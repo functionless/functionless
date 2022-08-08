@@ -82,7 +82,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             : payload;
 
         expect(
-          normalizeCDKJson(JSON.parse(extra!.definition))
+          normalizeCDKJson(JSON.parse(extra?.definition!))
         ).toMatchSnapshot();
         const result = await testStepFunction(context.function, pay);
 
@@ -1028,14 +1028,14 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         async (input) => {
           // 1, 2, 3 = 6
           for (const i in input.arr) {
-            await func({ n: `${input.arr[i]}`, id: input.id });
+            await func({ n: `${input.arr[i]!}`, id: input.id });
           }
           for (const i in input.arr) {
             let j = "1";
             for (j in input.arr) {
-              await func({ n: `${input.arr[i]}`, id: input.id }); // 1 1 1 2 2 2 3 3 3 = 18
+              await func({ n: `${input.arr[i]!}`, id: input.id }); // 1 1 1 2 2 2 3 3 3 = 18
               await func({ n: i as `${number}`, id: input.id }); // 0 0 0 1 1 1 2 2 2 = 9
-              await func({ n: `${input.arr[j]}`, id: input.id }); // 1 2 3 1 2 3 1 2 3 = 18
+              await func({ n: `${input.arr[j]!}`, id: input.id }); // 1 2 3 1 2 3 1 2 3 = 18
               await func({ n: j as `${number}`, id: input.id }); // 0 1 2 0 1 2 0 1 2 = 9
             }
             await func({ n: j as "2", id: input.id }); // 2 2 2 = 6

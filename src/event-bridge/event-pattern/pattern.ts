@@ -245,7 +245,7 @@ export const patternToEventBridgePattern = (
   } else if (isAnythingButPattern(pattern)) {
     return Array.isArray(pattern.anythingBut) &&
       pattern.anythingBut.length === 1
-      ? [{ "anything-but": pattern.anythingBut[0] }]
+      ? [{ "anything-but": pattern.anythingBut[0]! }]
       : [
           {
             "anything-but": pattern.anythingBut,

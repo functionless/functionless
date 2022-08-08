@@ -3006,7 +3006,7 @@ export class ASL {
       expr: PropAccessExpr;
     }
   ) {
-    const callbackfn = expr.args[0].expr;
+    const callbackfn = expr.args[0]?.expr;
     if (!isFunctionLike(callbackfn)) {
       throw new SynthError(
         ErrorCodes.Invalid_Input,
@@ -3086,7 +3086,7 @@ export class ASL {
       expr: PropAccessExpr;
     }
   ) {
-    const callbackfn = expr.args[0].expr;
+    const callbackfn = expr.args[0]?.expr;
     if (!isFunctionLike(callbackfn)) {
       throw new SynthError(
         ErrorCodes.Invalid_Input,
@@ -4153,7 +4153,7 @@ export namespace ASLGraph {
   export interface SubState {
     startState: string;
     node?: FunctionlessNode;
-    states?: { [stateName: string]: ASLGraph.NodeState | ASLGraph.SubState };
+    states: { [stateName: string]: ASLGraph.NodeState | ASLGraph.SubState };
   }
 
   export const isStateOrSubState = anyOf(isState, ASLGraph.isSubState);
@@ -4267,7 +4267,7 @@ export namespace ASLGraph {
     return realStates.length === 0
       ? undefined
       : realStates.length === 1
-      ? { node, ...realStates[0] }
+      ? { node, ...realStates[0]! }
       : {
           startState: "0",
           node,
@@ -4535,7 +4535,7 @@ export namespace ASLGraph {
       if (!(from in transitionMap)) {
         transitionMap[from] = new Set();
       }
-      transitionMap[from].add(to);
+      transitionMap[from]!.add(to);
     };
     const internal = (
       parentName: string,
@@ -4561,9 +4561,16 @@ export namespace ASLGraph {
           parent: stateNameMap,
           localNames: getStateNames(parentName, states),
         };
-        return Object.entries(states.states ?? {}).flatMap(([key, state]) =>
-          internal(nameMap.localNames[key], state, nameMap)
-        );
+        return Object.entries(states.states).flatMap(([key, state]) => {
+          const parentName = nameMap.localNames[key];
+          if (!parentName) {
+            throw new SynthError(
+              ErrorCodes.Unexpected_Error,
+              `Expected all local state names to be provided with a parent name, found ${key}`
+            );
+          }
+          return internal(parentName, state, nameMap);
+        });
       }
     };
 
@@ -4596,7 +4603,7 @@ export namespace ASLGraph {
       if (visited.has(state)) return;
       visited.add(state);
       if (state in matrix) {
-        matrix[state].forEach(depthFirst);
+        matrix[state]?.forEach(depthFirst);
       }
     };
 
@@ -4645,7 +4652,7 @@ export namespace ASLGraph {
           name,
           visitTransition(state, (transition) =>
             transition in emptyTransitions
-              ? emptyTransitions[transition]
+              ? emptyTransitions[transition]!
               : transition
           ),
         ],
@@ -4714,7 +4721,7 @@ export namespace ASLGraph {
             }
             return transition in emptyStates
               ? getNext(
-                  emptyStates[transition].Next!,
+                  emptyStates[transition]!.Next!,
                   seen ? [...seen, transition] : [transition]
                 )
               : transition;
@@ -4785,7 +4792,7 @@ export namespace ASLGraph {
       } else {
         const find = (nameMap: NameMap): string => {
           if (next in nameMap.localNames) {
-            return nameMap.localNames[next];
+            return nameMap.localNames[next]!;
           } else if (nameMap.parent) {
             return find(nameMap.parent);
           } else {
@@ -4873,24 +4880,24 @@ export namespace ASL {
 
   export const and = (...cond: (Condition | undefined)[]): Condition => {
     const conds = cond.filter((c): c is Condition => !!c);
-    return conds.length === 1
-      ? conds[0]
+    return conds.length > 1
+      ? {
+          And: conds,
+        }
       : conds.length === 0
       ? ASL.trueCondition()
-      : {
-          And: conds,
-        };
+      : conds[0]!;
   };
 
   export const or = (...cond: (Condition | undefined)[]): Condition => {
     const conds = cond.filter((c): c is Condition => !!c);
-    return conds.length === 1
-      ? conds[0]
+    return conds.length > 1
+      ? {
+          Or: conds,
+        }
       : conds.length === 0
       ? ASL.trueCondition()
-      : {
-          Or: conds,
-        };
+      : conds[0]!;
   };
 
   export const not = (cond: Condition): Condition => ({

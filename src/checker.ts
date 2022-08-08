@@ -431,7 +431,7 @@ export function makeFunctionlessChecker(
         // explicit return false. We always want to check the parent of the declaration or signature.
         return false;
       }
-    } else if (symbol.declarations && symbol.declarations.length > 0) {
+    } else if (symbol.declarations?.[0]) {
       const [decl] = symbol.declarations;
       // import x from y
       if (
@@ -699,9 +699,9 @@ export function makeFunctionlessChecker(
       isFunctionlessFunction(node.expression) &&
       // only take the form with the arrow function at the end.
       (node.arguments?.length === 3
-        ? ts.isArrowFunction(node.arguments[2])
+        ? ts.isArrowFunction(node.arguments[2]!)
         : node.arguments?.length === 4
-        ? ts.isArrowFunction(node.arguments[3])
+        ? ts.isArrowFunction(node.arguments[3]!)
         : false)
     );
   }
@@ -817,7 +817,7 @@ export function makeFunctionlessChecker(
       return false;
     }
     const typeParams = checker.getTypeArguments(type as ts.TypeReference);
-    if (isArraySymbol(symbol) && typeParams?.length === 1) {
+    if (isArraySymbol(symbol) && typeParams?.[0]) {
       const [param] = typeParams;
       // the type contains any type, union or intersection which is a Promise
       return typeMatch(param, (t) => {

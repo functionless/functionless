@@ -26,7 +26,8 @@
     "strictPropertyInitialization": true,
     "stripInternal": true,
     "target": "ES2019",
-    "declarationMap": true
+    "declarationMap": true,
+    "noUncheckedIndexedAccess": true
   },
   "include": [
     "src/**/*.ts"
