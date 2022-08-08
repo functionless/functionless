@@ -56,6 +56,7 @@ import {
   isLabelledStmt,
   isMethodDecl,
   isNewExpr,
+  isNoSubstitutionTemplateLiteral,
   isNullLiteralExpr,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
@@ -67,7 +68,6 @@ import {
   isPropAccessExpr,
   isPropAssignExpr,
   isPropDecl,
-  isQuasiString,
   isReferenceExpr,
   isRegexExpr,
   isReturnStmt,
@@ -463,6 +463,9 @@ export abstract class VTL {
             node.args[0]?.expr,
             ...NodeKind.FunctionLike
           );
+
+          fn.parameters.forEach(validateParameterDecl);
+
           const initialValue = node.args[1];
 
           // (previousValue: string[], currentValue: string, currentIndex: number, array: string[])
@@ -580,6 +583,12 @@ export abstract class VTL {
     } else if (isExprStmt(node)) {
       return this.qr(this.eval(node.expr));
     } else if (isForInStmt(node) || isForOfStmt(node)) {
+      if (isForOfStmt(node) && node.isAwait) {
+        throw new SynthError(
+          ErrorCodes.Unsupported_Feature,
+          `VTL does not support for-await, see https://github.com/functionless/functionless/issues/390`
+        );
+      }
       this.foreach(
         node.initializer,
         `${this.eval(node.expr)}${isForInStmt(node) ? ".keySet()" : ""}`,
@@ -647,18 +656,17 @@ export abstract class VTL {
       // handled inside ObjectLiteralExpr
     } else if (isStringLiteralExpr(node)) {
       return this.str(node.value);
+    } else if (isNoSubstitutionTemplateLiteral(node)) {
+      return this.str(node.text);
     } else if (isTemplateExpr(node)) {
-      return `"${node.spans
+      return `"${node.head.text}${node.spans
         .map((expr) => {
-          if (isQuasiString(expr) || isStringLiteralExpr(expr)) {
-            return expr.value;
-          }
-          const text = this.eval(expr, returnVar);
+          const text = this.eval(expr.expr, returnVar);
           if (text.startsWith("$")) {
-            return `\${${text.slice(1)}}`;
+            return `\${${text.slice(1)}}${expr.literal.text}`;
           } else {
             const varName = this.var(text);
-            return `\${${varName.slice(1)}}`;
+            return `\${${varName.slice(1)}}${expr.literal.text}`;
           }
         })
         .join("")}"`;
@@ -750,6 +758,9 @@ export abstract class VTL {
    */
   public evalDecl(decl: Decl, initialValueVar?: string) {
     if (isVariableDecl(decl) || isParameterDecl(decl) || isBindingElem(decl)) {
+      if (isParameterDecl(decl)) {
+        validateParameterDecl(decl);
+      }
       const variablePrefix = isInTopLevelScope(decl) ? `$context.stash.` : `$`;
       if (isBindingPattern(decl.name)) {
         if (!(decl.initializer || initialValueVar)) {
@@ -1089,8 +1100,26 @@ export abstract class VTL {
  * Returns the [value, index, array] arguments if this CallExpr is a `forEach` or `map` call.
  */
 const getMapForEachArgs = (call: CallExpr) => {
-  return assertNodeKind(call.args[0].expr, ...NodeKind.FunctionLike).parameters;
+  const parameters = assertNodeKind(
+    call.args[0].expr,
+    ...NodeKind.FunctionLike
+  ).parameters;
+  for (const param of parameters) {
+    validateParameterDecl(param);
+  }
+  return parameters;
 };
+
+function validateParameterDecl(
+  decl: ParameterDecl | undefined
+): asserts decl is ParameterDecl & { isRest: false } {
+  if (decl?.isRest) {
+    throw new SynthError(
+      ErrorCodes.Unsupported_Feature,
+      `VTL does not support rest parameters, see https://github.com/functionless/functionless/issues/391`
+    );
+  }
+}
 
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;

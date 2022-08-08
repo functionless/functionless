@@ -12,6 +12,7 @@ import {
   Identifier,
   ReferenceExpr,
   ThisExpr,
+  UndefinedLiteralExpr,
 } from "./expression";
 import { Function } from "./function";
 import {
@@ -649,7 +650,9 @@ export class APIGatewayVTL extends VTL {
   public eval(node: Stmt, returnVar?: string): void;
   public eval(node?: Expr | Stmt, returnVar?: string): string | void {
     if (isReturnStmt(node)) {
-      return this.add(this.exprToJson(node.expr));
+      return this.add(
+        this.exprToJson(node.expr ?? node.fork(new UndefinedLiteralExpr()))
+      );
     } else if (
       isPropAccessExpr(node) &&
       isIdentifier(node.name) &&

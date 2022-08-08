@@ -19,6 +19,7 @@ import {
   ReferenceExpr,
   StringLiteralExpr,
   ThisExpr,
+  UndefinedLiteralExpr,
 } from "./expression";
 import {
   isVariableStmt,
@@ -482,7 +483,10 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
          * Flatten variable declarations into multiple variable statements.
          */
         return node.declList.decls.map(
-          (decl) => new VariableStmt(new VariableDeclList([decl]))
+          (decl) =>
+            new VariableStmt(
+              new VariableDeclList([decl], node.declList.varKind)
+            )
         );
       } else if (isBinaryExpr(node)) {
         /**
@@ -608,7 +612,9 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
           return createStage(
             service,
             `${pre ? `${pre}\n` : ""}#set( $context.stash.return__flag = true )
-#set( $context.stash.return__val = ${getResult(stmt.expr)} )
+#set( $context.stash.return__val = ${getResult(
+              stmt.expr ?? stmt.fork(new UndefinedLiteralExpr())
+            )} )
 {}`
           );
         } else if (
@@ -683,7 +689,7 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
         }
       } else if (isLastExpr) {
         if (isReturnStmt(stmt)) {
-          template.return(stmt.expr);
+          template.return(stmt.expr ?? stmt.fork(new UndefinedLiteralExpr()));
         } else if (isIfStmt(stmt)) {
           template.eval(stmt);
         } else {

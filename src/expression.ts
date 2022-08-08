@@ -41,6 +41,7 @@ export type Expr =
   | FunctionExpr
   | Identifier
   | NewExpr
+  | NoSubstitutionTemplateLiteralExpr
   | NullLiteralExpr
   | NumberLiteralExpr
   | ObjectLiteralExpr
@@ -227,13 +228,14 @@ export class ElementAccessExpr extends BaseExpr<NodeKind.ElementAccessExpr> {
     super(NodeKind.ElementAccessExpr, arguments);
     this.ensure(expr, "expr", ["Expr"]);
     this.ensure(element, "element", ["Expr"]);
+    this.ensure(isOptional, "isOptional", ["undefined", "boolean"]);
   }
 }
 
 export class Argument extends BaseExpr<NodeKind.Argument, CallExpr | NewExpr> {
-  constructor(readonly expr?: Expr) {
+  constructor(readonly expr: Expr) {
     super(NodeKind.Argument, arguments);
-    this.ensure(expr, "element", ["undefined", "Expr"]);
+    this.ensure(expr, "element", ["Expr"]);
   }
 }
 
@@ -265,27 +267,74 @@ export class ConditionExpr extends BaseExpr<NodeKind.ConditionExpr> {
   }
 }
 
-export type ValueComparisonBinaryOp =
-  | "==="
-  | "=="
-  | "!="
-  | "!=="
-  | "<"
-  | "<="
-  | ">"
-  | ">=";
-export type MathBinaryOp = "/" | "*" | "+" | "-" | "%";
-export type MutationMathBinaryOp = "+=" | "*=" | "-=" | "/=" | "%=";
-export type ComparatorOp = "&&" | "||" | "??";
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#arithmetic_operators
+ */
+export type ArithmeticOp = "+" | "-" | "/" | "*" | "%" | "**";
 
-export type BinaryOp =
-  | MathBinaryOp
-  | MutationMathBinaryOp
-  | ValueComparisonBinaryOp
-  | ComparatorOp
-  | ","
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#assignment_operators
+ */
+export type AssignmentOp =
   | "="
-  | "in";
+  | "*="
+  | "**="
+  | "/="
+  | "%="
+  | "+="
+  | "-="
+  | "<<="
+  | ">>="
+  | ">>>="
+  | "&="
+  | "^="
+  | "|="
+  | "&&="
+  | "||="
+  | "??=";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#binary_logical_operators
+ */
+export type BinaryLogicalOp = "&&" | "||" | "??";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#bitwise_shift_operators
+ */
+export type BitwiseShiftOp = "<<" | ">>" | ">>>";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#binary_bitwise_operators
+ */
+export type BitwiseBinaryOp = "&" | "|" | "^";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#comma_operator
+ */
+export type CommaOp = ",";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#equality_operators
+ */
+export type EqualityOp = "==" | "!=" | "===" | "!==";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#relational_operators
+ */
+export type RelationalOp = "in" | "instanceof" | "<" | ">" | "<=" | ">=";
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators
+ */
+export type BinaryOp =
+  | ArithmeticOp
+  | AssignmentOp
+  | BinaryLogicalOp
+  | BitwiseShiftOp
+  | BitwiseBinaryOp
+  | CommaOp
+  | EqualityOp
+  | RelationalOp;
 
 export class BinaryExpr extends BaseExpr<NodeKind.BinaryExpr> {
   constructor(
@@ -299,8 +348,15 @@ export class BinaryExpr extends BaseExpr<NodeKind.BinaryExpr> {
   }
 }
 
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#increment_and_decrement
+ */
 export type PostfixUnaryOp = "--" | "++";
-export type UnaryOp = "!" | "-" | "~" | PostfixUnaryOp;
+
+/**
+ * @see https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators#unary_operators
+ */
+export type UnaryOp = "!" | "+" | "-" | "~" | PostfixUnaryOp;
 
 export class UnaryExpr extends BaseExpr<NodeKind.UnaryExpr> {
   constructor(readonly op: UnaryOp, readonly expr: Expr) {
@@ -447,47 +503,132 @@ export class SpreadElementExpr extends BaseExpr<
   }
 }
 
+export type TemplateLiteral = TemplateExpr | NoSubstitutionTemplateLiteralExpr;
+
 /**
- * A quasi string in a {@link TemplateExpr} or {@link TaggedTemplateExpr}.
+ * A Template literal with no substitutions.
+ *
+ * ```ts
+ * `has no substitutions`
+ * ```
+ */
+export class NoSubstitutionTemplateLiteralExpr extends BaseExpr<NodeKind.NoSubstitutionTemplateLiteral> {
+  constructor(readonly text: string) {
+    super(NodeKind.NoSubstitutionTemplateLiteral, arguments);
+    this.ensure(text, "text", ["string"]);
+  }
+}
+
+/**
+ * A template expression.
+ *
+ * ```ts
+ * `<head>(${expr}<literal>)*
+ * ```
+ */
+export class TemplateExpr extends BaseExpr<NodeKind.TemplateExpr> {
+  constructor(
+    /**
+     * The literal text prefix of the template.
+     * ```
+     * `head${expr}` // "head"
+     * `${expr}` // ""
+     * ```
+     */
+    readonly head: TemplateHead,
+    /**
+     * A chain of {@link TemplateSpan}s. The last {@link TemplateSpan}'s `literal` is always a
+     * {@link TemplateTail} and the former are always {@link TemplateMiddle}s.
+     */
+    readonly spans: [
+      ...TemplateSpan<TemplateMiddle>[],
+      TemplateSpan<TemplateTail>
+    ]
+  ) {
+    super(NodeKind.TemplateExpr, arguments);
+    this.ensure(head, "head", [NodeKind.TemplateHead]);
+    this.ensureArrayOf(spans, "spans", [NodeKind.TemplateSpan]);
+  }
+}
+
+/**
+ * A tagged template expression.
+ *
+ * ```ts
+ * <tag>`<head>(${expr}<literal>)*
+ * ```
+ */
+export class TaggedTemplateExpr extends BaseExpr<NodeKind.TaggedTemplateExpr> {
+  constructor(readonly tag: Expr, readonly template: TemplateLiteral) {
+    super(NodeKind.TaggedTemplateExpr, arguments);
+    this.ensure(tag, "tag", ["Expr"]);
+    this.ensure(template, "template", [
+      NodeKind.TemplateExpr,
+      NodeKind.NoSubstitutionTemplateLiteral,
+    ]);
+  }
+}
+
+/**
+ * The first quasi string at the beginning of a {@link TemplateExpr}.
  *
  * ```ts
  * const s = `abc${def}`
- *          // ^ quasi
+ *          // ^ TemplateHead
+ * ```
+ *
+ * Is empty in the case when there is no head quasi:
+ * ```ts
+ * `${abc}`
+ * // TemplateHead is "".
  * ```
  */
-export class QuasiString extends BaseNode<NodeKind.QuasiString> {
+export class TemplateHead extends BaseNode<NodeKind.TemplateHead> {
   readonly nodeKind = "Node";
-  constructor(readonly value: string) {
-    super(NodeKind.QuasiString, arguments);
+
+  constructor(readonly text: string) {
+    super(NodeKind.TemplateHead, arguments);
+    this.ensure(text, "text", ["string"]);
   }
 }
 
 /**
- * A span of text within a {@link TemplateExpr} or {@link TaggedTemplateExpr}.
+ * A span of text and expression within a {@link TemplateExpr} or {@link TaggedTemplateExpr}.
  *
  * ```ts
- * const s = `quasi ${expr}`
- *           // ^ Quasi string
- * const s = `quasi ${expr}`
- *                  // ^ expression to splice
+ * `${expr}<literal>`
  * ```
  */
-export type TemplateSpan = QuasiString | Expr;
+export class TemplateSpan<
+  Literal extends TemplateMiddle | TemplateTail = TemplateMiddle | TemplateTail
+> extends BaseNode<NodeKind.TemplateSpan> {
+  readonly nodeKind = "Node";
 
-/**
- * Interpolates a TemplateExpr to a string `this ${is} a template expression`
- */
-export class TemplateExpr extends BaseExpr<NodeKind.TemplateExpr> {
-  constructor(readonly spans: TemplateSpan[]) {
-    super(NodeKind.TemplateExpr, arguments);
-    this.ensureArrayOf(spans, "span", [NodeKind.QuasiString, "Expr"]);
+  constructor(readonly expr: Expr, readonly literal: Literal) {
+    super(NodeKind.TemplateSpan, arguments);
+    this.ensure(expr, "expr", ["Expr"]);
+    this.ensure(literal, "literal", [
+      NodeKind.TemplateMiddle,
+      NodeKind.TemplateTail,
+    ]);
   }
 }
 
-export class TaggedTemplateExpr extends BaseExpr<NodeKind.TaggedTemplateExpr> {
-  constructor(readonly tag: Expr, readonly spans: TemplateSpan[]) {
-    super(NodeKind.TaggedTemplateExpr, arguments);
-    this.ensureArrayOf(spans, "span", [NodeKind.QuasiString, "Expr"]);
+export class TemplateMiddle extends BaseNode<NodeKind.TemplateMiddle> {
+  readonly nodeKind = "Node";
+
+  constructor(readonly text: string) {
+    super(NodeKind.TemplateMiddle, arguments);
+    this.ensure(text, "text", ["string"]);
+  }
+}
+
+export class TemplateTail extends BaseNode<NodeKind.TemplateTail> {
+  readonly nodeKind = "Node";
+
+  constructor(readonly text: string) {
+    super(NodeKind.TemplateTail, arguments);
+    this.ensure(text, "text", ["string"]);
   }
 }
 

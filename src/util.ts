@@ -1,12 +1,6 @@
 import { Construct } from "constructs";
 import ts from "typescript";
-import {
-  BinaryOp,
-  CallExpr,
-  Expr,
-  PropAccessExpr,
-  QuasiString,
-} from "./expression";
+import { BinaryOp, CallExpr, Expr, PropAccessExpr } from "./expression";
 import {
   isArrayLiteralExpr,
   isBinaryExpr,
@@ -16,13 +10,13 @@ import {
   isForOfStmt,
   isFunctionLike,
   isIdentifier,
+  isNoSubstitutionTemplateLiteral,
   isNullLiteralExpr,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
   isPrivateIdentifier,
   isPropAccessExpr,
   isPropAssignExpr,
-  isQuasiString,
   isReferenceExpr,
   isSpreadAssignExpr,
   isSpreadElementExpr,
@@ -206,25 +200,17 @@ export function isConstant(x: any): x is Constant {
  * const obj = { val: "hello" };
  * obj.val -> { constant: "hello" }
  */
-export const evalToConstant = (
-  expr: Expr | QuasiString
-): Constant | undefined => {
-  if (isIdentifier(expr)) {
-    // const decl = expr.lookup();
-    // if (decl) {
-    //   if (isVariableDecl(decl) && decl.initializer) {
-    //     return evalToConstant(decl.initializer);
-    //   }
-    // }
-  } else if (
+export const evalToConstant = (expr: Expr): Constant | undefined => {
+  if (
     isStringLiteralExpr(expr) ||
     isNumberLiteralExpr(expr) ||
     isBooleanLiteralExpr(expr) ||
     isNullLiteralExpr(expr) ||
-    isUndefinedLiteralExpr(expr) ||
-    isQuasiString(expr)
+    isUndefinedLiteralExpr(expr)
   ) {
     return { constant: expr.value };
+  } else if (isNoSubstitutionTemplateLiteral(expr)) {
+    return { constant: expr.text };
   } else if (isArrayLiteralExpr(expr)) {
     const array = [];
     for (const item of expr.items) {
@@ -328,11 +314,16 @@ export const evalToConstant = (
       }
     }
   } else if (isTemplateExpr(expr)) {
-    const values = expr.spans.map(evalToConstant);
-    if (values.every((v): v is Constant => !!v)) {
-      return { constant: values.map((v) => v.constant).join("") };
+    const components: any[] = [expr.head.text];
+    for (const span of expr.spans) {
+      const exprVal = evalToConstant(span.expr);
+      if (exprVal === undefined) {
+        // can only evaluate templates if all expressions are constants
+        return undefined;
+      }
+      components.push(exprVal.constant, span.literal.text);
     }
-    return undefined;
+    return { constant: components.map((v) => v).join("") };
   }
   return undefined;
 };

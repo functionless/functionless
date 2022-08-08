@@ -54,12 +54,14 @@ export abstract class BaseStmt<
 export class ExprStmt extends BaseStmt<NodeKind.ExprStmt> {
   constructor(readonly expr: Expr) {
     super(NodeKind.ExprStmt, arguments);
+    this.ensure(expr, "expr", ["Expr"]);
   }
 }
 
 export class VariableStmt extends BaseStmt<NodeKind.VariableStmt> {
   constructor(readonly declList: VariableDeclList) {
     super(NodeKind.VariableStmt, arguments);
+    this.ensure(declList, "declList", [NodeKind.VariableDeclList]);
   }
 }
 
@@ -78,6 +80,7 @@ export type BlockStmtParent =
 export class BlockStmt extends BaseStmt<NodeKind.BlockStmt, BlockStmtParent> {
   constructor(readonly statements: Stmt[]) {
     super(NodeKind.BlockStmt, arguments);
+    this.ensureArrayOf(statements, "statements", ["Stmt"]);
     statements.forEach((stmt, i) => {
       stmt.prev = i > 0 ? statements[i - 1] : undefined;
       stmt.next = i + 1 < statements.length ? statements[i + 1] : undefined;
@@ -114,16 +117,18 @@ export class BlockStmt extends BaseStmt<NodeKind.BlockStmt, BlockStmtParent> {
 }
 
 export class ReturnStmt extends BaseStmt<NodeKind.ReturnStmt> {
-  constructor(readonly expr: Expr) {
+  constructor(readonly expr: Expr | undefined) {
     super(NodeKind.ReturnStmt, arguments);
+    this.ensure(expr, "expr", ["undefined", "Expr"]);
   }
 }
 
 export class IfStmt extends BaseStmt<NodeKind.IfStmt> {
   constructor(readonly when: Expr, readonly then: Stmt, readonly _else?: Stmt) {
     super(NodeKind.IfStmt, arguments);
-    if (_else) {
-    }
+    this.ensure(when, "when", ["Expr"]);
+    this.ensure(then, "then", ["Stmt"]);
+    this.ensure(_else, "else", ["undefined", "Stmt"]);
   }
 }
 
@@ -131,9 +136,22 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
   constructor(
     readonly initializer: VariableDecl | Identifier,
     readonly expr: Expr,
-    readonly body: BlockStmt
+    readonly body: BlockStmt,
+    /**
+     * Whether this is a for-await-of statement
+     * ```ts
+     * for await (const a of b) { .. }
+     * ```
+     */
+    readonly isAwait: boolean
   ) {
     super(NodeKind.ForOfStmt, arguments);
+    this.ensure(initializer, "initializer", [
+      NodeKind.VariableDecl,
+      NodeKind.Identifier,
+    ]);
+    this.ensure(expr, "expr", ["Expr"]);
+    this.ensure(isAwait, "isAwait", ["boolean"]);
   }
 }
 
@@ -155,19 +173,28 @@ export class ForStmt extends BaseStmt<NodeKind.ForStmt> {
     readonly incrementor?: Expr
   ) {
     super(NodeKind.ForStmt, arguments);
-    // validate
+    this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(initializer, "initializer", [
+      "undefined",
+      "Expr",
+      NodeKind.VariableDeclList,
+    ]);
+    this.ensure(condition, "condition", ["undefined", "Expr"]);
+    this.ensure(incrementor, "incrementor", ["undefined", "Expr"]);
   }
 }
 
 export class BreakStmt extends BaseStmt<NodeKind.BreakStmt> {
-  constructor() {
+  constructor(readonly label?: Identifier) {
     super(NodeKind.BreakStmt, arguments);
+    this.ensure(label, "label", ["undefined", NodeKind.Identifier]);
   }
 }
 
 export class ContinueStmt extends BaseStmt<NodeKind.ContinueStmt> {
-  constructor() {
+  constructor(readonly label?: Identifier) {
     super(NodeKind.ContinueStmt, arguments);
+    this.ensure(label, "label", ["undefined", NodeKind.Identifier]);
   }
 }
 
@@ -234,9 +261,9 @@ export class DoStmt extends BaseStmt<NodeKind.DoStmt> {
 }
 
 export class LabelledStmt extends BaseStmt<NodeKind.LabelledStmt> {
-  constructor(readonly label: string, readonly stmt: Stmt) {
+  constructor(readonly label: Identifier, readonly stmt: Stmt) {
     super(NodeKind.LabelledStmt, arguments);
-    this.ensure(label, "label", ["string"]);
+    this.ensure(label, "label", [NodeKind.Identifier]);
     this.ensure(stmt, "stmt", ["Stmt"]);
   }
 }
@@ -248,8 +275,9 @@ export class DebuggerStmt extends BaseStmt<NodeKind.DebuggerStmt> {
 }
 
 export class SwitchStmt extends BaseStmt<NodeKind.SwitchStmt> {
-  constructor(readonly clauses: SwitchClause[]) {
+  constructor(readonly expr: Expr, readonly clauses: SwitchClause[]) {
     super(NodeKind.SwitchStmt, arguments);
+    this.ensure(expr, "expr", ["Expr"]);
     this.ensureArrayOf(clauses, "clauses", NodeKind.SwitchClause);
   }
 }

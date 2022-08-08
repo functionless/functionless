@@ -833,6 +833,16 @@ test("put an event bus event", () => {
         detail: {
           value: input.id,
         },
+        version: "1",
+        id: "bbbbbbbb-eeee-eeee-eeee-ffffffffffff",
+        account: "123456789012",
+        time: "2022-08-05T16:19:03Z",
+        region: "us-east-1",
+        resources: [
+          "arn:aws:states:us-east-1:123456789012:stateMachine:MyStateMachine",
+        ],
+        "trace-header":
+          "X-Amzn-Trace-Id: Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=1",
       });
     }
   ).definition;
@@ -2052,6 +2062,22 @@ test("list.map(item => task(item))", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("list.forEach(item => )", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: { list: string[] }) => {
+      let a = "";
+      input.list.forEach((item) => {
+        a = `${a}${item}`;
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("[1,2,3].map(item => item)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<
@@ -2096,14 +2122,53 @@ test("[1,2,3,4].filter(item => item > 1 + 2)", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("[1,2,3,4].filter((item, index) => item > index)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return [1, 2, 3, 4].filter((item, index) => item > index);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("[1,2,3,4].filter((item, index, array) => item > 1 + 2)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return [1, 2, 3, 4].filter((item, _, arr) => item > arr[0]);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("[1,2,3,4].filter((item, index, array) => item > 1 + 2)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return [1, 2, 3, 4].filter((item, _, [first]) => item > first);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("[1,2,3,4].filter(item => item > {})", () => {
   const { stack } = initStepFunctionApp();
-  expect(
-    () =>
-      new ExpressStepFunction(stack, "fn", async () => {
-        return [{}].filter((item) => item === { a: "a" });
-      })
-  ).toThrow("Filter expressions do not support object or array literals");
+  const { definition } = new ExpressStepFunction(stack, "fn", async () => {
+    return [{}].filter((item) => item === { a: "a" });
+  });
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("[1,2,3,4].filter(item => item > {})", () => {
+  const { stack } = initStepFunctionApp();
+  const { definition } = new ExpressStepFunction(stack, "fn", async () => {
+    return [{ value: "a" }].filter((item) => {
+      const a = "a";
+      const { value } = item;
+      return value === a;
+    });
+  });
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 // https://github.com/functionless/functionless/issues/209
@@ -3907,4 +3972,27 @@ describe("binding", () => {
 
     expect(normalizeDefinition(definition)).toMatchSnapshot();
   });
+});
+
+test("throw SynthError when for-await is used", () => {
+  const { stack } = initStepFunctionApp();
+
+  expect(() => {
+    new StepFunction(stack, "MyStepF", async () => {
+      for await (const _ of []) {
+      }
+    });
+  }).toThrow("Step Functions does not yet support for-await");
+});
+
+test("throw SynthError when rest parameter is used", () => {
+  const { stack } = initStepFunctionApp();
+
+  expect(() => {
+    new StepFunction(stack, "MyStepF", async (input: { prop: string[] }) => {
+      return input.prop.map((...rest) => {
+        return rest;
+      });
+    });
+  }).toThrow("Step Functions does not yet support rest parameters");
 });

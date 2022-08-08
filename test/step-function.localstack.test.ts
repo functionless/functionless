@@ -442,9 +442,6 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     { arr: [1, 2, 3] }
   );
 
-  // uhh, so the best we can do is test that this doesn't fail
-  // Return from for loop - https://github.com/functionless/functionless/issues/319
-  // Assign to mutable variables from for loop - https://github.com/functionless/functionless/issues/318
   test(
     "for loops",
     (parent) => {
@@ -515,12 +512,17 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }
       );
       return new StepFunction(parent, "sfn2", async (input) => {
+        let a = "";
         const l = (await func()).map((x) => `n${x}`);
-        const l2 = input.arr.map((x) => `n${x}`);
-        return `${l[0]}${l[1]}${l[2]}${l2[0]}${l2[1]}${l2[2]}`;
+        const l2 = input.arr.map((x, i, [head]) => `n${i}${x}${head}`);
+        input.arr.map((x) => {
+          a = `${a}a${x}`;
+          return a;
+        });
+        return `${l[0]}${l[1]}${l[2]}${l2[0]}${l2[1]}${l2[2]}${a}`;
       });
     },
-    "n1n2n3n1n2n3",
+    "n1n2n3n011n121n231a1a2a3",
     { arr: [1, 2, 3] }
   );
 
@@ -542,6 +544,64 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     },
     "n1n2n3n1n2n3",
     { arr: [1, 2, 3], prefix: "n" }
+  );
+
+  test(
+    "foreach",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async (input) => {
+        let a = "";
+        input.arr.forEach((x) => {
+          a = `${a}a${x}`;
+          return a;
+        });
+        return a;
+      });
+    },
+    "a1a2a3",
+    { arr: [1, 2, 3] }
+  );
+
+  test(
+    "filter",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async ({ arr, key }) => {
+        const arr1 = arr
+          .filter(({ value }) => value <= 3)
+          .filter(({ value }) => value <= key)
+          .filter((item) => {
+            const { key: itemKey } = item;
+            $SFN.waitFor(1);
+            return itemKey === `hi${key}`;
+          });
+
+        const arr2 = [4, 3, 2, 1].filter(
+          (x, index, [first]) => x <= index || first === x
+        );
+
+        return { arr1, arr2 };
+      });
+    },
+    {
+      arr1: [
+        { value: 1, key: "hi2" },
+        { value: 2, key: "hi2" },
+      ],
+      arr2: [4, 2, 1],
+    },
+    {
+      arr: [
+        { value: 1, key: "hi" },
+        { value: 1, key: "hi2" },
+        { value: 2, key: "hi" },
+        { value: 2, key: "hi2" },
+        { value: 3, key: "hi" },
+        { value: 3, key: "hi2" },
+        { value: 4 },
+        { value: 1, key: "hi" },
+      ],
+      key: 2,
+    }
   );
 
   test(
@@ -803,10 +863,6 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     { a: "1" }
   );
 
-  // breaking test, will fix
-  // b = a incorrectly uses output path
-  // { Pass, { result.$: "$.a" }, resultPath: "$.b", outputPath: "$.result" }
-  // this won't work for multiple reasons, output path will write over the entire state
   test(
     "assignment",
     (parent) => {
@@ -1501,8 +1557,8 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             rra2: [t = "sir"],
           } = value;
 
-          const map = [{ a: "a", b: ["b"] }]
-            .map(({ a, b: [c] }) => `${a}${c}`)
+          const map = [{ aa: "a", bb: ["b"] }]
+            .map(({ aa, bb: [cc] }) => `${aa}${cc}`)
             .join();
 
           let forV = "";
