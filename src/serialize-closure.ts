@@ -14,6 +14,7 @@ import {
   isBooleanLiteralExpr,
   isBreakStmt,
   isCallExpr,
+  isCaseClause,
   isCatchClause,
   isClassDecl,
   isClassExpr,
@@ -21,9 +22,14 @@ import {
   isComputedPropertyNameExpr,
   isConditionExpr,
   isConstructorDecl,
+  isContinueStmt,
+  isDebuggerStmt,
+  isDefaultClause,
   isDeleteExpr,
   isDoStmt,
   isElementAccessExpr,
+  isEmptyStmt,
+  isErr,
   isExprStmt,
   isForInStmt,
   isForOfStmt,
@@ -34,6 +40,8 @@ import {
   isGetAccessorDecl,
   isIdentifier,
   isIfStmt,
+  isImportKeyword,
+  isLabelledStmt,
   isMethodDecl,
   isNewExpr,
   isNoSubstitutionTemplateLiteral,
@@ -51,11 +59,13 @@ import {
   isPropDecl,
   isReferenceExpr,
   isRegexExpr,
+  isReturnStmt,
   isSetAccessorDecl,
   isSpreadAssignExpr,
   isSpreadElementExpr,
   isStringLiteralExpr,
   isSuperKeyword,
+  isSwitchStmt,
   isTaggedTemplateExpr,
   isTemplateExpr,
   isTemplateHead,
@@ -63,13 +73,17 @@ import {
   isTemplateSpan,
   isTemplateTail,
   isThisExpr,
+  isThrowStmt,
   isTryStmt,
+  isTypeOfExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
   isVariableDecl,
   isVariableDeclList,
   isVariableStmt,
+  isVoidExpr,
   isWhileStmt,
+  isWithStmt,
   isYieldExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
@@ -229,6 +243,7 @@ export function serializeClosure(func: AnyFunction): string {
   function serializeAST(node: FunctionlessNode): ts.Node {
     if (isReferenceExpr(node)) {
       // TODO: serialize value captured in closure
+      return ts.factory.createIdentifier(serialize(node.ref()));
     } else if (isArrowFunctionExpr(node)) {
       return ts.factory.createArrowFunction(
         node.isAsync
@@ -650,6 +665,24 @@ export function serializeClosure(func: AnyFunction): string {
         serializeAST(node.then) as ts.Statement,
         node._else ? (serializeAST(node._else) as ts.Statement) : undefined
       );
+    } else if (isSwitchStmt(node)) {
+      return ts.factory.createSwitchStatement(
+        serializeAST(node.expr) as ts.Expression,
+        ts.factory.createCaseBlock(
+          node.clauses.map(
+            (clause) => serializeAST(clause) as ts.CaseOrDefaultClause
+          )
+        )
+      );
+    } else if (isCaseClause(node)) {
+      return ts.factory.createCaseClause(
+        serializeAST(node.expr) as ts.Expression,
+        node.statements.map((stmt) => serializeAST(stmt) as ts.Statement)
+      );
+    } else if (isDefaultClause(node)) {
+      return ts.factory.createDefaultClause(
+        node.statements.map((stmt) => serializeAST(stmt) as ts.Statement)
+      );
     } else if (isForStmt(node)) {
       return ts.factory.createForStatement(
         node.initializer
@@ -689,7 +722,18 @@ export function serializeClosure(func: AnyFunction): string {
         serializeAST(node.condition) as ts.Expression
       );
     } else if (isBreakStmt(node)) {
-      return ts.factory.createBreakStatement(node);
+      return ts.factory.createBreakStatement(
+        node.label ? (serializeAST(node.label) as ts.Identifier) : undefined
+      );
+    } else if (isContinueStmt(node)) {
+      return ts.factory.createContinueStatement(
+        node.label ? (serializeAST(node.label) as ts.Identifier) : undefined
+      );
+    } else if (isLabelledStmt(node)) {
+      return ts.factory.createLabeledStatement(
+        serializeAST(node.label) as ts.Identifier,
+        serializeAST(node.stmt) as ts.Statement
+      );
     } else if (isTryStmt(node)) {
       return ts.factory.createTryStatement(
         serializeAST(node.tryBlock) as ts.Block,
@@ -706,6 +750,10 @@ export function serializeClosure(func: AnyFunction): string {
           ? (serializeAST(node.variableDecl) as ts.VariableDeclaration)
           : undefined,
         serializeAST(node.block) as ts.Block
+      );
+    } else if (isThrowStmt(node)) {
+      return ts.factory.createThrowStatement(
+        serializeAST(node.expr) as ts.Expression
       );
     } else if (isDeleteExpr(node)) {
       return ts.factory.createDeleteExpression(
@@ -741,6 +789,31 @@ export function serializeClosure(func: AnyFunction): string {
       return ts.factory.createTemplateMiddle(node.text);
     } else if (isTemplateTail(node)) {
       return ts.factory.createTemplateTail(node.text);
+    } else if (isTypeOfExpr(node)) {
+      return ts.factory.createTypeOfExpression(
+        serializeAST(node.expr) as ts.Expression
+      );
+    } else if (isVoidExpr(node)) {
+      return ts.factory.createVoidExpression(
+        serializeAST(node.expr) as ts.Expression
+      );
+    } else if (isDebuggerStmt(node)) {
+      return ts.factory.createDebuggerStatement();
+    } else if (isEmptyStmt(node)) {
+      return ts.factory.createEmptyStatement();
+    } else if (isReturnStmt(node)) {
+      return ts.factory.createReturnStatement(
+        serializeAST(node.expr) as ts.Expression
+      );
+    } else if (isImportKeyword(node)) {
+      return ts.factory.createToken(ts.SyntaxKind.ImportKeyword);
+    } else if (isWithStmt(node)) {
+      return ts.factory.createWithStatement(
+        serializeAST(node.expr) as ts.Expression,
+        serializeAST(node.stmt) as ts.Statement
+      );
+    } else if (isErr(node)) {
+      throw node.error;
     } else {
       return assertNever(node);
     }
