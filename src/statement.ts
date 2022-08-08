@@ -185,14 +185,16 @@ export class ForStmt extends BaseStmt<NodeKind.ForStmt> {
 }
 
 export class BreakStmt extends BaseStmt<NodeKind.BreakStmt> {
-  constructor() {
+  constructor(readonly label?: Identifier) {
     super(NodeKind.BreakStmt, arguments);
+    this.ensure(label, "label", ["undefined", NodeKind.Identifier]);
   }
 }
 
 export class ContinueStmt extends BaseStmt<NodeKind.ContinueStmt> {
-  constructor() {
+  constructor(readonly label?: Identifier) {
     super(NodeKind.ContinueStmt, arguments);
+    this.ensure(label, "label", ["undefined", NodeKind.Identifier]);
   }
 }
 
@@ -259,9 +261,9 @@ export class DoStmt extends BaseStmt<NodeKind.DoStmt> {
 }
 
 export class LabelledStmt extends BaseStmt<NodeKind.LabelledStmt> {
-  constructor(readonly label: string, readonly stmt: Stmt) {
+  constructor(readonly label: Identifier, readonly stmt: Stmt) {
     super(NodeKind.LabelledStmt, arguments);
-    this.ensure(label, "label", ["string"]);
+    this.ensure(label, "label", [NodeKind.Identifier]);
     this.ensure(stmt, "stmt", ["Stmt"]);
   }
 }
