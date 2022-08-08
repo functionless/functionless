@@ -301,10 +301,10 @@ const deleteWorkflow = new StepFunction<{ postId: string }, void>(
   }
 );
 
-export const deletePost = new AppsyncResolver<
+export const deletePost: AppsyncResolver<
   { postId: string },
   AWS.StepFunctions.StartExecutionOutput | undefined
->(
+> = new AppsyncResolver(
   stack,
   "deletePost",
   {

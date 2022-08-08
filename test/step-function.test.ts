@@ -3971,3 +3971,26 @@ describe("binding", () => {
     expect(normalizeDefinition(definition)).toMatchSnapshot();
   });
 });
+
+test("throw SynthError when for-await is used", () => {
+  const { stack } = initStepFunctionApp();
+
+  expect(() => {
+    new StepFunction(stack, "MyStepF", async () => {
+      for await (const _ of []) {
+      }
+    });
+  }).toThrow("Step Functions does not yet support for-await");
+});
+
+test("throw SynthError when rest parameter is used", () => {
+  const { stack } = initStepFunctionApp();
+
+  expect(() => {
+    new StepFunction(stack, "MyStepF", async (input: { prop: string[] }) => {
+      return input.prop.map((...rest) => {
+        return rest;
+      });
+    });
+  }).toThrow("Step Functions does not yet support rest parameters");
+});

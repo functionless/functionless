@@ -2,10 +2,11 @@ import "jest";
 import {
   $util,
   AppsyncContext,
-  ComparatorOp,
-  MathBinaryOp,
+  ArithmeticOp,
+  BinaryLogicalOp,
+  EqualityOp,
+  RelationalOp,
   ResolverFunction,
-  ValueComparisonBinaryOp,
 } from "../src";
 import { reflect } from "../src/reflect";
 import { appsyncTestCase, testAppsyncVelocity } from "./util";
@@ -559,18 +560,25 @@ test("binary exprs value comparison", () => {
     reflect<
       ResolverFunction<
         { a: number; b: number },
-        Record<ValueComparisonBinaryOp, boolean>,
+        Record<
+          | EqualityOp
+          | Exclude<RelationalOp, "in" | "instanceof">
+          | Exclude<BinaryLogicalOp, "??">,
+          boolean | number
+        >,
         any
       >
     >(($context) => {
       const a = $context.arguments.a;
       const b = $context.arguments.b;
       return {
+        "!==": a != b,
         "!=": a != b,
         "&&": a && b,
         "||": a || b,
         "<": a < b,
         "<=": a <= b,
+        "===": a == b,
         "==": a == b,
         ">": a > b,
         ">=": a >= b,
@@ -581,9 +589,11 @@ test("binary exprs value comparison", () => {
   testAppsyncVelocity(templates[1]!, {
     arguments: { a: 1, b: 2 },
     resultMatch: {
+      "!==": true,
       "!=": true,
       "<": true,
       "<=": true,
+      "===": false,
       "==": false,
       ">": false,
       ">=": false,
@@ -593,9 +603,11 @@ test("binary exprs value comparison", () => {
   testAppsyncVelocity(templates[1]!, {
     arguments: { a: 2, b: 1 },
     resultMatch: {
+      "!==": true,
       "!=": true,
       "<": false,
       "<=": false,
+      "===": false,
       "==": false,
       ">": true,
       ">=": true,
@@ -605,9 +617,11 @@ test("binary exprs value comparison", () => {
   testAppsyncVelocity(templates[1]!, {
     arguments: { a: 1, b: 1 },
     resultMatch: {
+      "!==": false,
       "!=": false,
       "<": false,
       "<=": true,
+      "===": true,
       "==": true,
       ">": false,
       ">=": true,
@@ -643,7 +657,7 @@ test("binary exprs logical", () => {
     reflect<
       ResolverFunction<
         { a: boolean; b: boolean },
-        Record<ComparatorOp, boolean>,
+        Record<BinaryLogicalOp, boolean>,
         any
       >
     >(($context) => {
@@ -690,7 +704,7 @@ test("binary exprs math", () => {
     reflect<
       ResolverFunction<
         { a: number; b: number },
-        Record<MathBinaryOp, number>,
+        Record<Exclude<ArithmeticOp, "**">, number>,
         any
       >
     >(($context) => {

@@ -430,3 +430,34 @@ test("return error", () => {
     "Appsync Integration invocations must be unidirectional and defined statically"
   );
 });
+
+test("throw SynthError when for-await is used", () => {
+  expect(() => {
+    appsyncTestCase<{ strings: string[] }, { pk: string; sk: string }>(
+      // source https://github.com/functionless/functionless/issues/266
+      reflect(async ($context) => {
+        for await (const _ of $context.arguments.strings) {
+        }
+
+        return $util.error("Cannot find account.");
+      })
+    );
+  }).toThrow(
+    "VTL does not support for-await, see https://github.com/functionless/functionless/issues/390"
+  );
+});
+
+test("throw SynthError when rest parameter is used", () => {
+  expect(() => {
+    appsyncTestCase<{ strings: string[] }, { pk: string; sk: string }>(
+      // source https://github.com/functionless/functionless/issues/266
+      reflect(async ($context) => {
+        $context.arguments.strings.forEach((...rest) => {
+          return rest;
+        });
+
+        return $util.error("Cannot find account.");
+      })
+    );
+  }).toThrow();
+});

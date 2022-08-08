@@ -90,7 +90,7 @@ export namespace ErrorCodes {
    * });
    * ```
    */
-  export const Cannot_perform_arithmetic_on_variables_in_Step_Function: ErrorCode =
+  export const Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function: ErrorCode =
     {
       code: 10000,
       type: ErrorType.ERROR,

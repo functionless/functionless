@@ -1659,3 +1659,12 @@ describe.skip("list some", () => {
     );
   });
 });
+
+test("error when using rest parameters", () => {
+  ebEventPatternTestCaseError(
+    reflect<RulePredicateFunction<TestEvent>>((...event) =>
+      event[0].resources.some((r) => r.startsWith("hi") && r === "taco")
+    ),
+    "Event Bridge does not yet support rest parameters"
+  );
+});
