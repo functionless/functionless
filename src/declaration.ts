@@ -217,7 +217,8 @@ export class ParameterDecl extends BaseDecl<
      * ```ts
      * function foo(...rest) {}
      * ```
-     */ readonly isRest: boolean
+     */
+    readonly isRest: boolean
   ) {
     super(NodeKind.ParameterDecl, arguments);
     this.ensure(name, "name", NodeKind.BindingNames);

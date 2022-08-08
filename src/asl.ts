@@ -5235,11 +5235,7 @@ function nodeToString(
   } else if (isBigIntExpr(expr)) {
     return expr.value.toString(10);
   } else if (isBinaryExpr(expr)) {
-    return `${nodeToString(expr.left)} ${
-      // backwards compatibility
-      // TODO: remove this and update snapshots
-      expr.op === "===" ? "==" : expr.op === "!==" ? "!=" : expr.op
-    } ${nodeToString(expr.right)}`;
+    return `${nodeToString(expr.left)} ${expr.op} ${nodeToString(expr.right)}`;
   } else if (isBooleanLiteralExpr(expr)) {
     return `${expr.value}`;
   } else if (isCallExpr(expr) || isNewExpr(expr)) {
