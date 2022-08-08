@@ -82,7 +82,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             : payload;
 
         expect(
-          normalizeCDKJson(JSON.parse(extra!.definition))
+          normalizeCDKJson(JSON.parse(extra?.definition!))
         ).toMatchSnapshot();
         const result = await testStepFunction(context.function, pay);
 
