@@ -224,14 +224,14 @@ export const synthesizePatternDocument = (
         `Event bridge does not support OR logic between multiple fields, found ${doc1Keys[0]} and ${doc2Keys[0]}.`
       );
     }
-    const key = doc1Keys[0];
+    const key = doc1Keys[0]!;
 
     return {
       doc: {
         [key]: orMergePattern(
           key,
-          patternDocument1.doc[key],
-          patternDocument2.doc[key]
+          patternDocument1.doc[key]!,
+          patternDocument2.doc[key]!
         ),
       },
     };
@@ -663,7 +663,7 @@ const negateDocument = (classDocument: PatternDocument): PatternDocument => {
     return { doc: {} };
   }
 
-  const entry = classDocument.doc[key];
+  const entry = classDocument.doc[key]!;
 
   return {
     doc: {
@@ -681,7 +681,9 @@ const negateClassification = (pattern: Pattern): Pattern => {
     return Array.isArray(pattern.anythingBut)
       ? pattern.anythingBut.length > 1
         ? { patterns: pattern.anythingBut.map((x) => ({ value: x })) }
-        : { value: pattern.anythingBut[0] }
+        : pattern.anythingBut[0]
+        ? { value: pattern.anythingBut[0] }
+        : { empty: true }
       : { value: pattern.anythingBut };
   } else if (isAnythingButPrefixPattern(pattern)) {
     return { prefix: pattern.anythingButPrefix };
@@ -768,7 +770,11 @@ export const andDocuments = (
       // if the key is in both documents, try to merge them
       const mergedPattern =
         pattern ??
-        andMergePattern(key, classDocument1.doc[key], classDocument2.doc[key]);
+        andMergePattern(
+          key,
+          classDocument1.doc[key]!,
+          classDocument2.doc[key]!
+        );
       return {
         doc: {
           ...doc.doc,

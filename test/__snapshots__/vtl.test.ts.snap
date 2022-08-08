@@ -1127,6 +1127,21 @@ $util.qr($v1.add($v2))
 ]
 `;
 
+exports[`map over list without parameter 1`] = `
+Array [
+  "{
+\\"version\\": \\"2018-05-29\\",
+\\"payload\\": null
+}",
+  "#set($v1 = [])
+#foreach($v2 in $context.arguments.list)
+#set($v3 = 'hello')
+$util.qr($v1.add($v3))
+#end
+#return($v1)",
+]
+`;
+
 exports[`null and undefined 1`] = `
 Array [
   "{

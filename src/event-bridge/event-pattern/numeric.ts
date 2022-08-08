@@ -179,7 +179,7 @@ export const reduceNumericAggregate = (
   if (reduced.length === 0) {
     return { empty: true };
   } else if (reduced.length === 1) {
-    return reduced[0];
+    return reduced[0]!;
   }
   return { ranges: reduced };
 };
