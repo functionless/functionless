@@ -120,7 +120,7 @@ export function serializeClosure(func: AnyFunction): string {
   function emitVarDecl(
     expr: ts.Expression,
     varKind: "const" | "let" | "var" = "const"
-  ): string {
+  ): ts.Identifier {
     const name = uniqueName();
     emit(
       ts.factory.createVariableStatement(
@@ -142,12 +142,12 @@ export function serializeClosure(func: AnyFunction): string {
         )
       )
     );
-    return name;
+    return ts.factory.createIdentifier(name);
   }
 
-  const valueIds = new Map<any, string>();
+  const valueIds = new Map<any, ts.Expression>();
 
-  emit(expr(assign(prop(id("exports"), "handler"), id(serialize(func)))));
+  emit(expr(assign(prop(id("exports"), "handler"), serialize(func))));
 
   return printer.printFile(
     ts.factory.createSourceFile(
@@ -157,7 +157,7 @@ export function serializeClosure(func: AnyFunction): string {
     )
   );
 
-  function serialize(value: any): string {
+  function serialize(value: any): ts.Expression {
     let id = valueIds.get(value);
     if (id) {
       return id;
@@ -167,9 +167,42 @@ export function serializeClosure(func: AnyFunction): string {
     return id;
   }
 
-  function serializeValue(value: any) {
+  function serializeValue(value: any): ts.Expression {
     if (value === undefined) {
+      return undefined_expr();
     } else if (value === null) {
+      return null_expr();
+    } else if (value === true) {
+      return true_expr();
+    } else if (value === false) {
+      return false_expr();
+    } else if (typeof value === "number") {
+      return num(value);
+    } else if (typeof value === "bigint") {
+      return ts.factory.createBigIntLiteral(value.toString(10));
+    } else if (typeof value === "string") {
+      return string(value);
+    } else if (value instanceof RegExp) {
+      return ts.factory.createRegularExpressionLiteral(value.source);
+    } else if (value instanceof Date) {
+      return ts.factory.createNewExpression(id("Date"), undefined, [
+        num(value.getTime()),
+      ]);
+    } else if (Array.isArray(value)) {
+      // TODO: should we check the array's prototype?
+
+      // emit an empty array
+      // var vArr = []
+      const arr = emitVarDecl(ts.factory.createArrayLiteralExpression([]));
+
+      // cache the empty array now in case any of the items in the array circularly reference the array
+      valueIds.set(value, arr);
+
+      // for each item in the array, serialize the value and push it into the array
+      // vArr.push(vItem1, vItem2)
+      emit(expr(call(prop(arr, "push"), value.map(serialize))));
+
+      return arr;
     } else if (typeof value === "object") {
       // serialize the prototype first
       // there should be no circular references between an object instance and its prototype
@@ -179,38 +212,15 @@ export function serializeClosure(func: AnyFunction): string {
 
       // emit an empty object with the correct prototype
       // e.g. `var vObj = Object.create(vPrototype);`
-      const obj = emitVarDecl(
-        call(prop(id("Object"), "create"), [id(prototype)])
-      );
+      const obj = emitVarDecl(call(prop(id("Object"), "create"), [prototype]));
 
-      /**
-       * Cache the emitted value so that any circular object references serialize without issue.
-       *
-       * e.g.
-       *
-       * The following objects circularly reference each other:
-       * ```ts
-       * const a = {};
-       * const b = { a };
-       * a.b = b;
-       * ```
-       *
-       * Serializing `b` will emit the following code:
-       * ```ts
-       * const b = {};
-       * const a = {};
-       * a.b = b;
-       * b.a = a;
-       * ```
-       */
+      // cache the empty object nwo in case any of the properties in teh array circular reference the object
       valueIds.set(value, obj);
 
       // for each of the object's own properties, emit a statement that assigns the value of that property
       // vObj.propName = vValue
       Object.getOwnPropertyNames(value).forEach((propName) =>
-        emit(
-          expr(assign(prop(id(obj), propName), id(serialize(value[propName]))))
-        )
+        emit(expr(assign(prop(obj, propName), serialize(value[propName]))))
       );
 
       return obj;
@@ -229,7 +239,7 @@ export function serializeClosure(func: AnyFunction): string {
         const moduleName = emitVarDecl(call(id("require"), [string(mod.path)]));
 
         // const vFunc = vMod.prop
-        return emitVarDecl(prop(id(moduleName), mod.exportName));
+        return emitVarDecl(prop(moduleName, mod.exportName));
       } else if (isFunctionLike(ast)) {
         return emitVarDecl(serializeAST(ast) as ts.Expression);
       } else {
@@ -242,8 +252,7 @@ export function serializeClosure(func: AnyFunction): string {
 
   function serializeAST(node: FunctionlessNode): ts.Node {
     if (isReferenceExpr(node)) {
-      // TODO: serialize value captured in closure
-      return ts.factory.createIdentifier(serialize(node.ref()));
+      return serialize(node.ref());
     } else if (isArrowFunctionExpr(node)) {
       return ts.factory.createArrowFunction(
         node.isAsync
@@ -803,7 +812,7 @@ export function serializeClosure(func: AnyFunction): string {
       return ts.factory.createEmptyStatement();
     } else if (isReturnStmt(node)) {
       return ts.factory.createReturnStatement(
-        serializeAST(node.expr) as ts.Expression
+        node.expr ? (serializeAST(node.expr) as ts.Expression) : undefined
       );
     } else if (isImportKeyword(node)) {
       return ts.factory.createToken(ts.SyntaxKind.ImportKeyword);
@@ -820,12 +829,32 @@ export function serializeClosure(func: AnyFunction): string {
   }
 }
 
+function undefined_expr() {
+  return ts.factory.createIdentifier("undefined");
+}
+
+function null_expr() {
+  return ts.factory.createNull();
+}
+
+function true_expr() {
+  return ts.factory.createTrue();
+}
+
+function false_expr() {
+  return ts.factory.createFalse();
+}
+
 function id(name: string) {
   return ts.factory.createIdentifier(name);
 }
 
 function string(name: string) {
   return ts.factory.createStringLiteral(name);
+}
+
+function num(num: number) {
+  return ts.factory.createNumericLiteral(num);
 }
 
 function prop(expr: ts.Expression, name: string) {

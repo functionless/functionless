@@ -8,6 +8,7 @@ import {
   FunctionLike,
   ParameterDecl,
   VariableDecl,
+  VariableDeclList,
 } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
@@ -5215,7 +5216,13 @@ function toStateName(node: FunctionlessNode): string {
 }
 
 function nodeToString(
-  expr?: Expr | ParameterDecl | BindingName | BindingElem | VariableDecl
+  expr?:
+    | Expr
+    | ParameterDecl
+    | BindingName
+    | BindingElem
+    | VariableDecl
+    | VariableDeclList
 ): string {
   if (!expr) {
     return "";
@@ -5351,7 +5358,7 @@ function nodeToString(
       expr.initializer ? ` = ${nodeToString(expr.initializer)}` : ""
     }`;
   } else if (isVariableDeclList(expr)) {
-    return expr.declList.map(nodeToString).join(", ");
+    return expr.decls.map(nodeToString).join(", ");
   } else if (isParameterDecl(expr)) {
     return nodeToString(expr.name);
   } else if (isTaggedTemplateExpr(expr)) {
