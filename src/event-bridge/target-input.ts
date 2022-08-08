@@ -21,7 +21,6 @@ import {
   isParenthesizedExpr,
   isPropAccessExpr,
   isPropAssignExpr,
-  isQuasiString,
   isReferenceExpr,
   isStringLiteralExpr,
   isTemplateExpr,
@@ -197,10 +196,14 @@ export const synthesizeEventBridgeTargets = (
       }
     } else if (isTemplateExpr(expr)) {
       return {
-        value: expr.spans
-          .map((x) => (isQuasiString(x) ? x.value : exprToStringLiteral(x)))
-          .join(""),
         type: "string",
+        value: [
+          expr.head.text,
+          ...expr.spans.flatMap((span) => [
+            exprToStringLiteral(span.expr),
+            span.literal.text,
+          ]),
+        ].join(""),
       };
     } else if (isObjectLiteralExpr(expr) || isArrayLiteralExpr(expr)) {
       return exprToObject(expr);
