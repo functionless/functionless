@@ -116,7 +116,7 @@ const project = new CustomTypescriptProject({
     "@swc/core",
     "@swc/register",
     "@swc/jest",
-    "swc-closure@file:../swc-closure",
+    "@functionless/ast-reflection",
     "jest",
     "ts-jest",
   ],
@@ -173,6 +173,34 @@ const project = new CustomTypescriptProject({
 // projen assumes ts-jest
 delete project.jest.config.globals;
 delete project.jest.config.preset;
+
+new JsonFile(project, ".swcrc", {
+  marker: false,
+  obj: {
+    jsc: {
+      parser: {
+        syntax: "typescript",
+        dynamicImport: false,
+        decorators: false,
+        hidden: {
+          jest: true,
+        },
+      },
+      transform: null,
+      target: "es2021",
+      loose: false,
+      externalHelpers: false,
+      experimental: {
+        plugins: [["@functionless/ast-reflection", {}]],
+      },
+    },
+    minify: false,
+    sourceMaps: "inline",
+    module: {
+      type: "commonjs",
+    },
+  },
+});
 
 const packageJson = project.tryFindObjectFile("package.json");
 

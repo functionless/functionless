@@ -89,18 +89,6 @@
         "TS_NODE_PROJECT": "${workspaceRoot}/test-app/tsconfig.json"
       }
     },
-
-    {
-      "name": "launch js",
-      "type": "node",
-      "request": "launch",
-      "runtimeExecutable": "node",
-      "runtimeArgs": ["--nolazy"],
-      "args": ["./lib-test/test/step-function.test.js"],
-      "cwd": "${workspaceRoot}",
-      "internalConsoleOptions": "openOnSessionStart",
-      "skipFiles": ["<node_internals>/**", "node_modules/**"]
-    },
     {
       "type": "node",
       "name": "vscode-jest-tests.v2",

@@ -1040,6 +1040,11 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
+"@functionless/ast-reflection@^0.0.0":
+  version "0.0.0"
+  resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.0.0.tgz#328423829a09fc96df448d18fdf4228de87641ee"
+  integrity sha512-6YsxKPSOKofmyQoomDbXy/1vBUcAb4xUawPiS83Pilgxl1AM49C0I7l+HIc2sZBHj3q3ClGzQ7l6n4C++sQMjQ==
+
 "@functionless/nodejs-closure-serializer@^0.1.1":
   version "0.1.1"
   resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.1.1.tgz#2c56bbe164c3447d55ff8162472e9c0b59c1e690"
@@ -7560,9 +7565,6 @@ supports-preserve-symlinks-flag@^1.0.0:
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/supports-preserve-symlinks-flag/-/supports-preserve-symlinks-flag-1.0.0.tgz#6eda4bd344a3c94aea376d4cc31bc77311039e09"
   integrity sha512-ot0WnXS9fgdkgIcePe6RHNk1WA8+muPa6cSjeR3V8K27q9BB1rTE3R1p7Hv0z1ZyAc8s6Vvv8DIyWf681MAt0w==
-
-"swc-closure@file:../swc-closure":
-  version "0.1.0"
 
 table@^6.8.0:
   version "6.8.0"
