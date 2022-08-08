@@ -13,6 +13,9 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
   TemplateExpr,
+  TemplateMiddle,
+  TemplateSpan,
+  TemplateTail,
   UnaryExpr,
 } from "../expression";
 import {
@@ -28,18 +31,18 @@ import {
   isParenthesizedExpr,
   isPropAccessExpr,
   isPropAssignExpr,
-  isQuasiString,
   isReturnStmt,
   isSetAccessorDecl,
   isSpreadElementExpr,
   isStringLiteralExpr,
   isTemplateExpr,
+  isTemplateMiddle,
   isUnaryExpr,
   isVariableStmt,
 } from "../guards";
 import { NodeKind } from "../node-kind";
 import { Stmt, VariableStmt } from "../statement";
-import { Constant, evalToConstant } from "../util";
+import { evalToConstant } from "../util";
 
 /**
  * Returns a string array representing the property access starting from a named identity.
@@ -249,24 +252,34 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
       }, [] as PropAssignExpr[])
     );
   } else if (isTemplateExpr(expr)) {
-    const flattenedExpressions = expr.spans.map((x) =>
-      isQuasiString(x) ? x : flattenExpression(x, scope)
+    const flattenedExpressions = expr.spans.map(
+      (x) => [flattenExpression(x.expr, scope), x.literal.text] as const
     );
 
-    const flattenedConstants = flattenedExpressions.map((e) =>
-      evalToConstant(e)
+    const flattenedConstants = flattenedExpressions.map(
+      (e) => [evalToConstant(e[0]), e[1]] as const
     );
-    const allConstants = flattenedConstants.every((c) => !!c);
+    const allConstants = flattenedConstants.every((c) => !!c[0]);
 
     // when all of values are constants, turn them into a string constant now.
     return allConstants
       ? new StringLiteralExpr(
-          (<Constant[]>flattenedConstants).map((e) => e.constant).join("")
+          [
+            expr.head.text,
+            ...flattenedConstants.flatMap((e) => [e[0]!.constant, e[1]]),
+          ].join("")
         )
       : new TemplateExpr(
-          expr.spans.map((x) =>
-            isQuasiString(x) ? x : flattenExpression(x, scope)
-          )
+          expr.head.clone(),
+          expr.spans.map(
+            (span) =>
+              new TemplateSpan(
+                flattenExpression(span.expr, scope),
+                isTemplateMiddle(span.literal)
+                  ? new TemplateMiddle(span.literal.text)
+                  : new TemplateTail(span.literal.text)
+              )
+          ) as [...TemplateSpan<TemplateMiddle>[], TemplateSpan<TemplateTail>]
         );
   } else {
     return expr;

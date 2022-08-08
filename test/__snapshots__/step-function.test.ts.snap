@@ -61,16 +61,16 @@ Object {
     "$SFN.map([1, 2, 3], function(item))": Object {
       "ItemsPath": "$.heap1",
       "Iterator": Object {
-        "StartAt": "return \`nitem\`",
+        "StartAt": "return n\${item}",
         "States": Object {
-          "1__return \`nitem\`": Object {
+          "1__return n\${item}": Object {
             "End": true,
             "InputPath": "$.heap0.string",
             "ResultPath": "$",
             "Type": "Pass",
           },
-          "return \`nitem\`": Object {
-            "Next": "1__return \`nitem\`",
+          "return n\${item}": Object {
+            "Next": "1__return n\${item}",
             "Parameters": Object {
               "string.$": "States.Format('n{}',$.item)",
             },
@@ -1603,14 +1603,14 @@ exports[`\`template me \${await task(input.value)}\` 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return \`template me await task(input.value)\`": Object {
+    "1__return template me \${await task(input.value)}": Object {
       "End": true,
       "InputPath": "$.heap1.string",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return \`template me await task(input.value)\`",
+      "Next": "return template me \${await task(input.value)}",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -1620,20 +1620,20 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "\`template me await task(input.value)\`": Object {
-      "Next": "1__return \`template me await task(input.value)\`",
+    "return template me \${await task(input.value)}": Object {
+      "InputPath": "$.input.value",
+      "Next": "template me \${await task(input.value)}",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "template me \${await task(input.value)}": Object {
+      "Next": "1__return template me \${await task(input.value)}",
       "Parameters": Object {
         "string.$": "States.Format('template me {}',$.heap0)",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
-    },
-    "return \`template me await task(input.value)\`": Object {
-      "InputPath": "$.input.value",
-      "Next": "\`template me await task(input.value)\`",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
     },
   },
 }
@@ -1643,14 +1643,14 @@ exports[`\`template me \${input.value}\` 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return \`template me input.value\`": Object {
+    "1__return template me \${input.value}": Object {
       "End": true,
       "InputPath": "$.heap0.string",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return \`template me input.value\`",
+      "Next": "return template me \${input.value}",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -1660,8 +1660,8 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return \`template me input.value\`": Object {
-      "Next": "1__return \`template me input.value\`",
+    "return template me \${input.value}": Object {
+      "Next": "1__return template me \${input.value}",
       "Parameters": Object {
         "string.$": "States.Format('template me {}',$.input.value)",
       },
@@ -1833,12 +1833,12 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__for({key,value} = {key: \\"x\\", value: \\"y\\"};;) 1": Object {
-      "Next": "return \`keyvalue\`",
+      "Next": "return \${key}\${value}",
       "Result": "y",
       "ResultPath": "$.value",
       "Type": "Pass",
     },
-    "1__return \`keyvalue\`": Object {
+    "1__return \${key}\${value}": Object {
       "End": true,
       "InputPath": "$.heap0.string",
       "ResultPath": "$",
@@ -1860,8 +1860,8 @@ Object {
       "ResultPath": "$.key",
       "Type": "Pass",
     },
-    "return \`keyvalue\`": Object {
-      "Next": "1__return \`keyvalue\`",
+    "return \${key}\${value}": Object {
+      "Next": "1__return \${key}\${value}",
       "Parameters": Object {
         "string.$": "States.Format('{}{}',$.key,$.value)",
       },
@@ -1876,7 +1876,7 @@ exports[`binding forOf 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__a = \`keyvaluea\`": Object {
+    "1__a = \${key}\${value}\${a}": Object {
       "InputPath": "$.heap0.string",
       "Next": "tail__for({key,value} of input.value)",
       "ResultPath": "$.a",
@@ -1884,7 +1884,7 @@ Object {
     },
     "1__{ key, value }": Object {
       "InputPath": "$.heap1[0]['value']",
-      "Next": "a = \`keyvaluea\`",
+      "Next": "a = \${key}\${value}\${a}",
       "ResultPath": "$.value",
       "Type": "Pass",
     },
@@ -1905,8 +1905,8 @@ Object {
       "ResultPath": "$.a",
       "Type": "Pass",
     },
-    "a = \`keyvaluea\`": Object {
-      "Next": "1__a = \`keyvaluea\`",
+    "a = \${key}\${value}\${a}": Object {
+      "Next": "1__a = \${key}\${value}\${a}",
       "Parameters": Object {
         "string.$": "States.Format('{}{}{}',$.key,$.value,$.a)",
       },
@@ -1972,7 +1972,7 @@ Object {
       "Iterator": Object {
         "StartAt": "function({value:b,arr:[c]})",
         "States": Object {
-          "1__return \`bc\`": Object {
+          "1__return \${b}\${c}": Object {
             "End": true,
             "InputPath": "$.heap0.string",
             "ResultPath": "$",
@@ -1980,7 +1980,7 @@ Object {
           },
           "[ c ]": Object {
             "InputPath": "$.heap1['arr'][0]",
-            "Next": "return \`bc\`",
+            "Next": "return \${b}\${c}",
             "ResultPath": "$.c",
             "Type": "Pass",
           },
@@ -1990,8 +1990,8 @@ Object {
             "ResultPath": "$.b",
             "Type": "Pass",
           },
-          "return \`bc\`": Object {
-            "Next": "1__return \`bc\`",
+          "return \${b}\${c}": Object {
+            "Next": "1__return \${b}\${c}",
             "Parameters": Object {
               "string.$": "States.Format('{}{}',$.b,$.c)",
             },
@@ -2108,7 +2108,7 @@ Object {
       "Iterator": Object {
         "StartAt": "function({value:b,arr:[c]})",
         "States": Object {
-          "1__return \`bc\`": Object {
+          "1__return \${b}\${c}": Object {
             "End": true,
             "InputPath": "$.heap0.string",
             "ResultPath": "$",
@@ -2116,7 +2116,7 @@ Object {
           },
           "[ c ]": Object {
             "InputPath": "$.heap1['arr'][0]",
-            "Next": "return \`bc\`",
+            "Next": "return \${b}\${c}",
             "ResultPath": "$.c",
             "Type": "Pass",
           },
@@ -2126,8 +2126,8 @@ Object {
             "ResultPath": "$.b",
             "Type": "Pass",
           },
-          "return \`bc\`": Object {
-            "Next": "1__return \`bc\`",
+          "return \${b}\${c}": Object {
+            "Next": "1__return \${b}\${c}",
             "Parameters": Object {
               "string.$": "States.Format('{}{}',$.b,$.c)",
             },
@@ -2190,7 +2190,7 @@ exports[`binding functions forEach 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return \`bc\`": Object {
+    "1__return \${b}\${c}": Object {
       "InputPath": "$.heap1.string",
       "Next": "tail__input.value.forEach(function({value:b,arr:[c]}))",
       "ResultPath": "$.heap0.arr[0]",
@@ -2209,7 +2209,7 @@ Object {
     },
     "[ c ]": Object {
       "InputPath": "$.heap0.arr[0]['arr'][0]",
-      "Next": "return \`bc\`",
+      "Next": "return \${b}\${c}",
       "ResultPath": "$.c",
       "Type": "Pass",
     },
@@ -2244,8 +2244,8 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return \`bc\`": Object {
-      "Next": "1__return \`bc\`",
+    "return \${b}\${c}": Object {
+      "Next": "1__return \${b}\${c}",
       "Parameters": Object {
         "string.$": "States.Format('{}{}',$.b,$.c)",
       },
@@ -2272,7 +2272,7 @@ exports[`binding functions map 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return \`bc\`": Object {
+    "1__return \${b}\${c}": Object {
       "InputPath": "$.heap1.string",
       "Next": "handleResult__return input.value.map(function({value:b,arr:[c]})).join()",
       "ResultPath": "$.heap0.arr[0]",
@@ -2303,7 +2303,7 @@ Object {
     },
     "[ c ]": Object {
       "InputPath": "$.heap0.arr[0]['arr'][0]",
-      "Next": "return \`bc\`",
+      "Next": "return \${b}\${c}",
       "ResultPath": "$.c",
       "Type": "Pass",
     },
@@ -2392,8 +2392,8 @@ Object {
       "ResultPath": "$.heap3.string",
       "Type": "Pass",
     },
-    "return \`bc\`": Object {
-      "Next": "1__return \`bc\`",
+    "return \${b}\${c}": Object {
+      "Next": "1__return \${b}\${c}",
       "Parameters": Object {
         "string.$": "States.Format('{}{}',$.b,$.c)",
       },
@@ -2441,6 +2441,12 @@ exports[`binding functions use in map 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "1__return \${value}\${v}": Object {
+      "InputPath": "$.heap2.string",
+      "Next": "handleResult__1__return [1, 2, 3].map(function()).join() 2",
+      "ResultPath": "$.heap1.arr[0]",
+      "Type": "Pass",
+    },
     "1__return [1, 2, 3].map(function()).join()": Object {
       "End": true,
       "InputPath": "$.heap4.string",
@@ -2460,12 +2466,6 @@ Object {
         "arrStr": "[null",
       },
       "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "1__return \`valuev\`": Object {
-      "InputPath": "$.heap2.string",
-      "Next": "handleResult__1__return [1, 2, 3].map(function()).join() 2",
-      "ResultPath": "$.heap1.arr[0]",
       "Type": "Pass",
     },
     "1__{ value, obj }": Object {
@@ -2496,7 +2496,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "return \`valuev\`",
+          "Next": "return \${value}\${v}",
           "Variable": "$.heap1.arr[0]",
         },
       ],
@@ -2569,6 +2569,14 @@ Object {
       "ResultPath": "$.heap4.string",
       "Type": "Pass",
     },
+    "return \${value}\${v}": Object {
+      "Next": "1__return \${value}\${v}",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}',$.value,$.v)",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
     "return [1, 2, 3].map(function()).join()": Object {
       "Next": "1__return [1, 2, 3].map(function()).join() 2",
       "Result": Array [
@@ -2577,14 +2585,6 @@ Object {
         3,
       ],
       "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "return \`valuev\`": Object {
-      "Next": "1__return \`valuev\`",
-      "Parameters": Object {
-        "string.$": "States.Format('{}{}',$.value,$.v)",
-      },
-      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "returnEmpty__1__return [1, 2, 3].map(function()).join() 1": Object {
@@ -4967,7 +4967,7 @@ exports[`closure from map 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return \`aitem\`": Object {
+    "1__return \${a}\${item}": Object {
       "InputPath": "$.heap1.string",
       "Next": "handleResult__return input.list.map(function(item))",
       "ResultPath": "$.heap0.arr[0]",
@@ -5026,12 +5026,12 @@ Object {
     },
     "item": Object {
       "InputPath": "$.heap0.arr[0]",
-      "Next": "return \`aitem\`",
+      "Next": "return \${a}\${item}",
       "ResultPath": "$.item",
       "Type": "Pass",
     },
-    "return \`aitem\`": Object {
-      "Next": "1__return \`aitem\`",
+    "return \${a}\${item}": Object {
+      "Next": "1__return \${a}\${item}",
       "Parameters": Object {
         "string.$": "States.Format('{}{}',$.a,$.item)",
       },
@@ -6010,13 +6010,13 @@ exports[`for assign 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__a = \`i\`": Object {
+    "1__a = \${i}": Object {
       "InputPath": "$.heap0.string",
       "Next": "tail__for(i in input.items)",
       "ResultPath": "$.a",
       "Type": "Pass",
     },
-    "1__a = \`i\` 1": Object {
+    "1__a = \${i} 1": Object {
       "InputPath": "$.heap2.string",
       "Next": "tail__for(i of input.items)",
       "ResultPath": "$.a",
@@ -6059,16 +6059,16 @@ Object {
       "ResultPath": "$.a",
       "Type": "Pass",
     },
-    "a = \`i\`": Object {
-      "Next": "1__a = \`i\`",
+    "a = \${i}": Object {
+      "Next": "1__a = \${i}",
       "Parameters": Object {
         "string.$": "States.Format('{}',$.i)",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "a = \`i\` 1": Object {
-      "Next": "1__a = \`i\` 1",
+    "a = \${i} 1": Object {
+      "Next": "1__a = \${i} 1",
       "Parameters": Object {
         "string.$": "States.Format('{}',$.i)",
       },
@@ -6077,7 +6077,7 @@ Object {
     },
     "assignValue__i": Object {
       "InputPath": "$.heap1[0].item",
-      "Next": "a = \`i\`",
+      "Next": "a = \${i}",
       "ResultPath": "$.0__i",
       "Type": "Pass",
     },
@@ -6123,7 +6123,7 @@ Object {
     },
     "i 1": Object {
       "InputPath": "$.heap3[0]",
-      "Next": "a = \`i\` 1",
+      "Next": "a = \${i} 1",
       "ResultPath": "$.i",
       "Type": "Pass",
     },
@@ -10462,7 +10462,7 @@ exports[`list.forEach(item => ) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__a = \`aitem\`": Object {
+    "1__a = \${a}\${item}": Object {
       "InputPath": "$.heap1.string",
       "Next": "return null 1",
       "ResultPath": "$.a",
@@ -10485,8 +10485,8 @@ Object {
       "ResultPath": "$.a",
       "Type": "Pass",
     },
-    "a = \`aitem\`": Object {
-      "Next": "1__a = \`aitem\`",
+    "a = \${a}\${item}": Object {
+      "Next": "1__a = \${a}\${item}",
       "Parameters": Object {
         "string.$": "States.Format('{}{}',$.a,$.item)",
       },
@@ -10520,7 +10520,7 @@ Object {
     },
     "item": Object {
       "InputPath": "$.heap0.arr[0]",
-      "Next": "a = \`aitem\`",
+      "Next": "a = \${a}\${item}",
       "ResultPath": "$.item",
       "Type": "Pass",
     },
@@ -13372,14 +13372,14 @@ exports[`template literal strings 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return task({key: \`input.obj.str hello input.obj.items[0]\`})": Object {
+    "1__return task({key: \${input.obj.str} \${\\"hello\\"} \${input.obj.items[0]}})": Object {
       "End": true,
       "InputPath": "$.heap1",
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "1__return task({key: \`input.obj.str hello input.obj.items[0]\`}) 1": Object {
-      "Next": "1__return task({key: \`input.obj.str hello input.obj.items[0]\`})",
+    "1__return task({key: \${input.obj.str} \${\\"hello\\"} \${input.obj.items[0]}}) 1": Object {
+      "Next": "1__return task({key: \${input.obj.str} \${\\"hello\\"} \${input.obj.items[0]}})",
       "Parameters": Object {
         "key.$": "$.heap0.string",
       },
@@ -13388,7 +13388,7 @@ Object {
       "Type": "Task",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return task({key: \`input.obj.str hello input.obj.items[0]\`})",
+      "Next": "return task({key: \${input.obj.str} \${\\"hello\\"} \${input.obj.items[0]}})",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -13398,8 +13398,8 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return task({key: \`input.obj.str hello input.obj.items[0]\`})": Object {
-      "Next": "1__return task({key: \`input.obj.str hello input.obj.items[0]\`}) 1",
+    "return task({key: \${input.obj.str} \${\\"hello\\"} \${input.obj.items[0]}})": Object {
+      "Next": "1__return task({key: \${input.obj.str} \${\\"hello\\"} \${input.obj.items[0]}}) 1",
       "Parameters": Object {
         "string.$": "States.Format('{} hello {}',$.input.obj.str,$.input.obj.items[0])",
       },
@@ -13414,14 +13414,22 @@ exports[`template literal strings complex 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item": Object {
+    "\${input.obj.str ?? \\"default\\"} hello \${\\"hello\\"} \${input.obj.items[0] ?? awai": Object {
+      "Next": "1__return task({key: \${input.obj.str ?? \\"default\\"} hello \${\\"hello\\"} \${input 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{} hello hello {}',$.heap0,$.heap2)",
+      },
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "1__return task({key: \${input.obj.str ?? \\"default\\"} hello \${\\"hello\\"} \${input": Object {
       "End": true,
       "InputPath": "$.heap4",
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item 1": Object {
-      "Next": "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item",
+    "1__return task({key: \${input.obj.str ?? \\"default\\"} hello \${\\"hello\\"} \${input 1": Object {
+      "Next": "1__return task({key: \${input.obj.str ?? \\"default\\"} hello \${\\"hello\\"} \${input",
       "Parameters": Object {
         "key.$": "$.heap3.string",
       },
@@ -13430,7 +13438,7 @@ Object {
       "Type": "Task",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.items[0",
+      "Next": "return task({key: \${input.obj.str ?? \\"default\\"} hello \${\\"hello\\"} \${input.ob",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -13438,14 +13446,6 @@ Object {
         "input.$": "$",
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "\`input.obj.str ?? \\"default\\" hello hello input.obj.items[0] ?? await task()\`": Object {
-      "Next": "1__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.item 1",
-      "Parameters": Object {
-        "string.$": "States.Format('{} hello hello {}',$.heap0,$.heap2)",
-      },
-      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "input.obj.items[0] ?? await task()": Object {
@@ -13474,7 +13474,7 @@ Object {
       "Default": "takeRight__input.obj.items[0] ?? await task() 1",
       "Type": "Choice",
     },
-    "return task({key: \`input.obj.str ?? \\"default\\" hello hello input.obj.items[0": Object {
+    "return task({key: \${input.obj.str ?? \\"default\\"} hello \${\\"hello\\"} \${input.ob": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -13487,19 +13487,19 @@ Object {
               "Variable": "$.input.obj.str",
             },
           ],
-          "Next": "takeLeft__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.o",
+          "Next": "takeLeft__return task({key: \${input.obj.str ?? \\"default\\"} hello \${\\"hello\\"} ",
         },
       ],
-      "Default": "takeRight__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.",
+      "Default": "takeRight__return task({key: \${input.obj.str ?? \\"default\\"} hello \${\\"hello\\"}",
       "Type": "Choice",
     },
     "takeLeft__input.obj.items[0] ?? await task() 1": Object {
       "InputPath": "$.input.obj.items[0]",
-      "Next": "\`input.obj.str ?? \\"default\\" hello hello input.obj.items[0] ?? await task()\`",
+      "Next": "\${input.obj.str ?? \\"default\\"} hello \${\\"hello\\"} \${input.obj.items[0] ?? awai",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
-    "takeLeft__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.o": Object {
+    "takeLeft__return task({key: \${input.obj.str ?? \\"default\\"} hello \${\\"hello\\"} ": Object {
       "InputPath": "$.input.obj.str",
       "Next": "input.obj.items[0] ?? await task()",
       "ResultPath": "$.heap0",
@@ -13507,11 +13507,11 @@ Object {
     },
     "takeRight__input.obj.items[0] ?? await task() 1": Object {
       "InputPath": "$.heap1",
-      "Next": "\`input.obj.str ?? \\"default\\" hello hello input.obj.items[0] ?? await task()\`",
+      "Next": "\${input.obj.str ?? \\"default\\"} hello \${\\"hello\\"} \${input.obj.items[0] ?? awai",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
-    "takeRight__return task({key: \`input.obj.str ?? \\"default\\" hello hello input.": Object {
+    "takeRight__return task({key: \${input.obj.str ?? \\"default\\"} hello \${\\"hello\\"}": Object {
       "Next": "input.obj.items[0] ?? await task()",
       "Result": "default",
       "ResultPath": "$.heap0",
@@ -16526,14 +16526,14 @@ exports[`use context parameter in template 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return \`name: context.Execution.Id\`": Object {
+    "1__return name: \${context.Execution.Id}": Object {
       "End": true,
       "InputPath": "$.heap0.string",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return \`name: context.Execution.Id\`",
+      "Next": "return name: \${context.Execution.Id}",
       "Parameters": Object {
         "_.$": "$",
         "fnl_context": Object {
@@ -16543,8 +16543,8 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return \`name: context.Execution.Id\`": Object {
-      "Next": "1__return \`name: context.Execution.Id\`",
+    "return name: \${context.Execution.Id}": Object {
+      "Next": "1__return name: \${context.Execution.Id}",
       "Parameters": Object {
         "string.$": "States.Format('name: {}',$$.Execution.Id)",
       },

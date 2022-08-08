@@ -689,30 +689,41 @@ export function compile(
             toExpr(node.condition, scope),
             toExpr(node.incrementor, scope),
           ]);
-        } else if (
-          ts.isTemplateExpression(node) ||
-          ts.isTaggedTemplateExpression(node)
-        ) {
-          const template = ts.isTemplateExpression(node) ? node : node.template;
-          const exprs = [];
-          if (ts.isNoSubstitutionTemplateLiteral(template)) {
-            return newExpr(NodeKind.TaggedTemplateExpr, [quasi(template.text)]);
-          }
-          if (template.head.text) {
-            exprs.push(quasi(template.head.text));
-          }
-          for (const span of template.templateSpans) {
-            exprs.push(toExpr(span.expression, scope));
-            if (span.literal.text) {
-              exprs.push(quasi(span.literal.text));
-            }
-          }
-          return newExpr(
-            ts.isTemplateExpression(node)
-              ? NodeKind.TemplateExpr
-              : NodeKind.TaggedTemplateExpr,
-            [ts.factory.createArrayLiteralExpression(exprs)]
-          );
+        } else if (ts.isTemplateExpression(node)) {
+          return newExpr(NodeKind.TemplateExpr, [
+            // head
+            toExpr(node.head, scope),
+            // spans
+            ts.factory.createArrayLiteralExpression(
+              node.templateSpans.map((span) => toExpr(span, scope))
+            ),
+          ]);
+        } else if (ts.isTaggedTemplateExpression(node)) {
+          return newExpr(NodeKind.TaggedTemplateExpr, [
+            toExpr(node.tag, scope),
+            toExpr(node.template, scope),
+          ]);
+        } else if (ts.isNoSubstitutionTemplateLiteral(node)) {
+          return newExpr(NodeKind.NoSubstitutionTemplateLiteral, [
+            ts.factory.createStringLiteral(node.text),
+          ]);
+        } else if (ts.isTemplateSpan(node)) {
+          return newExpr(NodeKind.TemplateSpan, [
+            toExpr(node.expression, scope),
+            toExpr(node.literal, scope),
+          ]);
+        } else if (ts.isTemplateHead(node)) {
+          return newExpr(NodeKind.TemplateHead, [
+            ts.factory.createStringLiteral(node.text),
+          ]);
+        } else if (ts.isTemplateMiddle(node)) {
+          return newExpr(NodeKind.TemplateMiddle, [
+            ts.factory.createStringLiteral(node.text),
+          ]);
+        } else if (ts.isTemplateTail(node)) {
+          return newExpr(NodeKind.TemplateTail, [
+            ts.factory.createStringLiteral(node.text),
+          ]);
         } else if (ts.isBreakStatement(node)) {
           return newExpr(NodeKind.BreakStmt, []);
         } else if (ts.isContinueStatement(node)) {
@@ -903,12 +914,6 @@ export function compile(
         } else {
           return "";
         }
-      }
-
-      function quasi(literal: string): ts.Expression {
-        return newExpr(NodeKind.QuasiString, [
-          ts.factory.createStringLiteral(literal),
-        ]);
       }
 
       function string(literal: string): ts.Expression {
