@@ -3838,7 +3838,6 @@ export class ASL {
             expr.op === "/=" ||
             expr.op === "%=" ||
             expr.op === "&" ||
-            expr.op === "&&=" ||
             expr.op === "&=" ||
             expr.op === "**" ||
             expr.op === "**=" ||
@@ -3861,6 +3860,7 @@ export class ASL {
             expr.op === "instanceof" ||
             // https://github.com/functionless/functionless/issues/393
             expr.op === "??=" ||
+            expr.op === "&&=" ||
             expr.op === "||="
           ) {
             throw new SynthError(
