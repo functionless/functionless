@@ -850,6 +850,7 @@ export function compile(
           ]);
         } else if (ts.isSwitchStatement(node)) {
           return newExpr(NodeKind.SwitchStmt, [
+            toExpr(node.expression, scope),
             ts.factory.createArrayLiteralExpression(
               node.caseBlock.clauses.map((clause) => toExpr(clause, scope))
             ),

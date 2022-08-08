@@ -275,8 +275,9 @@ export class DebuggerStmt extends BaseStmt<NodeKind.DebuggerStmt> {
 }
 
 export class SwitchStmt extends BaseStmt<NodeKind.SwitchStmt> {
-  constructor(readonly clauses: SwitchClause[]) {
+  constructor(readonly expr: Expr, readonly clauses: SwitchClause[]) {
     super(NodeKind.SwitchStmt, arguments);
+    this.ensure(expr, "expr", ["Expr"]);
     this.ensureArrayOf(clauses, "clauses", NodeKind.SwitchClause);
   }
 }
