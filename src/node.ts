@@ -399,6 +399,20 @@ export abstract class BaseNode<
       getLexicalScope(this as unknown as FunctionlessNode, "scope")
     );
 
+    /**
+     * @param kind the relation of the current `node` to the requesting `node`.
+     *             * `scope` - the current node is an ancestor of the requesting node
+     *             * `sibling` - the current node is the sibling of the requesting node
+     *             ```ts
+     *             for(const i in []) { // scope - emits i=self
+     *                const a = ""; // sibling - emits a=self
+     *                for(const a of []) {} // sibling emits []
+     *                a // requesting node
+     *             }
+     *             ```
+     *             some nodes only emit names to their `scope` (ex: for) and
+     *             other nodes emit names to all of their `sibling`s (ex: variableStmt)
+     */
     function getLexicalScope(
       node: FunctionlessNode | undefined,
       kind: "scope" | "sibling"
@@ -412,6 +426,9 @@ export abstract class BaseNode<
       ).concat(getNames(node, kind));
     }
 
+    /**
+     * @see getLexicalScope
+     */
     function getNames(
       node: FunctionlessNode | undefined,
       kind: "scope" | "sibling"
