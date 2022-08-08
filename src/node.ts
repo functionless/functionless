@@ -400,23 +400,26 @@ export abstract class BaseNode<
     );
 
     /**
-     * @param kind of the relation between the current `node` and the requesting `node`.
-     *        * `scope` - the current node is an ancestor of the requesting node
-     *        * `sibling` - the current node is the sibling of the requesting node
-     *
-     *        ```ts
-     *        for(const i in []) { // scope - emits i=self
-     *           const a = ""; // sibling - emits a=self
-     *           for(const a of []) {} // sibling emits []
-     *           a // requesting node
-     *        }
-     *        ```
-     *
-     *        some nodes only emit names to their `scope` (ex: for) and
-     *        other nodes emit names to all of their `sibling`s (ex: variableStmt)
+     * @param kind the relation between the current `node` and the requesting `node`.
      */
     function getLexicalScope(
       node: FunctionlessNode | undefined,
+      /**
+       * the relation between the current `node` and the requesting `node`.
+       * * `scope` - the current node is an ancestor of the requesting node
+       * * `sibling` - the current node is the sibling of the requesting node
+       *
+       * ```ts
+       * for(const i in []) { // scope - emits i=self
+       *    const a = ""; // sibling - emits a=self
+       *    for(const a of []) {} // sibling emits []
+       *    a // requesting node
+       * }
+       * ```
+       *
+       * some nodes only emit names to their `scope` (ex: for) and
+       * other nodes emit names to all of their `sibling`s (ex: variableStmt)
+       */
       kind: "scope" | "sibling"
     ): Binding[] {
       if (node === undefined) {
