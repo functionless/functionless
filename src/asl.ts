@@ -1986,42 +1986,6 @@ export class ASL {
           value: constant,
           containsJsonPath: false,
         };
-      } else if (expr.op === "&&" || expr.op === "||") {
-        return this.evalExpr(expr.left, (leftOutput) => {
-          const right = this.eval(expr.right);
-
-          // if both values are literals, return a literal.
-          // Only evaluate right as a literal if it is strictly a literal with no states.
-          if (
-            ASLGraph.isLiteralValue(right) &&
-            ASLGraph.isLiteralValue(leftOutput)
-          ) {
-            return {
-              value: leftOutput.value && right.value,
-              containsJsonPath: false,
-            };
-          }
-
-          /**
-           * If left is a literal, evaluate the truthiness and return left or right.
-           * &&: when truthy, return right
-           * ||: when truthy, return left
-           */
-          if (ASLGraph.isLiteralValue(leftOutput)) {
-            if (expr.op === "&&") {
-              return !!leftOutput.value ? right : leftOutput;
-            } else {
-              return !!leftOutput.value ? leftOutput : right;
-            }
-          }
-
-          return this.conditionState(
-            expr,
-            ASL.isTruthy(leftOutput.jsonPath),
-            expr.op === "&&" ? right : leftOutput,
-            expr.op === "&&" ? leftOutput : right
-          );
-        });
       } else if (
         expr.op === "===" ||
         expr.op === "==" ||
@@ -2036,30 +2000,6 @@ export class ASL {
         return this.evalContext(expr, (_, evalCondition) => {
           const cond = evalCondition(expr);
           return this.conditionState(expr, cond);
-        });
-      } else if (expr.op === "??") {
-        return this.evalContext(expr, (evalExpr) => {
-          const left = evalExpr(expr.left);
-          // Do not evaluate right to short short circuit evaluation
-          const right = this.eval(expr.right);
-
-          // if left is a literal, just run the right side
-          if (ASLGraph.isLiteralValue(left)) {
-            if (left.value !== undefined && left.value !== null) {
-              return left;
-            } else {
-              return right;
-            }
-          }
-
-          return this.conditionState(
-            expr,
-            ASL.and(ASL.isPresent(left.jsonPath), ASL.isNotNull(left.jsonPath)),
-            // if true, left has already been evaluated, assign it's output and return
-            left,
-            // if false, right has not been evaluated, evaluate, assign the output and return
-            right
-          );
         });
       } else if (expr.op === "=") {
         if (!isVariableReference(expr.left)) {
@@ -2134,6 +2074,54 @@ export class ASL {
           ErrorCodes.Unsupported_Feature,
           `Step Function does not support ${expr.op} operator`
         );
+      } else if (expr.op === "&&" || expr.op === "||" || expr.op === "??") {
+        return this.evalExpr(expr.left, (leftOutput) => {
+          const right = this.eval(expr.right);
+
+          if (ASLGraph.isLiteralValue(leftOutput)) {
+            // if both values are literals, return a literal.
+            // Only evaluate right as a literal if it is strictly a literal with no states.
+            if (ASLGraph.isLiteralValue(right)) {
+              return {
+                value:
+                  expr.op === "&&"
+                    ? leftOutput.value && right.value
+                    : expr.op === "||"
+                    ? leftOutput.value || right.value
+                    : leftOutput.value ?? right.value,
+                containsJsonPath: false,
+              };
+            }
+
+            /**
+             * If left is a literal, evaluate the truthiness and return left or right.
+             * &&: when truthy, return right
+             * ||: when falsy, return right
+             * ??: when undefined or null, return right
+             */
+            if (expr.op === "&&") {
+              return !leftOutput.value ? leftOutput : right;
+            } else if (expr.op === "||") {
+              return !!leftOutput.value ? leftOutput : right;
+            } else {
+              return leftOutput.value !== null && leftOutput.value !== undefined
+                ? leftOutput
+                : right;
+            }
+          }
+
+          const condition =
+            expr.op === "||"
+              ? ASL.isTruthy(leftOutput.jsonPath)
+              : expr.op === "&&"
+              ? ASL.not(ASL.isTruthy(leftOutput.jsonPath))
+              : ASL.and(
+                  ASL.isPresent(leftOutput.jsonPath),
+                  ASL.isNotNull(leftOutput.jsonPath)
+                );
+
+          return this.conditionState(expr, condition, leftOutput, right);
+        });
       } else if (expr.op === "??=" || expr.op === "&&=" || expr.op === "||=") {
         if (!isVariableReference(expr.left)) {
           throw new SynthError(
