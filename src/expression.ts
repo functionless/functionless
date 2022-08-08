@@ -157,17 +157,10 @@ export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
 export class ReferenceExpr<
   R = unknown
 > extends BaseExpr<NodeKind.ReferenceExpr> {
-  constructor(
-    readonly name: string,
-    readonly ref: () => R,
-    readonly id: number,
-    readonly filename: string
-  ) {
+  constructor(readonly name: string, readonly ref: () => R) {
     super(NodeKind.ReferenceExpr, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensure(ref, "ref", ["function"]);
-    this.ensure(id, "id", ["number"]);
-    this.ensure(filename, "filename", ["string"]);
   }
 }
 

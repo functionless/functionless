@@ -709,10 +709,9 @@ export class Function<
               `While serializing ${_resource.node.path}:\n\n${e.message}`
             );
           } else if (e instanceof Error) {
-            throw e;
-            // throw Error(
-            //   `While serializing ${_resource.node.path}:\n\n${e.message}`
-            // );
+            throw Error(
+              `While serializing ${_resource.node.path}:\n\n${e.message}`
+            );
           }
         }
       })()
