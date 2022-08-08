@@ -893,7 +893,7 @@ export function compile(
         );
       }
 
-      function ref(node: ts.Identifier) {
+      function ref(node: ts.Expression) {
         return newExpr(NodeKind.ReferenceExpr, [
           ts.factory.createStringLiteral(exprToString(node)),
           ts.factory.createArrowFunction(
