@@ -4058,7 +4058,7 @@ export namespace ASLGraph {
       .filter(ASLGraph.isStateOrSubState);
     return realStates.length === 0
       ? undefined
-      : realStates[0]
+      : realStates.length === 1 && realStates[0]
       ? { node, ...realStates[0] }
       : {
           startState: "0",
@@ -4671,24 +4671,24 @@ export namespace ASL {
 
   export const and = (...cond: (Condition | undefined)[]): Condition => {
     const conds = cond.filter((c): c is Condition => !!c);
-    return conds[0]
-      ? conds[0]
+    return conds.length > 1
+      ? {
+          And: conds,
+        }
       : conds.length === 0
       ? ASL.trueCondition()
-      : {
-          And: conds,
-        };
+      : conds[0]!;
   };
 
   export const or = (...cond: (Condition | undefined)[]): Condition => {
     const conds = cond.filter((c): c is Condition => !!c);
-    return conds[0]
-      ? conds[0]
+    return conds.length > 1
+      ? {
+          Or: conds,
+        }
       : conds.length === 0
       ? ASL.trueCondition()
-      : {
-          Or: conds,
-        };
+      : conds[0]!;
   };
 
   export const not = (cond: Condition): Condition => ({

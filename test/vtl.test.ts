@@ -170,7 +170,7 @@ test("blockless if", () => {
   );
 
   // https://github.com/aws-amplify/amplify-category-api/issues/592
-  // testAppsyncVelocity(templates[1]);
+  // testAppsyncVelocity(templates[1]!);
 });
 
 test("return conditional expression", () => {
@@ -457,18 +457,18 @@ test("binary expr in", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { key: "hi" },
     resultMatch: { out: "hi" },
   });
 
   // falsey value
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { key: "" },
     resultMatch: { out: "" },
   });
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { key2: "hello" },
     resultMatch: { out: "hello" },
   });
@@ -490,7 +490,7 @@ test("binary expr ==", () => {
     )
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { key: "key" },
     resultMatch: { out: [true, true, true, true] },
   });
@@ -514,7 +514,7 @@ test("binary expr in map", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     resultMatch: {
       in: true,
       notIn: false,
@@ -528,27 +528,27 @@ test("binary expr in map", () => {
 // https://github.com/aws-amplify/amplify-cli/issues/10575
 test.skip("binary expr in array", () => {
   const templates = appsyncTestCase(
-    reflect<ResolverFunction<{ arr: string[] }, { out: string }, any>>(
-      ($context) => {
-        if (1 in $context.arguments.arr) {
-          return { out: $context.arguments.arr[1] };
-        }
-        return { out: $context.arguments.arr[0] };
+    reflect<
+      ResolverFunction<{ arr: string[] }, { out: string | undefined }, any>
+    >(($context) => {
+      if (1 in $context.arguments.arr) {
+        return { out: $context.arguments.arr[1] };
       }
-    )
+      return { out: $context.arguments.arr[0] };
+    })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { arr: ["1", "2"] },
     resultMatch: { out: "2" },
   });
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { arr: ["1", ""] },
     resultMatch: { out: "" },
   });
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { arr: ["1"] },
     resultMatch: { out: "1" },
   });
@@ -578,7 +578,7 @@ test("binary exprs value comparison", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { a: 1, b: 2 },
     resultMatch: {
       "!=": true,
@@ -590,7 +590,7 @@ test("binary exprs value comparison", () => {
     },
   });
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { a: 2, b: 1 },
     resultMatch: {
       "!=": true,
@@ -602,7 +602,7 @@ test("binary exprs value comparison", () => {
     },
   });
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { a: 1, b: 1 },
     resultMatch: {
       "!=": false,
@@ -627,7 +627,7 @@ test("null coalescing", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     resultMatch: {
       "??": null ?? "a",
       "not ??": "a" ?? "b",
@@ -657,7 +657,7 @@ test("binary exprs logical", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { a: true, b: true },
     resultMatch: {
       "&&": true,
@@ -666,7 +666,7 @@ test("binary exprs logical", () => {
     },
   });
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { a: true, b: false },
     resultMatch: {
       "&&": false,
@@ -675,7 +675,7 @@ test("binary exprs logical", () => {
     },
   });
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { a: false, b: false },
     resultMatch: {
       "&&": false,
@@ -706,7 +706,7 @@ test("binary exprs math", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { a: 6, b: 2 },
     resultMatch: {
       "+": 8,
@@ -733,17 +733,17 @@ test("binary expr =", () => {
     )
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { key: "hello" },
     resultMatch: { out: "ohh hi" },
   });
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { key: "giddyup" },
     resultMatch: { out: "wot" },
   });
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: { key: "help me" },
     resultMatch: { out: "ohh hi" },
   });
@@ -770,7 +770,7 @@ test("binary mutation", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     resultMatch: {
       "+=": 10,
       "-=": 9,
@@ -796,7 +796,7 @@ test("unary mutation", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     resultMatch: {
       "post--": 9, // 8
       "--pre": 7, // 7
@@ -818,7 +818,7 @@ test("unary", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     resultMatch: {
       "!": true,
       "-": -10,
@@ -836,7 +836,7 @@ test("assignment in object", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     resultMatch: {
       x: 2,
       y: 2,
@@ -860,7 +860,7 @@ test("var args push", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     resultMatch: {
       y1: [1, 2, 3],
       y2: [1, 2, 3, 4],
@@ -894,7 +894,7 @@ test("deconstruct variable", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: {
       a: "hello",
       bb: { value: "world", ab: "dynamic" },
@@ -933,7 +933,7 @@ test("deconstruct parameter", () => {
     )
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: {
       a: "hello",
       bb: { value: "world" },
@@ -971,7 +971,7 @@ test("deconstruct for of", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: {
       items: [
         {
@@ -1014,7 +1014,7 @@ test("deconstruct map", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: {
       items: [
         {
@@ -1044,7 +1044,7 @@ test("deconstruct map chain", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: {
       items: [
         {
@@ -1089,7 +1089,7 @@ test("deconstruct reduce", () => {
     })
   );
 
-  testAppsyncVelocity(templates[1], {
+  testAppsyncVelocity(templates[1]!, {
     arguments: {
       items: [
         {

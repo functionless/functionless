@@ -542,7 +542,11 @@ export abstract class VTL {
             "Appsync does not support concurrent integration invocation or methods on the `Promise` api."
           );
         } else if (expr.name.name === "push") {
-          if (node.args[0] && !isSpreadElementExpr(node.args[0].expr)) {
+          if (
+            node.args.length === 1 &&
+            node.args[0] &&
+            !isSpreadElementExpr(node.args[0].expr)
+          ) {
             // use the .add for the case when we are pushing exactly one argument
             return `${this.eval(expr.expr)}.add(${this.eval(
               node.args[0].expr
