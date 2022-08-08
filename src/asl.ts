@@ -8,7 +8,6 @@ import {
   FunctionLike,
   ParameterDecl,
   VariableDecl,
-  VariableDeclList,
 } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
@@ -20,15 +19,16 @@ import {
   Identifier,
   NullLiteralExpr,
   PropAccessExpr,
-  QuasiString,
 } from "./expression";
 import {
   isArgument,
   isArrayBinding,
   isArrayLiteralExpr,
   isAwaitExpr,
+  isBigIntExpr,
   isBinaryExpr,
   isBindingElem,
+  isBindingPattern,
   isBlockStmt,
   isBooleanLiteralExpr,
   isBreakStmt,
@@ -44,6 +44,7 @@ import {
   isContinueStmt,
   isDebuggerStmt,
   isDefaultClause,
+  isDeleteExpr,
   isDoStmt,
   isElementAccessExpr,
   isEmptyStmt,
@@ -52,59 +53,60 @@ import {
   isExprStmt,
   isForInStmt,
   isForOfStmt,
+  isForStmt,
   isFunctionLike,
+  isGetAccessorDecl,
   isIdentifier,
   isIfStmt,
+  isImportKeyword,
   isLabelledStmt,
   isLiteralExpr,
   isMethodDecl,
   isNewExpr,
   isNode,
+  isNoSubstitutionTemplateLiteral,
   isNullLiteralExpr,
   isNumberLiteralExpr,
   isObjectBinding,
   isObjectLiteralExpr,
+  isOmittedExpr,
   isParameterDecl,
+  isParenthesizedExpr,
   isPostfixUnaryExpr,
+  isPrivateIdentifier,
   isPropAccessExpr,
   isPropAssignExpr,
   isPropDecl,
   isReferenceExpr,
+  isRegexExpr,
   isReturnStmt,
+  isSetAccessorDecl,
   isSpreadAssignExpr,
   isSpreadElementExpr,
   isStmt,
   isStringLiteralExpr,
   isSuperKeyword,
   isSwitchStmt,
+  isTaggedTemplateExpr,
   isTemplateExpr,
+  isTemplateHead,
+  isTemplateMiddle,
+  isTemplateSpan,
+  isTemplateTail,
   isThisExpr,
   isThrowStmt,
   isTryStmt,
   isTypeOfExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
+  isVariableDecl,
+  isVariableDeclList,
   isVariableReference,
   isVariableStmt,
+  isVoidExpr,
   isWhileStmt,
   isWithStmt,
-  isForStmt,
-  isVariableDeclList,
-  isVariableDecl,
-  isPrivateIdentifier,
   isYieldExpr,
-  isBigIntExpr,
-  isRegexExpr,
-  isDeleteExpr,
-  isVoidExpr,
-  isParenthesizedExpr,
-  isImportKeyword,
-  isBindingPattern,
-  isSetAccessorDecl,
-  isGetAccessorDecl,
-  isTaggedTemplateExpr,
-  isOmittedExpr,
-  isQuasiString,
 } from "./guards";
 import {
   IntegrationImpl,
@@ -1600,11 +1602,19 @@ export class ASL {
 
     if (isTemplateExpr(expr)) {
       return this.evalContext(expr, (evalExpr) => {
-        const elementOutputs = expr.spans.map((span) =>
-          isQuasiString(span)
-            ? { value: span.value, containsJsonPath: false }
-            : evalExpr(span)
-        );
+        const elementOutputs = [
+          {
+            value: expr.head.text,
+            containsJsonPath: false,
+          },
+          ...expr.spans.flatMap((span) => [
+            evalExpr(span.expr),
+            {
+              value: span.literal.text,
+              containsJsonPath: false,
+            },
+          ]),
+        ];
 
         /**
          * Step Functions `States.Format` has a bug which fails when a jsonPath does not start with a
@@ -4938,7 +4948,7 @@ export namespace ASL {
   export const compare = (
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
-    operator: keyof typeof VALUE_COMPARISONS
+    operator: keyof typeof VALUE_COMPARISONS | "!=" | "!=="
   ): Condition => {
     if (
       operator === "===" ||
@@ -5093,7 +5103,7 @@ function toStateName(node: FunctionlessNode): string {
     }
   }
   function inner(node: Exclude<FunctionlessNode, BlockStmt>): string {
-    if (isExpr(node) || isQuasiString(node)) {
+    if (isExpr(node)) {
       return nodeToString(node);
     } else if (isIfStmt(node)) {
       return `if(${nodeToString(node.when)})`;
@@ -5182,7 +5192,11 @@ function toStateName(node: FunctionlessNode): string {
       isSuperKeyword(node) ||
       isSwitchStmt(node) ||
       isWithStmt(node) ||
-      isYieldExpr(node)
+      isYieldExpr(node) ||
+      isTemplateHead(node) ||
+      isTemplateMiddle(node) ||
+      isTemplateTail(node) ||
+      isTemplateSpan(node)
     ) {
       throw new SynthError(
         ErrorCodes.Unsupported_Feature,
@@ -5197,14 +5211,7 @@ function toStateName(node: FunctionlessNode): string {
 }
 
 function nodeToString(
-  expr?:
-    | Expr
-    | ParameterDecl
-    | BindingName
-    | BindingElem
-    | VariableDecl
-    | VariableDeclList
-    | QuasiString
+  expr?: Expr | ParameterDecl | BindingName | BindingElem | VariableDecl
 ): string {
   if (!expr) {
     return "";
@@ -5291,9 +5298,11 @@ function nodeToString(
   } else if (isStringLiteralExpr(expr)) {
     return `"${expr.value}"`;
   } else if (isTemplateExpr(expr)) {
-    return `\`${expr.spans
-      .map((e) => (isStringLiteralExpr(e) ? e.value : nodeToString(e)))
-      .join("")}\``;
+    return `${expr.head.text}${expr.spans
+      .map((span) => `\${${nodeToString(span.expr)}}${span.literal.text}`)
+      .join("")}`;
+  } else if (isNoSubstitutionTemplateLiteral(expr)) {
+    return `\`${expr.text}\``;
   } else if (isTypeOfExpr(expr)) {
     return `typeof ${nodeToString(expr.expr)}`;
   } else if (isUnaryExpr(expr)) {
@@ -5338,7 +5347,7 @@ function nodeToString(
       expr.initializer ? ` = ${nodeToString(expr.initializer)}` : ""
     }`;
   } else if (isVariableDeclList(expr)) {
-    return expr.decls.map(nodeToString).join(", ");
+    return expr.declList.map(nodeToString).join(", ");
   } else if (isParameterDecl(expr)) {
     return nodeToString(expr.name);
   } else if (isTaggedTemplateExpr(expr)) {
@@ -5348,8 +5357,6 @@ function nodeToString(
     );
   } else if (isOmittedExpr(expr)) {
     return "undefined";
-  } else if (isQuasiString(expr)) {
-    return expr.value;
   } else {
     return assertNever(expr);
   }

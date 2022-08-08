@@ -56,6 +56,7 @@ import {
   isLabelledStmt,
   isMethodDecl,
   isNewExpr,
+  isNoSubstitutionTemplateLiteral,
   isNullLiteralExpr,
   isNumberLiteralExpr,
   isObjectLiteralExpr,
@@ -67,7 +68,6 @@ import {
   isPropAccessExpr,
   isPropAssignExpr,
   isPropDecl,
-  isQuasiString,
   isReferenceExpr,
   isRegexExpr,
   isReturnStmt,
@@ -656,18 +656,17 @@ export abstract class VTL {
       // handled inside ObjectLiteralExpr
     } else if (isStringLiteralExpr(node)) {
       return this.str(node.value);
+    } else if (isNoSubstitutionTemplateLiteral(node)) {
+      return this.str(node.text);
     } else if (isTemplateExpr(node)) {
-      return `"${node.spans
+      return `"${node.head.text}${node.spans
         .map((expr) => {
-          if (isQuasiString(expr) || isStringLiteralExpr(expr)) {
-            return expr.value;
-          }
-          const text = this.eval(expr, returnVar);
+          const text = this.eval(expr.expr, returnVar);
           if (text.startsWith("$")) {
-            return `\${${text.slice(1)}}`;
+            return `\${${text.slice(1)}}${expr.literal.text}`;
           } else {
             const varName = this.var(text);
-            return `\${${varName.slice(1)}}`;
+            return `\${${varName.slice(1)}}${expr.literal.text}`;
           }
         })
         .join("")}"`;
