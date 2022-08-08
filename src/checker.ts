@@ -431,7 +431,7 @@ export function makeFunctionlessChecker(
         // explicit return false. We always want to check the parent of the declaration or signature.
         return false;
       }
-    } else if (symbol.declarations && symbol.declarations[0]) {
+    } else if (symbol.declarations?.[0]) {
       const [decl] = symbol.declarations;
       // import x from y
       if (

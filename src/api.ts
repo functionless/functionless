@@ -749,8 +749,6 @@ export class APIGatewayVTL extends VTL {
             "Called references are expected to be an integration."
           );
         }
-      } else if (isIdentifier(expr.expr) && expr.expr.name === "Number") {
-        return expr.args[0] ? this.exprToJson(expr.args[0]) : "0";
       } else if (
         isPropAccessExpr(expr.expr) &&
         isIdentifier(expr.expr.name) &&
@@ -765,7 +763,7 @@ export class APIGatewayVTL extends VTL {
             ref.parent.parameters.findIndex((param) => param === ref) === 0
           ) {
             // the first argument of the FunctionDecl is the `$input`, regardless of what it is named
-            if (!expr.args[0] || expr.args[0].expr === undefined) {
+            if (expr.args[0]?.expr === undefined) {
               const key = this.newLocalVarName();
               return `{#foreach(${key} in $input.params().keySet())"${key}": "$input.params("${key}")"#if($foreach.hasNext),#end#end}`;
             } else {

@@ -4146,8 +4146,8 @@ export namespace ASLGraph {
       .filter(ASLGraph.isStateOrSubState);
     return realStates.length === 0
       ? undefined
-      : realStates.length === 1 && realStates[0]
-      ? { node, ...realStates[0] }
+      : realStates.length === 1
+      ? { node, ...realStates[0]! }
       : {
           startState: "0",
           node,
