@@ -126,7 +126,7 @@ export abstract class BaseNode<
    *
    * This function simply sets the {@link node}'s parent and returns it.
    */
-  public fork<N extends this["parent"]>(node: N): N {
+  public fork<N extends FunctionlessNode>(node: N): N {
     // @ts-ignore
     node.parent = this;
     return node;

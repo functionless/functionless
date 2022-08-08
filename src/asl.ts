@@ -982,14 +982,16 @@ export class ASL {
         };
       });
     } else if (isReturnStmt(stmt)) {
-      return this.evalExprToSubState(stmt.expr, (output) =>
-        ASLGraph.passWithInput(
-          {
-            Type: "Pass",
-            ...returnPass,
-          },
-          output
-        )
+      return this.evalExprToSubState(
+        stmt.expr ?? stmt.fork(new NullLiteralExpr()),
+        (output) =>
+          ASLGraph.passWithInput(
+            {
+              Type: "Pass",
+              ...returnPass,
+            },
+            output
+          )
       );
     } else if (isVariableStmt(stmt)) {
       return ASLGraph.joinSubStates(
@@ -2866,7 +2868,9 @@ export class ASL {
       return undefined;
     };
 
-    const expression = toFilterCondition(stmt.expr);
+    const expression = toFilterCondition(
+      stmt.expr ?? stmt.fork(new NullLiteralExpr())
+    );
     return expression
       ? {
           jsonPath: `${valueJsonPath.jsonPath}[?(${expression})]`,

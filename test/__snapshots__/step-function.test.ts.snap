@@ -4418,7 +4418,7 @@ Object {
               "Variable": "$$.Execution.Id",
             },
           ],
-          "Next": "return null",
+          "Next": "return",
         },
       ],
       "Default": "score = await computeScore({id: person.Item.id.S, name: person.Item.name.S}",
@@ -4438,7 +4438,7 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
-    "return null": Object {
+    "return": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
@@ -5082,7 +5082,7 @@ Object {
               ],
             },
           ],
-          "Next": "return null 1",
+          "Next": "return",
         },
       ],
       "Default": "return null",
@@ -5105,13 +5105,13 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
-    "return null": Object {
+    "return": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return null 1": Object {
+    "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
@@ -5223,19 +5223,19 @@ Object {
               ],
             },
           ],
-          "Next": "return null 1",
+          "Next": "return",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "return null": Object {
+    "return": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return null 1": Object {
+    "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
@@ -5281,19 +5281,19 @@ Object {
               ],
             },
           ],
-          "Next": "return null 1",
+          "Next": "return",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
-    "return null": Object {
+    "return": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return null 1": Object {
+    "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
@@ -7356,10 +7356,10 @@ Object {
           "Variable": "$.heap0[0]",
         },
       ],
-      "Default": "return null",
+      "Default": "return",
       "Type": "Choice",
     },
-    "return null": Object {
+    "return": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
@@ -7780,10 +7780,10 @@ Object {
           "Variable": "$.heap0[0]",
         },
       ],
-      "Default": "return null",
+      "Default": "return",
       "Type": "Choice",
     },
-    "return null": Object {
+    "return": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
@@ -9395,8 +9395,14 @@ Object {
           "Next": "return \\"world\\"",
         },
       ],
-      "Default": "return null",
+      "Default": "return",
       "Type": "Choice",
+    },
+    "return": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
     },
     "return \\"hello\\"": Object {
       "End": true,
@@ -9407,12 +9413,6 @@ Object {
     "return \\"world\\"": Object {
       "End": true,
       "Result": "world",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "return null": Object {
-      "End": true,
-      "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -11913,7 +11913,7 @@ Object {
               "Variable": "$$.Execution.Id",
             },
           ],
-          "Next": "return null",
+          "Next": "return",
         },
       ],
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
@@ -11933,7 +11933,7 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
-    "return null": Object {
+    "return": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
@@ -12000,7 +12000,7 @@ Object {
               "Variable": "$$.Execution.Id",
             },
           ],
-          "Next": "return null",
+          "Next": "return",
         },
       ],
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
@@ -12025,7 +12025,7 @@ Object {
       "Default": "takeRight__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {",
       "Type": "Choice",
     },
-    "return null": Object {
+    "return": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
@@ -12863,7 +12863,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "return null",
+      "Next": "return",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -12872,7 +12872,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return null": Object {
+    "return": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",

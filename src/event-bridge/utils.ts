@@ -17,6 +17,7 @@ import {
   TemplateSpan,
   TemplateTail,
   UnaryExpr,
+  UndefinedLiteralExpr,
 } from "../expression";
 import {
   isArrayLiteralExpr,
@@ -364,7 +365,10 @@ export const flattenReturnEvent = (stmts: Stmt[]) => {
     throw Error("No return statement found in event bridge target function.");
   }
 
-  return flattenExpression(ret.expr, scope);
+  return flattenExpression(
+    ret.expr ?? ret.fork(new UndefinedLiteralExpr()),
+    scope
+  );
 };
 
 // to prevent the closure serializer from trying to import all of functionless.
