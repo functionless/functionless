@@ -735,9 +735,13 @@ export function compile(
             ts.factory.createStringLiteral(node.text),
           ]);
         } else if (ts.isBreakStatement(node)) {
-          return newExpr(NodeKind.BreakStmt, []);
+          return newExpr(NodeKind.BreakStmt, [
+            ...(node.label ? [toExpr(node.label, scope)] : []),
+          ]);
         } else if (ts.isContinueStatement(node)) {
-          return newExpr(NodeKind.ContinueStmt, []);
+          return newExpr(NodeKind.ContinueStmt, [
+            ...(node.label ? [toExpr(node.label, scope)] : []),
+          ]);
         } else if (ts.isTryStatement(node)) {
           return newExpr(NodeKind.TryStmt, [
             toExpr(node.tryBlock, scope),
@@ -851,6 +855,7 @@ export function compile(
           return newExpr(NodeKind.DebuggerStmt, []);
         } else if (ts.isLabeledStatement(node)) {
           return newExpr(NodeKind.LabelledStmt, [
+            toExpr(node.label, scope),
             toExpr(node.statement, scope),
           ]);
         } else if (ts.isSwitchStatement(node)) {
