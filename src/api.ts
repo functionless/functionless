@@ -738,7 +738,8 @@ export class APIGatewayVTL extends VTL {
       } else if (isReferenceExpr(expr.expr) || isThisExpr(expr.expr)) {
         const ref = expr.expr.ref();
         if (ref === Number) {
-          return this.exprToJson(expr.args[0]);
+          // Number() = 0
+          return expr.args[0] ? this.exprToJson(expr.args[0]) : "0";
         } else {
           throw new SynthError(
             ErrorCodes.Unexpected_Error,
@@ -746,7 +747,7 @@ export class APIGatewayVTL extends VTL {
           );
         }
       } else if (isIdentifier(expr.expr) && expr.expr.name === "Number") {
-        return this.exprToJson(expr.args[0]);
+        return expr.args[0] ? this.exprToJson(expr.args[0]) : "0";
       } else if (
         isPropAccessExpr(expr.expr) &&
         isIdentifier(expr.expr.name) &&
@@ -761,11 +762,11 @@ export class APIGatewayVTL extends VTL {
             ref.parent.parameters.findIndex((param) => param === ref) === 0
           ) {
             // the first argument of the FunctionDecl is the `$input`, regardless of what it is named
-            if (expr.args.length === 0 || expr.args[0].expr === undefined) {
+            if (!expr.args[0] || expr.args[0].expr === undefined) {
               const key = this.newLocalVarName();
               return `{#foreach(${key} in $input.params().keySet())"${key}": "$input.params("${key}")"#if($foreach.hasNext),#end#end}`;
-            } else if (expr.args.length === 1) {
-              const argName = expr.args[0].expr!;
+            } else {
+              const argName = expr.args[0].expr;
               if (isStringLiteralExpr(argName)) {
                 if (
                   isArgument(expr.parent) &&

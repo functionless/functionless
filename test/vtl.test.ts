@@ -272,6 +272,16 @@ test("map over list", () => {
   );
 });
 
+test("map over list without parameter", () => {
+  appsyncTestCase(
+    reflect((context: AppsyncContext<{ list: string[] }>) => {
+      return context.arguments.list.map(() => {
+        return `hello`;
+      });
+    })
+  );
+});
+
 test("map over list with in-line return", () => {
   appsyncTestCase(
     reflect((context: AppsyncContext<{ list: string[] }>) => {
