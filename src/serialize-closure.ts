@@ -12,38 +12,64 @@ import {
   isBindingElem,
   isBlockStmt,
   isBooleanLiteralExpr,
+  isBreakStmt,
   isCallExpr,
+  isCatchClause,
   isClassDecl,
   isClassExpr,
   isClassStaticBlockDecl,
   isComputedPropertyNameExpr,
+  isConditionExpr,
   isConstructorDecl,
+  isDeleteExpr,
+  isDoStmt,
   isElementAccessExpr,
   isExprStmt,
+  isForInStmt,
+  isForOfStmt,
+  isForStmt,
   isFunctionDecl,
   isFunctionExpr,
   isFunctionLike,
   isGetAccessorDecl,
   isIdentifier,
+  isIfStmt,
   isMethodDecl,
   isNewExpr,
+  isNoSubstitutionTemplateLiteral,
   isNullLiteralExpr,
   isNumberLiteralExpr,
   isObjectBinding,
   isObjectLiteralExpr,
   isOmittedExpr,
   isParameterDecl,
+  isParenthesizedExpr,
+  isPostfixUnaryExpr,
+  isPrivateIdentifier,
   isPropAccessExpr,
   isPropAssignExpr,
   isPropDecl,
+  isReferenceExpr,
+  isRegexExpr,
   isSetAccessorDecl,
   isSpreadAssignExpr,
   isSpreadElementExpr,
   isStringLiteralExpr,
+  isSuperKeyword,
+  isTaggedTemplateExpr,
+  isTemplateExpr,
+  isTemplateHead,
+  isTemplateMiddle,
+  isTemplateSpan,
+  isTemplateTail,
+  isThisExpr,
+  isTryStmt,
+  isUnaryExpr,
   isUndefinedLiteralExpr,
   isVariableDecl,
   isVariableDeclList,
   isVariableStmt,
+  isWhileStmt,
   isYieldExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
@@ -201,7 +227,9 @@ export function serializeClosure(func: AnyFunction): string {
   }
 
   function serializeAST(node: FunctionlessNode): ts.Node {
-    if (isArrowFunctionExpr(node)) {
+    if (isReferenceExpr(node)) {
+      // TODO: serialize value captured in closure
+    } else if (isArrowFunctionExpr(node)) {
       return ts.factory.createArrowFunction(
         node.isAsync
           ? [ts.factory.createModifier(ts.SyntaxKind.AsyncKeyword)]
@@ -265,8 +293,14 @@ export function serializeClosure(func: AnyFunction): string {
       return ts.factory.createBlock(
         node.statements.map((stmt) => serializeAST(stmt) as ts.Statement)
       );
+    } else if (isThisExpr(node)) {
+      return ts.factory.createThis();
+    } else if (isSuperKeyword(node)) {
+      return ts.factory.createSuper();
     } else if (isIdentifier(node)) {
       return ts.factory.createIdentifier(node.name);
+    } else if (isPrivateIdentifier(node)) {
+      return ts.factory.createPrivateIdentifier(node.name);
     } else if (isPropAccessExpr(node)) {
       return ts.factory.createPropertyAccessChain(
         serializeAST(node.expr) as ts.Expression,
@@ -486,37 +520,228 @@ export function serializeClosure(func: AnyFunction): string {
           serializeAST(node.expr) as ts.Expression
         );
       }
-    }
-    // else if (isBinaryExpr(node)) {
-    //   return ts.factory.createBinaryExpression(
-    //     serializeAST(node.left) as ts.Expression,
-    //     ts.factory.createToken(
-    //       node.op === "!="
-    //         ? ts.SyntaxKind.ExclamationEqualsToken
-    //         : node.op === "!=="
-    //         ? ts.SyntaxKind.ExclamationEqualsEqualsToken
-    //         : node.op === "=="
-    //         ? ts.SyntaxKind.EqualsEqualsToken
-    //         : node.op === "==="
-    //         ? ts.SyntaxKind.EqualsEqualsEqualsToken
-    //         : node.op === "%"
-    //         ? ts.SyntaxKind.PercentToken
-    //         : node.op === "%="
-    //         ? ts.SyntaxKind.PercentEqualsToken
-    //         : node.op === "&&"
-    //         ? ts.SyntaxKind.AmpersandAmpersandToken
-    //         : node.op === "&"
-    //         ? ts.SyntaxKind.AmpersandAmpersandToken
-    //         : node.op === "*"
-    //         ? ts.SyntaxKind.AsteriskToken
-    //         : node.op === "**"
-    //         ? ts.SyntaxKind.AsteriskToken
-    //         : undefined!
-    //     ),
-    //     serializeAST(node.right) as ts.Expression
-    //   );
-    // }
-    else {
+    } else if (isUnaryExpr(node)) {
+      return ts.factory.createPrefixUnaryExpression(
+        node.op === "!"
+          ? ts.SyntaxKind.ExclamationToken
+          : node.op === "+"
+          ? ts.SyntaxKind.PlusToken
+          : node.op === "++"
+          ? ts.SyntaxKind.PlusPlusToken
+          : node.op === "-"
+          ? ts.SyntaxKind.MinusToken
+          : node.op === "--"
+          ? ts.SyntaxKind.MinusMinusToken
+          : node.op === "~"
+          ? ts.SyntaxKind.TildeToken
+          : assertNever(node.op),
+        serializeAST(node.expr) as ts.Expression
+      );
+    } else if (isPostfixUnaryExpr(node)) {
+      return ts.factory.createPostfixUnaryExpression(
+        serializeAST(node.expr) as ts.Expression,
+        node.op === "++"
+          ? ts.SyntaxKind.PlusPlusToken
+          : node.op === "--"
+          ? ts.SyntaxKind.MinusMinusToken
+          : assertNever(node.op)
+      );
+    } else if (isBinaryExpr(node)) {
+      return ts.factory.createBinaryExpression(
+        serializeAST(node.left) as ts.Expression,
+        node.op === "!="
+          ? ts.SyntaxKind.ExclamationEqualsToken
+          : node.op === "!=="
+          ? ts.SyntaxKind.ExclamationEqualsEqualsToken
+          : node.op === "=="
+          ? ts.SyntaxKind.EqualsEqualsToken
+          : node.op === "==="
+          ? ts.SyntaxKind.EqualsEqualsEqualsToken
+          : node.op === "%"
+          ? ts.SyntaxKind.PercentToken
+          : node.op === "%="
+          ? ts.SyntaxKind.PercentEqualsToken
+          : node.op === "&&"
+          ? ts.SyntaxKind.AmpersandAmpersandToken
+          : node.op === "&"
+          ? ts.SyntaxKind.AmpersandAmpersandToken
+          : node.op === "*"
+          ? ts.SyntaxKind.AsteriskToken
+          : node.op === "**"
+          ? ts.SyntaxKind.AsteriskToken
+          : node.op === "&&="
+          ? ts.SyntaxKind.AmpersandAmpersandEqualsToken
+          : node.op === "&="
+          ? ts.SyntaxKind.AmpersandEqualsToken
+          : node.op === "**="
+          ? ts.SyntaxKind.AsteriskAsteriskEqualsToken
+          : node.op === "*="
+          ? ts.SyntaxKind.AsteriskEqualsToken
+          : node.op === "+"
+          ? ts.SyntaxKind.PlusToken
+          : node.op === "+="
+          ? ts.SyntaxKind.PlusEqualsToken
+          : node.op === ","
+          ? ts.SyntaxKind.CommaToken
+          : node.op === "-"
+          ? ts.SyntaxKind.MinusToken
+          : node.op === "-="
+          ? ts.SyntaxKind.MinusEqualsToken
+          : node.op === "/"
+          ? ts.SyntaxKind.SlashToken
+          : node.op === "/="
+          ? ts.SyntaxKind.SlashEqualsToken
+          : node.op === "<"
+          ? ts.SyntaxKind.LessThanToken
+          : node.op === "<="
+          ? ts.SyntaxKind.LessThanEqualsToken
+          : node.op === "<<"
+          ? ts.SyntaxKind.LessThanLessThanToken
+          : node.op === "<<="
+          ? ts.SyntaxKind.LessThanLessThanEqualsToken
+          : node.op === "="
+          ? ts.SyntaxKind.EqualsToken
+          : node.op === ">"
+          ? ts.SyntaxKind.GreaterThanToken
+          : node.op === ">>"
+          ? ts.SyntaxKind.GreaterThanGreaterThanToken
+          : node.op === ">>>"
+          ? ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken
+          : node.op === ">="
+          ? ts.SyntaxKind.GreaterThanEqualsToken
+          : node.op === ">>="
+          ? ts.SyntaxKind.GreaterThanGreaterThanEqualsToken
+          : node.op === ">>>="
+          ? ts.SyntaxKind.GreaterThanGreaterThanGreaterThanEqualsToken
+          : node.op === "??"
+          ? ts.SyntaxKind.QuestionQuestionToken
+          : node.op === "??="
+          ? ts.SyntaxKind.QuestionQuestionEqualsToken
+          : node.op === "^"
+          ? ts.SyntaxKind.CaretToken
+          : node.op === "^="
+          ? ts.SyntaxKind.CaretEqualsToken
+          : node.op === "in"
+          ? ts.SyntaxKind.InKeyword
+          : node.op === "instanceof"
+          ? ts.SyntaxKind.InstanceOfKeyword
+          : node.op === "|"
+          ? ts.SyntaxKind.BarToken
+          : node.op === "||"
+          ? ts.SyntaxKind.BarBarToken
+          : node.op === "|="
+          ? ts.SyntaxKind.BarEqualsToken
+          : node.op === "||="
+          ? ts.SyntaxKind.BarBarEqualsToken
+          : assertNever(node.op),
+        serializeAST(node.right) as ts.Expression
+      );
+    } else if (isConditionExpr(node)) {
+      return ts.factory.createConditionalExpression(
+        serializeAST(node.when) as ts.Expression,
+        undefined,
+        serializeAST(node.then) as ts.Expression,
+        undefined,
+        serializeAST(node._else) as ts.Expression
+      );
+    } else if (isIfStmt(node)) {
+      return ts.factory.createIfStatement(
+        serializeAST(node.when) as ts.Expression,
+        serializeAST(node.then) as ts.Statement,
+        node._else ? (serializeAST(node._else) as ts.Statement) : undefined
+      );
+    } else if (isForStmt(node)) {
+      return ts.factory.createForStatement(
+        node.initializer
+          ? (serializeAST(node.initializer) as ts.ForInitializer)
+          : undefined,
+        node.condition
+          ? (serializeAST(node.condition) as ts.Expression)
+          : undefined,
+        node.incrementor
+          ? (serializeAST(node.incrementor) as ts.Expression)
+          : undefined,
+        serializeAST(node.body) as ts.Statement
+      );
+    } else if (isForOfStmt(node)) {
+      return ts.factory.createForOfStatement(
+        node.isAwait
+          ? ts.factory.createToken(ts.SyntaxKind.AwaitKeyword)
+          : undefined,
+        serializeAST(node.initializer) as ts.ForInitializer,
+        serializeAST(node.expr) as ts.Expression,
+        serializeAST(node.body) as ts.Statement
+      );
+    } else if (isForInStmt(node)) {
+      return ts.factory.createForInStatement(
+        serializeAST(node.initializer) as ts.ForInitializer,
+        serializeAST(node.expr) as ts.Expression,
+        serializeAST(node.body) as ts.Statement
+      );
+    } else if (isWhileStmt(node)) {
+      return ts.factory.createWhileStatement(
+        serializeAST(node.condition) as ts.Expression,
+        serializeAST(node.block) as ts.Statement
+      );
+    } else if (isDoStmt(node)) {
+      return ts.factory.createDoStatement(
+        serializeAST(node.block) as ts.Statement,
+        serializeAST(node.condition) as ts.Expression
+      );
+    } else if (isBreakStmt(node)) {
+      return ts.factory.createBreakStatement(node);
+    } else if (isTryStmt(node)) {
+      return ts.factory.createTryStatement(
+        serializeAST(node.tryBlock) as ts.Block,
+        node.catchClause
+          ? (serializeAST(node.catchClause) as ts.CatchClause)
+          : undefined,
+        node.finallyBlock
+          ? (serializeAST(node.finallyBlock) as ts.Block)
+          : undefined
+      );
+    } else if (isCatchClause(node)) {
+      return ts.factory.createCatchClause(
+        node.variableDecl
+          ? (serializeAST(node.variableDecl) as ts.VariableDeclaration)
+          : undefined,
+        serializeAST(node.block) as ts.Block
+      );
+    } else if (isDeleteExpr(node)) {
+      return ts.factory.createDeleteExpression(
+        serializeAST(node.expr) as ts.Expression
+      );
+    } else if (isParenthesizedExpr(node)) {
+      return ts.factory.createParenthesizedExpression(
+        serializeAST(node.expr) as ts.Expression
+      );
+    } else if (isRegexExpr(node)) {
+      return ts.factory.createRegularExpressionLiteral(node.regex.source);
+    } else if (isTemplateExpr(node)) {
+      return ts.factory.createTemplateExpression(
+        serializeAST(node.head) as ts.TemplateHead,
+        node.spans.map((span) => serializeAST(span) as ts.TemplateSpan)
+      );
+    } else if (isTaggedTemplateExpr(node)) {
+      return ts.factory.createTaggedTemplateExpression(
+        serializeAST(node.tag) as ts.Expression,
+        undefined,
+        serializeAST(node.template) as ts.TemplateLiteral
+      );
+    } else if (isNoSubstitutionTemplateLiteral(node)) {
+      return ts.factory.createNoSubstitutionTemplateLiteral(node.text);
+    } else if (isTemplateHead(node)) {
+      return ts.factory.createTemplateHead(node.text);
+    } else if (isTemplateSpan(node)) {
+      return ts.factory.createTemplateSpan(
+        serializeAST(node.expr) as ts.Expression,
+        serializeAST(node.literal) as ts.TemplateMiddle | ts.TemplateTail
+      );
+    } else if (isTemplateMiddle(node)) {
+      return ts.factory.createTemplateMiddle(node.text);
+    } else if (isTemplateTail(node)) {
+      return ts.factory.createTemplateTail(node.text);
+    } else {
       return assertNever(node);
     }
   }
