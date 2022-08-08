@@ -594,9 +594,7 @@ export function compile(
         } else if (ts.isReturnStatement(node)) {
           return newExpr(
             NodeKind.ReturnStmt,
-            node.expression
-              ? [toExpr(node.expression, scope)]
-              : [newExpr(NodeKind.NullLiteralExpr, [])]
+            node.expression ? [toExpr(node.expression, scope)] : []
           );
         } else if (ts.isObjectLiteralExpression(node)) {
           return newExpr(NodeKind.ObjectLiteralExpr, [

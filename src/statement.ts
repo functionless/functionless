@@ -117,9 +117,9 @@ export class BlockStmt extends BaseStmt<NodeKind.BlockStmt, BlockStmtParent> {
 }
 
 export class ReturnStmt extends BaseStmt<NodeKind.ReturnStmt> {
-  constructor(readonly expr: Expr) {
+  constructor(readonly expr: Expr | undefined) {
     super(NodeKind.ReturnStmt, arguments);
-    this.ensure(expr, "expr", ["Expr"]);
+    this.ensure(expr, "expr", ["undefined", "Expr"]);
   }
 }
 
