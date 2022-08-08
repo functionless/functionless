@@ -147,6 +147,7 @@ const project = new CustomTypescriptProject({
   tsconfig: {
     compilerOptions: {
       declarationMap: true,
+      noUncheckedIndexedAccess: true,
       lib: ["dom", "ES2019"],
     },
   },

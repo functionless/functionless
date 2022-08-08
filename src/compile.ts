@@ -815,7 +815,7 @@ export function compile(
               // extends
               node.heritageClauses?.flatMap((clause) =>
                 clause.token === ts.SyntaxKind.ExtendsKeyword &&
-                clause.types[0].expression !== undefined
+                clause.types[0]?.expression !== undefined
                   ? [toExpr(clause.types[0].expression, scope)]
                   : []
               )[0] ?? ts.factory.createIdentifier("undefined"),

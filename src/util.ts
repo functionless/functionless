@@ -347,6 +347,40 @@ export class DeterministicNameGenerator {
   }
 }
 
+/**
+ * Generates unique names starting from the given name and then applying the given formatter function.
+ *
+ * Registers both the original name and the formatted name to ensure no collisions with given or formatted names.
+ *
+ * a -> a
+ * a -> formatted(a, 1)
+ * formatted(a, 1) -> formatted(formatted(a, 1), 1) // if a name is given that matches the output of formatted(a, 1), format the new name
+ * formatted(a, 2) -> formatted(a, 2)
+ * a -> formatted(a, 3) // the output of formatted(a, 2) already was registered, so try formatted(a, 3)
+ */
+export class UniqueNameGenerator {
+  private readonly nameCount = new Map<string, number>();
+
+  constructor(private formatter: (name: string, n: number) => string) {}
+
+  public getUnique(name: string) {
+    let nameCount = this.nameCount.get(name);
+    if (nameCount !== undefined) {
+      let formatted;
+      do {
+        formatted = this.formatter(name, ++nameCount);
+      } while (this.nameCount.has(formatted));
+      this.nameCount.set(name, nameCount);
+      this.nameCount.set(formatted, 0);
+      return formatted;
+    } else {
+      // first time seeing the name.
+      this.nameCount.set(name, 0);
+      return name;
+    }
+  }
+}
+
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;
 

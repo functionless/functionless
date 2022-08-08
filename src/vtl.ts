@@ -418,9 +418,10 @@ export abstract class VTL {
 
           const [value, index, array] = getMapForEachArgs(node);
 
-          const valueVar = isIdentifier(value.name)
-            ? `$${value.name.name}`
-            : this.newLocalVarName();
+          const valueVar =
+            value && isIdentifier(value.name)
+              ? `$${value.name.name}`
+              : this.newLocalVarName();
 
           // Try to flatten any maps before this operation
           // returns the first variable to be used in the foreach of this operation (may be the `value`)
@@ -434,7 +435,7 @@ export abstract class VTL {
             !!array
           );
 
-          if (isBindingPattern(value.name)) {
+          if (value && isBindingPattern(value.name)) {
             this.evaluateBindingPattern(value.name, valueVar);
           }
 
@@ -473,9 +474,10 @@ export abstract class VTL {
           const [previousValue, currentValue, currentIndex, array] =
             fn.parameters;
 
-          const currentValueName = isIdentifier(currentValue.name)
-            ? `$${currentValue.name.name}`
-            : this.newLocalVarName();
+          const currentValueName =
+            currentValue && isIdentifier(currentValue.name)
+              ? `$${currentValue.name.name}`
+              : this.newLocalVarName();
 
           // create a new local variable name to hold the initial/previous value
           // this is because previousValue may not be unique and isn't contained within the loop
@@ -500,7 +502,7 @@ export abstract class VTL {
             !!array
           );
 
-          if (isBindingPattern(currentValue.name)) {
+          if (currentValue && isBindingPattern(currentValue.name)) {
             this.evaluateBindingPattern(currentValue.name, currentValueName);
           }
 
@@ -513,7 +515,9 @@ export abstract class VTL {
 
           const body = () => {
             // set previousValue variable name to avoid remapping
-            this.evalDecl(previousValue, previousTmp);
+            if (previousValue) {
+              this.evalDecl(previousValue, previousTmp);
+            }
             const tmp = this.newLocalVarName();
             for (const stmt of fn.body.statements) {
               this.eval(stmt, tmp);
@@ -545,6 +549,7 @@ export abstract class VTL {
         } else if (expr.name.name === "push") {
           if (
             node.args.length === 1 &&
+            node.args[0] &&
             !isSpreadElementExpr(node.args[0].expr)
           ) {
             // use the .add for the case when we are pushing exactly one argument
@@ -696,7 +701,7 @@ export abstract class VTL {
     } else if (isVariableStmt(node)) {
       // variable statements with multiple declarations are turned into multiple variable statements.
       const decl = node.declList.decls[0];
-      return this.evalDecl(decl);
+      return decl ? this.evalDecl(decl) : undefined;
     } else if (isThrowStmt(node)) {
       return `#throw(${this.eval(node.expr)})`;
     } else if (isTryStmt(node)) {
@@ -1065,9 +1070,10 @@ export abstract class VTL {
        * The variable name this iteration is expecting.
        * If the variable is a binding expression, create a new variable name to assign the previous value into.
        */
-      const valueVar = isIdentifier(value.name)
-        ? `$${value.name.name}`
-        : this.newLocalVarName();
+      const valueVar =
+        value && isIdentifier(value.name)
+          ? `$${value.name.name}`
+          : this.newLocalVarName();
 
       const list = this.flattenListMapOperations(
         next,
@@ -1078,7 +1084,7 @@ export abstract class VTL {
         !!array
       );
 
-      if (isBindingPattern(value.name)) {
+      if (value && isBindingPattern(value.name)) {
         this.evaluateBindingPattern(value.name, valueVar);
       }
 
@@ -1101,7 +1107,7 @@ export abstract class VTL {
  */
 const getMapForEachArgs = (call: CallExpr) => {
   const parameters = assertNodeKind(
-    call.args[0].expr,
+    call.args[0]?.expr,
     ...NodeKind.FunctionLike
   ).parameters;
   for (const param of parameters) {
