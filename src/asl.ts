@@ -2110,7 +2110,6 @@ export class ASL {
         expr.op === "/=" ||
         expr.op === "%=" ||
         expr.op === "&" ||
-        expr.op === "&&=" ||
         expr.op === "&=" ||
         expr.op === "**" ||
         expr.op === "**=" ||
@@ -2130,16 +2129,51 @@ export class ASL {
           ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
           `Step Function does not support operator ${expr.op}`
         );
-      } else if (
-        expr.op === "instanceof" ||
-        // https://github.com/functionless/functionless/issues/393
-        expr.op === "??=" ||
-        expr.op === "||="
-      ) {
+      } else if (expr.op === "instanceof") {
         throw new SynthError(
           ErrorCodes.Unsupported_Feature,
           `Step Function does not support ${expr.op} operator`
         );
+      } else if (expr.op === "??=" || expr.op === "&&=" || expr.op === "||=") {
+        if (!isVariableReference(expr.left)) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected left side of assignment to be a variable."
+          );
+        }
+        return this.evalExpr(expr.left, (left) => {
+          const right = this.eval(expr.right);
+
+          if (!ASLGraph.isJsonPath(left)) {
+            throw new SynthError(
+              ErrorCodes.Unexpected_Error,
+              `Expected assignment to target a variable, found: ${left.value}`
+            );
+          }
+
+          /**
+           * &&: left ? right : left
+           * ||: left ? left : right
+           * ??: left !== undefined && left !== null ? left : right
+           */
+          const condition =
+            expr.op === "||="
+              ? ASL.isTruthy(left.jsonPath)
+              : expr.op === "&&="
+              ? ASL.not(ASL.isTruthy(left.jsonPath))
+              : ASL.and(
+                  ASL.isPresent(left.jsonPath),
+                  ASL.isNotNull(left.jsonPath)
+                );
+
+          return this.conditionState(
+            expr,
+            condition,
+            left,
+            right,
+            left.jsonPath
+          );
+        });
       }
       assertNever(expr.op);
     } else if (isAwaitExpr(expr)) {
@@ -2377,7 +2411,8 @@ export class ASL {
     node: FunctionlessNode | undefined,
     cond: Condition,
     trueState?: ASLGraph.NodeResults,
-    falseState?: ASLGraph.NodeResults
+    falseState?: ASLGraph.NodeResults,
+    outputJsonPath?: string
   ): ASLGraph.OutputSubState {
     const trueOutput: ASLGraph.Output = trueState
       ? ASLGraph.getAslStateOutput(trueState)
@@ -2385,7 +2420,7 @@ export class ASL {
     const falseOutput: ASLGraph.Output = falseState
       ? ASLGraph.getAslStateOutput(falseState)
       : { value: false, containsJsonPath: false };
-    const tempHeap = this.newHeapVariable();
+    const tempHeap = outputJsonPath ?? this.newHeapVariable();
     return {
       node,
       startState: "default",
