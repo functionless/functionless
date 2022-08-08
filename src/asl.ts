@@ -1963,7 +1963,7 @@ export class ASL {
         } else {
           return this.evalContext(expr, (_, evalCondition) => {
             const cond = evalCondition(expr);
-            return this.conditionState(cond);
+            return this.conditionState(expr, cond);
           });
         }
       } else if (
@@ -1986,9 +1986,43 @@ export class ASL {
           value: constant,
           containsJsonPath: false,
         };
+      } else if (expr.op === "&&" || expr.op === "||") {
+        return this.evalExpr(expr.left, (leftOutput) => {
+          const right = this.eval(expr.right);
+
+          // if both values are literals, return a literal.
+          // Only evaluate right as a literal if it is strictly a literal with no states.
+          if (
+            ASLGraph.isLiteralValue(right) &&
+            ASLGraph.isLiteralValue(leftOutput)
+          ) {
+            return {
+              value: leftOutput.value && right.value,
+              containsJsonPath: false,
+            };
+          }
+
+          /**
+           * If left is a literal, evaluate the truthiness and return left or right.
+           * &&: when truthy, return right
+           * ||: when truthy, return left
+           */
+          if (ASLGraph.isLiteralValue(leftOutput)) {
+            if (expr.op === "&&") {
+              return !!leftOutput.value ? right : leftOutput;
+            } else {
+              return !!leftOutput.value ? leftOutput : right;
+            }
+          }
+
+          return this.conditionState(
+            expr,
+            ASL.isTruthy(leftOutput.jsonPath),
+            expr.op === "&&" ? right : leftOutput,
+            expr.op === "&&" ? leftOutput : right
+          );
+        });
       } else if (
-        expr.op === "&&" ||
-        expr.op === "||" ||
         expr.op === "===" ||
         expr.op === "==" ||
         expr.op == "!=" ||
@@ -2001,57 +2035,31 @@ export class ASL {
       ) {
         return this.evalContext(expr, (_, evalCondition) => {
           const cond = evalCondition(expr);
-          return this.conditionState(cond);
+          return this.conditionState(expr, cond);
         });
       } else if (expr.op === "??") {
         return this.evalContext(expr, (evalExpr) => {
           const left = evalExpr(expr.left);
-          const right = evalExpr(expr.right);
-          // literal ?? anything
+          // Do not evaluate right to short short circuit evaluation
+          const right = this.eval(expr.right);
+
+          // if left is a literal, just run the right side
           if (ASLGraph.isLiteralValue(left)) {
-            if (!left.value) {
+            if (left.value !== undefined && left.value !== null) {
               return left;
             } else {
               return right;
             }
           }
-          const tempHeap = this.newHeapVariable();
-          return {
-            startState: "default",
-            node: expr,
-            states: {
-              default: {
-                Type: "Choice",
-                Choices: [
-                  {
-                    ...ASL.and(
-                      ASL.isPresent(left.jsonPath),
-                      ASL.isNotNull(left.jsonPath)
-                    ),
-                    Next: "takeLeft",
-                  },
-                ],
-                Default: "takeRight",
-              },
-              takeLeft: {
-                Type: "Pass",
-                InputPath: left.jsonPath,
-                ResultPath: tempHeap,
-                Next: ASLGraph.DeferNext,
-              },
-              takeRight: ASLGraph.passWithInput(
-                {
-                  Type: "Pass",
-                  ResultPath: tempHeap,
-                  Next: ASLGraph.DeferNext,
-                },
-                right
-              ),
-            },
-            output: {
-              jsonPath: tempHeap,
-            },
-          };
+
+          return this.conditionState(
+            expr,
+            ASL.and(ASL.isPresent(left.jsonPath), ASL.isNotNull(left.jsonPath)),
+            // if true, left has already been evaluated, assign it's output and return
+            left,
+            // if false, right has not been evaluated, evaluate, assign the output and return
+            right
+          );
         });
       } else if (expr.op === "=") {
         if (!isVariableReference(expr.left)) {
@@ -2234,56 +2242,8 @@ export class ASL {
         */
         const left = this.eval(expr.then);
         const right = this.eval(expr._else);
-        const outputVar = this.newHeapVariable();
 
-        const computeAndAssign = (
-          result: ASLGraph.NodeResults
-        ): ASLGraph.NodeState | ASLGraph.SubState => {
-          return ASLGraph.isJsonPath(result) || ASLGraph.isLiteralValue(result)
-            ? // if there is only an output and no additional states, just assign and continue
-              ASLGraph.passWithInput(
-                {
-                  Type: "Pass",
-                  ResultPath: outputVar,
-                  Next: ASLGraph.DeferNext,
-                },
-                result
-              )
-            : // if there are some returned states with the output reference, run the states and then assign the output value
-              {
-                startState: "compute",
-                states: {
-                  compute: ASLGraph.updateDeferredNextStates(
-                    { Next: "assign" },
-                    result
-                  ),
-                  assign: ASLGraph.passWithInput(
-                    {
-                      Type: "Pass",
-                      ResultPath: outputVar,
-                      Next: ASLGraph.DeferNext,
-                    },
-                    ASLGraph.getAslStateOutput(result)
-                  ),
-                },
-              };
-        };
-
-        return {
-          startState: "default",
-          states: {
-            default: {
-              Type: "Choice",
-              Choices: [{ ...cond, Next: "doTrue" }],
-              Default: "doFalse",
-            },
-            doTrue: computeAndAssign(left),
-            doFalse: computeAndAssign(right),
-          },
-          output: {
-            jsonPath: outputVar,
-          },
-        };
+        return this.conditionState(expr, cond, left, right);
       });
     } else if (isParenthesizedExpr(expr)) {
       return this.eval(expr.expr);
@@ -2407,28 +2367,58 @@ export class ASL {
     };
   }
 
-  public conditionState(cond: Condition): ASLGraph.OutputSubState {
+  /**
+   * When the condition is true, executes the left states and assigns the left output to a temp variable.
+   * When the condition is false, executes the right states and assigns the right out to a temp variable.
+   *
+   * @returns a {@link}
+   */
+  public conditionState(
+    node: FunctionlessNode | undefined,
+    cond: Condition,
+    trueState?: ASLGraph.NodeResults,
+    falseState?: ASLGraph.NodeResults
+  ): ASLGraph.OutputSubState {
+    const trueOutput: ASLGraph.Output = trueState
+      ? ASLGraph.getAslStateOutput(trueState)
+      : { value: true, containsJsonPath: false };
+    const falseOutput: ASLGraph.Output = falseState
+      ? ASLGraph.getAslStateOutput(falseState)
+      : { value: false, containsJsonPath: false };
     const tempHeap = this.newHeapVariable();
     return {
+      node,
       startState: "default",
       states: {
         default: {
           Type: "Choice",
-          Choices: [{ ...cond, Next: "assignTrue" }],
-          Default: "assignFalse",
+          Choices: [{ ...cond, Next: "true" }],
+          Default: "false",
         },
-        assignTrue: {
-          Type: "Pass",
-          Result: true,
-          ResultPath: tempHeap,
-          Next: ASLGraph.DeferNext,
-        },
-        assignFalse: {
-          Type: "Pass",
-          Result: false,
-          ResultPath: tempHeap,
-          Next: ASLGraph.DeferNext,
-        },
+        true: ASLGraph.joinSubStates(
+          ASLGraph.isStateOrSubState(trueState) ? trueState.node : undefined,
+          trueState,
+          ASLGraph.passWithInput(
+            {
+              Type: "Pass",
+              ResultPath: tempHeap,
+              Next: ASLGraph.DeferNext,
+            },
+            trueOutput
+          )
+        )!,
+        false: ASLGraph.joinSubStates(
+          ASLGraph.isStateOrSubState(falseState) ? falseState.node : undefined,
+          falseState,
+          ASLGraph.passWithInput(
+            {
+              Type: "Pass",
+              ResultPath: tempHeap,
+              Next: ASLGraph.DeferNext,
+            },
+            falseOutput
+          )
+        )!,
       },
       output: {
         jsonPath: tempHeap,
@@ -4249,7 +4239,7 @@ export namespace ASLGraph {
    * either being left as is.
    */
   export const joinSubStates = (
-    node: FunctionlessNode,
+    node?: FunctionlessNode,
     ...subStates: (
       | ASLGraph.NodeState
       | ASLGraph.SubState

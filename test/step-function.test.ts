@@ -483,7 +483,7 @@ test("condition on task output", () => {
 test("boolean logic", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<
-    { a: boolean; b: boolean },
+    { a: boolean; b: boolean; s: string },
     { and: boolean; or: boolean }
   >(stack, "fn", (input) => {
     return {
@@ -493,6 +493,14 @@ test("boolean logic", () => {
       notAnd: !(input.a && input.b),
       notOr: !(input.a || input.b),
       chain: !(input.a || (input.b && input.a)),
+      andFalsyConstantString: "" && input.s,
+      andTruthyConstantString: "hi" && input.s,
+      andAllConstant: true && false,
+      andVariable: input.a && input.s,
+      orFalsyConstantString: "" || input.s,
+      orTruthyConstantString: "hi" || input.s,
+      orAllConstant: false || true,
+      orVariable: input.b || input.s,
     };
   }).definition;
 
