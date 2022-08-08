@@ -320,6 +320,26 @@ test("let empty", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("shadow", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", () => {
+    const a = ""; // a
+    const a__2 = ""; // take a future updated name, a__2
+    for (const b in [1, 2, 3]) {
+      const a = ""; // take a future real name, a__1
+      const a__1 = ""; // name already exists, will use a__1__1
+      if (a === "") {
+        const a = ""; // a__3
+        return `${a}${b}${a__1}`;
+      }
+    }
+
+    return `${a}${a__2}`;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("undefined in ExprStmt", () => {
   const { stack } = initStepFunctionApp();
   expect(

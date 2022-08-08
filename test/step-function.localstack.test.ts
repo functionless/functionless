@@ -1617,19 +1617,39 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     }
   );
 
-  // https://github.com/functionless/functionless/issues/369
-  test.skip(
+  test(
     "shadowing maintains state",
     (parent) =>
       new StepFunction(parent, "sfn", async () => {
-        const a = "a";
-        let b;
-        for (const a of ["b"]) {
-          b = a;
+        const [a, b, c, d, e, f] = [1, 1, 1, 1, 1, 1];
+        let res = "";
+        for (const a in [2]) {
+          for (const b of [3]) {
+            await Promise.all(
+              [4].map(async (c) => {
+                if (c === 4) {
+                  const d = 5;
+                  for (let e = 6; e === 6; e = 7) {
+                    const r = (
+                      await $SFN.map([7], (f) => {
+                        return `${a}${b}${c}${d}${e}${f}`;
+                      })
+                    )[0];
+                    res = `${r}-${a}${b}${c}${d}${e}${f}`;
+                  }
+                  res = `${res}-${a}${b}${c}${d}${e}${f}`;
+                }
+                res = `${res}-${a}${b}${c}${d}${e}${f}`;
+              })
+            );
+            res = `${res}-${a}${b}${c}${d}${e}${f}`;
+          }
+          res = `${res}-${a}${b}${c}${d}${e}${f}`;
         }
-        return `${a}${b}`;
+        const z = [0].map((z) => z)[0];
+        return `${res}-${a}${b}${c}${d}${e}${f}-${z}`;
       }),
-    "ab"
+    "034567-034561-034511-034111-031111-011111-111111-0"
   );
 });
 
