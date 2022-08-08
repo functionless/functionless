@@ -145,7 +145,6 @@ const project = new CustomTypescriptProject({
   ],
   eslintOptions: {
     lintProjenRc: true,
-    ignorePatterns: ["jest.config.ts"],
   },
   tsconfig: {
     compilerOptions: {
