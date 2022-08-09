@@ -62,6 +62,14 @@ export function visitEachChild<T extends FunctionlessNode>(
   return new ctor(...args) as T;
 }
 
+/**
+ * Walks each of the children in {@link node} and calls {@link visit}.
+ *
+ * If {@link visit} returns a truthy value, then walking is immediately terminated.
+ *
+ * @param node the node to walk children of
+ * @param visit callback to call with each child node
+ */
 export function forEachChild(
   node: FunctionlessNode,
   visit: (node: FunctionlessNode) => any
