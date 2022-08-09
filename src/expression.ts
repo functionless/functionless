@@ -669,20 +669,29 @@ export class ImportKeyword extends BaseNode<NodeKind.ImportKeyword> {
   }
 }
 
-export class YieldExpr extends BaseExpr<NodeKind.YieldExpr> {
+export class YieldExpr<
+  Delegate extends boolean = boolean
+> extends BaseExpr<NodeKind.YieldExpr> {
   constructor(
     /**
      * The expression to yield (or delegate) to.
+     *
+     * If {@link delegate} is `true`, then {@link expr} must be defined, because
+     * `yield*` defers to another Generator, which `undefined` is not.
      */
-    readonly expr: Expr | undefined,
+    readonly expr: Expr | Delegate extends true ? undefined : never,
     /**
      * Is a `yield*` delegate expression.
      */
-    readonly delegate: boolean
+    readonly delegate: Delegate
   ) {
     super(NodeKind.YieldExpr, arguments);
-    this.ensure(expr, "expr", ["undefined", "Expr"]);
     this.ensure(delegate, "delegate", ["boolean"]);
+    if (delegate) {
+      this.ensure(expr, "expr", ["Expr"]);
+    } else {
+      this.ensure(expr, "expr", ["undefined", "Expr"]);
+    }
   }
 }
 
