@@ -157,7 +157,27 @@ export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
 export class ReferenceExpr<
   R = unknown
 > extends BaseExpr<NodeKind.ReferenceExpr> {
-  constructor(readonly name: string, readonly ref: () => R) {
+  constructor(
+    /**
+     * Name of the referenced variable.
+     *
+     * ```ts
+     * let i;
+     *
+     * i; // "i"
+     * ```
+     */
+    readonly name: string,
+    /**
+     * A closure that produces the referred value.
+     */
+    readonly ref: () => R,
+    /**
+     * An id number unique within the file where the reference originates from.
+     */
+    readonly id: number,
+    readonly filename: string
+  ) {
     super(NodeKind.ReferenceExpr, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensure(ref, "ref", ["function"]);
