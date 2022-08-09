@@ -5084,8 +5084,8 @@ export namespace ASL {
     operator: keyof typeof VALUE_COMPARISONS | "!=" | "!=="
   ): Condition => {
     if (
-      operator === "===" ||
       operator === "==" ||
+      operator === "===" ||
       operator === ">" ||
       operator === "<" ||
       operator === ">=" ||
