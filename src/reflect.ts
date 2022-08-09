@@ -167,7 +167,7 @@ function validateFunctionlessNodeSemantics<N extends FunctionlessNode>(
           // we should definitely make this a Symbol
           typeof clazz.FunctionlessType === "string"
       );
-      if (references?.length > 0) {
+      if (references.length > 0) {
         throw new SynthError(
           ErrorCodes.Unsupported_initialization_of_resources,
           "Cannot initialize new CDK resources in a runtime function."

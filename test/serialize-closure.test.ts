@@ -9,5 +9,7 @@ test("serialize a closure", () => {
     return i;
   });
 
-  expect(closure).toEqual("");
+  expect(closure).toEqual(`const v0 = () => { 0 += 1; return 0; };
+exports.handler = v0;
+`);
 });

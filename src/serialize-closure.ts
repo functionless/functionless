@@ -537,12 +537,14 @@ export function serializeClosure(func: AnyFunction): string {
       if (node.delegate) {
         return ts.factory.createYieldExpression(
           ts.factory.createToken(ts.SyntaxKind.AsteriskToken),
-          serializeAST(node.expr) as ts.Expression
+          node.expr
+            ? (serializeAST(node.expr) as ts.Expression)
+            : ts.factory.createIdentifier("undefined")
         );
       } else {
         return ts.factory.createYieldExpression(
           undefined,
-          serializeAST(node.expr) as ts.Expression
+          node.expr ? (serializeAST(node.expr) as ts.Expression) : undefined
         );
       }
     } else if (isUnaryExpr(node)) {
