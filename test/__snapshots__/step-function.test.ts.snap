@@ -1986,6 +1986,306 @@ Object {
 }
 `;
 
+exports[`binding forOf weird values 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__a = \${val}\${a}": Object {
+      "InputPath": "$.heap1.string",
+      "Next": "tail__for(val of input.value ?? [1, 2, 3]) 1",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "1__a = \${val}\${a} 1": Object {
+      "InputPath": "$.heap4.string",
+      "Next": "tail__for(val of input.value || [1, 2, 3]) 1",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "1__a = \${val}\${a} 2": Object {
+      "InputPath": "$.heap6.string",
+      "Next": "tail__for(val of a = \\"b\\" , true && [1, 2, 3]) 1",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "a = \\"\\"",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "a = \\"\\"": Object {
+      "Next": "for(val of input.value ?? [1, 2, 3])",
+      "Result": "",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "a = \${val}\${a}": Object {
+      "Next": "1__a = \${val}\${a}",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}',$.val,$.a)",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "a = \${val}\${a} 1": Object {
+      "Next": "1__a = \${val}\${a} 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}',$.val__1,$.a)",
+      },
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "a = \${val}\${a} 2": Object {
+      "Next": "1__a = \${val}\${a} 2",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}',$.val__2,$.a)",
+      },
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
+    "false__for(val of input.value ?? [1, 2, 3])": Object {
+      "Next": "for(val of input.value ?? [1, 2, 3]) 1",
+      "Result": Array [
+        1,
+        2,
+        3,
+      ],
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "false__for(val of input.value || [1, 2, 3])": Object {
+      "Next": "for(val of input.value || [1, 2, 3]) 1",
+      "Result": Array [
+        1,
+        2,
+        3,
+      ],
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "for(val of a = \\"b\\" , true && [1, 2, 3])": Object {
+      "Next": "for(val of a = \\"b\\" , true && [1, 2, 3]) 1",
+      "Result": "b",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "for(val of a = \\"b\\" , true && [1, 2, 3]) 1": Object {
+      "Next": "hasNext__for(val of a = \\"b\\" , true && [1, 2, 3]) 1",
+      "Result": Array [
+        1,
+        2,
+        3,
+      ],
+      "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "for(val of input.value ?? [1, 2, 3])": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.value",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.input.value",
+            },
+          ],
+          "Next": "true__for(val of input.value ?? [1, 2, 3])",
+        },
+      ],
+      "Default": "false__for(val of input.value ?? [1, 2, 3])",
+      "Type": "Choice",
+    },
+    "for(val of input.value ?? [1, 2, 3]) 1": Object {
+      "InputPath": "$.heap0",
+      "Next": "hasNext__for(val of input.value ?? [1, 2, 3]) 1",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "for(val of input.value || [1, 2, 3])": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.value",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.input.value",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.value",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.input.value",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.input.value",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.input.value",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.input.value",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.input.value",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.input.value",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.input.value",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__for(val of input.value || [1, 2, 3])",
+        },
+      ],
+      "Default": "false__for(val of input.value || [1, 2, 3])",
+      "Type": "Choice",
+    },
+    "for(val of input.value || [1, 2, 3]) 1": Object {
+      "InputPath": "$.heap3",
+      "Next": "hasNext__for(val of input.value || [1, 2, 3]) 1",
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "hasNext__for(val of a = \\"b\\" , true && [1, 2, 3]) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "val 2",
+          "Variable": "$.heap7[0]",
+        },
+      ],
+      "Default": "return a",
+      "Type": "Choice",
+    },
+    "hasNext__for(val of input.value ?? [1, 2, 3]) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "val",
+          "Variable": "$.heap2[0]",
+        },
+      ],
+      "Default": "for(val of input.value || [1, 2, 3])",
+      "Type": "Choice",
+    },
+    "hasNext__for(val of input.value || [1, 2, 3]) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "val 1",
+          "Variable": "$.heap5[0]",
+        },
+      ],
+      "Default": "for(val of a = \\"b\\" , true && [1, 2, 3])",
+      "Type": "Choice",
+    },
+    "return a": Object {
+      "End": true,
+      "InputPath": "$.a",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tail__for(val of a = \\"b\\" , true && [1, 2, 3]) 1": Object {
+      "InputPath": "$.heap7[1:]",
+      "Next": "hasNext__for(val of a = \\"b\\" , true && [1, 2, 3]) 1",
+      "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "tail__for(val of input.value ?? [1, 2, 3]) 1": Object {
+      "InputPath": "$.heap2[1:]",
+      "Next": "hasNext__for(val of input.value ?? [1, 2, 3]) 1",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "tail__for(val of input.value || [1, 2, 3]) 1": Object {
+      "InputPath": "$.heap5[1:]",
+      "Next": "hasNext__for(val of input.value || [1, 2, 3]) 1",
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "true__for(val of input.value ?? [1, 2, 3])": Object {
+      "InputPath": "$.input.value",
+      "Next": "for(val of input.value ?? [1, 2, 3]) 1",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "true__for(val of input.value || [1, 2, 3])": Object {
+      "InputPath": "$.input.value",
+      "Next": "for(val of input.value || [1, 2, 3]) 1",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "val": Object {
+      "InputPath": "$.heap2[0]",
+      "Next": "a = \${val}\${a}",
+      "ResultPath": "$.val",
+      "Type": "Pass",
+    },
+    "val 1": Object {
+      "InputPath": "$.heap5[0]",
+      "Next": "a = \${val}\${a} 1",
+      "ResultPath": "$.val__1",
+      "Type": "Pass",
+    },
+    "val 2": Object {
+      "InputPath": "$.heap7[0]",
+      "Next": "a = \${val}\${a} 2",
+      "ResultPath": "$.val__2",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`binding functions $SFN.forEach 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",

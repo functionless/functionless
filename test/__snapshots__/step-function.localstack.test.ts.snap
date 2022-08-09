@@ -6158,188 +6158,21 @@ exports[`binaryOps logic with calls 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__false || await func()": Object {
-      "Choices": Array [
-        Object {
-          "Next": "assignTrue__1__false || await func()",
-          "Or": Array [
-            Object {
-              "IsNull": true,
-              "Variable": "$$.Execution.Id",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsPresent": true,
-                  "Variable": "$.heap2",
-                },
-                Object {
-                  "IsNull": false,
-                  "Variable": "$.heap2",
-                },
-                Object {
-                  "Or": Array [
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.heap2",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsString": true,
-                                "Variable": "$.heap2",
-                              },
-                              Object {
-                                "StringEquals": "",
-                                "Variable": "$.heap2",
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.heap2",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsNumeric": true,
-                                "Variable": "$.heap2",
-                              },
-                              Object {
-                                "NumericEquals": 0,
-                                "Variable": "$.heap2",
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.heap2",
-                        },
-                        Object {
-                          "BooleanEquals": true,
-                          "Variable": "$.heap2",
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      "Default": "assignFalse__1__false || await func()",
-      "Type": "Choice",
-    },
     "1__return {and: true && await func(), or: false || await func()}": Object {
       "End": true,
       "Parameters": Object {
-        "and.$": "$.heap1",
-        "or.$": "$.heap3",
+        "and.$": "$.heap0",
+        "or.$": "$.heap1",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return {and: true && await func(), or: false || await func()} 1": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsPresent": true,
-                  "Variable": "$.heap0",
-                },
-                Object {
-                  "IsNull": false,
-                  "Variable": "$.heap0",
-                },
-                Object {
-                  "Or": Array [
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.heap0",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsString": true,
-                                "Variable": "$.heap0",
-                              },
-                              Object {
-                                "StringEquals": "",
-                                "Variable": "$.heap0",
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.heap0",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsNumeric": true,
-                                "Variable": "$.heap0",
-                              },
-                              Object {
-                                "NumericEquals": 0,
-                                "Variable": "$.heap0",
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.heap0",
-                        },
-                        Object {
-                          "BooleanEquals": true,
-                          "Variable": "$.heap0",
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-          "Next": "assignTrue__1__return {and: true && await func(), or: false || await func()",
-        },
-      ],
-      "Default": "assignFalse__1__return {and: true && await func(), or: false || await func(",
-      "Type": "Choice",
+      "InputPath": "$.fnl_context.null",
+      "Next": "1__return {and: true && await func(), or: false || await func()}",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
     },
     "Initialize Functionless Context": Object {
       "Next": "return {and: true && await func(), or: false || await func()}",
@@ -6350,37 +6183,6 @@ Object {
       },
       "ResultPath": "$",
       "Type": "Pass",
-    },
-    "assignFalse__1__false || await func()": Object {
-      "Next": "1__return {and: true && await func(), or: false || await func()}",
-      "Result": false,
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "assignFalse__1__return {and: true && await func(), or: false || await func(": Object {
-      "Next": "false || await func()",
-      "Result": false,
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "assignTrue__1__false || await func()": Object {
-      "Next": "1__return {and: true && await func(), or: false || await func()}",
-      "Result": true,
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "assignTrue__1__return {and: true && await func(), or: false || await func()": Object {
-      "Next": "false || await func()",
-      "Result": true,
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "false || await func()": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__false || await func()",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap2",
-      "Type": "Task",
     },
     "return {and: true && await func(), or: false || await func()}": Object {
       "InputPath": "$.fnl_context.null",

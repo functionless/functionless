@@ -915,9 +915,12 @@ export class ASL {
             : [evalExpr(stmt.initializer)]
           : [undefined];
 
-        const [cond, condStates] = stmt.condition
-          ? this.toCondition(stmt.condition)
-          : [];
+        const condStates = stmt.condition
+          ? this.eval(stmt.condition)
+          : undefined;
+        const conditionOutput = condStates
+          ? ASLGraph.getAslStateOutput(condStates)
+          : undefined;
 
         const increment = stmt.incrementor
           ? this.eval(stmt.incrementor)
@@ -929,14 +932,29 @@ export class ASL {
           states: {
             // check the condition (or do nothing)
             check:
-              cond && stmt.condition
+              condStates && conditionOutput && stmt.condition
                 ? // join the states required to execute the condition with the condition value.
                   // This ensures the condition supports short circuiting and runs all expressions as needed
-                  ASLGraph.joinSubStates(stmt.condition, condStates, {
-                    Type: "Choice",
-                    Choices: [{ ...cond, Next: "body" }],
-                    Default: "exit",
-                  })!
+                  ASLGraph.joinSubStates(
+                    stmt.condition,
+                    condStates,
+                    // evaluate the condition json path to be truthy
+                    ASLGraph.isJsonPath(conditionOutput)
+                      ? {
+                          Type: "Choice",
+                          Choices: [
+                            {
+                              ...ASL.isTruthy(conditionOutput.jsonPath),
+                              Next: "body",
+                            },
+                          ],
+                          Default: "exit",
+                        }
+                      : conditionOutput.value
+                      ? // if the condition is a constant (`for(;true;){}`), hardcode a destination
+                        { Type: "Pass", Next: "body" }
+                      : { Type: "Pass", Next: "exit" }
+                  )!
                 : // no condition, for loop will require an explicit exit
                   { Type: "Pass", Next: "body" },
             // then run the body
@@ -971,51 +989,63 @@ export class ASL {
         })!;
       });
     } else if (isIfStmt(stmt)) {
-      return this.evalContextToSubState(stmt, (_, evalCondition) => {
-        const collect = (curr: IfStmt): [IfStmt[], Stmt | undefined] => {
-          if (curr._else) {
-            if (isIfStmt(curr._else)) {
-              const [ifs, el] = collect(curr._else);
-              return [[curr, ...ifs], el];
-            } else {
-              return [[curr], curr._else];
-            }
+      const collect = (curr: IfStmt): [IfStmt[], Stmt | undefined] => {
+        if (curr._else) {
+          if (isIfStmt(curr._else)) {
+            const [ifs, el] = collect(curr._else);
+            return [[curr, ...ifs], el];
+          } else {
+            return [[curr], curr._else];
           }
-          return [[curr], undefined];
-        };
+        }
+        return [[curr], undefined];
+      };
 
-        const [ifs, els] = collect(stmt);
+      const [ifs, els] = collect(stmt);
 
-        const choices = ifs.map((_if, i) => ({
-          ...evalCondition(_if.when),
-          Next: `if_${i}`,
-        }));
-
-        const elsState = els ? this.evalStmt(els, returnPass) : undefined;
-
-        return {
-          startState: "choose",
-          states: {
-            choose: {
-              Type: "Choice",
-              Choices: choices,
-              Default: "else",
+      const ifStates = Object.fromEntries(
+        ifs.map((_if, i) => {
+          const stateName = i === 0 ? "if" : `if_${i}`;
+          const next =
+            i + 1 < ifs.length ? `if_${i}` : els ? "else" : ASLGraph.DeferNext;
+          const condition = this.eval(_if.when);
+          const conditionOutput = ASLGraph.getAslStateOutput(condition);
+          const stmtStates = this.evalStmt(_if.then, returnPass);
+          return [
+            stateName,
+            {
+              startAt: "condition",
+              states: {
+                // run any states required for the condition and then evaluate the output (short circuit)
+                condition: ASLGraph.joinSubStates(_if.when, condition, {
+                  Type: "Choice",
+                  Choices: [
+                    { ...ASL.isTruthyOutput(conditionOutput), Next: "body" },
+                  ],
+                  Default: next,
+                })!,
+                // if the condition is try, the body will be run
+                body: stmtStates ?? { Type: "Pass", Next: ASLGraph.DeferNext },
+              },
             },
-            ...Object.fromEntries(
-              ifs.map((_if, i) => [
-                `if_${i}`,
-                this.evalStmt(_if.then, returnPass),
-              ])
-            ),
-            // provide an empty else statement. A choice default cannot terminate a sub-graph,
-            // without a pass here, an if statement without else cannot end a block.
-            // if the extra pass isn't needed, it will be pruned later
-            else: elsState
-              ? elsState
-              : { Type: "Pass", Next: ASLGraph.DeferNext },
-          },
-        };
-      });
+          ];
+        })
+      );
+
+      const elsState = els ? this.evalStmt(els, returnPass) : undefined;
+
+      return {
+        startState: "if",
+        states: {
+          ...ifStates,
+          // provide an empty else statement. A choice default cannot terminate a sub-graph,
+          // without a pass here, an if statement without else cannot end a block.
+          // if the extra pass isn't needed, it will be pruned later
+          else: elsState
+            ? elsState
+            : { Type: "Pass", Next: ASLGraph.DeferNext },
+        },
+      };
     } else if (isReturnStmt(stmt)) {
       return this.evalExprToSubState(
         stmt.expr ?? stmt.fork(new NullLiteralExpr()),
@@ -1328,7 +1358,7 @@ export class ASL {
           `a ${stmt.kindName} block must have at least one Stmt`
         );
       }
-      return this.evalContextToSubState(stmt, (_, evalCondition) => {
+      return this.evalExprToSubState(stmt.condition, (conditionOutput) => {
         return {
           startState: "check",
           states: {
@@ -1337,7 +1367,7 @@ export class ASL {
               node: stmt.condition,
               Choices: [
                 {
-                  ...evalCondition(stmt.condition),
+                  ...ASL.isTruthyOutput(conditionOutput),
                   Next: "whenTrue",
                 },
               ],
@@ -1536,8 +1566,8 @@ export class ASL {
   public evalContext<T extends ASLGraph.NodeResults>(
     contextNode: FunctionlessNode,
     handler: (
-      evalExpr: (expr: Expr) => ASLGraph.Output,
-      evalCondition: (expr: Expr) => Condition
+      evalExpr: (expr: Expr) => ASLGraph.Output
+      // evalCondition: (expr: Expr) => Condition
     ) => T
   ): T extends ASLGraph.OutputSubState
     ? ASLGraph.OutputSubState
@@ -1569,8 +1599,7 @@ export class ASL {
   private evalContextToSubState(
     contextNode: FunctionlessNode,
     handler: (
-      evalExpr: (expr: Expr) => ASLGraph.Output,
-      evalCondition: (expr: Expr) => Condition
+      evalExpr: (expr: Expr) => ASLGraph.Output
     ) => ASLGraph.SubState | ASLGraph.NodeState
   ): ASLGraph.SubState | ASLGraph.NodeState {
     const [handlerOut, states] = this.evalContextBase(handler);
@@ -1584,10 +1613,7 @@ export class ASL {
    * @see evalContext for more details.
    */
   private evalContextBase<T>(
-    handler: (
-      evalExpr: (expr: Expr) => ASLGraph.Output,
-      evalCondition: (expr: Expr) => Condition
-    ) => T
+    handler: (evalExpr: (expr: Expr) => ASLGraph.Output) => T
   ): [T, (ASLGraph.SubState | ASLGraph.NodeState)[]] {
     const states: (ASLGraph.SubState | ASLGraph.NodeState)[] = [];
     const evalExpr = (expr: Expr) => {
@@ -1596,13 +1622,7 @@ export class ASL {
       ASLGraph.isOutputStateOrSubState(state) && states.push(state);
       return output;
     };
-    const evalCondition = (expr: Expr) => {
-      const [cond, subState] = this.toCondition(expr);
-      subState && states.push(subState);
-      return cond;
-    };
-
-    return [handler(evalExpr, evalCondition), states];
+    return [handler(evalExpr), states];
   }
 
   /**
@@ -1874,7 +1894,7 @@ export class ASL {
       } else if (isPropAccessExpr(expr)) {
         if (isIdentifier(expr.name)) {
           return this.evalExpr(expr.expr, (output) => {
-            return this.accessConstant(output, expr.name.name, false);
+            return ASL.accessConstant(output, expr.name.name, false);
           });
         } else {
           throw new SynthError(ErrorCodes.Classes_are_not_supported);
@@ -1982,9 +2002,11 @@ export class ASL {
             containsJsonPath: false,
           };
         } else {
-          return this.evalContext(expr, (_, evalCondition) => {
-            const cond = evalCondition(expr);
-            return this.conditionState(expr, cond);
+          return this.evalExpr(expr.expr, (output) => {
+            return this.conditionState(
+              expr,
+              ASL.not(ASL.isTruthyOutput(output))
+            );
           });
         }
       } else if (
@@ -2015,11 +2037,13 @@ export class ASL {
         expr.op == ">" ||
         expr.op == "<" ||
         expr.op == ">=" ||
-        expr.op == "<=" ||
-        expr.op == "in"
+        expr.op == "<="
       ) {
-        return this.evalContext(expr, (_, evalCondition) => {
-          const cond = evalCondition(expr);
+        const op = expr.op;
+        return this.evalContext(expr, (evalExpr) => {
+          const leftOutput = evalExpr(expr.left);
+          const rightOutput = evalExpr(expr.right);
+          const cond = ASL.compareOutputs(leftOutput, rightOutput, op);
           return this.conditionState(expr, cond);
         });
       } else if (expr.op === "=") {
@@ -2051,6 +2075,20 @@ export class ASL {
             ),
             output: left,
           };
+        });
+      } else if (expr.op === "in") {
+        return this.evalContext(expr, (evalExpr) => {
+          const left = evalExpr(expr.left);
+          const right = evalExpr(expr.right);
+          const elm = this.assertElementAccessConstant(left);
+          const cond = ASLGraph.isLiteralValue(right)
+            ? right.value &&
+              typeof right.value === "object" &&
+              elm in right.value
+              ? ASL.trueCondition()
+              : ASL.falseCondition()
+            : ASL.elementIn(elm, right);
+          return this.conditionState(expr, cond);
         });
       } else if (expr.op === ",") {
         return this.evalContext(expr, (evalExpr) => {
@@ -2269,9 +2307,7 @@ export class ASL {
         };
       });
     } else if (isConditionExpr(expr)) {
-      return this.evalContext(expr, (_, evalCondition) => {
-        const cond = evalCondition(expr.when);
-
+      return this.evalExpr(expr.when, (output) => {
         /* use `this.eval` instead of the evalContext's evalExpr so that the states for left and right are not hoisted before the condition is evaluated
            statesForCondition
            Choice(cond)
@@ -2286,7 +2322,12 @@ export class ASL {
         const left = this.eval(expr.then);
         const right = this.eval(expr._else);
 
-        return this.conditionState(expr, cond, left, right);
+        return this.conditionState(
+          expr,
+          ASL.isTruthyOutput(output),
+          left,
+          right
+        );
       });
     } else if (isParenthesizedExpr(expr)) {
       return this.eval(expr.expr);
@@ -2322,57 +2363,6 @@ export class ASL {
           .map((name) => [`${name}.$`, `$.${name}`])
       ),
     };
-  }
-
-  /**
-   * @param element - when true (or field is a number) the output json path will prefer to use the square bracket format.
-   *                  `$.obj[field]`. When false will prefer the dot format `$.obj.field`.
-   */
-  private accessConstant(
-    value: ASLGraph.Output,
-    field: string | number,
-    element: boolean
-  ): ASLGraph.Output {
-    if (ASLGraph.isJsonPath(value)) {
-      return typeof field === "number"
-        ? { jsonPath: `${value.jsonPath}[${field}]` }
-        : element
-        ? { jsonPath: `${value.jsonPath}['${field}']` }
-        : { jsonPath: `${value.jsonPath}.${field}` };
-    }
-
-    if (value.value) {
-      const accessedValue = (() => {
-        if (Array.isArray(value.value)) {
-          if (typeof field === "number") {
-            return value.value[field];
-          }
-          throw new SynthError(
-            ErrorCodes.StepFunctions_Invalid_collection_access,
-            "Accessor to an array must be a constant number"
-          );
-        } else if (typeof value.value === "object") {
-          return value.value[field];
-        }
-        throw new SynthError(
-          ErrorCodes.StepFunctions_Invalid_collection_access,
-          "Only a constant object or array may be accessed."
-        );
-      })();
-
-      return typeof accessedValue === "string" &&
-        (accessedValue.startsWith("$") || accessedValue.startsWith("States."))
-        ? { jsonPath: accessedValue }
-        : {
-            value: accessedValue,
-            containsJsonPath: value.containsJsonPath,
-          };
-    }
-
-    throw new SynthError(
-      ErrorCodes.StepFunctions_Invalid_collection_access,
-      "Only a constant object or array may be accessed."
-    );
   }
 
   /**
@@ -3446,7 +3436,7 @@ export class ASL {
       const expr = this.eval(access.expr);
       const exprOutput = ASLGraph.getAslStateOutput(expr);
 
-      const updatedOutput = this.accessConstant(
+      const updatedOutput = ASL.accessConstant(
         exprOutput,
         this.assertElementAccessConstant(elementOutput),
         true
@@ -3841,183 +3831,6 @@ export class ASL {
         },
       };
     }
-  }
-
-  /**
-   * Transform an {@link Expr} into a ASL {@link Condition}.
-   *
-   * @returns a {@link Condition} and an optional {@link ASLGraph.SubState} or {@link ASLGraph.NodeState}.
-   *          the states are returned when the condition needs annotation states to generate the conditional.
-   */
-  public toCondition(
-    expr: Expr
-  ): [Condition, ASLGraph.SubState | ASLGraph.NodeState | undefined] {
-    const subStates: (ASLGraph.SubState | ASLGraph.NodeState)[] = [];
-    const localEval = (expr: Expr): ASLGraph.Output => {
-      // for condition, allow undefined values.
-      const e = this.eval(expr, true);
-      ASLGraph.isStateOrSubState(e) && subStates.push(e);
-      return ASLGraph.getAslStateOutput(e);
-    };
-    const localToCondition = (expr: Expr): Condition => {
-      const [cond, subState] = this.toCondition(expr);
-      subState && subStates.push(subState);
-      return cond;
-    };
-    const internal = (expr: Expr): Condition => {
-      if (isParenthesizedExpr(expr)) {
-        return internal(expr.expr);
-      } else if (isBooleanLiteralExpr(expr)) {
-        return expr.value ? ASL.trueCondition() : ASL.falseCondition();
-      } else if (isUnaryExpr(expr) || isPostfixUnaryExpr(expr)) {
-        // TODO: more than just unary not... - https://github.com/functionless/functionless/issues/232
-        if (expr.op === "!") {
-          return {
-            Not: localToCondition(expr.expr),
-          };
-        } else if (
-          expr.op === "++" ||
-          expr.op === "--" ||
-          expr.op === "-" ||
-          expr.op === "~" ||
-          // https://github.com/functionless/functionless/issues/395
-          expr.op === "+"
-        ) {
-          throw new SynthError(
-            ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
-            `Step Function does not support operator ${expr.op}`
-          );
-        }
-        assertNever(expr.op);
-      } else if (isBinaryExpr(expr)) {
-        if (
-          expr.op === "!=" ||
-          expr.op === "!==" ||
-          expr.op === "==" ||
-          expr.op === "===" ||
-          expr.op === ">" ||
-          expr.op === "<" ||
-          expr.op === ">=" ||
-          expr.op === "<="
-        ) {
-          const leftOutput = localEval(expr.left);
-          const rightOutput = localEval(expr.right);
-
-          if (
-            ASLGraph.isLiteralValue(leftOutput) &&
-            ASLGraph.isLiteralValue(rightOutput)
-          ) {
-            return ((expr.op === "==" || expr.op === "===") &&
-              leftOutput.value === rightOutput.value) ||
-              ((expr.op === "!=" || expr.op === "!==") &&
-                leftOutput.value !== rightOutput.value) ||
-              (leftOutput.value !== null &&
-                rightOutput.value !== null &&
-                ((expr.op === ">" && leftOutput.value > rightOutput.value) ||
-                  (expr.op === "<" && leftOutput.value < rightOutput.value) ||
-                  (expr.op === "<=" && leftOutput.value <= rightOutput.value) ||
-                  (expr.op === ">=" && leftOutput.value >= rightOutput.value)))
-              ? ASL.trueCondition()
-              : ASL.falseCondition();
-          }
-
-          const [left, right] = ASLGraph.isJsonPath(leftOutput)
-            ? [leftOutput, rightOutput]
-            : [rightOutput as ASLGraph.JsonPath, leftOutput];
-          // if the right is a variable and the left isn't, invert the operator
-          // 1 >= a -> a <= 1
-          // a >= b -> a >= b
-          // a >= 1 -> a >= 1
-          const operator =
-            leftOutput === left ? expr.op : invertBinaryOperator(expr.op);
-
-          return ASL.compare(left, right, operator as any);
-        } else if (expr.op === "in") {
-          const leftOutput = localEval(expr.left);
-          const rightOutput = localEval(expr.right);
-
-          const elm = this.assertElementAccessConstant(leftOutput);
-
-          const accessed = this.accessConstant(rightOutput, elm, true);
-
-          if (ASLGraph.isLiteralValue(accessed)) {
-            return accessed.value === undefined
-              ? ASL.falseCondition()
-              : ASL.trueCondition();
-          } else {
-            return ASL.isPresent(accessed.jsonPath);
-          }
-        } else if (expr.op === ",") {
-          // discard the left (evaluated above)
-          // eval right to a condition and return
-          return localToCondition(expr.right);
-        } else if (
-          expr.op === "+" ||
-          expr.op === "-" ||
-          expr.op === "*" ||
-          expr.op === "/" ||
-          expr.op === "%" ||
-          expr.op === "+=" ||
-          expr.op === "-=" ||
-          expr.op === "*=" ||
-          expr.op === "/=" ||
-          expr.op === "%=" ||
-          expr.op === "&" ||
-          expr.op === "&=" ||
-          expr.op === "**" ||
-          expr.op === "**=" ||
-          expr.op === "<<" ||
-          expr.op === "<<=" ||
-          expr.op === ">>" ||
-          expr.op === ">>=" ||
-          expr.op === ">>>" ||
-          expr.op === ">>>=" ||
-          expr.op === "^" ||
-          expr.op === "^=" ||
-          expr.op === "|" ||
-          expr.op === "|="
-        ) {
-          throw new SynthError(
-            ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
-            `Step Function does not support operator ${expr.op}`
-          );
-        } else if (
-          expr.op === "??" ||
-          expr.op === "=" ||
-          expr.op === "&&" ||
-          expr.op === "||" ||
-          expr.op === "instanceof" ||
-          expr.op === "??=" ||
-          expr.op === "&&=" ||
-          expr.op === "||="
-        ) {
-          const result = localEval(expr);
-
-          return ASLGraph.isJsonPath(result)
-            ? ASL.isTruthy(result.jsonPath)
-            : result.value
-            ? ASL.trueCondition()
-            : ASL.falseCondition();
-        }
-
-        assertNever(expr.op);
-      } else if (isVariableReference(expr) || isCallExpr(expr)) {
-        const variableOutput = localEval(expr);
-        if (!ASLGraph.isJsonPath(variableOutput)) {
-          throw new SynthError(
-            ErrorCodes.Unexpected_Error,
-            "Expected VariableReference and CallExpr to return variables."
-          );
-        }
-        // if(expr) { ... }
-        return ASL.isTruthy(variableOutput.jsonPath);
-      } else if (isAwaitExpr(expr)) {
-        return localToCondition(expr.expr);
-      }
-      throw new Error(`cannot evaluate expression: '${expr.kindName}`);
-    };
-
-    return [internal(expr), ASLGraph.joinSubStates(expr, ...subStates)];
   }
 
   /**
@@ -4877,6 +4690,14 @@ export namespace ASLGraph {
 }
 
 export namespace ASL {
+  export const isTruthyOutput = (v: ASLGraph.Output): Condition => {
+    return ASLGraph.isLiteralValue(v)
+      ? v.value
+        ? ASL.trueCondition()
+        : ASL.falseCondition()
+      : ASL.isTruthy(v.jsonPath);
+  };
+
   export const isTruthy = (v: string): Condition =>
     and(
       isPresent(v),
@@ -5087,6 +4908,41 @@ export namespace ASL {
     };
   };
 
+  export const compareOutputs = (
+    leftOutput: ASLGraph.Output,
+    rightOutput: ASLGraph.Output,
+    operator: keyof typeof VALUE_COMPARISONS | "!=" | "!=="
+  ): Condition => {
+    if (
+      ASLGraph.isLiteralValue(leftOutput) &&
+      ASLGraph.isLiteralValue(rightOutput)
+    ) {
+      return ((operator === "==" || operator === "===") &&
+        leftOutput.value === rightOutput.value) ||
+        ((operator === "!=" || operator === "!==") &&
+          leftOutput.value !== rightOutput.value) ||
+        (leftOutput.value !== null &&
+          rightOutput.value !== null &&
+          ((operator === ">" && leftOutput.value > rightOutput.value) ||
+            (operator === "<" && leftOutput.value < rightOutput.value) ||
+            (operator === "<=" && leftOutput.value <= rightOutput.value) ||
+            (operator === ">=" && leftOutput.value >= rightOutput.value)))
+        ? ASL.trueCondition()
+        : ASL.falseCondition();
+    }
+
+    const [left, right] = ASLGraph.isJsonPath(leftOutput)
+      ? [leftOutput, rightOutput]
+      : [rightOutput as ASLGraph.JsonPath, leftOutput];
+    // if the right is a variable and the left isn't, invert the operator
+    // 1 >= a -> a <= 1
+    // a >= b -> a >= b
+    // a >= 1 -> a >= 1
+    const op = leftOutput === left ? operator : invertBinaryOperator(operator);
+
+    return ASL.compare(left, right, op as any);
+  };
+
   export const compare = (
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
@@ -5219,6 +5075,72 @@ export namespace ASL {
       }
     }
     return undefined;
+  };
+
+  export const elementIn = (
+    element: string | number,
+    targetJsonPath: ASLGraph.JsonPath
+  ): Condition => {
+    const accessed = ASL.accessConstant(targetJsonPath, element, true);
+
+    if (ASLGraph.isLiteralValue(accessed)) {
+      return accessed.value === undefined
+        ? ASL.falseCondition()
+        : ASL.trueCondition();
+    } else {
+      return ASL.isPresent(accessed.jsonPath);
+    }
+  };
+
+  /**
+   * @param element - when true (or field is a number) the output json path will prefer to use the square bracket format.
+   *                  `$.obj[field]`. When false will prefer the dot format `$.obj.field`.
+   */
+  export const accessConstant = (
+    value: ASLGraph.Output,
+    field: string | number,
+    element: boolean
+  ): ASLGraph.Output => {
+    if (ASLGraph.isJsonPath(value)) {
+      return typeof field === "number"
+        ? { jsonPath: `${value.jsonPath}[${field}]` }
+        : element
+        ? { jsonPath: `${value.jsonPath}['${field}']` }
+        : { jsonPath: `${value.jsonPath}.${field}` };
+    }
+
+    if (value.value) {
+      const accessedValue = (() => {
+        if (Array.isArray(value.value)) {
+          if (typeof field === "number") {
+            return value.value[field];
+          }
+          throw new SynthError(
+            ErrorCodes.StepFunctions_Invalid_collection_access,
+            "Accessor to an array must be a constant number"
+          );
+        } else if (typeof value.value === "object") {
+          return value.value[field];
+        }
+        throw new SynthError(
+          ErrorCodes.StepFunctions_Invalid_collection_access,
+          "Only a constant object or array may be accessed."
+        );
+      })();
+
+      return typeof accessedValue === "string" &&
+        (accessedValue.startsWith("$") || accessedValue.startsWith("States."))
+        ? { jsonPath: accessedValue }
+        : {
+            value: accessedValue,
+            containsJsonPath: value.containsJsonPath,
+          };
+    }
+
+    throw new SynthError(
+      ErrorCodes.StepFunctions_Invalid_collection_access,
+      "Only a constant object or array may be accessed."
+    );
   };
 
   export const falseCondition = () => ASL.isNull("$$.Execution.Id");
