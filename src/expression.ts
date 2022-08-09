@@ -18,6 +18,7 @@ import {
 } from "./guards";
 import { BaseNode, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
+import { Span } from "./span";
 import type { BlockStmt, Stmt } from "./statement";
 import type { AnyClass, AnyFunction } from "./util";
 
@@ -82,6 +83,10 @@ export class ArrowFunctionExpr<
 > extends BaseExpr<NodeKind.ArrowFunctionExpr> {
   readonly _functionBrand?: F;
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly parameters: ParameterDecl[],
     readonly body: BlockStmt,
     /**
@@ -92,7 +97,7 @@ export class ArrowFunctionExpr<
      */
     readonly isAsync: boolean
   ) {
-    super(NodeKind.ArrowFunctionExpr, arguments);
+    super(NodeKind.ArrowFunctionExpr, span, arguments);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(isAsync, "isAsync", ["boolean"]);
@@ -104,6 +109,10 @@ export class FunctionExpr<
 > extends BaseExpr<NodeKind.FunctionExpr> {
   readonly _functionBrand?: F;
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly name: string | undefined,
     readonly parameters: ParameterDecl[],
     readonly body: BlockStmt,
@@ -128,7 +137,7 @@ export class FunctionExpr<
      */
     readonly isAsterisk: boolean
   ) {
-    super(NodeKind.FunctionExpr, arguments);
+    super(NodeKind.FunctionExpr, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
@@ -143,11 +152,15 @@ export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
 > {
   readonly _classBrand?: C;
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly name: string | undefined,
     readonly heritage: Expr | undefined,
     readonly members: ClassMember[]
   ) {
-    super(NodeKind.ClassExpr, arguments);
+    super(NodeKind.ClassExpr, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensure(heritage, "heritage", ["undefined", "Expr"]);
     this.ensureArrayOf(members, "members", NodeKind.ClassMember);
@@ -157,8 +170,15 @@ export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
 export class ReferenceExpr<
   R = unknown
 > extends BaseExpr<NodeKind.ReferenceExpr> {
-  constructor(readonly name: string, readonly ref: () => R) {
-    super(NodeKind.ReferenceExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly name: string,
+    readonly ref: () => R
+  ) {
+    super(NodeKind.ReferenceExpr, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensure(ref, "ref", ["function"]);
   }
@@ -167,8 +187,14 @@ export class ReferenceExpr<
 export type VariableReference = Identifier | PropAccessExpr | ElementAccessExpr;
 
 export class Identifier extends BaseExpr<NodeKind.Identifier> {
-  constructor(readonly name: string) {
-    super(NodeKind.Identifier, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly name: string
+  ) {
+    super(NodeKind.Identifier, span, arguments);
     this.ensure(name, "name", ["string"]);
   }
 
@@ -178,8 +204,14 @@ export class Identifier extends BaseExpr<NodeKind.Identifier> {
 }
 
 export class PrivateIdentifier extends BaseExpr<NodeKind.PrivateIdentifier> {
-  constructor(readonly name: `#${string}`) {
-    super(NodeKind.PrivateIdentifier, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly name: `#${string}`
+  ) {
+    super(NodeKind.PrivateIdentifier, span, arguments);
     this.ensure(name, "name", ["string"]);
   }
 
@@ -190,6 +222,10 @@ export class PrivateIdentifier extends BaseExpr<NodeKind.PrivateIdentifier> {
 
 export class PropAccessExpr extends BaseExpr<NodeKind.PropAccessExpr> {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly expr: Expr,
     readonly name: Identifier | PrivateIdentifier,
     /**
@@ -200,7 +236,7 @@ export class PropAccessExpr extends BaseExpr<NodeKind.PropAccessExpr> {
      */
     readonly isOptional: boolean
   ) {
-    super(NodeKind.PropAccessExpr, arguments);
+    super(NodeKind.PropAccessExpr, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
     this.ensure(name, "ref", [NodeKind.Identifier, NodeKind.PrivateIdentifier]);
   }
@@ -208,6 +244,10 @@ export class PropAccessExpr extends BaseExpr<NodeKind.PropAccessExpr> {
 
 export class ElementAccessExpr extends BaseExpr<NodeKind.ElementAccessExpr> {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly expr: Expr,
     readonly element: Expr,
     /**
@@ -218,7 +258,7 @@ export class ElementAccessExpr extends BaseExpr<NodeKind.ElementAccessExpr> {
      */
     readonly isOptional: boolean
   ) {
-    super(NodeKind.ElementAccessExpr, arguments);
+    super(NodeKind.ElementAccessExpr, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
     this.ensure(element, "element", ["Expr"]);
     this.ensure(isOptional, "isOptional", ["undefined", "boolean"]);
@@ -226,8 +266,14 @@ export class ElementAccessExpr extends BaseExpr<NodeKind.ElementAccessExpr> {
 }
 
 export class Argument extends BaseExpr<NodeKind.Argument, CallExpr | NewExpr> {
-  constructor(readonly expr: Expr) {
-    super(NodeKind.Argument, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr
+  ) {
+    super(NodeKind.Argument, span, arguments);
     this.ensure(expr, "element", ["Expr"]);
   }
 }
@@ -238,22 +284,44 @@ export class CallExpr<
     | SuperKeyword
     | ImportKeyword
 > extends BaseExpr<NodeKind.CallExpr> {
-  constructor(readonly expr: E, readonly args: Argument[]) {
-    super(NodeKind.CallExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: E,
+    readonly args: Argument[]
+  ) {
+    super(NodeKind.CallExpr, span, arguments);
   }
 }
 
 export class NewExpr extends BaseExpr<NodeKind.NewExpr> {
-  constructor(readonly expr: Expr, readonly args: Argument[]) {
-    super(NodeKind.NewExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr,
+    readonly args: Argument[]
+  ) {
+    super(NodeKind.NewExpr, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
     this.ensureArrayOf(args, "args", [NodeKind.Argument]);
   }
 }
 
 export class ConditionExpr extends BaseExpr<NodeKind.ConditionExpr> {
-  constructor(readonly when: Expr, readonly then: Expr, readonly _else: Expr) {
-    super(NodeKind.ConditionExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly when: Expr,
+    readonly then: Expr,
+    readonly _else: Expr
+  ) {
+    super(NodeKind.ConditionExpr, span, arguments);
     this.ensure(when, "when", ["Expr"]);
     this.ensure(then, "then", ["Expr"]);
     this.ensure(_else, "else", ["Expr"]);
@@ -331,11 +399,15 @@ export type BinaryOp =
 
 export class BinaryExpr extends BaseExpr<NodeKind.BinaryExpr> {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly left: Expr,
     readonly op: BinaryOp,
     readonly right: Expr
   ) {
-    super(NodeKind.BinaryExpr, arguments);
+    super(NodeKind.BinaryExpr, span, arguments);
     this.ensure(left, "left", ["Expr"]);
     this.ensure(right, "right", ["Expr"]);
   }
@@ -352,15 +424,29 @@ export type PostfixUnaryOp = "--" | "++";
 export type UnaryOp = "!" | "+" | "-" | "~" | PostfixUnaryOp;
 
 export class UnaryExpr extends BaseExpr<NodeKind.UnaryExpr> {
-  constructor(readonly op: UnaryOp, readonly expr: Expr) {
-    super(NodeKind.UnaryExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly op: UnaryOp,
+    readonly expr: Expr
+  ) {
+    super(NodeKind.UnaryExpr, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
   }
 }
 
 export class PostfixUnaryExpr extends BaseExpr<NodeKind.PostfixUnaryExpr> {
-  constructor(readonly op: PostfixUnaryOp, readonly expr: Expr) {
-    super(NodeKind.PostfixUnaryExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly op: PostfixUnaryOp,
+    readonly expr: Expr
+  ) {
+    super(NodeKind.PostfixUnaryExpr, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
   }
 }
@@ -369,50 +455,90 @@ export class PostfixUnaryExpr extends BaseExpr<NodeKind.PostfixUnaryExpr> {
 
 export class NullLiteralExpr extends BaseExpr<NodeKind.NullLiteralExpr> {
   readonly value = null;
-  constructor() {
-    super(NodeKind.NullLiteralExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span
+  ) {
+    super(NodeKind.NullLiteralExpr, span, arguments);
   }
 }
 
 export class UndefinedLiteralExpr extends BaseExpr<NodeKind.UndefinedLiteralExpr> {
   readonly value = undefined;
 
-  constructor() {
-    super(NodeKind.UndefinedLiteralExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span
+  ) {
+    super(NodeKind.UndefinedLiteralExpr, span, arguments);
   }
 }
 
 export class BooleanLiteralExpr extends BaseExpr<NodeKind.BooleanLiteralExpr> {
-  constructor(readonly value: boolean) {
-    super(NodeKind.BooleanLiteralExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly value: boolean
+  ) {
+    super(NodeKind.BooleanLiteralExpr, span, arguments);
     this.ensure(value, "value", ["boolean"]);
   }
 }
 
 export class BigIntExpr extends BaseExpr<NodeKind.BigIntExpr> {
-  constructor(readonly value: bigint) {
-    super(NodeKind.BigIntExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly value: bigint
+  ) {
+    super(NodeKind.BigIntExpr, span, arguments);
     this.ensure(value, "value", ["bigint"]);
   }
 }
 
 export class NumberLiteralExpr extends BaseExpr<NodeKind.NumberLiteralExpr> {
-  constructor(readonly value: number) {
-    super(NodeKind.NumberLiteralExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly value: number
+  ) {
+    super(NodeKind.NumberLiteralExpr, span, arguments);
     this.ensure(value, "value", ["number"]);
   }
 }
 
 export class StringLiteralExpr extends BaseExpr<NodeKind.StringLiteralExpr> {
-  constructor(readonly value: string) {
-    super(NodeKind.StringLiteralExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly value: string
+  ) {
+    super(NodeKind.StringLiteralExpr, span, arguments);
     this.ensure(value, "value", ["string"]);
   }
 }
 
 export class ArrayLiteralExpr extends BaseExpr<NodeKind.ArrayLiteralExpr> {
-  constructor(readonly items: Expr[]) {
-    super(NodeKind.ArrayLiteralExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly items: Expr[]
+  ) {
+    super(NodeKind.ArrayLiteralExpr, span, arguments);
     this.ensureArrayOf(items, "items", ["Expr"]);
   }
 }
@@ -425,8 +551,14 @@ export type ObjectElementExpr =
   | SpreadAssignExpr;
 
 export class ObjectLiteralExpr extends BaseExpr<NodeKind.ObjectLiteralExpr> {
-  constructor(readonly properties: ObjectElementExpr[]) {
-    super(NodeKind.ObjectLiteralExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly properties: ObjectElementExpr[]
+  ) {
+    super(NodeKind.ObjectLiteralExpr, span, arguments);
     this.ensureArrayOf(properties, "properties", NodeKind.ObjectElementExpr);
   }
 
@@ -460,8 +592,15 @@ export class PropAssignExpr extends BaseExpr<
   NodeKind.PropAssignExpr,
   ObjectLiteralExpr
 > {
-  constructor(readonly name: PropName, readonly expr: Expr) {
-    super(NodeKind.PropAssignExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly name: PropName,
+    readonly expr: Expr
+  ) {
+    super(NodeKind.PropAssignExpr, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
   }
 }
@@ -470,8 +609,14 @@ export class ComputedPropertyNameExpr extends BaseExpr<
   NodeKind.ComputedPropertyNameExpr,
   PropAssignExpr
 > {
-  constructor(readonly expr: Expr) {
-    super(NodeKind.ComputedPropertyNameExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr
+  ) {
+    super(NodeKind.ComputedPropertyNameExpr, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
   }
 }
@@ -480,8 +625,14 @@ export class SpreadAssignExpr extends BaseExpr<
   NodeKind.SpreadAssignExpr,
   ObjectLiteralExpr
 > {
-  constructor(readonly expr: Expr) {
-    super(NodeKind.SpreadAssignExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr
+  ) {
+    super(NodeKind.SpreadAssignExpr, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
   }
 }
@@ -490,8 +641,14 @@ export class SpreadElementExpr extends BaseExpr<
   NodeKind.SpreadElementExpr,
   ObjectLiteralExpr
 > {
-  constructor(readonly expr: Expr) {
-    super(NodeKind.SpreadElementExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr
+  ) {
+    super(NodeKind.SpreadElementExpr, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
   }
 }
@@ -506,8 +663,14 @@ export type TemplateLiteral = TemplateExpr | NoSubstitutionTemplateLiteralExpr;
  * ```
  */
 export class NoSubstitutionTemplateLiteralExpr extends BaseExpr<NodeKind.NoSubstitutionTemplateLiteral> {
-  constructor(readonly text: string) {
-    super(NodeKind.NoSubstitutionTemplateLiteral, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly text: string
+  ) {
+    super(NodeKind.NoSubstitutionTemplateLiteral, span, arguments);
     this.ensure(text, "text", ["string"]);
   }
 }
@@ -521,6 +684,10 @@ export class NoSubstitutionTemplateLiteralExpr extends BaseExpr<NodeKind.NoSubst
  */
 export class TemplateExpr extends BaseExpr<NodeKind.TemplateExpr> {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     /**
      * The literal text prefix of the template.
      * ```
@@ -538,7 +705,7 @@ export class TemplateExpr extends BaseExpr<NodeKind.TemplateExpr> {
       TemplateSpan<TemplateTail>
     ]
   ) {
-    super(NodeKind.TemplateExpr, arguments);
+    super(NodeKind.TemplateExpr, span, arguments);
     this.ensure(head, "head", [NodeKind.TemplateHead]);
     this.ensureArrayOf(spans, "spans", [NodeKind.TemplateSpan]);
   }
@@ -552,8 +719,15 @@ export class TemplateExpr extends BaseExpr<NodeKind.TemplateExpr> {
  * ```
  */
 export class TaggedTemplateExpr extends BaseExpr<NodeKind.TaggedTemplateExpr> {
-  constructor(readonly tag: Expr, readonly template: TemplateLiteral) {
-    super(NodeKind.TaggedTemplateExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly tag: Expr,
+    readonly template: TemplateLiteral
+  ) {
+    super(NodeKind.TaggedTemplateExpr, span, arguments);
     this.ensure(tag, "tag", ["Expr"]);
     this.ensure(template, "template", [
       NodeKind.TemplateExpr,
@@ -579,8 +753,14 @@ export class TaggedTemplateExpr extends BaseExpr<NodeKind.TaggedTemplateExpr> {
 export class TemplateHead extends BaseNode<NodeKind.TemplateHead> {
   readonly nodeKind = "Node";
 
-  constructor(readonly text: string) {
-    super(NodeKind.TemplateHead, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly text: string
+  ) {
+    super(NodeKind.TemplateHead, span, arguments);
     this.ensure(text, "text", ["string"]);
   }
 }
@@ -597,8 +777,15 @@ export class TemplateSpan<
 > extends BaseNode<NodeKind.TemplateSpan> {
   readonly nodeKind = "Node";
 
-  constructor(readonly expr: Expr, readonly literal: Literal) {
-    super(NodeKind.TemplateSpan, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr,
+    readonly literal: Literal
+  ) {
+    super(NodeKind.TemplateSpan, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
     this.ensure(literal, "literal", [
       NodeKind.TemplateMiddle,
@@ -610,8 +797,14 @@ export class TemplateSpan<
 export class TemplateMiddle extends BaseNode<NodeKind.TemplateMiddle> {
   readonly nodeKind = "Node";
 
-  constructor(readonly text: string) {
-    super(NodeKind.TemplateMiddle, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly text: string
+  ) {
+    super(NodeKind.TemplateMiddle, span, arguments);
     this.ensure(text, "text", ["string"]);
   }
 }
@@ -619,22 +812,40 @@ export class TemplateMiddle extends BaseNode<NodeKind.TemplateMiddle> {
 export class TemplateTail extends BaseNode<NodeKind.TemplateTail> {
   readonly nodeKind = "Node";
 
-  constructor(readonly text: string) {
-    super(NodeKind.TemplateTail, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly text: string
+  ) {
+    super(NodeKind.TemplateTail, span, arguments);
     this.ensure(text, "text", ["string"]);
   }
 }
 
 export class TypeOfExpr extends BaseExpr<NodeKind.TypeOfExpr> {
-  constructor(readonly expr: Expr) {
-    super(NodeKind.TypeOfExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr
+  ) {
+    super(NodeKind.TypeOfExpr, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
   }
 }
 
 export class AwaitExpr extends BaseExpr<NodeKind.AwaitExpr> {
-  constructor(readonly expr: Expr) {
-    super(NodeKind.AwaitExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr
+  ) {
+    super(NodeKind.AwaitExpr, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
   }
 }
@@ -642,11 +853,15 @@ export class AwaitExpr extends BaseExpr<NodeKind.AwaitExpr> {
 export class ThisExpr<T = any> extends BaseExpr<NodeKind.ThisExpr> {
   constructor(
     /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    /**
      * Produce the value of `this`
      */
     readonly ref: () => T
   ) {
-    super(NodeKind.ThisExpr, arguments);
+    super(NodeKind.ThisExpr, span, arguments);
     this.ensure(ref, "ref", ["function"]);
   }
 }
@@ -657,15 +872,25 @@ export class SuperKeyword extends BaseNode<NodeKind.SuperKeyword> {
   // 1. call in a constructor - `super(..)`
   // 2. call a method on it - `super.method(..)`.
   readonly nodeKind = "Node";
-  constructor() {
-    super(NodeKind.SuperKeyword, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span
+  ) {
+    super(NodeKind.SuperKeyword, span, arguments);
   }
 }
 
 export class ImportKeyword extends BaseNode<NodeKind.ImportKeyword> {
   readonly nodeKind = "Node";
-  constructor() {
-    super(NodeKind.ImportKeyword, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span
+  ) {
+    super(NodeKind.ImportKeyword, span, arguments);
   }
 }
 
@@ -673,6 +898,10 @@ export class YieldExpr<
   Delegate extends boolean = boolean
 > extends BaseExpr<NodeKind.YieldExpr> {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     /**
      * The expression to yield (or delegate) to.
      *
@@ -685,7 +914,7 @@ export class YieldExpr<
      */
     readonly delegate: Delegate
   ) {
-    super(NodeKind.YieldExpr, arguments);
+    super(NodeKind.YieldExpr, span, arguments);
     this.ensure(delegate, "delegate", ["boolean"]);
     if (delegate) {
       this.ensure(expr, "expr", ["Expr"]);
@@ -696,26 +925,42 @@ export class YieldExpr<
 }
 
 export class RegexExpr extends BaseExpr<NodeKind.RegexExpr> {
-  constructor(readonly regex: RegExp) {
-    super(NodeKind.RegexExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly regex: RegExp
+  ) {
+    super(NodeKind.RegexExpr, span, arguments);
   }
 }
 
 export class VoidExpr extends BaseExpr<NodeKind.VoidExpr> {
   constructor(
     /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    /**
      * The expression to yield (or delegate) to.
      */
     readonly expr: Expr
   ) {
-    super(NodeKind.VoidExpr, arguments);
+    super(NodeKind.VoidExpr, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
   }
 }
 
 export class DeleteExpr extends BaseExpr<NodeKind.DeleteExpr> {
-  constructor(readonly expr: PropAccessExpr | ElementAccessExpr) {
-    super(NodeKind.DeleteExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: PropAccessExpr | ElementAccessExpr
+  ) {
+    super(NodeKind.DeleteExpr, span, arguments);
     this.ensure(expr, "expr", [
       NodeKind.PropAccessExpr,
       NodeKind.ElementAccessExpr,
@@ -724,8 +969,14 @@ export class DeleteExpr extends BaseExpr<NodeKind.DeleteExpr> {
 }
 
 export class ParenthesizedExpr extends BaseExpr<NodeKind.ParenthesizedExpr> {
-  constructor(readonly expr: Expr) {
-    super(NodeKind.ParenthesizedExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr
+  ) {
+    super(NodeKind.ParenthesizedExpr, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
   }
 
@@ -738,8 +989,13 @@ export class ParenthesizedExpr extends BaseExpr<NodeKind.ParenthesizedExpr> {
 }
 
 export class OmittedExpr extends BaseExpr<NodeKind.OmittedExpr> {
-  constructor() {
-    super(NodeKind.OmittedExpr, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span
+  ) {
+    super(NodeKind.OmittedExpr, span, arguments);
   }
 }
 

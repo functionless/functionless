@@ -84,6 +84,7 @@ export const getPropertyAccessKeyFlatten = (
   if (isElementAccessExpr(expr)) {
     return getPropertyAccessKey(
       new ElementAccessExpr(
+        expr.span,
         expr.expr,
         flattenExpression(expr.element, scope),
         expr.isOptional
@@ -145,7 +146,11 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
   if (isParenthesizedExpr(expr)) {
     return flattenExpression(expr.expr, scope);
   } else if (isUnaryExpr(expr)) {
-    return new UnaryExpr(expr.op, flattenExpression(expr.expr, scope));
+    return new UnaryExpr(
+      expr.span,
+      expr.op,
+      flattenExpression(expr.expr, scope)
+    );
   } else if (isIdentifier(expr)) {
     // if this variable is in scope, return the expression it points to.
     if (expr.name in scope) {
@@ -188,17 +193,30 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
       throw Error("Object access must be a string.");
     } else if (isArrayLiteralExpr(parent)) {
       if (typeof key === "number") {
-        return parent.items[key] ?? parent.fork(new UndefinedLiteralExpr());
+        return (
+          parent.items[key] ?? parent.fork(new UndefinedLiteralExpr(expr.span))
+        );
       }
       throw new Error("Array access must be a number.");
     }
     return typeof key === "string"
-      ? new PropAccessExpr(parent, new Identifier(key), false)
-      : new ElementAccessExpr(parent, new NumberLiteralExpr(key), false);
+      ? new PropAccessExpr(
+          expr.span,
+          parent,
+          new Identifier(expr.span, key),
+          false
+        )
+      : new ElementAccessExpr(
+          expr.span,
+          parent,
+          new NumberLiteralExpr(expr.span, key),
+          false
+        );
   } else if (isComputedPropertyNameExpr(expr)) {
     return flattenExpression(expr.expr, scope);
   } else if (isArrayLiteralExpr(expr)) {
     return new ArrayLiteralExpr(
+      expr.span,
       expr.items.reduce((items, x) => {
         if (isSpreadElementExpr(x)) {
           const ref = flattenExpression(x.expr, scope);
@@ -214,17 +232,20 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
     );
   } else if (isBinaryExpr(expr)) {
     return new BinaryExpr(
+      expr.span,
       flattenExpression(expr.left, scope),
       expr.op,
       flattenExpression(expr.right, scope)
     );
   } else if (isObjectLiteralExpr(expr)) {
     return new ObjectLiteralExpr(
+      expr.span,
       expr.properties.reduce((props, e) => {
         if (isPropAssignExpr(e)) {
           return [
             ...props,
             new PropAssignExpr(
+              e.span,
               isIdentifier(e.name)
                 ? e.name
                 : assertNodeKind(
@@ -265,20 +286,23 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
     // when all of values are constants, turn them into a string constant now.
     return allConstants
       ? new StringLiteralExpr(
+          expr.span,
           [
             expr.head.text,
             ...flattenedConstants.flatMap((e) => [e[0]!.constant, e[1]]),
           ].join("")
         )
       : new TemplateExpr(
+          expr.span,
           expr.head.clone(),
           expr.spans.map(
             (span) =>
               new TemplateSpan(
+                span.span,
                 flattenExpression(span.expr, scope),
                 isTemplateMiddle(span.literal)
-                  ? new TemplateMiddle(span.literal.text)
-                  : new TemplateTail(span.literal.text)
+                  ? new TemplateMiddle(span.literal.span, span.literal.text)
+                  : new TemplateTail(span.literal.span, span.literal.text)
               )
           ) as [...TemplateSpan<TemplateMiddle>[], TemplateSpan<TemplateTail>]
         );
@@ -366,7 +390,7 @@ export const flattenReturnEvent = (stmts: Stmt[]) => {
   }
 
   return flattenExpression(
-    ret.expr ?? ret.fork(new UndefinedLiteralExpr()),
+    ret.expr ?? ret.fork(new UndefinedLiteralExpr(ret.span)),
     scope
   );
 };
