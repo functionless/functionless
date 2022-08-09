@@ -1004,18 +1004,22 @@ export class ASL {
 
       const [ifs, els] = collect(stmt);
 
-      const ifStates = Object.fromEntries(
+      const ifStates: Record<string, ASLGraph.SubState> = Object.fromEntries(
         ifs.map((_if, i) => {
           const stateName = i === 0 ? "if" : `if_${i}`;
           const next =
-            i + 1 < ifs.length ? `if_${i}` : els ? "else" : ASLGraph.DeferNext;
+            i + 1 < ifs.length
+              ? `if_${i + 1}`
+              : els
+              ? "else"
+              : ASLGraph.DeferNext;
           const condition = this.eval(_if.when);
           const conditionOutput = ASLGraph.getAslStateOutput(condition);
           const stmtStates = this.evalStmt(_if.then, returnPass);
           return [
             stateName,
             {
-              startAt: "condition",
+              startState: "condition",
               states: {
                 // run any states required for the condition and then evaluate the output (short circuit)
                 condition: ASLGraph.joinSubStates(_if.when, condition, {
@@ -1567,7 +1571,7 @@ export class ASL {
   public evalContext<T extends ASLGraph.NodeResults>(
     contextNode: FunctionlessNode,
     handler: (
-      evalExpr: (expr: Expr) => ASLGraph.Output
+      evalExpr: (expr: Expr, allowUndefined?: boolean) => ASLGraph.Output
       // evalCondition: (expr: Expr) => Condition
     ) => T
   ): T extends ASLGraph.OutputSubState
@@ -1600,7 +1604,7 @@ export class ASL {
   private evalContextToSubState(
     contextNode: FunctionlessNode,
     handler: (
-      evalExpr: (expr: Expr) => ASLGraph.Output
+      evalExpr: (expr: Expr, allowUndefined?: boolean) => ASLGraph.Output
     ) => ASLGraph.SubState | ASLGraph.NodeState
   ): ASLGraph.SubState | ASLGraph.NodeState {
     const [handlerOut, states] = this.evalContextBase(handler);
@@ -1617,8 +1621,8 @@ export class ASL {
     handler: (evalExpr: (expr: Expr) => ASLGraph.Output) => T
   ): [T, (ASLGraph.SubState | ASLGraph.NodeState)[]] {
     const states: (ASLGraph.SubState | ASLGraph.NodeState)[] = [];
-    const evalExpr = (expr: Expr) => {
-      const state = this.eval(expr);
+    const evalExpr = (expr: Expr, allowUndefined?: boolean) => {
+      const state = this.eval(expr, allowUndefined);
       const output = ASLGraph.getAslStateOutput(state);
       ASLGraph.isOutputStateOrSubState(state) && states.push(state);
       return output;
@@ -2042,8 +2046,8 @@ export class ASL {
       ) {
         const op = expr.op;
         return this.evalContext(expr, (evalExpr) => {
-          const leftOutput = evalExpr(expr.left);
-          const rightOutput = evalExpr(expr.right);
+          const leftOutput = evalExpr(expr.left, true);
+          const rightOutput = evalExpr(expr.right, true);
           const cond = ASL.compareOutputs(leftOutput, rightOutput, op);
           return this.conditionState(expr, cond);
         });
