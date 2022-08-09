@@ -1694,6 +1694,38 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       }),
     "034567-034561-034511-034111-031111-011111-111111-0"
   );
+
+  test(
+    "boolean",
+    (parent) =>
+      new StepFunction(parent, "sfn", (input) => {
+        return {
+          trueString: Boolean("1"),
+          trueBoolean: Boolean(true),
+          trueNumber: Boolean(1),
+          trueObject: Boolean({}),
+          truthyVar: Boolean(input.value),
+          falseString: Boolean(""),
+          falseBoolean: Boolean(false),
+          falseNumber: Boolean(0),
+          falsyVar: Boolean(input.nv),
+          empty: Boolean(),
+        };
+      }),
+    {
+      trueString: true,
+      trueBoolean: true,
+      trueNumber: true,
+      trueObject: true,
+      falseString: false,
+      falseBoolean: false,
+      falseNumber: false,
+      empty: false,
+      truthyVar: true,
+      falsyVar: false,
+    },
+    { value: "hello", nv: "" }
+  );
 });
 
 /**

@@ -4699,6 +4699,224 @@ Object {
 }
 `;
 
+exports[`boolean 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber": Object {
+      "End": true,
+      "Parameters": Object {
+        "empty": false,
+        "falseBoolean": false,
+        "falseNumber": false,
+        "falseString": false,
+        "falsyVar.$": "$.heap1",
+        "trueBoolean": true,
+        "trueNumber": true,
+        "trueObject": true,
+        "trueString": true,
+        "truthyVar.$": "$.heap0",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Boolean(input.nv)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.nv",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.input.nv",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.nv",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.input.nv",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.input.nv",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.input.nv",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.input.nv",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.input.nv",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.input.nv",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.input.nv",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__Boolean(input.nv)",
+        },
+      ],
+      "Default": "false__Boolean(input.nv)",
+      "Type": "Choice",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber: B",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "false__Boolean(input.nv)": Object {
+      "Next": "1__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber",
+      "Result": false,
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "false__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNu": Object {
+      "Next": "Boolean(input.nv)",
+      "Result": false,
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber: B": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.value",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.input.value",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.value",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.input.value",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.input.value",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.input.value",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.input.value",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.input.value",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.input.value",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.input.value",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNum",
+        },
+      ],
+      "Default": "false__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNu",
+      "Type": "Choice",
+    },
+    "true__Boolean(input.nv)": Object {
+      "Next": "1__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber",
+      "Result": true,
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "true__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNum": Object {
+      "Next": "Boolean(input.nv)",
+      "Result": true,
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`call $SFN forEach 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",

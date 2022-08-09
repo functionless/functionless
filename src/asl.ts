@@ -148,7 +148,7 @@ export interface States {
 }
 
 export const isState = (state: any): state is State => {
-  return "Type" in state;
+  return state && "Type" in state;
 };
 
 export type State =
@@ -1825,6 +1825,27 @@ export class ASL {
             };
           }
         );
+      } else if (isReferenceExpr(expr.expr)) {
+        const ref = expr.expr.ref();
+        if (ref === Boolean) {
+          const [arg] = expr.args;
+          if (!arg) {
+            return {
+              value: false,
+              containsJsonPath: false,
+            };
+          }
+          return this.evalExpr(arg.expr, (argOutput) => {
+            if (ASLGraph.isJsonPath(argOutput)) {
+              return this.conditionState(
+                expr,
+                ASL.isTruthy(argOutput.jsonPath)
+              );
+            } else {
+              return { value: !!argOutput.value, containsJsonPath: false };
+            }
+          });
+        }
       }
       throw new Error(
         `call must be a service call or list .slice, .map, .forEach or .filter: ${nodeToString(
@@ -4155,7 +4176,7 @@ export namespace ASLGraph {
   export const isSubState = (
     state: ASLGraph.NodeState | ASLGraph.SubState | ASLGraph.NodeResults
   ): state is ASLGraph.SubState => {
-    return "startState" in state;
+    return state && "startState" in state;
   };
 
   /**

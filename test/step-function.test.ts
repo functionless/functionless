@@ -3641,6 +3641,29 @@ test("parse json", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("Boolean", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "machine2",
+    (input: { value: string }) => {
+      return {
+        trueString: Boolean("1"),
+        trueBoolean: Boolean(true),
+        trueNumber: Boolean(1),
+        trueObject: Boolean({}),
+        falseString: Boolean(""),
+        falseBoolean: Boolean(false),
+        falseNumber: Boolean(0),
+        empty: Boolean(),
+        var: Boolean(input.value),
+      };
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("use context parameter", () => {
   const { stack } = initStepFunctionApp();
   const definition = new StepFunction<{ value: string }, string>(

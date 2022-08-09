@@ -1672,6 +1672,40 @@ Object {
 }
 `;
 
+exports[`Boolean 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber: B",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber: B": Object {
+      "End": true,
+      "Result": Object {
+        "empty": false,
+        "falseBoolean": false,
+        "falseNumber": false,
+        "falseObject": true,
+        "falseString": false,
+        "trueBoolean": true,
+        "trueNumber": true,
+        "trueObject": true,
+        "trueString": true,
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`await Promise.all(input.list.map((item) => task(item)))).filter 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
