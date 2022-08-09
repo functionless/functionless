@@ -26,14 +26,6 @@
     "target": "ES2019",
     "declarationMap": true,
     "noUncheckedIndexedAccess": true,
-    "plugins": [
-      {
-        "transform": "./lib/compile",
-        "exclude": [
-          "./src/{,**}/*"
-        ]
-      }
-    ],
     "paths": {
       "@fnls": [
         "lib/index"

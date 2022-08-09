@@ -550,7 +550,7 @@ function makeDynamoIntegration<
     .flatMap((prop) => {
       if (isPropAssignExpr(prop)) {
         const name = isIdentifier(prop.name)
-          ? prop.name
+          ? prop.name.name
           : isStringLiteralExpr(prop.name)
           ? prop.name.value
           : undefined;

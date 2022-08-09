@@ -8,8 +8,9 @@ import {
 import { assertNodeKind } from "../src/assert";
 import { NodeKind } from "../src/node-kind";
 
-test("function", () =>
-  expect(reflect(() => {})?.kindName).toEqual("ArrowFunctionExpr"));
+test("function", () => {
+  expect(reflect(() => {})?.kindName).toEqual("ArrowFunctionExpr");
+});
 
 test("turns a single line function into a return", () => {
   const fn = assertNodeKind(
