@@ -14,8 +14,6 @@ export function isExpr(a: any): a is Expr {
   return isNode(a) && a.nodeKind === "Expr";
 }
 
-export const isRoot = typeGuard(NodeKind.Root);
-
 export const isArgument = typeGuard(NodeKind.Argument);
 export const isArrayLiteralExpr = typeGuard(NodeKind.ArrayLiteralExpr);
 export const isArrowFunctionExpr = typeGuard(NodeKind.ArrowFunctionExpr);

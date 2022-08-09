@@ -11,7 +11,6 @@ import {
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
-import { Root } from "./root";
 import { Span } from "./span";
 import type {
   BlockStmt,
@@ -33,14 +32,14 @@ export type Decl =
 
 abstract class BaseDecl<
   Kind extends NodeKind,
-  Parent extends FunctionlessNode = FunctionlessNode
+  Parent extends FunctionlessNode | undefined = FunctionlessNode | undefined
 > extends BaseNode<Kind, Parent> {
   readonly nodeKind: "Decl" = "Decl";
 }
 
 export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
   NodeKind.ClassDecl,
-  Root
+  BlockStmt | undefined
 > {
   readonly _classBrand?: C;
   constructor(
@@ -50,11 +49,18 @@ export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
     span: Span,
     readonly name: string,
     readonly heritage: Expr | undefined,
-    readonly members: ClassMember[]
+    readonly members: ClassMember[],
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.ClassDecl, span, arguments);
     this.ensure(name, "name", ["string"]);
     this.ensureArrayOf(members, "members", NodeKind.ClassMember);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 
@@ -66,7 +72,10 @@ export type ClassMember =
   | PropDecl
   | SetAccessorDecl;
 
-export class ClassStaticBlockDecl extends BaseDecl<NodeKind.ClassStaticBlockDecl> {
+export class ClassStaticBlockDecl extends BaseDecl<
+  NodeKind.ClassStaticBlockDecl,
+  ClassDecl | ClassExpr
+> {
   constructor(
     /**
      * Range of text in the source file where this Node resides.
@@ -86,15 +95,25 @@ export class ConstructorDecl extends BaseDecl<NodeKind.ConstructorDecl> {
      */
     span: Span,
     readonly parameters: ParameterDecl[],
-    readonly body: BlockStmt
+    readonly body: BlockStmt,
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.ConstructorDecl, span, arguments);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 
-export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
+export class MethodDecl extends BaseDecl<
+  NodeKind.MethodDecl,
+  ClassDecl | ClassExpr | undefined
+> {
   constructor(
     /**
      * Range of text in the source file where this Node resides.
@@ -103,7 +122,6 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
     readonly name: PropName,
     readonly parameters: ParameterDecl[],
     readonly body: BlockStmt,
-
     /**
      * true if this function has an `async` modifier
      * ```ts
@@ -128,7 +146,13 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
      * }
      * ```
      */
-    readonly isAsterisk: boolean
+    readonly isAsterisk: boolean,
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.MethodDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
@@ -136,6 +160,7 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
     this.ensure(body, "body", [NodeKind.BlockStmt]);
     this.ensure(isAsync, "isAsync", ["boolean"]);
     this.ensure(isAsterisk, "isAsterisk", ["boolean"]);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 
@@ -200,7 +225,7 @@ export type FunctionLike<F extends AnyFunction = AnyFunction> =
 
 export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
   NodeKind.FunctionDecl,
-  Root | BlockStmt
+  BlockStmt | undefined
 > {
   readonly _functionBrand?: F;
   constructor(
@@ -233,7 +258,13 @@ export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
      * async function *foo() {}
      * ```
      */
-    readonly isAsterisk: boolean
+    readonly isAsterisk: boolean,
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.FunctionDecl, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
@@ -241,6 +272,7 @@ export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
     this.ensure(body, "body", [NodeKind.BlockStmt]);
     this.ensure(isAsync, "isAsync", ["boolean"]);
     this.ensure(isAsterisk, "isAsterisk", ["boolean"]);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 

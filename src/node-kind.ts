@@ -1,6 +1,4 @@
 export enum NodeKind {
-  Root = -1,
-
   Argument = 0,
   ArrayBinding = 1,
   ArrayLiteralExpr = 2,

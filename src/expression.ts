@@ -68,14 +68,18 @@ export type Expr =
 
 export abstract class BaseExpr<
   Kind extends NodeKind,
-  Parent extends FunctionlessNode = BindingElem | Expr | Stmt | VariableDecl
+  Parent extends FunctionlessNode | undefined =
+    | BindingElem
+    | Expr
+    | Stmt
+    | VariableDecl
 > extends BaseNode<Kind, Parent> {
   readonly nodeKind: "Expr" = "Expr";
 }
 
 export class ArrowFunctionExpr<
   F extends AnyFunction = AnyFunction
-> extends BaseExpr<NodeKind.ArrowFunctionExpr> {
+> extends BaseExpr<NodeKind.ArrowFunctionExpr, FunctionlessNode | undefined> {
   readonly _functionBrand?: F;
   constructor(
     /**
@@ -90,12 +94,19 @@ export class ArrowFunctionExpr<
      * async () =>  {}
      * ```
      */
-    readonly isAsync: boolean
+    readonly isAsync: boolean,
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.ArrowFunctionExpr, span, arguments);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(isAsync, "isAsync", ["boolean"]);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 
@@ -130,7 +141,13 @@ export class FunctionExpr<
      * async function *foo() {}
      * ```
      */
-    readonly isAsterisk: boolean
+    readonly isAsterisk: boolean,
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.FunctionExpr, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
@@ -138,12 +155,14 @@ export class FunctionExpr<
     this.ensure(body, "body", [NodeKind.BlockStmt]);
     this.ensure(isAsync, "isAsync", ["boolean"]);
     this.ensure(isAsterisk, "isAsterisk", ["boolean"]);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 
-export class ClassExpr<
-  C extends AnyClass = AnyClass
-> extends BaseExpr<NodeKind.ClassExpr> {
+export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
+  NodeKind.ClassExpr,
+  FunctionlessNode | undefined
+> {
   readonly _classBrand?: C;
   constructor(
     /**
@@ -152,12 +171,19 @@ export class ClassExpr<
     span: Span,
     readonly name: string | undefined,
     readonly heritage: Expr | undefined,
-    readonly members: ClassMember[]
+    readonly members: ClassMember[],
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.ClassExpr, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensure(heritage, "heritage", ["undefined", "Expr"]);
     this.ensureArrayOf(members, "members", NodeKind.ClassMember);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 

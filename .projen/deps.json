@@ -21,24 +21,7 @@
       "type": "build"
     },
     {
-      "name": "@functionless/ast-reflection",
-      "version": "file:../ast-reflection",
-      "type": "build"
-    },
-    {
-      "name": "@swc/cli",
-      "type": "build"
-    },
-    {
-      "name": "@swc/core",
-      "type": "build"
-    },
-    {
       "name": "@swc/jest",
-      "type": "build"
-    },
-    {
-      "name": "@swc/register",
       "type": "build"
     },
     {
@@ -227,7 +210,25 @@
       "type": "peer"
     },
     {
+      "name": "@functionless/ast-reflection",
+      "version": "file:../ast-reflection",
+      "type": "runtime"
+    },
+    {
       "name": "@functionless/nodejs-closure-serializer",
+      "type": "runtime"
+    },
+    {
+      "name": "@swc/cli",
+      "type": "runtime"
+    },
+    {
+      "name": "@swc/core",
+      "version": "1.2.218",
+      "type": "runtime"
+    },
+    {
+      "name": "@swc/register",
       "type": "runtime"
     },
     {

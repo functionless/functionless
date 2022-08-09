@@ -43,7 +43,6 @@ import {
   isImportKeyword,
   isLabelledStmt,
   isMethodDecl,
-  isRoot,
   isNewExpr,
   isNoSubstitutionTemplateLiteral,
   isNullLiteralExpr,
@@ -267,9 +266,7 @@ export function serializeClosure(func: AnyFunction): string {
   }
 
   function _toTS(node: FunctionlessNode): ts.Node {
-    if (isRoot(node)) {
-      return toTS(node.entrypoint);
-    } else if (isReferenceExpr(node)) {
+    if (isReferenceExpr(node)) {
       return serialize(node.ref());
     } else if (isArrowFunctionExpr(node)) {
       return ts.factory.createArrowFunction(

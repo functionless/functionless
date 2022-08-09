@@ -35,7 +35,6 @@ import {
   isFunctionLike,
   isIdentifier,
   isIfStmt,
-  isRoot,
   isNode,
   isParameterDecl,
   isReturnStmt,
@@ -48,12 +47,10 @@ import {
 } from "./guards";
 import type { NodeCtor } from "./node-ctor";
 import { NodeKind, NodeKindName, getNodeKindName } from "./node-kind";
-import { Root } from "./root";
 import type { Span } from "./span";
 import type { BlockStmt, CatchClause, Stmt } from "./statement";
 
 export type FunctionlessNode =
-  | Root
   | Decl
   | Expr
   | Stmt
@@ -78,15 +75,9 @@ export type BindingDecl = VariableDecl | ParameterDecl | BindingElem;
 
 export abstract class BaseNode<
   Kind extends NodeKind,
-  Parent extends FunctionlessNode | undefined = FunctionlessNode | undefined
+  Parent extends FunctionlessNode | undefined = FunctionlessNode
 > {
-  abstract readonly nodeKind:
-    | "Decl"
-    | "Err"
-    | "Expr"
-    | "Node"
-    | "Root"
-    | "Stmt";
+  abstract readonly nodeKind: "Decl" | "Err" | "Expr" | "Node" | "Stmt";
 
   // @ts-ignore - we have a convention to set this in the parent constructor
   readonly parent: Parent;
@@ -154,7 +145,7 @@ export abstract class BaseNode<
    * @returns the name of the file this node originates from.
    */
   public getFileName(): string {
-    if (isRoot(this)) {
+    if (isFunctionLike(this) && this.filename) {
       return this.filename;
     } else if (this.parent === undefined) {
       throw new Error(`cannot get filename of orphaned node`);

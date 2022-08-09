@@ -63,7 +63,6 @@ import {
   YieldExpr,
 } from "./expression";
 import { NodeKind } from "./node-kind";
-import { Root } from "./root";
 import {
   BlockStmt,
   BreakStmt,
@@ -198,7 +197,6 @@ export const keywords = {
 } as const;
 
 export const nodes = {
-  [NodeKind.Root]: Root,
   ...declarations,
   ...error,
   ...expressions,
