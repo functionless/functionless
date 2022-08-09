@@ -234,6 +234,7 @@ export function compile(
        * Catches any errors and wraps them in a {@link Err} node.
        */
       function errorBoundary<T extends ts.Node>(
+        span: ts.Node,
         func: () => T
       ): T | ts.ArrayLiteralExpression {
         try {
@@ -241,7 +242,7 @@ export function compile(
         } catch (err) {
           const error =
             err instanceof Error ? err : Error("Unknown compiler error.");
-          return newExpr(NodeKind.Err, [
+          return newExpr(NodeKind.Err, span, [
             ts.factory.createNewExpression(
               ts.factory.createIdentifier(error.name),
               undefined,
@@ -279,7 +280,7 @@ export function compile(
          */
         scope?: ts.Node
       ): ts.Expression {
-        return errorBoundary(() => {
+        return errorBoundary(impl, () => {
           if (
             (!ts.isFunctionDeclaration(impl) &&
               !ts.isArrowFunction(impl) &&
@@ -295,9 +296,9 @@ export function compile(
 
           const body = ts.isBlock(impl.body)
             ? toExpr(impl.body, scope ?? impl)
-            : newExpr(NodeKind.BlockStmt, [
+            : newExpr(NodeKind.BlockStmt, impl.body, [
                 ts.factory.createArrayLiteralExpression([
-                  newExpr(NodeKind.ReturnStmt, [
+                  newExpr(NodeKind.ReturnStmt, impl.body, [
                     toExpr(impl.body, scope ?? impl),
                   ]),
                 ]),
@@ -328,11 +329,11 @@ export function compile(
                 ]
               : [];
 
-          return newExpr(type, [
+          return newExpr(type, impl, [
             ...resolveFunctionName(),
             ts.factory.createArrayLiteralExpression(
               impl.parameters.map((param) =>
-                newExpr(NodeKind.ParameterDecl, [
+                newExpr(NodeKind.ParameterDecl, param, [
                   toExpr(param.name, scope ?? impl),
                   param.initializer
                     ? toExpr(param.initializer, scope ?? impl)
@@ -384,7 +385,9 @@ export function compile(
         } else if (ts.isFunctionExpression(node)) {
           return toFunction(NodeKind.FunctionExpr, node, scope);
         } else if (ts.isExpressionStatement(node)) {
-          return newExpr(NodeKind.ExprStmt, [toExpr(node.expression, scope)]);
+          return newExpr(NodeKind.ExprStmt, node, [
+            toExpr(node.expression, scope),
+          ]);
         } else if (ts.isCallExpression(node) || ts.isNewExpression(node)) {
           if (ts.isNewExpression(node)) {
             const newType = checker.getTypeAtLocation(node);
@@ -407,11 +410,12 @@ export function compile(
 
           const call = newExpr(
             ts.isCallExpression(node) ? NodeKind.CallExpr : NodeKind.NewExpr,
+            node,
             [
               toExpr(node.expression, scope),
               ts.factory.createArrayLiteralExpression(
                 node.arguments?.map((arg) =>
-                  newExpr(NodeKind.Argument, [toExpr(arg, scope)])
+                  newExpr(NodeKind.Argument, arg, [toExpr(arg, scope)])
                 ) ?? []
               ),
               ts.isPropertyAccessExpression(node.parent) &&
@@ -424,16 +428,16 @@ export function compile(
 
           return call;
         } else if (ts.isBlock(node)) {
-          return newExpr(NodeKind.BlockStmt, [
+          return newExpr(NodeKind.BlockStmt, node, [
             ts.factory.createArrayLiteralExpression(
               node.statements.map((x) => toExpr(x, scope))
             ),
           ]);
         } else if (ts.isIdentifier(node)) {
           if (node.text === "undefined") {
-            return newExpr(NodeKind.UndefinedLiteralExpr, []);
+            return newExpr(NodeKind.UndefinedLiteralExpr, node, []);
           } else if (node.text === "null") {
-            return newExpr(NodeKind.NullLiteralExpr, []);
+            return newExpr(NodeKind.NullLiteralExpr, node, []);
           }
 
           /**
@@ -449,11 +453,11 @@ export function compile(
             return ref(node);
           }
 
-          return newExpr(NodeKind.Identifier, [
+          return newExpr(NodeKind.Identifier, node, [
             ts.factory.createStringLiteral(node.text),
           ]);
         } else if (ts.isPropertyAccessExpression(node)) {
-          return newExpr(NodeKind.PropAccessExpr, [
+          return newExpr(NodeKind.PropAccessExpr, node, [
             toExpr(node.expression, scope),
             toExpr(node.name, scope),
             node.questionDotToken
@@ -461,7 +465,7 @@ export function compile(
               : ts.factory.createFalse(),
           ]);
         } else if (ts.isPropertyAccessChain(node)) {
-          return newExpr(NodeKind.PropAccessExpr, [
+          return newExpr(NodeKind.PropAccessExpr, node, [
             toExpr(node.expression, scope),
             toExpr(node.name, scope),
             node.questionDotToken
@@ -469,7 +473,7 @@ export function compile(
               : ts.factory.createFalse(),
           ]);
         } else if (ts.isElementAccessChain(node)) {
-          return newExpr(NodeKind.ElementAccessExpr, [
+          return newExpr(NodeKind.ElementAccessExpr, node, [
             toExpr(node.expression, scope),
             toExpr(node.argumentExpression, scope),
             node.questionDotToken
@@ -477,7 +481,7 @@ export function compile(
               : ts.factory.createFalse(),
           ]);
         } else if (ts.isElementAccessExpression(node)) {
-          return newExpr(NodeKind.ElementAccessExpr, [
+          return newExpr(NodeKind.ElementAccessExpr, node, [
             toExpr(node.expression, scope),
             toExpr(node.argumentExpression, scope),
             node.questionDotToken
@@ -485,11 +489,11 @@ export function compile(
               : ts.factory.createFalse(),
           ]);
         } else if (ts.isVariableStatement(node)) {
-          return newExpr(NodeKind.VariableStmt, [
+          return newExpr(NodeKind.VariableStmt, node, [
             toExpr(node.declarationList, scope),
           ]);
         } else if (ts.isVariableDeclarationList(node)) {
-          return newExpr(NodeKind.VariableDeclList, [
+          return newExpr(NodeKind.VariableDeclList, node, [
             ts.factory.createArrayLiteralExpression(
               node.declarations.map((decl) => toExpr(decl, scope))
             ),
@@ -502,9 +506,9 @@ export function compile(
             ),
           ]);
         } else if (ts.isVariableDeclaration(node)) {
-          return newExpr(NodeKind.VariableDecl, [
+          return newExpr(NodeKind.VariableDecl, node, [
             ts.isIdentifier(node.name)
-              ? newExpr(NodeKind.Identifier, [
+              ? newExpr(NodeKind.Identifier, node.name, [
                   ts.factory.createStringLiteral(node.name.text),
                 ])
               : toExpr(node.name, scope),
@@ -513,7 +517,7 @@ export function compile(
               : ts.factory.createIdentifier("undefined"),
           ]);
         } else if (ts.isIfStatement(node)) {
-          return newExpr(NodeKind.IfStmt, [
+          return newExpr(NodeKind.IfStmt, node, [
             // when
             toExpr(node.expression, scope),
             // then
@@ -522,19 +526,19 @@ export function compile(
             ...(node.elseStatement ? [toExpr(node.elseStatement, scope)] : []),
           ]);
         } else if (ts.isObjectBindingPattern(node)) {
-          return newExpr(NodeKind.ObjectBinding, [
+          return newExpr(NodeKind.ObjectBinding, node, [
             ts.factory.createArrayLiteralExpression(
               node.elements.map((e) => toExpr(e, scope))
             ),
           ]);
         } else if (ts.isArrayBindingPattern(node)) {
-          return newExpr(NodeKind.ArrayBinding, [
+          return newExpr(NodeKind.ArrayBinding, node, [
             ts.factory.createArrayLiteralExpression(
               node.elements.map((e) => toExpr(e, scope))
             ),
           ]);
         } else if (ts.isBindingElement(node)) {
-          return newExpr(NodeKind.BindingElem, [
+          return newExpr(NodeKind.BindingElem, node, [
             toExpr(node.name, scope),
             node.dotDotDotToken
               ? ts.factory.createTrue()
@@ -543,7 +547,7 @@ export function compile(
             toExpr(node.initializer, scope),
           ]);
         } else if (ts.isConditionalExpression(node)) {
-          return newExpr(NodeKind.ConditionExpr, [
+          return newExpr(NodeKind.ConditionExpr, node, [
             // when
             toExpr(node.condition, scope),
             // then
@@ -552,7 +556,7 @@ export function compile(
             toExpr(node.whenFalse, scope),
           ]);
         } else if (ts.isBinaryExpression(node)) {
-          return newExpr(NodeKind.BinaryExpr, [
+          return newExpr(NodeKind.BinaryExpr, node, [
             toExpr(node.left, scope),
             ts.factory.createStringLiteral(
               assertDefined(
@@ -563,7 +567,7 @@ export function compile(
             toExpr(node.right, scope),
           ]);
         } else if (ts.isPrefixUnaryExpression(node)) {
-          return newExpr(NodeKind.UnaryExpr, [
+          return newExpr(NodeKind.UnaryExpr, node, [
             ts.factory.createStringLiteral(
               assertDefined(
                 ts.tokenToString(node.operator) as UnaryOp,
@@ -573,7 +577,7 @@ export function compile(
             toExpr(node.operand, scope),
           ]);
         } else if (ts.isPostfixUnaryExpression(node)) {
-          return newExpr(NodeKind.PostfixUnaryExpr, [
+          return newExpr(NodeKind.PostfixUnaryExpr, node, [
             ts.factory.createStringLiteral(
               assertDefined(
                 ts.tokenToString(node.operator) as PostfixUnaryOp,
@@ -585,62 +589,65 @@ export function compile(
         } else if (ts.isReturnStatement(node)) {
           return newExpr(
             NodeKind.ReturnStmt,
+            node,
             node.expression ? [toExpr(node.expression, scope)] : []
           );
         } else if (ts.isObjectLiteralExpression(node)) {
-          return newExpr(NodeKind.ObjectLiteralExpr, [
+          return newExpr(NodeKind.ObjectLiteralExpr, node, [
             ts.factory.createArrayLiteralExpression(
               node.properties.map((x) => toExpr(x, scope))
             ),
           ]);
         } else if (ts.isPropertyAssignment(node)) {
-          return newExpr(NodeKind.PropAssignExpr, [
+          return newExpr(NodeKind.PropAssignExpr, node, [
             ts.isStringLiteral(node.name) || ts.isIdentifier(node.name)
-              ? string(node.name.text)
+              ? newExpr(NodeKind.StringLiteralExpr, node.name, [
+                  ts.factory.createStringLiteral(node.name.text),
+                ])
               : toExpr(node.name, scope),
             toExpr(node.initializer, scope),
           ]);
         } else if (ts.isComputedPropertyName(node)) {
-          return newExpr(NodeKind.ComputedPropertyNameExpr, [
+          return newExpr(NodeKind.ComputedPropertyNameExpr, node, [
             toExpr(node.expression, scope),
           ]);
         } else if (ts.isShorthandPropertyAssignment(node)) {
-          return newExpr(NodeKind.PropAssignExpr, [
-            newExpr(NodeKind.Identifier, [
+          return newExpr(NodeKind.PropAssignExpr, node, [
+            newExpr(NodeKind.Identifier, node.name, [
               ts.factory.createStringLiteral(node.name.text),
             ]),
             toExpr(node.name, scope),
           ]);
         } else if (ts.isSpreadAssignment(node)) {
-          return newExpr(NodeKind.SpreadAssignExpr, [
+          return newExpr(NodeKind.SpreadAssignExpr, node, [
             toExpr(node.expression, scope),
           ]);
         } else if (ts.isSpreadElement(node)) {
-          return newExpr(NodeKind.SpreadElementExpr, [
+          return newExpr(NodeKind.SpreadElementExpr, node, [
             toExpr(node.expression, scope),
           ]);
         } else if (ts.isArrayLiteralExpression(node)) {
-          return newExpr(NodeKind.ArrayLiteralExpr, [
+          return newExpr(NodeKind.ArrayLiteralExpr, node, [
             ts.factory.updateArrayLiteralExpression(
               node,
               node.elements.map((x) => toExpr(x, scope))
             ),
           ]);
         } else if (node.kind === ts.SyntaxKind.NullKeyword) {
-          return newExpr(NodeKind.NullLiteralExpr, [
+          return newExpr(NodeKind.NullLiteralExpr, node, [
             ts.factory.createIdentifier("false"),
           ]);
         } else if (ts.isNumericLiteral(node)) {
-          return newExpr(NodeKind.NumberLiteralExpr, [node]);
+          return newExpr(NodeKind.NumberLiteralExpr, node, [node]);
         } else if (ts.isBigIntLiteral(node)) {
-          return newExpr(NodeKind.BigIntExpr, [node]);
+          return newExpr(NodeKind.BigIntExpr, node, [node]);
         } else if (ts.isRegularExpressionLiteral(node)) {
-          return newExpr(NodeKind.RegexExpr, [node]);
+          return newExpr(NodeKind.RegexExpr, node, [node]);
         } else if (
           ts.isStringLiteral(node) ||
           ts.isNoSubstitutionTemplateLiteral(node)
         ) {
-          return newExpr(NodeKind.StringLiteralExpr, [node]);
+          return newExpr(NodeKind.StringLiteralExpr, node, [node]);
         } else if (ts.isLiteralExpression(node)) {
           // const type = checker.getTypeAtLocation(node);
           // if (type.symbol.escapedName === "boolean") {
@@ -650,7 +657,9 @@ export function compile(
           node.kind === ts.SyntaxKind.TrueKeyword ||
           node.kind === ts.SyntaxKind.FalseKeyword
         ) {
-          return newExpr(NodeKind.BooleanLiteralExpr, [node as ts.Expression]);
+          return newExpr(NodeKind.BooleanLiteralExpr, node, [
+            node as ts.Expression,
+          ]);
         } else if (ts.isForOfStatement(node) || ts.isForInStatement(node)) {
           const decl =
             ts.isVariableDeclarationList(node.initializer) &&
@@ -668,6 +677,7 @@ export function compile(
 
           return newExpr(
             ts.isForOfStatement(node) ? NodeKind.ForOfStmt : NodeKind.ForInStmt,
+            node,
             [
               toExpr(decl, scope),
               toExpr(node.expression, scope),
@@ -682,14 +692,14 @@ export function compile(
             ]
           );
         } else if (ts.isForStatement(node)) {
-          return newExpr(NodeKind.ForStmt, [
+          return newExpr(NodeKind.ForStmt, node, [
             toExpr(node.statement, scope),
             toExpr(node.initializer, scope),
             toExpr(node.condition, scope),
             toExpr(node.incrementor, scope),
           ]);
         } else if (ts.isTemplateExpression(node)) {
-          return newExpr(NodeKind.TemplateExpr, [
+          return newExpr(NodeKind.TemplateExpr, node, [
             // head
             toExpr(node.head, scope),
             // spans
@@ -698,41 +708,41 @@ export function compile(
             ),
           ]);
         } else if (ts.isTaggedTemplateExpression(node)) {
-          return newExpr(NodeKind.TaggedTemplateExpr, [
+          return newExpr(NodeKind.TaggedTemplateExpr, node, [
             toExpr(node.tag, scope),
             toExpr(node.template, scope),
           ]);
         } else if (ts.isNoSubstitutionTemplateLiteral(node)) {
-          return newExpr(NodeKind.NoSubstitutionTemplateLiteral, [
+          return newExpr(NodeKind.NoSubstitutionTemplateLiteral, node, [
             ts.factory.createStringLiteral(node.text),
           ]);
         } else if (ts.isTemplateSpan(node)) {
-          return newExpr(NodeKind.TemplateSpan, [
+          return newExpr(NodeKind.TemplateSpan, node, [
             toExpr(node.expression, scope),
             toExpr(node.literal, scope),
           ]);
         } else if (ts.isTemplateHead(node)) {
-          return newExpr(NodeKind.TemplateHead, [
+          return newExpr(NodeKind.TemplateHead, node, [
             ts.factory.createStringLiteral(node.text),
           ]);
         } else if (ts.isTemplateMiddle(node)) {
-          return newExpr(NodeKind.TemplateMiddle, [
+          return newExpr(NodeKind.TemplateMiddle, node, [
             ts.factory.createStringLiteral(node.text),
           ]);
         } else if (ts.isTemplateTail(node)) {
-          return newExpr(NodeKind.TemplateTail, [
+          return newExpr(NodeKind.TemplateTail, node, [
             ts.factory.createStringLiteral(node.text),
           ]);
         } else if (ts.isBreakStatement(node)) {
-          return newExpr(NodeKind.BreakStmt, [
+          return newExpr(NodeKind.BreakStmt, node, [
             ...(node.label ? [toExpr(node.label, scope)] : []),
           ]);
         } else if (ts.isContinueStatement(node)) {
-          return newExpr(NodeKind.ContinueStmt, [
+          return newExpr(NodeKind.ContinueStmt, node, [
             ...(node.label ? [toExpr(node.label, scope)] : []),
           ]);
         } else if (ts.isTryStatement(node)) {
-          return newExpr(NodeKind.TryStmt, [
+          return newExpr(NodeKind.TryStmt, node, [
             toExpr(node.tryBlock, scope),
             node.catchClause
               ? toExpr(node.catchClause, scope)
@@ -742,34 +752,38 @@ export function compile(
               : ts.factory.createIdentifier("undefined"),
           ]);
         } else if (ts.isCatchClause(node)) {
-          return newExpr(NodeKind.CatchClause, [
+          return newExpr(NodeKind.CatchClause, node, [
             node.variableDeclaration
               ? toExpr(node.variableDeclaration, scope)
               : ts.factory.createIdentifier("undefined"),
             toExpr(node.block, scope),
           ]);
         } else if (ts.isThrowStatement(node)) {
-          return newExpr(NodeKind.ThrowStmt, [toExpr(node.expression, scope)]);
+          return newExpr(NodeKind.ThrowStmt, node, [
+            toExpr(node.expression, scope),
+          ]);
         } else if (ts.isTypeOfExpression(node)) {
-          return newExpr(NodeKind.TypeOfExpr, [toExpr(node.expression, scope)]);
+          return newExpr(NodeKind.TypeOfExpr, node, [
+            toExpr(node.expression, scope),
+          ]);
         } else if (ts.isWhileStatement(node)) {
-          return newExpr(NodeKind.WhileStmt, [
+          return newExpr(NodeKind.WhileStmt, node, [
             toExpr(node.expression, scope),
             ts.isBlock(node.statement)
               ? toExpr(node.statement, scope)
               : // re-write a standalone statement as as BlockStmt
-                newExpr(NodeKind.BlockStmt, [
+                newExpr(NodeKind.BlockStmt, node.statement, [
                   ts.factory.createArrayLiteralExpression([
                     toExpr(node.statement, scope),
                   ]),
                 ]),
           ]);
         } else if (ts.isDoStatement(node)) {
-          return newExpr(NodeKind.DoStmt, [
+          return newExpr(NodeKind.DoStmt, node, [
             ts.isBlock(node.statement)
               ? toExpr(node.statement, scope)
               : // re-write a standalone statement as as BlockStmt
-                newExpr(NodeKind.BlockStmt, [
+                newExpr(NodeKind.BlockStmt, node.statement, [
                   ts.factory.createArrayLiteralExpression([
                     toExpr(node.statement, scope),
                   ]),
@@ -777,7 +791,7 @@ export function compile(
             toExpr(node.expression, scope),
           ]);
         } else if (ts.isParenthesizedExpression(node)) {
-          return newExpr(NodeKind.ParenthesizedExpr, [
+          return newExpr(NodeKind.ParenthesizedExpr, node, [
             toExpr(node.expression, scope),
           ]);
         } else if (ts.isAsExpression(node)) {
@@ -787,7 +801,7 @@ export function compile(
         } else if (ts.isNonNullExpression(node)) {
           return toExpr(node.expression, scope);
         } else if (node.kind === ts.SyntaxKind.ThisKeyword) {
-          return newExpr(NodeKind.ThisExpr, [
+          return newExpr(NodeKind.ThisExpr, node, [
             ts.factory.createArrowFunction(
               undefined,
               undefined,
@@ -801,14 +815,17 @@ export function compile(
           ts.isToken(node) &&
           node.kind === ts.SyntaxKind.SuperKeyword
         ) {
-          return newExpr(NodeKind.SuperKeyword, []);
+          return newExpr(NodeKind.SuperKeyword, node, []);
         } else if (ts.isAwaitExpression(node)) {
-          return newExpr(NodeKind.AwaitExpr, [toExpr(node.expression, scope)]);
+          return newExpr(NodeKind.AwaitExpr, node, [
+            toExpr(node.expression, scope),
+          ]);
         } else if (ts.isClassDeclaration(node) || ts.isClassExpression(node)) {
           return newExpr(
             ts.isClassDeclaration(node)
               ? NodeKind.ClassDecl
               : NodeKind.ClassExpr,
+            node,
             [
               // name
               node.name ?? ts.factory.createIdentifier("undefined"),
@@ -826,7 +843,7 @@ export function compile(
             ]
           );
         } else if (ts.isClassStaticBlockDeclaration(node)) {
-          return newExpr(NodeKind.ClassStaticBlockDecl, [
+          return newExpr(NodeKind.ClassStaticBlockDecl, node, [
             toExpr(node.body, scope),
           ]);
         } else if (ts.isConstructorDeclaration(node)) {
@@ -834,58 +851,62 @@ export function compile(
         } else if (ts.isMethodDeclaration(node)) {
           return toFunction(NodeKind.MethodDecl, node);
         } else if (ts.isPropertyDeclaration(node)) {
-          return newExpr(NodeKind.PropDecl, [
+          return newExpr(NodeKind.PropDecl, node, [
             toExpr(node.name, scope),
             node.initializer
               ? toExpr(node.initializer, scope)
               : ts.factory.createIdentifier("undefined"),
           ]);
         } else if (ts.isDebuggerStatement(node)) {
-          return newExpr(NodeKind.DebuggerStmt, []);
+          return newExpr(NodeKind.DebuggerStmt, node, []);
         } else if (ts.isLabeledStatement(node)) {
-          return newExpr(NodeKind.LabelledStmt, [
+          return newExpr(NodeKind.LabelledStmt, node, [
             toExpr(node.label, scope),
             toExpr(node.statement, scope),
           ]);
         } else if (ts.isSwitchStatement(node)) {
-          return newExpr(NodeKind.SwitchStmt, [
+          return newExpr(NodeKind.SwitchStmt, node, [
             toExpr(node.expression, scope),
             ts.factory.createArrayLiteralExpression(
               node.caseBlock.clauses.map((clause) => toExpr(clause, scope))
             ),
           ]);
         } else if (ts.isCaseClause(node)) {
-          return newExpr(NodeKind.CaseClause, [
+          return newExpr(NodeKind.CaseClause, node, [
             toExpr(node.expression, scope),
             ts.factory.createArrayLiteralExpression(
               node.statements.map((stmt) => toExpr(stmt, scope))
             ),
           ]);
         } else if (ts.isDefaultClause(node)) {
-          return newExpr(NodeKind.DefaultClause, [
+          return newExpr(NodeKind.DefaultClause, node, [
             ts.factory.createArrayLiteralExpression(
               node.statements.map((stmt) => toExpr(stmt, scope))
             ),
           ]);
         } else if (ts.isWithStatement(node)) {
-          return newExpr(NodeKind.WithStmt, []);
+          return newExpr(NodeKind.WithStmt, node, []);
         } else if (ts.isPrivateIdentifier(node)) {
-          return newExpr(NodeKind.PrivateIdentifier, [
+          return newExpr(NodeKind.PrivateIdentifier, node, [
             ts.factory.createStringLiteral(node.getText()),
           ]);
         } else if (ts.isVoidExpression(node)) {
-          return newExpr(NodeKind.VoidExpr, [toExpr(node.expression, scope)]);
+          return newExpr(NodeKind.VoidExpr, node, [
+            toExpr(node.expression, scope),
+          ]);
         } else if (ts.isDeleteExpression(node)) {
-          return newExpr(NodeKind.DeleteExpr, [toExpr(node.expression, scope)]);
+          return newExpr(NodeKind.DeleteExpr, node, [
+            toExpr(node.expression, scope),
+          ]);
         } else if (ts.isYieldExpression(node)) {
-          return newExpr(NodeKind.YieldExpr, [
+          return newExpr(NodeKind.YieldExpr, node, [
             toExpr(node.expression, scope),
             node.asteriskToken
               ? ts.factory.createTrue()
               : ts.factory.createFalse(),
           ]);
         } else if (ts.isOmittedExpression(node)) {
-          return newExpr(NodeKind.OmittedExpr, []);
+          return newExpr(NodeKind.OmittedExpr, node, []);
         }
 
         throw new Error(
@@ -894,7 +915,7 @@ export function compile(
       }
 
       function ref(node: ts.Expression) {
-        return newExpr(NodeKind.ReferenceExpr, [
+        return newExpr(NodeKind.ReferenceExpr, node, [
           ts.factory.createStringLiteral(exprToString(node)),
           ts.factory.createArrowFunction(
             undefined,
@@ -921,15 +942,13 @@ export function compile(
         }
       }
 
-      function string(literal: string): ts.Expression {
-        return newExpr(NodeKind.StringLiteralExpr, [
-          ts.factory.createStringLiteral(literal),
-        ]);
-      }
-
-      function newExpr(type: NodeKind, args: ts.Expression[]) {
+      function newExpr(type: NodeKind, span: ts.Node, args: ts.Expression[]) {
         return ts.factory.createArrayLiteralExpression([
           ts.factory.createNumericLiteral(type),
+          ts.factory.createArrayLiteralExpression([
+            ts.factory.createNumericLiteral(span.getStart()),
+            ts.factory.createNumericLiteral(span.getEnd()),
+          ]),
           ...args,
         ]);
       }
