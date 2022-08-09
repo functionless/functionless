@@ -624,6 +624,16 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         truthyOrAssign ||= "b"; // "a"
         falsyOrAssign ||= "b"; // "b"
 
+        let y = "";
+
+        if ((y = `${y}1`) && ((y = `${y}2`), false) && (y = `${y}3`)) {
+          y = `${y}4`;
+        }
+
+        if (((y = `${y}5`), false) || ((y = `${y}6`), true) || (y = `${y}7`)) {
+          y = `${y}8`;
+        }
+
         return {
           andVar: c,
           and: input.a && input.b,
@@ -643,6 +653,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           truthyChainAnd:
             input.a && input.v && ((x = `${x}7`), true) && input.v, // sets x+=5, returns v
           x,
+          y,
           notNullishCoalAssign,
           nullishCoalAssign,
           truthyAndAssign,
@@ -671,6 +682,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       falsyAndAssign: "",
       truthyOrAssign: "a",
       falsyOrAssign: "b",
+      y: "12568",
     },
     { a: true, b: false, v: "val", nv: undefined, z: 0, arr: ["1", "2"] }
   );

@@ -3890,141 +3890,117 @@ export class ASL {
         }
         assertNever(expr.op);
       } else if (isBinaryExpr(expr)) {
-        if (expr.op === "&&") {
-          return {
-            And: [localToCondition(expr.left), localToCondition(expr.right)],
-          };
-        } else if (expr.op === "||") {
-          return {
-            Or: [localToCondition(expr.left), localToCondition(expr.right)],
-          };
-        } else if (expr.op === "??" || expr.op === "=") {
-          // FIXME: the potentially circular reference here (eval -> toCondition -> eval -> toCondition) is not good. Should toCondition and eval also be merged?
-          const res = localEval(expr);
-          if (ASLGraph.isJsonPath(res)) {
-            return ASL.isTruthy(res.jsonPath);
-          } else {
-            // if a value is returned, assign it into a variable and check if it is truthy.
-            const temp = this.newHeapVariable();
-            subStates.push(
-              ASLGraph.passWithInput(
-                {
-                  Type: "Pass",
-                  ResultPath: temp,
-                  Next: ASLGraph.DeferNext,
-                },
-                res
-              )
-            );
-            return ASL.isTruthy(temp);
-          }
-        } else {
+        if (
+          expr.op === "!=" ||
+          expr.op === "!==" ||
+          expr.op === "==" ||
+          expr.op === "===" ||
+          expr.op === ">" ||
+          expr.op === "<" ||
+          expr.op === ">=" ||
+          expr.op === "<="
+        ) {
           const leftOutput = localEval(expr.left);
           const rightOutput = localEval(expr.right);
 
           if (
-            expr.op === "!=" ||
-            expr.op === "!==" ||
-            expr.op === "==" ||
-            expr.op === "===" ||
-            expr.op === ">" ||
-            expr.op === "<" ||
-            expr.op === ">=" ||
-            expr.op === "<="
+            ASLGraph.isLiteralValue(leftOutput) &&
+            ASLGraph.isLiteralValue(rightOutput)
           ) {
-            if (
-              ASLGraph.isLiteralValue(leftOutput) &&
-              ASLGraph.isLiteralValue(rightOutput)
-            ) {
-              return ((expr.op === "==" || expr.op === "===") &&
-                leftOutput.value === rightOutput.value) ||
-                ((expr.op === "!=" || expr.op === "!==") &&
-                  leftOutput.value !== rightOutput.value) ||
-                (leftOutput.value !== null &&
-                  rightOutput.value !== null &&
-                  ((expr.op === ">" && leftOutput.value > rightOutput.value) ||
-                    (expr.op === "<" && leftOutput.value < rightOutput.value) ||
-                    (expr.op === "<=" &&
-                      leftOutput.value <= rightOutput.value) ||
-                    (expr.op === ">=" &&
-                      leftOutput.value >= rightOutput.value)))
-                ? ASL.trueCondition()
-                : ASL.falseCondition();
-            }
-
-            const [left, right] = ASLGraph.isJsonPath(leftOutput)
-              ? [leftOutput, rightOutput]
-              : [rightOutput as ASLGraph.JsonPath, leftOutput];
-            // if the right is a variable and the left isn't, invert the operator
-            // 1 >= a -> a <= 1
-            // a >= b -> a >= b
-            // a >= 1 -> a >= 1
-            const operator =
-              leftOutput === left ? expr.op : invertBinaryOperator(expr.op);
-
-            return ASL.compare(left, right, operator as any);
-          } else if (expr.op === "in") {
-            const elm = this.assertElementAccessConstant(leftOutput);
-
-            const accessed = this.accessConstant(rightOutput, elm, true);
-
-            if (ASLGraph.isLiteralValue(accessed)) {
-              return accessed.value === undefined
-                ? ASL.falseCondition()
-                : ASL.trueCondition();
-            } else {
-              return ASL.isPresent(accessed.jsonPath);
-            }
-          } else if (expr.op === ",") {
-            // eval left and discard the result
-            localEval(expr.left);
-            // eval right to a condition and return
-            return localToCondition(expr.right);
-          } else if (
-            expr.op === "+" ||
-            expr.op === "-" ||
-            expr.op === "*" ||
-            expr.op === "/" ||
-            expr.op === "%" ||
-            expr.op === "+=" ||
-            expr.op === "-=" ||
-            expr.op === "*=" ||
-            expr.op === "/=" ||
-            expr.op === "%=" ||
-            expr.op === "&" ||
-            expr.op === "&=" ||
-            expr.op === "**" ||
-            expr.op === "**=" ||
-            expr.op === "<<" ||
-            expr.op === "<<=" ||
-            expr.op === ">>" ||
-            expr.op === ">>=" ||
-            expr.op === ">>>" ||
-            expr.op === ">>>=" ||
-            expr.op === "^" ||
-            expr.op === "^=" ||
-            expr.op === "|" ||
-            expr.op === "|="
-          ) {
-            throw new SynthError(
-              ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
-              `Step Function does not support operator ${expr.op}`
-            );
-          } else if (
-            expr.op === "instanceof" ||
-            // https://github.com/functionless/functionless/issues/393
-            expr.op === "??=" ||
-            expr.op === "&&=" ||
-            expr.op === "||="
-          ) {
-            throw new SynthError(
-              ErrorCodes.Unsupported_Feature,
-              `Step Function does not support ${expr.op} operator`
-            );
+            return ((expr.op === "==" || expr.op === "===") &&
+              leftOutput.value === rightOutput.value) ||
+              ((expr.op === "!=" || expr.op === "!==") &&
+                leftOutput.value !== rightOutput.value) ||
+              (leftOutput.value !== null &&
+                rightOutput.value !== null &&
+                ((expr.op === ">" && leftOutput.value > rightOutput.value) ||
+                  (expr.op === "<" && leftOutput.value < rightOutput.value) ||
+                  (expr.op === "<=" && leftOutput.value <= rightOutput.value) ||
+                  (expr.op === ">=" && leftOutput.value >= rightOutput.value)))
+              ? ASL.trueCondition()
+              : ASL.falseCondition();
           }
 
-          assertNever(expr.op);
+          const [left, right] = ASLGraph.isJsonPath(leftOutput)
+            ? [leftOutput, rightOutput]
+            : [rightOutput as ASLGraph.JsonPath, leftOutput];
+          // if the right is a variable and the left isn't, invert the operator
+          // 1 >= a -> a <= 1
+          // a >= b -> a >= b
+          // a >= 1 -> a >= 1
+          const operator =
+            leftOutput === left ? expr.op : invertBinaryOperator(expr.op);
+
+          return ASL.compare(left, right, operator as any);
+        } else if (expr.op === "in") {
+          const leftOutput = localEval(expr.left);
+          const rightOutput = localEval(expr.right);
+
+          const elm = this.assertElementAccessConstant(leftOutput);
+
+          const accessed = this.accessConstant(rightOutput, elm, true);
+
+          if (ASLGraph.isLiteralValue(accessed)) {
+            return accessed.value === undefined
+              ? ASL.falseCondition()
+              : ASL.trueCondition();
+          } else {
+            return ASL.isPresent(accessed.jsonPath);
+          }
+        } else if (expr.op === ",") {
+          // discard the left (evaluated above)
+          // eval right to a condition and return
+          return localToCondition(expr.right);
+        } else if (
+          expr.op === "+" ||
+          expr.op === "-" ||
+          expr.op === "*" ||
+          expr.op === "/" ||
+          expr.op === "%" ||
+          expr.op === "+=" ||
+          expr.op === "-=" ||
+          expr.op === "*=" ||
+          expr.op === "/=" ||
+          expr.op === "%=" ||
+          expr.op === "&" ||
+          expr.op === "&=" ||
+          expr.op === "**" ||
+          expr.op === "**=" ||
+          expr.op === "<<" ||
+          expr.op === "<<=" ||
+          expr.op === ">>" ||
+          expr.op === ">>=" ||
+          expr.op === ">>>" ||
+          expr.op === ">>>=" ||
+          expr.op === "^" ||
+          expr.op === "^=" ||
+          expr.op === "|" ||
+          expr.op === "|="
+        ) {
+          throw new SynthError(
+            ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
+            `Step Function does not support operator ${expr.op}`
+          );
+        } else if (
+          expr.op === "??" ||
+          expr.op === "=" ||
+          expr.op === "&&" ||
+          expr.op === "||" ||
+          expr.op === "instanceof" ||
+          expr.op === "??=" ||
+          expr.op === "&&=" ||
+          expr.op === "||="
+        ) {
+          const result = localEval(expr);
+
+          return ASLGraph.isJsonPath(result)
+            ? ASL.isTruthy(result.jsonPath)
+            : result.value
+            ? ASL.trueCondition()
+            : ASL.falseCondition();
         }
+
+        assertNever(expr.op);
       } else if (isVariableReference(expr) || isCallExpr(expr)) {
         const variableOutput = localEval(expr);
         if (!ASLGraph.isJsonPath(variableOutput)) {

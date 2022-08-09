@@ -3800,18 +3800,438 @@ exports[`binaryOps logic 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return {andVar: c, and: input.a && input.b, or: input.a || input.b, null": Object {
+    "1__if(y = \${y}1 && y = \${y}2 , false && y = \${y}3)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsPresent": true,
+                      "Variable": "$.y",
+                    },
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.y",
+                    },
+                    Object {
+                      "Or": Array [
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.y",
+                            },
+                            Object {
+                              "Not": Object {
+                                "And": Array [
+                                  Object {
+                                    "IsString": true,
+                                    "Variable": "$.y",
+                                  },
+                                  Object {
+                                    "StringEquals": "",
+                                    "Variable": "$.y",
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.y",
+                            },
+                            Object {
+                              "Not": Object {
+                                "And": Array [
+                                  Object {
+                                    "IsNumeric": true,
+                                    "Variable": "$.y",
+                                  },
+                                  Object {
+                                    "NumericEquals": 0,
+                                    "Variable": "$.y",
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.y",
+                            },
+                            Object {
+                              "BooleanEquals": true,
+                              "Variable": "$.y",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.y",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.y",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.y",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.y",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.y",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.y",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.y",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.y",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.y",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.y",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "y = \${y}4",
+        },
+      ],
+      "Default": "if(y = \${y}5 , false || y = \${y}6 , true || y = \${y}7)",
+      "Type": "Choice",
+    },
+    "1__if(y = \${y}1 && y = \${y}2 , false && y = \${y}3) 1": Object {
+      "InputPath": "$.heap1.string",
+      "Next": "y = \${y}2 , false",
+      "ResultPath": "$.y",
+      "Type": "Pass",
+    },
+    "1__if(y = \${y}5 , false || y = \${y}6 , true || y = \${y}7)": Object {
+      "Choices": Array [
+        Object {
+          "Next": "y = \${y}8",
+          "Or": Array [
+            Object {
+              "Or": Array [
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.y",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.y",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.y",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.y",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.y",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.y",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.y",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.y",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.y",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.y",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      "Default": "return {andVar: c, and: input.a && input.b, or: input.a || input.b, invNull",
+      "Type": "Choice",
+    },
+    "1__if(y = \${y}5 , false || y = \${y}6 , true || y = \${y}7) 1": Object {
+      "InputPath": "$.heap6.string",
+      "Next": "y = \${y}5",
+      "ResultPath": "$.y",
+      "Type": "Pass",
+    },
+    "1__return {andVar: c, and: input.a && input.b, or: input.a || input.b, invN": Object {
       "End": true,
       "Parameters": Object {
-        "and.$": "$.heap1",
+        "and.$": "$.heap12",
         "andVar.$": "$.c",
-        "invNullCoal.$": "$.heap4",
-        "nullCoal.$": "$.heap3",
-        "nullNull.$": "$.heap5",
-        "nullVal.$": "$.heap6",
-        "or.$": "$.heap2",
+        "falsyAndAssign.$": "$.falsyAndAssign",
+        "falsyChainAnd.$": "$.heap30",
+        "falsyChainOr.$": "$.heap25",
+        "falsyOrAssign.$": "$.falsyOrAssign",
+        "invNullCoal.$": "$.heap15",
+        "notNullishCoalAssign.$": "$.notNullishCoalAssign",
+        "nullCoal.$": "$.heap17",
+        "nullNull.$": "$.heap18",
+        "nullVal.$": "$.heap19",
+        "nullishCoalAssign.$": "$.nullishCoalAssign",
+        "or.$": "$.heap13",
+        "truthyAndAssign.$": "$.truthyAndAssign",
+        "truthyChainAnd.$": "$.heap34",
+        "truthyChainOr.$": "$.heap28",
+        "truthyOrAssign.$": "$.truthyOrAssign",
+        "x.$": "$.x",
+        "y.$": "$.y",
       },
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__x = \${x}1": Object {
+      "InputPath": "$.input.v",
+      "Next": "input.v ?? x = \${x}2 , input.nv",
+      "ResultPath": "$.heap15",
+      "Type": "Pass",
+    },
+    "1__x = \${x}1 1": Object {
+      "InputPath": "$.heap14.string",
+      "Next": "1__x = \${x}1",
+      "ResultPath": "$.x",
+      "Type": "Pass",
+    },
+    "1__x = \${x}2": Object {
+      "InputPath": "$.input.nv",
+      "Next": "input.nv ?? null",
+      "ResultPath": "$.heap17",
+      "Type": "Pass",
+    },
+    "1__x = \${x}2 1": Object {
+      "InputPath": "$.heap16.string",
+      "Next": "1__x = \${x}2",
+      "ResultPath": "$.x",
+      "Type": "Pass",
+    },
+    "1__x = \${x}3": Object {
+      "Next": "input.b || input.z || x = \${x}3 , true || x = \${x}4 , false 1",
+      "Result": true,
+      "ResultPath": "$.heap22",
+      "Type": "Pass",
+    },
+    "1__x = \${x}3 1": Object {
+      "InputPath": "$.heap21.string",
+      "Next": "1__x = \${x}3",
+      "ResultPath": "$.x",
+      "Type": "Pass",
+    },
+    "1__x = \${x}4": Object {
+      "Next": "input.b || input.z || x = \${x}3 , true || x = \${x}4 , false || input.v",
+      "Result": false,
+      "ResultPath": "$.heap24",
+      "Type": "Pass",
+    },
+    "1__x = \${x}4 1": Object {
+      "InputPath": "$.heap23.string",
+      "Next": "1__x = \${x}4",
+      "ResultPath": "$.x",
+      "Type": "Pass",
+    },
+    "1__x = \${x}5": Object {
+      "Next": "input.b || x = \${x}5 , false || input.arr",
+      "Result": false,
+      "ResultPath": "$.heap27",
+      "Type": "Pass",
+    },
+    "1__x = \${x}5 1": Object {
+      "InputPath": "$.heap26.string",
+      "Next": "1__x = \${x}5",
+      "ResultPath": "$.x",
+      "Type": "Pass",
+    },
+    "1__x = \${x}6": Object {
+      "Next": "input.a && input.v && x = \${x}7 , true",
+      "Result": true,
+      "ResultPath": "$.heap30",
+      "Type": "Pass",
+    },
+    "1__x = \${x}6 1": Object {
+      "InputPath": "$.heap29.string",
+      "Next": "1__x = \${x}6",
+      "ResultPath": "$.x",
+      "Type": "Pass",
+    },
+    "1__x = \${x}7": Object {
+      "Next": "input.a && input.v && x = \${x}7 , true && input.v",
+      "Result": true,
+      "ResultPath": "$.heap33",
+      "Type": "Pass",
+    },
+    "1__x = \${x}7 1": Object {
+      "InputPath": "$.heap32.string",
+      "Next": "1__x = \${x}7",
+      "ResultPath": "$.x",
+      "Type": "Pass",
+    },
+    "1__y = \${y}2": Object {
+      "InputPath": "$.heap3.string",
+      "Next": "y = \${y}3",
+      "ResultPath": "$.y",
+      "Type": "Pass",
+    },
+    "1__y = \${y}2 , false": Object {
+      "InputPath": "$.heap2.string",
+      "Next": "y = \${y}2",
+      "ResultPath": "$.y",
+      "Type": "Pass",
+    },
+    "1__y = \${y}3": Object {
+      "InputPath": "$.heap4.string",
+      "Next": "1__if(y = \${y}1 && y = \${y}2 , false && y = \${y}3)",
+      "ResultPath": "$.y",
+      "Type": "Pass",
+    },
+    "1__y = \${y}4": Object {
+      "InputPath": "$.heap5.string",
+      "Next": "if(y = \${y}5 , false || y = \${y}6 , true || y = \${y}7)",
+      "ResultPath": "$.y",
+      "Type": "Pass",
+    },
+    "1__y = \${y}5": Object {
+      "InputPath": "$.heap7.string",
+      "Next": "y = \${y}6 , true",
+      "ResultPath": "$.y",
+      "Type": "Pass",
+    },
+    "1__y = \${y}6": Object {
+      "InputPath": "$.heap9.string",
+      "Next": "y = \${y}7",
+      "ResultPath": "$.y",
+      "Type": "Pass",
+    },
+    "1__y = \${y}6 , true": Object {
+      "InputPath": "$.heap8.string",
+      "Next": "y = \${y}6",
+      "ResultPath": "$.y",
+      "Type": "Pass",
+    },
+    "1__y = \${y}7": Object {
+      "InputPath": "$.heap10.string",
+      "Next": "1__if(y = \${y}5 , false || y = \${y}6 , true || y = \${y}7)",
+      "ResultPath": "$.y",
+      "Type": "Pass",
+    },
+    "1__y = \${y}8": Object {
+      "InputPath": "$.heap11.string",
+      "Next": "return {andVar: c, and: input.a && input.b, or: input.a || input.b, invNull",
+      "ResultPath": "$.y",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -3825,375 +4245,1171 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "assignFalse__c = input.a && input.b": Object {
-      "Next": "c",
-      "Result": false,
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "assignFalse__input.a || input.b": Object {
-      "Next": "input.v ?? input.nv",
-      "Result": false,
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
-    "assignFalse__return {andVar: c, and: input.a && input.b, or: input.a || inp": Object {
-      "Next": "input.a || input.b",
-      "Result": false,
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "assignTrue__c = input.a && input.b": Object {
-      "Next": "c",
-      "Result": true,
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "assignTrue__input.a || input.b": Object {
-      "Next": "input.v ?? input.nv",
-      "Result": true,
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
-    "assignTrue__return {andVar: c, and: input.a && input.b, or: input.a || inpu": Object {
-      "Next": "input.a || input.b",
-      "Result": true,
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
     "c": Object {
       "InputPath": "$.heap0",
-      "Next": "return {andVar: c, and: input.a && input.b, or: input.a || input.b, nullCoa",
+      "Next": "x = \\"\\"",
       "ResultPath": "$.c",
       "Type": "Pass",
     },
     "c = input.a && input.b": Object {
       "Choices": Array [
         Object {
-          "And": Array [
-            Object {
-              "And": Array [
-                Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.a",
-                },
-                Object {
-                  "IsNull": false,
-                  "Variable": "$.input.a",
-                },
-                Object {
-                  "Or": Array [
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.input.a",
+          "Next": "true__c = input.a && input.b",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.input.a",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.input.a",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.input.a",
+                            },
+                          ],
                         },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsString": true,
-                                "Variable": "$.input.a",
-                              },
-                              Object {
-                                "StringEquals": "",
-                                "Variable": "$.input.a",
-                              },
-                            ],
-                          },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.input.a",
+                            },
+                          ],
                         },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsNumeric": true,
-                                "Variable": "$.input.a",
-                              },
-                              Object {
-                                "NumericEquals": 0,
-                                "Variable": "$.input.a",
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "BooleanEquals": true,
-                          "Variable": "$.input.a",
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.b",
-                },
-                Object {
-                  "IsNull": false,
-                  "Variable": "$.input.b",
-                },
-                Object {
-                  "Or": Array [
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.input.b",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsString": true,
-                                "Variable": "$.input.b",
-                              },
-                              Object {
-                                "StringEquals": "",
-                                "Variable": "$.input.b",
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.input.b",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsNumeric": true,
-                                "Variable": "$.input.b",
-                              },
-                              Object {
-                                "NumericEquals": 0,
-                                "Variable": "$.input.b",
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.input.b",
-                        },
-                        Object {
-                          "BooleanEquals": true,
-                          "Variable": "$.input.b",
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-          "Next": "assignTrue__c = input.a && input.b",
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.input.a",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
         },
       ],
-      "Default": "assignFalse__c = input.a && input.b",
+      "Default": "false__c = input.a && input.b",
       "Type": "Choice",
     },
-    "input.a || input.b": Object {
+    "false__c = input.a && input.b": Object {
+      "InputPath": "$.input.b",
+      "Next": "c",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "false__falsyAndAssign &&= \\"b\\"": Object {
+      "Next": "truthyOrAssign ||= \\"b\\"",
+      "Result": "b",
+      "ResultPath": "$.falsyAndAssign",
+      "Type": "Pass",
+    },
+    "false__falsyOrAssign ||= \\"b\\"": Object {
+      "Next": "y = \\"\\"",
+      "Result": "b",
+      "ResultPath": "$.falsyOrAssign",
+      "Type": "Pass",
+    },
+    "false__input.a && input.v && x = \${x}7 , true": Object {
+      "InputPath": "$.input.v",
+      "Next": "input.a && input.v && x = \${x}7 , true 1",
+      "ResultPath": "$.heap31",
+      "Type": "Pass",
+    },
+    "false__input.a && input.v && x = \${x}7 , true && input.v": Object {
+      "InputPath": "$.input.v",
+      "Next": "1__return {andVar: c, and: input.a && input.b, or: input.a || input.b, invN",
+      "ResultPath": "$.heap34",
+      "Type": "Pass",
+    },
+    "false__input.a || input.b": Object {
+      "InputPath": "$.input.b",
+      "Next": "input.nv ?? x = \${x}1 , input.v",
+      "ResultPath": "$.heap13",
+      "Type": "Pass",
+    },
+    "false__input.b || input.z || x = \${x}3 , true || x = \${x}4 , false": Object {
+      "InputPath": "$.input.z",
+      "Next": "input.b || input.z || x = \${x}3 , true",
+      "ResultPath": "$.heap20",
+      "Type": "Pass",
+    },
+    "false__input.b || input.z || x = \${x}3 , true || x = \${x}4 , false || input": Object {
+      "InputPath": "$.input.v",
+      "Next": "input.b || x = \${x}5 , false",
+      "ResultPath": "$.heap25",
+      "Type": "Pass",
+    },
+    "false__input.b || x = \${x}5 , false || input.arr": Object {
+      "InputPath": "$.input.arr",
+      "Next": "input.z && x = \${x}6 , true",
+      "ResultPath": "$.heap28",
+      "Type": "Pass",
+    },
+    "false__input.nv ?? null": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "null ?? input.v",
+      "ResultPath": "$.heap18",
+      "Type": "Pass",
+    },
+    "false__notNullishCoalAssign ??= \\"b\\"": Object {
+      "Next": "nullishCoalAssign ??= \\"b\\"",
+      "Result": "b",
+      "ResultPath": "$.notNullishCoalAssign",
+      "Type": "Pass",
+    },
+    "false__null ?? input.v": Object {
+      "InputPath": "$.input.v",
+      "Next": "input.b || input.z || x = \${x}3 , true || x = \${x}4 , false",
+      "ResultPath": "$.heap19",
+      "Type": "Pass",
+    },
+    "false__nullishCoalAssign ??= \\"b\\"": Object {
+      "Next": "truthyAndAssign &&= \\"b\\"",
+      "Result": "b",
+      "ResultPath": "$.nullishCoalAssign",
+      "Type": "Pass",
+    },
+    "false__return {andVar: c, and: input.a && input.b, or: input.a || input.b, ": Object {
+      "InputPath": "$.input.b",
+      "Next": "input.a || input.b",
+      "ResultPath": "$.heap12",
+      "Type": "Pass",
+    },
+    "false__truthyAndAssign &&= \\"b\\"": Object {
+      "Next": "falsyAndAssign &&= \\"b\\"",
+      "Result": "b",
+      "ResultPath": "$.truthyAndAssign",
+      "Type": "Pass",
+    },
+    "false__truthyOrAssign ||= \\"b\\"": Object {
+      "Next": "falsyOrAssign ||= \\"b\\"",
+      "Result": "b",
+      "ResultPath": "$.truthyOrAssign",
+      "Type": "Pass",
+    },
+    "falsyAndAssign &&= \\"b\\"": Object {
       "Choices": Array [
         Object {
-          "Next": "assignTrue__input.a || input.b",
-          "Or": Array [
-            Object {
-              "And": Array [
-                Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.a",
-                },
-                Object {
-                  "IsNull": false,
-                  "Variable": "$.input.a",
-                },
-                Object {
-                  "Or": Array [
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.input.a",
+          "Next": "true__falsyAndAssign &&= \\"b\\"",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.falsyAndAssign",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.falsyAndAssign",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.falsyAndAssign",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.falsyAndAssign",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.falsyAndAssign",
+                            },
+                          ],
                         },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsString": true,
-                                "Variable": "$.input.a",
-                              },
-                              Object {
-                                "StringEquals": "",
-                                "Variable": "$.input.a",
-                              },
-                            ],
-                          },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.falsyAndAssign",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.falsyAndAssign",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.falsyAndAssign",
+                            },
+                          ],
                         },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsNumeric": true,
-                                "Variable": "$.input.a",
-                              },
-                              Object {
-                                "NumericEquals": 0,
-                                "Variable": "$.input.a",
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "BooleanEquals": true,
-                          "Variable": "$.input.a",
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.b",
-                },
-                Object {
-                  "IsNull": false,
-                  "Variable": "$.input.b",
-                },
-                Object {
-                  "Or": Array [
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.input.b",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsString": true,
-                                "Variable": "$.input.b",
-                              },
-                              Object {
-                                "StringEquals": "",
-                                "Variable": "$.input.b",
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.input.b",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsNumeric": true,
-                                "Variable": "$.input.b",
-                              },
-                              Object {
-                                "NumericEquals": 0,
-                                "Variable": "$.input.b",
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.input.b",
-                        },
-                        Object {
-                          "BooleanEquals": true,
-                          "Variable": "$.input.b",
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.falsyAndAssign",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.falsyAndAssign",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
         },
       ],
-      "Default": "assignFalse__input.a || input.b",
+      "Default": "false__falsyAndAssign &&= \\"b\\"",
       "Type": "Choice",
     },
-    "input.nv ?? input.v": Object {
+    "falsyAndAssign = \\"\\"": Object {
+      "Next": "truthyOrAssign = \\"a\\"",
+      "Result": "",
+      "ResultPath": "$.falsyAndAssign",
+      "Type": "Pass",
+    },
+    "falsyOrAssign = \\"\\"": Object {
+      "Next": "notNullishCoalAssign ??= \\"b\\"",
+      "Result": "",
+      "ResultPath": "$.falsyOrAssign",
+      "Type": "Pass",
+    },
+    "falsyOrAssign ||= \\"b\\"": Object {
       "Choices": Array [
         Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.input.nv",
+              "Variable": "$.falsyOrAssign",
             },
             Object {
               "IsNull": false,
-              "Variable": "$.input.nv",
+              "Variable": "$.falsyOrAssign",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.falsyOrAssign",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.falsyOrAssign",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.falsyOrAssign",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.falsyOrAssign",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.falsyOrAssign",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.falsyOrAssign",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.falsyOrAssign",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.falsyOrAssign",
+                    },
+                  ],
+                },
+              ],
             },
           ],
-          "Next": "takeLeft__input.nv ?? input.v",
+          "Next": "true__falsyOrAssign ||= \\"b\\"",
         },
       ],
-      "Default": "takeRight__input.nv ?? input.v",
+      "Default": "false__falsyOrAssign ||= \\"b\\"",
+      "Type": "Choice",
+    },
+    "if(y = \${y}1 && y = \${y}2 , false && y = \${y}3)": Object {
+      "Next": "1__if(y = \${y}1 && y = \${y}2 , false && y = \${y}3) 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{}1',$.y)",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "if(y = \${y}5 , false || y = \${y}6 , true || y = \${y}7)": Object {
+      "Next": "1__if(y = \${y}5 , false || y = \${y}6 , true || y = \${y}7) 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{}5',$.y)",
+      },
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
+    "input.a && input.v && x = \${x}7 , true": Object {
+      "Choices": Array [
+        Object {
+          "Next": "true__input.a && input.v && x = \${x}7 , true",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.input.a",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.input.a",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.input.a",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.input.a",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.input.a",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "false__input.a && input.v && x = \${x}7 , true",
+      "Type": "Choice",
+    },
+    "input.a && input.v && x = \${x}7 , true && input.v": Object {
+      "Choices": Array [
+        Object {
+          "Next": "true__input.a && input.v && x = \${x}7 , true && input.v",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.heap33",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.heap33",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap33",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.heap33",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.heap33",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap33",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.heap33",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.heap33",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap33",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.heap33",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "false__input.a && input.v && x = \${x}7 , true && input.v",
+      "Type": "Choice",
+    },
+    "input.a && input.v && x = \${x}7 , true 1": Object {
+      "Choices": Array [
+        Object {
+          "Next": "true__input.a && input.v && x = \${x}7 , true 1",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.heap31",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.heap31",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap31",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.heap31",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.heap31",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap31",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.heap31",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.heap31",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap31",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.heap31",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "x = \${x}7",
+      "Type": "Choice",
+    },
+    "input.a || input.b": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.a",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.input.a",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.a",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.input.a",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.input.a",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.input.a",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.input.a",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.input.a",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.input.a",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.input.a",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__input.a || input.b",
+        },
+      ],
+      "Default": "false__input.a || input.b",
+      "Type": "Choice",
+    },
+    "input.b || input.z || x = \${x}3 , true": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap20",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap20",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap20",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap20",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap20",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap20",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap20",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap20",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap20",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap20",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__input.b || input.z || x = \${x}3 , true",
+        },
+      ],
+      "Default": "x = \${x}3",
+      "Type": "Choice",
+    },
+    "input.b || input.z || x = \${x}3 , true || x = \${x}4 , false": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.b",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.input.b",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.b",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.input.b",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.input.b",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.input.b",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.input.b",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.input.b",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.input.b",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.input.b",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__input.b || input.z || x = \${x}3 , true || x = \${x}4 , false",
+        },
+      ],
+      "Default": "false__input.b || input.z || x = \${x}3 , true || x = \${x}4 , false",
+      "Type": "Choice",
+    },
+    "input.b || input.z || x = \${x}3 , true || x = \${x}4 , false 1": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap22",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap22",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap22",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap22",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap22",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap22",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap22",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap22",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap22",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap22",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__input.b || input.z || x = \${x}3 , true || x = \${x}4 , false 1",
+        },
+      ],
+      "Default": "x = \${x}4",
+      "Type": "Choice",
+    },
+    "input.b || input.z || x = \${x}3 , true || x = \${x}4 , false || input.v": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap24",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap24",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap24",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap24",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap24",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap24",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap24",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap24",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap24",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap24",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__input.b || input.z || x = \${x}3 , true || x = \${x}4 , false || input.",
+        },
+      ],
+      "Default": "false__input.b || input.z || x = \${x}3 , true || x = \${x}4 , false || input",
+      "Type": "Choice",
+    },
+    "input.b || x = \${x}5 , false": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.b",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.input.b",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.b",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.input.b",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.input.b",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.input.b",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.input.b",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.input.b",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.input.b",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.input.b",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__input.b || x = \${x}5 , false",
+        },
+      ],
+      "Default": "x = \${x}5",
+      "Type": "Choice",
+    },
+    "input.b || x = \${x}5 , false || input.arr": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap27",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.heap27",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap27",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.heap27",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.heap27",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap27",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.heap27",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.heap27",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.heap27",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.heap27",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__input.b || x = \${x}5 , false || input.arr",
+        },
+      ],
+      "Default": "false__input.b || x = \${x}5 , false || input.arr",
       "Type": "Choice",
     },
     "input.nv ?? null": Object {
@@ -4209,13 +5425,32 @@ Object {
               "Variable": "$.input.nv",
             },
           ],
-          "Next": "takeLeft__input.nv ?? null",
+          "Next": "true__input.nv ?? null",
         },
       ],
-      "Default": "takeRight__input.nv ?? null",
+      "Default": "false__input.nv ?? null",
       "Type": "Choice",
     },
-    "input.v ?? input.nv": Object {
+    "input.nv ?? x = \${x}1 , input.v": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.nv",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.input.nv",
+            },
+          ],
+          "Next": "true__input.nv ?? x = \${x}1 , input.v",
+        },
+      ],
+      "Default": "x = \${x}1",
+      "Type": "Choice",
+    },
+    "input.v ?? x = \${x}2 , input.nv": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -4228,10 +5463,116 @@ Object {
               "Variable": "$.input.v",
             },
           ],
-          "Next": "takeLeft__input.v ?? input.nv",
+          "Next": "true__input.v ?? x = \${x}2 , input.nv",
         },
       ],
-      "Default": "takeRight__input.v ?? input.nv",
+      "Default": "x = \${x}2",
+      "Type": "Choice",
+    },
+    "input.z && x = \${x}6 , true": Object {
+      "Choices": Array [
+        Object {
+          "Next": "true__input.z && x = \${x}6 , true",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.input.z",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.input.z",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.z",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.input.z",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.input.z",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.z",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.input.z",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.input.z",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.z",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.input.z",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "x = \${x}6",
+      "Type": "Choice",
+    },
+    "notNullishCoalAssign = \\"a\\"": Object {
+      "Next": "nullishCoalAssign = null",
+      "Result": "a",
+      "ResultPath": "$.notNullishCoalAssign",
+      "Type": "Pass",
+    },
+    "notNullishCoalAssign ??= \\"b\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.notNullishCoalAssign",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.notNullishCoalAssign",
+            },
+          ],
+          "Next": "true__notNullishCoalAssign ??= \\"b\\"",
+        },
+      ],
+      "Default": "false__notNullishCoalAssign ??= \\"b\\"",
       "Type": "Choice",
     },
     "null ?? input.v": Object {
@@ -4247,213 +5588,566 @@ Object {
               "Variable": "$.fnl_context.null",
             },
           ],
-          "Next": "takeLeft__null ?? input.v",
+          "Next": "true__null ?? input.v",
         },
       ],
-      "Default": "takeRight__null ?? input.v",
+      "Default": "false__null ?? input.v",
       "Type": "Choice",
     },
-    "return {andVar: c, and: input.a && input.b, or: input.a || input.b, nullCoa": Object {
+    "nullishCoalAssign = null": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "truthyAndAssign = \\"a\\"",
+      "ResultPath": "$.nullishCoalAssign",
+      "Type": "Pass",
+    },
+    "nullishCoalAssign ??= \\"b\\"": Object {
       "Choices": Array [
         Object {
           "And": Array [
             Object {
-              "And": Array [
+              "IsPresent": true,
+              "Variable": "$.nullishCoalAssign",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.nullishCoalAssign",
+            },
+          ],
+          "Next": "true__nullishCoalAssign ??= \\"b\\"",
+        },
+      ],
+      "Default": "false__nullishCoalAssign ??= \\"b\\"",
+      "Type": "Choice",
+    },
+    "return {andVar: c, and: input.a && input.b, or: input.a || input.b, invNull": Object {
+      "Choices": Array [
+        Object {
+          "Next": "true__return {andVar: c, and: input.a && input.b, or: input.a || input.b, i",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.input.a",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.input.a",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.input.a",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.input.a",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.input.a",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "false__return {andVar: c, and: input.a && input.b, or: input.a || input.b, ",
+      "Type": "Choice",
+    },
+    "true__c = input.a && input.b": Object {
+      "InputPath": "$.input.a",
+      "Next": "c",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "true__falsyAndAssign &&= \\"b\\"": Object {
+      "InputPath": "$.falsyAndAssign",
+      "Next": "truthyOrAssign ||= \\"b\\"",
+      "ResultPath": "$.falsyAndAssign",
+      "Type": "Pass",
+    },
+    "true__falsyOrAssign ||= \\"b\\"": Object {
+      "InputPath": "$.falsyOrAssign",
+      "Next": "y = \\"\\"",
+      "ResultPath": "$.falsyOrAssign",
+      "Type": "Pass",
+    },
+    "true__input.a && input.v && x = \${x}7 , true": Object {
+      "InputPath": "$.input.a",
+      "Next": "input.a && input.v && x = \${x}7 , true 1",
+      "ResultPath": "$.heap31",
+      "Type": "Pass",
+    },
+    "true__input.a && input.v && x = \${x}7 , true && input.v": Object {
+      "InputPath": "$.heap33",
+      "Next": "1__return {andVar: c, and: input.a && input.b, or: input.a || input.b, invN",
+      "ResultPath": "$.heap34",
+      "Type": "Pass",
+    },
+    "true__input.a && input.v && x = \${x}7 , true 1": Object {
+      "InputPath": "$.heap31",
+      "Next": "input.a && input.v && x = \${x}7 , true && input.v",
+      "ResultPath": "$.heap33",
+      "Type": "Pass",
+    },
+    "true__input.a || input.b": Object {
+      "InputPath": "$.input.a",
+      "Next": "input.nv ?? x = \${x}1 , input.v",
+      "ResultPath": "$.heap13",
+      "Type": "Pass",
+    },
+    "true__input.b || input.z || x = \${x}3 , true": Object {
+      "InputPath": "$.heap20",
+      "Next": "input.b || input.z || x = \${x}3 , true || x = \${x}4 , false 1",
+      "ResultPath": "$.heap22",
+      "Type": "Pass",
+    },
+    "true__input.b || input.z || x = \${x}3 , true || x = \${x}4 , false": Object {
+      "InputPath": "$.input.b",
+      "Next": "input.b || input.z || x = \${x}3 , true",
+      "ResultPath": "$.heap20",
+      "Type": "Pass",
+    },
+    "true__input.b || input.z || x = \${x}3 , true || x = \${x}4 , false 1": Object {
+      "InputPath": "$.heap22",
+      "Next": "input.b || input.z || x = \${x}3 , true || x = \${x}4 , false || input.v",
+      "ResultPath": "$.heap24",
+      "Type": "Pass",
+    },
+    "true__input.b || input.z || x = \${x}3 , true || x = \${x}4 , false || input.": Object {
+      "InputPath": "$.heap24",
+      "Next": "input.b || x = \${x}5 , false",
+      "ResultPath": "$.heap25",
+      "Type": "Pass",
+    },
+    "true__input.b || x = \${x}5 , false": Object {
+      "InputPath": "$.input.b",
+      "Next": "input.b || x = \${x}5 , false || input.arr",
+      "ResultPath": "$.heap27",
+      "Type": "Pass",
+    },
+    "true__input.b || x = \${x}5 , false || input.arr": Object {
+      "InputPath": "$.heap27",
+      "Next": "input.z && x = \${x}6 , true",
+      "ResultPath": "$.heap28",
+      "Type": "Pass",
+    },
+    "true__input.nv ?? null": Object {
+      "InputPath": "$.input.nv",
+      "Next": "null ?? input.v",
+      "ResultPath": "$.heap18",
+      "Type": "Pass",
+    },
+    "true__input.nv ?? x = \${x}1 , input.v": Object {
+      "InputPath": "$.input.nv",
+      "Next": "input.v ?? x = \${x}2 , input.nv",
+      "ResultPath": "$.heap15",
+      "Type": "Pass",
+    },
+    "true__input.v ?? x = \${x}2 , input.nv": Object {
+      "InputPath": "$.input.v",
+      "Next": "input.nv ?? null",
+      "ResultPath": "$.heap17",
+      "Type": "Pass",
+    },
+    "true__input.z && x = \${x}6 , true": Object {
+      "InputPath": "$.input.z",
+      "Next": "input.a && input.v && x = \${x}7 , true",
+      "ResultPath": "$.heap30",
+      "Type": "Pass",
+    },
+    "true__notNullishCoalAssign ??= \\"b\\"": Object {
+      "InputPath": "$.notNullishCoalAssign",
+      "Next": "nullishCoalAssign ??= \\"b\\"",
+      "ResultPath": "$.notNullishCoalAssign",
+      "Type": "Pass",
+    },
+    "true__null ?? input.v": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "input.b || input.z || x = \${x}3 , true || x = \${x}4 , false",
+      "ResultPath": "$.heap19",
+      "Type": "Pass",
+    },
+    "true__nullishCoalAssign ??= \\"b\\"": Object {
+      "InputPath": "$.nullishCoalAssign",
+      "Next": "truthyAndAssign &&= \\"b\\"",
+      "ResultPath": "$.nullishCoalAssign",
+      "Type": "Pass",
+    },
+    "true__return {andVar: c, and: input.a && input.b, or: input.a || input.b, i": Object {
+      "InputPath": "$.input.a",
+      "Next": "input.a || input.b",
+      "ResultPath": "$.heap12",
+      "Type": "Pass",
+    },
+    "true__truthyAndAssign &&= \\"b\\"": Object {
+      "InputPath": "$.truthyAndAssign",
+      "Next": "falsyAndAssign &&= \\"b\\"",
+      "ResultPath": "$.truthyAndAssign",
+      "Type": "Pass",
+    },
+    "true__truthyOrAssign ||= \\"b\\"": Object {
+      "InputPath": "$.truthyOrAssign",
+      "Next": "falsyOrAssign ||= \\"b\\"",
+      "ResultPath": "$.truthyOrAssign",
+      "Type": "Pass",
+    },
+    "truthyAndAssign &&= \\"b\\"": Object {
+      "Choices": Array [
+        Object {
+          "Next": "true__truthyAndAssign &&= \\"b\\"",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.truthyAndAssign",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.truthyAndAssign",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.truthyAndAssign",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.truthyAndAssign",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.truthyAndAssign",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.truthyAndAssign",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.truthyAndAssign",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "false__truthyAndAssign &&= \\"b\\"",
+      "Type": "Choice",
+    },
+    "truthyAndAssign = \\"a\\"": Object {
+      "Next": "falsyAndAssign = \\"\\"",
+      "Result": "a",
+      "ResultPath": "$.truthyAndAssign",
+      "Type": "Pass",
+    },
+    "truthyOrAssign = \\"a\\"": Object {
+      "Next": "falsyOrAssign = \\"\\"",
+      "Result": "a",
+      "ResultPath": "$.truthyOrAssign",
+      "Type": "Pass",
+    },
+    "truthyOrAssign ||= \\"b\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.truthyOrAssign",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.truthyOrAssign",
+            },
+            Object {
+              "Or": Array [
                 Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.a",
-                },
-                Object {
-                  "IsNull": false,
-                  "Variable": "$.input.a",
-                },
-                Object {
-                  "Or": Array [
+                  "And": Array [
                     Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsString": true,
-                                "Variable": "$.input.a",
-                              },
-                              Object {
-                                "StringEquals": "",
-                                "Variable": "$.input.a",
-                              },
-                            ],
-                          },
-                        },
-                      ],
+                      "IsString": true,
+                      "Variable": "$.truthyOrAssign",
                     },
                     Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsNumeric": true,
-                                "Variable": "$.input.a",
-                              },
-                              Object {
-                                "NumericEquals": 0,
-                                "Variable": "$.input.a",
-                              },
-                            ],
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.truthyOrAssign",
                           },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "BooleanEquals": true,
-                          "Variable": "$.input.a",
-                        },
-                      ],
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.truthyOrAssign",
+                          },
+                        ],
+                      },
                     },
                   ],
                 },
-              ],
-            },
-            Object {
-              "And": Array [
                 Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.b",
-                },
-                Object {
-                  "IsNull": false,
-                  "Variable": "$.input.b",
-                },
-                Object {
-                  "Or": Array [
+                  "And": Array [
                     Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.input.b",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsString": true,
-                                "Variable": "$.input.b",
-                              },
-                              Object {
-                                "StringEquals": "",
-                                "Variable": "$.input.b",
-                              },
-                            ],
-                          },
-                        },
-                      ],
+                      "IsNumeric": true,
+                      "Variable": "$.truthyOrAssign",
                     },
                     Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.input.b",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsNumeric": true,
-                                "Variable": "$.input.b",
-                              },
-                              Object {
-                                "NumericEquals": 0,
-                                "Variable": "$.input.b",
-                              },
-                            ],
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.truthyOrAssign",
                           },
-                        },
-                      ],
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.truthyOrAssign",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.truthyOrAssign",
                     },
                     Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.input.b",
-                        },
-                        Object {
-                          "BooleanEquals": true,
-                          "Variable": "$.input.b",
-                        },
-                      ],
+                      "BooleanEquals": true,
+                      "Variable": "$.truthyOrAssign",
                     },
                   ],
                 },
               ],
             },
           ],
-          "Next": "assignTrue__return {andVar: c, and: input.a && input.b, or: input.a || inpu",
+          "Next": "true__truthyOrAssign ||= \\"b\\"",
         },
       ],
-      "Default": "assignFalse__return {andVar: c, and: input.a && input.b, or: input.a || inp",
+      "Default": "false__truthyOrAssign ||= \\"b\\"",
       "Type": "Choice",
     },
-    "takeLeft__input.nv ?? input.v": Object {
-      "InputPath": "$.input.nv",
-      "Next": "input.nv ?? null",
-      "ResultPath": "$.heap4",
+    "x = \\"\\"": Object {
+      "Next": "notNullishCoalAssign = \\"a\\"",
+      "Result": "",
+      "ResultPath": "$.x",
       "Type": "Pass",
     },
-    "takeLeft__input.nv ?? null": Object {
-      "InputPath": "$.input.nv",
-      "Next": "null ?? input.v",
-      "ResultPath": "$.heap5",
+    "x = \${x}1": Object {
+      "Next": "1__x = \${x}1 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{}1',$.x)",
+      },
+      "ResultPath": "$.heap14",
       "Type": "Pass",
     },
-    "takeLeft__input.v ?? input.nv": Object {
-      "InputPath": "$.input.v",
-      "Next": "input.nv ?? input.v",
+    "x = \${x}2": Object {
+      "Next": "1__x = \${x}2 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{}2',$.x)",
+      },
+      "ResultPath": "$.heap16",
+      "Type": "Pass",
+    },
+    "x = \${x}3": Object {
+      "Next": "1__x = \${x}3 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{}3',$.x)",
+      },
+      "ResultPath": "$.heap21",
+      "Type": "Pass",
+    },
+    "x = \${x}4": Object {
+      "Next": "1__x = \${x}4 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{}4',$.x)",
+      },
+      "ResultPath": "$.heap23",
+      "Type": "Pass",
+    },
+    "x = \${x}5": Object {
+      "Next": "1__x = \${x}5 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{}5',$.x)",
+      },
+      "ResultPath": "$.heap26",
+      "Type": "Pass",
+    },
+    "x = \${x}6": Object {
+      "Next": "1__x = \${x}6 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{}6',$.x)",
+      },
+      "ResultPath": "$.heap29",
+      "Type": "Pass",
+    },
+    "x = \${x}7": Object {
+      "Next": "1__x = \${x}7 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{}7',$.x)",
+      },
+      "ResultPath": "$.heap32",
+      "Type": "Pass",
+    },
+    "y = \\"\\"": Object {
+      "Next": "if(y = \${y}1 && y = \${y}2 , false && y = \${y}3)",
+      "Result": "",
+      "ResultPath": "$.y",
+      "Type": "Pass",
+    },
+    "y = \${y}2": Object {
+      "Next": "1__y = \${y}2",
+      "Parameters": Object {
+        "string.$": "States.Format('{}2',$.y)",
+      },
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
-    "takeLeft__null ?? input.v": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__return {andVar: c, and: input.a && input.b, or: input.a || input.b, null",
-      "ResultPath": "$.heap6",
+    "y = \${y}2 , false": Object {
+      "Next": "1__y = \${y}2 , false",
+      "Parameters": Object {
+        "string.$": "States.Format('{}2',$.y)",
+      },
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
-    "takeRight__input.nv ?? input.v": Object {
-      "InputPath": "$.input.v",
-      "Next": "input.nv ?? null",
+    "y = \${y}3": Object {
+      "Next": "1__y = \${y}3",
+      "Parameters": Object {
+        "string.$": "States.Format('{}3',$.y)",
+      },
       "ResultPath": "$.heap4",
       "Type": "Pass",
     },
-    "takeRight__input.nv ?? null": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "null ?? input.v",
+    "y = \${y}4": Object {
+      "Next": "1__y = \${y}4",
+      "Parameters": Object {
+        "string.$": "States.Format('{}4',$.y)",
+      },
       "ResultPath": "$.heap5",
       "Type": "Pass",
     },
-    "takeRight__input.v ?? input.nv": Object {
-      "InputPath": "$.input.nv",
-      "Next": "input.nv ?? input.v",
-      "ResultPath": "$.heap3",
+    "y = \${y}5": Object {
+      "Next": "1__y = \${y}5",
+      "Parameters": Object {
+        "string.$": "States.Format('{}5',$.y)",
+      },
+      "ResultPath": "$.heap7",
       "Type": "Pass",
     },
-    "takeRight__null ?? input.v": Object {
-      "InputPath": "$.input.v",
-      "Next": "1__return {andVar: c, and: input.a && input.b, or: input.a || input.b, null",
-      "ResultPath": "$.heap6",
+    "y = \${y}6": Object {
+      "Next": "1__y = \${y}6",
+      "Parameters": Object {
+        "string.$": "States.Format('{}6',$.y)",
+      },
+      "ResultPath": "$.heap9",
+      "Type": "Pass",
+    },
+    "y = \${y}6 , true": Object {
+      "Next": "1__y = \${y}6 , true",
+      "Parameters": Object {
+        "string.$": "States.Format('{}6',$.y)",
+      },
+      "ResultPath": "$.heap8",
+      "Type": "Pass",
+    },
+    "y = \${y}7": Object {
+      "Next": "1__y = \${y}7",
+      "Parameters": Object {
+        "string.$": "States.Format('{}7',$.y)",
+      },
+      "ResultPath": "$.heap10",
+      "Type": "Pass",
+    },
+    "y = \${y}8": Object {
+      "Next": "1__y = \${y}8",
+      "Parameters": Object {
+        "string.$": "States.Format('{}8',$.y)",
+      },
+      "ResultPath": "$.heap11",
       "Type": "Pass",
     },
   },
