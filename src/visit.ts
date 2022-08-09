@@ -62,6 +62,30 @@ export function visitEachChild<T extends FunctionlessNode>(
   return new ctor(...args) as T;
 }
 
+export function forEachChild(
+  node: FunctionlessNode,
+  visit: (node: FunctionlessNode) => any
+): void {
+  for (const argument of node._arguments) {
+    if (argument === null || typeof argument !== "object") {
+      // all primitives are simply returned as-is
+    } else if (isNode(argument)) {
+      if (visit(argument)) {
+        // if a truthy value is returned from visit, terminate the walk
+        return;
+      }
+    } else if (Array.isArray(argument)) {
+      // is an Array of nodes
+      for (const item of argument) {
+        if (visit(item)) {
+          // if a truthy value is returned from visit, terminate the walk
+          return;
+        }
+      }
+    }
+  }
+}
+
 /**
  * Like {@link visitEachChild} but it only visits the statements of a block.
  *
