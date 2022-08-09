@@ -1040,8 +1040,10 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@functionless/ast-reflection@file:../ast-reflection":
-  version "0.0.0"
+"@functionless/ast-reflection@^0.1.0":
+  version "0.1.0"
+  resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.1.0.tgz#a4705fcad03d992751f993c7e3a84b459ebe0366"
+  integrity sha512-pFiO+nKkv7wksXsh5DJpME/93LQlW5bKV5VOzhASGZY0FPR47Y3KA9exwtdzJt5pWLuirK3fZH6DhEz9vrTTIQ==
 
 "@functionless/nodejs-closure-serializer@^0.1.2":
   version "0.1.2"
