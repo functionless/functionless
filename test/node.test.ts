@@ -12,19 +12,40 @@ import {
   VariableDecl,
   WhileStmt,
 } from "../src";
+import { emptySpan } from "../src/span";
 
 test("node.exit() from catch surrounded by while", () => {
   const catchClause = new CatchClause(
-    new VariableDecl(new Identifier("var"), new NullLiteralExpr()),
-    new BlockStmt([new ExprStmt(new CallExpr(new Identifier("task"), []))])
+    emptySpan(),
+    new VariableDecl(
+      emptySpan(),
+      new Identifier(emptySpan(), "var"),
+      new NullLiteralExpr(emptySpan())
+    ),
+    new BlockStmt(emptySpan(), [
+      new ExprStmt(
+        emptySpan(),
+        new CallExpr(emptySpan(), new Identifier(emptySpan(), "task"), [])
+      ),
+    ])
   );
 
   const whileStmt = new WhileStmt(
-    new BooleanLiteralExpr(true),
-    new BlockStmt([new TryStmt(new BlockStmt([]), catchClause)])
+    emptySpan(),
+    new BooleanLiteralExpr(emptySpan(), true),
+    new BlockStmt(emptySpan(), [
+      new TryStmt(emptySpan(), new BlockStmt(emptySpan(), []), catchClause),
+    ])
   );
 
-  new FunctionDecl("name", [], new BlockStmt([whileStmt]), false, false);
+  new FunctionDecl(
+    emptySpan(),
+    "name",
+    [],
+    new BlockStmt(emptySpan(), [whileStmt]),
+    false,
+    false
+  );
 
   const exit = catchClause.exit();
 

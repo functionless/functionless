@@ -22,6 +22,7 @@
     },
     {
       "name": "@functionless/ast-reflection",
+      "version": "file:../ast-reflection",
       "type": "build"
     },
     {

@@ -11,6 +11,7 @@ import {
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
+import { Span } from "./span";
 import type {
   BlockStmt,
   CatchClause,
@@ -42,11 +43,15 @@ export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
 > {
   readonly _classBrand?: C;
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly name: string,
     readonly heritage: Expr | undefined,
     readonly members: ClassMember[]
   ) {
-    super(NodeKind.ClassDecl, arguments);
+    super(NodeKind.ClassDecl, span, arguments);
     this.ensure(name, "name", ["string"]);
     this.ensureArrayOf(members, "members", NodeKind.ClassMember);
   }
@@ -61,15 +66,28 @@ export type ClassMember =
   | SetAccessorDecl;
 
 export class ClassStaticBlockDecl extends BaseDecl<NodeKind.ClassStaticBlockDecl> {
-  constructor(readonly block: BlockStmt) {
-    super(NodeKind.ClassStaticBlockDecl, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly block: BlockStmt
+  ) {
+    super(NodeKind.ClassStaticBlockDecl, span, arguments);
     this.ensure(block, "block", [NodeKind.BlockStmt]);
   }
 }
 
 export class ConstructorDecl extends BaseDecl<NodeKind.ConstructorDecl> {
-  constructor(readonly parameters: ParameterDecl[], readonly body: BlockStmt) {
-    super(NodeKind.ConstructorDecl, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly parameters: ParameterDecl[],
+    readonly body: BlockStmt
+  ) {
+    super(NodeKind.ConstructorDecl, span, arguments);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
@@ -77,6 +95,10 @@ export class ConstructorDecl extends BaseDecl<NodeKind.ConstructorDecl> {
 
 export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly name: PropName,
     readonly parameters: ParameterDecl[],
     readonly body: BlockStmt,
@@ -107,7 +129,7 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
      */
     readonly isAsterisk: boolean
   ) {
-    super(NodeKind.MethodDecl, arguments);
+    super(NodeKind.MethodDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
@@ -118,11 +140,15 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
 
 export class PropDecl extends BaseDecl<NodeKind.PropDecl> {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly name: PropName,
     readonly isStatic: boolean,
     readonly initializer?: Expr
   ) {
-    super(NodeKind.PropDecl, arguments);
+    super(NodeKind.PropDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensure(isStatic, "isStatic", ["boolean"]);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
@@ -133,8 +159,15 @@ export class GetAccessorDecl extends BaseDecl<
   NodeKind.GetAccessorDecl,
   ClassDecl | ClassExpr | ObjectLiteralExpr
 > {
-  constructor(readonly name: PropName, readonly body: BlockStmt) {
-    super(NodeKind.GetAccessorDecl, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly name: PropName,
+    readonly body: BlockStmt
+  ) {
+    super(NodeKind.GetAccessorDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
   }
@@ -144,11 +177,15 @@ export class SetAccessorDecl extends BaseDecl<
   ClassDecl | ClassExpr | ObjectLiteralExpr
 > {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly name: PropName,
     readonly parameter: ParameterDecl,
     readonly body: BlockStmt
   ) {
-    super(NodeKind.SetAccessorDecl, arguments);
+    super(NodeKind.SetAccessorDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensure(parameter, "parameter", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
@@ -165,6 +202,10 @@ export class FunctionDecl<
 > extends BaseDecl<NodeKind.FunctionDecl> {
   readonly _functionBrand?: F;
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     // TODO: narrow to string once we migrate compile.ts to produce a 1:1 AST node
     // right now, Arrow and FunctionExpr are parsed to FunctionDecl, so name can be undefined
     // according to the spec, name is mandatory on a FunctionDecl and FunctionExpr
@@ -192,7 +233,7 @@ export class FunctionDecl<
      */
     readonly isAsterisk: boolean
   ) {
-    super(NodeKind.FunctionDecl, arguments);
+    super(NodeKind.FunctionDecl, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
@@ -210,6 +251,10 @@ export class ParameterDecl extends BaseDecl<
   ArrowFunctionExpr | FunctionDecl | FunctionExpr | SetAccessorDecl
 > {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly name: BindingName,
     readonly initializer: Expr | undefined,
     /**
@@ -220,7 +265,7 @@ export class ParameterDecl extends BaseDecl<
      */
     readonly isRest: boolean
   ) {
-    super(NodeKind.ParameterDecl, arguments);
+    super(NodeKind.ParameterDecl, span, arguments);
     this.ensure(name, "name", NodeKind.BindingNames);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
     this.ensure(isRest, "isRest", ["boolean"]);
@@ -268,12 +313,16 @@ export class BindingElem extends BaseDecl<
   BindingPattern
 > {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly name: BindingName,
     readonly rest: boolean,
     readonly propertyName?: PropName,
     readonly initializer?: Expr
   ) {
-    super(NodeKind.BindingElem, arguments);
+    super(NodeKind.BindingElem, span, arguments);
     this.ensure(name, "name", NodeKind.BindingNames);
     this.ensure(rest, "rest", ["boolean"]);
     this.ensure(propertyName, "propertyName", [
@@ -311,8 +360,14 @@ export class ObjectBinding extends BaseNode<
 > {
   readonly nodeKind: "Node" = "Node";
 
-  constructor(readonly bindings: BindingElem[]) {
-    super(NodeKind.ObjectBinding, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly bindings: BindingElem[]
+  ) {
+    super(NodeKind.ObjectBinding, span, arguments);
     this.ensureArrayOf(bindings, "bindings", [NodeKind.BindingElem]);
   }
 }
@@ -343,8 +398,14 @@ export class ArrayBinding extends BaseNode<
 > {
   readonly nodeKind: "Node" = "Node";
 
-  constructor(readonly bindings: (BindingElem | OmittedExpr)[]) {
-    super(NodeKind.ArrayBinding, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly bindings: (BindingElem | OmittedExpr)[]
+  ) {
+    super(NodeKind.ArrayBinding, span, arguments);
     this.ensureArrayOf(bindings, "bindings", [
       NodeKind.BindingElem,
       NodeKind.OmittedExpr,
@@ -367,8 +428,15 @@ export enum VariableDeclKind {
 export class VariableDecl<
   E extends Expr | undefined = Expr | undefined
 > extends BaseDecl<NodeKind.VariableDecl, VariableDeclParent> {
-  constructor(readonly name: BindingName, readonly initializer: E) {
-    super(NodeKind.VariableDecl, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly name: BindingName,
+    readonly initializer: E
+  ) {
+    super(NodeKind.VariableDecl, span, arguments);
     this.ensure(name, "name", NodeKind.BindingNames);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
   }
@@ -383,10 +451,14 @@ export class VariableDeclList extends BaseNode<
   readonly nodeKind: "Node" = "Node";
 
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly decls: VariableDecl[],
     readonly varKind: VariableDeclKind
   ) {
-    super(NodeKind.VariableDeclList, arguments);
+    super(NodeKind.VariableDeclList, span, arguments);
     this.ensureArrayOf(decls, "decls", [NodeKind.VariableDecl]);
   }
 }

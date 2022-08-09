@@ -54,6 +54,7 @@ import {
 import { Literal } from "./literal";
 import { FunctionlessNode } from "./node";
 import { validateFunctionLike } from "./reflect";
+import { emptySpan } from "./span";
 import { BlockStmt, VariableStmt } from "./statement";
 import {
   AnyFunction,
@@ -451,7 +452,7 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
     ): FunctionlessNode | FunctionlessNode[] {
       // just counting, don'r do anything
       if (isBlockStmt(node)) {
-        return new BlockStmt([
+        return new BlockStmt(node.span, [
           // for each block statement
           ...visitBlock(
             node,
@@ -485,7 +486,12 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
         return node.declList.decls.map(
           (decl) =>
             new VariableStmt(
-              new VariableDeclList([decl], node.declList.varKind)
+              node.span,
+              new VariableDeclList(
+                node.declList.span,
+                [decl],
+                node.declList.varKind
+              )
             )
         );
       } else if (isBinaryExpr(node)) {
@@ -503,51 +509,73 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
           );
 
           const rightClassName = new PropAccessExpr(
+            updatedNode.span,
             new PropAccessExpr(
+              updatedNode.right.span,
               updatedNode.right,
-              new Identifier("class"),
+              new Identifier(emptySpan(), "class"),
               false
             ),
-            new Identifier("name"),
+            new Identifier(emptySpan(), "name"),
             false
           );
 
           return new ConditionExpr(
+            node.span,
             new BinaryExpr(
+              node.span,
               new CallExpr(
+                node.span,
                 new PropAccessExpr(
+                  node.span,
                   rightClassName,
-                  new Identifier("startsWith"),
+                  new Identifier(emptySpan(), "startsWith"),
                   false
                 ),
-                [new Argument(new StringLiteralExpr("[L"))]
+                [
+                  new Argument(
+                    emptySpan(),
+                    new StringLiteralExpr(emptySpan(), "[L")
+                  ),
+                ]
               ),
               "||",
               new CallExpr(
+                node.span,
                 new PropAccessExpr(
+                  node.span,
                   rightClassName,
-                  new Identifier("contains"),
+                  new Identifier(emptySpan(), "contains"),
                   false
                 ),
-                [new Argument(new StringLiteralExpr("ArrayList"))]
+                [
+                  new Argument(
+                    emptySpan(),
+                    new StringLiteralExpr(emptySpan(), "ArrayList")
+                  ),
+                ]
               )
             ),
             new BinaryExpr(
+              node.span,
               new PropAccessExpr(
+                node.span,
                 updatedNode.right,
-                new Identifier("length"),
+                new Identifier(emptySpan(), "length"),
                 false
               ),
               ">=",
               updatedNode.left
             ),
             new CallExpr(
+              node.span,
               new PropAccessExpr(
+                updatedNode.span,
                 updatedNode.right,
-                new Identifier("containsKey"),
+                new Identifier(emptySpan(), "containsKey"),
                 false
               ),
-              [new Argument(updatedNode.left)]
+              [new Argument(updatedNode.left.span, updatedNode.left)]
             )
           );
         }
@@ -613,7 +641,7 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
             service,
             `${pre ? `${pre}\n` : ""}#set( $context.stash.return__flag = true )
 #set( $context.stash.return__val = ${getResult(
-              stmt.expr ?? stmt.fork(new UndefinedLiteralExpr())
+              stmt.expr ?? stmt.fork(new UndefinedLiteralExpr(stmt.span))
             )} )
 {}`
           );
@@ -689,7 +717,9 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
         }
       } else if (isLastExpr) {
         if (isReturnStmt(stmt)) {
-          template.return(stmt.expr ?? stmt.fork(new UndefinedLiteralExpr()));
+          template.return(
+            stmt.expr ?? stmt.fork(new UndefinedLiteralExpr(stmt.span))
+          );
         } else if (isIfStmt(stmt)) {
           template.eval(stmt);
         } else {

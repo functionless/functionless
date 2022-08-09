@@ -7,6 +7,7 @@ import { Expr, FunctionExpr, Identifier } from "./expression";
 import { isTryStmt } from "./guards";
 import { BaseNode, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
+import { Span } from "./span";
 
 /**
  * A {@link Stmt} (Statement) is unit of execution that does not yield any value. They are translated
@@ -52,15 +53,27 @@ export abstract class BaseStmt<
 }
 
 export class ExprStmt extends BaseStmt<NodeKind.ExprStmt> {
-  constructor(readonly expr: Expr) {
-    super(NodeKind.ExprStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr
+  ) {
+    super(NodeKind.ExprStmt, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
   }
 }
 
 export class VariableStmt extends BaseStmt<NodeKind.VariableStmt> {
-  constructor(readonly declList: VariableDeclList) {
-    super(NodeKind.VariableStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly declList: VariableDeclList
+  ) {
+    super(NodeKind.VariableStmt, span, arguments);
     this.ensure(declList, "declList", [NodeKind.VariableDeclList]);
   }
 }
@@ -78,8 +91,14 @@ export type BlockStmtParent =
   | WhileStmt;
 
 export class BlockStmt extends BaseStmt<NodeKind.BlockStmt, BlockStmtParent> {
-  constructor(readonly statements: Stmt[]) {
-    super(NodeKind.BlockStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly statements: Stmt[]
+  ) {
+    super(NodeKind.BlockStmt, span, arguments);
     this.ensureArrayOf(statements, "statements", ["Stmt"]);
     statements.forEach((stmt, i) => {
       stmt.prev = i > 0 ? statements[i - 1] : undefined;
@@ -117,15 +136,29 @@ export class BlockStmt extends BaseStmt<NodeKind.BlockStmt, BlockStmtParent> {
 }
 
 export class ReturnStmt extends BaseStmt<NodeKind.ReturnStmt> {
-  constructor(readonly expr: Expr | undefined) {
-    super(NodeKind.ReturnStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr | undefined
+  ) {
+    super(NodeKind.ReturnStmt, span, arguments);
     this.ensure(expr, "expr", ["undefined", "Expr"]);
   }
 }
 
 export class IfStmt extends BaseStmt<NodeKind.IfStmt> {
-  constructor(readonly when: Expr, readonly then: Stmt, readonly _else?: Stmt) {
-    super(NodeKind.IfStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly when: Expr,
+    readonly then: Stmt,
+    readonly _else?: Stmt
+  ) {
+    super(NodeKind.IfStmt, span, arguments);
     this.ensure(when, "when", ["Expr"]);
     this.ensure(then, "then", ["Stmt"]);
     this.ensure(_else, "else", ["undefined", "Stmt"]);
@@ -134,6 +167,10 @@ export class IfStmt extends BaseStmt<NodeKind.IfStmt> {
 
 export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly initializer: VariableDecl | Identifier,
     readonly expr: Expr,
     readonly body: BlockStmt,
@@ -145,7 +182,7 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
      */
     readonly isAwait: boolean
   ) {
-    super(NodeKind.ForOfStmt, arguments);
+    super(NodeKind.ForOfStmt, span, arguments);
     this.ensure(initializer, "initializer", [
       NodeKind.VariableDecl,
       NodeKind.Identifier,
@@ -157,22 +194,30 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
 
 export class ForInStmt extends BaseStmt<NodeKind.ForInStmt> {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly initializer: VariableDecl | Identifier,
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {
-    super(NodeKind.ForInStmt, arguments);
+    super(NodeKind.ForInStmt, span, arguments);
   }
 }
 
 export class ForStmt extends BaseStmt<NodeKind.ForStmt> {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly body: BlockStmt,
     readonly initializer?: VariableDeclList | Expr,
     readonly condition?: Expr,
     readonly incrementor?: Expr
   ) {
-    super(NodeKind.ForStmt, arguments);
+    super(NodeKind.ForStmt, span, arguments);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
     this.ensure(initializer, "initializer", [
       "undefined",
@@ -185,15 +230,27 @@ export class ForStmt extends BaseStmt<NodeKind.ForStmt> {
 }
 
 export class BreakStmt extends BaseStmt<NodeKind.BreakStmt> {
-  constructor(readonly label?: Identifier) {
-    super(NodeKind.BreakStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly label?: Identifier
+  ) {
+    super(NodeKind.BreakStmt, span, arguments);
     this.ensure(label, "label", ["undefined", NodeKind.Identifier]);
   }
 }
 
 export class ContinueStmt extends BaseStmt<NodeKind.ContinueStmt> {
-  constructor(readonly label?: Identifier) {
-    super(NodeKind.ContinueStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly label?: Identifier
+  ) {
+    super(NodeKind.ContinueStmt, span, arguments);
     this.ensure(label, "label", ["undefined", NodeKind.Identifier]);
   }
 }
@@ -206,11 +263,15 @@ export interface FinallyBlock extends BlockStmt {
 
 export class TryStmt extends BaseStmt<NodeKind.TryStmt> {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly tryBlock: BlockStmt,
     readonly catchClause?: CatchClause,
     readonly finallyBlock?: FinallyBlock
   ) {
-    super(NodeKind.TryStmt, arguments);
+    super(NodeKind.TryStmt, span, arguments);
     this.ensure(tryBlock, "tryBlock", [NodeKind.BlockStmt]);
     this.ensure(catchClause, "catchClause", [
       "undefined",
@@ -225,10 +286,14 @@ export class TryStmt extends BaseStmt<NodeKind.TryStmt> {
 
 export class CatchClause extends BaseStmt<NodeKind.CatchClause, TryStmt> {
   constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
     readonly variableDecl: VariableDecl | undefined,
     readonly block: BlockStmt
   ) {
-    super(NodeKind.CatchClause, arguments);
+    super(NodeKind.CatchClause, span, arguments);
     this.ensure(variableDecl, "variableDecl", [
       "undefined",
       NodeKind.VariableDecl,
@@ -238,45 +303,84 @@ export class CatchClause extends BaseStmt<NodeKind.CatchClause, TryStmt> {
 }
 
 export class ThrowStmt extends BaseStmt<NodeKind.ThrowStmt> {
-  constructor(readonly expr: Expr) {
-    super(NodeKind.ThrowStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr
+  ) {
+    super(NodeKind.ThrowStmt, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
   }
 }
 
 export class WhileStmt extends BaseStmt<NodeKind.WhileStmt> {
-  constructor(readonly condition: Expr, readonly block: BlockStmt) {
-    super(NodeKind.WhileStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly condition: Expr,
+    readonly block: BlockStmt
+  ) {
+    super(NodeKind.WhileStmt, span, arguments);
     this.ensure(condition, "condition", ["Expr"]);
     this.ensure(block, "block", [NodeKind.BlockStmt]);
   }
 }
 
 export class DoStmt extends BaseStmt<NodeKind.DoStmt> {
-  constructor(readonly block: BlockStmt, readonly condition: Expr) {
-    super(NodeKind.DoStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly block: BlockStmt,
+    readonly condition: Expr
+  ) {
+    super(NodeKind.DoStmt, span, arguments);
     this.ensure(block, "block", [NodeKind.BlockStmt]);
     this.ensure(condition, "condition", ["Expr"]);
   }
 }
 
 export class LabelledStmt extends BaseStmt<NodeKind.LabelledStmt> {
-  constructor(readonly label: Identifier, readonly stmt: Stmt) {
-    super(NodeKind.LabelledStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly label: Identifier,
+    readonly stmt: Stmt
+  ) {
+    super(NodeKind.LabelledStmt, span, arguments);
     this.ensure(label, "label", [NodeKind.Identifier]);
     this.ensure(stmt, "stmt", ["Stmt"]);
   }
 }
 
 export class DebuggerStmt extends BaseStmt<NodeKind.DebuggerStmt> {
-  constructor() {
-    super(NodeKind.DebuggerStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span
+  ) {
+    super(NodeKind.DebuggerStmt, span, arguments);
   }
 }
 
 export class SwitchStmt extends BaseStmt<NodeKind.SwitchStmt> {
-  constructor(readonly expr: Expr, readonly clauses: SwitchClause[]) {
-    super(NodeKind.SwitchStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr,
+    readonly clauses: SwitchClause[]
+  ) {
+    super(NodeKind.SwitchStmt, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
     this.ensureArrayOf(clauses, "clauses", NodeKind.SwitchClause);
   }
@@ -285,29 +389,54 @@ export class SwitchStmt extends BaseStmt<NodeKind.SwitchStmt> {
 export type SwitchClause = CaseClause | DefaultClause;
 
 export class CaseClause extends BaseStmt<NodeKind.CaseClause> {
-  constructor(readonly expr: Expr, readonly statements: Stmt[]) {
-    super(NodeKind.CaseClause, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr,
+    readonly statements: Stmt[]
+  ) {
+    super(NodeKind.CaseClause, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
     this.ensureArrayOf(statements, "statements", ["Stmt"]);
   }
 }
 
 export class DefaultClause extends BaseStmt<NodeKind.DefaultClause> {
-  constructor(readonly statements: Stmt[]) {
-    super(NodeKind.DefaultClause, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly statements: Stmt[]
+  ) {
+    super(NodeKind.DefaultClause, span, arguments);
     this.ensureArrayOf(statements, "statements", ["Stmt"]);
   }
 }
 
 export class EmptyStmt extends BaseStmt<NodeKind.EmptyStmt> {
-  constructor() {
-    super(NodeKind.EmptyStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span
+  ) {
+    super(NodeKind.EmptyStmt, span, arguments);
   }
 }
 
 export class WithStmt extends BaseStmt<NodeKind.WithStmt> {
-  constructor(readonly expr: Expr, readonly stmt: Stmt) {
-    super(NodeKind.WithStmt, arguments);
+  constructor(
+    /**
+     * Range of text in the source file where this Node resides.
+     */
+    span: Span,
+    readonly expr: Expr,
+    readonly stmt: Stmt
+  ) {
+    super(NodeKind.WithStmt, span, arguments);
     this.ensure(expr, "expr", ["Expr"]);
     this.ensure(stmt, "stmt", ["Stmt"]);
   }
