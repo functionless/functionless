@@ -27,8 +27,11 @@ export function visitEachChild<T extends FunctionlessNode>(
   ) => FunctionlessNode | FunctionlessNode[] | undefined
 ): T {
   const ctor = getCtor(node.kind);
-  const args = node._arguments.map((argument) => {
-    if (argument === null || typeof argument !== "object") {
+  const args = node._arguments.map((argument, index) => {
+    if (index === 0) {
+      // first argument is always a Span, so simply return it
+      return argument;
+    } else if (argument === null || typeof argument !== "object") {
       // all primitives are simply returned as-is
       return argument;
     } else if (isNode(argument)) {
@@ -43,7 +46,7 @@ export function visitEachChild<T extends FunctionlessNode>(
     } else if (Array.isArray(argument)) {
       // is an Array of nodes
       return argument.flatMap((item) => {
-        const transformed = visit(item);
+        const transformed = visit(item as FunctionlessNode);
         if (transformed === undefined) {
           // the item was deleted, so remove it from the array
           return [];
@@ -74,8 +77,11 @@ export function forEachChild(
   node: FunctionlessNode,
   visit: (node: FunctionlessNode) => any
 ): void {
-  for (const argument of node._arguments) {
-    if (argument === null || typeof argument !== "object") {
+  for (let i = 0; i < node._arguments.length; i++) {
+    const argument = node._arguments[i];
+    if (i === 0) {
+      // the first argument is always a span, so skip visiting it
+    } else if (argument === null || typeof argument !== "object") {
       // all primitives are simply returned as-is
     } else if (isNode(argument)) {
       if (visit(argument)) {
@@ -85,7 +91,7 @@ export function forEachChild(
     } else if (Array.isArray(argument)) {
       // is an Array of nodes
       for (const item of argument) {
-        if (visit(item)) {
+        if (visit(item as FunctionlessNode)) {
           // if a truthy value is returned from visit, terminate the walk
           return;
         }
@@ -107,10 +113,12 @@ export function visitBlock(
   return visitEachChild(block, (stmt) => {
     const nestedTasks: FunctionlessNode[] = [];
     function hoist(expr: Expr): Identifier {
-      const id = new Identifier(nameGenerator.generateOrGet(expr));
+      const id = new Identifier(expr.span, nameGenerator.generateOrGet(expr));
       const stmt = new VariableStmt(
+        expr.span,
         new VariableDeclList(
-          [new VariableDecl(id.clone(), expr.clone())],
+          expr.span,
+          [new VariableDecl(expr.span, id.clone(), expr.clone())],
           VariableDeclKind.Const
         )
       );

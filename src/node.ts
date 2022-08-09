@@ -47,6 +47,7 @@ import {
 } from "./guards";
 import type { NodeCtor } from "./node-ctor";
 import { NodeKind, NodeKindName, getNodeKindName } from "./node-kind";
+import type { Span } from "./span";
 import type { BlockStmt, CatchClause, Stmt } from "./statement";
 
 export type FunctionlessNode =
@@ -88,7 +89,11 @@ export abstract class BaseNode<
 
   readonly _arguments: ConstructorParameters<NodeCtor<this["kind"]>>;
 
-  constructor(readonly kind: Kind, _arguments: IArguments) {
+  constructor(
+    readonly kind: Kind,
+    readonly span: Span,
+    _arguments: IArguments
+  ) {
     this._arguments = Array.from(_arguments) as any;
     const setParent = (node: any) => {
       if (isNode(node)) {
@@ -109,9 +114,11 @@ export abstract class BaseNode<
   }
 
   public toSExpr(): [kind: this["kind"], ...args: any[]] {
+    const [span, ...rest] = this._arguments;
     return [
       this.kind,
-      ...this._arguments.map(function toSExpr(arg: any): any {
+      span,
+      ...rest.map(function toSExpr(arg: any): any {
         if (isNode(arg)) {
           return arg.toSExpr();
         } else if (Array.isArray(arg)) {

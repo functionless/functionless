@@ -116,7 +116,7 @@ const project = new CustomTypescriptProject({
     "@swc/core",
     "@swc/register",
     "@swc/jest",
-    "@functionless/ast-reflection",
+    "@functionless/ast-reflection@file:../ast-reflection",
   ],
   jestOptions: {
     jestConfig: {

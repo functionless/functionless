@@ -651,7 +651,9 @@ export class APIGatewayVTL extends VTL {
   public eval(node?: Expr | Stmt, returnVar?: string): string | void {
     if (isReturnStmt(node)) {
       return this.add(
-        this.exprToJson(node.expr ?? node.fork(new UndefinedLiteralExpr()))
+        this.exprToJson(
+          node.expr ?? node.fork(new UndefinedLiteralExpr(node.span))
+        )
       );
     } else if (
       isPropAccessExpr(node) &&
