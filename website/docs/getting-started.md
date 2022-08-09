@@ -35,57 +35,61 @@ npm run deploy
 
 ## Add to an existing CDK project
 
-Functionless relies on a TypeScript compiler plugin. Setting this up requires two packages, `functionless` and `ts-patch`, and some configuration added to your `tsconfig.json`.
-
-Install the `functionless` and `ts-patch` NPM packages.
+Functionless relies on a [SWC](https://swc.rs) plugin for analyzing your code, so first install SWC and its core dependencies:
 
 ```shell
-npm install --save-dev functionless ts-patch
+npm install --save-dev functionless @swc/core@1.2.218 @swc/cli @swc/register @swc/jest
 ```
 
-Then, add `ts-patch install -s` to your `prepare` script (see [ts-patch](https://github.com/nonara/ts-patch) for mode details.)
+Then, create a `.swcrc` file to configure SWC to use the [Functionless AST Reflection Plugin](https://github.com/functionless/ast-reflection).
 
 ```json
 {
-  "scripts": {
-    "prepare": "ts-patch install -s"
-  }
-}
-```
-
-Make sure to run `npm install` to bootstrap `ts-patch` (via the `prepare` script).
-
-```shell
-npm install
-```
-
-Finally, configure the `functionless/lib/compile` TypeScript transformer plugin in your `tsconfig.json`:
-
-```json
-{
-  "compilerOptions": {
-    "plugins": [
-      {
-        "transform": "functionless/lib/compile"
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "dynamicImport": false,
+      "decorators": false,
+      "hidden": {
+        "jest": true
       }
-    ]
+    },
+    "transform": null,
+    "target": "es2021",
+    "loose": false,
+    "externalHelpers": false,
+    "experimental": {
+      "plugins": [
+        [
+          // make sure to configure the ast-reflection plugin or else Functionless will not work
+          "@functionless/ast-reflection",
+          {}
+        ]
+      ]
+    }
+  },
+  "minify": false,
+  "sourceMaps": "inline",
+  "module": {
+    "type": "commonjs"
   }
 }
 ```
 
-Files can be ignored by the transformer by using glob patterns in the `tsconfig.json`:
+In your `cdk.json`, make sure to configure the `@swc/register` require-hook. This hook ensures that the [Functionless AST Reflection Plugin](https://github.com/functionless/ast-reflection) is applied to all `src` and `node_modules`, enabling AST-reflection on not just your code, but also your dependencies.
 
 ```json
 {
-  "compilerOptions": {
-    "plugins": [
-      {
-        "transform": "functionless/lib/compile",
-        "exclude": ["./src/**/protected/*"]
-      }
-    ]
-  }
+  "app": "node -r '@swc/register' ./src/app.ts"
 }
+```
+
+For `jest` integration, we use [`@swc/jest`](https://github.com/swc-project/jest) instead of `ts-jest`. To configure `@swc/jest`, simply add the following `transform` configuration and remove any `ts-jest` configuration.
+
+```json
+"transform": {
+  "^.+\\.(t|j)sx?$": ["@swc/jest", {}]
+},
 ```
 
 ## Configure IDE Language Service

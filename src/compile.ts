@@ -110,6 +110,7 @@ export function compile(
     ? _config.exclude.map((pattern) => minimatch.makeRe(path.resolve(pattern)))
     : [];
   const checker = makeFunctionlessChecker(program.getTypeChecker());
+
   return (ctx) => {
     const functionless = ts.factory.createUniqueName("functionless");
     return (sf) => {

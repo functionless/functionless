@@ -19,7 +19,6 @@
     "post-compile": "npx projen post-compile",
     "post-upgrade": "npx projen post-upgrade",
     "pre-compile": "npx projen pre-compile",
-    "prepare": "npx projen prepare",
     "release": "npx projen release",
     "test": "npx projen test",
     "test:fast": "npx projen test:fast",
@@ -35,8 +34,13 @@
     "@aws-cdk/cloud-assembly-schema": "2.28.1",
     "@aws-cdk/cloudformation-diff": "2.28.1",
     "@aws-cdk/cx-api": "2.28.1",
+    "@functionless/ast-reflection": "0.0.1",
+    "@swc/cli": "^0.1.57",
+    "@swc/core": "1.2.218",
+    "@swc/jest": "^0.2.22",
+    "@swc/register": "^0.1.10",
     "@types/fs-extra": "^9.0.13",
-    "@types/jest": "^27.5.2",
+    "@types/jest": "^28.1.6",
     "@types/minimatch": "^3.0.5",
     "@types/node": "^14",
     "@types/uuid": "^8.3.4",
@@ -48,7 +52,7 @@
     "axios": "^0.27.2",
     "cdk-assets": "2.28.1",
     "constructs": "10.0.0",
-    "esbuild": "0.14.53",
+    "esbuild": "0.14.54",
     "eslint": "^8",
     "eslint-config-prettier": "^8.5.0",
     "eslint-import-resolver-node": "^0.3.6",
@@ -57,16 +61,16 @@
     "eslint-plugin-no-only-tests": "^2.6.0",
     "eslint-plugin-prettier": "^4.2.1",
     "graphql-request": "^4.3.0",
-    "jest": "^27",
+    "jest": "^28.1.3",
     "jest-junit": "^13",
     "json-schema": "^0.4.0",
     "npm-check-updates": "^15",
     "prettier": "^2.7.1",
-    "projen": "^0.61.1",
+    "projen": "^0.61.3",
     "promptly": "^3.2.0",
     "proxy-agent": "^5.0.0",
     "standard-version": "^9",
-    "ts-jest": "^27",
+    "ts-jest": "^28.0.7",
     "ts-node": "^10.9.1",
     "ts-patch": "^2.0.1",
     "typesafe-dynamodb": "0.1.5",
@@ -76,13 +80,13 @@
   "peerDependencies": {
     "aws-cdk-lib": "^2.28.1",
     "constructs": "^10.0.0",
-    "esbuild": "^0.14.53",
+    "esbuild": "^0.14.54",
     "typesafe-dynamodb": "^0.1.5",
     "typescript": "^4.7.2",
     "@aws-cdk/aws-appsync-alpha": "*"
   },
   "dependencies": {
-    "@functionless/nodejs-closure-serializer": "^0.1.1",
+    "@functionless/nodejs-closure-serializer": "^0.1.2",
     "@types/aws-lambda": "^8.10.101",
     "fs-extra": "^10.1.0",
     "minimatch": "^5.1.0"
@@ -99,6 +103,12 @@
     ],
     "moduleNameMapper": {
       "^@fnls$": "<rootDir>/lib/index"
+    },
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "@swc/jest",
+        {}
+      ]
     },
     "testMatch": [
       "<rootDir>/src/**/__tests__/**/*.ts?(x)",
@@ -127,13 +137,7 @@
           "outputDirectory": "test-reports"
         }
       ]
-    ],
-    "preset": "ts-jest",
-    "globals": {
-      "ts-jest": {
-        "tsconfig": "tsconfig.dev.json"
-      }
-    }
+    ]
   },
   "types": "lib/index.d.ts",
   "lint-staged": {

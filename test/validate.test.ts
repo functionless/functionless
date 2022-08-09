@@ -1,6 +1,5 @@
 import "jest";
 import fs from "fs";
-import { readFile } from "fs/promises";
 import path from "path";
 import ts from "typescript";
 import { ErrorCode, ErrorCodes } from "../src";
@@ -52,6 +51,12 @@ const skipErrorCodes: ErrorCode[] = [
   ErrorCodes.StepFunction_invalid_filter_syntax,
 ];
 
+const file: string | undefined = fs
+  .readFileSync(
+    path.resolve(__dirname, "./__snapshots__/validate.test.ts.snap")
+  )
+  .toString("utf8");
+
 /**
  * Test for recorded validations of each error code.
  * 1. Checks if there is a validation for an error code.
@@ -60,15 +65,6 @@ const skipErrorCodes: ErrorCode[] = [
  * If the error code cannot be validated or the validation cannot be easily tested, use skipErrorCodes to skip the code.
  */
 describe("all error codes tested", () => {
-  let file: string | undefined = undefined;
-  beforeAll(async () => {
-    file = (
-      await readFile(
-        path.resolve(__dirname, "./__snapshots__/validate.test.ts.snap")
-      )
-    ).toString("utf8");
-  });
-
   test.concurrent.each(
     Object.values(ErrorCodes).filter((code) => !skipErrorCodes.includes(code))
   )("$code: $title", async (code) => {
