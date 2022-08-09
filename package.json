@@ -34,11 +34,6 @@
     "@aws-cdk/cloud-assembly-schema": "2.28.1",
     "@aws-cdk/cloudformation-diff": "2.28.1",
     "@aws-cdk/cx-api": "2.28.1",
-    "@functionless/ast-reflection": "0.0.1",
-    "@swc/cli": "^0.1.57",
-    "@swc/core": "1.2.218",
-    "@swc/jest": "^0.2.22",
-    "@swc/register": "^0.1.10",
     "@types/fs-extra": "^9.0.13",
     "@types/jest": "^28.1.6",
     "@types/minimatch": "^3.0.5",
@@ -86,7 +81,12 @@
     "@aws-cdk/aws-appsync-alpha": "*"
   },
   "dependencies": {
+    "@functionless/ast-reflection": "0.0.2",
     "@functionless/nodejs-closure-serializer": "^0.1.2",
+    "@swc/cli": "^0.1.57",
+    "@swc/core": "1.2.218",
+    "@swc/jest": "^0.2.22",
+    "@swc/register": "^0.1.10",
     "@types/aws-lambda": "^8.10.101",
     "fs-extra": "^10.1.0",
     "minimatch": "^5.1.0"

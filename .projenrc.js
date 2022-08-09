@@ -85,6 +85,11 @@ const project = new CustomTypescriptProject({
     "fs-extra",
     "minimatch",
     "@functionless/nodejs-closure-serializer",
+    "@functionless/ast-reflection@0.0.2",
+    "@swc/cli",
+    "@swc/core@1.2.218",
+    "@swc/register",
+    "@swc/jest",
   ],
   devDeps: [
     `@aws-cdk/aws-appsync-alpha@${MIN_CDK_VERSION}-alpha.0`,
@@ -112,11 +117,6 @@ const project = new CustomTypescriptProject({
      */
     // for serializer testing
     "uuid",
-    "@swc/cli",
-    "@swc/core",
-    "@swc/register",
-    "@swc/jest",
-    "@functionless/ast-reflection",
   ],
   jestOptions: {
     jestConfig: {
