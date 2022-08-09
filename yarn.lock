@@ -1040,13 +1040,15 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@functionless/ast-reflection@file:../ast-reflection":
-  version "0.0.0"
+"@functionless/ast-reflection@0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.0.1.tgz#bf025e87456449f47a62c90323e55574b5131fdc"
+  integrity sha512-flKyyHZsAlSdEn9rZuLIOsLhM+jqt0U8vIPKsc/tzJzWnVRXRMHTzubES+YoXqT5MR0dJo94MTfte5zN/YlXxg==
 
-"@functionless/nodejs-closure-serializer@^0.1.1":
-  version "0.1.1"
-  resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.1.1.tgz#2c56bbe164c3447d55ff8162472e9c0b59c1e690"
-  integrity sha512-wjFpir9ulw9ulB4bU6gpf6PF7X2iwK6cGBQV0S9e33SchcIPR4EypOPC0Cbf0H4aG6g5mQYP3r9RZaWRpmrUmw==
+"@functionless/nodejs-closure-serializer@^0.1.2":
+  version "0.1.2"
+  resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.1.2.tgz#70d0a00d34629e40a362e35b144506aa5ceac7cd"
+  integrity sha512-l5SXGotOZ+WV7muMFe4Y3mlSwL5kQoDk4CRSZs07fp1rJNbNIFtP+T0CgXB1IlHOAb6IImaCYIwFgJgahE/lIA==
   dependencies:
     normalize-package-data "^4.0.0"
     read-package-tree "^5.3.1"

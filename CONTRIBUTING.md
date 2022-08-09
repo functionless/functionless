@@ -221,8 +221,4 @@ To the bottom of your PR description. When we merge the PR into `main`, the BREA
 
 [Error 10001 - Function not compiled]https://functionless.org/docs/error-codes#function-not-compiled-by-functionless-plugin
 
-The compiler plugin isn't patched or working.
-
-1. `npx ts-patch install -s`
-   1. `npx ts-patch check` can be used to this needs to be done. At least 1 item should be marked as Installed
-2. Check your typescript versions and match sure they all match through the code base.
+The SWC plugin isn't running on your code. See the [Getting Started](./website/docs/getting-started.md#add-to-an-existing-cdk-project) documentation for steps on how to properly configure SWC.

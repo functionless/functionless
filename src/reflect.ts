@@ -1,10 +1,12 @@
 import { FunctionLike } from "./declaration";
 import { Err } from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
-import { isFunctionLike, isErr } from "./guards";
+import { isFunctionLike, isErr, isNewExpr } from "./guards";
+import { tryFindIntegrations } from "./integration";
 import type { FunctionlessNode } from "./node";
 import { parseSExpr } from "./s-expression";
 import { AnyAsyncFunction, AnyFunction } from "./util";
+import { forEachChild } from "./visit";
 
 /**
  * A macro (compile-time) function that converts an ArrowFunction or FunctionExpression to a {@link FunctionDecl}.
@@ -122,7 +124,7 @@ function validateFunctionlessNode<Node extends FunctionlessNode>(
   validate: (e: FunctionlessNode) => e is Node
 ): Node {
   if (validate(a)) {
-    return a;
+    return validateFunctionlessNodeSemantics(a);
   } else if (isErr(a)) {
     throw a.error;
   } else if (typeof a === "function") {
@@ -133,4 +135,19 @@ function validateFunctionlessNode<Node extends FunctionlessNode>(
       `Expected input function to ${functionLocation} to be compiled by Functionless. Make sure you have the Functionless compiler plugin configured correctly.`
     );
   }
+}
+
+export function validateFunctionlessNodeSemantics<N extends FunctionlessNode>(
+  node: N
+): N {
+  forEachChild(node, (child) => {
+    if (isNewExpr(child) && tryFindIntegrations(child)?.length > 0) {
+      throw new SynthError(
+        ErrorCodes.Unsupported_initialization_of_resources,
+        "Cannot initialize new CDK resources in a runtime function."
+      );
+    }
+    validateFunctionlessNodeSemantics(child);
+  });
+  return node;
 }
