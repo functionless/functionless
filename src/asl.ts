@@ -5008,12 +5008,12 @@ export namespace ASL {
     "===" | "==" | ">" | ">=" | "<=" | "<",
     Record<"string" | "boolean" | "number", keyof Condition | undefined>
   > = {
-    "===": {
+    "==": {
       string: "StringEquals",
       boolean: "BooleanEquals",
       number: "NumericEquals",
     },
-    "==": {
+    "===": {
       string: "StringEquals",
       boolean: "BooleanEquals",
       number: "NumericEquals",
@@ -5084,8 +5084,8 @@ export namespace ASL {
     operator: keyof typeof VALUE_COMPARISONS | "!=" | "!=="
   ): Condition => {
     if (
-      operator === "===" ||
       operator === "==" ||
+      operator === "===" ||
       operator === ">" ||
       operator === "<" ||
       operator === ">=" ||
