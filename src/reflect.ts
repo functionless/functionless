@@ -2,7 +2,7 @@ import { FunctionLike } from "./declaration";
 import { Err } from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
 import { isFunctionLike, isErr, isNewExpr } from "./guards";
-import { tryFindIntegrations } from "./integration";
+import { tryResolveReferences } from "./integration";
 import type { FunctionlessNode } from "./node";
 import { parseSExpr } from "./s-expression";
 import { AnyAsyncFunction, AnyFunction } from "./util";
@@ -137,15 +137,32 @@ function validateFunctionlessNode<Node extends FunctionlessNode>(
   }
 }
 
-export function validateFunctionlessNodeSemantics<N extends FunctionlessNode>(
+/**
+ * Applies broad-spectrum validations to a {@link FunctionLike} AST. These validations
+ * apply to all interpreters and are therefore located here.
+ *
+ * For now, the only validation is that there are no NewExprs that instantiate Constructs.
+ */
+function validateFunctionlessNodeSemantics<N extends FunctionlessNode>(
   node: N
 ): N {
   forEachChild(node, (child) => {
-    if (isNewExpr(child) && tryFindIntegrations(child)?.length > 0) {
-      throw new SynthError(
-        ErrorCodes.Unsupported_initialization_of_resources,
-        "Cannot initialize new CDK resources in a runtime function."
+    if (isNewExpr(child)) {
+      const references = tryResolveReferences(child.expr).filter(
+        (clazz) =>
+          // all classes that extend Construct have the static property, Symbol(jsii.rtti)
+          // so this detects new <expr> where <expr> resolves to a Construct class
+          typeof clazz[Symbol.for("jsii.rtti")]?.fqn === "string" ||
+          // all Functionless primitives have the property, FunctionlessType
+          // we should definitely make this a Symbol
+          typeof clazz.FunctionlessType === "string"
       );
+      if (references?.length > 0) {
+        throw new SynthError(
+          ErrorCodes.Unsupported_initialization_of_resources,
+          "Cannot initialize new CDK resources in a runtime function."
+        );
+      }
     }
     validateFunctionlessNodeSemantics(child);
   });

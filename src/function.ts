@@ -10,6 +10,7 @@ import {
   aws_lambda,
   CfnResource,
   DockerImage,
+  IResolvable,
   Reference,
   Resource,
   SecretValue,
@@ -950,16 +951,23 @@ export async function serialize(
             Tokenization.reverseString(obj).tokens;
           if (!Array.isArray(reversed) || reversed.length > 0) {
             if (Array.isArray(reversed)) {
-              tokens = [...tokens, ...reversed.map((s) => s.toString())];
+              tokens = [
+                ...tokens,
+                ...reversed.map((s) => validateResolvable(s).toString()),
+              ];
             } else {
-              tokens = [...tokens, reversed.toString()];
+              tokens = [...tokens, validateResolvable(reversed).toString()];
             }
           }
         } else if (typeof obj === "object") {
+          return obj
+            ? transformIntegration(transformResource(transformCfnResource(obj)))
+            : obj;
+
           /**
            * Remove unnecessary fields from {@link CfnResource} that bloat or fail the closure serialization.
            */
-          const transformCfnResource = (o: unknown): any => {
+          function transformCfnResource(o: unknown) {
             if (Resource.isResource(o as any)) {
               const { node, stack, env, ...rest } = o as unknown as Resource;
               return rest;
@@ -976,7 +984,8 @@ export async function serialize(
               } = transformTable(o as CfnResource);
               return transformTaggableResource(rest);
             } else if (Token.isUnresolved(o)) {
-              const reversed = Tokenization.reverse(o)!;
+              const reversed = validateResolvable(Tokenization.reverse(o)!);
+
               if (Reference.isReference(reversed)) {
                 tokens.push(reversed.toString());
                 return reversed.toString();
@@ -992,13 +1001,13 @@ export async function serialize(
               return {};
             }
             return o;
-          };
+          }
 
           /**
            * When the StreamArn attribute is used in a Cfn template, but streamSpecification is
            * undefined, then the deployment fails. Lets make sure that doesn't happen.
            */
-          const transformTable = (o: CfnResource): CfnResource => {
+          function transformTable(o: CfnResource): CfnResource {
             if (
               o.cfnResourceType === aws_dynamodb.CfnTable.CFN_RESOURCE_TYPE_NAME
             ) {
@@ -1011,23 +1020,23 @@ export async function serialize(
             }
 
             return o;
-          };
+          }
 
           /**
            * CDK Tag manager bundles in ~200kb of junk we don't need at runtime,
            */
-          const transformTaggableResource = (o: any) => {
+          function transformTaggableResource(o: any) {
             if (TagManager.isTaggable(o)) {
               const { tags, ...rest } = o;
               return rest;
             }
             return o;
-          };
+          }
 
           /**
            * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
            */
-          const transformIntegration = (integ: unknown): any => {
+          function transformIntegration(integ: unknown): any {
             if (integ && isIntegration(integ)) {
               const c = integ.native?.call;
               const call =
@@ -1053,13 +1062,13 @@ export async function serialize(
               return call;
             }
             return integ;
-          };
+          }
 
           /**
            * TODO, make this configuration based.
            * https://github.com/functionless/functionless/issues/239
            */
-          const transformResource = (integ: unknown): any => {
+          function transformResource(integ: unknown): any {
             if (
               integ &&
               (isFunction(integ) ||
@@ -1072,13 +1081,22 @@ export async function serialize(
               return rest;
             }
             return integ;
-          };
-
-          return obj
-            ? transformIntegration(transformResource(transformCfnResource(obj)))
-            : obj;
+          }
         }
         return true;
+
+        function validateResolvable(resolvable: IResolvable) {
+          if (Token.isUnresolved(resolvable)) {
+            const tokenSource = Tokenization.reverse(resolvable)!;
+            if (SecretValue.isSecretValue(tokenSource)) {
+              throw new SynthError(
+                ErrorCodes.Unsafe_use_of_secrets,
+                "Found unsafe use of SecretValue token in a Function."
+              );
+            }
+          }
+          return resolvable;
+        }
       },
     }
   );
