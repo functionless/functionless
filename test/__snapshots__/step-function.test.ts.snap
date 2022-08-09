@@ -2202,8 +2202,30 @@ Object {
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
-    "for(val of input.value || [1, 2, 3])": Object {
+    "for(val of input.value || [1, 2, 3]) 1": Object {
+      "InputPath": "$.heap3",
+      "Next": "hasNext__for(val of input.value || [1, 2, 3]) 1",
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "hasNext__for(val of a = \\"b\\" , true && [1, 2, 3]) 1": Object {
       "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "val 2",
+          "Variable": "$.heap7[0]",
+        },
+      ],
+      "Default": "return a",
+      "Type": "Choice",
+    },
+    "hasNext__for(val of input.value ?? [1, 2, 3]) 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "val",
+          "Variable": "$.heap2[0]",
+        },
         Object {
           "And": Array [
             Object {
@@ -2279,34 +2301,6 @@ Object {
         },
       ],
       "Default": "false__for(val of input.value || [1, 2, 3])",
-      "Type": "Choice",
-    },
-    "for(val of input.value || [1, 2, 3]) 1": Object {
-      "InputPath": "$.heap3",
-      "Next": "hasNext__for(val of input.value || [1, 2, 3]) 1",
-      "ResultPath": "$.heap5",
-      "Type": "Pass",
-    },
-    "hasNext__for(val of a = \\"b\\" , true && [1, 2, 3]) 1": Object {
-      "Choices": Array [
-        Object {
-          "IsPresent": true,
-          "Next": "val 2",
-          "Variable": "$.heap7[0]",
-        },
-      ],
-      "Default": "return a",
-      "Type": "Choice",
-    },
-    "hasNext__for(val of input.value ?? [1, 2, 3]) 1": Object {
-      "Choices": Array [
-        Object {
-          "IsPresent": true,
-          "Next": "val",
-          "Variable": "$.heap2[0]",
-        },
-      ],
-      "Default": "for(val of input.value || [1, 2, 3])",
       "Type": "Choice",
     },
     "hasNext__for(val of input.value || [1, 2, 3]) 1": Object {
@@ -4165,8 +4159,83 @@ Object {
           ],
           "Next": "true__input.a || input.b && input.a",
         },
+        Object {
+          "Next": "true__input.b && input.a",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.input.b",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.input.b",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.b",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.input.b",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.input.b",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.b",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.input.b",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.input.b",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.b",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.input.b",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
       ],
-      "Default": "input.b && input.a",
+      "Default": "false__input.b && input.a",
       "Type": "Choice",
     },
     "input.a || input.b 1": Object {
@@ -4246,87 +4315,6 @@ Object {
         },
       ],
       "Default": "false__input.a || input.b 1",
-      "Type": "Choice",
-    },
-    "input.b && input.a": Object {
-      "Choices": Array [
-        Object {
-          "Next": "true__input.b && input.a",
-          "Not": Object {
-            "And": Array [
-              Object {
-                "IsPresent": true,
-                "Variable": "$.input.b",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.input.b",
-              },
-              Object {
-                "Or": Array [
-                  Object {
-                    "And": Array [
-                      Object {
-                        "IsString": true,
-                        "Variable": "$.input.b",
-                      },
-                      Object {
-                        "Not": Object {
-                          "And": Array [
-                            Object {
-                              "IsString": true,
-                              "Variable": "$.input.b",
-                            },
-                            Object {
-                              "StringEquals": "",
-                              "Variable": "$.input.b",
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                  Object {
-                    "And": Array [
-                      Object {
-                        "IsNumeric": true,
-                        "Variable": "$.input.b",
-                      },
-                      Object {
-                        "Not": Object {
-                          "And": Array [
-                            Object {
-                              "IsNumeric": true,
-                              "Variable": "$.input.b",
-                            },
-                            Object {
-                              "NumericEquals": 0,
-                              "Variable": "$.input.b",
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                  Object {
-                    "And": Array [
-                      Object {
-                        "IsBoolean": true,
-                        "Variable": "$.input.b",
-                      },
-                      Object {
-                        "BooleanEquals": true,
-                        "Variable": "$.input.b",
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        },
-      ],
-      "Default": "false__input.b && input.a",
       "Type": "Choice",
     },
     "input.b || input.s": Object {
@@ -6415,39 +6403,41 @@ Object {
     "if(input.key === \\"sam\\")": Object {
       "Choices": Array [
         Object {
-          "IsNull": false,
-          "Next": "if(input.key === \\"sam\\") 1",
-          "Variable": "$$.Execution.Id",
-        },
-      ],
-      "Default": "return null",
-      "Type": "Choice",
-    },
-    "if(input.key === \\"sam\\") 1": Object {
-      "Choices": Array [
-        Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.input.key",
+              "IsNull": false,
+              "Variable": "$$.Execution.Id",
             },
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsPresent": true,
                   "Variable": "$.input.key",
                 },
                 Object {
-                  "StringEquals": "sam",
-                  "Variable": "$.input.key",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.key",
+                    },
+                    Object {
+                      "StringEquals": "sam",
+                      "Variable": "$.input.key",
+                    },
+                  ],
                 },
               ],
             },
           ],
           "Next": "true__if(input.key === \\"sam\\") 1",
         },
+        Object {
+          "IsNull": false,
+          "Next": "false__if(input.key === \\"sam\\") 1",
+          "Variable": "$$.Execution.Id",
+        },
       ],
-      "Default": "false__if(input.key === \\"sam\\") 1",
+      "Default": "return null",
       "Type": "Choice",
     },
     "return null": Object {
@@ -6745,33 +6735,6 @@ Object {
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "if(input.key === \\"sam\\")": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.key",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsString": true,
-                  "Variable": "$.input.key",
-                },
-                Object {
-                  "StringEquals": "sam",
-                  "Variable": "$.input.key",
-                },
-              ],
-            },
-          ],
-          "Next": "true__if(input.key === \\"sam\\")",
-        },
-      ],
-      "Default": "false__if(input.key === \\"sam\\")",
-      "Type": "Choice",
-    },
     "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
@@ -6787,8 +6750,37 @@ Object {
     "while (true)": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsNull": false,
+              "Variable": "$$.Execution.Id",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.key",
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.key",
+                    },
+                    Object {
+                      "StringEquals": "sam",
+                      "Variable": "$.input.key",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__if(input.key === \\"sam\\")",
+        },
+        Object {
           "IsNull": false,
-          "Next": "if(input.key === \\"sam\\")",
+          "Next": "false__if(input.key === \\"sam\\")",
           "Variable": "$$.Execution.Id",
         },
       ],
@@ -6878,8 +6870,29 @@ Object {
           ],
           "Next": "return \\"yup\\"",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.val",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.input.val",
+                },
+                Object {
+                  "StringEquals": "b",
+                  "Variable": "$.input.val",
+                },
+              ],
+            },
+          ],
+          "Next": "true__if_1__if(input.val === \\"a\\")",
+        },
       ],
-      "Default": "if_1__if(input.val === \\"a\\")",
+      "Default": "false__if_1__if(input.val === \\"a\\")",
       "Type": "Choice",
     },
     "1__if_1__if(input.val === \\"a\\")": Object {
@@ -6957,8 +6970,29 @@ Object {
           ],
           "Next": "return \\"yip\\"",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.val",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.input.val",
+                },
+                Object {
+                  "StringEquals": "c",
+                  "Variable": "$.input.val",
+                },
+              ],
+            },
+          ],
+          "Next": "true__if_2__if(input.val === \\"a\\")",
+        },
       ],
-      "Default": "if_2__if(input.val === \\"a\\")",
+      "Default": "false__if_2__if(input.val === \\"a\\")",
       "Type": "Choice",
     },
     "1__if_2__if(input.val === \\"a\\")": Object {
@@ -7096,60 +7130,6 @@ Object {
       "Default": "false__if(input.val === \\"a\\")",
       "Type": "Choice",
     },
-    "if_1__if(input.val === \\"a\\")": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.val",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsString": true,
-                  "Variable": "$.input.val",
-                },
-                Object {
-                  "StringEquals": "b",
-                  "Variable": "$.input.val",
-                },
-              ],
-            },
-          ],
-          "Next": "true__if_1__if(input.val === \\"a\\")",
-        },
-      ],
-      "Default": "false__if_1__if(input.val === \\"a\\")",
-      "Type": "Choice",
-    },
-    "if_2__if(input.val === \\"a\\")": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.val",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsString": true,
-                  "Variable": "$.input.val",
-                },
-                Object {
-                  "StringEquals": "c",
-                  "Variable": "$.input.val",
-                },
-              ],
-            },
-          ],
-          "Next": "true__if_2__if(input.val === \\"a\\")",
-        },
-      ],
-      "Default": "false__if_2__if(input.val === \\"a\\")",
-      "Type": "Choice",
-    },
     "return \\"noop\\"": Object {
       "End": true,
       "Result": "noop",
@@ -7275,8 +7255,29 @@ Object {
           ],
           "Next": "return \\"yup\\"",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.val",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.input.val",
+                },
+                Object {
+                  "StringEquals": "b",
+                  "Variable": "$.input.val",
+                },
+              ],
+            },
+          ],
+          "Next": "true__if_1__if(input.val === \\"a\\")",
+        },
       ],
-      "Default": "if_1__if(input.val === \\"a\\")",
+      "Default": "false__if_1__if(input.val === \\"a\\")",
       "Type": "Choice",
     },
     "1__if_1__if(input.val === \\"a\\")": Object {
@@ -7406,33 +7407,6 @@ Object {
         },
       ],
       "Default": "false__if(input.val === \\"a\\")",
-      "Type": "Choice",
-    },
-    "if_1__if(input.val === \\"a\\")": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.val",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsString": true,
-                  "Variable": "$.input.val",
-                },
-                Object {
-                  "StringEquals": "b",
-                  "Variable": "$.input.val",
-                },
-              ],
-            },
-          ],
-          "Next": "true__if_1__if(input.val === \\"a\\")",
-        },
-      ],
-      "Default": "false__if_1__if(input.val === \\"a\\")",
       "Type": "Choice",
     },
     "return \\"noop\\"": Object {
@@ -9354,33 +9328,6 @@ Object {
       "Default": "false__i = if(i === 0)",
       "Type": "Choice",
     },
-    "i === 1": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.i",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsNumeric": true,
-                  "Variable": "$.i",
-                },
-                Object {
-                  "NumericEquals": 1,
-                  "Variable": "$.i",
-                },
-              ],
-            },
-          ],
-          "Next": "true__i === 1",
-        },
-      ],
-      "Default": "false__i === 1",
-      "Type": "Choice",
-    },
     "if(i === 0)": Object {
       "Choices": Array [
         Object {
@@ -9456,8 +9403,29 @@ Object {
           ],
           "Next": "true__if(i === 0)",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "NumericEquals": 1,
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "true__i === 1",
+        },
       ],
-      "Default": "i === 1",
+      "Default": "false__i === 1",
       "Type": "Choice",
     },
     "if(i === 1)": Object {
@@ -9731,6 +9699,103 @@ Object {
         Object {
           "And": Array [
             Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.heap0",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.heap0",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.heap0",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.heap0",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.heap0",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.heap0",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.heap0",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.heap0",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.heap0",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.heap0",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.i",
+                    },
+                    Object {
+                      "NumericEquals": 0,
+                      "Variable": "$.i",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__i = if(i === 0)",
+        },
+        Object {
+          "And": Array [
+            Object {
               "IsPresent": true,
               "Variable": "$.heap0",
             },
@@ -9799,7 +9864,7 @@ Object {
               ],
             },
           ],
-          "Next": "i = if(i === 0)",
+          "Next": "false__i = if(i === 0)",
         },
       ],
       "Default": "return null",
@@ -9884,60 +9949,6 @@ Object {
       "ResultPath": "$.i",
       "Type": "Pass",
     },
-    "i = if(i === 0)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.i",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsNumeric": true,
-                  "Variable": "$.i",
-                },
-                Object {
-                  "NumericEquals": 0,
-                  "Variable": "$.i",
-                },
-              ],
-            },
-          ],
-          "Next": "true__i = if(i === 0)",
-        },
-      ],
-      "Default": "false__i = if(i === 0)",
-      "Type": "Choice",
-    },
-    "i === 1": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.i",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsNumeric": true,
-                  "Variable": "$.i",
-                },
-                Object {
-                  "NumericEquals": 1,
-                  "Variable": "$.i",
-                },
-              ],
-            },
-          ],
-          "Next": "true__i === 1",
-        },
-      ],
-      "Default": "false__i === 1",
-      "Type": "Choice",
-    },
     "if(i === 0)": Object {
       "Choices": Array [
         Object {
@@ -10013,8 +10024,29 @@ Object {
           ],
           "Next": "true__if(i === 0)",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.i",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Variable": "$.i",
+                },
+                Object {
+                  "NumericEquals": 1,
+                  "Variable": "$.i",
+                },
+              ],
+            },
+          ],
+          "Next": "true__i === 1",
+        },
       ],
-      "Default": "i === 1",
+      "Default": "false__i === 1",
       "Type": "Choice",
     },
     "if(i === 1)": Object {
@@ -10950,8 +10982,52 @@ Object {
           ],
           "Next": "return \\"null\\"",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "string__if_1__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "boolean__if_1__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "number__if_1__if(input.id === undefined)",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__if_1__if(input.id === undefined)",
+          "Variable": "$.input.id",
+        },
       ],
-      "Default": "if_1__if(input.id === undefined)",
+      "Default": "undefined__if_1__if(input.id === undefined)",
       "Type": "Choice",
     },
     "1__if_1__if(input.id === undefined)": Object {
@@ -11029,8 +11105,52 @@ Object {
           ],
           "Next": "return \\"undefined\\"",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "string__if_2__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "boolean__if_2__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "number__if_2__if(input.id === undefined)",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__if_2__if(input.id === undefined)",
+          "Variable": "$.input.id",
+        },
       ],
-      "Default": "if_2__if(input.id === undefined)",
+      "Default": "undefined__if_2__if(input.id === undefined)",
       "Type": "Choice",
     },
     "1__if_2__if(input.id === undefined)": Object {
@@ -11108,8 +11228,52 @@ Object {
           ],
           "Next": "return \\"string\\"",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "string__if_3__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "boolean__if_3__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "number__if_3__if(input.id === undefined)",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__if_3__if(input.id === undefined)",
+          "Variable": "$.input.id",
+        },
       ],
-      "Default": "if_3__if(input.id === undefined)",
+      "Default": "undefined__if_3__if(input.id === undefined)",
       "Type": "Choice",
     },
     "1__if_3__if(input.id === undefined)": Object {
@@ -11187,8 +11351,52 @@ Object {
           ],
           "Next": "return \\"boolean\\"",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "string__if_4__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "boolean__if_4__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "number__if_4__if(input.id === undefined)",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__if_4__if(input.id === undefined)",
+          "Variable": "$.input.id",
+        },
       ],
-      "Default": "if_4__if(input.id === undefined)",
+      "Default": "undefined__if_4__if(input.id === undefined)",
       "Type": "Choice",
     },
     "1__if_4__if(input.id === undefined)": Object {
@@ -11266,8 +11474,52 @@ Object {
           ],
           "Next": "return \\"number\\"",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "string__if_5__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "boolean__if_5__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "number__if_5__if(input.id === undefined)",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__if_5__if(input.id === undefined)",
+          "Variable": "$.input.id",
+        },
       ],
-      "Default": "if_5__if(input.id === undefined)",
+      "Default": "undefined__if_5__if(input.id === undefined)",
       "Type": "Choice",
     },
     "1__if_5__if(input.id === undefined)": Object {
@@ -11443,256 +11695,6 @@ Object {
         },
       ],
       "Default": "false__if(input.id === undefined)",
-      "Type": "Choice",
-    },
-    "if_1__if(input.id === undefined)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsString": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "string__if_1__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "boolean__if_1__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsNumeric": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "number__if_1__if(input.id === undefined)",
-        },
-        Object {
-          "IsPresent": true,
-          "Next": "object__if_1__if(input.id === undefined)",
-          "Variable": "$.input.id",
-        },
-      ],
-      "Default": "undefined__if_1__if(input.id === undefined)",
-      "Type": "Choice",
-    },
-    "if_2__if(input.id === undefined)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsString": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "string__if_2__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "boolean__if_2__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsNumeric": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "number__if_2__if(input.id === undefined)",
-        },
-        Object {
-          "IsPresent": true,
-          "Next": "object__if_2__if(input.id === undefined)",
-          "Variable": "$.input.id",
-        },
-      ],
-      "Default": "undefined__if_2__if(input.id === undefined)",
-      "Type": "Choice",
-    },
-    "if_3__if(input.id === undefined)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsString": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "string__if_3__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "boolean__if_3__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsNumeric": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "number__if_3__if(input.id === undefined)",
-        },
-        Object {
-          "IsPresent": true,
-          "Next": "object__if_3__if(input.id === undefined)",
-          "Variable": "$.input.id",
-        },
-      ],
-      "Default": "undefined__if_3__if(input.id === undefined)",
-      "Type": "Choice",
-    },
-    "if_4__if(input.id === undefined)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsString": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "string__if_4__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "boolean__if_4__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsNumeric": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "number__if_4__if(input.id === undefined)",
-        },
-        Object {
-          "IsPresent": true,
-          "Next": "object__if_4__if(input.id === undefined)",
-          "Variable": "$.input.id",
-        },
-      ],
-      "Default": "undefined__if_4__if(input.id === undefined)",
-      "Type": "Choice",
-    },
-    "if_5__if(input.id === undefined)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsString": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "string__if_5__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "boolean__if_5__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsNumeric": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "number__if_5__if(input.id === undefined)",
-        },
-        Object {
-          "IsPresent": true,
-          "Next": "object__if_5__if(input.id === undefined)",
-          "Variable": "$.input.id",
-        },
-      ],
-      "Default": "undefined__if_5__if(input.id === undefined)",
       "Type": "Choice",
     },
     "number__if_1__if(input.id === undefined)": Object {
@@ -11976,8 +11978,52 @@ Object {
           ],
           "Next": "return \\"null\\"",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "string__if_1__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "boolean__if_1__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "number__if_1__if(input.id === undefined)",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__if_1__if(input.id === undefined)",
+          "Variable": "$.input.id",
+        },
       ],
-      "Default": "if_1__if(input.id === undefined)",
+      "Default": "undefined__if_1__if(input.id === undefined)",
       "Type": "Choice",
     },
     "1__if_1__if(input.id === undefined)": Object {
@@ -12055,8 +12101,52 @@ Object {
           ],
           "Next": "return \\"undefined\\"",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "string__if_2__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "boolean__if_2__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "number__if_2__if(input.id === undefined)",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__if_2__if(input.id === undefined)",
+          "Variable": "$.input.id",
+        },
       ],
-      "Default": "if_2__if(input.id === undefined)",
+      "Default": "undefined__if_2__if(input.id === undefined)",
       "Type": "Choice",
     },
     "1__if_2__if(input.id === undefined)": Object {
@@ -12134,8 +12224,52 @@ Object {
           ],
           "Next": "return \\"string\\"",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "string__if_3__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "boolean__if_3__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "number__if_3__if(input.id === undefined)",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__if_3__if(input.id === undefined)",
+          "Variable": "$.input.id",
+        },
       ],
-      "Default": "if_3__if(input.id === undefined)",
+      "Default": "undefined__if_3__if(input.id === undefined)",
       "Type": "Choice",
     },
     "1__if_3__if(input.id === undefined)": Object {
@@ -12213,8 +12347,52 @@ Object {
           ],
           "Next": "return \\"boolean\\"",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "string__if_4__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "boolean__if_4__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "number__if_4__if(input.id === undefined)",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__if_4__if(input.id === undefined)",
+          "Variable": "$.input.id",
+        },
       ],
-      "Default": "if_4__if(input.id === undefined)",
+      "Default": "undefined__if_4__if(input.id === undefined)",
       "Type": "Choice",
     },
     "1__if_4__if(input.id === undefined)": Object {
@@ -12292,8 +12470,52 @@ Object {
           ],
           "Next": "return \\"number\\"",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsString": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "string__if_5__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "boolean__if_5__if(input.id === undefined)",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.input.id",
+            },
+          ],
+          "Next": "number__if_5__if(input.id === undefined)",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__if_5__if(input.id === undefined)",
+          "Variable": "$.input.id",
+        },
       ],
-      "Default": "if_5__if(input.id === undefined)",
+      "Default": "undefined__if_5__if(input.id === undefined)",
       "Type": "Choice",
     },
     "1__if_5__if(input.id === undefined)": Object {
@@ -12469,256 +12691,6 @@ Object {
         },
       ],
       "Default": "false__if(input.id === undefined)",
-      "Type": "Choice",
-    },
-    "if_1__if(input.id === undefined)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsString": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "string__if_1__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "boolean__if_1__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsNumeric": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "number__if_1__if(input.id === undefined)",
-        },
-        Object {
-          "IsPresent": true,
-          "Next": "object__if_1__if(input.id === undefined)",
-          "Variable": "$.input.id",
-        },
-      ],
-      "Default": "undefined__if_1__if(input.id === undefined)",
-      "Type": "Choice",
-    },
-    "if_2__if(input.id === undefined)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsString": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "string__if_2__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "boolean__if_2__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsNumeric": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "number__if_2__if(input.id === undefined)",
-        },
-        Object {
-          "IsPresent": true,
-          "Next": "object__if_2__if(input.id === undefined)",
-          "Variable": "$.input.id",
-        },
-      ],
-      "Default": "undefined__if_2__if(input.id === undefined)",
-      "Type": "Choice",
-    },
-    "if_3__if(input.id === undefined)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsString": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "string__if_3__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "boolean__if_3__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsNumeric": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "number__if_3__if(input.id === undefined)",
-        },
-        Object {
-          "IsPresent": true,
-          "Next": "object__if_3__if(input.id === undefined)",
-          "Variable": "$.input.id",
-        },
-      ],
-      "Default": "undefined__if_3__if(input.id === undefined)",
-      "Type": "Choice",
-    },
-    "if_4__if(input.id === undefined)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsString": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "string__if_4__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "boolean__if_4__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsNumeric": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "number__if_4__if(input.id === undefined)",
-        },
-        Object {
-          "IsPresent": true,
-          "Next": "object__if_4__if(input.id === undefined)",
-          "Variable": "$.input.id",
-        },
-      ],
-      "Default": "undefined__if_4__if(input.id === undefined)",
-      "Type": "Choice",
-    },
-    "if_5__if(input.id === undefined)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsString": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "string__if_5__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "boolean__if_5__if(input.id === undefined)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "IsNumeric": true,
-              "Variable": "$.input.id",
-            },
-          ],
-          "Next": "number__if_5__if(input.id === undefined)",
-        },
-        Object {
-          "IsPresent": true,
-          "Next": "object__if_5__if(input.id === undefined)",
-          "Variable": "$.input.id",
-        },
-      ],
-      "Default": "undefined__if_5__if(input.id === undefined)",
       "Type": "Choice",
     },
     "number__if_1__if(input.id === undefined)": Object {
@@ -13257,6 +13229,103 @@ Object {
         Object {
           "And": Array [
             Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.heap0",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.heap0",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.heap0",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.heap0",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.heap0",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.heap0",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.heap0",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.heap0",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.heap0",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.heap0",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.val",
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.val",
+                    },
+                    Object {
+                      "StringEquals": "b",
+                      "Variable": "$.input.val",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__if(input.val === \\"b\\")",
+        },
+        Object {
+          "And": Array [
+            Object {
               "IsPresent": true,
               "Variable": "$.heap0",
             },
@@ -13325,7 +13394,7 @@ Object {
               ],
             },
           ],
-          "Next": "if(input.val === \\"b\\")",
+          "Next": "false__if(input.val === \\"b\\")",
         },
       ],
       "Default": "return \\"woop\\"",
@@ -13460,33 +13529,6 @@ Object {
         },
       ],
       "Default": "false__if(input.val !== \\"a\\")",
-      "Type": "Choice",
-    },
-    "if(input.val === \\"b\\")": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.val",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsString": true,
-                  "Variable": "$.input.val",
-                },
-                Object {
-                  "StringEquals": "b",
-                  "Variable": "$.input.val",
-                },
-              ],
-            },
-          ],
-          "Next": "true__if(input.val === \\"b\\")",
-        },
-      ],
-      "Default": "false__if(input.val === \\"b\\")",
       "Type": "Choice",
     },
     "return \\"hullo\\"": Object {
@@ -13861,8 +13903,29 @@ Object {
           ],
           "Next": "return \\"hello\\"",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.id",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.input.id",
+                },
+                Object {
+                  "StringEquals": "world",
+                  "Variable": "$.input.id",
+                },
+              ],
+            },
+          ],
+          "Next": "true__if_1__if(input.id === \\"hello\\")",
+        },
       ],
-      "Default": "if_1__if(input.id === \\"hello\\")",
+      "Default": "false__if_1__if(input.id === \\"hello\\")",
       "Type": "Choice",
     },
     "1__if_1__if(input.id === \\"hello\\")": Object {
@@ -13992,33 +14055,6 @@ Object {
         },
       ],
       "Default": "false__if(input.id === \\"hello\\")",
-      "Type": "Choice",
-    },
-    "if_1__if(input.id === \\"hello\\")": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.id",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsString": true,
-                  "Variable": "$.input.id",
-                },
-                Object {
-                  "StringEquals": "world",
-                  "Variable": "$.input.id",
-                },
-              ],
-            },
-          ],
-          "Next": "true__if_1__if(input.id === \\"hello\\")",
-        },
-      ],
-      "Default": "false__if_1__if(input.id === \\"hello\\")",
       "Type": "Choice",
     },
     "return": Object {

@@ -3892,8 +3892,83 @@ Object {
           "Next": "y = \${y}8",
           "Variable": "$$.Execution.Id",
         },
+        Object {
+          "Next": "true__return {andVar: c, and: input.a && input.b, or: input.a || input.b, i",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.input.a",
+              },
+              Object {
+                "IsNull": false,
+                "Variable": "$.input.a",
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.input.a",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.input.a",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.input.a",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
       ],
-      "Default": "return {andVar: c, and: input.a && input.b, or: input.a || input.b, invNull",
+      "Default": "false__return {andVar: c, and: input.a && input.b, or: input.a || input.b, ",
       "Type": "Choice",
     },
     "1__if(y = \${y}5 , false || y = \${y}6 , true || y = \${y}7) 1": Object {
@@ -7306,6 +7381,103 @@ Object {
         Object {
           "And": Array [
             Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.heap1",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.heap1",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.heap1",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.heap1",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.heap1",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.heap1",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.heap1",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.heap1",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.heap1",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.heap1",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.a",
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.a",
+                    },
+                    Object {
+                      "StringEquals": "11121",
+                      "Variable": "$.a",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__if(a === \\"11121\\")",
+        },
+        Object {
+          "And": Array [
+            Object {
               "IsPresent": true,
               "Variable": "$.heap1",
             },
@@ -7374,7 +7546,7 @@ Object {
               ],
             },
           ],
-          "Next": "if(a === \\"11121\\")",
+          "Next": "false__if(a === \\"11121\\")",
         },
       ],
       "Default": "a = \${a}2",
@@ -7743,33 +7915,6 @@ Object {
         },
       ],
       "Default": "false__if(a !== \\"111\\")",
-      "Type": "Choice",
-    },
-    "if(a === \\"11121\\")": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.a",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsString": true,
-                  "Variable": "$.a",
-                },
-                Object {
-                  "StringEquals": "11121",
-                  "Variable": "$.a",
-                },
-              ],
-            },
-          ],
-          "Next": "true__if(a === \\"11121\\")",
-        },
-      ],
-      "Default": "false__if(a === \\"11121\\")",
       "Type": "Choice",
     },
     "if(i === 1)": Object {
@@ -8593,73 +8738,6 @@ Object {
       "ResultPath": "$.first",
       "Type": "Pass",
     },
-    "first === x": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.first",
-            },
-            Object {
-              "Or": Array [
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.first",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.x",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.first",
-                    },
-                    Object {
-                      "StringEqualsPath": "$.x",
-                      "Variable": "$.first",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.first",
-                    },
-                    Object {
-                      "BooleanEqualsPath": "$.x",
-                      "Variable": "$.first",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsNumeric": true,
-                      "Variable": "$.first",
-                    },
-                    Object {
-                      "NumericEqualsPath": "$.x",
-                      "Variable": "$.first",
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-          "Next": "true__first === x",
-        },
-      ],
-      "Default": "false__first === x",
-      "Type": "Choice",
-    },
     "function(x, index, [first])": Object {
       "InputPath": "$.heap5.arr[0].item",
       "Next": "index",
@@ -9122,8 +9200,69 @@ Object {
           ],
           "Next": "true__x <= index || first === x",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.first",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.first",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.x",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.first",
+                    },
+                    Object {
+                      "StringEqualsPath": "$.x",
+                      "Variable": "$.first",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.first",
+                    },
+                    Object {
+                      "BooleanEqualsPath": "$.x",
+                      "Variable": "$.first",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.first",
+                    },
+                    Object {
+                      "NumericEqualsPath": "$.x",
+                      "Variable": "$.first",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__first === x",
+        },
       ],
-      "Default": "first === x",
+      "Default": "false__first === x",
       "Type": "Choice",
     },
     "{ arr, key }": Object {
@@ -9324,8 +9463,29 @@ Object {
           ],
           "Next": "c = \${c}1 1",
         },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.c",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.c",
+                },
+                Object {
+                  "StringEquals": "111",
+                  "Variable": "$.c",
+                },
+              ],
+            },
+          ],
+          "Next": "true__if(c === \\"111\\")",
+        },
       ],
-      "Default": "if(c === \\"111\\")",
+      "Default": "false__if(c === \\"111\\")",
       "Type": "Choice",
     },
     "1__if(c === \\"111\\")": Object {
@@ -9511,33 +9671,6 @@ Object {
         },
       ],
       "Default": "false__if(c === \\"1\\")",
-      "Type": "Choice",
-    },
-    "if(c === \\"111\\")": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.c",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsString": true,
-                  "Variable": "$.c",
-                },
-                Object {
-                  "StringEquals": "111",
-                  "Variable": "$.c",
-                },
-              ],
-            },
-          ],
-          "Next": "true__if(c === \\"111\\")",
-        },
-      ],
-      "Default": "false__if(c === \\"111\\")",
       "Type": "Choice",
     },
     "return a": Object {
@@ -14821,8 +14954,18 @@ Object {
           "Next": "throw__1__finally",
           "Variable": "$.fnl_tmp_8",
         },
+        Object {
+          "IsNull": false,
+          "Next": "await func() 1",
+          "Variable": "$$.Execution.Id",
+        },
+        Object {
+          "IsNull": false,
+          "Next": "await func() 2",
+          "Variable": "$$.Execution.Id",
+        },
       ],
-      "Default": "try 8",
+      "Default": "try 10",
       "Type": "Choice",
     },
     "1__finally 1": Object {
@@ -15346,8 +15489,13 @@ Object {
           "Next": "await func() 1",
           "Variable": "$$.Execution.Id",
         },
+        Object {
+          "IsNull": false,
+          "Next": "await func() 2",
+          "Variable": "$$.Execution.Id",
+        },
       ],
-      "Default": "try 9",
+      "Default": "try 10",
       "Type": "Choice",
     },
     "try 9": Object {

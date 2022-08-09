@@ -4356,16 +4356,31 @@ export namespace ASLGraph {
       states: ASLGraph.SubState
     ) => Record<string, string>
   ): States => {
-    // Utilize the rewrite transition logic to collect all state transitions in the graph.
-    // Later this is used to remove all unreachable states from the flattened machine.
-    const transitionMap: Record<string, Set<string>> = {};
-    const registerTransition = (from: string, to: string) => {
-      if (!(from in transitionMap)) {
-        transitionMap[from] = new Set();
-      }
-      transitionMap[from]!.add(to);
-    };
-    const internal = (
+    const namedStates = internal(startState, states, { localNames: {} });
+
+    /**
+     * Find any choice states that can be joined with their target state.
+     * TODO: generalize the optimization statements.
+     */
+    const updatedStates = joinChainedChoices(
+      startState,
+      /**
+       * Remove any states with no effect (Pass, generally)
+       * The incoming states to the empty states are re-wired to the outgoing transition of the empty state.
+       */
+      removeEmptyStates(startState, namedStates)
+    );
+
+    const reachableStates = findReachableStates(startState, updatedStates);
+
+    // only take the reachable states
+    return Object.fromEntries(
+      Object.entries(updatedStates).filter(([name]) =>
+        reachableStates.has(name)
+      )
+    );
+
+    function internal(
       parentName: string,
       states:
         | ASLGraph.NodeState
@@ -4373,15 +4388,13 @@ export namespace ASLGraph {
         | ASLGraph.OutputState
         | ASLGraph.OutputSubState,
       stateNameMap: NameMap
-    ): [string, State][] => {
+    ): [string, State][] {
       if (!states) {
         return [];
       } else if (!ASLGraph.isSubState(states)) {
         // strip output and node off of the state object.
         const { node, output, ...updated } = <ASLGraph.OutputState>(
-          rewriteStateTransitions(states, stateNameMap, (to: string) =>
-            registerTransition(parentName, to)
-          )
+          rewriteStateTransitions(states, stateNameMap)
         );
         return [[parentName, updated]];
       } else {
@@ -4400,22 +4413,7 @@ export namespace ASLGraph {
           return internal(parentName, state, nameMap);
         });
       }
-    };
-
-    const namedStates = internal(startState, states, { localNames: {} });
-    const reachableStateNames = findReachableStates(startState, transitionMap);
-
-    /**
-     * Remove any states with no effect (Pass, generally)
-     * The incoming states to the empty states are re-wired to the outgoing transition of the empty state.
-     */
-    const updatedStates = removeEmptyStates(
-      startState,
-      namedStates.filter(([name]) => reachableStateNames.has(name))
-    );
-
-    // only take the reachable states
-    return Object.fromEntries(updatedStates);
+    }
   };
 
   /**
@@ -4423,22 +4421,21 @@ export namespace ASLGraph {
    */
   const findReachableStates = (
     startState: string,
-    matrix: Record<string, Set<string>>
+    states: Record<string, State>
   ) => {
     const visited = new Set<string>();
-
-    const depthFirst = (state: string) => {
-      if (visited.has(state)) return;
-      visited.add(state);
-      if (state in matrix) {
-        matrix[state]?.forEach(depthFirst);
-      }
-    };
 
     // starting from the start state, find all reachable states
     depthFirst(startState);
 
     return visited;
+
+    function depthFirst(stateName: string) {
+      if (visited.has(stateName)) return;
+      visited.add(stateName);
+      const state = states[stateName]!;
+      visitTransition(state, depthFirst);
+    }
   };
 
   const removeEmptyStates = (
@@ -4560,13 +4557,111 @@ export namespace ASLGraph {
   };
 
   /**
+   * A {@link Choice} state that points to another {@link Choice} state can adopt the target state's
+   * choices and Next without adding an additional transition.
+   *
+   * 1
+   *    if a -> 2
+   *    if b -> 3
+   *    else -> 4
+   * 2
+   *    if c -> 3
+   *    else -> 4
+   * 3       - Task
+   * 4
+   *    if e -> 5
+   *    else -> 6
+   * 5       - Task
+   * 6       - Task
+   *
+   * =>
+   *
+   * 1
+   *    if a && c -> 3 (1 and 2)
+   *    if a && e -> 5 (1 and 4)
+   *    if b      -> 3
+   *    if e      -> 5 (4)
+   *    else      -> 6 (4's else)
+   * 2            - remove (if nothing else points to it)
+   * 3            - Task
+   * 4            - remove (if nothing else points to it)
+   * 5            - Task
+   * 6            - Task
+   */
+  const joinChainedChoices = (
+    startState: string,
+    stateEntries: [string, State][]
+  ) => {
+    const stateMap = Object.fromEntries(stateEntries);
+
+    const updatedStates: Record<string, State | null> = {};
+
+    depthFirst(startState);
+
+    // we can assume that all null states have been updated by here.
+    return updatedStates as Record<string, State>;
+
+    function depthFirst(state: string): State | null {
+      if (state in updatedStates) return updatedStates[state]!;
+      const stateObj = stateMap[state]!;
+      if (!isChoiceState(stateObj)) {
+        updatedStates[state] = stateObj;
+        visitTransition(stateObj, (next) => {
+          depthFirst(next);
+        });
+        // no change
+        return stateObj;
+      }
+      // set self to null to 1) halt circular references 2) avoid circular merges between choices.
+      // if #2 happens, that choice will always fail as state cannot change between transitions.
+      updatedStates[state] = null;
+      const branches = stateObj.Choices.flatMap((branch) => {
+        const { Next: branchNext, ...branchCondition } = branch;
+        const nextState = depthFirst(branchNext);
+        // next state should only by null when there is a circular reference between choices
+        if (!nextState || !isChoiceState(nextState)) {
+          return [branch];
+        } else {
+          const nextBranches = nextState.Choices.map(
+            ({ Next, ...condition }) => {
+              // for each branch in the next state, AND with the current branch and assign the next state's Next.
+              return { ...ASL.and(branchCondition, condition), Next };
+            }
+          );
+          return nextState.Default
+            ? [...nextBranches, { ...branchCondition, Next: nextState.Default }]
+            : nextBranches;
+        }
+      });
+      const defaultState = stateObj.Default
+        ? depthFirst(stateObj.Default)
+        : undefined;
+
+      const [defaultValue, defaultBranches] =
+        !defaultState || !isChoiceState(defaultState)
+          ? [stateObj.Default, []]
+          : [defaultState.Default, defaultState.Choices];
+
+      const mergedChoice = {
+        ...stateObj,
+        Choices: [...branches, ...defaultBranches],
+        Default: defaultValue,
+      };
+
+      updatedStates[state] = mergedChoice;
+      return mergedChoice;
+    }
+  };
+
+  /**
    * Visit each transition in each state.
    * Use the callback to update the transition name.
    */
   const visitTransition = (
     state: State,
-    cb: (next: string) => string
+    cb: (next: string) => string | undefined | void
   ): State => {
+    const cbOrNext = (next: string) => cb(next) ?? next;
     if ("End" in state && state.End !== undefined) {
       return state;
     }
@@ -4575,25 +4670,25 @@ export namespace ASLGraph {
         ...state,
         Choices: state.Choices.map((choice) => ({
           ...choice,
-          Next: cb(choice.Next),
+          Next: cbOrNext(choice.Next),
         })),
-        Default: state.Default ? cb(state.Default) : undefined,
+        Default: state.Default ? cbOrNext(state.Default) : undefined,
       };
     } else if ("Catch" in state) {
       return {
         ...state,
         Catch: state.Catch?.map((_catch) => ({
           ..._catch,
-          Next: _catch.Next ? cb(_catch.Next) : _catch.Next,
+          Next: _catch.Next ? cbOrNext(_catch.Next) : _catch.Next,
         })),
-        Next: state.Next ? cb(state.Next) : state.Next,
+        Next: state.Next ? cbOrNext(state.Next) : state.Next,
       };
     } else if (!("Next" in state)) {
       return state;
     }
     return {
       ...state,
-      Next: state.Next ? cb(state.Next) : state.Next,
+      Next: state.Next ? cbOrNext(state.Next) : state.Next,
     };
   };
 
@@ -4608,8 +4703,7 @@ export namespace ASLGraph {
    */
   const rewriteStateTransitions = (
     state: ASLGraph.NodeState,
-    substateNameMap: NameMap,
-    registerTransition: (transition: string) => void
+    substateNameMap: NameMap
   ) => {
     const updateTransition = (next: string, nameMap: NameMap): string => {
       if (next.startsWith("../")) {
@@ -4630,11 +4724,9 @@ export namespace ASLGraph {
         return find(nameMap);
       }
     };
-    return visitTransition(state, (next) => {
-      const name = updateTransition(next, substateNameMap);
-      registerTransition(name);
-      return name;
-    });
+    return visitTransition(state, (next) =>
+      updateTransition(next, substateNameMap)
+    );
   };
 
   /**
