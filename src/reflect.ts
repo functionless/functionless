@@ -152,7 +152,17 @@ function validateFunctionlessNodeSemantics<N extends FunctionlessNode>(
         (clazz) =>
           // all classes that extend Construct have the static property, Symbol(jsii.rtti)
           // so this detects new <expr> where <expr> resolves to a Construct class
-          typeof clazz[Symbol.for("jsii.rtti")]?.fqn === "string" ||
+          (typeof clazz[Symbol.for("jsii.rtti")]?.fqn === "string" &&
+            (function isConstruct(proto): boolean {
+              if (proto === null) {
+                // root of the prototype chain
+                return false;
+              } else if (proto.constructor?.name === "Construct") {
+                return true;
+              } else {
+                return isConstruct(Object.getPrototypeOf(proto));
+              }
+            })(clazz.prototype)) ||
           // all Functionless primitives have the property, FunctionlessType
           // we should definitely make this a Symbol
           typeof clazz.FunctionlessType === "string"
