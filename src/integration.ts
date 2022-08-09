@@ -19,7 +19,7 @@ import {
 } from "./guards";
 import { FunctionlessNode } from "./node";
 import { AnyFunction, evalToConstant } from "./util";
-import { visitEachChild } from "./visit";
+import { forEachChild } from "./visit";
 import { VTL } from "./vtl";
 
 export const isIntegration = <I extends Integration<string, AnyFunction>>(
@@ -298,7 +298,7 @@ export function findDeepIntegrations(
   ast: FunctionlessNode
 ): CallExpr<ReferenceExpr>[] {
   const nodes: CallExpr<ReferenceExpr>[] = [];
-  visitEachChild(ast, function visit(node: FunctionlessNode): FunctionlessNode {
+  forEachChild(ast, function visit(node: FunctionlessNode) {
     if (isCallExpr(node)) {
       const integrations = tryFindIntegrations(node.expr);
       if (integrations) {
@@ -307,7 +307,7 @@ export function findDeepIntegrations(
             node.fork(
               new CallExpr(
                 node.span,
-                new ReferenceExpr(node.expr.span, "", () => integration),
+                new ReferenceExpr(node.expr.span, "", () => integration, 0),
                 node.args.map((arg) => arg.clone())
               )
             )
@@ -316,7 +316,7 @@ export function findDeepIntegrations(
       }
     }
 
-    return visitEachChild(node, visit);
+    forEachChild(node, visit);
   });
 
   return nodes;

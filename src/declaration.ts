@@ -11,6 +11,7 @@ import {
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
+import { Root } from "./root";
 import { Span } from "./span";
 import type {
   BlockStmt,
@@ -32,14 +33,14 @@ export type Decl =
 
 abstract class BaseDecl<
   Kind extends NodeKind,
-  Parent extends FunctionlessNode | undefined = FunctionlessNode | undefined
+  Parent extends FunctionlessNode = FunctionlessNode
 > extends BaseNode<Kind, Parent> {
   readonly nodeKind: "Decl" = "Decl";
 }
 
 export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
   NodeKind.ClassDecl,
-  undefined
+  Root
 > {
   readonly _classBrand?: C;
   constructor(
@@ -197,9 +198,10 @@ export type FunctionLike<F extends AnyFunction = AnyFunction> =
   | FunctionExpr<F>
   | ArrowFunctionExpr<F>;
 
-export class FunctionDecl<
-  F extends AnyFunction = AnyFunction
-> extends BaseDecl<NodeKind.FunctionDecl> {
+export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
+  NodeKind.FunctionDecl,
+  Root | BlockStmt
+> {
   readonly _functionBrand?: F;
   constructor(
     /**

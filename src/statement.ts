@@ -38,7 +38,7 @@ export type Stmt =
 
 export abstract class BaseStmt<
   Kind extends NodeKind,
-  Parent extends FunctionlessNode | undefined = BlockStmt | IfStmt
+  Parent extends FunctionlessNode = BlockStmt | IfStmt
 > extends BaseNode<Kind, Parent> {
   readonly nodeKind: "Stmt" = "Stmt";
 

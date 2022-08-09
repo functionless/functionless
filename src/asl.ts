@@ -63,6 +63,7 @@ import {
   isLabelledStmt,
   isLiteralExpr,
   isMethodDecl,
+  isRoot,
   isNewExpr,
   isNode,
   isNoSubstitutionTemplateLiteral,
@@ -5335,7 +5336,8 @@ function toStateName(node: FunctionlessNode): string {
       isTemplateHead(node) ||
       isTemplateMiddle(node) ||
       isTemplateTail(node) ||
-      isTemplateSpan(node)
+      isTemplateSpan(node) ||
+      isRoot(node)
     ) {
       throw new SynthError(
         ErrorCodes.Unsupported_Feature,

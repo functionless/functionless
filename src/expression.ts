@@ -68,12 +68,7 @@ export type Expr =
 
 export abstract class BaseExpr<
   Kind extends NodeKind,
-  Parent extends FunctionlessNode | undefined =
-    | BindingElem
-    | Expr
-    | Stmt
-    | VariableDecl
-    | undefined
+  Parent extends FunctionlessNode = BindingElem | Expr | Stmt | VariableDecl
 > extends BaseNode<Kind, Parent> {
   readonly nodeKind: "Expr" = "Expr";
 }
@@ -146,10 +141,9 @@ export class FunctionExpr<
   }
 }
 
-export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
-  NodeKind.ClassExpr,
-  undefined
-> {
+export class ClassExpr<
+  C extends AnyClass = AnyClass
+> extends BaseExpr<NodeKind.ClassExpr> {
   readonly _classBrand?: C;
   constructor(
     /**
@@ -190,14 +184,17 @@ export class ReferenceExpr<
      */
     readonly ref: () => R,
     /**
-     * An id number unique within the file where the reference originates from.
+     * A number that uniquely identifies the variable within this AST.
+     *
+     * This is used to ensure that two ReferenceExpr's pointing to the same variable still point
+     * to the same variable after transformation.
      */
-    readonly id: number,
-    readonly filename: string
+    readonly id: number
   ) {
     super(NodeKind.ReferenceExpr, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensure(ref, "ref", ["function"]);
+    this.ensure(id, "id", ["number"]);
   }
 }
 

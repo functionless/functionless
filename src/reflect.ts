@@ -4,6 +4,7 @@ import { ErrorCodes, SynthError } from "./error-code";
 import { isFunctionLike, isErr, isNewExpr } from "./guards";
 import { tryResolveReferences } from "./integration";
 import type { FunctionlessNode } from "./node";
+import { Root } from "./root";
 import { parseSExpr } from "./s-expression";
 import { AnyAsyncFunction, AnyFunction } from "./util";
 import { forEachChild } from "./visit";
@@ -53,10 +54,8 @@ export function reflect<F extends AnyFunction | AnyAsyncFunction>(
   const astCallback = (<any>func)[ReflectionSymbols.AST];
   if (typeof astCallback === "function") {
     if (!reflectCache.has(astCallback)) {
-      reflectCache.set(
-        astCallback,
-        parseSExpr(astCallback()) as FunctionLike | Err
-      );
+      const mod = parseSExpr(astCallback()) as Root;
+      reflectCache.set(astCallback, mod.entrypoint as FunctionLike<F> | Err);
     }
     return reflectCache.get(astCallback) as FunctionLike<F> | Err | undefined;
   }
