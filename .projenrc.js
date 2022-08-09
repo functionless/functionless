@@ -89,7 +89,6 @@ const project = new CustomTypescriptProject({
     "@swc/cli",
     "@swc/core@1.2.218",
     "@swc/register",
-    "@swc/jest",
   ],
   devDeps: [
     `@aws-cdk/aws-appsync-alpha@${MIN_CDK_VERSION}-alpha.0`,
@@ -117,6 +116,7 @@ const project = new CustomTypescriptProject({
      */
     // for serializer testing
     "uuid",
+    "@swc/jest",
   ],
   jestOptions: {
     jestConfig: {

@@ -21,6 +21,10 @@
       "type": "build"
     },
     {
+      "name": "@swc/jest",
+      "type": "build"
+    },
+    {
       "name": "@types/fs-extra",
       "type": "build"
     },
@@ -221,10 +225,6 @@
     {
       "name": "@swc/core",
       "version": "1.2.218",
-      "type": "runtime"
-    },
-    {
-      "name": "@swc/jest",
       "type": "runtime"
     },
     {
