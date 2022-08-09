@@ -48,7 +48,7 @@
     "axios": "^0.27.2",
     "cdk-assets": "2.28.1",
     "constructs": "10.0.0",
-    "esbuild": "0.14.53",
+    "esbuild": "0.14.54",
     "eslint": "^8",
     "eslint-config-prettier": "^8.5.0",
     "eslint-import-resolver-node": "^0.3.6",
@@ -62,7 +62,7 @@
     "json-schema": "^0.4.0",
     "npm-check-updates": "^15",
     "prettier": "^2.7.1",
-    "projen": "^0.61.1",
+    "projen": "^0.61.3",
     "promptly": "^3.2.0",
     "proxy-agent": "^5.0.0",
     "standard-version": "^9",
@@ -76,13 +76,13 @@
   "peerDependencies": {
     "aws-cdk-lib": "^2.28.1",
     "constructs": "^10.0.0",
-    "esbuild": "^0.14.53",
+    "esbuild": "^0.14.54",
     "typesafe-dynamodb": "^0.1.5",
     "typescript": "^4.7.2",
     "@aws-cdk/aws-appsync-alpha": "*"
   },
   "dependencies": {
-    "@functionless/nodejs-closure-serializer": "^0.1.1",
+    "@functionless/nodejs-closure-serializer": "^0.1.2",
     "@types/aws-lambda": "^8.10.101",
     "fs-extra": "^10.1.0",
     "minimatch": "^5.1.0"
