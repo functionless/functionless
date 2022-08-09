@@ -113,8 +113,20 @@ export function serializeClosure(func: AnyFunction): string {
 
   const statements: ts.Statement[] = [];
 
-  function emit(...statements: ts.Statement[]) {
-    statements.push(...statements);
+  const valueIds = new Map<any, ts.Expression>();
+
+  emit(expr(assign(prop(id("exports"), "handler"), serialize(func))));
+
+  return printer.printFile(
+    ts.factory.createSourceFile(
+      statements,
+      ts.factory.createToken(ts.SyntaxKind.EndOfFileToken),
+      ts.NodeFlags.JavaScriptFile
+    )
+  );
+
+  function emit(...stmts: ts.Statement[]) {
+    statements.push(...stmts);
   }
 
   function emitVarDecl(
@@ -144,18 +156,6 @@ export function serializeClosure(func: AnyFunction): string {
     );
     return ts.factory.createIdentifier(name);
   }
-
-  const valueIds = new Map<any, ts.Expression>();
-
-  emit(expr(assign(prop(id("exports"), "handler"), serialize(func))));
-
-  return printer.printFile(
-    ts.factory.createSourceFile(
-      statements,
-      ts.factory.createToken(ts.SyntaxKind.EndOfFileToken),
-      ts.NodeFlags.JavaScriptFile
-    )
-  );
 
   function serialize(value: any): ts.Expression {
     let id = valueIds.get(value);
@@ -241,7 +241,8 @@ export function serializeClosure(func: AnyFunction): string {
         // const vFunc = vMod.prop
         return emitVarDecl(prop(moduleName, mod.exportName));
       } else if (isFunctionLike(ast)) {
-        return emitVarDecl(serializeAST(ast) as ts.Expression);
+        const expr = serializeAST(ast) as ts.Expression;
+        return emitVarDecl(expr);
       } else {
         throw ast.error;
       }

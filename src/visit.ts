@@ -87,6 +87,38 @@ export function forEachChild(
 }
 
 /**
+ * Walks each of the children in {@link node} and calls {@link visit}.
+ *
+ * If {@link visit} returns a truthy value, then walking is immediately terminated.
+ *
+ * @param node the node to walk children of
+ * @param visit callback to call with each child node
+ */
+export function forEachChild(
+  node: FunctionlessNode,
+  visit: (node: FunctionlessNode) => any
+): void {
+  for (const argument of node._arguments) {
+    if (argument === null || typeof argument !== "object") {
+      // all primitives are simply returned as-is
+    } else if (isNode(argument)) {
+      if (visit(argument)) {
+        // if a truthy value is returned from visit, terminate the walk
+        return;
+      }
+    } else if (Array.isArray(argument)) {
+      // is an Array of nodes
+      for (const item of argument) {
+        if (visit(item)) {
+          // if a truthy value is returned from visit, terminate the walk
+          return;
+        }
+      }
+    }
+  }
+}
+
+/**
  * Like {@link visitEachChild} but it only visits the statements of a block.
  *
  * Provides the hoist function that allows hoisting expressions into variable statements above the current statement.
