@@ -2,11 +2,7 @@ import { FunctionLike } from "./declaration";
 import { Err } from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
 import { isFunctionLike, isErr, isNewExpr } from "./guards";
-import {
-  findDeepIntegrations,
-  tryFindIntegration,
-  tryFindIntegrations,
-} from "./integration";
+import { tryFindIntegrations } from "./integration";
 import type { FunctionlessNode } from "./node";
 import { parseSExpr } from "./s-expression";
 import { AnyAsyncFunction, AnyFunction } from "./util";
