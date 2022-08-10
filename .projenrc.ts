@@ -143,7 +143,7 @@ const project = new CustomTypescriptProject({
   ],
   eslintOptions: {
     dirs: ["src", "test"],
-    lintProjenRc: true,
+    lintProjenRc: false,
   },
   tsconfig: {
     compilerOptions: {
