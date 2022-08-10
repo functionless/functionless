@@ -49,11 +49,18 @@ export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
     span: Span,
     readonly name: string,
     readonly heritage: Expr | undefined,
-    readonly members: ClassMember[]
+    readonly members: ClassMember[],
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.ClassDecl, span, arguments);
     this.ensure(name, "name", ["string"]);
     this.ensureArrayOf(members, "members", NodeKind.ClassMember);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 
@@ -85,11 +92,18 @@ export class ConstructorDecl extends BaseDecl<NodeKind.ConstructorDecl> {
      */
     span: Span,
     readonly parameters: ParameterDecl[],
-    readonly body: BlockStmt
+    readonly body: BlockStmt,
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.ConstructorDecl, span, arguments);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 
@@ -127,7 +141,13 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
      * }
      * ```
      */
-    readonly isAsterisk: boolean
+    readonly isAsterisk: boolean,
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.MethodDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
@@ -135,6 +155,7 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
     this.ensure(body, "body", [NodeKind.BlockStmt]);
     this.ensure(isAsync, "isAsync", ["boolean"]);
     this.ensure(isAsterisk, "isAsterisk", ["boolean"]);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 
@@ -165,11 +186,18 @@ export class GetAccessorDecl extends BaseDecl<
      */
     span: Span,
     readonly name: PropName,
-    readonly body: BlockStmt
+    readonly body: BlockStmt,
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.GetAccessorDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 export class SetAccessorDecl extends BaseDecl<
@@ -183,12 +211,19 @@ export class SetAccessorDecl extends BaseDecl<
     span: Span,
     readonly name: PropName,
     readonly parameter: ParameterDecl,
-    readonly body: BlockStmt
+    readonly body: BlockStmt,
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.SetAccessorDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensure(parameter, "parameter", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 
@@ -231,7 +266,13 @@ export class FunctionDecl<
      * async function *foo() {}
      * ```
      */
-    readonly isAsterisk: boolean
+    readonly isAsterisk: boolean,
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.FunctionDecl, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
@@ -239,6 +280,7 @@ export class FunctionDecl<
     this.ensure(body, "body", [NodeKind.BlockStmt]);
     this.ensure(isAsync, "isAsync", ["boolean"]);
     this.ensure(isAsterisk, "isAsterisk", ["boolean"]);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 
