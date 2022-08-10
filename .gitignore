@@ -55,3 +55,4 @@ junit.xml
 !/.eslintrc.json
 !/.git/hooks/pre-commit
 !/.swcrc
+!/jest.config.defaults.json

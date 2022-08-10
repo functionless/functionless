@@ -36,12 +36,9 @@
     }
   },
   "ignorePatterns": [
-    "*.js",
-    "!.projenrc.js",
-    "*.d.ts",
-    "node_modules/",
-    "*.generated.ts",
-    "coverage"
+    "jest.config.ts",
+    "!.projenrc.ts",
+    "!projenrc/**/*.ts"
   ],
   "rules": {
     "prettier/prettier": [
@@ -55,7 +52,10 @@
       {
         "devDependencies": [
           "**/test/**",
-          "**/build-tools/**"
+          "**/build-tools/**",
+          "**/projenrc/**",
+          ".projenrc.ts",
+          "projenrc/**/*.ts"
         ],
         "optionalDependencies": false,
         "peerDependencies": true
@@ -120,7 +120,7 @@
   "overrides": [
     {
       "files": [
-        ".projenrc.js"
+        ".projenrc.ts"
       ],
       "rules": {
         "@typescript-eslint/no-require-imports": "off",

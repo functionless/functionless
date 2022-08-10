@@ -111,7 +111,11 @@ export function serializeClosure(func: AnyFunction): string {
 
   const statements: ts.Statement[] = [];
 
+  // stores a map of value to a ts.Expression producing that value
   const valueIds = new Map<any, ts.Expression>();
+
+  // stores a map of a `<variable-id>` to a ts.Identifier pointing to the unique location of that variable
+  const referenceIds = new Map<string, ts.Identifier>();
 
   emit(expr(assign(prop(id("exports"), "handler"), serialize(func))));
 
@@ -134,17 +138,17 @@ export function serializeClosure(func: AnyFunction): string {
   }
 
   function emitVarDecl(
-    expr: ts.Expression,
-    varKind: "const" | "let" | "var" = "const"
+    varKind: "const" | "let" | "var",
+    varName: string,
+    expr: ts.Expression
   ): ts.Identifier {
-    const name = uniqueName();
     emit(
       ts.factory.createVariableStatement(
         undefined,
         ts.factory.createVariableDeclarationList(
           [
             ts.factory.createVariableDeclaration(
-              name,
+              varName,
               undefined,
               undefined,
               expr
@@ -158,7 +162,7 @@ export function serializeClosure(func: AnyFunction): string {
         )
       )
     );
-    return ts.factory.createIdentifier(name);
+    return ts.factory.createIdentifier(varName);
   }
 
   function serialize(value: any): ts.Expression {
@@ -197,7 +201,11 @@ export function serializeClosure(func: AnyFunction): string {
 
       // emit an empty array
       // var vArr = []
-      const arr = emitVarDecl(ts.factory.createArrayLiteralExpression([]));
+      const arr = emitVarDecl(
+        "const",
+        uniqueName(),
+        ts.factory.createArrayLiteralExpression([])
+      );
 
       // cache the empty array now in case any of the items in the array circularly reference the array
       valueIds.set(value, arr);
@@ -216,7 +224,11 @@ export function serializeClosure(func: AnyFunction): string {
 
       // emit an empty object with the correct prototype
       // e.g. `var vObj = Object.create(vPrototype);`
-      const obj = emitVarDecl(call(prop(id("Object"), "create"), [prototype]));
+      const obj = emitVarDecl(
+        "const",
+        uniqueName(),
+        call(prop(id("Object"), "create"), [prototype])
+      );
 
       // cache the empty object nwo in case any of the properties in teh array circular reference the object
       valueIds.set(value, obj);
@@ -229,25 +241,34 @@ export function serializeClosure(func: AnyFunction): string {
 
       return obj;
     } else if (typeof value === "function") {
-      const ast = reflect(func);
+      const ast = reflect(value);
 
       if (ast === undefined) {
         // if this is not compiled by functionless, we can only serialize it if it is exported by a module
-        const mod = requireCache.get(func);
+        const mod = requireCache.get(value);
         if (mod === undefined) {
+          // eslint-disable-next-line no-debugger
+          debugger;
           throw new Error(
             `cannot serialize closures that were not compiled with Functionless unless they are exported by a module: ${func}`
           );
         }
         // const vMod = require("module-name");
-        const moduleName = emitVarDecl(call(id("require"), [string(mod.path)]));
+        const moduleName = emitVarDecl(
+          "const",
+          uniqueName(),
+          call(id("require"), [string(mod.path)])
+        );
 
         // const vFunc = vMod.prop
-        return emitVarDecl(prop(moduleName, mod.exportName));
+        return emitVarDecl(
+          "const",
+          uniqueName(),
+          prop(moduleName, mod.exportName)
+        );
       } else if (isFunctionLike(ast)) {
-        const expr = toTS(ast) as ts.Expression;
-        return emitVarDecl(expr);
-      } else {
+        return emitVarDecl("const", uniqueName(), toTS(ast) as ts.Expression);
+      } else if (isErr(ast)) {
         throw ast.error;
       }
     }
@@ -267,7 +288,23 @@ export function serializeClosure(func: AnyFunction): string {
 
   function _toTS(node: FunctionlessNode): ts.Node {
     if (isReferenceExpr(node)) {
-      return serialize(node.ref());
+      // a key that uniquely identifies the variable pointed to by this reference
+      const varKey = `${node.getFileName()} ${node.name} ${node.id}`;
+
+      // a ts.Identifier that uniquely references the memory location of this variable in the serialized closure
+      let varId: ts.Identifier | undefined = referenceIds.get(varKey);
+      if (varId === undefined) {
+        const varName = uniqueName();
+        varId = ts.factory.createIdentifier(varName);
+        referenceIds.set(varKey, varId);
+
+        const value = serialize(node.ref());
+
+        // emit a unique variable with the current value
+        emitVarDecl("var", varName, value);
+      }
+
+      return varId;
     } else if (isArrowFunctionExpr(node)) {
       return ts.factory.createArrowFunction(
         node.isAsync
@@ -280,20 +317,43 @@ export function serializeClosure(func: AnyFunction): string {
         toTS(node.body) as ts.Block
       );
     } else if (isFunctionDecl(node)) {
-      return ts.factory.createFunctionDeclaration(
-        undefined,
-        node.isAsync
-          ? [ts.factory.createModifier(ts.SyntaxKind.AsyncKeyword)]
-          : undefined,
-        node.isAsterisk
-          ? ts.factory.createToken(ts.SyntaxKind.AsteriskToken)
-          : undefined,
-        node.name,
-        undefined,
-        node.parameters.map((param) => toTS(param) as ts.ParameterDeclaration),
-        undefined,
-        toTS(node.body) as ts.Block
-      );
+      if (node.parent === undefined) {
+        // if this is the root of a tree, then we must declare it as a FunctionExpression
+        // so that it can be assigned to a variable in the serialized closure
+        return ts.factory.createFunctionExpression(
+          node.isAsync
+            ? [ts.factory.createModifier(ts.SyntaxKind.AsyncKeyword)]
+            : undefined,
+          node.isAsterisk
+            ? ts.factory.createToken(ts.SyntaxKind.AsteriskToken)
+            : undefined,
+          node.name,
+          undefined,
+          node.parameters.map(
+            (param) => toTS(param) as ts.ParameterDeclaration
+          ),
+          undefined,
+          toTS(node.body) as ts.Block
+        );
+      } else {
+        // if it's not the root, then maintain the FunctionDeclaration SyntaxKind
+        return ts.factory.createFunctionDeclaration(
+          undefined,
+          node.isAsync
+            ? [ts.factory.createModifier(ts.SyntaxKind.AsyncKeyword)]
+            : undefined,
+          node.isAsterisk
+            ? ts.factory.createToken(ts.SyntaxKind.AsteriskToken)
+            : undefined,
+          node.name,
+          undefined,
+          node.parameters.map(
+            (param) => toTS(param) as ts.ParameterDeclaration
+          ),
+          undefined,
+          toTS(node.body) as ts.Block
+        );
+      }
     } else if (isFunctionExpr(node)) {
       return ts.factory.createFunctionExpression(
         node.isAsync

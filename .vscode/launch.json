@@ -107,6 +107,20 @@
         "${jest.testFile}",
         "--coverage=false"
       ]
+    },
+    {
+      "name": ".projenrc.ts",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--nolazy", "-r", "@swc/register"],
+      "args": [".projenrc.ts"],
+      "cwd": "${workspaceRoot}",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "env": {
+        "TS_NODE_PROJECT": "${workspaceRoot}/test-app/tsconfig.json"
+      }
     }
   ]
 }
