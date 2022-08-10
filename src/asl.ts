@@ -1,10 +1,10 @@
 import { aws_iam } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { BindingPattern } from "typescript";
 import { assertNever } from "./assert";
 import {
   BindingElem,
   BindingName,
+  BindingPattern,
   FunctionLike,
   ParameterDecl,
   VariableDecl,
@@ -433,15 +433,65 @@ export interface EvalExprContext {
   /**
    * returns a possibly mutated output variable as json path.
    *
-   * If the output was a {@link ASLGraph.LiteralValue}, a new state will be added that turns the literal into a json path.
-   * If the output was a {@link ASLGraph.JsonPath}, the output is returned.
+   * * If the output was a {@link ASLGraph.LiteralValue}, a new state will be added that turns the literal into a json path.
+   * * If the output was a {@link ASLGraph.JsonPath}, the output is returned.
+   * * If the output was a {@link ASLGraph.ConditionOutput}, a new {@link Choice} state will turn the conditional into a boolean
+   *   and return a {@link ASLGraph.JsonPath}.
    */
   normalizeOutputToJsonPath: () => ASLGraph.JsonPath;
+  /**
+   * returns a possibly mutated output variable as {@link ASLGraph.JsonPath} or {@link ASLGraph.LiteralValue}.
+   *
+   * * If the output is a {@link ASLGraph.LiteralValue}, the output is returned as is.
+   * * If the output was a {@link ASLGraph.JsonPath}, the output is returned as is.
+   * * If the output was a {@link ASLGraph.ConditionOutput}, a new {@link Choice} state will turn the conditional into a boolean
+   *   and return a {@link ASLGraph.JsonPath}.
+   */
+  normalizeConditionToJsonPath: () => Exclude<
+    ASLGraph.Output,
+    ASLGraph.ConditionOutput
+  >;
   /**
    * Callback provided to inject additional states into the graph.
    * The state will be joined (@see ASLGraph.joinSubStates ) with the previous and next states in the order received.
    */
   addState: (state: ASLGraph.NodeState | ASLGraph.SubState) => void;
+}
+
+export interface EvalContextContext {
+  /**
+   * returns a possibly mutated output variable as {@link ASLGraph.JsonPath}.
+   *
+   * * If the output was a {@link ASLGraph.LiteralValue}, a new state will be added that turns the literal into a {@link ASL.JsonPath}.
+   * * If the output was a {@link ASLGraph.JsonPath}, the output is returned as is.
+   * * If the output was a {@link ASLGraph.ConditionOutput}, a new {@link Choice} state will turn the conditional into a boolean
+   *   and return a {@link ASLGraph.JsonPath}.
+   */
+  normalizeOutputToJsonPath: (output: ASLGraph.Output) => ASLGraph.JsonPath;
+  /**
+   * returns a possibly mutated output variable as {@link ASLGraph.JsonPath} or {@link ASLGraph.LiteralValue}.
+   *
+   * * If the output is a {@link ASLGraph.LiteralValue}, the output is returned as is.
+   * * If the output was a {@link ASLGraph.JsonPath}, the output is returned as is.
+   * * If the output was a {@link ASLGraph.ConditionOutput}, a new {@link Choice} state will turn the conditional into a boolean
+   *   and return a {@link ASLGraph.JsonPath}.
+   */
+  normalizeConditionToJsonPath: (
+    output: ASLGraph.Output
+  ) => Exclude<ASLGraph.Output, ASLGraph.ConditionOutput>;
+  /**
+   * Callback provided to inject additional states into the graph.
+   * The state will be joined (@see ASLGraph.joinSubStates ) with the previous and next states in the order received.
+   */
+  addState: (state: ASLGraph.NodeState | ASLGraph.SubState) => void;
+  /**
+   * Evaluates a single expression and returns the {@link ASLGraph.Output}.
+   *
+   * Any require states will be merged in with the output.
+   *
+   * This method is the same as {@link ASL.evalExpr}, but can be used multiple times within a single {@link ASL.evalContext}.
+   */
+  evalExpr: (expr: Expr, allowUndefined?: boolean) => ASLGraph.Output;
 }
 
 /**
@@ -775,15 +825,7 @@ export class ASL {
         const body = this.evalStmt(stmt.body, returnPass);
 
         // assigns either a constant or json path to a new variable
-        const assignTempState = this.stateWithHeapOutput(
-          ASLGraph.passWithInput(
-            {
-              Type: "Pass",
-              Next: ASLGraph.DeferNext,
-            },
-            output
-          )
-        );
+        const assignTempState = this.assignValue(undefined, output);
         const tempArrayPath = assignTempState.output.jsonPath;
 
         const assignTemp = isForOfStmt(stmt)
@@ -909,7 +951,7 @@ export class ASL {
     } else if (isForStmt(stmt)) {
       const body = this.evalStmt(stmt.body, returnPass);
 
-      return this.evalContextToSubState(stmt, (evalExpr) => {
+      return this.evalContextToSubState(stmt, ({ evalExpr }) => {
         const initializers = stmt.initializer
           ? isVariableDeclList(stmt.initializer)
             ? stmt.initializer.decls.map((x) => this.evalDecl(x))
@@ -940,12 +982,15 @@ export class ASL {
                     stmt.condition,
                     condStates,
                     // evaluate the condition json path to be truthy
-                    ASLGraph.isJsonPath(conditionOutput)
+                    ASLGraph.isJsonPath(conditionOutput) ||
+                      ASLGraph.isConditionOutput(conditionOutput)
                       ? {
                           Type: "Choice",
                           Choices: [
                             {
-                              ...ASL.isTruthy(conditionOutput.jsonPath),
+                              ...(ASLGraph.isConditionOutput(conditionOutput)
+                                ? conditionOutput.condition
+                                : ASL.isTruthy(conditionOutput.jsonPath)),
                               Next: "body",
                             },
                           ],
@@ -1025,7 +1070,10 @@ export class ASL {
                 condition: ASLGraph.joinSubStates(_if.when, condition, {
                   Type: "Choice",
                   Choices: [
-                    { ...ASL.isTruthyOutput(conditionOutput), Next: "body" },
+                    {
+                      ...ASLGraph.isTruthyOutput(conditionOutput),
+                      Next: "body",
+                    },
                   ],
                   Default: next,
                 })!,
@@ -1054,13 +1102,13 @@ export class ASL {
     } else if (isReturnStmt(stmt)) {
       return this.evalExprToSubState(
         stmt.expr ?? stmt.fork(new NullLiteralExpr()),
-        (output) =>
+        (_, { normalizeConditionToJsonPath: normalizeConditionalToJsonPath }) =>
           ASLGraph.passWithInput(
             {
               Type: "Pass",
               ...returnPass,
             },
-            output
+            normalizeConditionalToJsonPath()
           )
       );
     } else if (isVariableStmt(stmt)) {
@@ -1086,7 +1134,7 @@ export class ASL {
           ? stmt.expr
           : stmt.expr.expr;
 
-      const throwState = this.evalContextToSubState(updated, (evalExpr) => {
+      const throwState = this.evalContextToSubState(updated, ({ evalExpr }) => {
         const errorClassName =
           // new StepFunctionError will be a ReferenceExpr with the name: Step
           isReferenceExpr(updated.expr) &&
@@ -1372,7 +1420,7 @@ export class ASL {
               node: stmt.condition,
               Choices: [
                 {
-                  ...ASL.isTruthyOutput(conditionOutput),
+                  ...ASLGraph.isTruthyOutput(conditionOutput),
                   Next: "whenTrue",
                 },
               ],
@@ -1525,33 +1573,78 @@ export class ASL {
       },
       // normalizes the output into a json path, creating a Pass state to turn a constant into a jsonPath if needed.
       normalizeOutputToJsonPath: () => {
-        if (ASLGraph.isJsonPath(output)) {
-          return output;
-        } else {
-          const heap = this.newHeapVariable();
-
-          states.push({
-            ...ASLGraph.passWithInput(
-              {
-                Type: "Pass",
-                ResultPath: heap,
-                Next: ASLGraph.DeferNext,
-              },
-              output
-            ),
-            node: expr,
-          });
-
-          return {
-            jsonPath: heap,
-          };
+        const newState = this.normalizeOutputToJsonPath(output, expr);
+        if (ASLGraph.isJsonPath(newState)) {
+          return newState;
         }
+
+        states.push(newState);
+
+        return newState.output;
+      },
+      normalizeConditionToJsonPath: () => {
+        const newState = this.normalizeConditionToJsonPath(output, expr);
+        if (
+          ASLGraph.isJsonPath(newState) ||
+          ASLGraph.isLiteralValue(newState)
+        ) {
+          return newState;
+        }
+
+        states.push(newState);
+
+        return newState.output;
       },
     });
 
     // return the value generated by the handler and any intermediate states generated
     // by eval, `addState`, or `normalizeOutputToJsonPath`.
     return [handlerOutput, states];
+  }
+
+  /**
+   * Returns the states required to normalize any {@link ASLGraph.Output} into a {@link ASLGraph.JsonPath}.
+   *
+   * * If the output was a {@link ASLGraph.LiteralValue}, a new state will be added that turns the literal into a json path.
+   * * If the output was a {@link ASLGraph.JsonPath}, the output is returned.
+   * * If the output was a {@link ASLGraph.ConditionOutput}, a new {@link Choice} state will turn the conditional into a boolean
+   *   and return a {@link ASLGraph.JsonPath}.
+   */
+  private normalizeOutputToJsonPath(
+    output: ASLGraph.Output,
+    node?: FunctionlessNode
+  ):
+    | ((ASLGraph.OutputState | ASLGraph.OutputSubState) & {
+        output: ASLGraph.JsonPath;
+      })
+    | ASLGraph.JsonPath {
+    if (ASLGraph.isJsonPath(output)) {
+      return output;
+    } else {
+      return this.assignValue(node, output);
+    }
+  }
+
+  /**
+   * returns the states required to normalize a {@link ASLGraph.Output} into a {@link ASLGraph.JsonPath} or {@link ASLGraph.LiteralValue}.
+   *
+   * * If the output is a {@link ASLGraph.LiteralValue}, the output is returned as is.
+   * * If the output was a {@link ASLGraph.JsonPath}, the output is returned as is.
+   * * If the output was a {@link ASLGraph.ConditionOutput}, a new {@link Choice} state will turn the conditional into a boolean
+   *   and return a {@link ASLGraph.JsonPath}.
+   */
+  private normalizeConditionToJsonPath(
+    output: ASLGraph.Output,
+    node?: FunctionlessNode
+  ):
+    | (ASLGraph.OutputSubState & { output: ASLGraph.JsonPath })
+    | ASLGraph.JsonPath
+    | ASLGraph.LiteralValue {
+    if (ASLGraph.isJsonPath(output) || ASLGraph.isLiteralValue(output)) {
+      return output;
+    } else {
+      return this.conditionState(node, output.condition);
+    }
   }
 
   /**
@@ -1570,10 +1663,7 @@ export class ASL {
    */
   public evalContext<T extends ASLGraph.NodeResults>(
     contextNode: FunctionlessNode,
-    handler: (
-      evalExpr: (expr: Expr, allowUndefined?: boolean) => ASLGraph.Output
-      // evalCondition: (expr: Expr) => Condition
-    ) => T
+    handler: (context: EvalContextContext) => T
   ): T extends ASLGraph.OutputSubState
     ? ASLGraph.OutputSubState
     : ASLGraph.NodeResults {
@@ -1604,7 +1694,7 @@ export class ASL {
   private evalContextToSubState(
     contextNode: FunctionlessNode,
     handler: (
-      evalExpr: (expr: Expr, allowUndefined?: boolean) => ASLGraph.Output
+      context: EvalContextContext
     ) => ASLGraph.SubState | ASLGraph.NodeState
   ): ASLGraph.SubState | ASLGraph.NodeState {
     const [handlerOut, states] = this.evalContextBase(handler);
@@ -1618,16 +1708,44 @@ export class ASL {
    * @see evalContext for more details.
    */
   private evalContextBase<T>(
-    handler: (evalExpr: (expr: Expr) => ASLGraph.Output) => T
+    handler: (context: EvalContextContext) => T
   ): [T, (ASLGraph.SubState | ASLGraph.NodeState)[]] {
     const states: (ASLGraph.SubState | ASLGraph.NodeState)[] = [];
-    const evalExpr = (expr: Expr, allowUndefined?: boolean) => {
-      const state = this.eval(expr, allowUndefined);
-      const output = ASLGraph.getAslStateOutput(state);
-      ASLGraph.isOutputStateOrSubState(state) && states.push(state);
-      return output;
+    const context: EvalContextContext = {
+      evalExpr: (expr: Expr, allowUndefined?: boolean) => {
+        const state = this.eval(expr, allowUndefined);
+        const output = ASLGraph.getAslStateOutput(state);
+        ASLGraph.isOutputStateOrSubState(state) && states.push(state);
+        return output;
+      },
+      addState: (state) => {
+        states.push(state);
+      },
+      normalizeOutputToJsonPath: (output) => {
+        const newState = this.normalizeOutputToJsonPath(output);
+        if (ASLGraph.isJsonPath(newState)) {
+          return newState;
+        }
+
+        states.push(newState);
+
+        return newState.output;
+      },
+      normalizeConditionToJsonPath: (output) => {
+        const newState = this.normalizeConditionToJsonPath(output);
+        if (
+          ASLGraph.isJsonPath(newState) ||
+          ASLGraph.isLiteralValue(newState)
+        ) {
+          return newState;
+        }
+
+        states.push(newState);
+
+        return newState.output;
+      },
     };
-    return [handler(evalExpr), states];
+    return [handler(context), states];
   }
 
   /**
@@ -1663,7 +1781,7 @@ export class ASL {
     }
 
     if (isTemplateExpr(expr)) {
-      return this.evalContext(expr, (evalExpr) => {
+      return this.evalContext(expr, ({ evalExpr }) => {
         const elementOutputs = [
           {
             value: expr.head.text,
@@ -1730,10 +1848,7 @@ export class ASL {
         const serviceCall = new IntegrationImpl(integration);
         const integStates = serviceCall.asl(expr, this);
 
-        if (
-          ASLGraph.isLiteralValue(integStates) ||
-          ASLGraph.isJsonPath(integStates)
-        ) {
+        if (ASLGraph.isAslGraphOutput(integStates)) {
           return integStates;
         }
 
@@ -1866,6 +1981,8 @@ export class ASL {
                 expr,
                 ASL.isTruthy(argOutput.jsonPath)
               );
+            } else if (ASLGraph.isConditionOutput(argOutput)) {
+              return this.conditionState(expr, argOutput.condition);
             } else {
               return { value: !!argOutput.value, containsJsonPath: false };
             }
@@ -1899,7 +2016,7 @@ export class ASL {
       } else if (isPropAccessExpr(expr)) {
         if (isIdentifier(expr.name)) {
           return this.evalExpr(expr.expr, (output) => {
-            return ASL.accessConstant(output, expr.name.name, false);
+            return ASLGraph.accessConstant(output, expr.name.name, false);
           });
         } else {
           throw new SynthError(ErrorCodes.Classes_are_not_supported);
@@ -1909,90 +2026,106 @@ export class ASL {
       }
       assertNever(expr);
     } else if (isObjectLiteralExpr(expr)) {
-      return this.evalContext(expr, (evalExpr) => {
-        return expr.properties.reduce(
-          (obj: ASLGraph.LiteralValue, prop) => {
-            if (!isPropAssignExpr(prop)) {
-              throw new Error(
-                `${prop.kindName} is not supported in Amazon States Language`
-              );
-            }
-            if (
-              (isComputedPropertyNameExpr(prop.name) &&
-                isStringLiteralExpr(prop.name.expr)) ||
-              isIdentifier(prop.name) ||
-              isStringLiteralExpr(prop.name)
-            ) {
-              const name = isIdentifier(prop.name)
-                ? prop.name.name
-                : isStringLiteralExpr(prop.name)
-                ? prop.name.value
-                : isStringLiteralExpr(prop.name.expr)
-                ? prop.name.expr.value
-                : undefined;
-              if (!name) {
+      return this.evalContext(
+        expr,
+        ({
+          evalExpr,
+          normalizeConditionToJsonPath: normalizeConditionalToJsonPath,
+        }) => {
+          return expr.properties.reduce(
+            (obj: ASLGraph.LiteralValue, prop) => {
+              if (!isPropAssignExpr(prop)) {
+                throw new Error(
+                  `${prop.kindName} is not supported in Amazon States Language`
+                );
+              }
+              if (
+                (isComputedPropertyNameExpr(prop.name) &&
+                  isStringLiteralExpr(prop.name.expr)) ||
+                isIdentifier(prop.name) ||
+                isStringLiteralExpr(prop.name)
+              ) {
+                const name = isIdentifier(prop.name)
+                  ? prop.name.name
+                  : isStringLiteralExpr(prop.name)
+                  ? prop.name.value
+                  : isStringLiteralExpr(prop.name.expr)
+                  ? prop.name.expr.value
+                  : undefined;
+                if (!name) {
+                  throw new SynthError(
+                    ErrorCodes.StepFunctions_property_names_must_be_constant
+                  );
+                }
+                const valueOutput = normalizeConditionalToJsonPath(
+                  evalExpr(prop.expr)
+                );
+                return {
+                  value: {
+                    ...(obj.value as Record<string, any>),
+                    ...ASLGraph.jsonAssignment(name, valueOutput),
+                  },
+                  containsJsonPath:
+                    obj.containsJsonPath ||
+                    ASLGraph.isJsonPath(valueOutput) ||
+                    valueOutput.containsJsonPath,
+                };
+              } else {
                 throw new SynthError(
                   ErrorCodes.StepFunctions_property_names_must_be_constant
                 );
               }
-              const valueOutput = evalExpr(prop.expr);
-              return {
-                value: {
-                  ...(obj.value as Record<string, any>),
-                  ...this.toJsonAssignment(name, valueOutput),
-                },
-                containsJsonPath:
-                  obj.containsJsonPath ||
-                  ASLGraph.isJsonPath(valueOutput) ||
-                  valueOutput.containsJsonPath,
-              };
-            } else {
+            },
+            {
+              value: {},
+              containsJsonPath: false,
+            }
+          );
+        }
+      );
+    } else if (isArrayLiteralExpr(expr)) {
+      return this.evalContext(
+        expr,
+        ({
+          evalExpr,
+          normalizeConditionToJsonPath: normalizeConditionalToJsonPath,
+        }) => {
+          // evaluate each item
+          const items = expr.items.map((item) => {
+            if (isOmittedExpr(item)) {
               throw new SynthError(
-                ErrorCodes.StepFunctions_property_names_must_be_constant
+                ErrorCodes.Step_Functions_does_not_support_undefined,
+                `omitted expressions in an array create an undefined value which cannot be represented in Step Functions`
               );
             }
-          },
-          {
-            value: {},
-            containsJsonPath: false,
-          }
-        );
-      });
-    } else if (isArrayLiteralExpr(expr)) {
-      return this.evalContext(expr, (evalExpr) => {
-        // evaluate each item
-        const items = expr.items.map((item) => {
-          if (isOmittedExpr(item)) {
-            throw new SynthError(
-              ErrorCodes.Step_Functions_does_not_support_undefined,
-              `omitted expressions in an array create an undefined value which cannot be represented in Step Functions`
-            );
-          }
-          return evalExpr(item);
-        });
-        const heapLocation = this.newHeapVariable();
+            return evalExpr(item);
+          });
+          const heapLocation = this.newHeapVariable();
 
-        return {
-          Type: "Pass",
-          Parameters: {
-            "arr.$": `States.Array(${items
-              .map((item) =>
-                ASLGraph.isJsonPath(item)
-                  ? item.jsonPath
-                  : typeof item.value === "string"
-                  ? `'${item.value}'`
-                  : item.value
-              )
-              .join(", ")})`,
-          },
-          ResultPath: heapLocation,
-          Next: ASLGraph.DeferNext,
-          node: expr,
-          output: {
-            jsonPath: `${heapLocation}.arr`,
-          },
-        };
-      });
+          return {
+            Type: "Pass",
+            Parameters: {
+              "arr.$": `States.Array(${items
+                // if the item is a conditional statement, normalize to a boolean reference
+                .map((item) => normalizeConditionalToJsonPath(item))
+                .map((item) =>
+                  ASLGraph.isJsonPath(item)
+                    ? item.jsonPath
+                    : typeof item.value === "string"
+                    ? `'${item.value}'`
+                    : item.value
+                )
+                .join(", ")})`,
+            },
+            ResultPath: heapLocation,
+            Next: ASLGraph.DeferNext,
+            node: expr,
+            output: {
+              jsonPath: `${heapLocation}.arr`,
+            },
+          };
+        }
+      );
     } else if (isLiteralExpr(expr)) {
       return {
         value: expr.value ?? null,
@@ -2003,14 +2136,14 @@ export class ASL {
         const constant = evalToConstant(expr);
         if (constant !== undefined) {
           return {
-            value: constant,
+            value: !constant.constant,
             containsJsonPath: false,
           };
         } else {
           return this.evalExpr(expr.expr, (output) => {
             return this.conditionState(
               expr,
-              ASL.not(ASL.isTruthyOutput(output))
+              ASL.not(ASLGraph.isTruthyOutput(output))
             );
           });
         }
@@ -2045,11 +2178,12 @@ export class ASL {
         expr.op == "<="
       ) {
         const op = expr.op;
-        return this.evalContext(expr, (evalExpr) => {
+        return this.evalContext(expr, ({ evalExpr }) => {
           const leftOutput = evalExpr(expr.left, true);
           const rightOutput = evalExpr(expr.right, true);
-          const cond = ASL.compareOutputs(leftOutput, rightOutput, op);
-          return this.conditionState(expr, cond);
+          return {
+            condition: ASLGraph.compareOutputs(leftOutput, rightOutput, op),
+          };
         });
       } else if (expr.op === "=") {
         if (!isVariableReference(expr.left)) {
@@ -2058,45 +2192,39 @@ export class ASL {
             "Expected left side of assignment to be a variable."
           );
         }
-        return this.evalContext(expr, (evalExpr) => {
+        return this.evalContext(expr, ({ evalExpr }) => {
           const right = evalExpr(expr.right);
           const left = evalExpr(expr.left);
 
           if (!ASLGraph.isJsonPath(left)) {
             throw new SynthError(
               ErrorCodes.Unexpected_Error,
-              `Expected assignment to target a variable, found: ${left.value}`
+              `Expected assignment to target a variable, found: ${
+                ASLGraph.isLiteralValue(left) ? left.value : "boolean"
+              }`
             );
           }
 
-          return {
-            ...ASLGraph.passWithInput(
-              {
-                Type: "Pass",
-                ResultPath: left.jsonPath,
-                Next: ASLGraph.DeferNext,
-              },
-              right
-            ),
-            output: left,
-          };
+          return this.assignValue(expr, right, left.jsonPath);
         });
       } else if (expr.op === "in") {
-        return this.evalContext(expr, (evalExpr) => {
+        return this.evalContext(expr, ({ evalExpr }) => {
           const left = evalExpr(expr.left);
           const right = evalExpr(expr.right);
           const elm = this.assertElementAccessConstant(left);
-          const cond = ASLGraph.isLiteralValue(right)
+          return ASLGraph.isLiteralValue(right)
             ? right.value &&
               typeof right.value === "object" &&
               elm in right.value
-              ? ASL.trueCondition()
-              : ASL.falseCondition()
-            : ASL.elementIn(elm, right);
-          return this.conditionState(expr, cond);
+              ? { value: true, containsJsonPath: false }
+              : { value: false, containsJsonPath: false }
+            : ASLGraph.isConditionOutput(right)
+            ? // `in` is invalid with a boolean value
+              { value: false, containsJsonPath: false }
+            : { condition: ASLGraph.elementIn(elm, right) };
         });
       } else if (expr.op === ",") {
-        return this.evalContext(expr, (evalExpr) => {
+        return this.evalContext(expr, ({ evalExpr }) => {
           // eval left and discard the result
           evalExpr(expr.left);
           // eval right and return the result
@@ -2174,15 +2302,47 @@ export class ASL {
             }
           }
 
+          /**
+           * If the right is strictly a condition (no states), return a condition.
+           */
+          if (ASLGraph.isConditionOutput(right)) {
+            if (ASLGraph.isConditionOutput(leftOutput)) {
+              return {
+                condition:
+                  expr.op === "&&"
+                    ? ASL.and(leftOutput.condition, right.condition)
+                    : expr.op === "||"
+                    ? ASL.or(leftOutput.condition, right.condition)
+                    : // ??: a boolean cannot be undefined or null, return the left side.
+                      leftOutput.condition,
+              };
+            }
+          }
+
           const condition =
-            expr.op === "||"
+            /**
+             * Left is a condition
+             * ??: checks for null or undefined, a condition will always be true or false
+             * &&: the right will be run when the result is true
+             * ||: the right will be run when the result is false
+             */
+            ASLGraph.isConditionOutput(leftOutput)
+              ? expr.op === "??"
+                ? ASL.trueCondition()
+                : expr.op === "&&"
+                ? leftOutput.condition
+                : ASL.not(leftOutput.condition)
+              : /**
+               * Left is a a json path
+               * ??: check for undefined or null
+               * &&: the right will be run when the result is truthy
+               * ||: the right will be run when the result is falsy
+               */
+              expr.op === "||"
               ? ASL.isTruthy(leftOutput.jsonPath)
               : expr.op === "&&"
               ? ASL.not(ASL.isTruthy(leftOutput.jsonPath))
-              : ASL.and(
-                  ASL.isPresent(leftOutput.jsonPath),
-                  ASL.isNotNull(leftOutput.jsonPath)
-                );
+              : ASL.isPresentAndNotNull(leftOutput.jsonPath);
 
           return this.conditionState(expr, condition, leftOutput, right);
         });
@@ -2199,7 +2359,9 @@ export class ASL {
           if (!ASLGraph.isJsonPath(left)) {
             throw new SynthError(
               ErrorCodes.Unexpected_Error,
-              `Expected assignment to target a variable, found: ${left.value}`
+              `Expected assignment to target a variable, found: ${
+                ASLGraph.isLiteralValue(left) ? left.value : "boolean"
+              }`
             );
           }
 
@@ -2213,10 +2375,7 @@ export class ASL {
               ? ASL.isTruthy(left.jsonPath)
               : expr.op === "&&="
               ? ASL.not(ASL.isTruthy(left.jsonPath))
-              : ASL.and(
-                  ASL.isPresent(left.jsonPath),
-                  ASL.isNotNull(left.jsonPath)
-                );
+              : ASL.isPresentAndNotNull(left.jsonPath);
 
           return this.conditionState(
             expr,
@@ -2235,6 +2394,11 @@ export class ASL {
         if (ASLGraph.isLiteralValue(exprOutput)) {
           return {
             value: typeof exprOutput.value,
+            containsJsonPath: false,
+          };
+        } else if (ASLGraph.isConditionOutput(exprOutput)) {
+          return {
+            value: "boolean",
             containsJsonPath: false,
           };
         }
@@ -2329,7 +2493,7 @@ export class ASL {
 
         return this.conditionState(
           expr,
-          ASL.isTruthyOutput(output),
+          ASLGraph.isTruthyOutput(output),
           left,
           right
         );
@@ -2406,10 +2570,13 @@ export class ASL {
   }
 
   /**
-   * When the condition is true, executes the left states and assigns the left output to a temp variable.
-   * When the condition is false, executes the right states and assigns the right out to a temp variable.
+   * When the condition is true, executes the true states and assigns the left output to a temp variable.
+   * When the condition is false, executes the true states and assigns the right out to a temp variable.
    *
-   * @returns a {@link}
+   * @param trueState - states to execute when the condition is true. Default: returns true
+   * @param falseState - states to execute when the condition is false. Default: returns false
+   *
+   * @returns a {@link ASLGraph.OutputSubState} that executes true when the value is true and false when the value is false.
    */
   public conditionState(
     node: FunctionlessNode | undefined,
@@ -2417,7 +2584,7 @@ export class ASL {
     trueState?: ASLGraph.NodeResults,
     falseState?: ASLGraph.NodeResults,
     outputJsonPath?: string
-  ): ASLGraph.OutputSubState {
+  ): ASLGraph.OutputSubState & { output: ASLGraph.JsonPath } {
     const trueOutput: ASLGraph.Output = trueState
       ? ASLGraph.getAslStateOutput(trueState)
       : { value: true, containsJsonPath: false };
@@ -2437,26 +2604,12 @@ export class ASL {
         true: ASLGraph.joinSubStates(
           ASLGraph.isStateOrSubState(trueState) ? trueState.node : undefined,
           trueState,
-          ASLGraph.passWithInput(
-            {
-              Type: "Pass",
-              ResultPath: tempHeap,
-              Next: ASLGraph.DeferNext,
-            },
-            trueOutput
-          )
+          this.assignValue(undefined, trueOutput, tempHeap)
         )!,
         false: ASLGraph.joinSubStates(
           ASLGraph.isStateOrSubState(falseState) ? falseState.node : undefined,
           falseState,
-          ASLGraph.passWithInput(
-            {
-              Type: "Pass",
-              ResultPath: tempHeap,
-              Next: ASLGraph.DeferNext,
-            },
-            falseOutput
-          )
+          this.assignValue(undefined, falseOutput, tempHeap)
         )!,
       },
       output: {
@@ -2595,7 +2748,10 @@ export class ASL {
             jsonPath: `${valueOutput.jsonPath}[${startConst}:${endConst.constant}]`,
           });
         }
-      } else if (Array.isArray(valueOutput.value)) {
+      } else if (
+        ASLGraph.isLiteralValue(valueOutput) &&
+        Array.isArray(valueOutput.value)
+      ) {
         return ASLGraph.updateAslStateOutput(value, {
           ...valueOutput,
           value: valueOutput.value.slice(startConst, endConst?.constant),
@@ -2627,152 +2783,139 @@ export class ASL {
   private joinToStateOutput(
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
-    return this.evalContext(expr, (evalExpr) => {
-      const separatorArg = expr.args[0]?.expr;
-      const valueOutput = evalExpr(expr.expr.expr);
-      const separatorOutput = separatorArg ? evalExpr(separatorArg) : undefined;
-      const separator =
-        separatorOutput &&
-        (ASLGraph.isJsonPath(separatorOutput) ||
-          separatorOutput.value !== undefined)
-          ? separatorOutput
-          : // default to `,`
-            { value: ",", containsJsonPath: false };
+    return this.evalContext(
+      expr,
+      ({
+        evalExpr,
+        normalizeConditionToJsonPath: normalizeConditionalToJsonPath,
+      }) => {
+        const separatorArg = expr.args[0]?.expr;
+        const valueOutput = evalExpr(expr.expr.expr);
+        const separatorOutput = separatorArg
+          ? normalizeConditionalToJsonPath(evalExpr(separatorArg))
+          : undefined;
+        const separator =
+          separatorOutput &&
+          (ASLGraph.isJsonPath(separatorOutput) ||
+            separatorOutput.value !== undefined)
+            ? separatorOutput
+            : // default to `,`
+              { value: ",", containsJsonPath: false };
 
-      if (
-        ASLGraph.isLiteralValue(valueOutput) &&
-        !Array.isArray(valueOutput.value)
-      ) {
-        throw new SynthError(
-          ErrorCodes.Unexpected_Error,
-          "Expected join to be performed on a variable or array constant"
-        );
-      }
+        if (
+          ASLGraph.isConditionOutput(valueOutput) ||
+          (ASLGraph.isLiteralValue(valueOutput) &&
+            !Array.isArray(valueOutput.value))
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected join to be performed on a variable or array constant"
+          );
+        }
 
-      if (
-        ASLGraph.isLiteralValue(separator) &&
-        typeof separator.value !== "string"
-      ) {
-        throw new SynthError(
-          ErrorCodes.Unexpected_Error,
-          "Expected join separator to be missing, undefined, a string, or a variable"
-        );
-      }
+        if (
+          ASLGraph.isLiteralValue(separator) &&
+          typeof separator.value !== "string"
+        ) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected join separator to be missing, undefined, a string, or a variable"
+          );
+        }
 
-      // both are constants, evaluate them here.
-      if (
-        ASLGraph.isLiteralValue(valueOutput) &&
-        ASLGraph.isLiteralValue(separator)
-      ) {
+        // both are constants, evaluate them here.
+        if (
+          ASLGraph.isLiteralValue(valueOutput) &&
+          ASLGraph.isLiteralValue(separator)
+        ) {
+          return {
+            value: (<any[]>valueOutput.value).join(<string>separator.value),
+            containsJsonPath: false,
+          };
+        }
+
+        const arrayPath = this.newHeapVariable();
+        const resultVariable = this.newHeapVariable();
+
         return {
-          value: (<any[]>valueOutput.value).join(<string>separator.value),
-          containsJsonPath: false,
+          startState: "initArray",
+          states: {
+            // put the constant or variable array in a new temp json path
+            initArray: ASLGraph.updateDeferredNextStates(
+              { Next: "hasNext" },
+              this.assignValue(expr.expr.expr, valueOutput, arrayPath)
+            ),
+            hasNext: {
+              Type: "Choice",
+              Choices: [
+                // not initialized and has next: init as first element
+                {
+                  ...ASL.and(
+                    ASL.isPresent(`${arrayPath}[0]`),
+                    ASL.not(ASL.isPresent(resultVariable))
+                  ),
+                  Next: "initValue",
+                },
+                // not initialized, but the array is empty
+                {
+                  ...ASL.and(
+                    ASL.not(ASL.isPresent(`${arrayPath}[0]`)),
+                    ASL.not(ASL.isPresent(resultVariable))
+                  ),
+                  Next: "returnEmpty",
+                },
+                // already initialized, there are items left
+                { ...ASL.isPresent(`${arrayPath}[0]`), Next: "append" },
+              ],
+              // nothing left to do, return the accumulated string
+              Default: "done",
+            },
+            // place the first value on the output
+            initValue: {
+              Type: "Pass",
+              InputPath: `${arrayPath}[0]`,
+              ResultPath: `${resultVariable}.string`,
+              // update the temp array
+              Next: "tail",
+            },
+            // append the current string to the separator and the head of the array
+            append: {
+              Type: "Pass",
+              Parameters: {
+                "string.$": ASLGraph.isJsonPath(separator)
+                  ? `States.Format('{}{}{}', ${resultVariable}.string, ${separator.jsonPath}, ${arrayPath}[0])`
+                  : `States.Format('{}${separator.value}{}', ${resultVariable}.string, ${arrayPath}[0])`,
+              },
+              ResultPath: resultVariable,
+              // update the temp array
+              Next: "tail",
+            },
+            // update the temp array and then check to see if there is more to do
+            tail: {
+              Type: "Pass",
+              InputPath: `${arrayPath}[1:]`,
+              ResultPath: arrayPath,
+              Next: "hasNext", // restart by checking for items after tail
+            },
+            // empty array, return `''`
+            returnEmpty: {
+              Type: "Pass",
+              Result: "",
+              ResultPath: `${resultVariable}.string`,
+              Next: ASLGraph.DeferNext,
+            },
+            // nothing left to do, this state will likely get optimized out, but it gives us a target
+            done: {
+              Type: "Pass",
+              Next: ASLGraph.DeferNext,
+            },
+          },
+          output: {
+            jsonPath: `${resultVariable}.string`,
+          },
         };
       }
-
-      const arrayPath = this.newHeapVariable();
-      const resultVariable = this.newHeapVariable();
-
-      return {
-        startState: "initArray",
-        states: {
-          // put the constant or variable array in a new temp json path
-          initArray: ASLGraph.passWithInput(
-            {
-              Type: "Pass",
-              ResultPath: arrayPath,
-              Next: "hasNext",
-            },
-            valueOutput
-          ),
-          hasNext: {
-            Type: "Choice",
-            Choices: [
-              // not initialized and has next: init as first element
-              {
-                ...ASL.and(
-                  ASL.isPresent(`${arrayPath}[0]`),
-                  ASL.not(ASL.isPresent(resultVariable))
-                ),
-                Next: "initValue",
-              },
-              // not initialized, but the array is empty
-              {
-                ...ASL.and(
-                  ASL.not(ASL.isPresent(`${arrayPath}[0]`)),
-                  ASL.not(ASL.isPresent(resultVariable))
-                ),
-                Next: "returnEmpty",
-              },
-              // already initialized, there are items left
-              { ...ASL.isPresent(`${arrayPath}[0]`), Next: "append" },
-            ],
-            // nothing left to do, return the accumulated string
-            Default: "done",
-          },
-          // place the first value on the output
-          initValue: {
-            Type: "Pass",
-            InputPath: `${arrayPath}[0]`,
-            ResultPath: `${resultVariable}.string`,
-            // update the temp array
-            Next: "tail",
-          },
-          // append the current string to the separator and the head of the array
-          append: {
-            Type: "Pass",
-            Parameters: {
-              "string.$": ASLGraph.isJsonPath(separator)
-                ? `States.Format('{}{}{}', ${resultVariable}.string, ${separator.jsonPath}, ${arrayPath}[0])`
-                : `States.Format('{}${separator.value}{}', ${resultVariable}.string, ${arrayPath}[0])`,
-            },
-            ResultPath: resultVariable,
-            // update the temp array
-            Next: "tail",
-          },
-          // update the temp array and then check to see if there is more to do
-          tail: {
-            Type: "Pass",
-            InputPath: `${arrayPath}[1:]`,
-            ResultPath: arrayPath,
-            Next: "hasNext", // restart by checking for items after tail
-          },
-          // empty array, return `''`
-          returnEmpty: {
-            Type: "Pass",
-            Result: "",
-            ResultPath: `${resultVariable}.string`,
-            Next: ASLGraph.DeferNext,
-          },
-          // nothing left to do, this state will likely get optimized out, but it gives us a target
-          done: {
-            Type: "Pass",
-            Next: ASLGraph.DeferNext,
-          },
-        },
-        output: {
-          jsonPath: `${resultVariable}.string`,
-        },
-      };
-    });
-  }
-
-  /**
-   * Returns a object with the key formatted based on the contents of the value.
-   * in ASL, object keys that reference json path values must have a suffix of ".$"
-   * { "input.$": "$.value" }
-   */
-  public toJsonAssignment(
-    key: string,
-    output: ASLGraph.Output
-  ): Record<string, any> {
-    return {
-      [ASLGraph.isJsonPath(output) ? `${key}.$` : key]: ASLGraph.isLiteralValue(
-        output
-      )
-        ? output.value
-        : output.jsonPath,
-    };
+    );
   }
 
   private filterToStateOutput(
@@ -2790,8 +2933,9 @@ export class ASL {
       expr.expr.expr,
       (leftOutput, { normalizeOutputToJsonPath }) => {
         if (
-          !ASLGraph.isJsonPath(leftOutput) &&
-          !Array.isArray(leftOutput.value)
+          ASLGraph.isConditionOutput(leftOutput) ||
+          (ASLGraph.isLiteralValue(leftOutput) &&
+            !Array.isArray(leftOutput.value))
         ) {
           throw new SynthError(
             ErrorCodes.Unexpected_Error,
@@ -3441,7 +3585,7 @@ export class ASL {
       const expr = this.eval(access.expr);
       const exprOutput = ASLGraph.getAslStateOutput(expr);
 
-      const updatedOutput = ASL.accessConstant(
+      const updatedOutput = ASLGraph.accessConstant(
         exprOutput,
         this.assertElementAccessConstant(elementOutput),
         true
@@ -3457,7 +3601,7 @@ export class ASL {
    * Element access in StepFunctions must be constant because dynamic object is not supported.
    */
   private assertElementAccessConstant(value: ASLGraph.Output): string | number {
-    if (!ASLGraph.isJsonPath(value) && !value.containsJsonPath) {
+    if (ASLGraph.isLiteralValue(value) && !value.containsJsonPath) {
       if (typeof value.value === "string" || typeof value.value === "number") {
         return value.value;
       }
@@ -3621,14 +3765,10 @@ export class ASL {
   ): ASLGraph.SubState | ASLGraph.NodeState | undefined {
     // assign an identifier the current value
     if (isIdentifier(pattern)) {
-      return ASLGraph.passWithInput(
-        {
-          Type: "Pass",
-          node: pattern,
-          ResultPath: `$.${this.getIdentifierName(pattern)}`,
-          Next: ASLGraph.DeferNext,
-        },
-        value
+      return this.assignValue(
+        pattern,
+        value,
+        `$.${this.getIdentifierName(pattern)}`
       );
     } else {
       const rest = pattern.bindings.find(
@@ -3656,7 +3796,9 @@ export class ASL {
               };
             } else {
               // const [a] = [1,2,3];
-              if (!Array.isArray(value.value)) {
+              if (
+                !(ASLGraph.isLiteralValue(value) && Array.isArray(value.value))
+              ) {
                 throw new SynthError(
                   ErrorCodes.Invalid_Input,
                   "Expected array binding pattern to be on a reference path or array literal."
@@ -3688,7 +3830,11 @@ export class ASL {
               return {
                 jsonPath: `${value.jsonPath}['${propertyName}']`,
               };
-            } else if (value.value && typeof value.value === "object") {
+            } else if (
+              ASLGraph.isLiteralValue(value) &&
+              value.value &&
+              typeof value.value === "object"
+            ) {
               return {
                 value: value.value[propertyName as keyof typeof value.value],
                 containsJsonPath: value.containsJsonPath,
@@ -3738,7 +3884,10 @@ export class ASL {
                     pattern.bindings.length - 1
                   }:]`,
                 };
-              } else if (Array.isArray(value.value)) {
+              } else if (
+                ASLGraph.isLiteralValue(value) &&
+                Array.isArray(value.value)
+              ) {
                 return {
                   ...value,
                   value: value.value.slice(pattern.bindings.length - 1),
@@ -3757,8 +3906,40 @@ export class ASL {
     }
   }
 
+  private assignValue(
+    node: FunctionlessNode | undefined,
+    value: ASLGraph.Output,
+    targetJsonPath?: string
+  ): (ASLGraph.OutputState | ASLGraph.OutputSubState) & {
+    output: ASLGraph.JsonPath;
+  } {
+    if (ASLGraph.isConditionOutput(value)) {
+      return this.conditionState(
+        node,
+        value.condition,
+        undefined,
+        undefined,
+        targetJsonPath
+      );
+    }
+    const target = targetJsonPath ?? this.newHeapVariable();
+
+    return {
+      ...ASLGraph.passWithInput(
+        {
+          Type: "Pass",
+          node,
+          Next: ASLGraph.DeferNext,
+          ResultPath: target,
+        },
+        value
+      ),
+      output: { jsonPath: target },
+    };
+  }
+
   /**
-   * Given an output value (json path or literal) and an expression to compute a default value,
+   * Given an output value (json path, literal, or condition) and an expression to compute a default value,
    * return a possibly updated output value which will contain the default value if the initial value is undefined.
    *
    * `return value === undefined ? defaultValue : value;`
@@ -3796,6 +3977,9 @@ export class ASL {
       ASLGraph.isLiteralValue(value)
     ) {
       return updatedValue;
+    } else if (ASLGraph.isConditionOutput(value)) {
+      // a boolean cannot be undefined.
+      return this.normalizeConditionToJsonPath(value);
     } else {
       const temp = this.newHeapVariable();
       // runtime determination of default values
@@ -3809,26 +3993,12 @@ export class ASL {
             Choices: [{ ...ASL.isPresent(value.jsonPath), Next: "value" }],
             Default: "default",
           },
-          value: ASLGraph.passWithInput(
-            {
-              Type: "Pass",
-              ResultPath: temp,
-              Next: ASLGraph.DeferNext,
-            },
-            value
-          ),
+          value: this.assignValue(undefined, value, temp),
           // default will first execute any states to compute the default value and then assign the output to the temp variable.
           default: ASLGraph.joinSubStates(
             defaultValueExpression,
             defaultValueState,
-            ASLGraph.passWithInput(
-              {
-                Type: "Pass",
-                ResultPath: temp,
-                Next: ASLGraph.DeferNext,
-              },
-              defaultValue
-            )
+            this.assignValue(undefined, defaultValue, temp)
           )!,
         },
         output: {
@@ -4059,7 +4229,14 @@ export namespace ASLGraph {
     jsonPath: string;
   }
 
-  export type Output = ASLGraph.LiteralValue | ASLGraph.JsonPath;
+  export interface ConditionOutput {
+    condition: Condition;
+  }
+
+  export type Output =
+    | ASLGraph.LiteralValue
+    | ASLGraph.JsonPath
+    | ASLGraph.ConditionOutput;
 
   export const isLiteralValue = (
     state: any
@@ -4070,6 +4247,18 @@ export namespace ASLGraph {
   export const isJsonPath = (state: any): state is ASLGraph.JsonPath => {
     return "jsonPath" in state;
   };
+
+  export const isConditionOutput = (
+    state: any
+  ): state is ASLGraph.ConditionOutput => {
+    return "condition" in state;
+  };
+
+  export const isAslGraphOutput = anyOf(
+    isLiteralValue,
+    isJsonPath,
+    isConditionOutput
+  );
 
   /**
    * Wires together an array of {@link State} or {@link ASLGraph.SubState} nodes in the order given.
@@ -4735,20 +4924,18 @@ export namespace ASLGraph {
   export const getAslStateOutput = (
     state: ASLGraph.NodeResults
   ): ASLGraph.Output => {
-    return ASLGraph.isLiteralValue(state)
-      ? state
-      : ASLGraph.isJsonPath(state)
-      ? state
-      : state.output;
+    return ASLGraph.isAslGraphOutput(state) ? state : state.output;
   };
 
   /**
-   * Applies an {@link ASLGraph.Output} to a partial {@link Pass}
+   * Applies an {@link ASLGraph.Output} to a partial {@link Pass}.
+   *
+   * {@link ASLGraph.ConditionOutput} must be first turned into a {@link ASLGraph.JsonPath}.
    */
   export const passWithInput = (
     pass: Omit<NodeState<Pass>, "Parameters" | "InputPath" | "Result"> &
       CommonFields,
-    value: ASLGraph.Output
+    value: Exclude<ASLGraph.Output, ASLGraph.ConditionOutput>
   ): Pass => {
     return {
       ...pass,
@@ -4768,10 +4955,12 @@ export namespace ASLGraph {
 
   /**
    * Applies an {@link ASLGraph.Output} to a partial {@link Task}
+   *
+   * {@link ASLGraph.ConditionOutput} must be first turned into a {@link ASLGraph.JsonPath}.
    */
   export const taskWithInput = (
     task: Omit<Task, "Parameters" | "InputPath"> & CommonFields,
-    value: ASLGraph.Output
+    value: Exclude<ASLGraph.Output, ASLGraph.ConditionOutput>
   ): Task => {
     return {
       ...task,
@@ -4784,21 +4973,331 @@ export namespace ASLGraph {
           }),
     };
   };
-}
 
-export namespace ASL {
+  /**
+   * Compare any two {@link ASLGraph.Output} values.
+   */
+  export const compareOutputs = (
+    leftOutput: ASLGraph.Output,
+    rightOutput: ASLGraph.Output,
+    operator: ASL.ValueComparisonOperators | "!=" | "!=="
+  ): Condition => {
+    if (
+      ASLGraph.isLiteralValue(leftOutput) &&
+      ASLGraph.isLiteralValue(rightOutput)
+    ) {
+      return ((operator === "==" || operator === "===") &&
+        leftOutput.value === rightOutput.value) ||
+        ((operator === "!=" || operator === "!==") &&
+          leftOutput.value !== rightOutput.value) ||
+        (leftOutput.value !== null &&
+          rightOutput.value !== null &&
+          ((operator === ">" && leftOutput.value > rightOutput.value) ||
+            (operator === "<" && leftOutput.value < rightOutput.value) ||
+            (operator === "<=" && leftOutput.value <= rightOutput.value) ||
+            (operator === ">=" && leftOutput.value >= rightOutput.value)))
+        ? ASL.trueCondition()
+        : ASL.falseCondition();
+    }
+
+    const [left, right] =
+      ASLGraph.isJsonPath(leftOutput) || ASLGraph.isConditionOutput(leftOutput)
+        ? [leftOutput, rightOutput]
+        : [
+            rightOutput as ASLGraph.JsonPath | ASLGraph.ConditionOutput,
+            leftOutput,
+          ];
+    // if the right is a variable and the left isn't, invert the operator
+    // 1 >= a -> a <= 1
+    // a >= b -> a >= b
+    // a >= 1 -> a >= 1
+    const op = leftOutput === left ? operator : invertBinaryOperator(operator);
+
+    return ASLGraph.compare(left, right, op as any);
+  };
+
+  export const compare = (
+    left: ASLGraph.JsonPath | ASLGraph.ConditionOutput,
+    right: ASLGraph.Output,
+    operator: ASL.ValueComparisonOperators | "!=" | "!=="
+  ): Condition => {
+    if (
+      operator === "==" ||
+      operator === "===" ||
+      operator === ">" ||
+      operator === "<" ||
+      operator === ">=" ||
+      operator === "<="
+    ) {
+      if (ASLGraph.isConditionOutput(left)) {
+        return (
+          ASLGraph.booleanCompare(left, right, operator) ?? ASL.falseCondition()
+        );
+      }
+      const condition = ASL.or(
+        ASLGraph.nullCompare(left, right, operator),
+        ASLGraph.stringCompare(left, right, operator),
+        ASLGraph.booleanCompare(left, right, operator),
+        ASLGraph.numberCompare(left, right, operator)
+      );
+
+      if (ASLGraph.isJsonPath(right)) {
+        ASL.or(
+          // a === b while a and b are both not defined
+          ASL.not(
+            ASL.and(ASL.isPresent(left.jsonPath), ASL.isPresent(right.jsonPath))
+          ),
+          // a !== undefined && b !== undefined
+          ASL.and(
+            ASL.isPresent(left.jsonPath),
+            ASL.isPresent(right.jsonPath),
+            // && a [op] b
+            condition
+          )
+        );
+      }
+      return ASL.and(ASL.isPresent(left.jsonPath), condition);
+    } else if (operator === "!=" || operator === "!==") {
+      return ASL.not(ASLGraph.compare(left, right, "=="));
+    }
+
+    assertNever(operator);
+  };
+
+  // Assumes the variable(s) are present and not null
+  export const stringCompare = (
+    left: ASLGraph.JsonPath,
+    right: ASLGraph.Output,
+    operator: ASL.ValueComparisonOperators
+  ) => {
+    if (
+      ASLGraph.isJsonPath(right) ||
+      (ASLGraph.isLiteralValue(right) && typeof right.value === "string")
+    ) {
+      return ASL.and(
+        ASL.isString(left.jsonPath),
+        ASLGraph.isJsonPath(right)
+          ? ASL.comparePathOfType(
+              left.jsonPath,
+              operator,
+              right.jsonPath,
+              "string"
+            )
+          : ASL.compareValueOfType(
+              left.jsonPath,
+              operator,
+              right.value as string
+            )
+      );
+    }
+    return undefined;
+  };
+
+  export const numberCompare = (
+    left: ASLGraph.JsonPath,
+    right: ASLGraph.Output,
+    operator: ASL.ValueComparisonOperators
+  ) => {
+    if (
+      ASLGraph.isJsonPath(right) ||
+      (ASLGraph.isLiteralValue(right) && typeof right.value === "number")
+    ) {
+      return ASL.and(
+        ASL.isNumeric(left.jsonPath),
+        ASLGraph.isJsonPath(right)
+          ? ASL.comparePathOfType(
+              left.jsonPath,
+              operator,
+              right.jsonPath,
+              "number"
+            )
+          : ASL.compareValueOfType(
+              left.jsonPath,
+              operator,
+              right.value as number
+            )
+      );
+    }
+    return undefined;
+  };
+
+  export const booleanCompare = (
+    left: ASLGraph.JsonPath | ASLGraph.ConditionOutput,
+    right: ASLGraph.Output,
+    operator: ASL.ValueComparisonOperators
+  ) => {
+    // (z == b) === (a ==c c)
+    if (ASLGraph.isConditionOutput(left)) {
+      if (operator === "===" || operator === "==") {
+        if (ASLGraph.isConditionOutput(right)) {
+          // (!left && !right) || (left && right)
+          return ASL.or(
+            ASL.and(ASL.not(left.condition), ASL.not(right.condition)),
+            ASL.and(left.condition, right.condition)
+          );
+        } else if (
+          ASLGraph.isLiteralValue(right) &&
+          typeof right.value === "boolean"
+        ) {
+          // (a === b) === true
+          return right.value ? left.condition : ASL.not(left.condition);
+        } else if (ASLGraph.isJsonPath(right)) {
+          // (a === b) === c
+          return ASL.or(
+            ASL.and(
+              ASL.not(left.condition),
+              ASL.booleanEquals(right.jsonPath, false)
+            ),
+            ASL.and(left.condition, ASL.booleanEquals(right.jsonPath, true))
+          );
+        }
+      }
+      return undefined;
+    }
+    if (ASLGraph.isConditionOutput(right)) {
+      // a === (b === c)
+      return ASL.or(
+        ASL.and(
+          ASL.not(right.condition),
+          ASL.booleanEquals(left.jsonPath, false)
+        ),
+        ASL.and(right.condition, ASL.booleanEquals(left.jsonPath, true))
+      );
+    }
+    if (ASLGraph.isJsonPath(right) || typeof right.value === "boolean") {
+      return ASL.and(
+        ASL.isBoolean(left.jsonPath),
+        ASLGraph.isJsonPath(right)
+          ? ASL.comparePathOfType(
+              left.jsonPath,
+              operator,
+              right.jsonPath,
+              "boolean"
+            )
+          : ASL.compareValueOfType(
+              left.jsonPath,
+              operator,
+              right.value as boolean
+            )
+      );
+    }
+    return undefined;
+  };
+
+  export const nullCompare = (
+    left: ASLGraph.JsonPath,
+    right: ASLGraph.Output,
+    operator: ASL.ValueComparisonOperators
+  ) => {
+    if (operator === "==" || operator === "===") {
+      if (ASLGraph.isJsonPath(right)) {
+        return ASL.and(ASL.isNull(left.jsonPath), ASL.isNull(right.jsonPath));
+      } else if (ASLGraph.isLiteralValue(right) && right.value === null) {
+        return ASL.isNull(left.jsonPath);
+      }
+    }
+    return undefined;
+  };
+
+  /**
+   * Returns a object with the key formatted based on the contents of the value.
+   * in ASL, object keys that reference json path values must have a suffix of ".$"
+   * { "input.$": "$.value" }
+   */
+  export const jsonAssignment = (
+    key: string,
+    output: Exclude<ASLGraph.Output, ASLGraph.ConditionOutput>
+  ): Record<string, any> => {
+    return {
+      [ASLGraph.isJsonPath(output) ? `${key}.$` : key]: ASLGraph.isLiteralValue(
+        output
+      )
+        ? output.value
+        : output.jsonPath,
+    };
+  };
+
   export const isTruthyOutput = (v: ASLGraph.Output): Condition => {
     return ASLGraph.isLiteralValue(v)
       ? v.value
         ? ASL.trueCondition()
         : ASL.falseCondition()
-      : ASL.isTruthy(v.jsonPath);
+      : ASLGraph.isJsonPath(v)
+      ? ASL.isTruthy(v.jsonPath)
+      : v.condition;
   };
 
+  export const elementIn = (
+    element: string | number,
+    targetJsonPath: ASLGraph.JsonPath
+  ): Condition => {
+    const accessed = ASLGraph.accessConstant(targetJsonPath, element, true);
+
+    if (ASLGraph.isLiteralValue(accessed)) {
+      return accessed.value === undefined
+        ? ASL.falseCondition()
+        : ASL.trueCondition();
+    } else {
+      return ASL.isPresent(accessed.jsonPath);
+    }
+  };
+
+  /**
+   * @param element - when true (or field is a number) the output json path will prefer to use the square bracket format.
+   *                  `$.obj[field]`. When false will prefer the dot format `$.obj.field`.
+   */
+  export const accessConstant = (
+    value: ASLGraph.Output,
+    field: string | number,
+    element: boolean
+  ): ASLGraph.JsonPath | ASLGraph.LiteralValue => {
+    if (ASLGraph.isJsonPath(value)) {
+      return typeof field === "number"
+        ? { jsonPath: `${value.jsonPath}[${field}]` }
+        : element
+        ? { jsonPath: `${value.jsonPath}['${field}']` }
+        : { jsonPath: `${value.jsonPath}.${field}` };
+    }
+
+    if (ASLGraph.isLiteralValue(value) && value.value) {
+      const accessedValue = (() => {
+        if (Array.isArray(value.value)) {
+          if (typeof field === "number") {
+            return value.value[field];
+          }
+          throw new SynthError(
+            ErrorCodes.StepFunctions_Invalid_collection_access,
+            "Accessor to an array must be a constant number"
+          );
+        } else if (typeof value.value === "object") {
+          return value.value[field];
+        }
+        throw new SynthError(
+          ErrorCodes.StepFunctions_Invalid_collection_access,
+          "Only a constant object or array may be accessed."
+        );
+      })();
+
+      return typeof accessedValue === "string" &&
+        (accessedValue.startsWith("$") || accessedValue.startsWith("States."))
+        ? { jsonPath: accessedValue }
+        : {
+            value: accessedValue,
+            containsJsonPath: value.containsJsonPath,
+          };
+    }
+
+    throw new SynthError(
+      ErrorCodes.StepFunctions_Invalid_collection_access,
+      "Only a constant object or array may be accessed."
+    );
+  };
+}
+
+export namespace ASL {
   export const isTruthy = (v: string): Condition =>
     and(
-      isPresent(v),
-      isNotNull(v),
+      isPresentAndNotNull(v),
       or(
         and(isString(v), not(stringEquals(v, ""))),
         and(isNumeric(v), not(numericEquals(v, 0))),
@@ -4861,6 +5360,9 @@ export namespace ASL {
     IsNumeric: true,
     Variable,
   });
+
+  export const isPresentAndNotNull = (Variable: string): Condition =>
+    ASL.and(ASL.isPresent(Variable), ASL.isNotNull(Variable));
 
   export const stringEqualsPath = (
     Variable: string,
@@ -4930,9 +5432,16 @@ export namespace ASL {
     Variable,
   });
 
+  /**
+   * Supported comparison operators.
+   *
+   * Note: !== and != can be achieved by using {@link ASL.not}.
+   */
+  export type ValueComparisonOperators = "===" | "==" | ">" | ">=" | "<=" | "<";
+
   // for != use not(equals())
   export const VALUE_COMPARISONS: Record<
-    "===" | "==" | ">" | ">=" | "<=" | "<",
+    ValueComparisonOperators,
     Record<"string" | "boolean" | "number", keyof Condition | undefined>
   > = {
     "==": {
@@ -5003,241 +5512,6 @@ export namespace ASL {
       Variable,
       [`${comparison}Path`]: path,
     };
-  };
-
-  export const compareOutputs = (
-    leftOutput: ASLGraph.Output,
-    rightOutput: ASLGraph.Output,
-    operator: keyof typeof VALUE_COMPARISONS | "!=" | "!=="
-  ): Condition => {
-    if (
-      ASLGraph.isLiteralValue(leftOutput) &&
-      ASLGraph.isLiteralValue(rightOutput)
-    ) {
-      return ((operator === "==" || operator === "===") &&
-        leftOutput.value === rightOutput.value) ||
-        ((operator === "!=" || operator === "!==") &&
-          leftOutput.value !== rightOutput.value) ||
-        (leftOutput.value !== null &&
-          rightOutput.value !== null &&
-          ((operator === ">" && leftOutput.value > rightOutput.value) ||
-            (operator === "<" && leftOutput.value < rightOutput.value) ||
-            (operator === "<=" && leftOutput.value <= rightOutput.value) ||
-            (operator === ">=" && leftOutput.value >= rightOutput.value)))
-        ? ASL.trueCondition()
-        : ASL.falseCondition();
-    }
-
-    const [left, right] = ASLGraph.isJsonPath(leftOutput)
-      ? [leftOutput, rightOutput]
-      : [rightOutput as ASLGraph.JsonPath, leftOutput];
-    // if the right is a variable and the left isn't, invert the operator
-    // 1 >= a -> a <= 1
-    // a >= b -> a >= b
-    // a >= 1 -> a >= 1
-    const op = leftOutput === left ? operator : invertBinaryOperator(operator);
-
-    return ASL.compare(left, right, op as any);
-  };
-
-  export const compare = (
-    left: ASLGraph.JsonPath,
-    right: ASLGraph.Output,
-    operator: keyof typeof VALUE_COMPARISONS | "!=" | "!=="
-  ): Condition => {
-    if (
-      operator === "==" ||
-      operator === "===" ||
-      operator === ">" ||
-      operator === "<" ||
-      operator === ">=" ||
-      operator === "<="
-    ) {
-      const condition = ASL.or(
-        ASL.nullCompare(left, right, operator),
-        ASL.stringCompare(left, right, operator),
-        ASL.booleanCompare(left, right, operator),
-        ASL.numberCompare(left, right, operator)
-      );
-
-      if (ASLGraph.isJsonPath(right)) {
-        ASL.or(
-          // a === b while a and b are both not defined
-          ASL.not(
-            ASL.and(ASL.isPresent(left.jsonPath), ASL.isPresent(right.jsonPath))
-          ),
-          // a !== undefined && b !== undefined
-          ASL.and(
-            ASL.isPresent(left.jsonPath),
-            ASL.isPresent(right.jsonPath),
-            // && a [op] b
-            condition
-          )
-        );
-      }
-      return ASL.and(ASL.isPresent(left.jsonPath), condition);
-    } else if (operator === "!=" || operator === "!==") {
-      return ASL.not(ASL.compare(left, right, "=="));
-    }
-
-    assertNever(operator);
-  };
-
-  // Assumes the variable(s) are present and not null
-  export const stringCompare = (
-    left: ASLGraph.JsonPath,
-    right: ASLGraph.Output,
-    operator: "===" | "==" | ">" | "<" | "<=" | ">="
-  ) => {
-    if (ASLGraph.isJsonPath(right) || typeof right.value === "string") {
-      return ASL.and(
-        ASL.isString(left.jsonPath),
-        ASLGraph.isJsonPath(right)
-          ? ASL.comparePathOfType(
-              left.jsonPath,
-              operator,
-              right.jsonPath,
-              "string"
-            )
-          : ASL.compareValueOfType(
-              left.jsonPath,
-              operator,
-              right.value as string
-            )
-      );
-    }
-    return undefined;
-  };
-
-  export const numberCompare = (
-    left: ASLGraph.JsonPath,
-    right: ASLGraph.Output,
-    operator: "===" | "==" | ">" | "<" | "<=" | ">="
-  ) => {
-    if (ASLGraph.isJsonPath(right) || typeof right.value === "number") {
-      return ASL.and(
-        ASL.isNumeric(left.jsonPath),
-        ASLGraph.isJsonPath(right)
-          ? ASL.comparePathOfType(
-              left.jsonPath,
-              operator,
-              right.jsonPath,
-              "number"
-            )
-          : ASL.compareValueOfType(
-              left.jsonPath,
-              operator,
-              right.value as number
-            )
-      );
-    }
-    return undefined;
-  };
-
-  export const booleanCompare = (
-    left: ASLGraph.JsonPath,
-    right: ASLGraph.Output,
-    operator: "===" | "==" | ">" | "<" | "<=" | ">="
-  ) => {
-    if (ASLGraph.isJsonPath(right) || typeof right.value === "boolean") {
-      return ASL.and(
-        ASL.isBoolean(left.jsonPath),
-        ASLGraph.isJsonPath(right)
-          ? ASL.comparePathOfType(
-              left.jsonPath,
-              operator,
-              right.jsonPath,
-              "boolean"
-            )
-          : ASL.compareValueOfType(
-              left.jsonPath,
-              operator,
-              right.value as boolean
-            )
-      );
-    }
-    return undefined;
-  };
-
-  export const nullCompare = (
-    left: ASLGraph.JsonPath,
-    right: ASLGraph.Output,
-    operator: "===" | "==" | ">" | "<" | "<=" | ">="
-  ) => {
-    if (operator === "==" || operator === "===") {
-      if (ASLGraph.isJsonPath(right)) {
-        return ASL.and(ASL.isNull(left.jsonPath), ASL.isNull(right.jsonPath));
-      } else if (right.value === null) {
-        return ASL.isNull(left.jsonPath);
-      }
-    }
-    return undefined;
-  };
-
-  export const elementIn = (
-    element: string | number,
-    targetJsonPath: ASLGraph.JsonPath
-  ): Condition => {
-    const accessed = ASL.accessConstant(targetJsonPath, element, true);
-
-    if (ASLGraph.isLiteralValue(accessed)) {
-      return accessed.value === undefined
-        ? ASL.falseCondition()
-        : ASL.trueCondition();
-    } else {
-      return ASL.isPresent(accessed.jsonPath);
-    }
-  };
-
-  /**
-   * @param element - when true (or field is a number) the output json path will prefer to use the square bracket format.
-   *                  `$.obj[field]`. When false will prefer the dot format `$.obj.field`.
-   */
-  export const accessConstant = (
-    value: ASLGraph.Output,
-    field: string | number,
-    element: boolean
-  ): ASLGraph.Output => {
-    if (ASLGraph.isJsonPath(value)) {
-      return typeof field === "number"
-        ? { jsonPath: `${value.jsonPath}[${field}]` }
-        : element
-        ? { jsonPath: `${value.jsonPath}['${field}']` }
-        : { jsonPath: `${value.jsonPath}.${field}` };
-    }
-
-    if (value.value) {
-      const accessedValue = (() => {
-        if (Array.isArray(value.value)) {
-          if (typeof field === "number") {
-            return value.value[field];
-          }
-          throw new SynthError(
-            ErrorCodes.StepFunctions_Invalid_collection_access,
-            "Accessor to an array must be a constant number"
-          );
-        } else if (typeof value.value === "object") {
-          return value.value[field];
-        }
-        throw new SynthError(
-          ErrorCodes.StepFunctions_Invalid_collection_access,
-          "Only a constant object or array may be accessed."
-        );
-      })();
-
-      return typeof accessedValue === "string" &&
-        (accessedValue.startsWith("$") || accessedValue.startsWith("States."))
-        ? { jsonPath: accessedValue }
-        : {
-            value: accessedValue,
-            containsJsonPath: value.containsJsonPath,
-          };
-    }
-
-    throw new SynthError(
-      ErrorCodes.StepFunctions_Invalid_collection_access,
-      "Only a constant object or array may be accessed."
-    );
   };
 
   export const falseCondition = () => ASL.isNull("$$.Execution.Id");

@@ -457,17 +457,26 @@ export namespace $AWS {
           );
         }
 
-        return context.evalExpr(payload.expr, (output) => {
-          return context.stateWithHeapOutput({
-            Type: "Task",
-            Resource: "arn:aws:states:::lambda:invoke",
-            Parameters: {
-              FunctionName: functionRef.resource.functionName,
-              ...context.toJsonAssignment("Payload", output),
-            },
-            Next: ASLGraph.DeferNext,
-          });
-        });
+        return context.evalExpr(
+          payload.expr,
+          (
+            _,
+            { normalizeConditionToJsonPath: normalizeConditionalToJsonPath }
+          ) => {
+            return context.stateWithHeapOutput({
+              Type: "Task",
+              Resource: "arn:aws:states:::lambda:invoke",
+              Parameters: {
+                FunctionName: functionRef.resource.functionName,
+                ...ASLGraph.jsonAssignment(
+                  "Payload",
+                  normalizeConditionalToJsonPath()
+                ),
+              },
+              Next: ASLGraph.DeferNext,
+            });
+          }
+        );
       },
     });
   }

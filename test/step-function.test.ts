@@ -489,6 +489,9 @@ test("boolean logic", () => {
     return {
       and: input.a && input.b,
       or: input.a || input.b,
+      andCondition: input.a === input.b && input.s === "hello",
+      orCondition: input.a === input.b || input.s === "hello",
+      nullCondition: input.a === input.b ?? input.s === "hello",
       not: !true,
       notAnd: !(input.a && input.b),
       notOr: !(input.a || input.b),

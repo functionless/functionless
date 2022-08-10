@@ -297,65 +297,71 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
           throw Error("Must provide at least one event.");
         }
 
-        return context.evalContext(call, (evalExpr) => {
-          const events = eventObjs.map((event) => {
-            const props = event.properties.filter(
-              (
-                e
-              ): e is PropAssignExpr & {
-                name: StringLiteralExpr | Identifier;
-              } =>
-                !(isSpreadAssignExpr(e) || isComputedPropertyNameExpr(e.name))
-            );
-            if (props.length < event.properties.length) {
-              throw new SynthError(
-                ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
+        return context.evalContext(
+          call,
+          ({
+            evalExpr,
+            normalizeConditionToJsonPath: normalizeConditionalToJsonPath,
+          }) => {
+            const events = eventObjs.map((event) => {
+              const props = event.properties.filter(
+                (
+                  e
+                ): e is PropAssignExpr & {
+                  name: StringLiteralExpr | Identifier;
+                } =>
+                  !(isSpreadAssignExpr(e) || isComputedPropertyNameExpr(e.name))
               );
-            }
-            const evaluatedProps = props.map(({ name, expr }) => {
-              const val = evalExpr(expr);
+              if (props.length < event.properties.length) {
+                throw new SynthError(
+                  ErrorCodes.StepFunctions_calls_to_EventBus_PutEvents_must_use_object_literals
+                );
+              }
+              const evaluatedProps = props.map(({ name, expr }) => {
+                const val = evalExpr(expr);
+                return {
+                  name: isIdentifier(name) ? name.name : name.value,
+                  value: normalizeConditionalToJsonPath(val),
+                };
+              });
+
               return {
-                name: isIdentifier(name) ? name.name : name.value,
-                value: val,
+                event: evaluatedProps
+                  .filter(
+                    (
+                      x
+                    ): x is {
+                      name: keyof typeof ENTRY_PROPERTY_MAP;
+                      value: ASLGraph.LiteralValue | ASLGraph.JsonPath;
+                    } => x.name in ENTRY_PROPERTY_MAP
+                  )
+                  /**
+                   * Build the parameter payload for an event entry.
+                   * All members must be in Pascal case.
+                   */
+                  .reduce(
+                    (acc: Record<string, any>, { name, value }) => ({
+                      ...acc,
+                      ...ASLGraph.jsonAssignment(
+                        ENTRY_PROPERTY_MAP[name],
+                        value
+                      ),
+                    }),
+                    { EventBusName: this.resource.eventBusArn }
+                  ),
               };
             });
 
-            return {
-              event: evaluatedProps
-                .filter(
-                  (
-                    x
-                  ): x is {
-                    name: keyof typeof ENTRY_PROPERTY_MAP;
-                    value: ASLGraph.LiteralValue | ASLGraph.JsonPath;
-                  } => x.name in ENTRY_PROPERTY_MAP
-                )
-                /**
-                 * Build the parameter payload for an event entry.
-                 * All members must be in Pascal case.
-                 */
-                .reduce(
-                  (acc: Record<string, any>, { name, value }) => ({
-                    ...acc,
-                    ...context.toJsonAssignment(
-                      ENTRY_PROPERTY_MAP[name],
-                      value
-                    ),
-                  }),
-                  { EventBusName: this.resource.eventBusArn }
-                ),
-            };
-          });
-
-          return context.stateWithHeapOutput({
-            Resource: "arn:aws:states:::events:putEvents",
-            Type: "Task",
-            Parameters: {
-              Entries: events.map(({ event }) => event),
-            },
-            Next: ASLGraph.DeferNext,
-          });
-        });
+            return context.stateWithHeapOutput({
+              Resource: "arn:aws:states:::events:putEvents",
+              Type: "Task",
+              Parameters: {
+                Entries: events.map(({ event }) => event),
+              },
+              Next: ASLGraph.DeferNext,
+            });
+          }
+        );
       },
       apiGWVtl: {
         renderRequest: (call, context): string => {
