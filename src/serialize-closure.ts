@@ -303,7 +303,6 @@ export function serializeClosure(func: AnyFunction): string {
         // emit a unique variable with the current value
         emitVarDecl("var", varName, value);
       }
-
       return varId;
     } else if (isArrowFunctionExpr(node)) {
       return ts.factory.createArrowFunction(
@@ -509,7 +508,7 @@ export function serializeClosure(func: AnyFunction): string {
       )(
         undefined,
         undefined,
-        node.name,
+        node.name?.name,
         undefined,
         node.heritage ? [toTS(node.heritage) as ts.HeritageClause] : undefined,
         node.members.map((member) => toTS(member) as ts.ClassElement)

@@ -38,3 +38,23 @@ test("serialize an imported module", () => {
 exports.handler = v0;
 `);
 });
+
+test("serialize a class declaration", () => {
+  let i = 0;
+  class Foo {
+    public method() {
+      i++;
+      return i;
+    }
+  }
+
+  const closure = serializeClosure(() => {
+    const foo = new Foo();
+
+    foo.method();
+    foo.method();
+    return i;
+  });
+
+  expect(closure).toEqual("");
+});
