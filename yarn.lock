@@ -1040,10 +1040,10 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@functionless/ast-reflection@0.0.1":
-  version "0.0.1"
-  resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.0.1.tgz#bf025e87456449f47a62c90323e55574b5131fdc"
-  integrity sha512-flKyyHZsAlSdEn9rZuLIOsLhM+jqt0U8vIPKsc/tzJzWnVRXRMHTzubES+YoXqT5MR0dJo94MTfte5zN/YlXxg==
+"@functionless/ast-reflection@^0.1.1":
+  version "0.1.1"
+  resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.1.1.tgz#3d75cb797336e60317b8fc454346cf3d4704f8f2"
+  integrity sha512-hb1GLpwrgMrJzhTBryna9/vT3KMHTRgD3SXJiKzSU0Pb1ZEhvDx8Q+n89zuR7/lOWRO7x6LFXWQE0RSyEnDgdQ==
 
 "@functionless/nodejs-closure-serializer@^0.1.2":
   version "0.1.2"
@@ -1079,10 +1079,17 @@
     tslib "^2.4.0"
     value-or-promise "1.0.11"
 
-"@graphql-tools/utils@8.9.0", "@graphql-tools/utils@^8.5.1":
+"@graphql-tools/utils@8.9.0":
   version "8.9.0"
   resolved "https://registry.yarnpkg.com/@graphql-tools/utils/-/utils-8.9.0.tgz#c6aa5f651c9c99e1aca55510af21b56ec296cdb7"
   integrity sha512-pjJIWH0XOVnYGXCqej8g/u/tsfV4LvLlj0eATKQu5zwnxd/TiTHq7Cg313qUPTFFHZ3PP5wJ15chYVtLDwaymg==
+  dependencies:
+    tslib "^2.4.0"
+
+"@graphql-tools/utils@^8.5.1":
+  version "8.9.1"
+  resolved "https://registry.yarnpkg.com/@graphql-tools/utils/-/utils-8.9.1.tgz#11d6c8a292ac5f224dfda655b87adfece3a257c6"
+  integrity sha512-LHR7U4okICeUap+WV/T1FnLOmTr3KYuphgkXYendaBVO/DXKyc+TeOFBiN1LcEjPqCB8hO+0B0iTIO0cGqhNTA==
   dependencies:
     tslib "^2.4.0"
 
@@ -1518,9 +1525,9 @@
     config-chain "^1.1.11"
 
 "@sinclair/typebox@^0.24.1":
-  version "0.24.26"
-  resolved "https://registry.yarnpkg.com/@sinclair/typebox/-/typebox-0.24.26.tgz#84f9e8c1d93154e734a7947609a1dc7c7a81cc22"
-  integrity sha512-1ZVIyyS1NXDRVT8GjWD5jULjhDyM3IsIHef2VGUMdnWOlX2tkPjyEX/7K0TGSH2S8EaPhp1ylFdjSjUGQ+gecg==
+  version "0.24.27"
+  resolved "https://registry.yarnpkg.com/@sinclair/typebox/-/typebox-0.24.27.tgz#d55643516a1546174e10da681a8aaa81e757452d"
+  integrity sha512-K7C7IlQ3zLePEZleUN21ceBA2aLcMnLHTLph8QWk1JK37L90obdpY+QGY8bXMKxf1ht1Z0MNewvXxWv0oGDYFg==
 
 "@sindresorhus/is@^5.2.0":
   version "5.3.0"
@@ -1869,9 +1876,9 @@
     "@types/yargs-parser" "*"
 
 "@types/yargs@^17.0.8":
-  version "17.0.10"
-  resolved "https://registry.yarnpkg.com/@types/yargs/-/yargs-17.0.10.tgz#591522fce85d8739bca7b8bb90d048e4478d186a"
-  integrity sha512-gmEaFwpj/7f/ROdtIlci1R1VYU1J4j95m8T+Tj3iBgiBFKg1foE/PSl93bBd5T9LDXNPo8UlNN6W0qwD8O5OaA==
+  version "17.0.11"
+  resolved "https://registry.yarnpkg.com/@types/yargs/-/yargs-17.0.11.tgz#5e10ca33e219807c0eee0f08b5efcba9b6a42c06"
+  integrity sha512-aB4y9UDUXTSMxmM4MH+YnuR0g5Cph3FLQBoWoMB21DSvFVAxRVEHEMx3TLh+zUZYMCQtKiqazz0Q4Rre31f/OA==
   dependencies:
     "@types/yargs-parser" "*"
 
@@ -2315,9 +2322,9 @@ aws-cdk@2.28.1:
     fsevents "2.3.2"
 
 aws-sdk@^2.1079.0, aws-sdk@^2.1093.0, aws-sdk@^2.1113.0:
-  version "2.1190.0"
-  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.1190.0.tgz#9ca291c27ff9dc3428a9211048754df9d01734c9"
-  integrity sha512-VJ3kpqjqww3u2OUOpvDA4EWU2HYetk0/5PQONqXR9N4dAvs8BP/Rv4BoYM/9m4rfhdBEMWizdye7epbBNxb4ZQ==
+  version "2.1191.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.1191.0.tgz#2748567252c68ef37a8ce29f48aa063681083918"
+  integrity sha512-G8hWvuc+3rxTfHqsnUwGx/fy8zlnVPtlNesXMHlwU/l4oBx3+Weg0Nhng6HvLGzUJifzlnSKDXrOsWVkHtuZ1w==
   dependencies:
     buffer "4.9.2"
     events "1.1.1"
@@ -3334,9 +3341,9 @@ ee-first@1.1.1:
   integrity sha512-WMwm9LhRUo+WUaRN+vRuETqG89IgZphVSNkdFgeb6sS/E4OrDIN7t48CAewSHXc6C8lefD8KKfr5vY61brQlow==
 
 electron-to-chromium@^1.4.202:
-  version "1.4.212"
-  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.212.tgz#20cd48e88288fd2428138c108804edb1961bf559"
-  integrity sha512-LjQUg1SpLj2GfyaPDVBUHdhmlDU1vDB4f0mJWSGkISoXQrn5/lH3ECPCuo2Bkvf6Y30wO+b69te+rZK/llZmjg==
+  version "1.4.213"
+  resolved "https://registry.yarnpkg.com/electron-to-chromium/-/electron-to-chromium-1.4.213.tgz#a0d0f535e4fbddc25196c91ff2964b5660932297"
+  integrity sha512-+3DbGHGOCHTVB/Ms63bGqbyC1b8y7Fk86+7ltssB8NQrZtSCvZG6eooSl9U2Q0yw++fL2DpHKOdTU0NVEkFObg==
 
 emittery@^0.10.2:
   version "0.10.2"
@@ -4527,9 +4534,9 @@ hosted-git-info@^4.0.0, hosted-git-info@^4.0.1:
     lru-cache "^6.0.0"
 
 hosted-git-info@^5.0.0:
-  version "5.0.0"
-  resolved "https://registry.yarnpkg.com/hosted-git-info/-/hosted-git-info-5.0.0.tgz#df7a06678b4ebd722139786303db80fdf302ea56"
-  integrity sha512-rRnjWu0Bxj+nIfUOkz0695C0H6tRrN5iYIzYejb0tDEefe2AekHu/U5Kn9pEie5vsJqpNQU02az7TGSH3qpz4Q==
+  version "5.1.0"
+  resolved "https://registry.yarnpkg.com/hosted-git-info/-/hosted-git-info-5.1.0.tgz#9786123f92ef3627f24abc3f15c20d98ec4a6594"
+  integrity sha512-Ek+QmMEqZF8XrbFdwoDjSbm7rT23pCgEMOJmz6GPk/s4yH//RQfNPArhIxbguNxROq/+5lNBwCDHMhA903Kx1Q==
   dependencies:
     lru-cache "^7.5.1"
 
@@ -6634,10 +6641,10 @@ progress@^2.0.3:
   resolved "https://registry.yarnpkg.com/progress/-/progress-2.0.3.tgz#7e8cf8d8f5b8f239c1bc68beb4eb78567d572ef8"
   integrity sha512-7PiHtLll5LdnKIMw100I+8xJXR5gW2QwWYkT6iJva0bXitZKa/XMrSbdmg3r2Xnaidz9Qumd0VPaMrZlF9V9sA==
 
-projen@^0.61.3:
-  version "0.61.3"
-  resolved "https://registry.yarnpkg.com/projen/-/projen-0.61.3.tgz#5511f7fdd4a03bca8ffe60013b1ed9cc7ada83cd"
-  integrity sha512-DeW4oj8mx5PJe/MPEqhiOOd5tZTCO7Vbl+U8JL0fs+uaJJKp2RnrkjhBMNpfolQYPK7uoSLtwgp2GYue9I2fPA==
+projen@^0.61.4:
+  version "0.61.4"
+  resolved "https://registry.yarnpkg.com/projen/-/projen-0.61.4.tgz#d5e869716f74dea586070594ce06140a8b49a406"
+  integrity sha512-rYkDfrWWsJhpoRXj5uSnnkmf/NeEKW+DaAmD75It11EGw49Xy4k8mmn3j/HcygXKnh/qtgQqRh07Q62jtyumxg==
   dependencies:
     "@iarna/toml" "^2.2.5"
     case "^1.6.3"
@@ -8241,9 +8248,9 @@ yargs-parser@^20.2.2, yargs-parser@^20.2.3:
   integrity sha512-y11nGElTIV+CT3Zv9t7VKl+Q3hTQoT9a1Qzezhhl6Rp21gJ/IVTW7Z3y9EWXhuUBC2Shnf+DX0antecpAwSP8w==
 
 yargs-parser@^21.0.0, yargs-parser@^21.0.1:
-  version "21.1.0"
-  resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-21.1.0.tgz#a11d06a3bf57f064e951aa3ef55fcf3a5705f876"
-  integrity sha512-xzm2t63xTV/f7+bGMSRzLhUNk1ajv/tDoaD5OeGyC3cFo2fl7My9Z4hS3q2VdQ7JaLvTxErO8Jp5pRIFGMD/zg==
+  version "21.1.1"
+  resolved "https://registry.yarnpkg.com/yargs-parser/-/yargs-parser-21.1.1.tgz#9096bceebf990d21bb31fa9516e0ede294a77d35"
+  integrity sha512-tVpsJW7DdjecAiFpbIB1e3qxIQsE6NoPc5/eTdrbbIC4h0LVsWhnoa3g+m2HclBIujHzsxZ4VJVA+GUuc2/LBw==
 
 yargs@^16.0.0, yargs@^16.2.0:
   version "16.2.0"

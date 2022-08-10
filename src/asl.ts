@@ -116,6 +116,7 @@ import {
   tryFindIntegration,
 } from "./integration";
 import { BindingDecl, FunctionlessNode } from "./node";
+import { emptySpan } from "./span";
 import {
   BlockStmt,
   BreakStmt,
@@ -563,7 +564,7 @@ export class ASL {
       | FunctionlessNode
       | FunctionlessNode[] {
       if (isBlockStmt(node)) {
-        return new BlockStmt([
+        return new BlockStmt(node.span, [
           // for each block statement
           ...node.statements.flatMap((stmt) => {
             const transformed = normalizeAST(stmt) as Stmt[];
@@ -580,7 +581,12 @@ export class ASL {
           // without this, chains that should return null will actually include the entire state as their output
           ...(isFunctionLike(node.parent) &&
           (!node.lastStmt || !node.lastStmt.isTerminal())
-            ? [new ReturnStmt(new NullLiteralExpr())]
+            ? [
+                new ReturnStmt(
+                  node.lastStmt?.span ?? node.span,
+                  new NullLiteralExpr(node.lastStmt?.span ?? node.span)
+                ),
+              ]
             : []),
         ]);
       } else if (isForOfStmt(node) && node.isAwait) {
@@ -938,12 +944,12 @@ export class ASL {
             [ASL.ContinueNext]: {
               Type: "Pass",
               Next: "tail",
-              node: new ContinueStmt(),
+              node: new ContinueStmt(emptySpan()),
             },
             [ASL.BreakNext]: {
               Type: "Pass",
               Next: "exit",
-              node: new BreakStmt(),
+              node: new BreakStmt(emptySpan()),
             },
           },
         };
@@ -1024,12 +1030,12 @@ export class ASL {
             [ASL.ContinueNext]: {
               Type: "Pass",
               Next: "check",
-              node: new ContinueStmt(),
+              node: new ContinueStmt(emptySpan()),
             },
             [ASL.BreakNext]: {
               Type: "Pass",
               Next: "exit",
-              node: new BreakStmt(),
+              node: new BreakStmt(emptySpan()),
             },
           },
         })!;
@@ -1101,7 +1107,7 @@ export class ASL {
       };
     } else if (isReturnStmt(stmt)) {
       return this.evalExprToSubState(
-        stmt.expr ?? stmt.fork(new NullLiteralExpr()),
+        stmt.expr ?? stmt.fork(new NullLiteralExpr(stmt.span)),
         (_, { normalizeConditionToJsonPath: normalizeConditionalToJsonPath }) =>
           ASLGraph.passWithInput(
             {
@@ -1433,12 +1439,12 @@ export class ASL {
             ),
             [ASL.ContinueNext]: {
               Type: "Pass",
-              node: new ContinueStmt(),
+              node: new ContinueStmt(emptySpan()),
               Next: "check",
             },
             [ASL.BreakNext]: {
               Type: "Pass",
-              node: new BreakStmt(),
+              node: new BreakStmt(emptySpan()),
               Next: ASLGraph.DeferNext,
             },
           },
@@ -3079,7 +3085,7 @@ export class ASL {
     };
 
     const expression = toFilterCondition(
-      stmt.expr ?? stmt.fork(new NullLiteralExpr())
+      stmt.expr ?? stmt.fork(new NullLiteralExpr(stmt.span))
     );
     return expression
       ? {
