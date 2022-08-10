@@ -85,7 +85,7 @@ const project = new CustomTypescriptProject({
     "fs-extra",
     "minimatch",
     "@functionless/nodejs-closure-serializer",
-    "@functionless/ast-reflection",
+    "@functionless/ast-reflection@^0.1.1",
     "@swc/cli",
     "@swc/core@1.2.218",
     "@swc/register",
