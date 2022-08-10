@@ -1,0 +1,40 @@
+// Jest Snapshot v1, https://goo.gl/fbAQLP
+
+exports[`all observers of a free variable share the same reference 1`] = `
+"var v3 = 0;
+const v2 = function up() { v3 += 1; };
+var v1 = v2;
+const v5 = function down() { v3 -= 1; };
+var v4 = v5;
+const v0 = () => { v1(); v4(); return v3; };
+exports.handler = v0;
+"
+`;
+
+exports[`serialize a class declaration 1`] = `
+"var v3 = 0;
+const v2 = class Foo {
+    method() { v3++; return v3; }
+};
+var v1 = v2;
+const v0 = () => { const foo = new v1(); foo.method(); foo.method(); return v3; };
+exports.handler = v0;
+"
+`;
+
+exports[`serialize a class declaration with constructor 1`] = `
+"var v3 = 0;
+const v2 = class Foo {
+    method() { v3++; return v3; }
+};
+var v1 = v2;
+const v0 = () => { const foo = new v1(); foo.method(); foo.method(); return v3; };
+exports.handler = v0;
+"
+`;
+
+exports[`serialize an imported module 1`] = `
+"const v0 = function isNode(a) { return typeof a?.kind === \\"number\\"; };
+exports.handler = v0;
+"
+`;

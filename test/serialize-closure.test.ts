@@ -1,9 +1,46 @@
 import "jest";
+import fs from "fs";
+import path from "path";
+import { v4 } from "uuid";
+import { AnyFunction } from "../src";
 
 import { isNode } from "../src/guards";
 import { serializeClosure } from "../src/serialize-closure";
 
-test("all observers of a free variable share the same reference", () => {
+const tmpDir = path.join(__dirname, ".test");
+beforeAll(async () => {
+  await fs.promises.mkdir(tmpDir);
+});
+
+const cleanup = true;
+
+afterAll(async () => {
+  if (cleanup) {
+    await rmrf(tmpDir);
+  }
+});
+async function rmrf(file: string) {
+  const stat = await fs.promises.stat(file);
+  if (stat.isDirectory()) {
+    await Promise.all(
+      (await fs.promises.readdir(file)).map((f) => rmrf(path.join(file, f)))
+    );
+    await fs.promises.rmdir(file);
+  } else {
+    await fs.promises.rm(file);
+  }
+}
+
+async function expectClosure<F extends AnyFunction>(f: F): Promise<F> {
+  const closure = serializeClosure(f);
+  expect(closure).toMatchSnapshot();
+  const jsFile = path.join(tmpDir, `${v4()}.js`);
+  await fs.promises.writeFile(jsFile, closure);
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  return require(jsFile).handler as F;
+}
+
+test("all observers of a free variable share the same reference", async () => {
   let i = 0;
 
   function up() {
@@ -14,32 +51,22 @@ test("all observers of a free variable share the same reference", () => {
     i -= 1;
   }
 
-  const closure = serializeClosure(() => {
+  const closure = await expectClosure(() => {
     up();
     down();
     return i;
   });
 
-  expect(closure).toEqual(`var v3 = 0;
-const v2 = function up() { v3 += 1; };
-var v1 = v2;
-const v5 = function down() { v3 -= 1; };
-var v4 = v5;
-const v0 = () => { v1(); v4(); return v3; };
-exports.handler = v0;
-`);
+  expect(closure()).toEqual(0);
 });
 
-test("serialize an imported module", () => {
-  const closure = serializeClosure(isNode);
+test("serialize an imported module", async () => {
+  const closure = await expectClosure(isNode);
 
-  expect(closure)
-    .toEqual(`const v0 = function isNode(a) { return typeof a?.kind === \"number\"; };
-exports.handler = v0;
-`);
+  expect(closure({ kind: 1 })).toEqual(true);
 });
 
-test("serialize a class declaration", () => {
+test("serialize a class declaration", async () => {
   let i = 0;
   class Foo {
     public method() {
@@ -48,7 +75,7 @@ test("serialize a class declaration", () => {
     }
   }
 
-  const closure = serializeClosure(() => {
+  const closure = await expectClosure(() => {
     const foo = new Foo();
 
     foo.method();
@@ -56,12 +83,25 @@ test("serialize a class declaration", () => {
     return i;
   });
 
-  expect(closure).toEqual(`var v3 = 0;
-const v2 = class Foo {
-    method() { v3++; return v3; }
-};
-var v1 = v2;
-const v0 = () => { const foo = v1(); foo.method(); foo.method(); return v3; };
-exports.handler = v0;
-`);
+  expect(closure()).toEqual(2);
+});
+
+test("serialize a class declaration with constructor", async () => {
+  let i = 0;
+  class Foo {
+    public method() {
+      i++;
+      return i;
+    }
+  }
+
+  const closure = await expectClosure(() => {
+    const foo = new Foo();
+
+    foo.method();
+    foo.method();
+    return i;
+  });
+
+  expect(closure()).toEqual(2);
 });

@@ -414,7 +414,7 @@ export function serializeClosure(func: AnyFunction): string {
         node.args.map((arg) => toTS(arg) as ts.Expression)
       );
     } else if (isNewExpr(node)) {
-      return ts.factory.createCallExpression(
+      return ts.factory.createNewExpression(
         toTS(node.expr) as ts.Expression,
         undefined,
         node.args.map((arg) => toTS(arg) as ts.Expression)
