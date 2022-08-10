@@ -990,10 +990,10 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           }`
         );
 
-        return `the result: ${result.str}`;
+        return `the result: ${result.str} ${input.obj.str === "hullo"}`;
       });
     },
-    "the result: hullo hello hello default 1",
+    "the result: hullo hello hello default 1 true",
     { obj: { str: "hullo", items: [1] } }
   );
 

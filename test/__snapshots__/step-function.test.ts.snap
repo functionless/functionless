@@ -3809,255 +3809,6 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "2__return {and: input.a && input.b, or: input.a || input.b, andCondition: i": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "And": Array [
-                Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.a",
-                },
-                Object {
-                  "Or": Array [
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNull": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "IsNull": true,
-                          "Variable": "$.input.b",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "StringEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "BooleanEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "NumericEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.s",
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.input.s",
-                    },
-                    Object {
-                      "StringEquals": "hello",
-                      "Variable": "$.input.s",
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-          "Next": "true__2__return {and: input.a && input.b, or: input.a || input.b, andCondit",
-        },
-      ],
-      "Default": "false__2__return {and: input.a && input.b, or: input.a || input.b, andCondi",
-      "Type": "Choice",
-    },
-    "3__return {and: input.a && input.b, or: input.a || input.b, andCondition: i": Object {
-      "Choices": Array [
-        Object {
-          "Next": "true__3__return {and: input.a && input.b, or: input.a || input.b, andCondit",
-          "Or": Array [
-            Object {
-              "And": Array [
-                Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.a",
-                },
-                Object {
-                  "Or": Array [
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNull": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "IsNull": true,
-                          "Variable": "$.input.b",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "StringEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "BooleanEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "NumericEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.s",
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.input.s",
-                    },
-                    Object {
-                      "StringEquals": "hello",
-                      "Variable": "$.input.s",
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      "Default": "false__3__return {and: input.a && input.b, or: input.a || input.b, andCondi",
-      "Type": "Choice",
-    },
-    "4__return {and: input.a && input.b, or: input.a || input.b, andCondition: i": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "IsPresent": true,
-              "Variable": "$.input.a",
-            },
-            Object {
-              "Or": Array [
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.input.a",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.input.b",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.input.a",
-                    },
-                    Object {
-                      "StringEqualsPath": "$.input.b",
-                      "Variable": "$.input.a",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.input.a",
-                    },
-                    Object {
-                      "BooleanEqualsPath": "$.input.b",
-                      "Variable": "$.input.a",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsNumeric": true,
-                      "Variable": "$.input.a",
-                    },
-                    Object {
-                      "NumericEqualsPath": "$.input.b",
-                      "Variable": "$.input.a",
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-          "Next": "true__4__return {and: input.a && input.b, or: input.a || input.b, andCondit",
-        },
-      ],
-      "Default": "false__4__return {and: input.a && input.b, or: input.a || input.b, andCondi",
-      "Type": "Choice",
-    },
     "Initialize Functionless Context": Object {
       "Next": "return {and: input.a && input.b, or: input.a || input.b, andCondition: inpu",
       "Parameters": Object {
@@ -4093,24 +3844,6 @@ Object {
       "ResultPath": "$.heap5",
       "Type": "Pass",
     },
-    "false__2__return {and: input.a && input.b, or: input.a || input.b, andCondi": Object {
-      "Next": "3__return {and: input.a && input.b, or: input.a || input.b, andCondition: i",
-      "Result": false,
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
-    "false__3__return {and: input.a && input.b, or: input.a || input.b, andCondi": Object {
-      "Next": "4__return {and: input.a && input.b, or: input.a || input.b, andCondition: i",
-      "Result": false,
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "false__4__return {and: input.a && input.b, or: input.a || input.b, andCondi": Object {
-      "Next": "!true",
-      "Result": false,
-      "ResultPath": "$.heap4",
-      "Type": "Pass",
-    },
     "false__input.a && input.b": Object {
       "InputPath": "$.input.b",
       "Next": "!input.a && input.b",
@@ -4123,9 +3856,27 @@ Object {
       "ResultPath": "$.heap13",
       "Type": "Pass",
     },
+    "false__input.a === input.b && input.s === \\"hello\\"": Object {
+      "Next": "input.a === input.b || input.s === \\"hello\\"",
+      "Result": false,
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "false__input.a === input.b ?? input.s === \\"hello\\"": Object {
+      "Next": "!true",
+      "Result": false,
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "false__input.a === input.b || input.s === \\"hello\\"": Object {
+      "Next": "input.a === input.b ?? input.s === \\"hello\\"",
+      "Result": false,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
     "false__input.a || input.b": Object {
       "InputPath": "$.input.b",
-      "Next": "2__return {and: input.a && input.b, or: input.a || input.b, andCondition: i",
+      "Next": "input.a === input.b && input.s === \\"hello\\"",
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
@@ -4321,6 +4072,255 @@ Object {
         },
       ],
       "Default": "false__input.a && input.s",
+      "Type": "Choice",
+    },
+    "input.a === input.b && input.s === \\"hello\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.a",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.input.b",
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "StringEqualsPath": "$.input.b",
+                          "Variable": "$.input.a",
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "BooleanEqualsPath": "$.input.b",
+                          "Variable": "$.input.a",
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "NumericEqualsPath": "$.input.b",
+                          "Variable": "$.input.a",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.s",
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.s",
+                    },
+                    Object {
+                      "StringEquals": "hello",
+                      "Variable": "$.input.s",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__input.a === input.b && input.s === \\"hello\\"",
+        },
+      ],
+      "Default": "false__input.a === input.b && input.s === \\"hello\\"",
+      "Type": "Choice",
+    },
+    "input.a === input.b ?? input.s === \\"hello\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.a",
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.input.a",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.input.b",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.a",
+                    },
+                    Object {
+                      "StringEqualsPath": "$.input.b",
+                      "Variable": "$.input.a",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.input.a",
+                    },
+                    Object {
+                      "BooleanEqualsPath": "$.input.b",
+                      "Variable": "$.input.a",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.input.a",
+                    },
+                    Object {
+                      "NumericEqualsPath": "$.input.b",
+                      "Variable": "$.input.a",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__input.a === input.b ?? input.s === \\"hello\\"",
+        },
+      ],
+      "Default": "false__input.a === input.b ?? input.s === \\"hello\\"",
+      "Type": "Choice",
+    },
+    "input.a === input.b || input.s === \\"hello\\"": Object {
+      "Choices": Array [
+        Object {
+          "Next": "true__input.a === input.b || input.s === \\"hello\\"",
+          "Or": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.a",
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.input.b",
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "StringEqualsPath": "$.input.b",
+                          "Variable": "$.input.a",
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "BooleanEqualsPath": "$.input.b",
+                          "Variable": "$.input.a",
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "NumericEqualsPath": "$.input.b",
+                          "Variable": "$.input.a",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.s",
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.s",
+                    },
+                    Object {
+                      "StringEquals": "hello",
+                      "Variable": "$.input.s",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      "Default": "false__input.a === input.b || input.s === \\"hello\\"",
       "Type": "Choice",
     },
     "input.a || input.b": Object {
@@ -4843,24 +4843,6 @@ Object {
       "ResultPath": "$.heap5",
       "Type": "Pass",
     },
-    "true__2__return {and: input.a && input.b, or: input.a || input.b, andCondit": Object {
-      "Next": "3__return {and: input.a && input.b, or: input.a || input.b, andCondition: i",
-      "Result": true,
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
-    "true__3__return {and: input.a && input.b, or: input.a || input.b, andCondit": Object {
-      "Next": "4__return {and: input.a && input.b, or: input.a || input.b, andCondition: i",
-      "Result": true,
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "true__4__return {and: input.a && input.b, or: input.a || input.b, andCondit": Object {
-      "Next": "!true",
-      "Result": true,
-      "ResultPath": "$.heap4",
-      "Type": "Pass",
-    },
     "true__input.a && input.b": Object {
       "InputPath": "$.input.a",
       "Next": "!input.a && input.b",
@@ -4873,9 +4855,27 @@ Object {
       "ResultPath": "$.heap13",
       "Type": "Pass",
     },
+    "true__input.a === input.b && input.s === \\"hello\\"": Object {
+      "Next": "input.a === input.b || input.s === \\"hello\\"",
+      "Result": true,
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "true__input.a === input.b ?? input.s === \\"hello\\"": Object {
+      "Next": "!true",
+      "Result": true,
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "true__input.a === input.b || input.s === \\"hello\\"": Object {
+      "Next": "input.a === input.b ?? input.s === \\"hello\\"",
+      "Result": true,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
     "true__input.a || input.b": Object {
       "InputPath": "$.input.a",
-      "Next": "2__return {and: input.a && input.b, or: input.a || input.b, andCondition: i",
+      "Next": "input.a === input.b && input.s === \\"hello\\"",
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },

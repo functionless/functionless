@@ -360,8 +360,8 @@ export namespace $SFN {
       throw new Error("missing argument 'array'");
     }
 
-    return context.evalExpr(array, call, (_, { normalizeOutputToJsonPath }) => {
-      const arrayPath = normalizeOutputToJsonPath().jsonPath;
+    return context.evalExprToJsonPath(array, call, (output) => {
+      const arrayPath = output.jsonPath;
 
       const [itemParam, indexParam, arrayParam] = callbackfn.parameters;
 
@@ -794,45 +794,36 @@ abstract class BaseStepFunction<
       TraceHeader: traceHeader,
     };
 
-    return context.evalContext(
-      call,
-      ({
-        evalExpr,
-        normalizeConditionToJsonPath: normalizeConditionalToJsonPath,
-      }) => {
-        // evaluate each of the input expressions,
-        // returning an object assignment with the output value { input.$: $.inputLocation }
-        // and a state object containing the output and/or a sub-state with additional required nodes to add to the
-        // machine
-        const evalInputs = Object.fromEntries(
-          Object.entries(inputs)
-            .filter(([, expr]) => !!expr)
-            .flatMap(([key, expr]) =>
-              Object.entries(
-                ASLGraph.jsonAssignment(
-                  key,
-                  normalizeConditionalToJsonPath(evalExpr(expr!))
-                )
-              )
+    return context.evalContext(call, ({ evalExprToJsonPathOrLiteral }) => {
+      // evaluate each of the input expressions,
+      // returning an object assignment with the output value { input.$: $.inputLocation }
+      // and a state object containing the output and/or a sub-state with additional required nodes to add to the
+      // machine
+      const evalInputs = Object.fromEntries(
+        Object.entries(inputs)
+          .filter(([, expr]) => !!expr)
+          .flatMap(([key, expr]) =>
+            Object.entries(
+              ASLGraph.jsonAssignment(key, evalExprToJsonPathOrLiteral(expr!))
             )
-        );
+          )
+      );
 
-        return context.stateWithHeapOutput({
-          Type: "Task",
-          Resource: `arn:aws:states:::aws-sdk:sfn:${
-            this.resource.stateMachineType ===
-            aws_stepfunctions.StateMachineType.EXPRESS
-              ? "startSyncExecution"
-              : "startExecution"
-          }`,
-          Parameters: {
-            StateMachineArn: this.resource.stateMachineArn,
-            ...evalInputs,
-          },
-          Next: ASLGraph.DeferNext,
-        });
-      }
-    );
+      return context.stateWithHeapOutput({
+        Type: "Task",
+        Resource: `arn:aws:states:::aws-sdk:sfn:${
+          this.resource.stateMachineType ===
+          aws_stepfunctions.StateMachineType.EXPRESS
+            ? "startSyncExecution"
+            : "startExecution"
+        }`,
+        Parameters: {
+          StateMachineArn: this.resource.stateMachineArn,
+          ...evalInputs,
+        },
+        Next: ASLGraph.DeferNext,
+      });
+    });
   }
 
   public readonly eventBus = makeEventBusIntegration<
@@ -1446,23 +1437,14 @@ class BaseStandardStepFunction<
         "Describe Execution requires a single string argument."
       );
 
-      return context.evalExpr(
-        executionArnExpr,
-        (
-          _,
-          { normalizeConditionToJsonPath: normalizeConditionalToJsonPath }
-        ) => {
-          return context.stateWithHeapOutput({
-            Type: "Task",
-            Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
-            Parameters: ASLGraph.jsonAssignment(
-              "ExecutionArn",
-              normalizeConditionalToJsonPath()
-            ),
-            Next: ASLGraph.DeferNext,
-          });
-        }
-      );
+      return context.evalExprToJsonPathOrLiteral(executionArnExpr, (output) => {
+        return context.stateWithHeapOutput({
+          Type: "Task",
+          Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
+          Parameters: ASLGraph.jsonAssignment("ExecutionArn", output),
+          Next: ASLGraph.DeferNext,
+        });
+      });
     },
     native: {
       bind: (context) => this.resource.grantRead(context.resource),

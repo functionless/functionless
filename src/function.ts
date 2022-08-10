@@ -379,24 +379,18 @@ abstract class FunctionBase<in Payload, Out>
     this.resource.grantInvoke(context.role);
 
     return payloadArg
-      ? context.evalExpr(
-          payloadArg,
-          (
-            _,
-            { normalizeConditionToJsonPath: normalizeConditionalToJsonPath }
-          ) => {
-            return context.stateWithHeapOutput(
-              ASLGraph.taskWithInput(
-                {
-                  Type: "Task",
-                  Resource: this.resource.functionArn,
-                  Next: ASLGraph.DeferNext,
-                },
-                normalizeConditionalToJsonPath()
-              )
-            );
-          }
-        )
+      ? context.evalExprToJsonPathOrLiteral(payloadArg, (output) => {
+          return context.stateWithHeapOutput(
+            ASLGraph.taskWithInput(
+              {
+                Type: "Task",
+                Resource: this.resource.functionArn,
+                Next: ASLGraph.DeferNext,
+              },
+              output
+            )
+          );
+        })
       : context.stateWithHeapOutput(
           ASLGraph.taskWithInput(
             {
