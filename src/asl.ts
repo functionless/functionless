@@ -2211,7 +2211,9 @@ export class ASL {
                   ErrorCodes.StepFunctions_property_names_must_be_constant
                 );
               }
+
               const valueOutput = evalExprToJsonPathOrLiteral(prop.expr);
+
               return {
                 value: {
                   ...(obj.value as Record<string, any>),
@@ -2349,7 +2351,10 @@ export class ASL {
             );
           }
 
-          return this.assignValue(expr, right, left.jsonPath);
+          return {
+            ...this.assignValue(expr, right, left.jsonPath),
+            output: right,
+          };
         });
       } else if (expr.op === "in") {
         return this.evalContext(expr, ({ evalExpr }) => {

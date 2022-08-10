@@ -933,10 +933,28 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         a = { x: "val" };
         const f = a;
         a = { 1: "val2" };
-        return { a, b, c, d, e, f };
+        let z = "";
+        const g = {
+          a: z,
+          b: (z = "a"),
+          c: ((z = "b"), z),
+          z,
+        };
+        let y = "";
+        const h = [y, (y = "a"), ((y = "b"), y), y];
+        return { a, b, c, d, e, f, g, h };
       });
     },
-    { a: { "1": "val2" }, b: "2", c: null, d: 1, e: [1, 2], f: { x: "val" } }
+    {
+      a: { "1": "val2" },
+      b: "2",
+      c: null,
+      d: 1,
+      e: [1, 2],
+      f: { x: "val" },
+      g: { a: "", b: "a", c: "b", z: "b" },
+      h: ["", "a", "b", "b"],
+    }
   );
 
   test(
