@@ -15,7 +15,7 @@ class GitHooksPreCommitComponent extends TextFile {
     });
   }
 
-  postSynthesize() {
+  public postSynthesize() {
     chmodSync(this.path, "755");
   }
 }
@@ -45,7 +45,7 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
     this.postSynthesize = this.postSynthesize.bind(this);
   }
 
-  postSynthesize() {
+  public postSynthesize() {
     super.postSynthesize();
 
     /**
@@ -79,12 +79,13 @@ const project = new CustomTypescriptProject({
   bin: {
     functionless: "./bin/functionless.js",
   },
+  projenrcTs: true,
   deps: [
     "@types/aws-lambda",
     "fs-extra",
     "minimatch",
     "@functionless/nodejs-closure-serializer",
-    "@functionless/ast-reflection@file:../ast-reflection",
+    "@functionless/ast-reflection",
     "@swc/cli",
     "@swc/core@1.2.218",
     "@swc/register",
