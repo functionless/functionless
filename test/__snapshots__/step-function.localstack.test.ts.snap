@@ -174,12 +174,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.input.a",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.input.a",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.input.a",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.input.a",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -255,12 +259,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.input.n",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.input.n",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.input.n",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.input.n",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -336,12 +344,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.input.nv",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.input.nv",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.input.nv",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.input.nv",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -417,12 +429,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.input.x",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.input.x",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.input.x",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.input.x",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -3782,12 +3798,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.heap5",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.heap5",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.heap5",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.heap5",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -3868,12 +3888,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.input.a",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.input.a",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.input.a",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.input.a",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -4046,12 +4070,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.input.a",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.input.a",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.input.a",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.input.a",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -4223,12 +4251,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.falsyAndAssign",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.falsyAndAssign",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.falsyAndAssign",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.falsyAndAssign",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -4314,12 +4346,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.falsyOrAssign",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.falsyOrAssign",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.falsyOrAssign",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.falsyOrAssign",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -4411,12 +4447,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.input.a",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.input.a",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.input.a",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.input.a",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -4492,12 +4532,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.heap32",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.heap32",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.heap32",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.heap32",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -4573,12 +4617,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.heap30",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.heap30",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.heap30",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.heap30",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -4652,12 +4700,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.input.a",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.input.a",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.a",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.input.a",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -4731,12 +4783,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.heap19",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.heap19",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.heap19",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.heap19",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -4810,12 +4866,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.input.b",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.input.b",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.b",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.input.b",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -4889,12 +4949,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.heap21",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.heap21",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.heap21",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.heap21",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -4968,12 +5032,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.heap23",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.heap23",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.heap23",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.heap23",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -5047,12 +5115,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.input.b",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.input.b",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.b",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.input.b",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -5126,12 +5198,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.heap26",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.heap26",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.heap26",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.heap26",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -5264,12 +5340,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.input.z",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.input.z",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.input.z",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.input.z",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -5414,12 +5494,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.input.a",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.input.a",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.input.a",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.input.a",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -5645,12 +5729,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.truthyAndAssign",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.truthyAndAssign",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.truthyAndAssign",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.truthyAndAssign",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -5736,12 +5824,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.truthyOrAssign",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.truthyOrAssign",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.truthyOrAssign",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.truthyOrAssign",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -5933,12 +6025,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.y",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.y",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.y",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.y",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -6014,12 +6110,16 @@ Object {
           "Not": Object {
             "And": Array [
               Object {
-                "IsPresent": true,
-                "Variable": "$.heap3",
-              },
-              Object {
-                "IsNull": false,
-                "Variable": "$.heap3",
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.heap3",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.heap3",
+                  },
+                ],
               },
               Object {
                 "Or": Array [
@@ -6235,12 +6335,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.input.nv",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.input.nv",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.nv",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.input.nv",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -6337,12 +6441,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.input.value",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.input.value",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.value",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.input.value",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -7094,12 +7202,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.heap0",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.heap0",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.heap0",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.heap0",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -7191,12 +7303,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.input.a",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.input.a",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.a",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.input.a",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -8300,12 +8416,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.heap6",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.heap6",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.heap6",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.heap6",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -8379,12 +8499,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.heap1",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.heap1",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.heap1",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.heap1",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -8753,12 +8877,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.arr[0]",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.arr[0]",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.arr[0]",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.arr[0]",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -12858,12 +12986,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.input.f",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.input.f",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.f",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.input.f",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -12937,12 +13069,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.input.f",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.input.f",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.f",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.input.f",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -13016,12 +13152,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.input.t",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.input.t",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.t",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.input.t",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -13095,12 +13235,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.input.t",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.input.t",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.t",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.input.t",
+                },
+              ],
             },
             Object {
               "Or": Array [
@@ -13185,12 +13329,16 @@ Object {
         Object {
           "And": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.input.t",
-            },
-            Object {
-              "IsNull": false,
-              "Variable": "$.input.t",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.t",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.input.t",
+                },
+              ],
             },
             Object {
               "Or": Array [
