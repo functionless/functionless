@@ -28,6 +28,7 @@ import {
   isBindingPattern,
   isBlockStmt,
   isCatchClause,
+  isClassLike,
   isDoStmt,
   isForInStmt,
   isForOfStmt,
@@ -145,7 +146,7 @@ export abstract class BaseNode<
    * @returns the name of the file this node originates from.
    */
   public getFileName(): string {
-    if (isFunctionLike(this) && this.filename) {
+    if ((isFunctionLike(this) || isClassLike(this)) && this.filename) {
       return this.filename;
     } else if (this.parent === undefined) {
       throw new Error(`cannot get filename of orphaned node`);

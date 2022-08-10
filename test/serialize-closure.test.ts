@@ -56,5 +56,12 @@ test("serialize a class declaration", () => {
     return i;
   });
 
-  expect(closure).toEqual("");
+  expect(closure).toEqual(`var v3 = 0;
+const v2 = class Foo {
+    method() { v3++; return v3; }
+};
+var v1 = v2;
+const v0 = () => { const foo = v1(); foo.method(); foo.method(); return v3; };
+exports.handler = v0;
+`);
 });

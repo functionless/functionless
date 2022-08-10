@@ -128,6 +128,8 @@ export const isFunctionLike = typeGuard(
   NodeKind.ArrowFunctionExpr
 );
 
+export const isClassLike = typeGuard(NodeKind.ClassDecl, NodeKind.ClassExpr);
+
 export const isClassDecl = typeGuard(NodeKind.ClassDecl);
 export const isClassStaticBlockDecl = typeGuard(NodeKind.ClassStaticBlockDecl);
 export const isConstructorDecl = typeGuard(NodeKind.ConstructorDecl);

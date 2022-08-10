@@ -266,7 +266,7 @@ export function serializeClosure(func: AnyFunction): string {
           uniqueName(),
           prop(moduleName, mod.exportName)
         );
-      } else if (isFunctionLike(ast)) {
+      } else if (isFunctionLike(ast) || isClassDecl(ast) || isClassExpr(ast)) {
         return emitVarDecl("const", uniqueName(), toTS(ast) as ts.Expression);
       } else if (isErr(ast)) {
         throw ast.error;
@@ -502,7 +502,7 @@ export function serializeClosure(func: AnyFunction): string {
       );
     } else if (isClassDecl(node) || isClassExpr(node)) {
       return (
-        isClassDecl(node)
+        isClassDecl(node) && node.parent !== undefined // if this is the root ClassDecl, it must be a ts.ClassExpression to be assigned to a variable
           ? ts.factory.createClassDeclaration
           : ts.factory.createClassExpression
       )(
