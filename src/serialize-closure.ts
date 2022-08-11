@@ -406,6 +406,11 @@ export function serializeClosure(func: AnyFunction): string {
             `Cannot monkey-patch a method with a ${methodAST.kindName}`
           );
         }
+      } else if (propDescriptor.writable) {
+        // this is a literal value, like an object, so let's serialize it and set
+        emit(
+          expr(assign(prop(varName, propName), serialize(propDescriptor.value)))
+        );
       }
     }
   }

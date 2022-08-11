@@ -7,6 +7,9 @@ import { AnyFunction } from "../src";
 import { isNode } from "../src/guards";
 import { serializeClosure } from "../src/serialize-closure";
 
+// set to false to inspect generated js files in .test/
+const cleanup = true;
+
 const tmpDir = path.join(__dirname, ".test");
 beforeAll(async () => {
   let exists = true;
@@ -20,8 +23,6 @@ beforeAll(async () => {
   }
   await fs.promises.mkdir(tmpDir);
 });
-
-const cleanup = true;
 
 afterAll(async () => {
   if (cleanup) {
@@ -117,6 +118,62 @@ test("serialize a class declaration with constructor", async () => {
   });
 
   expect(closure()).toEqual(3);
+});
+
+test("serialize a monkey-patched static class method", async () => {
+  let i = 0;
+  class Foo {
+    public static method() {
+      i += 1;
+    }
+  }
+
+  Foo.method = function () {
+    i += 2;
+  };
+
+  const closure = await expectClosure(() => {
+    Foo.method();
+    Foo.method();
+    return i;
+  });
+
+  expect(closure()).toEqual(4);
+});
+
+test("serialize a monkey-patched static class arrow function", async () => {
+  let i = 0;
+  class Foo {
+    public static method = () => {
+      i += 1;
+    };
+  }
+
+  Foo.method = function () {
+    i += 2;
+  };
+
+  const closure = await expectClosure(() => {
+    Foo.method();
+    Foo.method();
+    return i;
+  });
+
+  expect(closure()).toEqual(4);
+});
+
+test("serialize a monkey-patched static class property", async () => {
+  class Foo {
+    public static prop = 1;
+  }
+
+  Foo.prop = 2;
+
+  const closure = await expectClosure(() => {
+    return Foo.prop;
+  });
+
+  expect(closure()).toEqual(2);
 });
 
 test("serialize a monkey-patched class method", async () => {
