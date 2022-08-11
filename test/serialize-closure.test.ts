@@ -279,3 +279,32 @@ test("serialize a monkey-patched class getter and setter", async () => {
 
   expect(closure()).toEqual(5); // equals 2 if monkey patch not applied
 });
+
+test("serialize a monkey-patched class getter while setter remains unchanged", async () => {
+  let i = 0;
+  class Foo {
+    public set method(val: number) {
+      i += val;
+    }
+    public get method() {
+      return i;
+    }
+  }
+
+  Object.defineProperty(Foo.prototype, "method", {
+    set: Object.getOwnPropertyDescriptor(Foo.prototype, "method")?.set!,
+    get() {
+      return i + 1;
+    },
+  });
+
+  const closure = await expectClosure(() => {
+    const foo = new Foo();
+
+    foo.method = 1;
+    foo.method = 1;
+    return foo.method;
+  });
+
+  expect(closure()).toEqual(3);
+});

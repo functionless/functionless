@@ -1,6 +1,12 @@
 import ts from "typescript";
 import { assertNever } from "./assert";
-import { ClassDecl, MethodDecl, VariableDeclKind } from "./declaration";
+import {
+  ClassDecl,
+  GetAccessorDecl,
+  MethodDecl,
+  SetAccessorDecl,
+  VariableDeclKind,
+} from "./declaration";
 import { ClassExpr } from "./expression";
 import {
   isArgument,
@@ -297,6 +303,8 @@ export function serializeClosure(func: AnyFunction): string {
       toTS(classAST) as ts.Expression
     );
 
+    valueIds.set(classVal, classDecl);
+
     monkeyPatch(classDecl, classVal, classVal, ["prototype"]);
     monkeyPatch(prop(classDecl, "prototype"), classVal.prototype, classVal, [
       "constructor",
@@ -333,56 +341,86 @@ export function serializeClosure(func: AnyFunction): string {
       Object.getOwnPropertyDescriptors(varValue)
     ).filter(([propName]) => !exclude.includes(propName))) {
       if (propDescriptor.get || propDescriptor.set) {
-        let get: ts.Expression | undefined;
-        let set: ts.Expression | undefined;
-        if (propDescriptor.get) {
-          const getAST = reflect(propDescriptor.get);
-          if (getAST === undefined) {
-            throw new Error(`getter was not compiled with functionless`);
-          }
-          if (isGetAccessorDecl(getAST)) {
-            if (getAST.ownedBy!.ref() !== ownedBy) {
-              // a monkey-patched getter
-              get = serialize(propDescriptor.get);
-            }
-          } else if (isFunctionLike(getAST) || isMethodDecl(getAST)) {
-            get = serialize(propDescriptor.get);
-          }
-        }
-        if (propDescriptor.set) {
-          const setAST = reflect(propDescriptor.set);
-          if (setAST === undefined) {
-            throw new Error(`setter was not compiled with functionless`);
-          }
-          if (isSetAccessorDecl(setAST)) {
-            if (setAST.ownedBy!.ref() !== ownedBy) {
-              // a monkey-patched setter
-              set = serialize(propDescriptor.set);
-            }
-          } else if (isFunctionLike(setAST) || isMethodDecl(setAST)) {
-            set = serialize(propDescriptor.set);
-          }
-        }
+        const get = propAccessor("get", propDescriptor);
+        const set = propAccessor("set", propDescriptor);
 
-        if (get || set) {
+        if (get?.patched || set?.patched) {
           emit(
             expr(
-              call(prop(id("Object"), "defineProperty"), [
+              defineProperty(
                 varName,
                 string(propName),
-                object(
-                  get && set
+                object({
+                  ...(get
                     ? {
-                        get,
-                        set,
+                        get: get.patched ?? get.original,
                       }
-                    : get
-                    ? { get }
-                    : { set: set! }
-                ),
-              ])
+                    : {}),
+                  ...(set
+                    ? {
+                        set: set.patched ?? set.original,
+                      }
+                    : {}),
+                })
+              )
             )
           );
+        }
+
+        type PatchedPropAccessor =
+          | {
+              patched: ts.Expression;
+              original?: never;
+            }
+          | {
+              patched?: never;
+              original: ts.Expression;
+            };
+
+        /**
+         * If this getter/setter has changed from the original declaration, then
+         * serialize its value and monkey-patch it back in.
+         */
+        function propAccessor(
+          kind: "get" | "set",
+          propDescriptor: PropertyDescriptor
+        ): PatchedPropAccessor | undefined {
+          const getterOrSetter = propDescriptor[kind];
+          if (getterOrSetter === undefined) {
+            return undefined;
+          }
+          const ast = reflect(getterOrSetter);
+          if (ast === undefined) {
+            throw new Error(
+              `${`${kind}ter`} was not compiled with functionless`
+            );
+          }
+          if (
+            (kind === "get" && isGetAccessorDecl(ast)) ||
+            (kind === "set" && isSetAccessorDecl(ast))
+          ) {
+            const owner = (
+              ast as GetAccessorDecl | SetAccessorDecl
+            ).ownedBy!.ref();
+            if (owner === ownedBy) {
+              return {
+                original: prop(
+                  getOwnPropertyDescriptor(serialize(owner), string(propName)),
+                  kind
+                ),
+              };
+            } else {
+              // a monkey-patched getter/setter
+              return {
+                patched: serialize(getterOrSetter),
+              };
+            }
+          } else if (isFunctionLike(ast) || isMethodDecl(ast)) {
+            return {
+              patched: serialize(getterOrSetter),
+            };
+          }
+          return undefined;
         }
       } else if (typeof propDescriptor.value === "function") {
         // method
@@ -1085,4 +1123,16 @@ function call(expr: ts.Expression, args: ts.Expression[]) {
 
 function expr(expr: ts.Expression): ts.Statement {
   return ts.factory.createExpressionStatement(expr);
+}
+
+function defineProperty(
+  on: ts.Expression,
+  name: ts.Expression,
+  value: ts.Expression
+) {
+  return call(prop(id("Object"), "defineProperty"), [on, name, value]);
+}
+
+function getOwnPropertyDescriptor(obj: ts.Expression, key: ts.Expression) {
+  return call(prop(id("Object"), "getOwnPropertyDescriptor"), [obj, key]);
 }
