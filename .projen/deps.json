@@ -70,6 +70,10 @@
       "type": "build"
     },
     {
+      "name": "aws-sdk",
+      "type": "build"
+    },
+    {
       "name": "axios",
       "type": "build"
     },

@@ -1,11 +1,15 @@
 import "jest";
 import fs from "fs";
 import path from "path";
+import AWS from "aws-sdk";
 import { v4 } from "uuid";
 import { AnyFunction } from "../src";
 
 import { isNode } from "../src/guards";
-import { serializeClosure } from "../src/serialize-closure";
+import {
+  serializeClosure,
+  SerializeClosureProps,
+} from "../src/serialize-closure";
 
 // set to false to inspect generated js files in .test/
 const cleanup = true;
@@ -41,8 +45,11 @@ async function rmrf(file: string) {
   }
 }
 
-async function expectClosure<F extends AnyFunction>(f: F): Promise<F> {
-  const closure = serializeClosure(f);
+async function expectClosure<F extends AnyFunction>(
+  f: F,
+  options?: SerializeClosureProps
+): Promise<F> {
+  const closure = serializeClosure(f, options);
   expect(closure).toMatchSnapshot();
   const jsFile = path.join(tmpDir, `${v4()}.js`);
   await fs.promises.writeFile(jsFile, closure);
@@ -54,7 +61,7 @@ test("all observers of a free variable share the same reference", async () => {
   let i = 0;
 
   function up() {
-    i += 1;
+    i += 2;
   }
 
   function down() {
@@ -67,7 +74,7 @@ test("all observers of a free variable share the same reference", async () => {
     return i;
   });
 
-  expect(closure()).toEqual(0);
+  expect(closure()).toEqual(1);
 });
 
 test("serialize an imported module", async () => {
@@ -197,6 +204,37 @@ test("serialize a monkey-patched class method", async () => {
   });
 
   expect(closure()).toEqual(4);
+});
+
+test("serialize a monkey-patched class method that has been re-set", async () => {
+  let i = 0;
+  class Foo {
+    public method() {
+      i += 1;
+    }
+  }
+
+  const method = Foo.prototype.method;
+
+  Foo.prototype.method = function () {
+    i += 2;
+  };
+
+  const closure = () => {
+    const foo = new Foo();
+
+    foo.method();
+
+    Foo.prototype.method = method;
+
+    foo.method();
+    return i;
+  };
+
+  const serialized = await expectClosure(closure);
+
+  expect(serialized()).toEqual(3);
+  expect(closure()).toEqual(3);
 });
 
 test("serialize a monkey-patched class getter", async () => {
@@ -371,4 +409,14 @@ test("avoid name collision with a closure's lexical scope", async () => {
   });
 
   expect(closure()).toEqual(1);
+});
+
+test("instantiating the AWS SDK", async () => {
+  const closure = await expectClosure(() => {
+    const client = new AWS.DynamoDB();
+
+    return client.config.endpoint;
+  });
+
+  expect(closure()).toEqual("dynamodb.undefined.amazonaws.com");
 });

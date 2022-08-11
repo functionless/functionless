@@ -1,164 +1,764 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`all observers of a free variable share the same reference 1`] = `
-"var v1 = 0;
-var v0 = function up() { v1 += 1; };
-var v2 = function down() { v1 -= 1; };
-exports.handler = () => { v0(); v2(); return v1; };
+"// <stdin>
+var v1 = 0;
+var v0 = function up() {
+  v1 += 2;
+};
+var v2 = function down() {
+  v1 -= 1;
+};
+exports.handler = () => {
+  v0();
+  v2();
+  return v1;
+};
 "
 `;
 
 exports[`avoid name collision with a closure's lexical scope 1`] = `
-"var v5 = 0;
-const v4 = class v1 {
-    foo() { return (v5 += 1); }
+"// <stdin>
+var v5 = 0;
+var v4 = class v1 {
+  foo() {
+    return v5 += 1;
+  }
 };
 var v3 = v4;
-const v1 = class v2 extends v3 {
+var v12 = class v2 extends v3 {
 };
-var v0 = v1;
-exports.handler = () => { const v3 = new v0(); return v3.foo(); };
+var v0 = v12;
+exports.handler = () => {
+  const v32 = new v0();
+  return v32.foo();
+};
+"
+`;
+
+exports[`instantiating the AWS SDK 1`] = `
+"// <stdin>
+var v1 = require(\\"aws-sdk\\");
+var v2 = v1;
+var v0 = v2;
+exports.handler = () => {
+  const client = new v0.DynamoDB();
+  return client.config.endpoint;
+};
 "
 `;
 
 exports[`serialize a class declaration 1`] = `
-"var v2 = 0;
-const v1 = class Foo {
-    method() { v2++; return v2; }
+"// <stdin>
+var v2 = 0;
+var v1 = class Foo {
+  method() {
+    v2++;
+    return v2;
+  }
 };
 var v0 = v1;
-exports.handler = () => { const foo = new v0(); foo.method(); foo.method(); return v2; };
+exports.handler = () => {
+  const foo = new v0();
+  foo.method();
+  foo.method();
+  return v2;
+};
 "
 `;
 
 exports[`serialize a class declaration with constructor 1`] = `
-"var v2 = 0;
-const v1 = class Foo {
-    constructor() { v2 += 1; }
-    method() { v2++; return v2; }
+"// <stdin>
+var v2 = 0;
+var v1 = class Foo {
+  constructor() {
+    v2 += 1;
+  }
+  method() {
+    v2++;
+    return v2;
+  }
 };
 var v0 = v1;
-exports.handler = () => { const foo = new v0(); foo.method(); foo.method(); return v2; };
+exports.handler = () => {
+  const foo = new v0();
+  foo.method();
+  foo.method();
+  return v2;
+};
 "
 `;
 
 exports[`serialize a class hierarchy 1`] = `
-"var v4 = 0;
-const v3 = class Foo {
-    method() { return (v4 += 1); }
+"// <stdin>
+var v4 = 0;
+var v3 = class Foo {
+  method() {
+    return v4 += 1;
+  }
 };
 var v2 = v3;
-const v1 = class Bar extends v2 {
-    method() { return super.method() + 1; }
+var v1 = class Bar extends v2 {
+  method() {
+    return super.method() + 1;
+  }
 };
 var v0 = v1;
-exports.handler = () => { const bar = new v0(); return [bar.method(), v4]; };
+exports.handler = () => {
+  const bar = new v0();
+  return [bar.method(), v4];
+};
 "
 `;
 
 exports[`serialize a class mix-in 1`] = `
-"var v3 = 0;
-var v2 = () => { return class Foo {
-    method() { return (v3 += 1); }
-}; };
-const v1 = class Bar extends v2() {
-    method() { return super.method() + 1; }
+"// <stdin>
+var v3 = 0;
+var v2 = () => {
+  return class Foo {
+    method() {
+      return v3 += 1;
+    }
+  };
+};
+var v1 = class Bar extends v2() {
+  method() {
+    return super.method() + 1;
+  }
 };
 var v0 = v1;
-exports.handler = () => { const bar = new v0(); return [bar.method(), v3]; };
+exports.handler = () => {
+  const bar = new v0();
+  return [bar.method(), v3];
+};
 "
 `;
 
 exports[`serialize a monkey-patched class getter 1`] = `
-"var v2 = 0;
-const v1 = class Foo {
-    get method() { return (v2 += 1); }
+"// <stdin>
+var v2 = 0;
+var v1 = class Foo {
+  get method() {
+    return v2 += 1;
+  }
 };
-Object.defineProperty(v1.prototype, \\"method\\", { get: function get() { return (v2 += 2); } });
+Object.defineProperty(v1.prototype, \\"method\\", { get: function get() {
+  return v2 += 2;
+} });
 var v0 = v1;
-exports.handler = () => { const foo = new v0(); foo.method; foo.method; return v2; };
+exports.handler = () => {
+  const foo = new v0();
+  foo.method;
+  foo.method;
+  return v2;
+};
 "
 `;
 
 exports[`serialize a monkey-patched class getter and setter 1`] = `
-"var v2 = 0;
-const v1 = class Foo {
-    set method(val) { v2 += val; }
-    get method() { return v2; }
+"// <stdin>
+var v2 = 0;
+var v1 = class Foo {
+  set method(val) {
+    v2 += val;
+  }
+  get method() {
+    return v2;
+  }
 };
-Object.defineProperty(v1.prototype, \\"method\\", { get: function get() { return v2 + 1; }, set: function set(val) { v2 += val + 1; } });
+Object.defineProperty(v1.prototype, \\"method\\", { get: function get() {
+  return v2 + 1;
+}, set: function set(val) {
+  v2 += val + 1;
+} });
 var v0 = v1;
-exports.handler = () => { const foo = new v0(); foo.method = 1; foo.method = 1; return foo.method; };
+exports.handler = () => {
+  const foo = new v0();
+  foo.method = 1;
+  foo.method = 1;
+  return foo.method;
+};
 "
 `;
 
 exports[`serialize a monkey-patched class getter while setter remains unchanged 1`] = `
-"var v2 = 0;
-const v1 = class Foo {
-    set method(val) { v2 += val; }
-    get method() { return v2; }
+"// <stdin>
+var v2 = 0;
+var v1 = class Foo {
+  set method(val) {
+    v2 += val;
+  }
+  get method() {
+    return v2;
+  }
 };
-Object.defineProperty(v1.prototype, \\"method\\", { get: function get() { return v2 + 1; }, set: Object.getOwnPropertyDescriptor(v1.prototype, \\"method\\").set });
+Object.defineProperty(v1.prototype, \\"method\\", { get: function get() {
+  return v2 + 1;
+}, set: Object.getOwnPropertyDescriptor(v1.prototype, \\"method\\").set });
 var v0 = v1;
-exports.handler = () => { const foo = new v0(); foo.method = 1; foo.method = 1; return foo.method; };
+exports.handler = () => {
+  const foo = new v0();
+  foo.method = 1;
+  foo.method = 1;
+  return foo.method;
+};
 "
 `;
 
 exports[`serialize a monkey-patched class method 1`] = `
-"var v2 = 0;
-const v1 = class Foo {
-    method() { v2 += 1; }
+"// <stdin>
+var v2 = 0;
+var v1 = class Foo {
+  method() {
+    v2 += 1;
+  }
 };
-v1.prototype.method = function () { v2 += 2; };
+v1.prototype.method = function() {
+  v2 += 2;
+};
 var v0 = v1;
-exports.handler = () => { const foo = new v0(); foo.method(); foo.method(); return v2; };
+exports.handler = () => {
+  const foo = new v0();
+  foo.method();
+  foo.method();
+  return v2;
+};
+"
+`;
+
+exports[`serialize a monkey-patched class method that has been re-set 1`] = `
+"// <stdin>
+var v2 = 0;
+var v1 = class Foo {
+  method() {
+    v2 += 1;
+  }
+};
+v1.prototype.method = function() {
+  v2 += 2;
+};
+var v0 = v1;
+var v3 = function method() {
+  v2 += 1;
+};
+exports.handler = () => {
+  const foo = new v0();
+  foo.method();
+  v0.prototype.method = v3;
+  foo.method();
+  return v2;
+};
 "
 `;
 
 exports[`serialize a monkey-patched class setter 1`] = `
-"var v2 = 0;
-const v1 = class Foo {
-    set method(val) { v2 += val; }
+"// <stdin>
+var v2 = 0;
+var v1 = class Foo {
+  set method(val) {
+    v2 += val;
+  }
 };
-Object.defineProperty(v1.prototype, \\"method\\", { set: function set(val) { v2 += val + 1; } });
+Object.defineProperty(v1.prototype, \\"method\\", { set: function set(val) {
+  v2 += val + 1;
+} });
 var v0 = v1;
-exports.handler = () => { const foo = new v0(); foo.method = 1; foo.method = 1; return v2; };
+exports.handler = () => {
+  const foo = new v0();
+  foo.method = 1;
+  foo.method = 1;
+  return v2;
+};
 "
 `;
 
 exports[`serialize a monkey-patched static class arrow function 1`] = `
-"var v2 = 0;
-const v1 = class Foo {
-    static method = () => { v2 += 1; };
+"var __defProp = Object.defineProperty;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => {
+  __defNormalProp(obj, typeof key !== \\"symbol\\" ? key + \\"\\" : key, value);
+  return value;
 };
-v1.method = function () { v2 += 2; };
+
+// <stdin>
+var v2 = 0;
+var _a;
+var v1 = (_a = class {
+}, __publicField(_a, \\"method\\", () => {
+  v2 += 1;
+}), _a);
+v1.method = function() {
+  v2 += 2;
+};
 var v0 = v1;
-exports.handler = () => { v0.method(); v0.method(); return v2; };
+exports.handler = () => {
+  v0.method();
+  v0.method();
+  return v2;
+};
 "
 `;
 
 exports[`serialize a monkey-patched static class method 1`] = `
-"var v2 = 0;
-const v1 = class Foo {
-    method() { v2 += 1; }
+"// <stdin>
+var v2 = 0;
+var v1 = class Foo {
+  method() {
+    v2 += 1;
+  }
 };
-v1.method = function () { v2 += 2; };
+v1.method = function() {
+  v2 += 2;
+};
 var v0 = v1;
-exports.handler = () => { v0.method(); v0.method(); return v2; };
+exports.handler = () => {
+  v0.method();
+  v0.method();
+  return v2;
+};
 "
 `;
 
 exports[`serialize a monkey-patched static class property 1`] = `
-"const v1 = class Foo {
-    static prop = 1;
+"var __defProp = Object.defineProperty;
+var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
+var __publicField = (obj, key, value) => {
+  __defNormalProp(obj, typeof key !== \\"symbol\\" ? key + \\"\\" : key, value);
+  return value;
 };
+
+// <stdin>
+var _a;
+var v1 = (_a = class {
+}, __publicField(_a, \\"prop\\", 1), _a);
 v1.prop = 2;
 var v0 = v1;
-exports.handler = () => { return v0.prop; };
+exports.handler = () => {
+  return v0.prop;
+};
 "
 `;
 
 exports[`serialize an imported module 1`] = `
-"exports.handler = function isNode(a) { return typeof a?.kind === \\"number\\"; };
+"var __defProp = Object.defineProperty;
+var __getOwnPropDesc = Object.getOwnPropertyDescriptor;
+var __getOwnPropNames = Object.getOwnPropertyNames;
+var __hasOwnProp = Object.prototype.hasOwnProperty;
+var __esm = (fn, res) => function __init() {
+  return fn && (res = (0, fn[__getOwnPropNames(fn)[0]])(fn = 0)), res;
+};
+var __export = (target, all) => {
+  for (var name in all)
+    __defProp(target, name, { get: all[name], enumerable: true });
+};
+var __copyProps = (to, from, except, desc) => {
+  if (from && typeof from === \\"object\\" || typeof from === \\"function\\") {
+    for (let key of __getOwnPropNames(from))
+      if (!__hasOwnProp.call(to, key) && key !== except)
+        __defProp(to, key, { get: () => from[key], enumerable: !(desc = __getOwnPropDesc(from, key)) || desc.enumerable });
+  }
+  return to;
+};
+var __toCommonJS = (mod) => __copyProps(__defProp({}, \\"__esModule\\", { value: true }), mod);
+
+// src/node-kind.ts
+var NodeKind, NodeKindNames;
+var init_node_kind = __esm({
+  \\"src/node-kind.ts\\"() {
+    \\"use strict\\";
+    NodeKind = /* @__PURE__ */ ((NodeKind2) => {
+      NodeKind2[NodeKind2[\\"Argument\\"] = 0] = \\"Argument\\";
+      NodeKind2[NodeKind2[\\"ArrayBinding\\"] = 1] = \\"ArrayBinding\\";
+      NodeKind2[NodeKind2[\\"ArrayLiteralExpr\\"] = 2] = \\"ArrayLiteralExpr\\";
+      NodeKind2[NodeKind2[\\"ArrowFunctionExpr\\"] = 3] = \\"ArrowFunctionExpr\\";
+      NodeKind2[NodeKind2[\\"AwaitExpr\\"] = 4] = \\"AwaitExpr\\";
+      NodeKind2[NodeKind2[\\"BigIntExpr\\"] = 5] = \\"BigIntExpr\\";
+      NodeKind2[NodeKind2[\\"BinaryExpr\\"] = 6] = \\"BinaryExpr\\";
+      NodeKind2[NodeKind2[\\"BindingElem\\"] = 7] = \\"BindingElem\\";
+      NodeKind2[NodeKind2[\\"BlockStmt\\"] = 8] = \\"BlockStmt\\";
+      NodeKind2[NodeKind2[\\"BooleanLiteralExpr\\"] = 9] = \\"BooleanLiteralExpr\\";
+      NodeKind2[NodeKind2[\\"BreakStmt\\"] = 10] = \\"BreakStmt\\";
+      NodeKind2[NodeKind2[\\"CallExpr\\"] = 11] = \\"CallExpr\\";
+      NodeKind2[NodeKind2[\\"CaseClause\\"] = 12] = \\"CaseClause\\";
+      NodeKind2[NodeKind2[\\"CatchClause\\"] = 13] = \\"CatchClause\\";
+      NodeKind2[NodeKind2[\\"ClassDecl\\"] = 14] = \\"ClassDecl\\";
+      NodeKind2[NodeKind2[\\"ClassExpr\\"] = 15] = \\"ClassExpr\\";
+      NodeKind2[NodeKind2[\\"ClassStaticBlockDecl\\"] = 16] = \\"ClassStaticBlockDecl\\";
+      NodeKind2[NodeKind2[\\"ComputedPropertyNameExpr\\"] = 17] = \\"ComputedPropertyNameExpr\\";
+      NodeKind2[NodeKind2[\\"ConditionExpr\\"] = 18] = \\"ConditionExpr\\";
+      NodeKind2[NodeKind2[\\"ConstructorDecl\\"] = 19] = \\"ConstructorDecl\\";
+      NodeKind2[NodeKind2[\\"ContinueStmt\\"] = 20] = \\"ContinueStmt\\";
+      NodeKind2[NodeKind2[\\"DebuggerStmt\\"] = 21] = \\"DebuggerStmt\\";
+      NodeKind2[NodeKind2[\\"DefaultClause\\"] = 22] = \\"DefaultClause\\";
+      NodeKind2[NodeKind2[\\"DeleteExpr\\"] = 23] = \\"DeleteExpr\\";
+      NodeKind2[NodeKind2[\\"DoStmt\\"] = 24] = \\"DoStmt\\";
+      NodeKind2[NodeKind2[\\"ElementAccessExpr\\"] = 25] = \\"ElementAccessExpr\\";
+      NodeKind2[NodeKind2[\\"EmptyStmt\\"] = 26] = \\"EmptyStmt\\";
+      NodeKind2[NodeKind2[\\"Err\\"] = 27] = \\"Err\\";
+      NodeKind2[NodeKind2[\\"ExprStmt\\"] = 28] = \\"ExprStmt\\";
+      NodeKind2[NodeKind2[\\"ForInStmt\\"] = 29] = \\"ForInStmt\\";
+      NodeKind2[NodeKind2[\\"ForOfStmt\\"] = 30] = \\"ForOfStmt\\";
+      NodeKind2[NodeKind2[\\"ForStmt\\"] = 31] = \\"ForStmt\\";
+      NodeKind2[NodeKind2[\\"FunctionDecl\\"] = 32] = \\"FunctionDecl\\";
+      NodeKind2[NodeKind2[\\"FunctionExpr\\"] = 33] = \\"FunctionExpr\\";
+      NodeKind2[NodeKind2[\\"GetAccessorDecl\\"] = 34] = \\"GetAccessorDecl\\";
+      NodeKind2[NodeKind2[\\"Identifier\\"] = 35] = \\"Identifier\\";
+      NodeKind2[NodeKind2[\\"IfStmt\\"] = 36] = \\"IfStmt\\";
+      NodeKind2[NodeKind2[\\"ImportKeyword\\"] = 37] = \\"ImportKeyword\\";
+      NodeKind2[NodeKind2[\\"LabelledStmt\\"] = 38] = \\"LabelledStmt\\";
+      NodeKind2[NodeKind2[\\"MethodDecl\\"] = 39] = \\"MethodDecl\\";
+      NodeKind2[NodeKind2[\\"NewExpr\\"] = 40] = \\"NewExpr\\";
+      NodeKind2[NodeKind2[\\"NullLiteralExpr\\"] = 41] = \\"NullLiteralExpr\\";
+      NodeKind2[NodeKind2[\\"NumberLiteralExpr\\"] = 42] = \\"NumberLiteralExpr\\";
+      NodeKind2[NodeKind2[\\"ObjectBinding\\"] = 43] = \\"ObjectBinding\\";
+      NodeKind2[NodeKind2[\\"ObjectLiteralExpr\\"] = 44] = \\"ObjectLiteralExpr\\";
+      NodeKind2[NodeKind2[\\"OmittedExpr\\"] = 45] = \\"OmittedExpr\\";
+      NodeKind2[NodeKind2[\\"ParameterDecl\\"] = 46] = \\"ParameterDecl\\";
+      NodeKind2[NodeKind2[\\"ParenthesizedExpr\\"] = 47] = \\"ParenthesizedExpr\\";
+      NodeKind2[NodeKind2[\\"PostfixUnaryExpr\\"] = 48] = \\"PostfixUnaryExpr\\";
+      NodeKind2[NodeKind2[\\"PrivateIdentifier\\"] = 49] = \\"PrivateIdentifier\\";
+      NodeKind2[NodeKind2[\\"PropAccessExpr\\"] = 52] = \\"PropAccessExpr\\";
+      NodeKind2[NodeKind2[\\"PropAssignExpr\\"] = 53] = \\"PropAssignExpr\\";
+      NodeKind2[NodeKind2[\\"PropDecl\\"] = 54] = \\"PropDecl\\";
+      NodeKind2[NodeKind2[\\"ReferenceExpr\\"] = 55] = \\"ReferenceExpr\\";
+      NodeKind2[NodeKind2[\\"RegexExpr\\"] = 56] = \\"RegexExpr\\";
+      NodeKind2[NodeKind2[\\"ReturnStmt\\"] = 57] = \\"ReturnStmt\\";
+      NodeKind2[NodeKind2[\\"SetAccessorDecl\\"] = 58] = \\"SetAccessorDecl\\";
+      NodeKind2[NodeKind2[\\"SpreadAssignExpr\\"] = 59] = \\"SpreadAssignExpr\\";
+      NodeKind2[NodeKind2[\\"SpreadElementExpr\\"] = 60] = \\"SpreadElementExpr\\";
+      NodeKind2[NodeKind2[\\"StringLiteralExpr\\"] = 61] = \\"StringLiteralExpr\\";
+      NodeKind2[NodeKind2[\\"SuperKeyword\\"] = 62] = \\"SuperKeyword\\";
+      NodeKind2[NodeKind2[\\"SwitchStmt\\"] = 63] = \\"SwitchStmt\\";
+      NodeKind2[NodeKind2[\\"TaggedTemplateExpr\\"] = 64] = \\"TaggedTemplateExpr\\";
+      NodeKind2[NodeKind2[\\"TemplateExpr\\"] = 65] = \\"TemplateExpr\\";
+      NodeKind2[NodeKind2[\\"ThisExpr\\"] = 66] = \\"ThisExpr\\";
+      NodeKind2[NodeKind2[\\"ThrowStmt\\"] = 67] = \\"ThrowStmt\\";
+      NodeKind2[NodeKind2[\\"TryStmt\\"] = 68] = \\"TryStmt\\";
+      NodeKind2[NodeKind2[\\"TypeOfExpr\\"] = 69] = \\"TypeOfExpr\\";
+      NodeKind2[NodeKind2[\\"UnaryExpr\\"] = 70] = \\"UnaryExpr\\";
+      NodeKind2[NodeKind2[\\"UndefinedLiteralExpr\\"] = 71] = \\"UndefinedLiteralExpr\\";
+      NodeKind2[NodeKind2[\\"VariableDecl\\"] = 72] = \\"VariableDecl\\";
+      NodeKind2[NodeKind2[\\"VariableDeclList\\"] = 73] = \\"VariableDeclList\\";
+      NodeKind2[NodeKind2[\\"VariableStmt\\"] = 74] = \\"VariableStmt\\";
+      NodeKind2[NodeKind2[\\"VoidExpr\\"] = 75] = \\"VoidExpr\\";
+      NodeKind2[NodeKind2[\\"WhileStmt\\"] = 76] = \\"WhileStmt\\";
+      NodeKind2[NodeKind2[\\"WithStmt\\"] = 77] = \\"WithStmt\\";
+      NodeKind2[NodeKind2[\\"YieldExpr\\"] = 78] = \\"YieldExpr\\";
+      NodeKind2[NodeKind2[\\"TemplateHead\\"] = 79] = \\"TemplateHead\\";
+      NodeKind2[NodeKind2[\\"TemplateSpan\\"] = 80] = \\"TemplateSpan\\";
+      NodeKind2[NodeKind2[\\"TemplateMiddle\\"] = 81] = \\"TemplateMiddle\\";
+      NodeKind2[NodeKind2[\\"TemplateTail\\"] = 82] = \\"TemplateTail\\";
+      NodeKind2[NodeKind2[\\"NoSubstitutionTemplateLiteral\\"] = 83] = \\"NoSubstitutionTemplateLiteral\\";
+      return NodeKind2;
+    })(NodeKind || {});
+    ((NodeKind2) => {
+      NodeKind2.BindingPattern = [
+        43 /* ObjectBinding */,
+        1 /* ArrayBinding */
+      ];
+      NodeKind2.BindingNames = [
+        35 /* Identifier */,
+        55 /* ReferenceExpr */,
+        ...NodeKind2.BindingPattern
+      ];
+      NodeKind2.ClassMember = [
+        16 /* ClassStaticBlockDecl */,
+        19 /* ConstructorDecl */,
+        34 /* GetAccessorDecl */,
+        39 /* MethodDecl */,
+        54 /* PropDecl */,
+        58 /* SetAccessorDecl */
+      ];
+      NodeKind2.ObjectElementExpr = [
+        34 /* GetAccessorDecl */,
+        39 /* MethodDecl */,
+        53 /* PropAssignExpr */,
+        58 /* SetAccessorDecl */,
+        59 /* SpreadAssignExpr */
+      ];
+      NodeKind2.PropName = [
+        35 /* Identifier */,
+        49 /* PrivateIdentifier */,
+        17 /* ComputedPropertyNameExpr */,
+        61 /* StringLiteralExpr */,
+        42 /* NumberLiteralExpr */
+      ];
+      NodeKind2.SwitchClause = [
+        12 /* CaseClause */,
+        22 /* DefaultClause */
+      ];
+      NodeKind2.FunctionLike = [
+        32 /* FunctionDecl */,
+        33 /* FunctionExpr */,
+        3 /* ArrowFunctionExpr */
+      ];
+    })(NodeKind || (NodeKind = {}));
+    NodeKindNames = Object.fromEntries(
+      Object.entries(NodeKind).flatMap(
+        ([name, kind]) => typeof kind === \\"number\\" ? [[kind, name]] : []
+      )
+    );
+  }
+});
+
+// src/guards.ts
+var guards_exports = {};
+__export(guards_exports, {
+  isArgument: () => isArgument,
+  isArrayBinding: () => isArrayBinding,
+  isArrayLiteralExpr: () => isArrayLiteralExpr,
+  isArrowFunctionExpr: () => isArrowFunctionExpr,
+  isAwaitExpr: () => isAwaitExpr,
+  isBigIntExpr: () => isBigIntExpr,
+  isBinaryExpr: () => isBinaryExpr,
+  isBindingElem: () => isBindingElem,
+  isBindingPattern: () => isBindingPattern,
+  isBlockStmt: () => isBlockStmt,
+  isBooleanLiteralExpr: () => isBooleanLiteralExpr,
+  isBreakStmt: () => isBreakStmt,
+  isCallExpr: () => isCallExpr,
+  isCaseClause: () => isCaseClause,
+  isCatchClause: () => isCatchClause,
+  isClassDecl: () => isClassDecl,
+  isClassExpr: () => isClassExpr,
+  isClassLike: () => isClassLike,
+  isClassMember: () => isClassMember,
+  isClassStaticBlockDecl: () => isClassStaticBlockDecl,
+  isComputedPropertyNameExpr: () => isComputedPropertyNameExpr,
+  isConditionExpr: () => isConditionExpr,
+  isConstructorDecl: () => isConstructorDecl,
+  isContinueStmt: () => isContinueStmt,
+  isDebuggerStmt: () => isDebuggerStmt,
+  isDecl: () => isDecl,
+  isDefaultClause: () => isDefaultClause,
+  isDeleteExpr: () => isDeleteExpr,
+  isDoStmt: () => isDoStmt,
+  isElementAccessExpr: () => isElementAccessExpr,
+  isEmptyStmt: () => isEmptyStmt,
+  isErr: () => isErr,
+  isExpr: () => isExpr,
+  isExprStmt: () => isExprStmt,
+  isForInStmt: () => isForInStmt,
+  isForOfStmt: () => isForOfStmt,
+  isForStmt: () => isForStmt,
+  isFunctionDecl: () => isFunctionDecl,
+  isFunctionExpr: () => isFunctionExpr,
+  isFunctionLike: () => isFunctionLike,
+  isGetAccessorDecl: () => isGetAccessorDecl,
+  isIdentifier: () => isIdentifier,
+  isIfStmt: () => isIfStmt,
+  isImportKeyword: () => isImportKeyword,
+  isLabelledStmt: () => isLabelledStmt,
+  isLiteralExpr: () => isLiteralExpr,
+  isLiteralPrimitiveExpr: () => isLiteralPrimitiveExpr,
+  isMethodDecl: () => isMethodDecl,
+  isNewExpr: () => isNewExpr,
+  isNoSubstitutionTemplateLiteral: () => isNoSubstitutionTemplateLiteral,
+  isNode: () => isNode,
+  isNullLiteralExpr: () => isNullLiteralExpr,
+  isNumberLiteralExpr: () => isNumberLiteralExpr,
+  isObjectBinding: () => isObjectBinding,
+  isObjectElementExpr: () => isObjectElementExpr,
+  isObjectLiteralExpr: () => isObjectLiteralExpr,
+  isOmittedExpr: () => isOmittedExpr,
+  isParameterDecl: () => isParameterDecl,
+  isParenthesizedExpr: () => isParenthesizedExpr,
+  isPostfixUnaryExpr: () => isPostfixUnaryExpr,
+  isPrivateIdentifier: () => isPrivateIdentifier,
+  isPropAccessExpr: () => isPropAccessExpr,
+  isPropAssignExpr: () => isPropAssignExpr,
+  isPropDecl: () => isPropDecl,
+  isPropName: () => isPropName,
+  isReferenceExpr: () => isReferenceExpr,
+  isRegexExpr: () => isRegexExpr,
+  isReturnStmt: () => isReturnStmt,
+  isSetAccessorDecl: () => isSetAccessorDecl,
+  isSpreadAssignExpr: () => isSpreadAssignExpr,
+  isSpreadElementExpr: () => isSpreadElementExpr,
+  isStmt: () => isStmt,
+  isStringLiteralExpr: () => isStringLiteralExpr,
+  isSuperKeyword: () => isSuperKeyword,
+  isSwitchClause: () => isSwitchClause,
+  isSwitchStmt: () => isSwitchStmt,
+  isTaggedTemplateExpr: () => isTaggedTemplateExpr,
+  isTemplateExpr: () => isTemplateExpr,
+  isTemplateHead: () => isTemplateHead,
+  isTemplateMiddle: () => isTemplateMiddle,
+  isTemplateSpan: () => isTemplateSpan,
+  isTemplateTail: () => isTemplateTail,
+  isThisExpr: () => isThisExpr,
+  isThrowStmt: () => isThrowStmt,
+  isTryStmt: () => isTryStmt,
+  isTypeOfExpr: () => isTypeOfExpr,
+  isUnaryExpr: () => isUnaryExpr,
+  isUndefinedLiteralExpr: () => isUndefinedLiteralExpr,
+  isVariableDecl: () => isVariableDecl,
+  isVariableDeclList: () => isVariableDeclList,
+  isVariableReference: () => isVariableReference,
+  isVariableStmt: () => isVariableStmt,
+  isVoidExpr: () => isVoidExpr,
+  isWhileStmt: () => isWhileStmt,
+  isWithStmt: () => isWithStmt,
+  isYieldExpr: () => isYieldExpr,
+  typeGuard: () => typeGuard
+});
+function isNode(a) {
+  return typeof (a == null ? void 0 : a.kind) === \\"number\\";
+}
+function isExpr(a) {
+  return isNode(a) && a.nodeKind === \\"Expr\\";
+}
+function isStmt(a) {
+  return isNode(a) && a.nodeKind === \\"Stmt\\";
+}
+function isDecl(a) {
+  return isNode(a) && a.nodeKind === \\"Decl\\";
+}
+function typeGuard(...kinds) {
+  return (a) => kinds.find((kind) => (a == null ? void 0 : a.kind) === kind) !== void 0;
+}
+function isVariableReference(expr) {
+  return isIdentifier(expr) || isPropAccessExpr(expr) || isElementAccessExpr(expr);
+}
+var isErr, isArgument, isArrayLiteralExpr, isArrowFunctionExpr, isAwaitExpr, isBigIntExpr, isBinaryExpr, isBooleanLiteralExpr, isCallExpr, isClassExpr, isComputedPropertyNameExpr, isConditionExpr, isDeleteExpr, isElementAccessExpr, isFunctionExpr, isIdentifier, isImportKeyword, isNewExpr, isNoSubstitutionTemplateLiteral, isNullLiteralExpr, isNumberLiteralExpr, isObjectLiteralExpr, isOmittedExpr, isParenthesizedExpr, isPostfixUnaryExpr, isPrivateIdentifier, isPropAccessExpr, isPropAssignExpr, isReferenceExpr, isRegexExpr, isSpreadAssignExpr, isSpreadElementExpr, isStringLiteralExpr, isSuperKeyword, isTemplateExpr, isThisExpr, isTypeOfExpr, isUnaryExpr, isUndefinedLiteralExpr, isVoidExpr, isYieldExpr, isObjectElementExpr, isLiteralExpr, isLiteralPrimitiveExpr, isTemplateHead, isTemplateSpan, isTemplateMiddle, isTemplateTail, isBlockStmt, isBreakStmt, isCaseClause, isCatchClause, isContinueStmt, isDebuggerStmt, isDefaultClause, isDoStmt, isEmptyStmt, isExprStmt, isForInStmt, isForOfStmt, isForStmt, isIfStmt, isLabelledStmt, isReturnStmt, isSwitchStmt, isTaggedTemplateExpr, isThrowStmt, isTryStmt, isVariableStmt, isWhileStmt, isWithStmt, isSwitchClause, isFunctionLike, isClassLike, isClassDecl, isClassStaticBlockDecl, isConstructorDecl, isFunctionDecl, isGetAccessorDecl, isMethodDecl, isParameterDecl, isPropDecl, isSetAccessorDecl, isClassMember, isVariableDecl, isArrayBinding, isBindingElem, isObjectBinding, isPropName, isBindingPattern, isVariableDeclList;
+var init_guards = __esm({
+  \\"src/guards.ts\\"() {
+    \\"use strict\\";
+    init_node_kind();
+    isErr = typeGuard(27 /* Err */);
+    isArgument = typeGuard(0 /* Argument */);
+    isArrayLiteralExpr = typeGuard(2 /* ArrayLiteralExpr */);
+    isArrowFunctionExpr = typeGuard(3 /* ArrowFunctionExpr */);
+    isAwaitExpr = typeGuard(4 /* AwaitExpr */);
+    isBigIntExpr = typeGuard(5 /* BigIntExpr */);
+    isBinaryExpr = typeGuard(6 /* BinaryExpr */);
+    isBooleanLiteralExpr = typeGuard(9 /* BooleanLiteralExpr */);
+    isCallExpr = typeGuard(11 /* CallExpr */);
+    isClassExpr = typeGuard(15 /* ClassExpr */);
+    isComputedPropertyNameExpr = typeGuard(
+      17 /* ComputedPropertyNameExpr */
+    );
+    isConditionExpr = typeGuard(18 /* ConditionExpr */);
+    isDeleteExpr = typeGuard(23 /* DeleteExpr */);
+    isElementAccessExpr = typeGuard(25 /* ElementAccessExpr */);
+    isFunctionExpr = typeGuard(33 /* FunctionExpr */);
+    isIdentifier = typeGuard(35 /* Identifier */);
+    isImportKeyword = typeGuard(37 /* ImportKeyword */);
+    isNewExpr = typeGuard(40 /* NewExpr */);
+    isNoSubstitutionTemplateLiteral = typeGuard(
+      83 /* NoSubstitutionTemplateLiteral */
+    );
+    isNullLiteralExpr = typeGuard(41 /* NullLiteralExpr */);
+    isNumberLiteralExpr = typeGuard(42 /* NumberLiteralExpr */);
+    isObjectLiteralExpr = typeGuard(44 /* ObjectLiteralExpr */);
+    isOmittedExpr = typeGuard(45 /* OmittedExpr */);
+    isParenthesizedExpr = typeGuard(47 /* ParenthesizedExpr */);
+    isPostfixUnaryExpr = typeGuard(48 /* PostfixUnaryExpr */);
+    isPrivateIdentifier = typeGuard(49 /* PrivateIdentifier */);
+    isPropAccessExpr = typeGuard(52 /* PropAccessExpr */);
+    isPropAssignExpr = typeGuard(53 /* PropAssignExpr */);
+    isReferenceExpr = typeGuard(55 /* ReferenceExpr */);
+    isRegexExpr = typeGuard(56 /* RegexExpr */);
+    isSpreadAssignExpr = typeGuard(59 /* SpreadAssignExpr */);
+    isSpreadElementExpr = typeGuard(60 /* SpreadElementExpr */);
+    isStringLiteralExpr = typeGuard(61 /* StringLiteralExpr */);
+    isSuperKeyword = typeGuard(62 /* SuperKeyword */);
+    isTemplateExpr = typeGuard(65 /* TemplateExpr */);
+    isThisExpr = typeGuard(66 /* ThisExpr */);
+    isTypeOfExpr = typeGuard(69 /* TypeOfExpr */);
+    isUnaryExpr = typeGuard(70 /* UnaryExpr */);
+    isUndefinedLiteralExpr = typeGuard(71 /* UndefinedLiteralExpr */);
+    isVoidExpr = typeGuard(75 /* VoidExpr */);
+    isYieldExpr = typeGuard(78 /* YieldExpr */);
+    isObjectElementExpr = typeGuard(
+      53 /* PropAssignExpr */,
+      59 /* SpreadAssignExpr */
+    );
+    isLiteralExpr = typeGuard(
+      2 /* ArrayLiteralExpr */,
+      9 /* BooleanLiteralExpr */,
+      71 /* UndefinedLiteralExpr */,
+      41 /* NullLiteralExpr */,
+      42 /* NumberLiteralExpr */,
+      44 /* ObjectLiteralExpr */,
+      61 /* StringLiteralExpr */
+    );
+    isLiteralPrimitiveExpr = typeGuard(
+      9 /* BooleanLiteralExpr */,
+      41 /* NullLiteralExpr */,
+      42 /* NumberLiteralExpr */,
+      61 /* StringLiteralExpr */
+    );
+    isTemplateHead = typeGuard(79 /* TemplateHead */);
+    isTemplateSpan = typeGuard(80 /* TemplateSpan */);
+    isTemplateMiddle = typeGuard(81 /* TemplateMiddle */);
+    isTemplateTail = typeGuard(82 /* TemplateTail */);
+    isBlockStmt = typeGuard(8 /* BlockStmt */);
+    isBreakStmt = typeGuard(10 /* BreakStmt */);
+    isCaseClause = typeGuard(12 /* CaseClause */);
+    isCatchClause = typeGuard(13 /* CatchClause */);
+    isContinueStmt = typeGuard(20 /* ContinueStmt */);
+    isDebuggerStmt = typeGuard(21 /* DebuggerStmt */);
+    isDefaultClause = typeGuard(22 /* DefaultClause */);
+    isDoStmt = typeGuard(24 /* DoStmt */);
+    isEmptyStmt = typeGuard(26 /* EmptyStmt */);
+    isExprStmt = typeGuard(28 /* ExprStmt */);
+    isForInStmt = typeGuard(29 /* ForInStmt */);
+    isForOfStmt = typeGuard(30 /* ForOfStmt */);
+    isForStmt = typeGuard(31 /* ForStmt */);
+    isIfStmt = typeGuard(36 /* IfStmt */);
+    isLabelledStmt = typeGuard(38 /* LabelledStmt */);
+    isReturnStmt = typeGuard(57 /* ReturnStmt */);
+    isSwitchStmt = typeGuard(63 /* SwitchStmt */);
+    isTaggedTemplateExpr = typeGuard(64 /* TaggedTemplateExpr */);
+    isThrowStmt = typeGuard(67 /* ThrowStmt */);
+    isTryStmt = typeGuard(68 /* TryStmt */);
+    isVariableStmt = typeGuard(74 /* VariableStmt */);
+    isWhileStmt = typeGuard(76 /* WhileStmt */);
+    isWithStmt = typeGuard(77 /* WithStmt */);
+    isSwitchClause = typeGuard(
+      12 /* CaseClause */,
+      22 /* DefaultClause */
+    );
+    isFunctionLike = typeGuard(
+      32 /* FunctionDecl */,
+      33 /* FunctionExpr */,
+      3 /* ArrowFunctionExpr */
+    );
+    isClassLike = typeGuard(14 /* ClassDecl */, 15 /* ClassExpr */);
+    isClassDecl = typeGuard(14 /* ClassDecl */);
+    isClassStaticBlockDecl = typeGuard(16 /* ClassStaticBlockDecl */);
+    isConstructorDecl = typeGuard(19 /* ConstructorDecl */);
+    isFunctionDecl = typeGuard(32 /* FunctionDecl */);
+    isGetAccessorDecl = typeGuard(34 /* GetAccessorDecl */);
+    isMethodDecl = typeGuard(39 /* MethodDecl */);
+    isParameterDecl = typeGuard(46 /* ParameterDecl */);
+    isPropDecl = typeGuard(54 /* PropDecl */);
+    isSetAccessorDecl = typeGuard(58 /* SetAccessorDecl */);
+    isClassMember = typeGuard(
+      16 /* ClassStaticBlockDecl */,
+      19 /* ConstructorDecl */,
+      39 /* MethodDecl */,
+      54 /* PropDecl */
+    );
+    isVariableDecl = typeGuard(72 /* VariableDecl */);
+    isArrayBinding = typeGuard(1 /* ArrayBinding */);
+    isBindingElem = typeGuard(7 /* BindingElem */);
+    isObjectBinding = typeGuard(43 /* ObjectBinding */);
+    isPropName = typeGuard(
+      17 /* ComputedPropertyNameExpr */,
+      35 /* Identifier */,
+      42 /* NumberLiteralExpr */,
+      61 /* StringLiteralExpr */
+    );
+    isBindingPattern = (a) => isNode(a) && (isObjectBinding(a) || isArrayBinding(a));
+    isVariableDeclList = typeGuard(73 /* VariableDeclList */);
+  }
+});
+
+// <stdin>
+var v0 = (init_guards(), __toCommonJS(guards_exports));
+var v1 = v0.isNode;
+exports.handler = v1;
 "
 `;

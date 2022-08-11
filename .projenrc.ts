@@ -107,6 +107,7 @@ const project = new CustomTypescriptProject({
     `@aws-cdk/cloud-assembly-schema@${MIN_CDK_VERSION}`,
     `@aws-cdk/cloudformation-diff@${MIN_CDK_VERSION}`,
     `@aws-cdk/cx-api@${MIN_CDK_VERSION}`,
+    "aws-sdk",
     `aws-cdk@${MIN_CDK_VERSION}`,
     `cdk-assets@${MIN_CDK_VERSION}`,
     "promptly",

@@ -1,3 +1,5 @@
+import fs from "fs";
+import path from "path";
 import esbuild from "esbuild";
 import ts from "typescript";
 
@@ -104,7 +106,7 @@ export interface SerializeClosureProps extends esbuild.BuildOptions {
    * Whether to favor require statements and es-build's tree-shaking over a pure
    * traversal of the in-memory graph.
    *
-   * @default false
+   * @default true
    */
   useESBuild?: boolean;
 }
@@ -119,33 +121,36 @@ export function serializeClosure(
   func: AnyFunction,
   options?: SerializeClosureProps
 ): string {
-  // this may be un-safe if the module is not available locally
-  const externalModules = options?.external?.map(require) ?? [];
+  interface RequiredModule {
+    path: string;
+    exportName?: string;
+    exportValue: any;
+    module: NodeModule;
+  }
 
-  type RequiredModule = Exclude<ReturnType<typeof requireCache.get>, undefined>;
-  const requireCache = new Map(
-    Object.entries(require.cache).flatMap(([path, module]) => {
-      return Object.entries(module?.exports ?? {}).map(
+  const requireCache = new Map<any, RequiredModule>(
+    Object.entries(require.cache).flatMap(([path, module]) => [
+      [
+        module?.exports as any,
+        <RequiredModule>{
+          path: module?.path,
+          exportName: undefined,
+          exportValue: module?.exports,
+          module,
+        },
+      ],
+      ...(Object.entries(module?.exports ?? {}).map(
         ([exportName, exportValue]) => [
-          exportValue,
-          {
+          exportValue as any,
+          <RequiredModule>{
             path,
             exportName,
             exportValue,
             module,
           },
         ]
-      );
-    })
-  );
-
-  const externalModuleExports = new Map(
-    externalModules.flatMap((mod) =>
-      Object.entries(mod).map(([, exportVal]) => [
-        exportVal,
-        requireCache.get(exportVal),
-      ])
-    )
+      ) as [any, RequiredModule][]),
+    ])
   );
 
   let i = 0;
@@ -182,7 +187,7 @@ export function serializeClosure(
   // TODO: figure out how to generate a source map since we have all the information ...
   const script = printer.printFile(sourceFile);
 
-  if (!options?.useESBuild) {
+  if (options?.useESBuild === false) {
     return script;
   } else {
     const bundle = esbuild.buildSync({
@@ -237,16 +242,33 @@ export function serializeClosure(
     return ts.factory.createIdentifier(varName);
   }
 
-  function emitRequire(mod: RequiredModule) {
+  function emitRequire(mod: string) {
     // const vMod = require("module-name");
-    const moduleName = emitVarDecl(
+    return emitVarDecl(
       "const",
       uniqueName(),
-      call(id("require"), [string(mod.path)])
+      call(id("require"), [string(mod)])
     );
+  }
 
-    // const vFunc = vMod.prop
-    return emitVarDecl("const", uniqueName(), prop(moduleName, mod.exportName));
+  function getModuleId(jsFile: string): string {
+    return findModuleName(path.dirname(jsFile));
+    function findModuleName(dir: string): string {
+      if (path.resolve(dir) === path.resolve(process.cwd())) {
+        // reached the root workspace, import the absolute file path of the jsFile
+        return jsFile;
+      }
+      const pkgJsonPath = path.join(dir, "package.json");
+      if (fs.existsSync(pkgJsonPath)) {
+        const pkgJson = JSON.parse(
+          fs.readFileSync(pkgJsonPath).toString("utf-8")
+        );
+        if (typeof pkgJson.name === "string") {
+          return pkgJson.name;
+        }
+      }
+      return findModuleName(path.join(dir, ".."));
+    }
   }
 
   function serialize(value: any): ts.Expression {
@@ -269,7 +291,7 @@ export function serializeClosure(
     } else if (value === false) {
       return false_expr();
     } else if (typeof value === "number") {
-      return num(value);
+      return number_expr(value);
     } else if (typeof value === "bigint") {
       return ts.factory.createBigIntLiteral(value.toString(10));
     } else if (typeof value === "string") {
@@ -278,7 +300,7 @@ export function serializeClosure(
       return ts.factory.createRegularExpressionLiteral(value.source);
     } else if (value instanceof Date) {
       return ts.factory.createNewExpression(id("Date"), undefined, [
-        num(value.getTime()),
+        number_expr(value.getTime()),
       ]);
     } else if (Array.isArray(value)) {
       // TODO: should we check the array's prototype?
@@ -300,18 +322,28 @@ export function serializeClosure(
 
       return arr;
     } else if (typeof value === "object") {
+      const mod = requireCache.get(value);
+
+      if (mod) {
+        return importMod(mod, value);
+      }
+
+      const prototype = Object.getPrototypeOf(value);
       // serialize the prototype first
       // there should be no circular references between an object instance and its prototype
       // if we need to handle circular references between an instance and prototype, then we can
       // switch to a strategy of emitting an object and then calling Object.setPrototypeOf
-      const prototype = serialize(Object.getPrototypeOf(value));
+      const serializedPrototype =
+        prototype !== Object.prototype ? serialize(prototype) : undefined;
 
       // emit an empty object with the correct prototype
       // e.g. `var vObj = Object.create(vPrototype);`
       const obj = emitVarDecl(
         "const",
         uniqueName(),
-        call(prop(id("Object"), "create"), [prototype])
+        serializedPrototype
+          ? call(prop(id("Object"), "create"), [serializedPrototype])
+          : object({})
       );
 
       // cache the empty object nwo in case any of the properties in teh array circular reference the object
@@ -329,16 +361,7 @@ export function serializeClosure(
       const mod = requireCache.get(value);
 
       if (mod) {
-      }
-      if (
-        mod &&
-        // if useESBuild is true then favor esbuild's tree-shaking algorithm
-        // by emitting requires for any imported value
-        (options?.useESBuild ||
-          // or, if this is imported from a module marked as `external`, then emit a require
-          externalModuleExports.has(value))
-      ) {
-        return emitRequire(mod);
+        return importMod(mod, value);
       }
 
       const ast = reflect(value);
@@ -365,6 +388,24 @@ export function serializeClosure(
     }
 
     throw new Error("not implemented");
+  }
+
+  function importMod(mod: RequiredModule, value: any) {
+    const exports = mod.module?.exports;
+    if (exports === undefined) {
+      throw new Error(`undefined exports`);
+    }
+    if (!valueIds.has(exports)) {
+      valueIds.set(exports, emitRequire(getModuleId(mod.path)));
+    }
+    const requireMod = valueIds.get(exports)!;
+    const requireModExport = emitVarDecl(
+      "const",
+      uniqueName(),
+      mod.exportName ? prop(requireMod, mod.exportName) : requireMod
+    );
+    valueIds.set(value, requireModExport);
+    return requireModExport;
   }
 
   function serializeClass(
@@ -1177,7 +1218,7 @@ function string(name: string) {
   return ts.factory.createStringLiteral(name);
 }
 
-function num(num: number) {
+function number_expr(num: number) {
   return ts.factory.createNumericLiteral(num);
 }
 
