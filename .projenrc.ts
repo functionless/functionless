@@ -104,6 +104,7 @@ const project = new CustomTypescriptProject({
     /**
      * For CDK Local Stack tests
      */
+    "@aws-sdk/client-dynamodb",
     `@aws-cdk/cloud-assembly-schema@${MIN_CDK_VERSION}`,
     `@aws-cdk/cloudformation-diff@${MIN_CDK_VERSION}`,
     `@aws-cdk/cx-api@${MIN_CDK_VERSION}`,

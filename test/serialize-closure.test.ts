@@ -1,6 +1,7 @@
 import "jest";
 import fs from "fs";
 import path from "path";
+import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import AWS from "aws-sdk";
 import { v4 } from "uuid";
 import { AnyFunction } from "../src";
@@ -419,4 +420,14 @@ test("instantiating the AWS SDK", async () => {
   });
 
   expect(closure()).toEqual("dynamodb.undefined.amazonaws.com");
+});
+
+test("instantiating the AWS SDK v3", async () => {
+  const closure = await expectClosure(() => {
+    const client = new DynamoDBClient({});
+
+    return client.config.serviceId;
+  });
+
+  expect(closure()).toEqual("DynamoDB");
 });

@@ -200,7 +200,12 @@ export function serializeClosure(
       metafile: true,
       platform: "node",
       target: "node14",
-      external: ["aws-sdk", "aws-cdk-lib", "esbuild"],
+      external: [
+        "aws-sdk",
+        "aws-cdk-lib",
+        "esbuild",
+        ...(options?.external ?? []),
+      ],
     });
 
     if (bundle.outputFiles[0] === undefined) {

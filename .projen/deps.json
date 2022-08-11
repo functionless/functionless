@@ -21,6 +21,10 @@
       "type": "build"
     },
     {
+      "name": "@aws-sdk/client-dynamodb",
+      "type": "build"
+    },
+    {
       "name": "@swc/jest",
       "type": "build"
     },
