@@ -170,7 +170,7 @@ export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly name: string | undefined,
+    readonly name: Identifier | undefined,
     readonly heritage: Expr | undefined,
     readonly members: ClassMember[],
     /**
@@ -181,7 +181,7 @@ export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
     readonly filename?: string
   ) {
     super(NodeKind.ClassExpr, span, arguments);
-    this.ensure(name, "name", ["undefined", "string"]);
+    this.ensure(name, "name", ["undefined", NodeKind.Identifier]);
     this.ensure(heritage, "heritage", ["undefined", "Expr"]);
     this.ensureArrayOf(members, "members", NodeKind.ClassMember);
     this.ensure(filename, "filename", ["undefined", "string"]);
