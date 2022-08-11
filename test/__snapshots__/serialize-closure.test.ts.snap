@@ -12,23 +12,40 @@ exports.handler = v0;
 `;
 
 exports[`serialize a class declaration 1`] = `
-"var v3 = 0;
-const v2 = class Foo {
-    method() { v3++; return v3; }
+"var v4 = 0;
+const v3 = class Foo {
+    method() { v4++; return v4; }
 };
+const v2 = v3;
 var v1 = v2;
-const v0 = () => { const foo = new v1(); foo.method(); foo.method(); return v3; };
+const v0 = () => { const foo = new v1(); foo.method(); foo.method(); return v4; };
 exports.handler = v0;
 "
 `;
 
 exports[`serialize a class declaration with constructor 1`] = `
-"var v3 = 0;
-const v2 = class Foo {
-    method() { v3++; return v3; }
+"var v4 = 0;
+const v3 = class Foo {
+    constructor() { v4 += 1; }
+    method() { v4++; return v4; }
 };
+const v2 = v3;
 var v1 = v2;
-const v0 = () => { const foo = new v1(); foo.method(); foo.method(); return v3; };
+const v0 = () => { const foo = new v1(); foo.method(); foo.method(); return v4; };
+exports.handler = v0;
+"
+`;
+
+exports[`serialize a monkey-patched class method 1`] = `
+"var v4 = 0;
+const v3 = class Foo {
+    method() { v4 += 1; }
+};
+const v5 = function () { v4 += 2; };
+v3.prototype.method = v5;
+const v2 = v3;
+var v1 = v2;
+const v0 = () => { const foo = new v1(); foo.method(); foo.method(); return v4; };
 exports.handler = v0;
 "
 `;

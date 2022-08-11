@@ -1,6 +1,7 @@
 import ts from "typescript";
 import { assertNever } from "./assert";
-import { VariableDeclKind } from "./declaration";
+import { ClassDecl, VariableDeclKind } from "./declaration";
+import { ClassExpr } from "./expression";
 import {
   isArgument,
   isArrayBinding,
@@ -88,7 +89,7 @@ import {
 } from "./guards";
 import { FunctionlessNode } from "./node";
 import { reflect } from "./reflect";
-import { AnyFunction } from "./util";
+import { AnyClass, AnyFunction } from "./util";
 
 export function serializeClosure(func: AnyFunction): string {
   const requireCache = new Map(
@@ -266,14 +267,73 @@ export function serializeClosure(func: AnyFunction): string {
           uniqueName(),
           prop(moduleName, mod.exportName)
         );
-      } else if (isFunctionLike(ast) || isClassDecl(ast) || isClassExpr(ast)) {
+      } else if (isFunctionLike(ast)) {
         return emitVarDecl("const", uniqueName(), toTS(ast) as ts.Expression);
+      } else if (isClassDecl(ast) || isClassExpr(ast)) {
+        return emitVarDecl("const", uniqueName(), serializeClass(value, ast));
       } else if (isErr(ast)) {
         throw ast.error;
       }
     }
 
     throw new Error("not implemented");
+  }
+
+  function serializeClass(
+    classVal: AnyClass,
+    classAST: ClassExpr | ClassDecl
+  ): ts.Expression {
+    // emit the class to the closure
+    const classDecl = emitVarDecl(
+      "const",
+      uniqueName(),
+      toTS(classAST) as ts.Expression
+    );
+
+    monkeyPatch(classDecl, classVal, classVal);
+    monkeyPatch(prop(classDecl, "prototype"), classVal.prototype, classVal, [
+      "constructor",
+    ]);
+
+    return classDecl;
+  }
+
+  function monkeyPatch(
+    varName: ts.Expression,
+    varValue: any,
+    ownedBy: any,
+    exclude: string[] = []
+  ) {
+    // discover any properties that have been monkey-patched and overwrite them
+    for (const [propName, propDescriptor] of Object.entries(
+      Object.getOwnPropertyDescriptors(varValue)
+    ).filter(([propName]) => !exclude.includes(propName))) {
+      if (propDescriptor.get || propDescriptor.set) {
+        // getter or setter
+      } else if (typeof propDescriptor.value === "function") {
+        // method
+        const method = propDescriptor.value;
+        const methodAST = reflect(method);
+        if (methodAST === undefined) {
+          throw new Error(`method ${method.toString()} cannot be reflected`);
+        }
+        if (isMethodDecl(methodAST)) {
+          if (methodAST.ownedBy!.ref() !== ownedBy) {
+            // this is a monkey-patched method, overwrite the value
+            emit(expr(assign(prop(varName, propName), serialize(method))));
+          } else {
+            // this is the same method as declared in the class, so do nothing
+          }
+        } else if (isFunctionLike(methodAST)) {
+          // a method that has been patched with a function decl/expr or arrow expr.
+          emit(expr(assign(prop(varName, propName), serialize(method))));
+        } else {
+          throw new Error(
+            `Cannot monkey-patch a method with a ${methodAST.kindName}`
+          );
+        }
+      }
+    }
   }
 
   function toTS(node: FunctionlessNode): ts.Node {

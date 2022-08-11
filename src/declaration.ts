@@ -7,6 +7,7 @@ import {
   ObjectLiteralExpr,
   OmittedExpr,
   PropName,
+  ReferenceExpr,
 } from "./expression";
 import { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
@@ -102,19 +103,36 @@ export class ConstructorDecl extends BaseDecl<NodeKind.ConstructorDecl> {
      *
      * Only set on the root of the tree, i.e. when `this` is `undefined`.
      */
-    readonly filename?: string
+    readonly filename: string | undefined,
+    /**
+     * The class or object that owns this {@link ConstructorDecl}.
+     *
+     * This value is only set if this {@link ConstructorDecl} is the root node in the tree (parent === undefined).
+     *
+     * ```ts
+     * class Foo {
+     *     // ^
+     *   constructor() {}
+     * }
+     * ```
+     */
+    readonly ownedBy: ReferenceExpr<AnyClass | object> | undefined
   ) {
     super(NodeKind.ConstructorDecl, span, arguments);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
     this.ensure(filename, "filename", ["undefined", "string"]);
+    this.ensure(ownedBy, "ownedBy", ["undefined", NodeKind.ReferenceExpr]);
   }
 }
 
-export class MethodDecl extends BaseDecl<
+export class MethodDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
   NodeKind.MethodDecl,
   ClassDecl | ClassExpr | undefined
 > {
+  // @ts-ignore
+  __methodBrand: F;
+
   constructor(
     /**
      * Range of text in the source file where this Node resides.
@@ -153,7 +171,34 @@ export class MethodDecl extends BaseDecl<
      *
      * Only set on the root of the tree, i.e. when `this` is `undefined`.
      */
-    readonly filename?: string
+    readonly filename: string | undefined,
+    /**
+     * `true` if this is a static setter on a class.
+     *
+     * ```ts
+     * class Foo {
+     *   static method() {
+     *     return value;
+     *   }
+     * }
+     * ```
+     */
+    readonly isStatic: boolean | undefined,
+    /**
+     * The class or object that owns this {@link MethodDecl}.
+     *
+     * This value is only set if this {@link MethodDecl} is the root node in the tree (parent === undefined).
+     *
+     * ```ts
+     * class Foo {
+     *     // ^
+     *   static method() {
+     *     return value;
+     *   }
+     * }
+     * ```
+     */
+    readonly ownedBy: ReferenceExpr<AnyClass | object> | undefined
   ) {
     super(NodeKind.MethodDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
@@ -162,23 +207,71 @@ export class MethodDecl extends BaseDecl<
     this.ensure(isAsync, "isAsync", ["boolean"]);
     this.ensure(isAsterisk, "isAsterisk", ["boolean"]);
     this.ensure(filename, "filename", ["undefined", "string"]);
+    this.ensure(isStatic, "isStatic", ["undefined", "boolean"]);
+    this.ensure(ownedBy, "ownedBy", ["undefined", NodeKind.ReferenceExpr]);
   }
 }
 
-export class PropDecl extends BaseDecl<NodeKind.PropDecl> {
+export class PropDecl extends BaseDecl<
+  NodeKind.PropDecl,
+  ClassDecl | ClassExpr
+> {
   constructor(
     /**
      * Range of text in the source file where this Node resides.
      */
     span: Span,
+    /**
+     * Name of the {@link PropDecl}.
+     *
+     * ```ts
+     * class Foo {
+     *   prop;
+     * // ^
+     * }
+     * ```
+     */
     readonly name: PropName,
+    /**
+     * `true` if this is a static setter on a class.
+     *
+     * ```ts
+     * class Foo {
+     *   static prop: string = ?
+     * }
+     * ```
+     */
     readonly isStatic: boolean,
-    readonly initializer?: Expr
+    /**
+     * An optional initializer for the property.
+     *
+     * ```ts
+     * class Foo {
+     *   prop = <expr>
+     *         // ^
+     * }
+     * ```
+     */
+    readonly initializer: Expr | undefined,
+    /**
+     * A reference to the {@link ClassDecl} or {@link ClassExpr} instance that owns this {@link PropDecl}
+     *
+     * This value is only set if this {@link PropDecl} is the root node in the tree (parent === undefined).
+     *
+     * ```ts
+     * class Foo {
+     *     // ^
+     *   static prop: string = ?
+     * }
+     * ```
+     */
+    readonly ownedBy: ReferenceExpr<AnyClass> | undefined
   ) {
     super(NodeKind.PropDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensure(isStatic, "isStatic", ["boolean"]);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
+    this.ensure(ownedBy, "ownedBy", ["undefined", NodeKind.ReferenceExpr]);
   }
 }
 
@@ -192,11 +285,46 @@ export class GetAccessorDecl extends BaseDecl<
      */
     span: Span,
     readonly name: PropName,
-    readonly body: BlockStmt
+    readonly body: BlockStmt,
+    /**
+     * `true` if this is a static getter on a class.
+     *
+     * ```ts
+     * class Foo {
+     *   static get getter() {
+     *     return value;
+     *   }
+     * }
+     * ```
+     */
+    readonly isStatic: boolean | undefined,
+    /**
+     * The class or object that owns this {@link GetAccessorDecl}. This value is only set
+     * if this {@link GetAccessorDecl} is the root node in the tree (parent === undefined).
+     *
+     * ```ts
+     * const object = {
+     *     // ^
+     *   get getter() {
+     *     return value;
+     *   }
+     * }
+     *
+     * class Foo {
+     *     // ^
+     *   get getter() {
+     *     return value;
+     *   }
+     * }
+     * ```
+     */
+    readonly ownedBy: ReferenceExpr<AnyClass | object> | undefined
   ) {
     super(NodeKind.GetAccessorDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(isStatic, "isStatic", ["undefined", "boolean"]);
+    this.ensure(ownedBy, "ownedBy", ["undefined", NodeKind.ReferenceExpr]);
   }
 }
 export class SetAccessorDecl extends BaseDecl<
@@ -209,13 +337,58 @@ export class SetAccessorDecl extends BaseDecl<
      */
     span: Span,
     readonly name: PropName,
+    /**
+     * ```ts
+     * class Foo {
+     *   static get setter(value) {
+     *                   // ^
+     *     _value = value;
+     *   }
+     * }
+     * ```
+     */
     readonly parameter: ParameterDecl,
-    readonly body: BlockStmt
+    readonly body: BlockStmt,
+    /**
+     * `true` if this is a static setter on a class.
+     *
+     * ```ts
+     * class Foo {
+     *   static get setter(value) {
+     *     _value = value;
+     *   }
+     * }
+     * ```
+     */
+    readonly isStatic: boolean | undefined,
+    /**
+     * The class or object that owns this {@link SetAccessorDecl}. This value is only set
+     * if this {@link SetAccessorDecl} is the root node in the tree (parent === undefined).
+     *
+     * ```ts
+     * const object = {
+     *     // ^
+     *   get setter(value) {
+     *     _value = value;
+     *   }
+     * }
+     *
+     * class Foo {
+     *     // ^
+     *   get setter(value) {
+     *     _value = value;
+     *   }
+     * }
+     * ```
+     */
+    readonly ownedBy: ReferenceExpr<AnyClass | object> | undefined
   ) {
     super(NodeKind.SetAccessorDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensure(parameter, "parameter", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(isStatic, "isStatic", ["undefined", "boolean"]);
+    this.ensure(ownedBy, "ownedBy", ["undefined", NodeKind.ReferenceExpr]);
   }
 }
 

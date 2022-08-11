@@ -9,6 +9,15 @@ import { serializeClosure } from "../src/serialize-closure";
 
 const tmpDir = path.join(__dirname, ".test");
 beforeAll(async () => {
+  let exists = true;
+  try {
+    await fs.promises.access(tmpDir);
+  } catch {
+    exists = false;
+  }
+  if (exists) {
+    await rmrf(tmpDir);
+  }
   await fs.promises.mkdir(tmpDir);
 });
 
@@ -89,6 +98,10 @@ test("serialize a class declaration", async () => {
 test("serialize a class declaration with constructor", async () => {
   let i = 0;
   class Foo {
+    constructor() {
+      i += 1;
+    }
+
     public method() {
       i++;
       return i;
@@ -103,5 +116,28 @@ test("serialize a class declaration with constructor", async () => {
     return i;
   });
 
-  expect(closure()).toEqual(2);
+  expect(closure()).toEqual(3);
+});
+
+test("serialize a monkey-patched class method", async () => {
+  let i = 0;
+  class Foo {
+    public method() {
+      i += 1;
+    }
+  }
+
+  Foo.prototype.method = function () {
+    i += 2;
+  };
+
+  const closure = await expectClosure(() => {
+    const foo = new Foo();
+
+    foo.method();
+    foo.method();
+    return i;
+  });
+
+  expect(closure()).toEqual(4);
 });
