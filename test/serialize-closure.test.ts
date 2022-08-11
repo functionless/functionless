@@ -42,7 +42,7 @@ async function rmrf(file: string) {
 }
 
 async function expectClosure<F extends AnyFunction>(f: F): Promise<F> {
-  const closure = serializeClosure(f).text;
+  const closure = serializeClosure(f);
   expect(closure).toMatchSnapshot();
   const jsFile = path.join(tmpDir, `${v4()}.js`);
   await fs.promises.writeFile(jsFile, closure);

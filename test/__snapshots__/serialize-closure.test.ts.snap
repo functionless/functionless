@@ -1,311 +1,164 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`all observers of a free variable share the same reference 1`] = `
-"// <stdin>
-var v1 = 0;
-var v0 = function up() {
-  v1 += 1;
-};
-var v2 = function down() {
-  v1 -= 1;
-};
-exports.handler = () => {
-  v0();
-  v2();
-  return v1;
-};
+"var v1 = 0;
+var v0 = function up() { v1 += 1; };
+var v2 = function down() { v1 -= 1; };
+exports.handler = () => { v0(); v2(); return v1; };
 "
 `;
 
 exports[`avoid name collision with a closure's lexical scope 1`] = `
-"// <stdin>
-var v5 = 0;
-var v4 = class v1 {
-  foo() {
-    return v5 += 1;
-  }
+"var v5 = 0;
+const v4 = class v1 {
+    foo() { return (v5 += 1); }
 };
 var v3 = v4;
-var v12 = class v2 extends v3 {
+const v1 = class v2 extends v3 {
 };
-var v0 = v12;
-exports.handler = () => {
-  const v32 = new v0();
-  return v32.foo();
-};
+var v0 = v1;
+exports.handler = () => { const v3 = new v0(); return v3.foo(); };
 "
 `;
 
 exports[`serialize a class declaration 1`] = `
-"// <stdin>
-var v2 = 0;
-var v1 = class Foo {
-  method() {
-    v2++;
-    return v2;
-  }
+"var v2 = 0;
+const v1 = class Foo {
+    method() { v2++; return v2; }
 };
 var v0 = v1;
-exports.handler = () => {
-  const foo = new v0();
-  foo.method();
-  foo.method();
-  return v2;
-};
+exports.handler = () => { const foo = new v0(); foo.method(); foo.method(); return v2; };
 "
 `;
 
 exports[`serialize a class declaration with constructor 1`] = `
-"// <stdin>
-var v2 = 0;
-var v1 = class Foo {
-  constructor() {
-    v2 += 1;
-  }
-  method() {
-    v2++;
-    return v2;
-  }
+"var v2 = 0;
+const v1 = class Foo {
+    constructor() { v2 += 1; }
+    method() { v2++; return v2; }
 };
 var v0 = v1;
-exports.handler = () => {
-  const foo = new v0();
-  foo.method();
-  foo.method();
-  return v2;
-};
+exports.handler = () => { const foo = new v0(); foo.method(); foo.method(); return v2; };
 "
 `;
 
 exports[`serialize a class hierarchy 1`] = `
-"// <stdin>
-var v4 = 0;
-var v3 = class Foo {
-  method() {
-    return v4 += 1;
-  }
+"var v4 = 0;
+const v3 = class Foo {
+    method() { return (v4 += 1); }
 };
 var v2 = v3;
-var v1 = class Bar extends v2 {
-  method() {
-    return super.method() + 1;
-  }
+const v1 = class Bar extends v2 {
+    method() { return super.method() + 1; }
 };
 var v0 = v1;
-exports.handler = () => {
-  const bar = new v0();
-  return [bar.method(), v4];
-};
+exports.handler = () => { const bar = new v0(); return [bar.method(), v4]; };
 "
 `;
 
 exports[`serialize a class mix-in 1`] = `
-"// <stdin>
-var v3 = 0;
-var v2 = () => {
-  return class Foo {
-    method() {
-      return v3 += 1;
-    }
-  };
-};
-var v1 = class Bar extends v2() {
-  method() {
-    return super.method() + 1;
-  }
+"var v3 = 0;
+var v2 = () => { return class Foo {
+    method() { return (v3 += 1); }
+}; };
+const v1 = class Bar extends v2() {
+    method() { return super.method() + 1; }
 };
 var v0 = v1;
-exports.handler = () => {
-  const bar = new v0();
-  return [bar.method(), v3];
-};
+exports.handler = () => { const bar = new v0(); return [bar.method(), v3]; };
 "
 `;
 
 exports[`serialize a monkey-patched class getter 1`] = `
-"// <stdin>
-var v2 = 0;
-var v1 = class Foo {
-  get method() {
-    return v2 += 1;
-  }
+"var v2 = 0;
+const v1 = class Foo {
+    get method() { return (v2 += 1); }
 };
-Object.defineProperty(v1.prototype, \\"method\\", { get: function get() {
-  return v2 += 2;
-} });
+Object.defineProperty(v1.prototype, \\"method\\", { get: function get() { return (v2 += 2); } });
 var v0 = v1;
-exports.handler = () => {
-  const foo = new v0();
-  foo.method;
-  foo.method;
-  return v2;
-};
+exports.handler = () => { const foo = new v0(); foo.method; foo.method; return v2; };
 "
 `;
 
 exports[`serialize a monkey-patched class getter and setter 1`] = `
-"// <stdin>
-var v2 = 0;
-var v1 = class Foo {
-  set method(val) {
-    v2 += val;
-  }
-  get method() {
-    return v2;
-  }
+"var v2 = 0;
+const v1 = class Foo {
+    set method(val) { v2 += val; }
+    get method() { return v2; }
 };
-Object.defineProperty(v1.prototype, \\"method\\", { get: function get() {
-  return v2 + 1;
-}, set: function set(val) {
-  v2 += val + 1;
-} });
+Object.defineProperty(v1.prototype, \\"method\\", { get: function get() { return v2 + 1; }, set: function set(val) { v2 += val + 1; } });
 var v0 = v1;
-exports.handler = () => {
-  const foo = new v0();
-  foo.method = 1;
-  foo.method = 1;
-  return foo.method;
-};
+exports.handler = () => { const foo = new v0(); foo.method = 1; foo.method = 1; return foo.method; };
 "
 `;
 
 exports[`serialize a monkey-patched class getter while setter remains unchanged 1`] = `
-"// <stdin>
-var v2 = 0;
-var v1 = class Foo {
-  set method(val) {
-    v2 += val;
-  }
-  get method() {
-    return v2;
-  }
+"var v2 = 0;
+const v1 = class Foo {
+    set method(val) { v2 += val; }
+    get method() { return v2; }
 };
-Object.defineProperty(v1.prototype, \\"method\\", { get: function get() {
-  return v2 + 1;
-}, set: Object.getOwnPropertyDescriptor(v1.prototype, \\"method\\").set });
+Object.defineProperty(v1.prototype, \\"method\\", { get: function get() { return v2 + 1; }, set: Object.getOwnPropertyDescriptor(v1.prototype, \\"method\\").set });
 var v0 = v1;
-exports.handler = () => {
-  const foo = new v0();
-  foo.method = 1;
-  foo.method = 1;
-  return foo.method;
-};
+exports.handler = () => { const foo = new v0(); foo.method = 1; foo.method = 1; return foo.method; };
 "
 `;
 
 exports[`serialize a monkey-patched class method 1`] = `
-"// <stdin>
-var v2 = 0;
-var v1 = class Foo {
-  method() {
-    v2 += 1;
-  }
+"var v2 = 0;
+const v1 = class Foo {
+    method() { v2 += 1; }
 };
-v1.prototype.method = function() {
-  v2 += 2;
-};
+v1.prototype.method = function () { v2 += 2; };
 var v0 = v1;
-exports.handler = () => {
-  const foo = new v0();
-  foo.method();
-  foo.method();
-  return v2;
-};
+exports.handler = () => { const foo = new v0(); foo.method(); foo.method(); return v2; };
 "
 `;
 
 exports[`serialize a monkey-patched class setter 1`] = `
-"// <stdin>
-var v2 = 0;
-var v1 = class Foo {
-  set method(val) {
-    v2 += val;
-  }
+"var v2 = 0;
+const v1 = class Foo {
+    set method(val) { v2 += val; }
 };
-Object.defineProperty(v1.prototype, \\"method\\", { set: function set(val) {
-  v2 += val + 1;
-} });
+Object.defineProperty(v1.prototype, \\"method\\", { set: function set(val) { v2 += val + 1; } });
 var v0 = v1;
-exports.handler = () => {
-  const foo = new v0();
-  foo.method = 1;
-  foo.method = 1;
-  return v2;
-};
+exports.handler = () => { const foo = new v0(); foo.method = 1; foo.method = 1; return v2; };
 "
 `;
 
 exports[`serialize a monkey-patched static class arrow function 1`] = `
-"var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => {
-  __defNormalProp(obj, typeof key !== \\"symbol\\" ? key + \\"\\" : key, value);
-  return value;
+"var v2 = 0;
+const v1 = class Foo {
+    static method = () => { v2 += 1; };
 };
-
-// <stdin>
-var v2 = 0;
-var _a;
-var v1 = (_a = class {
-}, __publicField(_a, \\"method\\", () => {
-  v2 += 1;
-}), _a);
-v1.method = function() {
-  v2 += 2;
-};
+v1.method = function () { v2 += 2; };
 var v0 = v1;
-exports.handler = () => {
-  v0.method();
-  v0.method();
-  return v2;
-};
+exports.handler = () => { v0.method(); v0.method(); return v2; };
 "
 `;
 
 exports[`serialize a monkey-patched static class method 1`] = `
-"// <stdin>
-var v2 = 0;
-var v1 = class Foo {
-  method() {
-    v2 += 1;
-  }
+"var v2 = 0;
+const v1 = class Foo {
+    method() { v2 += 1; }
 };
-v1.method = function() {
-  v2 += 2;
-};
+v1.method = function () { v2 += 2; };
 var v0 = v1;
-exports.handler = () => {
-  v0.method();
-  v0.method();
-  return v2;
-};
+exports.handler = () => { v0.method(); v0.method(); return v2; };
 "
 `;
 
 exports[`serialize a monkey-patched static class property 1`] = `
-"var __defProp = Object.defineProperty;
-var __defNormalProp = (obj, key, value) => key in obj ? __defProp(obj, key, { enumerable: true, configurable: true, writable: true, value }) : obj[key] = value;
-var __publicField = (obj, key, value) => {
-  __defNormalProp(obj, typeof key !== \\"symbol\\" ? key + \\"\\" : key, value);
-  return value;
+"const v1 = class Foo {
+    static prop = 1;
 };
-
-// <stdin>
-var _a;
-var v1 = (_a = class {
-}, __publicField(_a, \\"prop\\", 1), _a);
 v1.prop = 2;
 var v0 = v1;
-exports.handler = () => {
-  return v0.prop;
-};
+exports.handler = () => { return v0.prop; };
 "
 `;
 
 exports[`serialize an imported module 1`] = `
-"// <stdin>
-exports.handler = function isNode(a) {
-  return typeof (a == null ? void 0 : a.kind) === \\"number\\";
-};
+"exports.handler = function isNode(a) { return typeof a?.kind === \\"number\\"; };
 "
 `;

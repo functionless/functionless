@@ -99,6 +99,16 @@ import { FunctionlessNode } from "./node";
 import { reflect } from "./reflect";
 import { AnyClass, AnyFunction } from "./util";
 
+export interface SerializeClosureProps extends esbuild.BuildOptions {
+  /**
+   * Whether to favor require statements and es-build's tree-shaking over a pure
+   * traversal of the in-memory graph.
+   *
+   * @default false
+   */
+  useESBuild?: boolean;
+}
+
 /**
  * Serialize a closure to a bundle that can be remotely executed.
  * @param func
@@ -107,21 +117,37 @@ import { AnyClass, AnyFunction } from "./util";
  */
 export function serializeClosure(
   func: AnyFunction,
-  _options?: esbuild.BuildOptions
-): esbuild.OutputFile {
+  options?: SerializeClosureProps
+): string {
+  // this may be un-safe if the module is not available locally
+  const externalModules = options?.external?.map(require) ?? [];
+
+  type RequiredModule = Exclude<ReturnType<typeof requireCache.get>, undefined>;
   const requireCache = new Map(
-    Object.entries(require.cache).flatMap(([path, module]) =>
-      Object.entries(module ?? {}).map(([exportName, exportValue]) => [
-        exportValue,
-        {
-          path,
-          exportName,
+    Object.entries(require.cache).flatMap(([path, module]) => {
+      return Object.entries(module?.exports ?? {}).map(
+        ([exportName, exportValue]) => [
           exportValue,
-          module,
-        },
+          {
+            path,
+            exportName,
+            exportValue,
+            module,
+          },
+        ]
+      );
+    })
+  );
+
+  const externalModuleExports = new Map(
+    externalModules.flatMap((mod) =>
+      Object.entries(mod).map(([, exportVal]) => [
+        exportVal,
+        requireCache.get(exportVal),
       ])
     )
   );
+
   let i = 0;
   const uniqueName = (scope?: FunctionlessNode) => {
     const names = scope?.getLexicalScope();
@@ -156,24 +182,28 @@ export function serializeClosure(
   // TODO: figure out how to generate a source map since we have all the information ...
   const script = printer.printFile(sourceFile);
 
-  const bundle = esbuild.buildSync({
-    stdin: {
-      contents: script,
-      resolveDir: process.cwd(),
-    },
-    bundle: true,
-    write: false,
-    metafile: true,
-    platform: "node",
-    target: "node14",
-    external: ["aws-sdk", "aws-cdk-lib", "esbuild"],
-  });
+  if (!options?.useESBuild) {
+    return script;
+  } else {
+    const bundle = esbuild.buildSync({
+      stdin: {
+        contents: script,
+        resolveDir: process.cwd(),
+      },
+      bundle: true,
+      write: false,
+      metafile: true,
+      platform: "node",
+      target: "node14",
+      external: ["aws-sdk", "aws-cdk-lib", "esbuild"],
+    });
 
-  if (bundle.outputFiles[0] === undefined) {
-    throw new Error("No output files after bundling with ES Build");
+    if (bundle.outputFiles[0] === undefined) {
+      throw new Error("No output files after bundling with ES Build");
+    }
+
+    return bundle.outputFiles[0].text;
   }
-
-  return bundle.outputFiles[0];
 
   function emit(...stmts: ts.Statement[]) {
     statements.push(...stmts);
@@ -205,6 +235,18 @@ export function serializeClosure(
       )
     );
     return ts.factory.createIdentifier(varName);
+  }
+
+  function emitRequire(mod: RequiredModule) {
+    // const vMod = require("module-name");
+    const moduleName = emitVarDecl(
+      "const",
+      uniqueName(),
+      call(id("require"), [string(mod.path)])
+    );
+
+    // const vFunc = vMod.prop
+    return emitVarDecl("const", uniqueName(), prop(moduleName, mod.exportName));
   }
 
   function serialize(value: any): ts.Expression {
@@ -283,31 +325,33 @@ export function serializeClosure(
 
       return obj;
     } else if (typeof value === "function") {
+      // if this is not compiled by functionless, we can only serialize it if it is exported by a module
+      const mod = requireCache.get(value);
+
+      if (mod) {
+      }
+      if (
+        mod &&
+        // if useESBuild is true then favor esbuild's tree-shaking algorithm
+        // by emitting requires for any imported value
+        (options?.useESBuild ||
+          // or, if this is imported from a module marked as `external`, then emit a require
+          externalModuleExports.has(value))
+      ) {
+        return emitRequire(mod);
+      }
+
       const ast = reflect(value);
 
       if (ast === undefined) {
-        // if this is not compiled by functionless, we can only serialize it if it is exported by a module
-        const mod = requireCache.get(value);
+        // TODO: check if this is an intrinsic, such as Object, Function, Array, Date, etc.
         if (mod === undefined) {
-          // eslint-disable-next-line no-debugger
-          debugger;
           throw new Error(
             `cannot serialize closures that were not compiled with Functionless unless they are exported by a module: ${func}`
           );
         }
-        // const vMod = require("module-name");
-        const moduleName = emitVarDecl(
-          "const",
-          uniqueName(),
-          call(id("require"), [string(mod.path)])
-        );
 
-        // const vFunc = vMod.prop
-        return emitVarDecl(
-          "const",
-          uniqueName(),
-          prop(moduleName, mod.exportName)
-        );
+        return emitRequire(mod);
       } else if (isFunctionLike(ast)) {
         return toTS(ast) as ts.Expression;
       } else if (isClassDecl(ast) || isClassExpr(ast)) {
