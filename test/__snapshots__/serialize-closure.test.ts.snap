@@ -36,6 +36,39 @@ exports.handler = v0;
 "
 `;
 
+exports[`serialize a class hierarchy 1`] = `
+"var v7 = 0;
+const v6 = class Foo {
+    method() { return (v7 += 1); }
+};
+const v5 = v6;
+var v4 = v5;
+const v3 = class Bar extends v4 {
+    method() { return super.method() + 1; }
+};
+const v2 = v3;
+var v1 = v2;
+const v0 = () => { const bar = new v1(); return [bar.method(), v7]; };
+exports.handler = v0;
+"
+`;
+
+exports[`serialize a class mix-in 1`] = `
+"var v6 = 0;
+const v5 = () => { return class Foo {
+    method() { return (v6 += 1); }
+}; };
+var v4 = v5;
+const v3 = class Bar extends v4() {
+    method() { return super.method() + 1; }
+};
+const v2 = v3;
+var v1 = v2;
+const v0 = () => { const bar = new v1(); return [bar.method(), v6]; };
+exports.handler = v0;
+"
+`;
+
 exports[`serialize a monkey-patched class getter 1`] = `
 "var v4 = 0;
 const v3 = class Foo {
@@ -73,7 +106,7 @@ const v3 = class Foo {
     get method() { return v4; }
 };
 const v5 = function get() { return v4 + 1; };
-Object.defineProperty(v3.prototype, \\"method\\", { get: v5, set: Object.getOwnPropertyDescriptor(v3, \\"method\\").set });
+Object.defineProperty(v3.prototype, \\"method\\", { get: v5, set: Object.getOwnPropertyDescriptor(v3.prototype, \\"method\\").set });
 const v2 = v3;
 var v1 = v2;
 const v0 = () => { const foo = new v1(); foo.method = 1; foo.method = 1; return foo.method; };

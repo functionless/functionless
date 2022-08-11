@@ -266,7 +266,7 @@ export class PropAccessExpr extends BaseExpr<NodeKind.PropAccessExpr> {
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly expr: Expr,
+    readonly expr: Expr | SuperKeyword,
     readonly name: Identifier | PrivateIdentifier,
     /**
      * Whether this is using optional chaining.
@@ -277,7 +277,7 @@ export class PropAccessExpr extends BaseExpr<NodeKind.PropAccessExpr> {
     readonly isOptional: boolean
   ) {
     super(NodeKind.PropAccessExpr, span, arguments);
-    this.ensure(expr, "expr", ["Expr"]);
+    this.ensure(expr, "expr", ["Expr", NodeKind.SuperKeyword]);
     this.ensure(name, "ref", [NodeKind.Identifier, NodeKind.PrivateIdentifier]);
   }
 }

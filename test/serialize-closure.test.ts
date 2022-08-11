@@ -308,3 +308,50 @@ test("serialize a monkey-patched class getter while setter remains unchanged", a
 
   expect(closure()).toEqual(3);
 });
+
+test("serialize a class hierarchy", async () => {
+  let i = 0;
+  class Foo {
+    public method() {
+      return (i += 1);
+    }
+  }
+
+  class Bar extends Foo {
+    public method() {
+      return super.method() + 1;
+    }
+  }
+
+  const closure = await expectClosure(() => {
+    const bar = new Bar();
+
+    return [bar.method(), i];
+  });
+
+  expect(closure()).toEqual([2, 1]);
+});
+
+test("serialize a class mix-in", async () => {
+  let i = 0;
+  const mixin = () =>
+    class Foo {
+      public method() {
+        return (i += 1);
+      }
+    };
+
+  class Bar extends mixin() {
+    public method() {
+      return super.method() + 1;
+    }
+  }
+
+  const closure = await expectClosure(() => {
+    const bar = new Bar();
+
+    return [bar.method(), i];
+  });
+
+  expect(closure()).toEqual([2, 1]);
+});

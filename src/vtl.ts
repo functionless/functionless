@@ -12,6 +12,7 @@ import {
   Expr,
   Identifier,
   ReferenceExpr,
+  SuperKeyword,
   ThisExpr,
 } from "./expression";
 import {
@@ -321,9 +322,12 @@ export abstract class VTL {
    * @param node the {@link Expr} or {@link Stmt} to evaluate.
    * @returns a variable reference to the evaluated value
    */
-  public eval(node?: Expr, returnVar?: string): string;
+  public eval(node?: Expr | SuperKeyword, returnVar?: string): string;
   public eval(node: Stmt, returnVar?: string): void;
-  public eval(node?: Expr | Stmt, returnVar?: string): string | void {
+  public eval(
+    node?: Expr | Stmt | SuperKeyword,
+    returnVar?: string
+  ): string | void {
     if (!node) {
       return "$null";
     }
@@ -1049,7 +1053,7 @@ export abstract class VTL {
    * @return [firstVariable, list variable, render function]
    */
   private flattenListMapOperations(
-    expr: Expr,
+    expr: Expr | SuperKeyword,
     // Should start with $
     returnVariable: string,
     before: (firstVariable: string, list: string) => void,

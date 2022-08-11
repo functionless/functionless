@@ -60,7 +60,7 @@ export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
   ) {
     super(NodeKind.ClassDecl, span, arguments);
     this.ensure(name, "name", [NodeKind.Identifier]);
-    this.ensure(heritage, "name", ["undefined", NodeKind.Identifier]);
+    this.ensure(heritage, "heritage", ["undefined", "Expr"]);
     this.ensureArrayOf(members, "members", NodeKind.ClassMember);
     this.ensure(filename, "filename", ["undefined", "string"]);
   }

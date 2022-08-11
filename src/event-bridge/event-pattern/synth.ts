@@ -16,6 +16,7 @@ import {
   Expr,
   PropAccessExpr,
   UnaryExpr,
+  SuperKeyword,
 } from "../../expression";
 import {
   isBinaryExpr,
@@ -25,6 +26,7 @@ import {
   isNullLiteralExpr,
   isParenthesizedExpr,
   isPropAccessExpr,
+  isSuperKeyword,
   isUnaryExpr,
   isUndefinedLiteralExpr,
 } from "../../guards";
@@ -635,7 +637,15 @@ export const synthesizePatternDocument = (
   /**
    * Recurse an expression to find a reference to the event.
    */
-  const getEventReference = (expression: Expr): ReferencePath | undefined => {
+  const getEventReference = (
+    expression: Expr | SuperKeyword
+  ): ReferencePath | undefined => {
+    if (isSuperKeyword(expression)) {
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        "Event Bridge does not support super."
+      );
+    }
     return getReferencePath(expression);
   };
 

@@ -21,6 +21,7 @@ import {
   isSpreadAssignExpr,
   isSpreadElementExpr,
   isStringLiteralExpr,
+  isSuperKeyword,
   isTemplateExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
@@ -280,7 +281,7 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
     if (typeof number === "number") {
       return { constant: -number };
     }
-  } else if (isPropAccessExpr(expr)) {
+  } else if (isPropAccessExpr(expr) && !isSuperKeyword(expr.expr)) {
     const obj = evalToConstant(expr.expr)?.constant as any;
     if (obj && isIdentifier(expr.name) && expr.name.name in obj) {
       return { constant: obj[expr.name.name] };

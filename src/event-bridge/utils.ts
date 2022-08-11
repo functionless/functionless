@@ -36,6 +36,7 @@ import {
   isSetAccessorDecl,
   isSpreadElementExpr,
   isStringLiteralExpr,
+  isSuperKeyword,
   isTemplateExpr,
   isTemplateMiddle,
   isUnaryExpr,
@@ -65,6 +66,12 @@ export const getReferencePath = (
     return { reference: [], identity: expression.name };
   } else if (isPropAccessExpr(expression) || isElementAccessExpr(expression)) {
     const key = getPropertyAccessKey(expression);
+    if (isSuperKeyword(expression.expr)) {
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        "Event Bridge does not support super."
+      );
+    }
     const parent = getReferencePath(expression.expr);
     if (parent) {
       return {
@@ -162,6 +169,12 @@ export const flattenExpression = (expr: Expr, scope: EventScope): Expr => {
     }
     return expr;
   } else if (isPropAccessExpr(expr) || isElementAccessExpr(expr)) {
+    if (isSuperKeyword(expr.expr)) {
+      throw new SynthError(
+        ErrorCodes.Unsupported_Feature,
+        "Event Bridge does not support super."
+      );
+    }
     const key = getPropertyAccessKeyFlatten(expr, scope);
     const parent = flattenExpression(expr.expr, scope);
     if (isObjectLiteralExpr(parent)) {

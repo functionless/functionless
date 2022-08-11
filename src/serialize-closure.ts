@@ -405,7 +405,7 @@ export function serializeClosure(func: AnyFunction): string {
             if (owner === ownedBy) {
               return {
                 original: prop(
-                  getOwnPropertyDescriptor(serialize(owner), string(propName)),
+                  getOwnPropertyDescriptor(varName, string(propName)),
                   kind
                 ),
               };
@@ -714,7 +714,16 @@ export function serializeClosure(func: AnyFunction): string {
         undefined,
         node.name?.name,
         undefined,
-        node.heritage ? [toTS(node.heritage) as ts.HeritageClause] : undefined,
+        node.heritage
+          ? [
+              ts.factory.createHeritageClause(ts.SyntaxKind.ExtendsKeyword, [
+                ts.factory.createExpressionWithTypeArguments(
+                  toTS(node.heritage) as ts.Expression,
+                  []
+                ),
+              ]),
+            ]
+          : undefined,
         node.members.map((member) => toTS(member) as ts.ClassElement)
       );
     } else if (isClassStaticBlockDecl(node)) {
