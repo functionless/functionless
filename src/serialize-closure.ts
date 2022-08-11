@@ -1,6 +1,6 @@
 import ts from "typescript";
 import { assertNever } from "./assert";
-import { ClassDecl, VariableDeclKind } from "./declaration";
+import { ClassDecl, MethodDecl, VariableDeclKind } from "./declaration";
 import { ClassExpr } from "./expression";
 import {
   isArgument,
@@ -271,9 +271,16 @@ export function serializeClosure(func: AnyFunction): string {
         return emitVarDecl("const", uniqueName(), toTS(ast) as ts.Expression);
       } else if (isClassDecl(ast) || isClassExpr(ast)) {
         return emitVarDecl("const", uniqueName(), serializeClass(value, ast));
+      } else if (isMethodDecl(ast)) {
+        return emitVarDecl(
+          "const",
+          uniqueName(),
+          serializeMethodAsFunction(ast)
+        );
       } else if (isErr(ast)) {
         throw ast.error;
       }
+      throw new Error("not implemented");
     }
 
     throw new Error("not implemented");
@@ -290,7 +297,7 @@ export function serializeClosure(func: AnyFunction): string {
       toTS(classAST) as ts.Expression
     );
 
-    monkeyPatch(classDecl, classVal, classVal);
+    monkeyPatch(classDecl, classVal, classVal, ["prototype"]);
     monkeyPatch(prop(classDecl, "prototype"), classVal.prototype, classVal, [
       "constructor",
     ]);
@@ -298,10 +305,27 @@ export function serializeClosure(func: AnyFunction): string {
     return classDecl;
   }
 
+  /**
+   * Detect properties that have been patched on the original class and
+   * emit statements to re-apply the patched values.
+   */
   function monkeyPatch(
+    /**
+     * A ts.Expression pointing to the value within the closure that contains the
+     * patched properties.
+     */
     varName: ts.Expression,
+    /**
+     * The value being serialized.
+     */
     varValue: any,
-    ownedBy: any,
+    /**
+     * The class that "owns" this value.
+     */
+    ownedBy: AnyClass,
+    /**
+     * A list of names that should not be considered, such as `prototype` or `constructor`.
+     */
     exclude: string[] = []
   ) {
     // discover any properties that have been monkey-patched and overwrite them
@@ -309,7 +333,57 @@ export function serializeClosure(func: AnyFunction): string {
       Object.getOwnPropertyDescriptors(varValue)
     ).filter(([propName]) => !exclude.includes(propName))) {
       if (propDescriptor.get || propDescriptor.set) {
-        // getter or setter
+        let get: ts.Expression | undefined;
+        let set: ts.Expression | undefined;
+        if (propDescriptor.get) {
+          const getAST = reflect(propDescriptor.get);
+          if (getAST === undefined) {
+            throw new Error(`getter was not compiled with functionless`);
+          }
+          if (isGetAccessorDecl(getAST)) {
+            if (getAST.ownedBy!.ref() !== ownedBy) {
+              // a monkey-patched getter
+              get = serialize(propDescriptor.get);
+            }
+          } else if (isFunctionLike(getAST) || isMethodDecl(getAST)) {
+            get = serialize(propDescriptor.get);
+          }
+        }
+        if (propDescriptor.set) {
+          const setAST = reflect(propDescriptor.set);
+          if (setAST === undefined) {
+            throw new Error(`setter was not compiled with functionless`);
+          }
+          if (isSetAccessorDecl(setAST)) {
+            if (setAST.ownedBy!.ref() !== ownedBy) {
+              // a monkey-patched setter
+              set = serialize(propDescriptor.set);
+            }
+          } else if (isFunctionLike(setAST) || isMethodDecl(setAST)) {
+            set = serialize(propDescriptor.set);
+          }
+        }
+
+        if (get || set) {
+          emit(
+            expr(
+              call(prop(id("Object"), "defineProperty"), [
+                varName,
+                string(propName),
+                object(
+                  get && set
+                    ? {
+                        get,
+                        set,
+                      }
+                    : get
+                    ? { get }
+                    : { set: set! }
+                ),
+              ])
+            )
+          );
+        }
       } else if (typeof propDescriptor.value === "function") {
         // method
         const method = propDescriptor.value;
@@ -336,6 +410,30 @@ export function serializeClosure(func: AnyFunction): string {
     }
   }
 
+  /**
+   * Serialize a {@link MethodDecl} as a {@link ts.FunctionExpression} so that it can be individually referenced.
+   */
+  function serializeMethodAsFunction(
+    method: MethodDecl
+  ): ts.FunctionExpression {
+    return ts.factory.createFunctionExpression(
+      method.isAsync
+        ? [ts.factory.createModifier(ts.SyntaxKind.AsyncKeyword)]
+        : undefined,
+      method.isAsterisk
+        ? ts.factory.createToken(ts.SyntaxKind.AsteriskToken)
+        : undefined,
+      toTS(method.name) as ts.Identifier,
+      undefined,
+      method.parameters.map((param) => toTS(param) as ts.ParameterDeclaration),
+      undefined,
+      toTS(method.body) as ts.Block
+    );
+  }
+
+  /**
+   * Convert a {@link FunctionlessNode} into its TypeScript counter-part and set the Source Map Range.
+   */
   function toTS(node: FunctionlessNode): ts.Node {
     const tsNode = _toTS(node);
     ts.setSourceMapRange(tsNode, {
@@ -346,6 +444,9 @@ export function serializeClosure(func: AnyFunction): string {
     return tsNode;
   }
 
+  /**
+   * Convert a {@link FunctionlessNode} into its TypeScript counter-part.
+   */
   function _toTS(node: FunctionlessNode): ts.Node {
     if (isReferenceExpr(node)) {
       // a key that uniquely identifies the variable pointed to by this reference
@@ -627,7 +728,7 @@ export function serializeClosure(func: AnyFunction): string {
         undefined,
         undefined,
         toTS(node.name) as ts.PropertyName,
-        [toTS(node.parameter) as ts.ParameterDeclaration],
+        node.parameter ? [toTS(node.parameter) as ts.ParameterDeclaration] : [],
         toTS(node.body) as ts.Block
       );
     } else if (isExprStmt(node)) {
@@ -951,6 +1052,14 @@ function string(name: string) {
 
 function num(num: number) {
   return ts.factory.createNumericLiteral(num);
+}
+
+function object(obj: Record<string, ts.Expression>) {
+  return ts.factory.createObjectLiteralExpression(
+    Object.entries(obj).map(([name, val]) =>
+      ts.factory.createPropertyAssignment(name, val)
+    )
+  );
 }
 
 function prop(expr: ts.Expression, name: string) {

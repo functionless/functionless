@@ -1,4 +1,9 @@
-import { FunctionLike, MethodDecl } from "./declaration";
+import {
+  FunctionLike,
+  GetAccessorDecl,
+  MethodDecl,
+  SetAccessorDecl,
+} from "./declaration";
 import { Err } from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
 import { isFunctionLike, isErr, isNewExpr } from "./guards";
@@ -36,7 +41,13 @@ import { forEachChild } from "./visit";
  */
 export function reflect<F extends AnyFunction | AnyAsyncFunction>(
   func: F
-): FunctionLike<F> | MethodDecl<F> | Err | undefined {
+):
+  | FunctionLike<F>
+  | MethodDecl<F>
+  | GetAccessorDecl<F>
+  | SetAccessorDecl<F>
+  | Err
+  | undefined {
   if (func.name.startsWith("bound ")) {
     // native bound function
     const targetFunc = (<any>func)[ReflectionSymbols.TargetFunction];

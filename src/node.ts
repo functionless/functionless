@@ -36,6 +36,7 @@ import {
   isFunctionLike,
   isIdentifier,
   isIfStmt,
+  isMethodDecl,
   isNode,
   isParameterDecl,
   isReturnStmt,
@@ -146,7 +147,10 @@ export abstract class BaseNode<
    * @returns the name of the file this node originates from.
    */
   public getFileName(): string {
-    if ((isFunctionLike(this) || isClassLike(this)) && this.filename) {
+    if (
+      (isFunctionLike(this) || isClassLike(this) || isMethodDecl(this)) &&
+      this.filename
+    ) {
       return this.filename;
     } else if (this.parent === undefined) {
       throw new Error(`cannot get filename of orphaned node`);

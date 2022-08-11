@@ -36,6 +36,36 @@ exports.handler = v0;
 "
 `;
 
+exports[`serialize a monkey-patched class getter 1`] = `
+"var v4 = 0;
+const v3 = class Foo {
+    get method() { return (v4 += 1); }
+};
+const v5 = function get() { return (v4 += 2); };
+Object.defineProperty(v3.prototype, \\"method\\", { get: v5 });
+const v2 = v3;
+var v1 = v2;
+const v0 = () => { const foo = new v1(); foo.method; foo.method; return v4; };
+exports.handler = v0;
+"
+`;
+
+exports[`serialize a monkey-patched class getter and setter 1`] = `
+"var v4 = 0;
+const v3 = class Foo {
+    set method(val) { v4 += val; }
+    get method() { return v4; }
+};
+const v5 = function get() { return v4 + 1; };
+const v6 = function set(val) { v4 += val + 1; };
+Object.defineProperty(v3.prototype, \\"method\\", { get: v5, set: v6 });
+const v2 = v3;
+var v1 = v2;
+const v0 = () => { const foo = new v1(); foo.method = 1; foo.method = 1; return foo.method; };
+exports.handler = v0;
+"
+`;
+
 exports[`serialize a monkey-patched class method 1`] = `
 "var v4 = 0;
 const v3 = class Foo {
@@ -46,6 +76,20 @@ v3.prototype.method = v5;
 const v2 = v3;
 var v1 = v2;
 const v0 = () => { const foo = new v1(); foo.method(); foo.method(); return v4; };
+exports.handler = v0;
+"
+`;
+
+exports[`serialize a monkey-patched class setter 1`] = `
+"var v4 = 0;
+const v3 = class Foo {
+    set method(val) { v4 += val; }
+};
+const v5 = function set(val) { v4 += val + 1; };
+Object.defineProperty(v3.prototype, \\"method\\", { set: v5 });
+const v2 = v3;
+var v1 = v2;
+const v0 = () => { const foo = new v1(); foo.method = 1; foo.method = 1; return v4; };
 exports.handler = v0;
 "
 `;

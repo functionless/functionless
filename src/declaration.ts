@@ -275,10 +275,13 @@ export class PropDecl extends BaseDecl<
   }
 }
 
-export class GetAccessorDecl extends BaseDecl<
+export class GetAccessorDecl<F extends () => any = () => any> extends BaseDecl<
   NodeKind.GetAccessorDecl,
   ClassDecl | ClassExpr | ObjectLiteralExpr
 > {
+  // @ts-ignore
+  __getterBrand: F;
+
   constructor(
     /**
      * Range of text in the source file where this Node resides.
@@ -327,10 +330,15 @@ export class GetAccessorDecl extends BaseDecl<
     this.ensure(ownedBy, "ownedBy", ["undefined", NodeKind.ReferenceExpr]);
   }
 }
-export class SetAccessorDecl extends BaseDecl<
+export class SetAccessorDecl<
+  F extends (val: any) => typeof val = (val: any) => typeof val
+> extends BaseDecl<
   NodeKind.SetAccessorDecl,
   ClassDecl | ClassExpr | ObjectLiteralExpr
 > {
+  // @ts-ignore
+  __setterBrand: F;
+
   constructor(
     /**
      * Range of text in the source file where this Node resides.
@@ -347,7 +355,7 @@ export class SetAccessorDecl extends BaseDecl<
      * }
      * ```
      */
-    readonly parameter: ParameterDecl,
+    readonly parameter: ParameterDecl | undefined,
     readonly body: BlockStmt,
     /**
      * `true` if this is a static setter on a class.
@@ -385,7 +393,7 @@ export class SetAccessorDecl extends BaseDecl<
   ) {
     super(NodeKind.SetAccessorDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
-    this.ensure(parameter, "parameter", [NodeKind.ParameterDecl]);
+    this.ensure(parameter, "parameter", ["undefined", NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
     this.ensure(isStatic, "isStatic", ["undefined", "boolean"]);
     this.ensure(ownedBy, "ownedBy", ["undefined", NodeKind.ReferenceExpr]);

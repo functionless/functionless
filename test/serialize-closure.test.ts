@@ -141,3 +141,84 @@ test("serialize a monkey-patched class method", async () => {
 
   expect(closure()).toEqual(4);
 });
+
+test("serialize a monkey-patched class getter", async () => {
+  let i = 0;
+  class Foo {
+    public get method() {
+      return (i += 1);
+    }
+  }
+
+  Object.defineProperty(Foo.prototype, "method", {
+    get() {
+      return (i += 2);
+    },
+  });
+
+  const closure = await expectClosure(() => {
+    const foo = new Foo();
+
+    foo.method;
+    foo.method;
+    return i;
+  });
+
+  expect(closure()).toEqual(4); // equals 2 if monkey patch not applied
+});
+
+test("serialize a monkey-patched class setter", async () => {
+  let i = 0;
+  class Foo {
+    public set method(val: number) {
+      i += val;
+    }
+  }
+
+  Object.defineProperty(Foo.prototype, "method", {
+    set(val: number) {
+      i += val + 1;
+    },
+  });
+
+  const closure = await expectClosure(() => {
+    const foo = new Foo();
+
+    foo.method = 1;
+    foo.method = 1;
+    return i;
+  });
+
+  expect(closure()).toEqual(4); // equals 2 if monkey patch not applied
+});
+
+test("serialize a monkey-patched class getter and setter", async () => {
+  let i = 0;
+  class Foo {
+    public set method(val: number) {
+      i += val;
+    }
+    public get method() {
+      return i;
+    }
+  }
+
+  Object.defineProperty(Foo.prototype, "method", {
+    set(val: number) {
+      i += val + 1;
+    },
+    get() {
+      return i + 1;
+    },
+  });
+
+  const closure = await expectClosure(() => {
+    const foo = new Foo();
+
+    foo.method = 1;
+    foo.method = 1;
+    return foo.method;
+  });
+
+  expect(closure()).toEqual(5); // equals 2 if monkey patch not applied
+});
