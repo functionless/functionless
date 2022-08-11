@@ -1,4 +1,5 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
+import { Client as AWSClient } from "@aws-sdk/types";
 import {
   aws_apigateway,
   aws_events_targets,
@@ -8,6 +9,7 @@ import {
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
+import { FunctionKeys } from "utility-types";
 import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph, StateMachine, States } from "./asl";
@@ -466,6 +468,64 @@ export namespace $SFN {
       });
     },
   });
+
+  type SdkIntegrationClient<T extends object> = {
+    [K in FunctionKeys<T>]: T[K] extends (
+      params: infer TInput,
+      options: any,
+      cb: (err: any, output?: infer TOutput) => void
+    ) => Promise<infer _X>
+      ? (input: TInput) => Promise<TOutput>
+      : never;
+  };
+
+  export const sdk = <Service extends AWSClient<any, any, any>>(service: {
+    prototype: Service;
+    new (config: {}): Service;
+  }): SdkIntegrationClient<Service> => {
+    //TODO: do I need to prewarm here?
+    const client = new service({});
+
+    // TODO: add lookup for known special cases, e.g. sfn
+    const [serviceName] = client.config.endpoint.hostname.split(".");
+
+    return new Proxy(client as any, {
+      get: (_, prop: string) => {
+        return makeIntegration<"$AWS.SDK", (input: any) => Promise<any>>({
+          kind: "$AWS.SDK",
+          asl: (call, context) => {
+            const input = call.args[0]?.expr;
+            if (!isObjectLiteralExpr(input)) {
+              throw new SynthError(
+                ErrorCodes.Expected_an_object_literal,
+                `First argument ('input') into $AWS.SDK must be an object.`
+              );
+            }
+
+            return context.evalExpr(input, (output) => {
+              if (
+                !ASLGraph.isLiteralValue(output) ||
+                typeof output.value !== "object" ||
+                !output.value
+              ) {
+                throw new SynthError(
+                  ErrorCodes.Unexpected_Error,
+                  "Expected an object literal as the first parameter."
+                );
+              }
+
+              return context.stateWithHeapOutput({
+                Type: "Task",
+                Resource: `arn:aws:states:::aws-sdk:${serviceName}:${prop}`,
+                Parameters: output.value,
+                Next: ASLGraph.DeferNext,
+              });
+            });
+          },
+        });
+      },
+    });
+  };
 }
 
 /**
