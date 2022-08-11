@@ -2185,57 +2185,82 @@ export class ASL {
       }
       assertNever(expr);
     } else if (isObjectLiteralExpr(expr)) {
-      return this.evalContext(expr, ({ evalExprToJsonPathOrLiteral }) => {
-        return expr.properties.reduce(
-          (obj: ASLGraph.LiteralValue, prop) => {
-            if (!isPropAssignExpr(prop)) {
-              throw new Error(
-                `${prop.kindName} is not supported in Amazon States Language`
-              );
-            }
-            if (
-              (isComputedPropertyNameExpr(prop.name) &&
-                isStringLiteralExpr(prop.name.expr)) ||
-              isIdentifier(prop.name) ||
-              isStringLiteralExpr(prop.name)
-            ) {
-              const name = isIdentifier(prop.name)
-                ? prop.name.name
-                : isStringLiteralExpr(prop.name)
-                ? prop.name.value
-                : isStringLiteralExpr(prop.name.expr)
-                ? prop.name.expr.value
-                : undefined;
-              if (!name) {
+      return this.evalContext(
+        expr,
+        ({ evalExprToJsonPathOrLiteral, addState }) => {
+          return expr.properties.reduce(
+            (obj: ASLGraph.LiteralValue, prop) => {
+              if (!isPropAssignExpr(prop)) {
+                throw new Error(
+                  `${prop.kindName} is not supported in Amazon States Language`
+                );
+              }
+              if (
+                (isComputedPropertyNameExpr(prop.name) &&
+                  isStringLiteralExpr(prop.name.expr)) ||
+                isIdentifier(prop.name) ||
+                isStringLiteralExpr(prop.name)
+              ) {
+                const name = isIdentifier(prop.name)
+                  ? prop.name.name
+                  : isStringLiteralExpr(prop.name)
+                  ? prop.name.value
+                  : isStringLiteralExpr(prop.name.expr)
+                  ? prop.name.expr.value
+                  : undefined;
+                if (!name) {
+                  throw new SynthError(
+                    ErrorCodes.StepFunctions_property_names_must_be_constant
+                  );
+                }
+
+                const valueOutput = evalExprToJsonPathOrLiteral(prop.expr);
+
+                // if the value is a json path, assign to a new heap value that will not change
+                // we do this to prevent the edge case where a variable reference changes
+                // between evaluation and assignment. we'll optimize this out later.
+                const assign = ASLGraph.isJsonPath(valueOutput)
+                  ? this.stateWithHeapOutput({
+                      ...ASLGraph.passWithInput(
+                        {
+                          Type: "Pass",
+                          Next: ASLGraph.DeferNext,
+                        },
+                        valueOutput
+                      ),
+                    })
+                  : undefined;
+
+                if (assign) {
+                  addState(assign);
+                }
+
+                return {
+                  value: {
+                    ...(obj.value as Record<string, any>),
+                    ...ASLGraph.jsonAssignment(
+                      name,
+                      assign ? assign.output : valueOutput
+                    ),
+                  },
+                  containsJsonPath:
+                    obj.containsJsonPath ||
+                    ASLGraph.isJsonPath(valueOutput) ||
+                    valueOutput.containsJsonPath,
+                };
+              } else {
                 throw new SynthError(
                   ErrorCodes.StepFunctions_property_names_must_be_constant
                 );
               }
-
-              const valueOutput = evalExprToJsonPathOrLiteral(prop.expr);
-
-              return {
-                value: {
-                  ...(obj.value as Record<string, any>),
-                  ...ASLGraph.jsonAssignment(name, valueOutput),
-                },
-                containsJsonPath:
-                  obj.containsJsonPath ||
-                  ASLGraph.isJsonPath(valueOutput) ||
-                  valueOutput.containsJsonPath,
-              };
-            } else {
-              throw new SynthError(
-                ErrorCodes.StepFunctions_property_names_must_be_constant
-              );
+            },
+            {
+              value: {},
+              containsJsonPath: false,
             }
-          },
-          {
-            value: {},
-            containsJsonPath: false,
-          }
-        );
-      });
+          );
+        }
+      );
     } else if (isArrayLiteralExpr(expr)) {
       return this.evalContext(expr, ({ evalExprToJsonPathOrLiteral }) => {
         // evaluate each item
