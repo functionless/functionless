@@ -210,6 +210,10 @@
       "type": "peer"
     },
     {
+      "name": "@aws-sdk/types",
+      "type": "runtime"
+    },
+    {
       "name": "@functionless/ast-reflection",
       "version": "^0.1.1",
       "type": "runtime"
@@ -241,6 +245,10 @@
     },
     {
       "name": "minimatch",
+      "type": "runtime"
+    },
+    {
+      "name": "utility-types",
       "type": "runtime"
     }
   ],

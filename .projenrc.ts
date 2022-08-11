@@ -81,6 +81,7 @@ const project = new CustomTypescriptProject({
   },
   projenrcTs: true,
   deps: [
+    "@aws-sdk/types",
     "@types/aws-lambda",
     "fs-extra",
     "minimatch",
@@ -89,6 +90,7 @@ const project = new CustomTypescriptProject({
     "@swc/cli",
     "@swc/core@1.2.218",
     "@swc/register",
+    "utility-types",
   ],
   devDeps: [
     `@aws-cdk/aws-appsync-alpha@${MIN_CDK_VERSION}-alpha.0`,
