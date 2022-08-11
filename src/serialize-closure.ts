@@ -1,4 +1,6 @@
+import esbuild from "esbuild";
 import ts from "typescript";
+
 import { assertNever } from "./assert";
 import {
   ClassDecl,
@@ -97,7 +99,16 @@ import { FunctionlessNode } from "./node";
 import { reflect } from "./reflect";
 import { AnyClass, AnyFunction } from "./util";
 
-export function serializeClosure(func: AnyFunction): string {
+/**
+ * Serialize a closure to a bundle that can be remotely executed.
+ * @param func
+ * @param options ES Build options.
+ * @returns a string
+ */
+export function serializeClosure(
+  func: AnyFunction,
+  _options?: esbuild.BuildOptions
+): esbuild.OutputFile {
   const requireCache = new Map(
     Object.entries(require.cache).flatMap(([path, module]) =>
       Object.entries(module ?? {}).map(([exportName, exportValue]) => [
@@ -143,7 +154,26 @@ export function serializeClosure(func: AnyFunction): string {
 
   // looks like TS does not expose the source-map functionality
   // TODO: figure out how to generate a source map since we have all the information ...
-  return printer.printFile(sourceFile);
+  const script = printer.printFile(sourceFile);
+
+  const bundle = esbuild.buildSync({
+    stdin: {
+      contents: script,
+      resolveDir: process.cwd(),
+    },
+    bundle: true,
+    write: false,
+    metafile: true,
+    platform: "node",
+    target: "node14",
+    external: ["aws-sdk", "aws-cdk-lib", "esbuild"],
+  });
+
+  if (bundle.outputFiles[0] === undefined) {
+    throw new Error("No output files after bundling with ES Build");
+  }
+
+  return bundle.outputFiles[0];
 
   function emit(...stmts: ts.Statement[]) {
     statements.push(...stmts);
