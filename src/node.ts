@@ -1,7 +1,9 @@
 import type {
   BindingElem,
   BindingPattern,
+  ClassDecl,
   Decl,
+  FunctionDecl,
   ParameterDecl,
   VariableDecl,
   VariableDeclList,
@@ -14,7 +16,9 @@ import {
 } from "./ensure";
 import type { Err } from "./error";
 import type {
+  ClassExpr,
   Expr,
+  FunctionExpr,
   ImportKeyword,
   NoSubstitutionTemplateLiteralExpr,
   SuperKeyword,
@@ -28,11 +32,15 @@ import {
   isBindingPattern,
   isBlockStmt,
   isCatchClause,
+  isClassDecl,
+  isClassExpr,
   isClassLike,
   isDoStmt,
   isForInStmt,
   isForOfStmt,
   isForStmt,
+  isFunctionDecl,
+  isFunctionExpr,
   isFunctionLike,
   isIdentifier,
   isIfStmt,
@@ -73,7 +81,14 @@ export interface HasParent<Parent extends FunctionlessNode> {
 }
 
 type Binding = [string, BindingDecl];
-export type BindingDecl = VariableDecl | ParameterDecl | BindingElem;
+export type BindingDecl =
+  | VariableDecl
+  | ParameterDecl
+  | BindingElem
+  | ClassDecl
+  | ClassExpr
+  | FunctionDecl
+  | FunctionExpr;
 
 export abstract class BaseNode<
   Kind extends NodeKind,
@@ -420,80 +435,59 @@ export abstract class BaseNode<
    * @returns a mapping of name to the node visible in this node's scope.
    */
   public getLexicalScope(): Map<string, BindingDecl> {
-    return new Map(
-      getLexicalScope(this as unknown as FunctionlessNode, "scope")
-    );
+    return new Map(getLexicalScope(this as unknown as FunctionlessNode));
 
     /**
      * @param kind the relation between the current `node` and the requesting `node`.
      */
-    function getLexicalScope(
-      node: FunctionlessNode | undefined,
-      /**
-       * the relation between the current `node` and the requesting `node`.
-       * * `scope` - the current node is an ancestor of the requesting node
-       * * `sibling` - the current node is the sibling of the requesting node
-       *
-       * ```ts
-       * for(const i in []) { // scope - emits i=self
-       *    const a = ""; // sibling - emits a=self
-       *    for(const a of []) {} // sibling emits []
-       *    a // requesting node
-       * }
-       * ```
-       *
-       * some nodes only emit names to their `scope` (ex: for) and
-       * other nodes emit names to all of their `sibling`s (ex: variableStmt)
-       */
-      kind: "scope" | "sibling"
-    ): Binding[] {
+    function getLexicalScope(node: FunctionlessNode | undefined): Binding[] {
       if (node === undefined) {
         return [];
       }
       return getLexicalScope(
-        node.nodeKind === "Stmt" && node.prev ? node.prev : node.parent,
-        node.nodeKind === "Stmt" && node.prev ? "sibling" : "scope"
-      ).concat(getNames(node, kind));
+        node.nodeKind === "Stmt" && node.prev ? node.prev : node.parent
+      ).concat(getNames(node));
     }
 
     /**
      * @see getLexicalScope
      */
-    function getNames(
-      node: FunctionlessNode | undefined,
-      kind: "scope" | "sibling"
-    ): Binding[] {
+    function getNames(node: FunctionlessNode | undefined): Binding[] {
       if (node === undefined) {
         return [];
       } else if (isParameterDecl(node)) {
         return isIdentifier(node.name)
           ? [[node.name.name, node]]
-          : getNames(node.name, kind);
+          : getNames(node.name);
       } else if (isVariableDeclList(node)) {
-        return node.decls.flatMap((d) => getNames(d, kind));
+        return node.decls.flatMap((d) => getNames(d));
       } else if (isVariableStmt(node)) {
-        return getNames(node.declList, kind);
+        return getNames(node.declList);
       } else if (isVariableDecl(node)) {
         if (isBindingPattern(node.name)) {
-          return getNames(node.name, kind);
+          return getNames(node.name);
         }
         return [[node.name.name, node]];
       } else if (isBindingElem(node)) {
         if (isIdentifier(node.name)) {
           return [[node.name.name, node]];
         }
-        return getNames(node.name, kind);
+        return getNames(node.name);
       } else if (isBindingPattern(node)) {
-        return node.bindings.flatMap((b) => getNames(b, kind));
+        return node.bindings.flatMap((b) => getNames(b));
       } else if (isFunctionLike(node)) {
-        if (kind === "sibling") return [];
-        return node.parameters.flatMap((param) => getNames(param, kind));
+        const parameters = node.parameters.flatMap((param) => getNames(param));
+        if ((isFunctionExpr(node) || isFunctionDecl(node)) && node.name) {
+          return [[node.name, node], ...parameters];
+        } else {
+          return parameters;
+        }
       } else if (isForInStmt(node) || isForOfStmt(node) || isForStmt(node)) {
-        if (kind === "sibling") return [];
-        return getNames(node.initializer, kind);
+        return getNames(node.initializer);
       } else if (isCatchClause(node) && node.variableDecl?.name) {
-        if (kind === "sibling") return [];
-        return getNames(node.variableDecl, kind);
+        return getNames(node.variableDecl);
+      } else if (isClassDecl(node) || (isClassExpr(node) && node.name)) {
+        return [[node.name!.name, node]];
       } else {
         return [];
       }

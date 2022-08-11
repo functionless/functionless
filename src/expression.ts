@@ -1,7 +1,6 @@
 import type {
   BindingElem,
   ClassMember,
-  Decl,
   GetAccessorDecl,
   MethodDecl,
   ParameterDecl,
@@ -16,7 +15,7 @@ import {
   isPropAssignExpr,
   isStringLiteralExpr,
 } from "./guards";
-import { BaseNode, FunctionlessNode } from "./node";
+import { BaseNode, BindingDecl, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
 import { Span } from "./span";
 import type { BlockStmt, Stmt } from "./statement";
@@ -238,7 +237,7 @@ export class Identifier extends BaseExpr<NodeKind.Identifier> {
     this.ensure(name, "name", ["string"]);
   }
 
-  public lookup(): Decl | undefined {
+  public lookup(): BindingDecl | undefined {
     return this.getLexicalScope().get(this.name);
   }
 }
@@ -255,7 +254,7 @@ export class PrivateIdentifier extends BaseExpr<NodeKind.PrivateIdentifier> {
     this.ensure(name, "name", ["string"]);
   }
 
-  public lookup(): Decl | undefined {
+  public lookup(): BindingDecl | undefined {
     return this.getLexicalScope().get(this.name);
   }
 }

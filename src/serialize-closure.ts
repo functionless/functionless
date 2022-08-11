@@ -112,8 +112,13 @@ export function serializeClosure(func: AnyFunction): string {
     )
   );
   let i = 0;
-  const uniqueName = () => {
-    return `v${i++}`;
+  const uniqueName = (scope?: FunctionlessNode) => {
+    const names = scope?.getLexicalScope();
+    let name;
+    do {
+      name = `v${i++}`;
+    } while (names?.has(name));
+    return name;
   };
 
   const statements: ts.Statement[] = [];
@@ -274,15 +279,11 @@ export function serializeClosure(func: AnyFunction): string {
           prop(moduleName, mod.exportName)
         );
       } else if (isFunctionLike(ast)) {
-        return emitVarDecl("const", uniqueName(), toTS(ast) as ts.Expression);
+        return toTS(ast) as ts.Expression;
       } else if (isClassDecl(ast) || isClassExpr(ast)) {
-        return emitVarDecl("const", uniqueName(), serializeClass(value, ast));
+        return serializeClass(value, ast);
       } else if (isMethodDecl(ast)) {
-        return emitVarDecl(
-          "const",
-          uniqueName(),
-          serializeMethodAsFunction(ast)
-        );
+        return serializeMethodAsFunction(ast);
       } else if (isErr(ast)) {
         throw ast.error;
       }
@@ -299,7 +300,7 @@ export function serializeClosure(func: AnyFunction): string {
     // emit the class to the closure
     const classDecl = emitVarDecl(
       "const",
-      uniqueName(),
+      uniqueName(classAST),
       toTS(classAST) as ts.Expression
     );
 
@@ -498,7 +499,7 @@ export function serializeClosure(func: AnyFunction): string {
       // a ts.Identifier that uniquely references the memory location of this variable in the serialized closure
       let varId: ts.Identifier | undefined = referenceIds.get(varKey);
       if (varId === undefined) {
-        const varName = uniqueName();
+        const varName = uniqueName(node);
         varId = ts.factory.createIdentifier(varName);
         referenceIds.set(varKey, varId);
 

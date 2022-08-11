@@ -355,3 +355,20 @@ test("serialize a class mix-in", async () => {
 
   expect(closure()).toEqual([2, 1]);
 });
+
+test("avoid name collision with a closure's lexical scope", async () => {
+  let v0 = 0;
+  class v1 {
+    public foo() {
+      return (v0 += 1);
+    }
+  }
+  class v2 extends v1 {}
+
+  const closure = await expectClosure(() => {
+    const v3 = new v2();
+    return v3.foo();
+  });
+
+  expect(closure()).toEqual(1);
+});
