@@ -48,7 +48,9 @@ export function reflect<F extends AnyFunction | AnyAsyncFunction>(
   | SetAccessorDecl<F>
   | Err
   | undefined {
-  if (func.name.startsWith("bound ")) {
+  if (func.name === "bound requireModuleOrMock") {
+    return undefined;
+  } else if (func.name.startsWith("bound ")) {
     // native bound function
     const targetFunc = (<any>func)[ReflectionSymbols.TargetFunction];
     if (targetFunc) {

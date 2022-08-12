@@ -109,7 +109,45 @@ export interface SerializeClosureProps extends esbuild.BuildOptions {
    * @default true
    */
   useESBuild?: boolean;
+
+  /**
+   * A function to prevent serialization of certain objects captured during the serialization.  Primarily used to
+   * prevent potential cycles.
+   */
+  serialize: (o: any) => boolean | any;
+  /**
+   * A function to prevent serialization of a {@link property} on an {@link obj}
+   *
+   * @param obj the object containing the property
+   * @param property the value of the property name
+   */
+  shouldCaptureProp?: (obj: any, property: string | number | symbol) => boolean;
+  /**
+   * If this is a function which, when invoked, will produce the actual entrypoint function.
+   * Useful for when serializing a function that has high startup cost that only wants to be
+   * run once. The signature of this function should be:  () => (provider_handler_args...) => provider_result
+   *
+   * This will then be emitted as: `exports.[exportName] = serialized_func_name();`
+   *
+   * In other words, the function will be invoked (once) and the resulting inner function will
+   * be what is exported.
+   */
+  isFactoryFunction?: boolean;
 }
+
+const globals = new Map<any, () => ts.Expression>([
+  [process, () => id("process")],
+  [Object, () => id("Object")],
+  [Object.prototype, () => prop(id("Object"), "prototype")],
+  [Function, () => id("Function")],
+  [Function.prototype, () => prop(id("Function"), "prototype")],
+  [Date, () => id("Date")],
+  [Date.prototype, () => prop(id("Date"), "prototype")],
+  [RegExp, () => id("RegExp")],
+  [RegExp.prototype, () => prop(id("RegExp"), "prototype")],
+  [Error, () => id("Error")],
+  [Error.prototype, () => prop(id("Error"), "prototype")],
+]);
 
 /**
  * Serialize a closure to a bundle that can be remotely executed.
@@ -129,28 +167,42 @@ export function serializeClosure(
   }
 
   const requireCache = new Map<any, RequiredModule>(
-    Object.entries(require.cache).flatMap(([path, module]) => [
-      [
-        module?.exports as any,
-        <RequiredModule>{
-          path: module?.path,
-          exportName: undefined,
-          exportValue: module?.exports,
-          module,
-        },
-      ],
-      ...(Object.entries(module?.exports ?? {}).map(
-        ([exportName, exportValue]) => [
-          exportValue as any,
-          <RequiredModule>{
-            path,
-            exportName,
-            exportValue,
-            module,
-          },
-        ]
-      ) as [any, RequiredModule][]),
-    ])
+    Object.entries(Object.getOwnPropertyDescriptors(require.cache)).flatMap(
+      ([path, module]) => {
+        try {
+          return [
+            [
+              module.value?.exports as any,
+              <RequiredModule>{
+                path: module.value?.path,
+                exportName: undefined,
+                exportValue: module.value?.exports,
+                module,
+              },
+            ],
+            ...(Object.entries(
+              Object.getOwnPropertyDescriptors(module.value?.exports ?? {})
+            ).map(([exportName, exportValue]) => {
+              try {
+                return [
+                  exportValue.value,
+                  <RequiredModule>{
+                    path,
+                    exportName,
+                    exportValue: exportValue.value,
+                    module: module.value,
+                  },
+                ];
+              } catch (err) {
+                throw err;
+              }
+            }) as [any, RequiredModule][]),
+          ];
+        } catch (err) {
+          throw err;
+        }
+      }
+    )
   );
 
   let i = 0;
@@ -171,7 +223,15 @@ export function serializeClosure(
   // stores a map of a `<variable-id>` to a ts.Identifier pointing to the unique location of that variable
   const referenceIds = new Map<string, ts.Identifier>();
 
-  emit(expr(assign(prop(id("exports"), "handler"), serialize(func))));
+  const f = serialize(func);
+  emit(
+    expr(
+      assign(
+        prop(id("exports"), "handler"),
+        options?.isFactoryFunction ? call(f, []) : f
+      )
+    )
+  );
 
   const printer = ts.createPrinter({
     newLine: ts.NewLineKind.LineFeed,
@@ -300,6 +360,16 @@ export function serializeClosure(
     } else if (typeof value === "bigint") {
       return ts.factory.createBigIntLiteral(value.toString(10));
     } else if (typeof value === "string") {
+      if (options?.serialize) {
+        const result = options.serialize(value);
+        if (result === false) {
+          return undefined_expr();
+        } else if (result === true) {
+          return string(value);
+        } else {
+          return serialize(result);
+        }
+      }
       return string(value);
     } else if (value instanceof RegExp) {
       return ts.factory.createRegularExpressionLiteral(value.source);
@@ -327,6 +397,22 @@ export function serializeClosure(
 
       return arr;
     } else if (typeof value === "object") {
+      if (globals.has(value)) {
+        return emitVarDecl("const", uniqueName(), globals.get(value)!());
+      }
+
+      if (options?.serialize) {
+        const result = options.serialize(value);
+        if (!result) {
+          // do not serialize
+          return emitVarDecl("const", uniqueName(), undefined_expr());
+        } else if (value === true || typeof result === "object") {
+          value = result;
+        } else {
+          return serialize(result);
+        }
+      }
+
       const mod = requireCache.get(value);
 
       if (mod) {
@@ -356,12 +442,28 @@ export function serializeClosure(
 
       // for each of the object's own properties, emit a statement that assigns the value of that property
       // vObj.propName = vValue
-      Object.getOwnPropertyNames(value).forEach((propName) =>
-        emit(expr(assign(prop(obj, propName), serialize(value[propName]))))
-      );
+      Object.getOwnPropertyNames(value).forEach((propName) => {
+        return emit(
+          expr(assign(prop(obj, propName), serialize(value[propName])))
+        );
+      });
 
       return obj;
     } else if (typeof value === "function") {
+      if (globals.has(value)) {
+        return emitVarDecl("const", uniqueName(), globals.get(value)!());
+      }
+
+      if (options?.serialize) {
+        const result = options.serialize(value);
+        if (result === false) {
+          // do not serialize
+          return emitVarDecl("const", uniqueName(), undefined_expr());
+        } else if (result !== true) {
+          value = result;
+        }
+      }
+
       // if this is not compiled by functionless, we can only serialize it if it is exported by a module
       const mod = requireCache.get(value);
 
@@ -374,6 +476,19 @@ export function serializeClosure(
       if (ast === undefined) {
         // TODO: check if this is an intrinsic, such as Object, Function, Array, Date, etc.
         if (mod === undefined) {
+          if (value.name === "bound requireModuleOrMock") {
+            return id("require");
+          } else if (value.name === "Object") {
+            return serialize(Object.prototype);
+          } else {
+            const parsed = ts.createSourceFile(
+              "",
+              `(${value.toString()})`,
+              ts.ScriptTarget.Latest
+            ).statements[0];
+
+            return (parsed as ts.ExpressionStatement).expression;
+          }
           throw new Error(
             `cannot serialize closures that were not compiled with Functionless unless they are exported by a module: ${func}`
           );
@@ -381,7 +496,32 @@ export function serializeClosure(
 
         return emitRequire(mod);
       } else if (isFunctionLike(ast)) {
-        return toTS(ast) as ts.Expression;
+        const func = emitVarDecl(
+          "const",
+          uniqueName(),
+          toTS(ast) as ts.Expression
+        );
+
+        // for each of the object's own properties, emit a statement that assigns the value of that property
+        // vObj.propName = vValue
+        Object.getOwnPropertyNames(value).forEach((propName) => {
+          const propDescriptor = Object.getOwnPropertyDescriptor(
+            value,
+            propName
+          );
+          if (propDescriptor?.writable) {
+            if (propDescriptor.get || propDescriptor.set) {
+            } else {
+              emit(
+                expr(
+                  assign(prop(func, propName), serialize(propDescriptor.value))
+                )
+              );
+            }
+          }
+        });
+
+        return func;
       } else if (isClassDecl(ast) || isClassExpr(ast)) {
         return serializeClass(value, ast);
       } else if (isMethodDecl(ast)) {

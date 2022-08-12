@@ -57,6 +57,7 @@ import {
   isIntegration,
 } from "./integration";
 import { ReflectionSymbols, validateFunctionLike } from "./reflect";
+import { serializeClosure } from "./serialize-closure";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
 import { AnyAsyncFunction, AnyFunction } from "./util";
@@ -505,6 +506,11 @@ interface FunctionBase<in Payload, Out> {
   >;
 }
 
+export enum SerializerImpl {
+  ASYNC,
+  SYNC,
+}
+
 const PromisesSymbol = Symbol.for("functionless.Function.promises");
 
 export interface FunctionProps<in P = any, O = any, OutP extends P = P>
@@ -512,6 +518,7 @@ export interface FunctionProps<in P = any, O = any, OutP extends P = P>
     aws_lambda.FunctionProps,
     "code" | "handler" | "runtime" | "onSuccess" | "onFailure"
   > {
+  serializer?: SerializerImpl;
   /**
    * Method which allows runtime computation of AWS client configuration.
    * ```ts
@@ -702,7 +709,11 @@ export class Function<
     Function.promises.push(
       (async () => {
         try {
-          await callbackLambdaCode.generate(nativeIntegrationsPrewarm);
+          await callbackLambdaCode.generate(
+            nativeIntegrationsPrewarm,
+            // TODO: make default ASYNC until we are happy
+            props?.serializer ?? SerializerImpl.SYNC
+          );
         } catch (e) {
           if (e instanceof SynthError) {
             throw new SynthError(
@@ -779,7 +790,8 @@ export class CallbackLambdaCode extends aws_lambda.Code {
    * https://twitter.com/samgoodwin89/status/1516887131108438016?s=20&t=7GRGOQ1Bp0h_cPsJgFk3Ww
    */
   public async generate(
-    integrationPrewarms: NativeIntegration<AnyFunction>["preWarm"][]
+    integrationPrewarms: NativeIntegration<AnyFunction>["preWarm"][],
+    serializerImpl: SerializerImpl
   ) {
     if (!this.scope) {
       throw new SynthError(
@@ -800,6 +812,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
     const [serialized, tokens] = await serialize(
       this.func,
       integrationPrewarms,
+      serializerImpl,
       this.props
     );
     const bundled = await bundle(serialized);
@@ -822,7 +835,9 @@ export class CallbackLambdaCode extends aws_lambda.Code {
       },
     });
 
-    tokens.forEach((t) => scope.addEnvironment(t.env, t.token));
+    tokens.forEach((t) => {
+      scope.addEnvironment(t.env, t.token);
+    });
 
     const funcResource = scope.node.findChild(
       "Resource"
@@ -894,212 +909,239 @@ interface TokenContext {
 export async function serialize(
   func: AnyAsyncFunction,
   integrationPrewarms: NativeIntegration<AnyFunction>["preWarm"][],
+  serializerImpl: SerializerImpl,
   props?: PrewarmProps
 ): Promise<[string, TokenContext[]]> {
   let tokens: string[] = [];
   const preWarmContext = new NativePreWarmContext(props);
 
-  const result = await serializeFunction(
-    // factory function allows us to prewarm the clients and other context.
-    integrationPrewarms.length > 0
-      ? () => {
-          integrationPrewarms.forEach((i) => i?.(preWarmContext));
-          return func;
-        }
-      : func,
-    {
-      isFactoryFunction: integrationPrewarms.length > 0,
-      transformers: [
-        (ctx) =>
-          /**
-           * TS Transformer for erasing calls to the generated `register` and `bind` functions
-           * from all emitted closures.
-           */
-          function eraseBindAndRegister(node: ts.Node): ts.Node {
-            if (ts.isCallExpression(node) && ts.isIdentifier(node.expression)) {
-              if (node.expression.text === RegisterFunctionName) {
-                // register(func, ast)
-                // => func
-                return ts.visitEachChild(
-                  node.arguments[0]!,
-                  eraseBindAndRegister,
-                  ctx
-                );
-              } else if (node.expression.text === BindFunctionName) {
-                // bind(func, self, ...args)
-                // => func.bind(self, ...args)
-                return ts.factory.createCallExpression(
-                  eraseBindAndRegister(node.arguments[0]!) as ts.Expression,
-                  undefined,
-                  node.arguments.map(
-                    (arg) => eraseBindAndRegister(arg) as ts.Expression
-                  )
-                );
+  const f = func;
+
+  const preWarms = integrationPrewarms;
+  const result =
+    serializerImpl === SerializerImpl.SYNC
+      ? serializeClosure(
+          integrationPrewarms.length > 0
+            ? () => {
+                preWarms.forEach((i) => i?.(preWarmContext));
+                return f;
               }
-            }
-            return ts.visitEachChild(node, eraseBindAndRegister, ctx);
-          },
-      ],
-      shouldCaptureProp: (_, propName) => {
-        // do not serialize the AST property on functions
-        return propName !== ReflectionSymbols.AST;
-      },
-      serialize: (obj) => {
-        if (typeof obj === "string") {
-          const reversed =
-            Tokenization.reverse(obj, { failConcat: false }) ??
-            Tokenization.reverseString(obj).tokens;
-          if (!Array.isArray(reversed) || reversed.length > 0) {
-            if (Array.isArray(reversed)) {
-              tokens = [
-                ...tokens,
-                ...reversed.map((s) => validateResolvable(s).toString()),
-              ];
-            } else {
-              tokens = [...tokens, validateResolvable(reversed).toString()];
-            }
+            : f,
+          {
+            serialize: serializeHook,
+            isFactoryFunction: integrationPrewarms.length > 0,
           }
-        } else if (typeof obj === "object") {
-          return obj
-            ? transformIntegration(transformResource(transformCfnResource(obj)))
-            : obj;
-
-          /**
-           * Remove unnecessary fields from {@link CfnResource} that bloat or fail the closure serialization.
-           */
-          function transformCfnResource(o: unknown) {
-            if (Resource.isResource(o as any)) {
-              const { node, stack, env, ...rest } = o as unknown as Resource;
-              return rest;
-            } else if (CfnResource.isCfnResource(o as any)) {
-              const {
-                stack,
-                node,
-                creationStack,
-                // don't need to serialize at runtime
-                _toCloudFormation,
-                // @ts-ignore - private - adds the tag manager, which we don't need
-                cfnProperties,
-                ...rest
-              } = transformTable(o as CfnResource);
-              return transformTaggableResource(rest);
-            } else if (Token.isUnresolved(o)) {
-              const reversed = validateResolvable(Tokenization.reverse(o)!);
-
-              if (Reference.isReference(reversed)) {
-                tokens.push(reversed.toString());
-                return reversed.toString();
-              } else if (SecretValue.isSecretValue(reversed)) {
-                throw new SynthError(
-                  ErrorCodes.Unsafe_use_of_secrets,
-                  "Found unsafe use of SecretValue token in a Function."
-                );
-              } else if ("value" in reversed) {
-                return (reversed as unknown as { value: any }).value;
-              }
-              // TODO: fail at runtime and warn at compiler time when a token cannot be serialized
-              return {};
-            }
-            return o;
-          }
-
-          /**
-           * When the StreamArn attribute is used in a Cfn template, but streamSpecification is
-           * undefined, then the deployment fails. Lets make sure that doesn't happen.
-           */
-          function transformTable(o: CfnResource): CfnResource {
-            if (
-              o.cfnResourceType === aws_dynamodb.CfnTable.CFN_RESOURCE_TYPE_NAME
-            ) {
-              const table = o as aws_dynamodb.CfnTable;
-              if (!table.streamSpecification) {
-                const { attrStreamArn, ...rest } = table;
-
-                return rest as unknown as CfnResource;
-              }
-            }
-
-            return o;
-          }
-
-          /**
-           * CDK Tag manager bundles in ~200kb of junk we don't need at runtime,
-           */
-          function transformTaggableResource(o: any) {
-            if (TagManager.isTaggable(o)) {
-              const { tags, ...rest } = o;
-              return rest;
-            }
-            return o;
-          }
-
-          /**
-           * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
-           */
-          function transformIntegration(integ: unknown): any {
-            if (integ && isIntegration(integ)) {
-              const c = integ.native?.call;
-              const call =
-                typeof c !== "undefined"
-                  ? function (...args: any[]) {
-                      return c(args, preWarmContext);
-                    }
-                  : integ.unhandledContext
-                  ? function () {
-                      integ.unhandledContext!(integ.kind, "Function");
-                    }
-                  : function () {
-                      throw new Error();
-                    };
-
-              for (const prop in integ) {
-                if (!INTEGRATION_TYPE_KEYS.includes(prop as any)) {
-                  // @ts-ignore
-                  call[prop] = integ[prop];
+        )
+      : (
+          await serializeFunction(
+            // factory function allows us to prewarm the clients and other context.
+            integrationPrewarms.length > 0
+              ? () => {
+                  integrationPrewarms.forEach((i) => i?.(preWarmContext));
+                  return func;
                 }
-              }
-
-              return call;
+              : func,
+            {
+              isFactoryFunction: integrationPrewarms.length > 0,
+              transformers: [
+                (ctx) =>
+                  /**
+                   * TS Transformer for erasing calls to the generated `register` and `bind` functions
+                   * from all emitted closures.
+                   */
+                  function eraseBindAndRegister(node: ts.Node): ts.Node {
+                    if (
+                      ts.isCallExpression(node) &&
+                      ts.isIdentifier(node.expression)
+                    ) {
+                      if (node.expression.text === RegisterFunctionName) {
+                        // register(func, ast)
+                        // => func
+                        return ts.visitEachChild(
+                          node.arguments[0]!,
+                          eraseBindAndRegister,
+                          ctx
+                        );
+                      } else if (node.expression.text === BindFunctionName) {
+                        // bind(func, self, ...args)
+                        // => func.bind(self, ...args)
+                        return ts.factory.createCallExpression(
+                          eraseBindAndRegister(
+                            node.arguments[0]!
+                          ) as ts.Expression,
+                          undefined,
+                          node.arguments.map(
+                            (arg) => eraseBindAndRegister(arg) as ts.Expression
+                          )
+                        );
+                      }
+                    }
+                    return ts.visitEachChild(node, eraseBindAndRegister, ctx);
+                  },
+              ],
+              shouldCaptureProp: (_, propName) => {
+                // do not serialize the AST property on functions
+                return propName !== ReflectionSymbols.AST;
+              },
+              serialize: serializeHook,
             }
-            return integ;
+          )
+        ).text;
+
+  function serializeHook(obj: any): any {
+    if (typeof obj === "string") {
+      const reversed =
+        Tokenization.reverse(obj, { failConcat: false }) ??
+        Tokenization.reverseString(obj).tokens;
+      if (!Array.isArray(reversed) || reversed.length > 0) {
+        if (Array.isArray(reversed)) {
+          tokens = [
+            ...tokens,
+            ...reversed.map((s) => validateResolvable(s).toString()),
+          ];
+        } else {
+          tokens = [...tokens, validateResolvable(reversed).toString()];
+        }
+      }
+    } else if (typeof obj === "object") {
+      return obj
+        ? transformIntegration(transformResource(transformCfnResource(obj)))
+        : obj;
+
+      /**
+       * Remove unnecessary fields from {@link CfnResource} that bloat or fail the closure serialization.
+       */
+      function transformCfnResource(o: unknown) {
+        if (Resource.isResource(o as any)) {
+          const { node, stack, env, ...rest } = o as unknown as Resource;
+          return rest;
+        } else if (CfnResource.isCfnResource(o as any)) {
+          const {
+            stack,
+            node,
+            creationStack,
+            // don't need to serialize at runtime
+            _toCloudFormation,
+            // @ts-ignore - private - adds the tag manager, which we don't need
+            cfnProperties,
+            ...rest
+          } = transformTable(o as CfnResource);
+          return transformTaggableResource(rest);
+        } else if (Token.isUnresolved(o)) {
+          const reversed = validateResolvable(Tokenization.reverse(o)!);
+
+          if (Reference.isReference(reversed)) {
+            tokens.push(reversed.toString());
+            return reversed.toString();
+          } else if (SecretValue.isSecretValue(reversed)) {
+            throw new SynthError(
+              ErrorCodes.Unsafe_use_of_secrets,
+              "Found unsafe use of SecretValue token in a Function."
+            );
+          } else if ("value" in reversed) {
+            return (reversed as unknown as { value: any }).value;
           }
+          // TODO: fail at runtime and warn at compiler time when a token cannot be serialized
+          return {};
+        }
+        return o;
+      }
 
-          /**
-           * TODO, make this configuration based.
-           * https://github.com/functionless/functionless/issues/239
-           */
-          function transformResource(integ: unknown): any {
-            if (
-              integ &&
-              (isFunction(integ) ||
-                isTable(integ) ||
-                isStepFunction(integ) ||
-                isEventBus(integ))
-            ) {
-              const { resource, ...rest } = integ;
+      /**
+       * When the StreamArn attribute is used in a Cfn template, but streamSpecification is
+       * undefined, then the deployment fails. Lets make sure that doesn't happen.
+       */
+      function transformTable(o: CfnResource): CfnResource {
+        if (
+          o.cfnResourceType === aws_dynamodb.CfnTable.CFN_RESOURCE_TYPE_NAME
+        ) {
+          const table = o as aws_dynamodb.CfnTable;
+          if (!table.streamSpecification) {
+            const { attrStreamArn, ...rest } = table;
 
-              return rest;
-            }
-            return integ;
+            return rest as unknown as CfnResource;
           }
         }
-        return true;
 
-        function validateResolvable(resolvable: IResolvable) {
-          if (Token.isUnresolved(resolvable)) {
-            const tokenSource = Tokenization.reverse(resolvable)!;
-            if (SecretValue.isSecretValue(tokenSource)) {
-              throw new SynthError(
-                ErrorCodes.Unsafe_use_of_secrets,
-                "Found unsafe use of SecretValue token in a Function."
-              );
+        return o;
+      }
+
+      /**
+       * CDK Tag manager bundles in ~200kb of junk we don't need at runtime,
+       */
+      function transformTaggableResource(o: any) {
+        if (TagManager.isTaggable(o)) {
+          const { tags, ...rest } = o;
+          return rest;
+        }
+        return o;
+      }
+
+      /**
+       * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
+       */
+      function transformIntegration(integ: unknown): any {
+        if (integ && isIntegration(integ)) {
+          const c = integ.native?.call;
+          const call =
+            typeof c !== "undefined"
+              ? function (...args: any[]) {
+                  return c(args, preWarmContext);
+                }
+              : integ.unhandledContext
+              ? function () {
+                  integ.unhandledContext!(integ.kind, "Function");
+                }
+              : function () {
+                  throw new Error();
+                };
+
+          for (const prop in integ) {
+            if (!INTEGRATION_TYPE_KEYS.includes(prop as any)) {
+              // @ts-ignore
+              call[prop] = integ[prop];
             }
           }
-          return resolvable;
+
+          return call;
         }
-      },
+        return integ;
+      }
+
+      /**
+       * TODO, make this configuration based.
+       * https://github.com/functionless/functionless/issues/239
+       */
+      function transformResource(integ: unknown): any {
+        if (
+          integ &&
+          (isFunction(integ) ||
+            isTable(integ) ||
+            isStepFunction(integ) ||
+            isEventBus(integ))
+        ) {
+          const { resource, ...rest } = integ;
+
+          return rest;
+        }
+        return integ;
+      }
     }
-  );
+    return true;
+
+    function validateResolvable(resolvable: IResolvable) {
+      if (Token.isUnresolved(resolvable)) {
+        const tokenSource = Tokenization.reverse(resolvable)!;
+        if (SecretValue.isSecretValue(tokenSource)) {
+          throw new SynthError(
+            ErrorCodes.Unsafe_use_of_secrets,
+            "Found unsafe use of SecretValue token in a Function."
+          );
+        }
+      }
+      return resolvable;
+    }
+  }
 
   /**
    * A map of token id to unique index.
@@ -1130,7 +1172,7 @@ export async function serialize(
   const resultText = tokenContext.reduce(
     // TODO: support templated strings
     (r, t) => r.split(`"${t.token}"`).join(`process.env.${t.env}`),
-    result.text
+    result
   );
 
   return [resultText, tokenContext];
