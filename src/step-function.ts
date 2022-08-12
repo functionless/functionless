@@ -6,8 +6,7 @@ import {
   Stack,
 } from "aws-cdk-lib";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { StepFunctions, Service as AWSService } from "aws-sdk";
-import * as AWS from "aws-sdk";
+import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
 import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
@@ -43,7 +42,7 @@ import {
   makeIntegration,
 } from "./integration";
 import { validateFunctionLike } from "./reflect";
-import { AnyFunction, OverloadUnion } from "./util";
+import { AnyFunction } from "./util";
 import { VTL } from "./vtl";
 
 export type AnyStepFunction =
@@ -467,122 +466,6 @@ export namespace $SFN {
       });
     },
   });
-
-  type AWSServiceClass = { new (): AWSService };
-
-  /**
-   * First we have to extract the names of all Services in the v2 AWS namespace
-   *
-   * @returns "AccessAnalyzer" | "Account" | ... | "XRay"
-   */
-  type ServiceKeys = {
-    [K in keyof typeof AWS]: typeof AWS[K] extends AWSServiceClass ? K : never;
-  }[keyof typeof AWS];
-
-  type StepFunctionSDK = {
-    [serviceName in ServiceKeys]: typeof AWS[serviceName] extends new (
-      ...args: any[]
-    ) => infer Client
-      ? {
-          [methodName in keyof Client]: StepFunctionMethod<Client[methodName]>;
-        }
-      : never;
-  };
-
-  type StepFunctionMethod<API> = API extends AnyFunction
-    ? Exclude<OverloadUnion<API>, (cb: AnyFunction) => any> extends (
-        input: infer Input extends {}
-      ) => AWS.Request<infer Output, any>
-      ? (input: Input) => Promise<Output>
-      : never
-    : never;
-
-  export const SDK: StepFunctionSDK = new Proxy({} as any, {
-    get(_, serviceName: ServiceKeys) {
-      const client = new AWS[serviceName]();
-      const sdkIntegrationServiceName = mapAslSdkServiceName(serviceName);
-
-      return new Proxy(client as any, {
-        get: (_, prop: string) => {
-          return makeIntegration<
-            `$AWS.SDK.${ServiceKeys}`,
-            (input: any) => Promise<any>
-          >({
-            kind: `$AWS.SDK.${serviceName}`,
-            asl: (call, context) => {
-              const input = call.args[0]?.expr;
-
-              if (!input) {
-                throw (
-                  (new SynthError(ErrorCodes.Invalid_Input),
-                  "SDK integrations need a single input")
-                );
-              }
-
-              return context.evalExpr(input, (output) => {
-                if (
-                  !ASLGraph.isLiteralValue(output) ||
-                  typeof output.value !== "object" ||
-                  !output.value
-                ) {
-                  throw new SynthError(
-                    ErrorCodes.Unexpected_Error,
-                    "Expected an object literal as the first parameter."
-                  );
-                }
-
-                return context.stateWithHeapOutput({
-                  Type: "Task",
-                  Resource: `arn:aws:states:::aws-sdk:${sdkIntegrationServiceName}:${prop}`,
-                  Parameters: output.value,
-                  Next: ASLGraph.DeferNext,
-                });
-              });
-            },
-          });
-        },
-      });
-    },
-  });
-}
-
-function mapAslSdkServiceName(serviceName: string): string {
-  // source: https://docs.aws.amazon.com/step-functions/latest/dg/supported-services-awssdk.html
-  switch (serviceName) {
-    case "Discovery":
-      return "applicationdiscovery";
-    // TODO: should I simply remove any trailing `Service` or leave the explicit mapping
-    case "ConfigService":
-      return "config";
-    case "CUR":
-      return "costandusagereport";
-    case "DMS":
-      return "databasemigration";
-    case "DirectoryService":
-      return "directory";
-    case "MarketplaceEntitlementService":
-      return "marketplaceentitlement";
-    case "RDSDataService":
-      return "rdsdata";
-    case "StepFunctions":
-      return "sfn";
-    case "AugmentedAIRuntime":
-      return "sagemakera2iruntime";
-    case "ForecastQueryService":
-      return "forecastquery";
-    case "KinesisVideoSignalingChannels":
-      return "kinesisvideosignaling";
-    case "LexModelBuildingService":
-      return "lexmodelbuilding";
-    case "TranscribeService":
-      return "transcribe";
-    case "ELB":
-      return "elasticloadbalancing";
-    case "ELBv2":
-      return "elasticloadbalancingv2";
-    default:
-      return serviceName.toLowerCase();
-  }
 }
 
 /**
