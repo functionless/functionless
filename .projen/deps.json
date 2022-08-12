@@ -236,10 +236,6 @@
       "type": "runtime"
     },
     {
-      "name": "aws-sdk",
-      "type": "runtime"
-    },
-    {
       "name": "fs-extra",
       "type": "runtime"
     },
