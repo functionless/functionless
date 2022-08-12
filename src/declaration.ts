@@ -47,7 +47,7 @@ export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly name: string,
+    readonly name: Identifier,
     readonly heritage: Expr | undefined,
     readonly members: ClassMember[],
     /**
@@ -58,7 +58,8 @@ export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
     readonly filename?: string
   ) {
     super(NodeKind.ClassDecl, span, arguments);
-    this.ensure(name, "name", ["string"]);
+    this.ensure(name, "name", [NodeKind.Identifier]);
+    this.ensure(heritage, "heritage", ["undefined", "Expr"]);
     this.ensureArrayOf(members, "members", NodeKind.ClassMember);
     this.ensure(filename, "filename", ["undefined", "string"]);
   }

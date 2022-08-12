@@ -828,7 +828,8 @@ export function compile(
             node,
             [
               // name
-              node.name ?? ts.factory.createIdentifier("undefined"),
+              toExpr(node.name, scope) ??
+                ts.factory.createIdentifier("undefined"),
               // extends
               node.heritageClauses?.flatMap((clause) =>
                 clause.token === ts.SyntaxKind.ExtendsKeyword &&
