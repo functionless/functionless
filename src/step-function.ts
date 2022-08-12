@@ -9,7 +9,6 @@ import {
 import { StepFunctions, Service as AWSService } from "aws-sdk";
 import * as AWS from "aws-sdk";
 import { Construct } from "constructs";
-import { FunctionKeys } from "utility-types";
 import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph, StateMachine, States } from "./asl";
@@ -44,7 +43,7 @@ import {
   makeIntegration,
 } from "./integration";
 import { validateFunctionLike } from "./reflect";
-import { AnyFunction } from "./util";
+import { AnyFunction, OverloadUnion } from "./util";
 import { VTL } from "./vtl";
 
 export type AnyStepFunction =
@@ -480,17 +479,25 @@ export namespace $SFN {
     [K in keyof typeof AWS]: typeof AWS[K] extends AWSServiceClass ? K : never;
   }[keyof typeof AWS];
 
-  /**
-   * We define this to omit any non-funciton types from service
-   * instances. e.g. `apiVersions` and `config`
-   */
-  type ServiceInstance<T extends AWSServiceClass> = {
-    [K in FunctionKeys<InstanceType<T>>]: InstanceType<T>[K];
+  type StepFunctionSDK = {
+    [serviceName in ServiceKeys]: typeof AWS[serviceName] extends new (
+      ...args: any[]
+    ) => infer Client
+      ? {
+          [methodName in keyof Client]: StepFunctionMethod<Client[methodName]>;
+        }
+      : never;
   };
 
-  export const SDK: {
-    [serviceName in ServiceKeys]: ServiceInstance<typeof AWS[serviceName]>;
-  } = new Proxy({} as any, {
+  type StepFunctionMethod<API> = API extends AnyFunction
+    ? Exclude<OverloadUnion<API>, (cb: AnyFunction) => any> extends (
+        input: infer Input extends {}
+      ) => AWS.Request<infer Output, any>
+      ? (input: Input) => Promise<Output>
+      : never
+    : never;
+
+  export const SDK: StepFunctionSDK = new Proxy({} as any, {
     get(_, serviceName: ServiceKeys) {
       const client = new AWS[serviceName]();
       const sdkIntegrationServiceName = mapSDKServiceName(serviceName);
