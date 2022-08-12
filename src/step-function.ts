@@ -504,11 +504,9 @@ export namespace $SFN {
             kind: `$AWS.SDK.${serviceName}`,
             asl: (call, context) => {
               const input = call.args[0]?.expr;
-              if (!isObjectLiteralExpr(input)) {
-                throw new SynthError(
-                  ErrorCodes.Expected_an_object_literal,
-                  `First argument ('input') into $AWS.SDK must be an object.`
-                );
+
+              if(!input) {
+                
               }
 
               return context.evalExpr(input, (output) => {
