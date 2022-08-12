@@ -82,13 +82,13 @@
     "@aws-cdk/aws-appsync-alpha": "*"
   },
   "dependencies": {
-    "@aws-sdk/types": "^3.127.0",
     "@functionless/ast-reflection": "^0.1.1",
     "@functionless/nodejs-closure-serializer": "^0.1.2",
     "@swc/cli": "^0.1.57",
     "@swc/core": "1.2.218",
     "@swc/register": "^0.1.10",
     "@types/aws-lambda": "^8.10.101",
+    "aws-sdk": "^2.1193.0",
     "fs-extra": "^10.1.0",
     "minimatch": "^5.1.0",
     "utility-types": "^3.10.0"

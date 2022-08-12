@@ -571,7 +571,7 @@
     "@aws-sdk/types" "3.127.0"
     tslib "^2.3.1"
 
-"@aws-sdk/types@3.127.0", "@aws-sdk/types@^3.1.0", "@aws-sdk/types@^3.127.0", "@aws-sdk/types@^3.50.0":
+"@aws-sdk/types@3.127.0", "@aws-sdk/types@^3.1.0", "@aws-sdk/types@^3.50.0":
   version "3.127.0"
   resolved "https://registry.yarnpkg.com/@aws-sdk/types/-/types-3.127.0.tgz#a7bafc47ee2328eee2453087521e6c3a39e7278d"
   integrity sha512-e0wtx2IkOl7rwfKfLH5pPTzQ+d45V7b1WrjeL0WDI8kOu6w+sXmhNxI6uM2kf0k4NiTLN84lW290AEWupey9Og==
@@ -2325,6 +2325,22 @@ aws-sdk@^2.1079.0, aws-sdk@^2.1093.0, aws-sdk@^2.1113.0:
   version "2.1191.0"
   resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.1191.0.tgz#2748567252c68ef37a8ce29f48aa063681083918"
   integrity sha512-G8hWvuc+3rxTfHqsnUwGx/fy8zlnVPtlNesXMHlwU/l4oBx3+Weg0Nhng6HvLGzUJifzlnSKDXrOsWVkHtuZ1w==
+  dependencies:
+    buffer "4.9.2"
+    events "1.1.1"
+    ieee754 "1.1.13"
+    jmespath "0.16.0"
+    querystring "0.2.0"
+    sax "1.2.1"
+    url "0.10.3"
+    util "^0.12.4"
+    uuid "8.0.0"
+    xml2js "0.4.19"
+
+aws-sdk@^2.1193.0:
+  version "2.1193.0"
+  resolved "https://registry.yarnpkg.com/aws-sdk/-/aws-sdk-2.1193.0.tgz#34d3ed3ea19a776dafd954183588169c6daa4764"
+  integrity sha512-nSbljBZhxNn+LmENc14md+y1Z+U8BUcS1LLlOxeJvjYAkkGbPf29Bl8FvzbRsZuoxtF6N1Mkel3AI5XIx7mkew==
   dependencies:
     buffer "4.9.2"
     events "1.1.1"

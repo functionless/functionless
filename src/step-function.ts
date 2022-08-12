@@ -1,5 +1,4 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { Client as AWSClient } from "@aws-sdk/types";
 import {
   aws_apigateway,
   aws_events_targets,
@@ -7,7 +6,8 @@ import {
   Stack,
 } from "aws-cdk-lib";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { StepFunctions } from "aws-sdk";
+import { StepFunctions, Service as AWSService } from "aws-sdk";
+import * as AWS from "aws-sdk";
 import { Construct } from "constructs";
 import { FunctionKeys } from "utility-types";
 import { ApiGatewayVtlIntegration } from "./api";
@@ -469,63 +469,71 @@ export namespace $SFN {
     },
   });
 
-  type SdkIntegrationClient<T extends object> = {
-    [K in FunctionKeys<T>]: T[K] extends (
-      params: infer TInput,
-      options: any,
-      cb: (err: any, output?: infer TOutput) => void
-    ) => Promise<infer _X>
-      ? (input: TInput) => Promise<TOutput>
-      : never;
+  type AWSServiceClass = { new (): AWSService };
+
+  /**
+   * First we have to extract the names of all Services in the v2 AWS namespace
+   *
+   * @returns "AccessAnalyzer" | "Account" | ... | "XRay"
+   */
+  type ServiceKeys = {
+    [K in keyof typeof AWS]: typeof AWS[K] extends AWSServiceClass ? K : never;
+  }[keyof typeof AWS];
+
+  /**
+   * We define this to omit any non-funciton types from service
+   * instances. e.g. `apiVersions` and `config`
+   */
+  type ServiceInstance<T extends AWSServiceClass> = {
+    [K in FunctionKeys<InstanceType<T>>]: InstanceType<T>[K];
   };
 
-  export const sdk = <Service extends AWSClient<any, any, any>>(service: {
-    prototype: Service;
-    new (config: {}): Service;
-  }): SdkIntegrationClient<Service> => {
-    //TODO: do I need to prewarm here?
-    const client = new service({});
+  export const SDK: {
+    [serviceName in ServiceKeys]: ServiceInstance<typeof AWS[serviceName]>;
+  } = new Proxy({} as any, {
+    get(_, serviceName: ServiceKeys) {
+      const client = new AWS[serviceName]();
 
-    // TODO: add lookup for known special cases, e.g. sfn
-    const [serviceName] = client.config.endpoint.hostname.split(".");
-
-    return new Proxy(client as any, {
-      get: (_, prop: string) => {
-        return makeIntegration<"$AWS.SDK", (input: any) => Promise<any>>({
-          kind: "$AWS.SDK",
-          asl: (call, context) => {
-            const input = call.args[0]?.expr;
-            if (!isObjectLiteralExpr(input)) {
-              throw new SynthError(
-                ErrorCodes.Expected_an_object_literal,
-                `First argument ('input') into $AWS.SDK must be an object.`
-              );
-            }
-
-            return context.evalExpr(input, (output) => {
-              if (
-                !ASLGraph.isLiteralValue(output) ||
-                typeof output.value !== "object" ||
-                !output.value
-              ) {
+      return new Proxy(client as any, {
+        get: (_, prop: string) => {
+          return makeIntegration<"$AWS.SDK", (input: any) => Promise<any>>({
+            kind: "$AWS.SDK",
+            asl: (call, context) => {
+              const input = call.args[0]?.expr;
+              if (!isObjectLiteralExpr(input)) {
                 throw new SynthError(
-                  ErrorCodes.Unexpected_Error,
-                  "Expected an object literal as the first parameter."
+                  ErrorCodes.Expected_an_object_literal,
+                  `First argument ('input') into $AWS.SDK must be an object.`
                 );
               }
 
-              return context.stateWithHeapOutput({
-                Type: "Task",
-                Resource: `arn:aws:states:::aws-sdk:${serviceName}:${prop}`,
-                Parameters: output.value,
-                Next: ASLGraph.DeferNext,
+              return context.evalExpr(input, (output) => {
+                if (
+                  !ASLGraph.isLiteralValue(output) ||
+                  typeof output.value !== "object" ||
+                  !output.value
+                ) {
+                  throw new SynthError(
+                    ErrorCodes.Unexpected_Error,
+                    "Expected an object literal as the first parameter."
+                  );
+                }
+
+                const sdk
+
+                return context.stateWithHeapOutput({
+                  Type: "Task",
+                  Resource: `arn:aws:states:::aws-sdk:${serviceName.toLowerCase()}:${prop}`,
+                  Parameters: output.value,
+                  Next: ASLGraph.DeferNext,
+                });
               });
-            });
-          },
-        });
-      },
-    });
-  };
+            },
+          });
+        },
+      });
+    },
+  });
 }
 
 /**

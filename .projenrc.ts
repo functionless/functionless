@@ -81,7 +81,7 @@ const project = new CustomTypescriptProject({
   },
   projenrcTs: true,
   deps: [
-    "@aws-sdk/types",
+    "aws-sdk",
     "@types/aws-lambda",
     "fs-extra",
     "minimatch",
