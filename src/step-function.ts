@@ -493,6 +493,7 @@ export namespace $SFN {
   } = new Proxy({} as any, {
     get(_, serviceName: ServiceKeys) {
       const client = new AWS[serviceName]();
+      const sdkIntegrationServiceName = mapSDKServiceName(serviceName);
 
       return new Proxy(client as any, {
         get: (_, prop: string) => {
@@ -519,11 +520,9 @@ export namespace $SFN {
                   );
                 }
 
-                const sdk
-
                 return context.stateWithHeapOutput({
                   Type: "Task",
-                  Resource: `arn:aws:states:::aws-sdk:${serviceName.toLowerCase()}:${prop}`,
+                  Resource: `arn:aws:states:::aws-sdk:${sdkIntegrationServiceName}:${prop}`,
                   Parameters: output.value,
                   Next: ASLGraph.DeferNext,
                 });
@@ -534,6 +533,45 @@ export namespace $SFN {
       });
     },
   });
+}
+
+function mapSDKServiceName(serviceName: string): string {
+  // source: https://docs.aws.amazon.com/step-functions/latest/dg/supported-services-awssdk.html
+  switch (serviceName) {
+    case "Discovery":
+      return "applicationdiscovery";
+    // TODO: should I simply remove any trailing `Service` or leave the explicit mapping
+    case "ConfigService":
+      return "config";
+    case "CUR":
+      return "costandusagereport";
+    case "DMS":
+      return "databasemigration";
+    case "DirectoryService":
+      return "directory";
+    case "MarketplaceEntitlementService":
+      return "marketplaceentitlement";
+    case "RDSDataService":
+      return "rdsdata";
+    case "StepFunctions":
+      return "sfn";
+    case "AugmentedAIRuntime":
+      return "sagemakera2iruntime";
+    case "ForecastQueryService":
+      return "forecastquery";
+    case "KinesisVideoSignalingChannels":
+      return "kinesisvideosignaling";
+    case "LexModelBuildingService":
+      return "lexmodelbuilding";
+    case "TranscribeService":
+      return "transcribe";
+    case "ELB":
+      return "elasticloadbalancing";
+    case "ELBv2":
+      return "elasticloadbalancingv2";
+    default:
+      return serviceName.toLowerCase();
+  }
 }
 
 /**
