@@ -500,7 +500,7 @@ export namespace $SFN {
   export const SDK: StepFunctionSDK = new Proxy({} as any, {
     get(_, serviceName: ServiceKeys) {
       const client = new AWS[serviceName]();
-      const sdkIntegrationServiceName = mapSDKServiceName(serviceName);
+      const sdkIntegrationServiceName = mapAslSdkServiceName(serviceName);
 
       return new Proxy(client as any, {
         get: (_, prop: string) => {
@@ -546,7 +546,7 @@ export namespace $SFN {
   });
 }
 
-function mapSDKServiceName(serviceName: string): string {
+function mapAslSdkServiceName(serviceName: string): string {
   // source: https://docs.aws.amazon.com/step-functions/latest/dg/supported-services-awssdk.html
   switch (serviceName) {
     case "Discovery":
