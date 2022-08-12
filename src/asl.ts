@@ -2502,7 +2502,7 @@ export class ASL {
             if (expr.op === "&&") {
               return !leftOutput.value ? leftOutput : right;
             } else if (expr.op === "||") {
-              return !!leftOutput.value ? leftOutput : right;
+              return leftOutput.value ? leftOutput : right;
             } else {
               return leftOutput.value !== null && leftOutput.value !== undefined
                 ? leftOutput

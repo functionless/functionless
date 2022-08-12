@@ -939,6 +939,8 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           b: (z = "a"),
           c: ((z = "b"), z),
           z,
+          t: z === "b",
+          o: { z },
         };
         let y = "";
         const h = [y, (y = "a"), ((y = "b"), y), y];
@@ -954,7 +956,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       d: 1,
       e: [1, 2],
       f: { x: "val" },
-      g: { a: "", b: "a", c: "b", z: "b" },
+      g: { a: "", b: "a", c: "b", z: "b", t: true, o: { z: "b" } },
       h: ["", "a", "b", "b"],
       i: "hello 0 1 2 3",
     }
