@@ -77,15 +77,15 @@ Object {
     "1__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": Object {
       "End": true,
       "Parameters": Object {
-        "a.$": "$.heap10",
-        "b.$": "$.heap11",
-        "c.$": "$.heap12",
-        "d.$": "$.heap13",
-        "e.$": "$.heap14",
-        "f.$": "$.heap15",
-        "g.$": "$.heap16",
-        "h.$": "$.heap17",
-        "i.$": "$.heap18",
+        "a.$": "$.heap13",
+        "b.$": "$.heap14",
+        "c.$": "$.heap15",
+        "d.$": "$.heap16",
+        "e.$": "$.heap17",
+        "f.$": "$.heap18",
+        "g.$": "$.heap19",
+        "h.$": "$.heap20",
+        "i.$": "$.heap21",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -93,73 +93,85 @@ Object {
     "1__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i} 1": Object {
       "InputPath": "$.b",
       "Next": "2__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap11",
+      "ResultPath": "$.heap14",
       "Type": "Pass",
     },
     "2__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": Object {
       "InputPath": "$.c",
       "Next": "3__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap12",
+      "ResultPath": "$.heap15",
       "Type": "Pass",
     },
-    "3__g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z}": Object {
+    "3__g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z, t: z === \\"b\\", o: {z: z}}": Object {
       "InputPath": "$.z",
-      "Next": "4__g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z}",
+      "Next": "4__g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z, t: z === \\"b\\", o: {z: z}}",
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "3__h = [y, y = \\"a\\", y = \\"b\\" , y, y]": Object {
       "InputPath": "$.y",
       "Next": "4__h = [y, y = \\"a\\", y = \\"b\\" , y, y]",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap7",
       "Type": "Pass",
     },
     "3__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": Object {
       "InputPath": "$.d",
       "Next": "4__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap13",
+      "ResultPath": "$.heap16",
       "Type": "Pass",
     },
-    "4__g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z}": Object {
+    "4__g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z, t: z === \\"b\\", o: {z: z}}": Object {
       "InputPath": "$.z",
-      "Next": "g",
+      "Next": "z === \\"b\\"",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "4__h = [y, y = \\"a\\", y = \\"b\\" , y, y]": Object {
       "InputPath": "$.y",
       "Next": "[y, y = \\"a\\", y = \\"b\\" , y, y]",
-      "ResultPath": "$.heap5",
+      "ResultPath": "$.heap8",
       "Type": "Pass",
     },
     "4__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": Object {
       "InputPath": "$.e",
       "Next": "5__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap14",
+      "ResultPath": "$.heap17",
       "Type": "Pass",
     },
     "5__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": Object {
       "InputPath": "$.f",
       "Next": "6__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap15",
+      "ResultPath": "$.heap18",
+      "Type": "Pass",
+    },
+    "6__g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z, t: z === \\"b\\", o: {z: z}}": Object {
+      "InputPath": "$.heap3",
+      "Next": "7__g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z, t: z === \\"b\\", o: {z: z}}",
+      "ResultPath": "$.heap4",
       "Type": "Pass",
     },
     "6__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": Object {
       "InputPath": "$.g",
       "Next": "7__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap16",
+      "ResultPath": "$.heap19",
+      "Type": "Pass",
+    },
+    "7__g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z, t: z === \\"b\\", o: {z: z}}": Object {
+      "InputPath": "$.z",
+      "Next": "g",
+      "ResultPath": "$.heap5",
       "Type": "Pass",
     },
     "7__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": Object {
       "InputPath": "$.h",
       "Next": "8__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap17",
+      "ResultPath": "$.heap20",
       "Type": "Pass",
     },
     "8__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": Object {
       "InputPath": "$.i",
       "Next": "1__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap18",
+      "ResultPath": "$.heap21",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -175,9 +187,9 @@ Object {
     "[y, y = \\"a\\", y = \\"b\\" , y, y]": Object {
       "Next": "h",
       "Parameters": Object {
-        "arr.$": "States.Array($.heap3, 'a', $.heap4, $.heap5)",
+        "arr.$": "States.Array($.heap6, 'a', $.heap7, $.heap8)",
       },
-      "ResultPath": "$.heap6",
+      "ResultPath": "$.heap9",
       "Type": "Pass",
     },
     "a = \\"2\\"": Object {
@@ -253,25 +265,35 @@ Object {
       "ResultPath": "$.f",
       "Type": "Pass",
     },
+    "false__z === \\"b\\"": Object {
+      "Next": "6__g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z, t: z === \\"b\\", o: {z: z}}",
+      "Result": false,
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
     "g": Object {
       "Next": "y = \\"\\"",
       "Parameters": Object {
         "a.$": "$.heap0",
         "b": "a",
         "c.$": "$.heap1",
+        "o": Object {
+          "z.$": "$.heap5",
+        },
+        "t.$": "$.heap4",
         "z.$": "$.heap2",
       },
       "ResultPath": "$.g",
       "Type": "Pass",
     },
-    "g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z}": Object {
+    "g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z, t: z === \\"b\\", o: {z: z}}": Object {
       "InputPath": "$.z",
       "Next": "z = \\"a\\"",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "h": Object {
-      "InputPath": "$.heap6.arr",
+      "InputPath": "$.heap9.arr",
       "Next": "x = \\"0\\"",
       "ResultPath": "$.h",
       "Type": "Pass",
@@ -279,19 +301,19 @@ Object {
     "h = [y, y = \\"a\\", y = \\"b\\" , y, y]": Object {
       "InputPath": "$.y",
       "Next": "y = \\"a\\"",
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap6",
       "Type": "Pass",
     },
     "hello  x x = \\"1\\" x = \\"3\\" , \\"2\\"x": Object {
       "Next": "i",
       "Parameters": Object {
-        "string.$": "States.Format('hello {} 1 2 {}',$.heap7,$.heap8)",
+        "string.$": "States.Format('hello {} 1 2 {}',$.heap10,$.heap11)",
       },
-      "ResultPath": "$.heap9",
+      "ResultPath": "$.heap12",
       "Type": "Pass",
     },
     "i": Object {
-      "InputPath": "$.heap9.string",
+      "InputPath": "$.heap12.string",
       "Next": "return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
       "ResultPath": "$.i",
       "Type": "Pass",
@@ -299,19 +321,25 @@ Object {
     "i = hello  x x = \\"1\\" x = \\"3\\" , \\"2\\"x": Object {
       "InputPath": "$.x",
       "Next": "x = \\"1\\"",
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": Object {
       "InputPath": "$.a",
       "Next": "1__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i} 1",
-      "ResultPath": "$.heap10",
+      "ResultPath": "$.heap13",
+      "Type": "Pass",
+    },
+    "true__z === \\"b\\"": Object {
+      "Next": "6__g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z, t: z === \\"b\\", o: {z: z}}",
+      "Result": true,
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "x": Object {
       "InputPath": "$.x",
       "Next": "hello  x x = \\"1\\" x = \\"3\\" , \\"2\\"x",
-      "ResultPath": "$.heap8",
+      "ResultPath": "$.heap11",
       "Type": "Pass",
     },
     "x = \\"0\\"": Object {
@@ -351,7 +379,7 @@ Object {
       "Type": "Pass",
     },
     "z = \\"\\"": Object {
-      "Next": "g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z}",
+      "Next": "g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z, t: z === \\"b\\", o: {z: z}}",
       "Result": "",
       "ResultPath": "$.z",
       "Type": "Pass",
@@ -363,10 +391,37 @@ Object {
       "Type": "Pass",
     },
     "z = \\"b\\"": Object {
-      "Next": "3__g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z}",
+      "Next": "3__g = {a: z, b: z = \\"a\\", c: z = \\"b\\" , z, z: z, t: z === \\"b\\", o: {z: z}}",
       "Result": "b",
       "ResultPath": "$.z",
       "Type": "Pass",
+    },
+    "z === \\"b\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.z",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.z",
+                },
+                Object {
+                  "StringEquals": "b",
+                  "Variable": "$.z",
+                },
+              ],
+            },
+          ],
+          "Next": "true__z === \\"b\\"",
+        },
+      ],
+      "Default": "false__z === \\"b\\"",
+      "Type": "Choice",
     },
   },
 }
