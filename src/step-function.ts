@@ -505,8 +505,11 @@ export namespace $SFN {
             asl: (call, context) => {
               const input = call.args[0]?.expr;
 
-              if(!input) {
-                
+              if (!input) {
+                throw (
+                  (new SynthError(ErrorCodes.Invalid_Input),
+                  "SDK integrations need a single input")
+                );
               }
 
               return context.evalExpr(input, (output) => {
