@@ -497,8 +497,11 @@ export namespace $SFN {
 
       return new Proxy(client as any, {
         get: (_, prop: string) => {
-          return makeIntegration<"$AWS.SDK", (input: any) => Promise<any>>({
-            kind: "$AWS.SDK",
+          return makeIntegration<
+            `$AWS.SDK.${ServiceKeys}`,
+            (input: any) => Promise<any>
+          >({
+            kind: `$AWS.SDK.${serviceName}`,
             asl: (call, context) => {
               const input = call.args[0]?.expr;
               if (!isObjectLiteralExpr(input)) {
