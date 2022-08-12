@@ -507,103 +507,125 @@ export namespace $AWS {
       },
     });
   }
-  export const SDK: StepFunctionSDK = new Proxy({} as any, {
-    get(_, serviceName: ServiceKeys) {
-      return new Proxy({} as any, {
-        get: (_, methodName: string) => {
-          const defaultServicePrefix = serviceName.toLowerCase();
-          const defaultMethod =
-            methodName.charAt(0).toUpperCase() + methodName.slice(1);
-          const defaultIamActions = [
-            `${defaultServicePrefix}:${defaultMethod}`,
-          ];
 
-          return makeIntegration<
-            `$AWS.SDK.${ServiceKeys}`,
-            (input: any) => Promise<any>
-          >({
-            kind: `$AWS.SDK.${serviceName}`,
-            native: {
-              bind(context, args) {
-                // TODO: figure out how to get the iamOptions from `args`
-                context.resource.addToRolePolicy(
-                  new aws_iam.PolicyStatement({
-                    effect: aws_iam.Effect.ALLOW,
-                    // TODO find actions in input
-                    actions: [] ?? defaultIamActions,
-                    // TODO find resources in input
-                    resources: [],
-                    // TODO find conditions in input
-                    conditions: undefined,
-                  })
-                );
-              },
-              preWarm(preWarmContext) {
-                preWarmContext.getOrInit({
-                  key: `$AWS.SDK.${serviceName}`,
-                  init: (key, props) =>
-                    new AWS[serviceName](props?.clientConfigRetriever?.(key)),
-                });
-              },
-              call(args, preWarmContext) {
-                const client: any = preWarmContext.getOrInit({
-                  key: `$AWS.SDK.${serviceName}`,
-                  init: (key, props) =>
-                    new AWS[serviceName](props?.clientConfigRetriever?.(key)),
-                });
+  export const SDK: StepFunctionSDK = new Proxy<any>(
+    {},
+    {
+      get(_, serviceName: ServiceKeys) {
+        return new Proxy<any>(
+          {},
+          {
+            get: (_, methodName: string) => {
+              const defaultServicePrefix = serviceName.toLowerCase();
+              const defaultMethod =
+                methodName.charAt(0).toUpperCase() + methodName.slice(1);
+              const defaultIamActions = [
+                `${defaultServicePrefix}:${defaultMethod}`,
+              ];
 
-                return client[methodName](args[0]).promise();
-              },
-            },
-            asl: (call, context) => {
-              context.role.addToPrincipalPolicy(
-                new aws_iam.PolicyStatement({
-                  effect: aws_iam.Effect.ALLOW,
-                  // TODO find actions in input
-                  actions: [] ?? defaultIamActions,
-                  // TODO find resources in input
-                  resources: [],
-                  // TODO find conditions in input
-                  conditions: undefined,
-                })
-              );
+              return makeIntegration<
+                `$AWS.SDK.${ServiceKeys}`,
+                (input: any) => Promise<any>
+              >({
+                kind: `$AWS.SDK.${serviceName}`,
+                native: {
+                  bind(context, args) {
+                    const iamOptions = args[1] as unknown as IamOptions;
 
-              const sdkIntegrationServiceName =
-                mapAslSdkServiceName(serviceName);
-              const input = call.args[0]?.expr;
+                    if (!isObjectLiteralExpr(iamOptions)) {
+                      throw new SynthError(
+                        ErrorCodes.Expected_an_object_literal,
+                        `Second argument ('iamOptions') into a SDK call must be an object`
+                      );
+                    }
 
-              if (!input) {
-                throw (
-                  (new SynthError(ErrorCodes.Invalid_Input),
-                  "SDK integrations need a single input")
-                );
-              }
+                    context.resource.addToRolePolicy(
+                      new aws_iam.PolicyStatement({
+                        effect: aws_iam.Effect.ALLOW,
+                        actions: iamOptions.iamActions ?? defaultIamActions,
+                        resources: iamOptions.iamResources,
+                        conditions: iamOptions.iamConditions,
+                      })
+                    );
+                  },
+                  preWarm(preWarmContext) {
+                    preWarmContext.getOrInit({
+                      key: `$AWS.SDK.${serviceName}`,
+                      init: (key, props) =>
+                        new AWS[serviceName](
+                          props?.clientConfigRetriever?.(key)
+                        ),
+                    });
+                  },
+                  call(args, preWarmContext) {
+                    const client: any = preWarmContext.getOrInit({
+                      key: `$AWS.SDK.${serviceName}`,
+                      init: (key, props) =>
+                        new AWS[serviceName](
+                          props?.clientConfigRetriever?.(key)
+                        ),
+                    });
 
-              return context.evalExpr(input, (output) => {
-                if (
-                  !ASLGraph.isLiteralValue(output) ||
-                  typeof output.value !== "object" ||
-                  !output.value
-                ) {
-                  throw new SynthError(
-                    ErrorCodes.Unexpected_Error,
-                    "Expected an object literal as the first parameter."
+                    return client[methodName](args[0]).promise();
+                  },
+                },
+                asl: (call, context) => {
+                  const iamOptions = call.args[1] as unknown as IamOptions;
+
+                  if (!isObjectLiteralExpr(iamOptions)) {
+                    throw new SynthError(
+                      ErrorCodes.Expected_an_object_literal,
+                      `Second argument ('iamOptions') into a SDK call must be an object`
+                    );
+                  }
+
+                  context.role.addToPrincipalPolicy(
+                    new aws_iam.PolicyStatement({
+                      effect: aws_iam.Effect.ALLOW,
+                      actions: iamOptions.iamActions ?? defaultIamActions,
+                      resources: iamOptions.iamResources,
+                      conditions: iamOptions.iamConditions,
+                    })
                   );
-                }
 
-                return context.stateWithHeapOutput({
-                  Type: "Task",
-                  Resource: `arn:aws:states:::aws-sdk:${sdkIntegrationServiceName}:${methodName}`,
-                  Parameters: output.value,
-                  Next: ASLGraph.DeferNext,
-                });
+                  const sdkIntegrationServiceName =
+                    mapAslSdkServiceName(serviceName);
+                  const input = call.args[0]?.expr;
+
+                  if (!input) {
+                    throw (
+                      (new SynthError(ErrorCodes.Invalid_Input),
+                      "SDK integrations need a single input")
+                    );
+                  }
+
+                  return context.evalExpr(input, (output) => {
+                    if (
+                      !ASLGraph.isLiteralValue(output) ||
+                      typeof output.value !== "object" ||
+                      !output.value
+                    ) {
+                      throw new SynthError(
+                        ErrorCodes.Unexpected_Error,
+                        "Expected an object literal as the first parameter."
+                      );
+                    }
+
+                    return context.stateWithHeapOutput({
+                      Type: "Task",
+                      Resource: `arn:aws:states:::aws-sdk:${sdkIntegrationServiceName}:${methodName}`,
+                      Parameters: output.value,
+                      Next: ASLGraph.DeferNext,
+                    });
+                  });
+                },
               });
             },
-          });
-        },
-      });
-    },
-  });
+          }
+        );
+      },
+    }
+  );
 }
 
 type AWSServiceClass = { new (): AWSService };
@@ -652,7 +674,7 @@ interface IamOptions {
    * @example s3:ListAllMyBuckets
    * @see https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_action.html
    */
-  iamAction?: string[];
+  iamActions?: string[];
 
   /**
    * The iam conditions to apply to the IAM Statement that will be added to the state machine role's
