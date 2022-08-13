@@ -149,6 +149,8 @@ const globals = new Map<any, () => ts.Expression>([
   [Error.prototype, () => prop(id("Error"), "prototype")],
   [JSON, () => id("JSON")],
   [Promise, () => id("Promise")],
+  [console, () => id("console")],
+  [setTimeout, () => id("setTimeout")],
 ]);
 
 /**
@@ -222,6 +224,7 @@ export function serializeClosure(
 
   // stores a map of a `<variable-id>` to a ts.Identifier pointing to the unique location of that variable
   const referenceIds = new Map<string, ts.Identifier>();
+  const referenceExprToIds = new Map<number, number>();
 
   const f = serialize(func);
   emit(
@@ -457,6 +460,9 @@ export function serializeClosure(
             propName
           );
           if (propDescriptor?.get || propDescriptor?.set) {
+            // TODO;
+            // eslint-disable-next-line no-debugger
+            debugger;
           } else if (propDescriptor?.writable) {
             emit(expr(assign(prop(obj, propName), serialize(value[propName]))));
           }
@@ -521,6 +527,9 @@ export function serializeClosure(
             );
             if (propDescriptor?.writable) {
               if (propDescriptor.get || propDescriptor.set) {
+                // TODO:
+                // eslint-disable-next-line no-debugger
+                debugger;
               } else {
                 emit(
                   expr(
@@ -767,8 +776,13 @@ export function serializeClosure(
    */
   function _toTS(node: FunctionlessNode): ts.Node {
     if (isReferenceExpr(node)) {
+      // get the set of ReferenceExpr instances for thisId
+      let thisId = referenceExprToIds.get(node.thisId);
+      thisId = thisId === undefined ? 0 : thisId + 1;
+      referenceExprToIds.set(node.thisId, thisId);
+
       // a key that uniquely identifies the variable pointed to by this reference
-      const varKey = `${node.getFileName()} ${node.name} ${node.id}`;
+      const varKey = `${node.getFileName()} ${node.name} ${node.id} ${thisId}`;
 
       // a ts.Identifier that uniquely references the memory location of this variable in the serialized closure
       let varId: ts.Identifier | undefined = referenceIds.get(varKey);
@@ -899,6 +913,13 @@ export function serializeClosure(
         if (isReferenceExpr(expr)) {
           return true;
         } else if (isPropAccessExpr(expr)) {
+          if (isReferenceExpr(expr.expr)) {
+            const ref = expr.expr.ref();
+            if (ref === process && expr.name.name === "env") {
+              // process.env, we should never serialize these values literally
+              return false;
+            }
+          }
           return isRef(expr.expr);
         }
         return false;

@@ -1205,7 +1205,6 @@ export async function serialize(
  * Bundles a serialized function with esbuild.
  */
 export async function bundle(text: string): Promise<esbuild.OutputFile> {
-  fs.writeFileSync("a.js", text);
   const bundle = await esbuild.build({
     stdin: {
       contents: text,

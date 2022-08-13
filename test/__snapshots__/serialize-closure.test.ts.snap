@@ -24,6 +24,56 @@ exports.handler = v0;
 "
 `;
 
+exports[`all observers of a free variable share the same reference even when two instances 1`] = `
+"// <stdin>
+var v2 = [];
+var v6 = 0;
+var v5 = function up() {
+  v6 += 2;
+};
+var v7 = {};
+v5.prototype = v7;
+var v4 = v5;
+var v9 = function down() {
+  v6 -= 1;
+};
+var v10 = {};
+v9.prototype = v10;
+var v8 = v9;
+var v3 = () => {
+  v4();
+  v8();
+  return v6;
+};
+var v14 = 0;
+var v13 = function up2() {
+  v14 += 2;
+};
+var v15 = {};
+v13.prototype = v15;
+var v12 = v13;
+var v17 = function down2() {
+  v14 -= 1;
+};
+var v18 = {};
+v17.prototype = v18;
+var v16 = v17;
+var v11 = () => {
+  v12();
+  v16();
+  return v14;
+};
+v2.push(v3, v11);
+var v1 = v2;
+var v0 = () => {
+  return v1.map((closure) => {
+    return closure();
+  });
+};
+exports.handler = v0;
+"
+`;
+
 exports[`avoid name collision with a closure's lexical scope 1`] = `
 "// <stdin>
 var v6 = 0;

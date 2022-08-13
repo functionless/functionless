@@ -214,7 +214,9 @@ export class ReferenceExpr<
      * This is used to ensure that two ReferenceExpr's pointing to the same variable still point
      * to the same variable after transformation.
      */
-    readonly id: number
+    readonly id: number,
+
+    readonly thisId: number
   ) {
     super(NodeKind.ReferenceExpr, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);

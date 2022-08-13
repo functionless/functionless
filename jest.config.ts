@@ -1,5 +1,9 @@
 // ensure the SWC require-hook is installed before anything else runs
-import "@swc/register";
+import register from "@swc/register/lib/node";
+
+register({
+  ignore: [],
+});
 
 import fs from "fs";
 import path from "path";

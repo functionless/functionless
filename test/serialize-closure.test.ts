@@ -78,6 +78,32 @@ test("all observers of a free variable share the same reference", async () => {
   expect(closure()).toEqual(1);
 });
 
+test("all observers of a free variable share the same reference even when two instances", async () => {
+  const closures = [0, 0].map(() => {
+    let i = 0;
+
+    function up() {
+      i += 2;
+    }
+
+    function down() {
+      i -= 1;
+    }
+
+    return () => {
+      up();
+      down();
+      return i;
+    };
+  });
+
+  const closure = await expectClosure(() => {
+    return closures.map((closure) => closure());
+  });
+
+  expect(closure()).toEqual([1, 1]);
+});
+
 test("serialize an imported module", async () => {
   const closure = await expectClosure(isNode);
 
@@ -418,6 +444,21 @@ test("instantiating the AWS SDK", async () => {
 
     return client.config.endpoint;
   });
+
+  expect(closure()).toEqual("dynamodb.undefined.amazonaws.com");
+});
+
+test("instantiating the AWS SDK without esbuild", async () => {
+  const closure = await expectClosure(
+    () => {
+      const client = new AWS.DynamoDB();
+
+      return client.config.endpoint;
+    },
+    {
+      useESBuild: false,
+    }
+  );
 
   expect(closure()).toEqual("dynamodb.undefined.amazonaws.com");
 });
