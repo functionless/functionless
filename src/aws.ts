@@ -619,25 +619,23 @@ export namespace $AWS {
                     );
                   }
 
-                  return context.evalExpr(input, (output) => {
-                    if (
-                      !ASLGraph.isLiteralValue(output) ||
-                      typeof output.value !== "object" ||
-                      !output.value
-                    ) {
-                      throw new SynthError(
-                        ErrorCodes.Unexpected_Error,
-                        "Expected an object literal as the first parameter."
+                  // normalized any output to a jsonPath or literal
+                  return context.evalExprToJsonPathOrLiteral(
+                    input,
+                    (output) => {
+                      return context.stateWithHeapOutput(
+                        // can add LiteralValue or JsonPath as the parameter to a task.
+                        ASLGraph.taskWithInput(
+                          {
+                            Type: "Task",
+                            Resource: `arn:aws:states:::aws-sdk:${sdkIntegrationServiceName}:${methodName}`,
+                            Next: ASLGraph.DeferNext,
+                          },
+                          output
+                        )
                       );
                     }
-
-                    return context.stateWithHeapOutput({
-                      Type: "Task",
-                      Resource: `arn:aws:states:::aws-sdk:${sdkIntegrationServiceName}:${methodName}`,
-                      Parameters: output.value,
-                      Next: ASLGraph.DeferNext,
-                    });
-                  });
+                  );
                 },
               });
             },
