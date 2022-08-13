@@ -662,7 +662,7 @@ type SDK = {
     ...args: any[]
   ) => infer Client
     ? {
-        [methodName in keyof Client]: StepFunctionMethod<Client[methodName]>;
+        [methodName in keyof Client]: SdkMethod<Client[methodName]>;
       }
     : never;
 };
@@ -711,7 +711,7 @@ interface SdkCallOptions {
   iamConditions: Record<string, any>;
 }
 
-type StepFunctionMethod<API> = API extends AnyFunction
+type SdkMethod<API> = API extends AnyFunction
   ? Exclude<OverloadUnion<API>, (cb: AnyFunction) => any> extends (
       input: infer Input extends {}
     ) => AWS.Request<infer Output, any>
