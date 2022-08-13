@@ -114,7 +114,7 @@ export interface SerializeClosureProps extends esbuild.BuildOptions {
    * A function to prevent serialization of certain objects captured during the serialization.  Primarily used to
    * prevent potential cycles.
    */
-  serialize: (o: any) => boolean | any;
+  serialize?: (o: any) => boolean | any;
   /**
    * A function to prevent serialization of a {@link property} on an {@link obj}
    *
@@ -147,6 +147,8 @@ const globals = new Map<any, () => ts.Expression>([
   [RegExp.prototype, () => prop(id("RegExp"), "prototype")],
   [Error, () => id("Error")],
   [Error.prototype, () => prop(id("Error"), "prototype")],
+  [JSON, () => id("JSON")],
+  [Promise, () => id("Promise")],
 ]);
 
 /**
@@ -167,42 +169,40 @@ export function serializeClosure(
   }
 
   const requireCache = new Map<any, RequiredModule>(
-    Object.entries(Object.getOwnPropertyDescriptors(require.cache)).flatMap(
-      ([path, module]) => {
-        try {
-          return [
-            [
-              module.value?.exports as any,
-              <RequiredModule>{
-                path: module.value?.path,
-                exportName: undefined,
-                exportValue: module.value?.exports,
-                module,
-              },
-            ],
-            ...(Object.entries(
-              Object.getOwnPropertyDescriptors(module.value?.exports ?? {})
-            ).map(([exportName, exportValue]) => {
-              try {
-                return [
-                  exportValue.value,
-                  <RequiredModule>{
-                    path,
-                    exportName,
-                    exportValue: exportValue.value,
-                    module: module.value,
-                  },
-                ];
-              } catch (err) {
-                throw err;
-              }
-            }) as [any, RequiredModule][]),
-          ];
-        } catch (err) {
-          throw err;
-        }
+    Object.entries(require.cache).flatMap(([path, module]) => {
+      try {
+        return [
+          [
+            module?.exports as any,
+            <RequiredModule>{
+              path: module?.path,
+              exportName: undefined,
+              exportValue: module?.exports,
+              module,
+            },
+          ],
+          ...(Object.entries(
+            Object.getOwnPropertyDescriptors(module?.exports ?? {})
+          ).map(([exportName, exportValue]) => {
+            try {
+              return [
+                exportValue.value,
+                <RequiredModule>{
+                  path,
+                  exportName,
+                  exportValue: exportValue.value,
+                  module: module,
+                },
+              ];
+            } catch (err) {
+              throw err;
+            }
+          }) as [any, RequiredModule][]),
+        ];
+      } catch (err) {
+        throw err;
       }
-    )
+    })
   );
 
   let i = 0;
@@ -250,29 +250,33 @@ export function serializeClosure(
   if (options?.useESBuild === false) {
     return script;
   } else {
-    const bundle = esbuild.buildSync({
-      stdin: {
-        contents: script,
-        resolveDir: process.cwd(),
-      },
-      bundle: true,
-      write: false,
-      metafile: true,
-      platform: "node",
-      target: "node14",
-      external: [
-        "aws-sdk",
-        "aws-cdk-lib",
-        "esbuild",
-        ...(options?.external ?? []),
-      ],
-    });
+    try {
+      const bundle = esbuild.buildSync({
+        stdin: {
+          contents: script,
+          resolveDir: process.cwd(),
+        },
+        bundle: true,
+        write: false,
+        metafile: true,
+        platform: "node",
+        target: "node14",
+        external: [
+          "aws-sdk",
+          "aws-cdk-lib",
+          "esbuild",
+          ...(options?.external ?? []),
+        ],
+      });
 
-    if (bundle.outputFiles[0] === undefined) {
-      throw new Error("No output files after bundling with ES Build");
+      if (bundle.outputFiles[0] === undefined) {
+        throw new Error("No output files after bundling with ES Build");
+      }
+
+      return bundle.outputFiles[0].text;
+    } catch (err) {
+      throw err;
     }
-
-    return bundle.outputFiles[0].text;
   }
 
   function emit(...stmts: ts.Statement[]) {
@@ -415,7 +419,7 @@ export function serializeClosure(
 
       const mod = requireCache.get(value);
 
-      if (mod) {
+      if (mod && options?.useESBuild !== false) {
         return importMod(mod, value);
       }
 
@@ -442,11 +446,21 @@ export function serializeClosure(
 
       // for each of the object's own properties, emit a statement that assigns the value of that property
       // vObj.propName = vValue
-      Object.getOwnPropertyNames(value).forEach((propName) => {
-        return emit(
-          expr(assign(prop(obj, propName), serialize(value[propName])))
-        );
-      });
+      Object.getOwnPropertyNames(value)
+        .filter((propName) => propName !== "constructor")
+        .filter(
+          (propName) => options?.shouldCaptureProp?.(value, propName) ?? true
+        )
+        .forEach((propName) => {
+          const propDescriptor = Object.getOwnPropertyDescriptor(
+            value,
+            propName
+          );
+          if (propDescriptor?.get || propDescriptor?.set) {
+          } else if (propDescriptor?.writable) {
+            emit(expr(assign(prop(obj, propName), serialize(value[propName]))));
+          }
+        });
 
       return obj;
     } else if (typeof value === "function") {
@@ -467,7 +481,7 @@ export function serializeClosure(
       // if this is not compiled by functionless, we can only serialize it if it is exported by a module
       const mod = requireCache.get(value);
 
-      if (mod) {
+      if (mod && options?.useESBuild !== false) {
         return importMod(mod, value);
       }
 
@@ -480,21 +494,13 @@ export function serializeClosure(
             return id("require");
           } else if (value.name === "Object") {
             return serialize(Object.prototype);
-          } else {
-            const parsed = ts.createSourceFile(
-              "",
-              `(${value.toString()})`,
-              ts.ScriptTarget.Latest
-            ).statements[0];
-
-            return (parsed as ts.ExpressionStatement).expression;
           }
           throw new Error(
             `cannot serialize closures that were not compiled with Functionless unless they are exported by a module: ${func}`
           );
         }
 
-        return emitRequire(mod);
+        return importMod(mod, value);
       } else if (isFunctionLike(ast)) {
         const func = emitVarDecl(
           "const",
@@ -504,22 +510,29 @@ export function serializeClosure(
 
         // for each of the object's own properties, emit a statement that assigns the value of that property
         // vObj.propName = vValue
-        Object.getOwnPropertyNames(value).forEach((propName) => {
-          const propDescriptor = Object.getOwnPropertyDescriptor(
-            value,
-            propName
-          );
-          if (propDescriptor?.writable) {
-            if (propDescriptor.get || propDescriptor.set) {
-            } else {
-              emit(
-                expr(
-                  assign(prop(func, propName), serialize(propDescriptor.value))
-                )
-              );
+        Object.getOwnPropertyNames(value)
+          .filter(
+            (propName) => options?.shouldCaptureProp?.(value, propName) ?? true
+          )
+          .forEach((propName) => {
+            const propDescriptor = Object.getOwnPropertyDescriptor(
+              value,
+              propName
+            );
+            if (propDescriptor?.writable) {
+              if (propDescriptor.get || propDescriptor.set) {
+              } else {
+                emit(
+                  expr(
+                    assign(
+                      prop(func, propName),
+                      serialize(propDescriptor.value)
+                    )
+                  )
+                );
+              }
             }
-          }
-        });
+          });
 
         return func;
       } else if (isClassDecl(ast) || isClassExpr(ast)) {
@@ -541,7 +554,8 @@ export function serializeClosure(
       throw new Error(`undefined exports`);
     }
     if (!valueIds.has(exports)) {
-      valueIds.set(exports, emitRequire(getModuleId(mod.path)));
+      const moduleId = getModuleId(mod.path);
+      valueIds.set(exports, emitRequire(moduleId));
     }
     const requireMod = valueIds.get(exports)!;
     const requireModExport = emitVarDecl(
@@ -857,6 +871,13 @@ export function serializeClosure(
     } else if (isPrivateIdentifier(node)) {
       return ts.factory.createPrivateIdentifier(node.name);
     } else if (isPropAccessExpr(node)) {
+      if (isRef(node)) {
+        const value = deRef(node);
+        if (typeof value !== "function") {
+          return serialize(value);
+        }
+      }
+
       return ts.factory.createPropertyAccessChain(
         toTS(node.expr) as ts.Expression,
         node.isOptional
@@ -864,6 +885,24 @@ export function serializeClosure(
           : undefined,
         toTS(node.name) as ts.MemberName
       );
+
+      function deRef(expr: FunctionlessNode): any {
+        if (isReferenceExpr(expr)) {
+          return expr.ref();
+        } else if (isPropAccessExpr(expr)) {
+          return deRef(expr.expr)?.[expr.name.name];
+        }
+        throw new Error(`was not rooted`);
+      }
+
+      function isRef(expr: FunctionlessNode): boolean {
+        if (isReferenceExpr(expr)) {
+          return true;
+        } else if (isPropAccessExpr(expr)) {
+          return isRef(expr.expr);
+        }
+        return false;
+      }
     } else if (isElementAccessExpr(node)) {
       return ts.factory.createElementAccessChain(
         toTS(node.expr) as ts.Expression,
@@ -1375,8 +1414,14 @@ function object(obj: Record<string, ts.Expression>) {
   );
 }
 
+const propNameRegex = /^[_a-zA-Z][_a-zA-Z0-9]*$/g;
+
 function prop(expr: ts.Expression, name: string) {
-  return ts.factory.createPropertyAccessExpression(expr, name);
+  if (name.match(propNameRegex)) {
+    return ts.factory.createPropertyAccessExpression(expr, name);
+  } else {
+    return ts.factory.createElementAccessExpression(expr, string(name));
+  }
 }
 
 function assign(left: ts.Expression, right: ts.Expression) {

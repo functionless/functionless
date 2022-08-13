@@ -234,8 +234,8 @@ test("serialize a monkey-patched class method that has been re-set", async () =>
 
   const serialized = await expectClosure(closure);
 
-  expect(serialized()).toEqual(3);
   expect(closure()).toEqual(3);
+  expect(serialized()).toEqual(3);
 });
 
 test("serialize a monkey-patched class getter", async () => {

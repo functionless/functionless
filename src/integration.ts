@@ -400,7 +400,10 @@ export function tryResolveReferences(
       return tryResolveReferences(defaultValue, undefined);
     }
   } else if (isReferenceExpr(node) || isThisExpr(node)) {
-    return [node.ref()];
+    const ref = node.ref?.();
+    if (ref) {
+      return [ref];
+    }
   } else if (isIdentifier(node)) {
     return tryResolveReferences(node.lookup(), defaultValue);
   } else if (isBindingElem(node)) {

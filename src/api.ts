@@ -748,7 +748,7 @@ export class APIGatewayVTL extends VTL {
         const serviceCall = new IntegrationImpl(integration);
         return this.integrate(serviceCall, expr);
       } else if (isReferenceExpr(expr.expr) || isThisExpr(expr.expr)) {
-        const ref = expr.expr.ref();
+        const ref = expr.expr.ref?.();
         if (ref === Number) {
           // Number() = 0
           return expr.args[0] ? this.exprToJson(expr.args[0]) : "0";

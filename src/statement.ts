@@ -99,7 +99,11 @@ export class BlockStmt extends BaseStmt<NodeKind.BlockStmt, BlockStmtParent> {
     readonly statements: Stmt[]
   ) {
     super(NodeKind.BlockStmt, span, arguments);
-    this.ensureArrayOf(statements, "statements", ["Stmt"]);
+    this.ensureArrayOf(statements, "statements", [
+      "Stmt",
+      NodeKind.FunctionDecl,
+      NodeKind.ClassDecl,
+    ]);
     statements.forEach((stmt, i) => {
       stmt.prev = i > 0 ? statements[i - 1] : undefined;
       stmt.next = i + 1 < statements.length ? statements[i + 1] : undefined;

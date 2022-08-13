@@ -507,8 +507,24 @@ interface FunctionBase<in Payload, Out> {
 }
 
 export enum SerializerImpl {
-  ASYNC,
-  SYNC,
+  /**
+   * The default serializer, uses the v8 inspector API to introspect closures.
+   *
+   * It is slow and has caveats such as not properly serializing stable references to variables.
+   *
+   * @see https://github.com/functionless/nodejs-closure-serializer
+   */
+  STABLE_DEBUGGER,
+  /**
+   * A new experimental serializer that makes use of Functionless's SWC AST
+   * reflection library that decorates syntax for use at runtime.
+   *
+   * It has not been as well tested, but is fast, synchronous and has support for
+   * stable references and other features.
+   *
+   * @see https://www.npmjs.com/package/@functionless/ast-reflection
+   */
+  EXPERIMENTAL_SWC,
 }
 
 const PromisesSymbol = Symbol.for("functionless.Function.promises");
@@ -712,17 +728,17 @@ export class Function<
           await callbackLambdaCode.generate(
             nativeIntegrationsPrewarm,
             // TODO: make default ASYNC until we are happy
-            props?.serializer ?? SerializerImpl.SYNC
+            props?.serializer ?? SerializerImpl.EXPERIMENTAL_SWC
           );
         } catch (e) {
           if (e instanceof SynthError) {
             throw new SynthError(
               e.code,
-              `While serializing ${_resource.node.path}:\n\n${e.message}`
+              `While serializing ${_resource.node.path}:\n\n${e.message}\n${e.stack}`
             );
           } else if (e instanceof Error) {
             throw Error(
-              `While serializing ${_resource.node.path}:\n\n${e.message}`
+              `While serializing ${_resource.node.path}:\n\n${e.message}\n${e.stack}`
             );
           }
         }
@@ -919,7 +935,7 @@ export async function serialize(
 
   const preWarms = integrationPrewarms;
   const result =
-    serializerImpl === SerializerImpl.SYNC
+    serializerImpl === SerializerImpl.EXPERIMENTAL_SWC
       ? serializeClosure(
           integrationPrewarms.length > 0
             ? () => {
@@ -928,6 +944,7 @@ export async function serialize(
               }
             : f,
           {
+            shouldCaptureProp,
             serialize: serializeHook,
             isFactoryFunction: integrationPrewarms.length > 0,
           }
@@ -979,14 +996,54 @@ export async function serialize(
                     return ts.visitEachChild(node, eraseBindAndRegister, ctx);
                   },
               ],
-              shouldCaptureProp: (_, propName) => {
-                // do not serialize the AST property on functions
-                return propName !== ReflectionSymbols.AST;
-              },
+
               serialize: serializeHook,
+              shouldCaptureProp,
             }
           )
         ).text;
+
+  /**
+   * A map of token id to unique index.
+   * Keeps the serialized function rom changing when the token IDs change.
+   */
+  const tokenIdLookup = new Map<string, number>();
+
+  const tokenContext: TokenContext[] = tokens.map((t, i) => {
+    const id = /\${Token\[.*\.([0-9]*)\]}/g.exec(t)?.[1];
+    if (!id) {
+      throw Error("Unrecognized token format, no id found: " + t);
+    }
+
+    const envId =
+      id in tokenIdLookup
+        ? tokenIdLookup.get(id)
+        : tokenIdLookup.set(id, i).get(id);
+
+    return {
+      token: t,
+      // env variables must start with a alpha character
+      env: `env__functionless${envId}`,
+    };
+  });
+
+  // replace all tokens in the form "${Token[{anything}.{id}]}" -> process.env.env__functionless{id}
+  // this doesn't solve for tokens like "arn:${Token[{anything}.{id}]}:something" -> "arn:" + process.env.env__functionless{id} + ":something"
+  const resultText = tokenContext.reduce(
+    // TODO: support templated strings
+    (r, t) => r.split(`"${t.token}"`).join(`process.env.${t.env}`),
+    result
+  );
+
+  return [resultText, tokenContext];
+
+  function shouldCaptureProp(
+    _: any,
+    propName: string | symbol | number
+  ): boolean {
+    // do not serialize the AST property on functions
+    return propName !== ReflectionSymbols.AST;
+  }
 
   function serializeHook(obj: any): any {
     if (typeof obj === "string") {
@@ -1142,46 +1199,13 @@ export async function serialize(
       return resolvable;
     }
   }
-
-  /**
-   * A map of token id to unique index.
-   * Keeps the serialized function rom changing when the token IDs change.
-   */
-  const tokenIdLookup = new Map<string, number>();
-
-  const tokenContext: TokenContext[] = tokens.map((t, i) => {
-    const id = /\${Token\[.*\.([0-9]*)\]}/g.exec(t)?.[1];
-    if (!id) {
-      throw Error("Unrecognized token format, no id found: " + t);
-    }
-
-    const envId =
-      id in tokenIdLookup
-        ? tokenIdLookup.get(id)
-        : tokenIdLookup.set(id, i).get(id);
-
-    return {
-      token: t,
-      // env variables must start with a alpha character
-      env: `env__functionless${envId}`,
-    };
-  });
-
-  // replace all tokens in the form "${Token[{anything}.{id}]}" -> process.env.env__functionless{id}
-  // this doesn't solve for tokens like "arn:${Token[{anything}.{id}]}:something" -> "arn:" + process.env.env__functionless{id} + ":something"
-  const resultText = tokenContext.reduce(
-    // TODO: support templated strings
-    (r, t) => r.split(`"${t.token}"`).join(`process.env.${t.env}`),
-    result
-  );
-
-  return [resultText, tokenContext];
 }
 
 /**
  * Bundles a serialized function with esbuild.
  */
 export async function bundle(text: string): Promise<esbuild.OutputFile> {
+  fs.writeFileSync("a.js", text);
   const bundle = await esbuild.build({
     stdin: {
       contents: text,

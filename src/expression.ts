@@ -898,10 +898,10 @@ export class ThisExpr<T = any> extends BaseExpr<NodeKind.ThisExpr> {
     /**
      * Produce the value of `this`
      */
-    readonly ref: () => T
+    readonly ref?: () => T
   ) {
     super(NodeKind.ThisExpr, span, arguments);
-    this.ensure(ref, "ref", ["function"]);
+    this.ensure(ref, "ref", ["undefined", "function"]);
   }
 }
 
