@@ -609,7 +609,8 @@ export namespace $AWS {
                   );
 
                   const sdkIntegrationServiceName =
-                    mapAslSdkServiceName(serviceName);
+                    SDK_INTEGRATION_SERVICE_NAME[serviceName] ??
+                    serviceName.toLowerCase();
                   const input = call.args[0]?.expr;
 
                   if (!input) {
@@ -708,7 +709,12 @@ interface SdkCallOptions {
    * ```
    * @see https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_condition.html
    */
-  iamConditions: Record<string, any>;
+  iamConditions?: Record<string, any>;
+
+  /**
+   * 
+   */
+  aslServiceName?: string;
 }
 
 type SdkMethod<API> = API extends AnyFunction
@@ -719,44 +725,23 @@ type SdkMethod<API> = API extends AnyFunction
     : never
   : never;
 
-function mapAslSdkServiceName(serviceName: string): string {
-  // source: https://docs.aws.amazon.com/step-functions/latest/dg/supported-services-awssdk.html
-  switch (serviceName) {
-    case "Discovery":
-      return "applicationdiscovery";
-    // TODO: should I simply remove any trailing `Service` or leave the explicit mapping
-    case "ConfigService":
-      return "config";
-    case "CUR":
-      return "costandusagereport";
-    case "DMS":
-      return "databasemigration";
-    case "DirectoryService":
-      return "directory";
-    case "MarketplaceEntitlementService":
-      return "marketplaceentitlement";
-    case "RDSDataService":
-      return "rdsdata";
-    case "StepFunctions":
-      return "sfn";
-    case "AugmentedAIRuntime":
-      return "sagemakera2iruntime";
-    case "ForecastQueryService":
-      return "forecastquery";
-    case "KinesisVideoSignalingChannels":
-      return "kinesisvideosignaling";
-    case "LexModelBuildingService":
-      return "lexmodelbuilding";
-    case "TranscribeService":
-      return "transcribe";
-    case "ELB":
-      return "elasticloadbalancing";
-    case "ELBv2":
-      return "elasticloadbalancingv2";
-    default:
-      return serviceName.toLowerCase();
-  }
-}
+const SDK_INTEGRATION_SERVICE_NAME: Partial<Record<ServiceKeys, string>> = {
+  Discovery: "applicationdiscovery",
+  ConfigService: "config",
+  CUR: "costandusagereport",
+  DMS: "databasemigration",
+  DirectoryService: "directory",
+  MarketplaceEntitlementService: "marketplaceentitlement",
+  RDSDataService: "rdsdata",
+  StepFunctions: "sfn",
+  AugmentedAIRuntime: "sagemakera2iruntime",
+  ForecastQueryService: "forecastquery",
+  KinesisVideoSignalingChannels: "kinesisvideosignaling",
+  LexModelBuildingService: "lexmodelbuilding",
+  TranscribeService: "transcribe",
+  ELB: "elasticloadbalancing",
+  ELBv2: "elasticloadbalancingv2",
+};
 
 export type OperationName =
   | "deleteItem"
