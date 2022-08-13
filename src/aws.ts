@@ -508,7 +508,7 @@ export namespace $AWS {
     });
   }
 
-  export const SDK: StepFunctionSDK = new Proxy<any>(
+  export const SDK: SDK = new Proxy<any>(
     {},
     {
       get(_, serviceName: ServiceKeys) {
@@ -639,7 +639,7 @@ type ServiceKeys = {
   [K in keyof typeof AWS]: typeof AWS[K] extends AWSServiceClass ? K : never;
 }[keyof typeof AWS];
 
-type StepFunctionSDK = {
+type SDK = {
   [serviceName in ServiceKeys]: typeof AWS[serviceName] extends new (
     ...args: any[]
   ) => infer Client
