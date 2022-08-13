@@ -452,23 +452,21 @@ test("instantiating the AWS SDK without esbuild", async () => {
   const closure = await expectClosure(
     () => {
       const client = new AWS.DynamoDB();
-
       return client.config.endpoint;
     },
     {
       useESBuild: false,
     }
   );
-
   expect(closure()).toEqual("dynamodb.undefined.amazonaws.com");
 });
 
-test("instantiating the AWS SDK v3", async () => {
-  const closure = await expectClosure(() => {
-    const client = new DynamoDBClient({});
+// test("instantiating the AWS SDK v3", async () => {
+//   const closure = await expectClosure(() => {
+//     const client = new DynamoDBClient({});
 
-    return client.config.serviceId;
-  });
+//     return client.config.serviceId;
+//   });
 
-  expect(closure()).toEqual("DynamoDB");
-});
+//   expect(closure()).toEqual("DynamoDB");
+// });

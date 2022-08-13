@@ -6,6 +6,7 @@ import ts from "typescript";
 import { assertNever } from "./assert";
 import {
   ClassDecl,
+  FunctionLike,
   GetAccessorDecl,
   MethodDecl,
   SetAccessorDecl,
@@ -101,20 +102,21 @@ import { FunctionlessNode } from "./node";
 import { reflect } from "./reflect";
 import { Globals } from "./serialize-globals";
 import {
-  expr,
-  assign,
-  prop,
-  id,
-  string,
-  undefined_expr,
-  null_expr,
-  true_expr,
-  false_expr,
-  number,
-  object,
-  defineProperty,
-  getOwnPropertyDescriptor,
-  call,
+  exprStmt,
+  assignExpr,
+  propAccessExpr,
+  idExpr,
+  stringExpr,
+  undefinedExpr,
+  nullExpr,
+  trueExpr,
+  falseExpr,
+  numberExpr,
+  objectExpr,
+  definePropertyExpr,
+  getOwnPropertyDescriptorExpr,
+  callExpr,
+  setPropertyStmt,
 } from "./serialize-util";
 import { AnyClass, AnyFunction } from "./util";
 
@@ -218,19 +220,32 @@ export function serializeClosure(
 
   const statements: ts.Statement[] = [];
 
-  // stores a map of value to a ts.Expression producing that value
-  const valueIds = new Map<any, ts.Expression>();
+  const singleton = (() => {
+    // stores a map of value to a ts.Expression producing that value
+    const valueIds = new Map<any, ts.Expression>();
+
+    return function <T extends ts.Expression>(value: any, produce: () => T): T {
+      // optimize for number of map get/set operations as this is hot code
+      let expr = valueIds.get(value);
+      if (expr === undefined) {
+        expr = produce();
+        valueIds.set(value, expr);
+      }
+      return expr as T;
+    };
+  })();
 
   // stores a map of a `<variable-id>` to a ts.Identifier pointing to the unique location of that variable
   const referenceIds = new Map<string, ts.Identifier>();
-  const referenceExprToIds = new Map<number, number>();
+  // map ReferenceExpr (syntactically) to the Closure Instance ID
+  const referenceInstanceIDs = new Map<number, number>();
 
   const f = serialize(func);
   emit(
-    expr(
-      assign(
-        prop(id("exports"), "handler"),
-        options?.isFactoryFunction ? call(f, []) : f
+    exprStmt(
+      assignExpr(
+        propAccessExpr(idExpr("exports"), "handler"),
+        options?.isFactoryFunction ? callExpr(f, []) : f
       )
     )
   );
@@ -288,7 +303,7 @@ export function serializeClosure(
   function emitVarDecl(
     varKind: "const" | "let" | "var",
     varName: string,
-    expr: ts.Expression
+    expr?: ts.Expression | undefined
   ): ts.Identifier {
     emit(
       ts.factory.createVariableStatement(
@@ -318,7 +333,7 @@ export function serializeClosure(
     return emitVarDecl(
       "const",
       uniqueName(),
-      call(id("require"), [string(mod)])
+      callExpr(idExpr("require"), [stringExpr(mod)])
     );
   }
 
@@ -343,63 +358,58 @@ export function serializeClosure(
   }
 
   function serialize(value: any): ts.Expression {
-    let id = valueIds.get(value);
-    if (id) {
-      return id;
-    }
-    id = serializeValue(value);
-    valueIds.set(value, id);
-    return id;
+    return singleton(value, () => serializeValue(value));
   }
 
   function serializeValue(value: any): ts.Expression {
     if (value === undefined) {
-      return undefined_expr();
+      return undefinedExpr();
     } else if (value === null) {
-      return null_expr();
+      return nullExpr();
     } else if (value === true) {
-      return true_expr();
+      return trueExpr();
     } else if (value === false) {
-      return false_expr();
+      return falseExpr();
     } else if (typeof value === "number") {
-      return number(value);
+      return numberExpr(value);
     } else if (typeof value === "bigint") {
       return ts.factory.createBigIntLiteral(value.toString(10));
     } else if (typeof value === "string") {
       if (options?.serialize) {
         const result = options.serialize(value);
         if (result === false) {
-          return undefined_expr();
+          return undefinedExpr();
         } else if (result === true) {
-          return string(value);
+          return stringExpr(value);
         } else {
           return serialize(result);
         }
       }
-      return string(value);
+      return stringExpr(value);
     } else if (value instanceof RegExp) {
       return ts.factory.createRegularExpressionLiteral(value.source);
     } else if (value instanceof Date) {
-      return ts.factory.createNewExpression(id("Date"), undefined, [
-        number(value.getTime()),
+      return ts.factory.createNewExpression(idExpr("Date"), undefined, [
+        numberExpr(value.getTime()),
       ]);
     } else if (Array.isArray(value)) {
       // TODO: should we check the array's prototype?
 
       // emit an empty array
       // var vArr = []
-      const arr = emitVarDecl(
-        "const",
-        uniqueName(),
-        ts.factory.createArrayLiteralExpression([])
+      const arr = singleton(value, () =>
+        emitVarDecl(
+          "const",
+          uniqueName(),
+          ts.factory.createArrayLiteralExpression([])
+        )
       );
-
-      // cache the empty array now in case any of the items in the array circularly reference the array
-      valueIds.set(value, arr);
 
       // for each item in the array, serialize the value and push it into the array
       // vArr.push(vItem1, vItem2)
-      emit(expr(call(prop(arr, "push"), value.map(serialize))));
+      emit(
+        exprStmt(callExpr(propAccessExpr(arr, "push"), value.map(serialize)))
+      );
 
       return arr;
     } else if (typeof value === "object") {
@@ -411,7 +421,7 @@ export function serializeClosure(
         const result = options.serialize(value);
         if (!result) {
           // do not serialize
-          return emitVarDecl("const", uniqueName(), undefined_expr());
+          return emitVarDecl("const", uniqueName(), undefinedExpr());
         } else if (value === true || typeof result === "object") {
           value = result;
         } else {
@@ -422,10 +432,21 @@ export function serializeClosure(
       const mod = requireCache.get(value);
 
       if (mod && options?.useESBuild !== false) {
-        return importMod(mod, value);
+        return serializeModule(value, mod);
+      }
+
+      if (
+        Object.hasOwn(value, "__defineGetter__") &&
+        value !== Object.prototype
+      ) {
+        // heuristic to detect an Object that looks like the Object.prototype but isn't
+        // we replace it with the actual Object.prototype since we don't know what to do
+        // with its native functions.
+        return serialize(Object.prototype);
       }
 
       const prototype = Object.getPrototypeOf(value);
+
       // serialize the prototype first
       // there should be no circular references between an object instance and its prototype
       // if we need to handle circular references between an instance and prototype, then we can
@@ -435,116 +456,53 @@ export function serializeClosure(
 
       // emit an empty object with the correct prototype
       // e.g. `var vObj = Object.create(vPrototype);`
-      const obj = emitVarDecl(
-        "const",
-        uniqueName(),
-        serializedPrototype
-          ? call(prop(id("Object"), "create"), [serializedPrototype])
-          : object({})
+      const obj = singleton(value, () =>
+        emitVarDecl(
+          "const",
+          uniqueName(),
+          serializedPrototype
+            ? callExpr(propAccessExpr(idExpr("Object"), "create"), [
+                serializedPrototype,
+              ])
+            : objectExpr({})
+        )
       );
 
-      // cache the empty object nwo in case any of the properties in teh array circular reference the object
-      valueIds.set(value, obj);
-
-      // for each of the object's own properties, emit a statement that assigns the value of that property
-      // vObj.propName = vValue
-      Object.getOwnPropertyNames(value)
-        .filter((propName) => propName !== "constructor")
-        .filter(
-          (propName) => options?.shouldCaptureProp?.(value, propName) ?? true
-        )
-        .forEach((propName) => {
-          const propDescriptor = Object.getOwnPropertyDescriptor(
-            value,
-            propName
-          );
-          if (propDescriptor?.get || propDescriptor?.set) {
-            // TODO;
-            // eslint-disable-next-line no-debugger
-            debugger;
-          } else if (propDescriptor?.writable) {
-            emit(expr(assign(prop(obj, propName), serialize(value[propName]))));
-          }
-        });
+      defineProperties(value, obj);
 
       return obj;
     } else if (typeof value === "function") {
-      if (Globals.has(value)) {
-        return emitVarDecl("const", uniqueName(), Globals.get(value)!());
-      }
-
       if (options?.serialize) {
         const result = options.serialize(value);
         if (result === false) {
           // do not serialize
-          return emitVarDecl("const", uniqueName(), undefined_expr());
+          return undefinedExpr();
         } else if (result !== true) {
           value = result;
         }
+      }
+
+      if (Globals.has(value)) {
+        return emitVarDecl("const", uniqueName(), Globals.get(value)!());
       }
 
       // if this is not compiled by functionless, we can only serialize it if it is exported by a module
       const mod = requireCache.get(value);
 
       if (mod && options?.useESBuild !== false) {
-        return importMod(mod, value);
+        return serializeModule(value, mod);
       }
 
       const ast = reflect(value);
 
       if (ast === undefined) {
-        // TODO: check if this is an intrinsic, such as Object, Function, Array, Date, etc.
-        if (mod === undefined) {
-          if (value.name === "bound requireModuleOrMock") {
-            return id("require");
-          } else if (value.name === "Object") {
-            return serialize(Object.prototype);
-          }
-          // eslint-disable-next-line no-debugger
-          debugger;
-          throw new Error(
-            `cannot serialize closures that were not compiled with Functionless unless they are exported by a module: ${func}`
-          );
+        if (mod) {
+          return serializeModule(value, mod);
+        } else {
+          return serializeUnknownFunction(value);
         }
-
-        return importMod(mod, value);
       } else if (isFunctionLike(ast)) {
-        const func = emitVarDecl(
-          "const",
-          uniqueName(),
-          toTS(ast) as ts.Expression
-        );
-
-        // for each of the object's own properties, emit a statement that assigns the value of that property
-        // vObj.propName = vValue
-        Object.getOwnPropertyNames(value)
-          .filter(
-            (propName) => options?.shouldCaptureProp?.(value, propName) ?? true
-          )
-          .forEach((propName) => {
-            const propDescriptor = Object.getOwnPropertyDescriptor(
-              value,
-              propName
-            );
-            if (propDescriptor?.writable) {
-              if (propDescriptor.get || propDescriptor.set) {
-                // TODO:
-                // eslint-disable-next-line no-debugger
-                debugger;
-              } else {
-                emit(
-                  expr(
-                    assign(
-                      prop(func, propName),
-                      serialize(propDescriptor.value)
-                    )
-                  )
-                );
-              }
-            }
-          });
-
-        return func;
+        return serializeFunction(value, ast);
       } else if (isClassDecl(ast) || isClassExpr(ast)) {
         return serializeClass(value, ast);
       } else if (isMethodDecl(ast)) {
@@ -555,26 +513,58 @@ export function serializeClosure(
       throw new Error("not implemented");
     }
 
+    // eslint-disable-next-line no-debugger
+    debugger;
     throw new Error("not implemented");
   }
 
-  function importMod(mod: RequiredModule, value: any) {
+  function serializeModule(value: unknown, mod: RequiredModule) {
     const exports = mod.module?.exports;
     if (exports === undefined) {
       throw new Error(`undefined exports`);
     }
-    if (!valueIds.has(exports)) {
-      const moduleId = getModuleId(mod.path);
-      valueIds.set(exports, emitRequire(moduleId));
-    }
-    const requireMod = valueIds.get(exports)!;
-    const requireModExport = emitVarDecl(
-      "const",
-      uniqueName(),
-      mod.exportName ? prop(requireMod, mod.exportName) : requireMod
+    const requireMod = singleton(exports, () =>
+      emitRequire(getModuleId(mod.path))
     );
-    valueIds.set(value, requireModExport);
-    return requireModExport;
+    return singleton(value, () =>
+      emitVarDecl(
+        "const",
+        uniqueName(),
+        mod.exportName ? propAccessExpr(requireMod, mod.exportName) : requireMod
+      )
+    );
+  }
+
+  function serializeFunction(value: AnyFunction, ast: FunctionLike) {
+    // declare an empty var for this function
+    const func = singleton(value, () => emitVarDecl("var", uniqueName()));
+
+    emit(exprStmt(assignExpr(func, toTS(ast) as ts.Expression)));
+
+    defineProperties(value, func);
+
+    return func;
+  }
+
+  function serializeUnknownFunction(value: AnyFunction) {
+    if (value.name === "bound requireModuleOrMock") {
+      // heuristic to catch Jest's hacked-up require
+      return idExpr("require");
+    } else if (value.name === "Object") {
+      //
+      return serialize(Object);
+    } else if (
+      value.toString() === `function ${value.name}() { [native code] }`
+    ) {
+      // eslint-disable-next-line no-debugger
+      debugger;
+    }
+
+    // eslint-disable-next-line no-debugger
+    debugger;
+    throw new Error(
+      `cannot serialize closures that were not compiled with Functionless unless they are exported by a module: ${func}`
+    );
   }
 
   function serializeClass(
@@ -582,20 +572,72 @@ export function serializeClosure(
     classAST: ClassExpr | ClassDecl
   ): ts.Expression {
     // emit the class to the closure
-    const classDecl = emitVarDecl(
-      "const",
-      uniqueName(classAST),
-      toTS(classAST) as ts.Expression
+    const classDecl = singleton(classVal, () =>
+      emitVarDecl(
+        "const",
+        uniqueName(classAST),
+        toTS(classAST) as ts.Expression
+      )
     );
 
-    valueIds.set(classVal, classDecl);
-
     monkeyPatch(classDecl, classVal, classVal, ["prototype"]);
-    monkeyPatch(prop(classDecl, "prototype"), classVal.prototype, classVal, [
-      "constructor",
-    ]);
+    monkeyPatch(
+      propAccessExpr(classDecl, "prototype"),
+      classVal.prototype,
+      classVal,
+      ["constructor"]
+    );
 
     return classDecl;
+  }
+
+  function defineProperties(
+    value: unknown,
+    expr: ts.Expression,
+    ignore?: string[]
+  ) {
+    const ignoreSet = new Set(ignore);
+    // for each of the object's own properties, emit a statement that assigns the value of that property
+    // vObj.propName = vValue
+    Object.getOwnPropertyNames(value)
+      .filter(
+        (propName) =>
+          !ignoreSet.has(propName) &&
+          (options?.shouldCaptureProp?.(value, propName) ?? true)
+      )
+      .forEach((propName) => {
+        const propDescriptor = Object.getOwnPropertyDescriptor(value, propName);
+        if (propDescriptor?.writable) {
+          if (
+            propDescriptor.get === undefined &&
+            propDescriptor.set === undefined
+          ) {
+            emit(
+              setPropertyStmt(expr, propName, serialize(propDescriptor.value))
+            );
+          } else {
+            const getter = propDescriptor.get
+              ? serialize(propDescriptor.get)
+              : undefinedExpr();
+            const setter = propDescriptor.set
+              ? serialize(propDescriptor.set)
+              : undefinedExpr();
+
+            emit(
+              exprStmt(
+                definePropertyExpr(
+                  expr,
+                  stringExpr(propName),
+                  objectExpr({
+                    get: getter,
+                    set: setter,
+                  })
+                )
+              )
+            );
+          }
+        }
+      });
   }
 
   /**
@@ -631,11 +673,11 @@ export function serializeClosure(
 
         if (get?.patched || set?.patched) {
           emit(
-            expr(
-              defineProperty(
+            exprStmt(
+              definePropertyExpr(
                 varName,
-                string(propName),
-                object({
+                stringExpr(propName),
+                objectExpr({
                   ...(get
                     ? {
                         get: get.patched ?? get.original,
@@ -689,8 +731,8 @@ export function serializeClosure(
             ).ownedBy!.ref();
             if (owner === ownedBy) {
               return {
-                original: prop(
-                  getOwnPropertyDescriptor(varName, string(propName)),
+                original: propAccessExpr(
+                  getOwnPropertyDescriptorExpr(varName, stringExpr(propName)),
                   kind
                 ),
               };
@@ -713,17 +755,16 @@ export function serializeClosure(
         const methodAST = reflect(method);
         if (methodAST === undefined) {
           throw new Error(`method ${method.toString()} cannot be reflected`);
-        }
-        if (isMethodDecl(methodAST)) {
+        } else if (isMethodDecl(methodAST)) {
           if (methodAST.ownedBy!.ref() !== ownedBy) {
             // this is a monkey-patched method, overwrite the value
-            emit(expr(assign(prop(varName, propName), serialize(method))));
+            emit(setPropertyStmt(varName, propName, serialize(method)));
           } else {
             // this is the same method as declared in the class, so do nothing
           }
         } else if (isFunctionLike(methodAST)) {
           // a method that has been patched with a function decl/expr or arrow expr.
-          emit(expr(assign(prop(varName, propName), serialize(method))));
+          emit(setPropertyStmt(varName, propName, serialize(method)));
         } else {
           throw new Error(
             `Cannot monkey-patch a method with a ${methodAST.kindName}`
@@ -731,9 +772,7 @@ export function serializeClosure(
         }
       } else if (propDescriptor.writable) {
         // this is a literal value, like an object, so let's serialize it and set
-        emit(
-          expr(assign(prop(varName, propName), serialize(propDescriptor.value)))
-        );
+        emit(setPropertyStmt(varName, propName, propDescriptor.value));
       }
     }
   }
@@ -778,9 +817,9 @@ export function serializeClosure(
   function _toTS(node: FunctionlessNode): ts.Node {
     if (isReferenceExpr(node)) {
       // get the set of ReferenceExpr instances for thisId
-      let thisId = referenceExprToIds.get(node.thisId);
+      let thisId = referenceInstanceIDs.get(node.thisId);
       thisId = thisId === undefined ? 0 : thisId + 1;
-      referenceExprToIds.set(node.thisId, thisId);
+      referenceInstanceIDs.set(node.thisId, thisId);
 
       // a key that uniquely identifies the variable pointed to by this reference
       const varKey = `${node.getFileName()} ${node.name} ${node.id} ${thisId}`;
@@ -958,7 +997,7 @@ export function serializeClosure(
     } else if (isBigIntExpr(node)) {
       return ts.factory.createBigIntLiteral(node.value.toString(10));
     } else if (isStringLiteralExpr(node)) {
-      return string(node.value);
+      return stringExpr(node.value);
     } else if (isArrayLiteralExpr(node)) {
       return ts.factory.createArrayLiteralExpression(
         node.items.map((item) => toTS(item) as ts.Expression),

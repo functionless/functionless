@@ -1,34 +1,34 @@
 import ts from "typescript";
 
-export function undefined_expr() {
+export function undefinedExpr() {
   return ts.factory.createIdentifier("undefined");
 }
 
-export function null_expr() {
+export function nullExpr() {
   return ts.factory.createNull();
 }
 
-export function true_expr() {
+export function trueExpr() {
   return ts.factory.createTrue();
 }
 
-export function false_expr() {
+export function falseExpr() {
   return ts.factory.createFalse();
 }
 
-export function id(name: string) {
+export function idExpr(name: string) {
   return ts.factory.createIdentifier(name);
 }
 
-export function string(name: string) {
+export function stringExpr(name: string) {
   return ts.factory.createStringLiteral(name);
 }
 
-export function number(num: number) {
+export function numberExpr(num: number) {
   return ts.factory.createNumericLiteral(num);
 }
 
-export function object(obj: Record<string, ts.Expression>) {
+export function objectExpr(obj: Record<string, ts.Expression>) {
   return ts.factory.createObjectLiteralExpression(
     Object.entries(obj).map(([name, val]) =>
       ts.factory.createPropertyAssignment(name, val)
@@ -38,15 +38,15 @@ export function object(obj: Record<string, ts.Expression>) {
 
 const propNameRegex = /^[_a-zA-Z][_a-zA-Z0-9]*$/g;
 
-export function prop(expr: ts.Expression, name: string) {
+export function propAccessExpr(expr: ts.Expression, name: string) {
   if (name.match(propNameRegex)) {
     return ts.factory.createPropertyAccessExpression(expr, name);
   } else {
-    return ts.factory.createElementAccessExpression(expr, string(name));
+    return ts.factory.createElementAccessExpression(expr, stringExpr(name));
   }
 }
 
-export function assign(left: ts.Expression, right: ts.Expression) {
+export function assignExpr(left: ts.Expression, right: ts.Expression) {
   return ts.factory.createBinaryExpression(
     left,
     ts.factory.createToken(ts.SyntaxKind.EqualsToken),
@@ -54,25 +54,48 @@ export function assign(left: ts.Expression, right: ts.Expression) {
   );
 }
 
-export function call(expr: ts.Expression, args: ts.Expression[]) {
+export function callExpr(expr: ts.Expression, args: ts.Expression[]) {
   return ts.factory.createCallExpression(expr, undefined, args);
 }
 
-export function expr(expr: ts.Expression): ts.Statement {
+export function exprStmt(expr: ts.Expression): ts.Statement {
   return ts.factory.createExpressionStatement(expr);
 }
 
-export function defineProperty(
+export function setPropertyStmt(
+  on: ts.Expression,
+  key: string,
+  value: ts.Expression
+) {
+  return exprStmt(setPropertyExpr(on, key, value));
+}
+
+export function setPropertyExpr(
+  on: ts.Expression,
+  key: string,
+  value: ts.Expression
+) {
+  return assignExpr(propAccessExpr(on, key), value);
+}
+
+export function definePropertyExpr(
   on: ts.Expression,
   name: ts.Expression,
   value: ts.Expression
 ) {
-  return call(prop(id("Object"), "defineProperty"), [on, name, value]);
+  return callExpr(propAccessExpr(idExpr("Object"), "defineProperty"), [
+    on,
+    name,
+    value,
+  ]);
 }
 
-export function getOwnPropertyDescriptor(
+export function getOwnPropertyDescriptorExpr(
   obj: ts.Expression,
   key: ts.Expression
 ) {
-  return call(prop(id("Object"), "getOwnPropertyDescriptor"), [obj, key]);
+  return callExpr(
+    propAccessExpr(idExpr("Object"), "getOwnPropertyDescriptor"),
+    [obj, key]
+  );
 }

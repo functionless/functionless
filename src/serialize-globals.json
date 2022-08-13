@@ -129,6 +129,7 @@
     "location",
     "Lock",
     "LockManager",
+    "Math",
     "Map",
     "MediaCapabilities",
     "MessageChannel",
