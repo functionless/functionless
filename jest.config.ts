@@ -2,7 +2,14 @@
 import register from "@swc/register/lib/node";
 
 register({
-  ignore: [],
+  ignore: [
+    (file) => {
+      if (file.includes("aws-sdk")) {
+        console.log(file);
+      }
+      return false;
+    },
+  ],
 });
 
 import fs from "fs";
@@ -22,5 +29,6 @@ export default async (): Promise<Config.InitialOptions> => {
   return {
     // override defaults programmatically if needed
     ...defaults,
+    transformIgnorePatterns: ["node_modules/typescript/.*"],
   };
 };

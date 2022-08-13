@@ -121,6 +121,20 @@
       "env": {
         "TS_NODE_PROJECT": "${workspaceRoot}/test-app/tsconfig.json"
       }
+    },
+    {
+      "name": "generate-globals",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"],
+      "args": ["./src/serialize-globals.ts"],
+      "cwd": "${workspaceRoot}",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "env": {
+        "TS_NODE_PROJECT": "${workspaceRoot}/tsconfig.json"
+      }
     }
   ]
 }

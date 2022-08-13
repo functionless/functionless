@@ -99,6 +99,23 @@ import {
 } from "./guards";
 import { FunctionlessNode } from "./node";
 import { reflect } from "./reflect";
+import { Globals } from "./serialize-globals";
+import {
+  expr,
+  assign,
+  prop,
+  id,
+  string,
+  undefined_expr,
+  null_expr,
+  true_expr,
+  false_expr,
+  number,
+  object,
+  defineProperty,
+  getOwnPropertyDescriptor,
+  call,
+} from "./serialize-util";
 import { AnyClass, AnyFunction } from "./util";
 
 export interface SerializeClosureProps extends esbuild.BuildOptions {
@@ -134,24 +151,6 @@ export interface SerializeClosureProps extends esbuild.BuildOptions {
    */
   isFactoryFunction?: boolean;
 }
-
-const globals = new Map<any, () => ts.Expression>([
-  [process, () => id("process")],
-  [Object, () => id("Object")],
-  [Object.prototype, () => prop(id("Object"), "prototype")],
-  [Function, () => id("Function")],
-  [Function.prototype, () => prop(id("Function"), "prototype")],
-  [Date, () => id("Date")],
-  [Date.prototype, () => prop(id("Date"), "prototype")],
-  [RegExp, () => id("RegExp")],
-  [RegExp.prototype, () => prop(id("RegExp"), "prototype")],
-  [Error, () => id("Error")],
-  [Error.prototype, () => prop(id("Error"), "prototype")],
-  [JSON, () => id("JSON")],
-  [Promise, () => id("Promise")],
-  [console, () => id("console")],
-  [setTimeout, () => id("setTimeout")],
-]);
 
 /**
  * Serialize a closure to a bundle that can be remotely executed.
@@ -363,7 +362,7 @@ export function serializeClosure(
     } else if (value === false) {
       return false_expr();
     } else if (typeof value === "number") {
-      return number_expr(value);
+      return number(value);
     } else if (typeof value === "bigint") {
       return ts.factory.createBigIntLiteral(value.toString(10));
     } else if (typeof value === "string") {
@@ -382,7 +381,7 @@ export function serializeClosure(
       return ts.factory.createRegularExpressionLiteral(value.source);
     } else if (value instanceof Date) {
       return ts.factory.createNewExpression(id("Date"), undefined, [
-        number_expr(value.getTime()),
+        number(value.getTime()),
       ]);
     } else if (Array.isArray(value)) {
       // TODO: should we check the array's prototype?
@@ -404,8 +403,8 @@ export function serializeClosure(
 
       return arr;
     } else if (typeof value === "object") {
-      if (globals.has(value)) {
-        return emitVarDecl("const", uniqueName(), globals.get(value)!());
+      if (Globals.has(value)) {
+        return emitVarDecl("const", uniqueName(), Globals.get(value)!());
       }
 
       if (options?.serialize) {
@@ -470,8 +469,8 @@ export function serializeClosure(
 
       return obj;
     } else if (typeof value === "function") {
-      if (globals.has(value)) {
-        return emitVarDecl("const", uniqueName(), globals.get(value)!());
+      if (Globals.has(value)) {
+        return emitVarDecl("const", uniqueName(), Globals.get(value)!());
       }
 
       if (options?.serialize) {
@@ -501,6 +500,8 @@ export function serializeClosure(
           } else if (value.name === "Object") {
             return serialize(Object.prototype);
           }
+          // eslint-disable-next-line no-debugger
+          debugger;
           throw new Error(
             `cannot serialize closures that were not compiled with Functionless unless they are exported by a module: ${func}`
           );
@@ -1397,78 +1398,4 @@ export function serializeClosure(
       return assertNever(node);
     }
   }
-}
-
-function undefined_expr() {
-  return ts.factory.createIdentifier("undefined");
-}
-
-function null_expr() {
-  return ts.factory.createNull();
-}
-
-function true_expr() {
-  return ts.factory.createTrue();
-}
-
-function false_expr() {
-  return ts.factory.createFalse();
-}
-
-function id(name: string) {
-  return ts.factory.createIdentifier(name);
-}
-
-function string(name: string) {
-  return ts.factory.createStringLiteral(name);
-}
-
-function number_expr(num: number) {
-  return ts.factory.createNumericLiteral(num);
-}
-
-function object(obj: Record<string, ts.Expression>) {
-  return ts.factory.createObjectLiteralExpression(
-    Object.entries(obj).map(([name, val]) =>
-      ts.factory.createPropertyAssignment(name, val)
-    )
-  );
-}
-
-const propNameRegex = /^[_a-zA-Z][_a-zA-Z0-9]*$/g;
-
-function prop(expr: ts.Expression, name: string) {
-  if (name.match(propNameRegex)) {
-    return ts.factory.createPropertyAccessExpression(expr, name);
-  } else {
-    return ts.factory.createElementAccessExpression(expr, string(name));
-  }
-}
-
-function assign(left: ts.Expression, right: ts.Expression) {
-  return ts.factory.createBinaryExpression(
-    left,
-    ts.factory.createToken(ts.SyntaxKind.EqualsToken),
-    right
-  );
-}
-
-function call(expr: ts.Expression, args: ts.Expression[]) {
-  return ts.factory.createCallExpression(expr, undefined, args);
-}
-
-function expr(expr: ts.Expression): ts.Statement {
-  return ts.factory.createExpressionStatement(expr);
-}
-
-function defineProperty(
-  on: ts.Expression,
-  name: ts.Expression,
-  value: ts.Expression
-) {
-  return call(prop(id("Object"), "defineProperty"), [on, name, value]);
-}
-
-function getOwnPropertyDescriptor(obj: ts.Expression, key: ts.Expression) {
-  return call(prop(id("Object"), "getOwnPropertyDescriptor"), [obj, key]);
 }

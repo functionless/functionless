@@ -153,7 +153,8 @@ const project = new CustomTypescriptProject({
       // @ts-ignore
       declarationMap: true,
       noUncheckedIndexedAccess: true,
-      lib: ["dom", "ES2019"],
+      lib: ["dom", "ES2022"],
+      resolveJsonModule: true,
     },
   },
   tsconfigDev: {
