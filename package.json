@@ -89,8 +89,7 @@
     "@swc/register": "^0.1.10",
     "@types/aws-lambda": "^8.10.101",
     "fs-extra": "^10.1.0",
-    "minimatch": "^5.1.0",
-    "utility-types": "^3.10.0"
+    "minimatch": "^5.1.0"
   },
   "main": "lib/index.js",
   "license": "Apache-2.0",
