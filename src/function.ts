@@ -379,7 +379,7 @@ abstract class FunctionBase<in Payload, Out>
     this.resource.grantInvoke(context.role);
 
     return payloadArg
-      ? context.evalExpr(payloadArg, (output) => {
+      ? context.evalExprToJsonPathOrLiteral(payloadArg, (output) => {
           return context.stateWithHeapOutput(
             ASLGraph.taskWithInput(
               {
@@ -387,7 +387,7 @@ abstract class FunctionBase<in Payload, Out>
                 Resource: this.resource.functionArn,
                 Next: ASLGraph.DeferNext,
               },
-              output ?? { jsonPath: context.context.null }
+              output
             )
           );
         })

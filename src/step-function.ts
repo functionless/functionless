@@ -360,8 +360,8 @@ export namespace $SFN {
       throw new Error("missing argument 'array'");
     }
 
-    return context.evalExpr(array, call, (_, { normalizeOutputToJsonPath }) => {
-      const arrayPath = normalizeOutputToJsonPath().jsonPath;
+    return context.evalExprToJsonPath(array, call, (output) => {
+      const arrayPath = output.jsonPath;
 
       const [itemParam, indexParam, arrayParam] = callbackfn.parameters;
 
@@ -794,7 +794,7 @@ abstract class BaseStepFunction<
       TraceHeader: traceHeader,
     };
 
-    return context.evalContext(call, (evalExpr) => {
+    return context.evalContext(call, ({ evalExprToJsonPathOrLiteral }) => {
       // evaluate each of the input expressions,
       // returning an object assignment with the output value { input.$: $.inputLocation }
       // and a state object containing the output and/or a sub-state with additional required nodes to add to the
@@ -803,7 +803,9 @@ abstract class BaseStepFunction<
         Object.entries(inputs)
           .filter(([, expr]) => !!expr)
           .flatMap(([key, expr]) =>
-            Object.entries(context.toJsonAssignment(key, evalExpr(expr!)))
+            Object.entries(
+              ASLGraph.jsonAssignment(key, evalExprToJsonPathOrLiteral(expr!))
+            )
           )
       );
 
@@ -1435,11 +1437,11 @@ class BaseStandardStepFunction<
         "Describe Execution requires a single string argument."
       );
 
-      return context.evalExpr(executionArnExpr, (argValueOutput) => {
+      return context.evalExprToJsonPathOrLiteral(executionArnExpr, (output) => {
         return context.stateWithHeapOutput({
           Type: "Task",
           Resource: "arn:aws:states:::aws-sdk:sfn:describeExecution",
-          Parameters: context.toJsonAssignment("ExecutionArn", argValueOutput),
+          Parameters: ASLGraph.jsonAssignment("ExecutionArn", output),
           Next: ASLGraph.DeferNext,
         });
       });

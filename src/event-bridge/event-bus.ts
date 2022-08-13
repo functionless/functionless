@@ -297,7 +297,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
           throw Error("Must provide at least one event.");
         }
 
-        return context.evalContext(call, (evalExpr) => {
+        return context.evalContext(call, ({ evalExprToJsonPathOrLiteral }) => {
           const events = eventObjs.map((event) => {
             const props = event.properties.filter(
               (
@@ -313,7 +313,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
               );
             }
             const evaluatedProps = props.map(({ name, expr }) => {
-              const val = evalExpr(expr);
+              const val = evalExprToJsonPathOrLiteral(expr);
               return {
                 name: isIdentifier(name) ? name.name : name.value,
                 value: val,
@@ -337,10 +337,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
                 .reduce(
                   (acc: Record<string, any>, { name, value }) => ({
                     ...acc,
-                    ...context.toJsonAssignment(
-                      ENTRY_PROPERTY_MAP[name],
-                      value
-                    ),
+                    ...ASLGraph.jsonAssignment(ENTRY_PROPERTY_MAP[name], value),
                   }),
                   { EventBusName: this.resource.eventBusArn }
                 ),

@@ -483,16 +483,27 @@ test("condition on task output", () => {
 test("boolean logic", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<
-    { a: boolean; b: boolean },
+    { a: boolean; b: boolean; s: string },
     { and: boolean; or: boolean }
   >(stack, "fn", (input) => {
     return {
       and: input.a && input.b,
       or: input.a || input.b,
+      andCondition: input.a === input.b && input.s === "hello",
+      orCondition: input.a === input.b || input.s === "hello",
+      nullCondition: input.a === input.b ?? input.s === "hello",
       not: !true,
       notAnd: !(input.a && input.b),
       notOr: !(input.a || input.b),
       chain: !(input.a || (input.b && input.a)),
+      andFalsyConstantString: "" && input.s,
+      andTruthyConstantString: "hi" && input.s,
+      andAllConstant: true && false,
+      andVariable: input.a && input.s,
+      orFalsyConstantString: "" || input.s,
+      orTruthyConstantString: "hi" || input.s,
+      orAllConstant: false || true,
+      orVariable: input.b || input.s,
     };
   }).definition;
 
@@ -3633,6 +3644,29 @@ test("parse json", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("Boolean", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "machine2",
+    (input: { value: string }) => {
+      return {
+        trueString: Boolean("1"),
+        trueBoolean: Boolean(true),
+        trueNumber: Boolean(1),
+        trueObject: Boolean({}),
+        falseString: Boolean(""),
+        falseBoolean: Boolean(false),
+        falseNumber: Boolean(0),
+        empty: Boolean(),
+        var: Boolean(input.value),
+      };
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("use context parameter", () => {
   const { stack } = initStepFunctionApp();
   const definition = new StepFunction<{ value: string }, string>(
@@ -3958,6 +3992,29 @@ describe("binding", () => {
       }
       return a;
     }).definition;
+
+    expect(normalizeDefinition(definition)).toMatchSnapshot();
+  });
+
+  test("forOf weird values", () => {
+    const { stack } = initStepFunctionApp();
+    const definition = new StepFunction<{ value?: number[] }, string>(
+      stack,
+      "machine1",
+      async (input) => {
+        let a = "";
+        for (const val of input.value ?? [1, 2, 3]) {
+          a = `${val}${a}`;
+        }
+        for (const val of input.value || [1, 2, 3]) {
+          a = `${val}${a}`;
+        }
+        for (const val of ((a = "b"), true) && [1, 2, 3]) {
+          a = `${val}${a}`;
+        }
+        return a;
+      }
+    ).definition;
 
     expect(normalizeDefinition(definition)).toMatchSnapshot();
   });

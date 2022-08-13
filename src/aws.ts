@@ -465,13 +465,13 @@ export namespace $AWS {
           );
         }
 
-        return context.evalExpr(payload.expr, (output) => {
+        return context.evalExprToJsonPathOrLiteral(payload.expr, (output) => {
           return context.stateWithHeapOutput({
             Type: "Task",
             Resource: "arn:aws:states:::lambda:invoke",
             Parameters: {
               FunctionName: functionRef.resource.functionName,
-              ...context.toJsonAssignment("Payload", output),
+              ...ASLGraph.jsonAssignment("Payload", output),
             },
             Next: ASLGraph.DeferNext,
           });
