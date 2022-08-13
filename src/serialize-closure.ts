@@ -374,6 +374,22 @@ export function serializeClosure(
       return numberExpr(value);
     } else if (typeof value === "bigint") {
       return ts.factory.createBigIntLiteral(value.toString(10));
+    } else if (typeof value === "symbol") {
+      const symbol = serialize(Symbol);
+      if (typeof value.description === "string") {
+        if (value === Symbol.for(value.description)) {
+          // Symbol.for(description)
+          return callExpr(propAccessExpr(symbol, "for"), [
+            stringExpr(value.description),
+          ]);
+        } else {
+          // Symbol(description)
+          return callExpr(symbol, [stringExpr(value.description)]);
+        }
+      } else {
+        // Symbol()
+        return callExpr(symbol, []);
+      }
     } else if (typeof value === "string") {
       if (options?.serialize) {
         const result = options.serialize(value);
@@ -596,13 +612,13 @@ export function serializeClosure(
     expr: ts.Expression,
     ignore?: string[]
   ) {
-    const ignoreSet = new Set(ignore);
+    const ignoreSet = ignore ? new Set() : undefined;
     // for each of the object's own properties, emit a statement that assigns the value of that property
     // vObj.propName = vValue
     Object.getOwnPropertyNames(value)
       .filter(
         (propName) =>
-          !ignoreSet.has(propName) &&
+          ignoreSet?.has(propName) !== true &&
           (options?.shouldCaptureProp?.(value, propName) ?? true)
       )
       .forEach((propName) => {

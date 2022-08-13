@@ -19,34 +19,31 @@ for (const moduleName of modules) {
 }
 
 function registerValue(value: any, expr: ts.Expression) {
-  Globals.set(value, () => expr);
-  if (typeof value === "function") {
-    Globals.set(value.prototype, () => propAccessExpr(expr, "prototype"));
+  if (Globals.has(value)) {
+    return;
   }
+  Globals.set(value, () => expr);
   registerOwnProperties(value, expr);
+  if (typeof value === "function") {
+    registerValue(value.prototype, propAccessExpr(expr, "prototype"));
+  } else if (value && typeof value === "object") {
+    registerValue(value.constructor, propAccessExpr(expr, "constructor"));
+  }
 }
 
 function registerOwnProperties(value: any, expr: ts.Expression) {
-  // go through each of its properties
-  for (const propName of Object.getOwnPropertyNames(value)) {
-    if (value === process && propName === "env") {
-      // never serialize environment variables
-      continue;
-    }
-    const propDesc = Object.getOwnPropertyDescriptor(value, propName);
-    if (!propDesc?.writable || propDesc?.get || propDesc.set) {
-      continue;
-    }
-    const propValue = propDesc.value;
-    if (
-      propValue &&
-      !Globals.has(propValue) &&
-      (typeof propValue === "function" || typeof propValue === "object")
-    ) {
-      Globals.set(propValue, () => propAccessExpr(expr, propName));
-      if (typeof propValue === "function") {
-        registerOwnProperties(propValue, propAccessExpr(expr, propName));
+  if (value && (typeof value === "object" || typeof value === "function")) {
+    // go through each of its properties
+    for (const propName of Object.getOwnPropertyNames(value)) {
+      if (value === process && propName === "env") {
+        // never serialize environment variables
+        continue;
       }
+      const propDesc = Object.getOwnPropertyDescriptor(value, propName);
+      if (!propDesc?.writable || propDesc?.get || propDesc.set) {
+        continue;
+      }
+      registerValue(propDesc.value, propAccessExpr(expr, propName));
     }
   }
 }
