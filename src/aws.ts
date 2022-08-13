@@ -41,7 +41,12 @@ import {
   makeIntegration,
 } from "./integration";
 import { AnyTable, isTable, ITable } from "./table";
-import type { AnyFunction, AnyAsyncFunction, OverloadUnion } from "./util";
+import {
+  AnyFunction,
+  AnyAsyncFunction,
+  OverloadUnion,
+  evalToConstant,
+} from "./util";
 
 /**
  * The `AWS` namespace exports functions that map to AWS Step Functions AWS-SDK Integrations.
@@ -530,21 +535,28 @@ export namespace $AWS {
                 kind: `$AWS.SDK.${serviceName}`,
                 native: {
                   bind(context, args) {
-                    const iamOptions = args[1] as unknown as IamOptions;
+                    const options =
+                      args[1] &&
+                      (evalToConstant(args[1])?.constant as SdkCallOptions);
 
-                    if (!isObjectLiteralExpr(iamOptions)) {
+                    if (!options) {
                       throw new SynthError(
                         ErrorCodes.Expected_an_object_literal,
-                        `Second argument ('iamOptions') into a SDK call must be an object`
+                        "Second argument ('options') into a SDK call is required"
+                      );
+                    } else if (typeof options !== "object") {
+                      throw new SynthError(
+                        ErrorCodes.Expected_an_object_literal,
+                        "Second argument ('options') into a SDK call must be an object"
                       );
                     }
 
                     context.resource.addToRolePolicy(
                       new aws_iam.PolicyStatement({
                         effect: aws_iam.Effect.ALLOW,
-                        actions: iamOptions.iamActions ?? defaultIamActions,
-                        resources: iamOptions.iamResources,
-                        conditions: iamOptions.iamConditions,
+                        actions: options.iamActions ?? defaultIamActions,
+                        resources: options.iamResources,
+                        conditions: options.iamConditions,
                       })
                     );
                   },
@@ -570,21 +582,29 @@ export namespace $AWS {
                   },
                 },
                 asl: (call, context) => {
-                  const iamOptions = call.args[1] as unknown as IamOptions;
+                  const options =
+                    call.args[1]?.expr &&
+                    (evalToConstant(call.args[1]?.expr)
+                      ?.constant as SdkCallOptions);
 
-                  if (!isObjectLiteralExpr(iamOptions)) {
+                  if (!options) {
                     throw new SynthError(
                       ErrorCodes.Expected_an_object_literal,
-                      `Second argument ('iamOptions') into a SDK call must be an object`
+                      "Second argument ('options') into a SDK call is required"
+                    );
+                  } else if (typeof options !== "object") {
+                    throw new SynthError(
+                      ErrorCodes.Expected_an_object_literal,
+                      "Second argument ('options') into a SDK call must be an object"
                     );
                   }
 
                   context.role.addToPrincipalPolicy(
                     new aws_iam.PolicyStatement({
                       effect: aws_iam.Effect.ALLOW,
-                      actions: iamOptions.iamActions ?? defaultIamActions,
-                      resources: iamOptions.iamResources,
-                      conditions: iamOptions.iamConditions,
+                      actions: options.iamActions ?? defaultIamActions,
+                      resources: options.iamResources,
+                      conditions: options.iamConditions,
                     })
                   );
 
@@ -649,7 +669,7 @@ type SDK = {
     : never;
 };
 
-interface IamOptions {
+interface SdkCallOptions {
   /**
    * The resources for the IAM statement that will be added to the state machine
    * role's policy to allow the state machine to make the API call.
@@ -697,7 +717,7 @@ type StepFunctionMethod<API> = API extends AnyFunction
   ? Exclude<OverloadUnion<API>, (cb: AnyFunction) => any> extends (
       input: infer Input extends {}
     ) => AWS.Request<infer Output, any>
-    ? (input: Input, iamOptions: IamOptions) => Promise<Output>
+    ? (input: Input, options: SdkCallOptions) => Promise<Output>
     : never
   : never;
 
