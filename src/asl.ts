@@ -129,9 +129,14 @@ import { StepFunctionError } from "./step-function";
 import {
   anyOf,
   DeterministicNameGenerator,
+  escapeRegExp,
   evalToConstant,
+  formatJsonPath,
   invertBinaryOperator,
   isPromiseAll,
+  jsonPathStartsWith,
+  normalizeJsonPath,
+  replaceJsonPathPrefix,
   UniqueNameGenerator,
 } from "./util";
 import { visitEachChild } from "./visit";
@@ -854,7 +859,7 @@ export class ASL {
 
         const initializer: ASLGraph.SubState | ASLGraph.NodeState = (() => {
           /**ForInStmt
-           * Assign the value to $.0__[variableName].
+           * Assign the value to $.fnls__0__[variableName].
            * Assign the index to the variable decl. If the variable decl is an identifier, it may be carried beyond the ForIn.
            */
           if (isForInStmt(stmt)) {
@@ -887,7 +892,7 @@ export class ASL {
                 assignValue: {
                   Type: "Pass",
                   InputPath: `${tempArrayPath}[0].item`,
-                  ResultPath: `$.0__${initializerName}`,
+                  ResultPath: `$.fnls__0__${initializerName}`,
                   Next: ASLGraph.DeferNext,
                 },
               },
@@ -2199,7 +2204,7 @@ export class ASL {
       } else if (isPropAccessExpr(expr)) {
         if (isIdentifier(expr.name)) {
           return this.evalExpr(expr.expr, (output) => {
-            return ASLGraph.accessConstant(output, expr.name.name, false);
+            return ASLGraph.accessConstant(output, expr.name.name);
           });
         } else {
           throw new SynthError(ErrorCodes.Classes_are_not_supported);
@@ -3252,14 +3257,17 @@ export class ASL {
               ? ref.name.name
               : undefined;
 
-            if (!propName) {
+            if (
+              !propName ||
+              !(typeof propName === "string" || typeof propName === "number")
+            ) {
               // step function does not support variable property accessors
               // this will probably fail in the filter to ASLGraph implementation too
               // however, lets let ASLGraph try and fail if needed.
               return undefined;
             }
 
-            return `${value}['${propName}']`;
+            return formatJsonPath([propName], value);
           }
         }
       } else if (isPropAccessExpr(expr)) {
@@ -3772,8 +3780,11 @@ export class ASL {
           return false;
         })
       ) {
-        // the array element is assigned to $.0__[name]
-        return { jsonPath: `$.0__${this.getIdentifierName(access.element)}` };
+        // the array element is assigned to $.fnls__0__[name]
+        // https://twitter.com/sussmansa/status/1542777348616990720?s=20&t=p5GiGf58znNQmhj1zEOIqg
+        return {
+          jsonPath: `$.fnls__0__${this.getIdentifierName(access.element)}`,
+        };
       }
     }
 
@@ -3784,8 +3795,7 @@ export class ASL {
 
       const updatedOutput = ASLGraph.accessConstant(
         exprOutput,
-        this.getElementAccessConstant(elementOutput),
-        true
+        this.getElementAccessConstant(elementOutput)
       );
 
       return ASLGraph.updateAslStateOutput(expr, updatedOutput);
@@ -4017,7 +4027,13 @@ export class ASL {
               ? propertyNameExpr.value
               : undefined;
 
-            if (!propertyName || typeof propertyName !== "string") {
+            if (
+              !propertyName ||
+              !(
+                typeof propertyName === "string" ||
+                typeof propertyName === "number"
+              )
+            ) {
               throw new SynthError(
                 ErrorCodes.StepFunctions_property_names_must_be_constant
               );
@@ -4025,7 +4041,7 @@ export class ASL {
 
             if (ASLGraph.isJsonPath(value)) {
               return {
-                jsonPath: `${value.jsonPath}['${propertyName}']`,
+                jsonPath: formatJsonPath([propertyName], value.jsonPath),
               };
             } else if (
               ASLGraph.isLiteralValue(value) &&
@@ -4788,7 +4804,7 @@ export namespace ASLGraph {
        * Remove any states with no effect (Pass, generally)
        * The incoming states to the empty states are re-wired to the outgoing transition of the empty state.
        */
-      removeEmptyStates(startState, namedStates)
+      reduceGraph(startState, Object.fromEntries(namedStates))
     );
 
     const reachableStates = findReachableStates(startState, updatedStates);
@@ -4858,15 +4874,12 @@ export namespace ASLGraph {
     }
   }
 
-  function removeEmptyStates(
-    startState: string,
-    stateEntries: [string, State][]
-  ): [string, State][] {
-    /**
-     * Find all {@link Pass} states that do not do anything.
-     */
-    const emptyStates = Object.fromEntries(
-      stateEntries.filter((entry): entry is [string, Pass] => {
+  /**
+   * Find all {@link Pass} states that do not do anything.
+   */
+  function findEmptyStates(startState: string, states: States): string[] {
+    return Object.entries(states)
+      .filter((entry): entry is [string, Pass] => {
         const [name, state] = entry;
         return (
           name !== startState &&
@@ -4882,96 +4895,1316 @@ export namespace ASLGraph {
           )
         );
       })
-    );
+      .map(([name]) => name);
+  }
 
-    const emptyTransitions = computeEmptyStateToUpdatedTransition(emptyStates);
+  function analyzeVariables(startState: string, states: States) {
+    const variableAssignments: StateVariableUsage[] = [];
+    const variableNames = new Set<string>();
+    const visited = new Set<string>();
 
-    // return the updated set of name to state.
-    return stateEntries.flatMap(([name, state]) => {
-      if (name in emptyTransitions) {
+    const topo = topoSort(startState, states);
+
+    depthFirst(startState);
+
+    const variableNamesArray = [...variableNames];
+
+    const stats = variableNamesArray.map((v) => ({
+      variable: v,
+      assigns: variableAssignments
+        .filter((usage) => {
+          if (
+            usage.type === "Assignment" ||
+            usage.type === "PropAssignment" ||
+            usage.type === "LiteralPropAssignment" ||
+            usage.type === "LiteralAssignment" ||
+            usage.type === "StateOutput" ||
+            usage.type === "Intrinsic" ||
+            usage.type === "Filter" ||
+            usage.type === "FilterPropAssignment"
+          ) {
+            return jsonPathStartsWith(usage.to, v);
+          } else if (
+            // condition and state input cases do not create or update variables.
+            usage.type === "Condition" ||
+            usage.type === "StateInput" ||
+            usage.type === "ReturnUsage"
+          ) {
+            return false;
+          } else {
+            return assertNever(usage);
+          }
+        })
+        .map((s) => ({
+          usage: s,
+          index: topo.findIndex((t) => t[0] === s.state),
+        })),
+      usage: variableAssignments
+        .filter((usage) => {
+          if (
+            usage.type === "Assignment" ||
+            usage.type === "Intrinsic" ||
+            usage.type === "StateInput" ||
+            usage.type === "Condition" ||
+            usage.type === "PropAssignment" ||
+            usage.type === "Filter" ||
+            usage.type === "FilterPropAssignment" ||
+            usage.type === "ReturnUsage"
+          ) {
+            return (
+              jsonPathStartsWith(usage.from, v) ||
+              jsonPathStartsWith(v, usage.from)
+            );
+          } else if (
+            // stateoutput and literal assignments cannot use other variables
+            usage.type === "LiteralAssignment" ||
+            usage.type === "LiteralPropAssignment" ||
+            usage.type === "StateOutput"
+          ) {
+            return false;
+          } else {
+            return assertNever(usage);
+          }
+        })
+        .map((s) => ({
+          usage: s,
+          index: topo.findIndex((t) => t[0] === s.state),
+        })),
+    }));
+
+    return { variableAssignments, variableNames: [...variableNames], stats };
+
+    function depthFirst(stateName: string) {
+      if (visited.has(stateName)) return;
+      visited.add(stateName);
+      const state = states[stateName]!;
+      variableAssignments.push(
+        ...getVariableUsage(state).map((usage) => ({
+          ...usage,
+          state: stateName,
+        }))
+      );
+      const names = getVariableNamesFromState(state);
+      names.forEach((n) => variableNames.add(n));
+      visitTransition(state, depthFirst);
+    }
+  }
+
+  /**
+   * A variable is assigned from one to another
+   */
+  interface VariableAssignment {
+    type: "Assignment";
+    from: string;
+    to: string;
+  }
+
+  /**
+   * A variable is assigned to a property in a map.
+   */
+  interface PropertyAssignment {
+    type: "PropAssignment";
+    from: string;
+    to: string;
+    props: string[];
+  }
+
+  /**
+   * When a variable is used in an intrinsic function.
+   * Similar to {@link VariableAssignment},
+   * but highlights that this is not a 1:1 assignment.
+   *
+   * {
+   *    "Parameters": {
+   *       "string.$": "States.Array($.var1)"
+   *    },
+   *    ResultPath: "$.var2"
+   * }
+   * =>
+   * from: "$.var1"
+   * to: "$.var2"
+   */
+  interface VariableIntrinsicUsage {
+    type: "Intrinsic";
+    from: string;
+    props: string[];
+    to: string;
+  }
+
+  /**
+   * Variables found in a json path filter.
+   */
+  interface VariableFilterUsage {
+    type: "Filter";
+    from: string;
+    to: string;
+  }
+
+  interface VariableFilterPropAssignment {
+    type: "FilterPropAssignment";
+    from: string;
+    props: string[];
+    to: string;
+  }
+
+  /**
+   * A variable is the output of a opaque state.
+   *
+   * For example, the output of a task that invoked a lambda function.
+   */
+  interface StateOutput {
+    type: "StateOutput";
+    stateType: "Map" | "Parallel" | "Catch" | "Task";
+    to: string;
+  }
+
+  /**
+   * When a variable is used to return from a sub-graph;
+   *
+   * ```ts
+   * return heap0;
+   * ```
+   */
+  interface ReturnUsage {
+    type: "ReturnUsage";
+    from: string;
+  }
+
+  /**
+   * A parameter is the input to an opaque state.
+   *
+   * For example, an input to a Task which invokes a lambda function.
+   */
+  interface StateInput {
+    type: "StateInput";
+    stateType: "Map" | "Task";
+    from: string;
+  }
+
+  /**
+   * When a variable is set using a constant value.
+   */
+  interface VariableLiteralAssignment {
+    type: "LiteralAssignment";
+    value: Parameters;
+    to: string;
+  }
+
+  interface VariableLiteralPropAssignment {
+    type: "LiteralPropAssignment";
+    value: Parameters;
+    to: string;
+    props: string[];
+  }
+
+  /**
+   * When a variable is used in a conditional statement.
+   */
+  interface VariableConditionUsage {
+    type: "Condition";
+    from: string;
+  }
+
+  type VariableUsage =
+    | VariableAssignment
+    | PropertyAssignment
+    | VariableLiteralAssignment
+    | VariableLiteralPropAssignment
+    | VariableConditionUsage
+    | VariableIntrinsicUsage
+    | VariableFilterUsage
+    | VariableFilterPropAssignment
+    | StateOutput
+    | StateInput
+    | ReturnUsage;
+
+  type StateVariableUsage = VariableUsage & {
+    state: string;
+  };
+
+  function getVariableUsage(state: State): VariableUsage[] {
+    const usages: VariableUsage[] = (() => {
+      if (isPassState(state)) {
+        if (state.ResultPath) {
+          if (state.Result !== undefined) {
+            return [
+              {
+                type: "LiteralAssignment",
+                to: state.ResultPath,
+                value: state.Result,
+              },
+            ];
+          } else if (state.InputPath) {
+            if (state.InputPath.includes("?(")) {
+              return extractVariableReferences(state.InputPath).map((v) => ({
+                type: "Filter",
+                from: v,
+                to: state.ResultPath as string,
+              }));
+            }
+            return [
+              {
+                type: "Assignment",
+                from: state.InputPath,
+                to: state.ResultPath,
+              },
+            ];
+          } else if (state.Parameters) {
+            return parametersAssignment(
+              state.Parameters,
+              false,
+              state.ResultPath
+            );
+          }
+        }
+        return [];
+      } else if (isTaskState(state)) {
+        return [
+          ...(state.InputPath
+            ? [
+                {
+                  type: "StateInput" as const,
+                  stateType: "Task" as const,
+                  from: state.InputPath,
+                },
+              ]
+            : []),
+          ...(state.ResultPath
+            ? [
+                {
+                  type: "StateOutput" as const,
+                  stateType: "Task" as const,
+                  to: state.ResultPath,
+                },
+              ]
+            : []),
+          ...(state.Parameters
+            ? parametersAssignment(state.Parameters, false, "[[task]]")
+            : []),
+          ...catchAssignment(state.Catch),
+        ];
+      } else if (isMapTaskState(state)) {
+        if (state.ResultPath) {
+          return [
+            { type: "StateOutput", stateType: "Map", to: state.ResultPath },
+            ...catchAssignment(state.Catch),
+            ...(state.Parameters
+              ? parametersAssignment(state.Parameters, false, "[[map]]")
+              : []),
+            ...(state.ItemsPath
+              ? [
+                  {
+                    type: "StateInput" as const,
+                    stateType: "Map" as const,
+                    from: state.ItemsPath,
+                  },
+                ]
+              : []),
+          ];
+        }
+        return [];
+      } else if (isParallelTaskState(state)) {
+        if (state.ResultPath) {
+          return [
+            {
+              type: "StateOutput",
+              stateType: "Parallel",
+              to: state.ResultPath,
+            },
+            ...catchAssignment(state.Catch),
+            ...(state.Parameters
+              ? parametersAssignment(state.Parameters, false, "[[parallel]]")
+              : []),
+          ];
+        }
+        return [];
+      } else if (isChoiceState(state)) {
+        const vars = state.Choices.flatMap(choiceUsage);
+        return [...new Set(vars)].map((v) => ({
+          type: "Condition",
+          from: v,
+        }));
+      } else if (
+        isFailState(state) ||
+        isSucceedState(state) ||
+        isWaitState(state)
+      ) {
         return [];
       }
+      return assertNever(state);
+    })();
 
+    if (
+      "End" in state &&
+      state.End &&
+      "ResultPath" in state &&
+      state.ResultPath
+    ) {
       return [
-        [
-          name,
-          visitTransition(state, (transition) =>
-            transition in emptyTransitions
-              ? emptyTransitions[transition]!
-              : transition
-          ),
-        ],
+        ...usages,
+        {
+          type: "ReturnUsage" as const,
+          from: state.ResultPath,
+        },
       ];
-    });
+    }
+    return usages;
+
+    function choiceUsage(condition: Condition): string[] {
+      const vars = new Set<string>();
+      for (const key in condition) {
+        if (key === "Variable") {
+          vars.add(condition.Variable!);
+        } else if (key === "And" || key === "Or") {
+          const conds = (condition.And! ?? condition.Or!) as Condition[];
+          conds.flatMap(choiceUsage).map((v) => vars.add(v));
+        } else if (key === "Not") {
+          return choiceUsage(condition.Not!);
+        } else if (key.endsWith("Path")) {
+          // @ts-ignore
+          vars.add(condition[key]!);
+        }
+      }
+      return [...vars];
+    }
+
+    function catchAssignment(_catch?: Catch[]): StateOutput[] {
+      return _catch
+        ? _catch
+            .filter(
+              (_catch): _catch is Catch & { ResultPath: string } =>
+                !!_catch.ResultPath
+            )
+            .map(({ ResultPath }) => ({
+              type: "StateOutput",
+              stateType: "Catch",
+              to: ResultPath,
+            }))
+        : [];
+    }
+
+    /**
+     * {
+     *  Parameters: {
+     *     "a.$": "$.value"
+     *  },
+     *  ResultPath: "$.out"
+     * }
+     * =>
+     * ["$.value", "$.out.a"]
+     */
+    function parametersAssignment(
+      parameters: Parameters,
+      containsJsonPath: boolean,
+      resultPath: string,
+      _props?: string[]
+    ): (
+      | PropertyAssignment
+      | VariableLiteralPropAssignment
+      | VariableIntrinsicUsage
+      | VariableFilterPropAssignment
+    )[] {
+      const props: string[] = _props ?? [];
+      if (!parameters) {
+        return [];
+      }
+      if (typeof parameters === "object") {
+        if (Array.isArray(parameters)) {
+          return [
+            {
+              type: "LiteralPropAssignment",
+              to: resultPath,
+              value: parameters,
+              props,
+            },
+          ];
+        } else {
+          return Object.entries(parameters).flatMap(([key, param]) => {
+            const jsonPath = key.endsWith(".$");
+            return parametersAssignment(param, jsonPath, resultPath, [
+              ...props,
+              jsonPath ? key.substring(0, key.length - 2) : key,
+            ]);
+          });
+        }
+      }
+      if (!containsJsonPath) {
+        return [
+          {
+            type: "LiteralPropAssignment",
+            to: resultPath,
+            value: parameters,
+            props,
+          },
+        ];
+      }
+      if (typeof parameters === "string") {
+        if (parameters.startsWith("States.")) {
+          return extractVariableReferences(parameters).map((x) => ({
+            type: "Intrinsic",
+            from: x,
+            to: resultPath,
+            props,
+          }));
+        } else if (parameters.includes("?(")) {
+          return extractVariableReferences(parameters).map((x) => ({
+            type: "FilterPropAssignment",
+            from: x,
+            to: resultPath,
+            props,
+          }));
+        }
+      }
+      // if the value is json path, it will not be a boolean or string
+      return [
+        {
+          type: "PropAssignment",
+          from: parameters as string,
+          to: resultPath,
+          props,
+        },
+      ];
+    }
+
+    /**
+     * Pull variable references out of intrinsic functions and json path filters.
+     *
+     * States.Array($.var) => $.var
+     * $.arr[?(['value'] == $.var)] => $.arr, $.var
+     */
+    function extractVariableReferences(jsonPath: string) {
+      return jsonPath.match(/(\$\.?[^,)]+)+/g) ?? [];
+    }
+  }
+
+  function getVariableNamesFromState(state: State): string[] {
+    const names = ((state) => {
+      if (
+        isTaskState(state) ||
+        isMapTaskState(state) ||
+        isParallelTaskState(state)
+      ) {
+        return [
+          state.ResultPath,
+          ...(state.Catch?.map((c) => c.ResultPath) ?? []),
+        ];
+      } else if (isPassState(state)) {
+        return [state.ResultPath];
+      } else if (
+        isSucceedState(state) ||
+        isFailState(state) ||
+        isChoiceState(state) ||
+        isWaitState(state)
+      ) {
+        return [];
+      }
+      return assertNever(state);
+    })(state);
+
+    return names.filter((n): n is string => !!n);
+  }
+
+  function reduceGraph(startState: string, states: States): States {
+    const updatedStates = { ...states };
+    const { stats } = analyzeVariables(startState, states);
+
+    const removedState = new Set<string>();
+    const removedVars = new Set<string>();
+
+    const emptyStates = findEmptyStates(startState, states);
+
+    emptyStates.forEach((s) => removedState.add(s));
+
+    const statsMap: Record<string, typeof stats[number]> = Object.fromEntries(
+      stats.map((s) => [s.variable, s])
+    );
+
+    console.log(JSON.stringify(stats, null, 2));
+
+    stats
+      .map((s) => s.variable)
+      .forEach((sourceVariable) => {
+        const sourceStats = statsMap[sourceVariable];
+        if (!sourceStats) return;
+        if (
+          // only support simple assignments for now
+          sourceStats.assigns.some(
+            (s) =>
+              !(
+                s.usage.type === "Assignment" ||
+                s.usage.type === "LiteralAssignment"
+              )
+          )
+        ) {
+          return;
+        }
+        const sourceAssigns: {
+          index: number;
+          usage: (
+            | VariableAssignment
+            // TODO support filter
+            | VariableLiteralAssignment
+          ) & {
+            state: string;
+          };
+        }[] = sourceStats.assigns as any;
+
+        const singleUsage = sourceStats.usage[0];
+        if (!singleUsage || sourceStats.usage.length > 1) {
+          // only update variables with a single assignment
+          return;
+        }
+
+        const { usage, index } = singleUsage;
+
+        /**
+         * When the target variable is being assigned to from the source (literal, filter, or reference)
+         *
+         * > note: ASL doesn't have a concept of variable declaration without initialization. The let/var/const is assumed.
+         * > note: we only support single usage right now, so if `a` is used after `b` in the below example, optimization won't happen.
+         */
+        if (usage.type === "Assignment") {
+          const targetVariable = usage.to;
+          const targetStats = statsMap[targetVariable];
+          if (!targetStats) {
+            return;
+          }
+
+          if (sourceAssigns.length !== 1 || !sourceAssigns[0]) {
+            // if the source variable is assigned to multiple times (for example, a ternary), do not re-write this usage for now.
+            // let a = ""'
+            // if(x) {
+            //    a = "b";
+            // }
+            return;
+          }
+          const sourceAssign = sourceAssigns[0];
+
+          // the source state is, do not remove the target (maybe).
+          const state = updatedStates[usage.state]!;
+          if (!isPassState(state)) {
+            throw new Error("Expected state with assignment to be a Pass");
+          }
+          if (sourceAssign.usage.type === "LiteralAssignment") {
+            const value = accessLiteralAtJsonPathSuffix(
+              usage.from,
+              sourceAssign.usage.to,
+              sourceAssign.usage.value
+            );
+            /**
+             * Update the target's stats to contain the new assign and remove the old one.
+             */
+            const targetStats = statsMap[targetVariable];
+            // some targets don't have stats, like when a parameter map is the input to a task or map state.
+            if (targetStats) {
+              statsMap[targetVariable] = {
+                ...targetStats,
+                assigns: [
+                  ...targetStats.assigns.filter((a) => a !== sourceAssign),
+                  {
+                    index,
+                    usage: {
+                      ...usage,
+                      type: "LiteralAssignment",
+                      value,
+                    },
+                  },
+                ],
+              };
+            }
+
+            // update the state's parameter to contain the constant value.
+            updatedStates[usage.state] = {
+              ...state,
+              Result: undefined,
+              InputPath: undefined,
+              Parameters: value,
+            };
+
+            // when there is a single variable, zero out the usage on the source variable.
+            sourceStats.usage = [];
+          } else if (sourceAssign.usage.type === "Assignment") {
+            // if the "from" variable we intend to update the prop assignment with will be
+            // assigned to after the source assignment, skip.
+
+            const from = sourceAssign.usage.from;
+            const fromStats = statsMap[from];
+            if (
+              fromStats?.assigns.some(
+                (a) => a.index > sourceAssign.index && a.index < index
+              ) ??
+              false
+            ) {
+              return;
+            }
+
+            const updatedFrom = replaceJsonPathPrefix(
+              usage.from,
+              sourceAssign.usage.to,
+              sourceAssign.usage.from
+            );
+
+            /**
+             * Update the target's stats to contain the new assign and remove the old one.
+             */
+            const targetStats = statsMap[targetVariable];
+            // some targets don't have stats, like when a parameter map is the input to a task or map state.
+            if (targetStats) {
+              statsMap[targetVariable] = {
+                ...targetStats,
+                assigns: [
+                  ...targetStats.assigns.filter((a) => a !== sourceAssign),
+                  {
+                    index,
+                    usage: {
+                      ...usage,
+                      type: "Assignment",
+                      from: updatedFrom,
+                    },
+                  },
+                ],
+              };
+            }
+
+            // update the state's parameter to contain the constant value.
+            updatedStates[usage.state] = {
+              ...state,
+              Parameters: undefined,
+              Result: undefined,
+              /**
+               * Search assignment to value should be a prefix of the old `usage.from`.
+               * Maintain the tail of the `usage.from`, but replace the prefix with `sourceAssign.usage.from`
+               * Value: $.source[0]
+               * Search Value: $.source
+               * Replace Value: $.from
+               * => $.from[0]
+               */
+              InputPath: updatedFrom,
+            };
+            // when there is a single variable, zero out the usage on the source variable.
+            sourceStats.usage = [];
+          }
+          return;
+        }
+        // when the target is a property being assigned to from the source (literal, filter, or reference)
+        else if (usage.type === "PropAssignment") {
+          // when updating a prop assignment, we can try to move the input to the original
+          // assignment to the property assignment.
+          const targetVariable = usage.to;
+
+          const sourceAssign = sourceAssigns[0];
+          if (sourceAssigns.length !== 1 || !sourceAssign) {
+            // if the input variable is assigned to multiple times (for example, a ternary), do not re-write this usage.
+            // return {
+            //    a: x ? b : c,
+            // }
+            // however, the actual cases are based on the implementation of the interpreter.
+            return;
+          }
+          /**
+           * Handling a case where a property is being assigned a value from a constant or a reference.
+           * const c = "a";
+           * return {
+           *    b: c
+           * }
+           * =>
+           * return {
+           *    b: "a"
+           * }
+           *
+           * const c = a;
+           * return {
+           *    b: c
+           * }
+           * =>
+           * return {
+           *    b: a
+           * }
+           *
+           * TODO: support filter assignment.
+           */
+          // the source state is, do not remove the target (maybe).
+          const state = updatedStates[usage.state] as
+            | Pass
+            | Task
+            | MapTask
+            | ParallelTask;
+          if (
+            !state.Parameters ||
+            typeof state.Parameters !== "object" ||
+            Array.isArray(state.Parameters)
+          ) {
+            throw new Error(
+              "Expected state with prop assignment to have parameters"
+            );
+          }
+
+          const targetStats = statsMap[targetVariable];
+          if (sourceAssign.usage.type === "LiteralAssignment") {
+            const value = accessLiteralAtJsonPathSuffix(
+              usage.from,
+              sourceAssign.usage.to,
+              sourceAssign.usage.value
+            );
+            // some targets don't have stats, like when a parameter map is the input to a task or map state.
+            if (targetStats) {
+              statsMap[targetVariable] = {
+                ...targetStats,
+                assigns: [
+                  ...targetStats.assigns.filter((a) => a !== sourceAssign),
+                  {
+                    index,
+                    usage: {
+                      ...usage,
+                      type: "LiteralPropAssignment",
+                      value,
+                    },
+                  },
+                ],
+              };
+            }
+            // update the state's parameter to contain the constant value.
+            updatedStates[usage.state] = {
+              ...state,
+              Parameters: updateParameters(
+                usage.props,
+                state.Parameters!,
+                value,
+                false
+              ),
+            };
+
+            // when there is a single variable, zero out the usage on the source variable.
+            sourceStats.usage = [];
+          } else {
+            // if the "from" variable we intend to update the prop assignment with will be
+            // assigned to after the source assignment, skip.
+            /**
+             * a = "a"
+             * source = a
+             * a = "b" // not ok, skip
+             * target = a
+             * a = "c" // ok assignment
+             */
+            const from = sourceAssign.usage.from;
+            const fromStats = statsMap[from];
+            if (
+              fromStats?.assigns.some(
+                (a) => a.index > sourceAssign.index && a.index < index
+              ) ??
+              false
+            ) {
+              return;
+            }
+
+            /**
+             * Search assignment to value should be a prefix of the old `usage.from`.
+             * Maintain the tail of the `usage.from`, but replace the prefix with `sourceAssign.usage.from`
+             * Value: $.source[0]
+             * Search Value: $.source
+             * Replace Value: $.from
+             * => $.from[0]
+             */
+            const updatedFrom = replaceJsonPathPrefix(
+              usage.from,
+              sourceAssign.usage.to,
+              sourceAssign.usage.from
+            );
+            // some targets don't have stats, like when a parameter map is the input to a task or map state.
+            if (targetStats) {
+              statsMap[targetVariable] = {
+                ...targetStats,
+                assigns: [
+                  ...targetStats.assigns.filter((a) => a !== sourceAssign),
+                  {
+                    index,
+                    usage: {
+                      ...usage,
+                      type: "PropAssignment",
+                      from: updatedFrom,
+                    },
+                  },
+                ],
+              };
+            }
+            // update the state's parameter to contain the constant value.
+            updatedStates[usage.state] = {
+              ...state,
+              Parameters: updateParameters(
+                usage.props,
+                state.Parameters!,
+                updatedFrom,
+                true
+              ),
+            };
+            // when there is a single variable, zero out the usage on the source variable.
+            sourceStats.usage = [];
+          }
+          return;
+        } else if (usage.type === "Intrinsic") {
+          // when updating a intrinsic assignment, we can try to move the input to the original
+          // assignment to the intrinsic assignment.
+          const targetVariable = usage.to;
+          const sourceAssign = sourceAssigns[0];
+          if (sourceAssigns.length !== 1 || !sourceAssign) {
+            // if the input variable is assigned to multiple times (for example, a ternary), do not re-write this usage.
+            // return {
+            //    a: x ? b : c,
+            // }
+            // however, the actual cases are based on the implementation of the interpreter.
+            return;
+          }
+          /**
+           * Handling a case where a property is being assigned a value from a constant or a reference.
+           * const c = "a";
+           * return {
+           *    b: c
+           * }
+           * =>
+           * return {
+           *    b: "a"
+           * }
+           *
+           * const c = a;
+           * return {
+           *    b: c
+           * }
+           * =>
+           * return {
+           *    b: a
+           * }
+           *
+           * TODO: support filter assignment.
+           */
+          // the source state is, do not remove the target (maybe).
+          const state = updatedStates[usage.state] as
+            | Pass
+            | Task
+            | MapTask
+            | ParallelTask;
+          if (
+            !state.Parameters ||
+            typeof state.Parameters !== "object" ||
+            Array.isArray(state.Parameters)
+          ) {
+            throw new Error(
+              "Expected state with prop assignment to have parameters"
+            );
+          }
+
+          // if the "from" variable we intend to update the prop assignment with will be
+          // assigned to after the source assignment and before the target assignment, skip.
+          /**
+           * a = "a"
+           * source = a
+           * a = "b" // not ok, skip
+           * target = a
+           * a = "c" // ok assignment
+           */
+          if (sourceAssign.usage.type === "Assignment") {
+            const from = sourceAssign.usage.from;
+            const fromStats = statsMap[from];
+            if (
+              fromStats?.assigns.some(
+                (a) => a.index > sourceAssign.index && a.index < index
+              ) ??
+              false
+            ) {
+              return;
+            }
+          }
+
+          /**
+           * Update the target's stats to contain the new assign and remove the old one.
+           */
+          const targetStats = statsMap[targetVariable];
+          // some targets don't have stats, like when a parameter map is the input to a task or map state.
+          if (targetStats) {
+            statsMap[targetVariable] = {
+              ...targetStats,
+              assigns: [
+                ...targetStats.assigns.filter((a) => a !== sourceAssign),
+                ...(sourceAssign.usage.type === "LiteralAssignment"
+                  ? []
+                  : [
+                      {
+                        index,
+                        usage: {
+                          ...usage,
+                          type: "Intrinsic" as const,
+                          // update the from
+                          from: sourceAssign.usage.from,
+                        },
+                      },
+                    ]),
+              ],
+            };
+          }
+
+          // when there is a single variable, zero out the usage on the source variable.
+          sourceStats.usage = [];
+
+          // update the state's parameter to contain the constant value.
+          updatedStates[usage.state] = {
+            ...state,
+            Parameters: updateParameters(
+              usage.props,
+              state.Parameters!,
+              (original) => {
+                const intrinsic = original;
+                if (typeof intrinsic !== "string") {
+                  throw new Error(
+                    "Expected intrinsic property value to be a string."
+                  );
+                }
+                const originalFrom = usage.from;
+                // States.Format($.heap0) => States.Format($.v)
+                // States.Format($.heap0) => States.Format("someString")
+                // States.Format($.heap0) => States.Format(0)
+                return intrinsic.replace(
+                  new RegExp(escapeRegExp(originalFrom), "g"),
+                  sourceAssign.usage.type === "Assignment"
+                    ? // https://stackoverflow.com/questions/38866071/javascript-replace-method-dollar-signs
+                      sourceAssign.usage.from.split("$").join("$$")
+                    : typeof sourceAssign.usage.value === "string"
+                    ? `'${sourceAssign.usage.value}'`
+                    : `${sourceAssign.usage.value}`
+                );
+              },
+              true
+            ),
+          };
+          return;
+        } else if (usage.type === "StateInput") {
+          // only update when all of the assignments of the current variable are from variables that will not be changed after this point.
+          // let a = "a";
+          // let d = a;
+          // a = "b"
+          // return d;
+          //        ^ the return cannot use a because a changed value on line 3 while d did not.
+          if (
+            sourceAssigns.some((s) => {
+              if (s.usage.type === "LiteralAssignment") return false;
+              const from = s.usage.from;
+              const fromStats = statsMap[from]!;
+              // use this assign if the from variable is not assigned to after this variable.
+              return (
+                fromStats?.assigns.some(
+                  (a) => a.index > s.index && a.index < index
+                ) ?? false
+              );
+            })
+          ) {
+            return;
+          }
+
+          const state = updatedStates[usage.state] as Task | MapTask;
+
+          const sourceAssign = sourceAssigns[0];
+          if (sourceAssigns.length !== 1 || !sourceAssign) {
+            // if the input variable is assigned to multiple times (for example, a ternary), do not re-write this usage.
+            // return {
+            //    a: x ? b : c,
+            // }
+            // however, the actual cases are based on the implementation of the interpreter.
+            return;
+          }
+
+          // if the "from" variable we intend to update the prop assignment with will be
+          // assigned to after the source assignment and before the target assignment, skip.
+          /**
+           * a = "a"
+           * source = a
+           * a = "b" // not ok, skip
+           * target = a
+           * a = "c" // ok assignment
+           */
+          if (sourceAssign.usage.type === "Assignment") {
+            const from = sourceAssign.usage.from;
+            const fromStats = statsMap[from];
+            if (
+              fromStats?.assigns.some(
+                (a) => a.index > sourceAssign.index && a.index < index
+              ) ??
+              false
+            ) {
+              return;
+            }
+          }
+
+          if (state.Type === "Map") {
+            // map items cannot be a literal value
+            if (sourceAssign.usage.type === "LiteralAssignment") {
+              return;
+            }
+            updatedStates[usage.state] = {
+              ...state,
+              ItemsPath: sourceAssign.usage.from,
+            };
+          } else if (state.Type === "Task") {
+            // update the state's parameter to contain the constant value.
+            updatedStates[usage.state] =
+              sourceAssign.usage.type === "LiteralAssignment"
+                ? {
+                    ...state,
+                    InputPath: undefined,
+                    Parameters: sourceAssign.usage.value,
+                  }
+                : {
+                    ...state,
+                    InputPath: sourceAssign.usage.from,
+                  };
+          } else {
+            assertNever(state);
+          }
+          // when there is a single variable, zero out the usage on the source variable.
+          sourceStats.usage = [];
+
+          return;
+        } else if (
+          usage.type === "Filter" ||
+          usage.type === "FilterPropAssignment" ||
+          usage.type === "ReturnUsage"
+        ) {
+          // TODO: support more cases.
+          return;
+        } else if (
+          usage.type === "LiteralAssignment" ||
+          usage.type === "LiteralPropAssignment" ||
+          usage.type === "StateOutput" ||
+          usage.type === "Condition"
+        ) {
+          // nothing else to simplify here.
+          return;
+        } else {
+          return assertNever(usage);
+        }
+      });
+
+    function accessLiteralAtJsonPathSuffix(
+      originalJsonPath: string,
+      prefixJsonPath: string,
+      value: any
+    ) {
+      if (jsonPathStartsWith(originalJsonPath, prefixJsonPath)) {
+        const normOriginal = normalizeJsonPath(originalJsonPath);
+        const normPrefix = normalizeJsonPath(prefixJsonPath);
+
+        return access(normOriginal.slice(normPrefix.length), value);
+      }
+
+      function access(segments: (string | number)[], value: any): any {
+        const [segment, ...tail] = segments;
+        if (segment === undefined) {
+          return value;
+        } else if (!value) {
+          throw new Error("Expected object or array literal, found: " + value);
+        } else if (typeof value === "object") {
+          if (Array.isArray(value)) {
+            const index = Number(segment);
+            if (index === NaN) {
+              throw new Error(
+                "Expected number to access an array literal literal, found: " +
+                  segment
+              );
+            }
+            return access(tail, value[index]);
+          } else {
+            return value[segment];
+          }
+        }
+        throw new Error("Expected object or array to access.");
+      }
+    }
+
+    function updateParameters(
+      /**
+       * Json path prefix to skip in the json path.
+       *
+       * Prefix: $.output.param
+       * JsonPath: $.output.param.param2.param3
+       *
+       * {
+       *    Parameters: {
+       *       param2: { param3: value }
+       *    },
+       *    ResultPath: $.output.param
+       * }
+       */
+      props: string[],
+      originalParameters: Record<string, Parameters>,
+      value: Parameters | ((value: Parameters) => Parameters),
+      isValueJsonPath: boolean
+    ): Record<string, Parameters> {
+      const [segment, ...tail] = props;
+      if (typeof segment !== "string") {
+        throw new Error("Parameters objects should only contain string keys");
+      }
+      if (props.length === 1) {
+        const paramClone = { ...originalParameters };
+        const updatedValue =
+          typeof value === "function"
+            ? value(paramClone[`${segment}.$`] ?? paramClone[segment] ?? null)
+            : value;
+        delete paramClone[`${segment}.$`];
+        delete paramClone[segment];
+        if (isValueJsonPath) {
+          return {
+            ...paramClone,
+            [`${segment}.$`]: updatedValue,
+          };
+        } else {
+          return {
+            ...paramClone,
+            [segment]: updatedValue,
+          };
+        }
+      } else {
+        const _params = originalParameters[segment];
+        if (!_params || typeof _params !== "object" || Array.isArray(_params)) {
+          throw new Error(
+            "Something went wrong when updating parameter object. Expected structure to stay the same."
+          );
+        }
+        return {
+          ...originalParameters,
+          [segment]: updateParameters(tail, _params, value, isValueJsonPath),
+        };
+      }
+    }
+
+    const unused = Object.values(statsMap).filter((s) => s.usage.length === 0);
+    const unassigned = Object.values(statsMap).filter(
+      (s) => s.assigns.length === 0
+    );
+
+    console.log(JSON.stringify(unused, null, 2));
+    console.log(JSON.stringify(unassigned, null, 2));
+
+    unused
+      .flatMap((u) =>
+        u.assigns.flatMap((a) => {
+          // TODO: eww mutation in a map... :( sad sam
+          if (a.usage.type === "StateOutput" || a.usage.state === startState) {
+            // state outputs should not be removed as they can still have effects.
+            // Also do not remove the start states of sub-graphs.
+            // Instead we will update their result path to be null
+            // @ts-ignore
+            updatedStates[a.usage.state] = {
+              ...updatedStates[a.usage.state],
+              ResultPath: null,
+            };
+            return [];
+          }
+          return [a.usage.state];
+        })
+      )
+      .forEach((s) => removedState.add(s));
+
+    console.log(removedState);
+    console.log(removedVars);
+
+    const removedTransitions = computeRemovedStateToUpdatedTransition(
+      removedState,
+      updatedStates
+    );
+
+    // return the updated set of name to state.
+    return Object.fromEntries(
+      Object.entries(updatedStates).flatMap(([name, state]) => {
+        if (name in removedTransitions) {
+          return [];
+        }
+
+        return [
+          [
+            name,
+            visitTransition(state, (transition) =>
+              transition in removedTransitions
+                ? removedTransitions[transition]!
+                : transition
+            ),
+          ],
+        ];
+      })
+    );
 
     /**
      * Find the updated next value for all of the empty states.
      * If the updated Next cannot be determined, do not remove the state.
      */
-    function computeEmptyStateToUpdatedTransition(
-      emptyStates: Record<string, Pass>
+    function computeRemovedStateToUpdatedTransition(
+      removedStates: Set<string>,
+      states: States
     ) {
       return Object.fromEntries(
-        Object.entries(emptyStates).flatMap(([name, { Next }]) => {
-          const newNext = Next ? getNext(Next, []) : Next;
+        [...removedStates]
+          // assume removed states have Next for now
+          .map((s): [string, State & Pick<Pass, "Next">] => [
+            s,
+            states[s]! as State & Pick<Pass, "Next">,
+          ])
+          .flatMap(([name, { Next }]) => {
+            const newNext = Next ? getNext(Next, []) : Next;
 
-          /**
-           * If the updated Next value for this state cannot be determined,
-           * do not remove the state.
-           *
-           * This can because the state has no Next value (Functionless bug)
-           * or because all of the states in a cycle are empty.
-           */
-          if (!newNext) {
-            return [];
-          }
-
-          return [[name, newNext]];
-
-          /**
-           * When all states in a cycle are empty, the cycle will be impossible to exit.
-           *
-           * Note: This should be a rare case and is not an attempt to find any non-terminating logic.
-           *       ex: `for(;;){}`
-           *       Adding most conditions, incrementors, or bodies will not run into this issue.
-           *
-           * ```ts
-           * {
-           *   1: { Type: "???", Next: 2 },
-           *   2: { Type: "Pass", Next: 3 },
-           *   3: { Type: "Pass", Next: 4 },
-           *   4: { Type: "Pass", Next: 2 }
-           * }
-           * ```
-           *
-           * State 1 is any state that transitions to state 2.
-           * State 2 transitions to empty state 3
-           * State 3 transitions to empty state 4
-           * State 4 transitions back to empty state 2.
-           *
-           * Empty Pass states provide no value and will be removed.
-           * Empty Pass states can never fail and no factor can change where it goes.
-           *
-           * This is not an issue for other states which may fail or inject other logic to change the next state.
-           * Even the Wait stat could be used in an infinite loop if the machine is terminated from external source.
-           *
-           * If this happens, return undefined.
-           */
-          function getNext(
-            transition: string,
-            seen: string[] = []
-          ): string | undefined {
-            if (seen?.includes(transition)) {
-              return undefined;
+            /**
+             * If the updated Next value for this state cannot be determined,
+             * do not remove the state.
+             *
+             * This can because the state has no Next value (Functionless bug)
+             * or because all of the states in a cycle are empty.
+             */
+            if (!newNext) {
+              return [];
             }
-            return transition in emptyStates
-              ? getNext(
-                  emptyStates[transition]!.Next!,
-                  seen ? [...seen, transition] : [transition]
-                )
-              : transition;
-          }
-        })
+
+            return [[name, newNext]];
+
+            /**
+             * When all states in a cycle are empty, the cycle will be impossible to exit.
+             *
+             * Note: This should be a rare case and is not an attempt to find any non-terminating logic.
+             *       ex: `for(;;){}`
+             *       Adding most conditions, incrementors, or bodies will not run into this issue.
+             *
+             * ```ts
+             * {
+             *   1: { Type: "???", Next: 2 },
+             *   2: { Type: "Pass", Next: 3 },
+             *   3: { Type: "Pass", Next: 4 },
+             *   4: { Type: "Pass", Next: 2 }
+             * }
+             * ```
+             *
+             * State 1 is any state that transitions to state 2.
+             * State 2 transitions to empty state 3
+             * State 3 transitions to empty state 4
+             * State 4 transitions back to empty state 2.
+             *
+             * Empty Pass states provide no value and will be removed.
+             * Empty Pass states can never fail and no factor can change where it goes.
+             *
+             * This is not an issue for other states which may fail or inject other logic to change the next state.
+             * Even the Wait stat could be used in an infinite loop if the machine is terminated from external source.
+             *
+             * If this happens, return undefined.
+             */
+            function getNext(
+              transition: string,
+              seen: string[] = []
+            ): string | undefined {
+              if (seen?.includes(transition)) {
+                return undefined;
+              }
+              return removedStates.has(transition)
+                ? getNext(
+                    // assuming the removes states have Next
+                    (states[transition]! as State & Pick<Pass, "Next">).Next!,
+                    seen ? [...seen, transition] : [transition]
+                  )
+                : transition;
+            }
+          })
       );
     }
   }
@@ -5008,12 +6241,7 @@ export namespace ASLGraph {
    * 5            - Task
    * 6            - Task
    */
-  function joinChainedChoices(
-    startState: string,
-    stateEntries: [string, State][]
-  ) {
-    const stateMap = Object.fromEntries(stateEntries);
-
+  function joinChainedChoices(startState: string, stateMap: States) {
     const updatedStates: Record<string, State | null> = {};
 
     depthFirst(startState);
@@ -5070,6 +6298,37 @@ export namespace ASLGraph {
 
       updatedStates[state] = mergedChoice;
       return mergedChoice;
+    }
+  }
+
+  /**
+   * Topologically sort a connected directed graph.
+   */
+  function topoSort(
+    startState: string,
+    states: States
+  ): [stateName: string, state: State][] {
+    const marks: Record<string, boolean> = {};
+    let nodes: [stateName: string, state: State][] = [];
+
+    visit(startState);
+
+    return nodes;
+    function visit(state: string) {
+      const stateMark = marks[state];
+      if (stateMark === false) {
+        // cycle
+        return;
+      } else if (stateMark === true) {
+        return;
+      }
+      const stateObj = states[state]!;
+
+      marks[state] = false;
+
+      visitTransition(stateObj, visit);
+      marks[state] = true;
+      nodes = [[state, stateObj], ...nodes];
     }
   }
 
@@ -5463,7 +6722,7 @@ export namespace ASLGraph {
     element: string | number,
     targetJsonPath: ASLGraph.JsonPath
   ): Condition {
-    const accessed = ASLGraph.accessConstant(targetJsonPath, element, true);
+    const accessed = ASLGraph.accessConstant(targetJsonPath, element);
 
     if (ASLGraph.isLiteralValue(accessed)) {
       return accessed.value === undefined
@@ -5474,21 +6733,12 @@ export namespace ASLGraph {
     }
   }
 
-  /**
-   * @param element - when true (or field is a number) the output json path will prefer to use the square bracket format.
-   *                  `$.obj[field]`. When false will prefer the dot format `$.obj.field`.
-   */
   export function accessConstant(
     value: ASLGraph.Output,
-    field: string | number,
-    element: boolean
+    field: string | number
   ): ASLGraph.JsonPath | ASLGraph.LiteralValue {
     if (ASLGraph.isJsonPath(value)) {
-      return typeof field === "number"
-        ? { jsonPath: `${value.jsonPath}[${field}]` }
-        : element
-        ? { jsonPath: `${value.jsonPath}['${field}']` }
-        : { jsonPath: `${value.jsonPath}.${field}` };
+      return { jsonPath: formatJsonPath([field], value.jsonPath) };
     }
 
     if (ASLGraph.isLiteralValue(value) && value.value) {

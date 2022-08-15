@@ -408,3 +408,152 @@ export const invertBinaryOperator = (op: BinaryOp): BinaryOp => {
       return op;
   }
 };
+
+export function normalizeJsonPath(jsonPath: string): (string | number)[] {
+  return (
+    jsonPath.match(/(\.[a-zA-Z0-9_\$]*|\[\'?[^'\]]*\'?\])/g)?.map((seg) => {
+      if (seg.startsWith(".")) {
+        return seg.substring(1);
+      } else if (seg.startsWith("['")) {
+        return seg.substring(2, seg.length - 2);
+      } else if (seg.startsWith("[")) {
+        return Number(seg.substring(1, seg.length - 1));
+      } else {
+        throw new Error("Invalid json path: " + jsonPath);
+      }
+    }) ?? []
+  );
+}
+
+function jsonPathSegmentStartsWith(
+  p1: (string | number)[],
+  p2: (string | number)[]
+): boolean {
+  if (p1.length === 0) {
+    return p2.length === 0;
+  } else if (p2.length === 0) {
+    return true;
+  }
+  return p1[0] === p2[0] && jsonPathSegmentStartsWith(p1.slice(1), p2.slice(1));
+}
+
+/**
+ * Determines if a normalized json path is the prefix of another normalized json path.
+ *
+ * ```ts
+ * jsonPathStartsWith($.var, $['var']); // true
+ * jsonPathStartsWith($.var, $.var1); // false
+ * jsonPathStartsWith($.var.abc.y, $.var); // true
+ * jsonPathStartsWith($.var, $.var.abc); // false
+ * jsonPathStartsWith($.var['abc'], $.var.abc); // false
+ * ```
+ */
+export function jsonPathStartsWith(path1: string, prefix: string): boolean {
+  const path1Segs = normalizeJsonPath(path1);
+  const path2Segs = normalizeJsonPath(prefix);
+
+  return (
+    path1Segs.length >= path2Segs.length &&
+    jsonPathSegmentStartsWith(path1Segs, path2Segs)
+  );
+}
+
+/**
+ * Determines if two normalized json paths are exactly equal.
+ *
+ * $.var === $['var']
+ * $.var !== $.var1
+ * $.var === $.var
+ */
+export function jsonPathEquals(path1: string, path2: string): boolean {
+  const path1Segs = normalizeJsonPath(path1);
+  const path2Segs = normalizeJsonPath(path2);
+
+  return (
+    path1Segs.length === path2Segs.length &&
+    jsonPathSegmentStartsWith(path1Segs, path2Segs)
+  );
+}
+
+/**
+ * Formats a series of json path segments into a value json path.
+ *
+ * Attempts to determine of a segment can be represented using dot notation or element access notation.
+ *
+ * ['var1', 'var 2', 0]
+ * => $.var1['var2'][0]
+ *
+ * @param prefix - Default: $., when provided acts as the prefix to the resulting json path. `[prefix].segment1['segment 2'][0]`
+ */
+export function formatJsonPath(segments: (string | number)[], prefix?: string) {
+  const _prefix = prefix ?? "$.";
+
+  return append(segments, _prefix);
+
+  function append(segments: (string | number)[], prefix: string) {
+    const [segment] = segments;
+    if (segment === undefined) {
+      return prefix;
+    } else if (typeof segment === "number") {
+      // $[0]
+      return `${prefix}[${segment}]`;
+    } else {
+      return `${prefix}${
+        segment.match(/[a-zA-Z][a-zA-Z0-9_]*/)
+          ? // $.var
+            `.${segment}`
+          : // $['var with $$$ stuff in it']
+            `['${segment}']`
+      }`;
+    }
+  }
+}
+
+/**
+ * Like {@link String.replace}, but works on complete json path segments,
+ * supports json path of any form, and only replaces the prefix of the json path.
+ *
+ * The output is a re-formatted jsonPath using {@link formatJsonPath}.
+ *
+ * When the search value is not found, the value is returned.
+ *
+ * Search Value: $.prefix
+ * Replace Value: $.newPrefix
+ * Target: $.prefix.suffix
+ *
+ * => $.newPrefix.suffix
+ *
+ * Search Value: $['prefix']
+ * Replace Value: $.newPrefix
+ * Target: $.prefix.suffix
+ *
+ * => $.newPrefix.suffix
+ *
+ * Search Value: $.prefix
+ * Replace Value: $['new Prefix']
+ * Target: $.prefix['suffix'][0]
+ *
+ * => $['new Prefix'].suffix[0]
+ */
+export function replaceJsonPathPrefix(
+  value: string,
+  searchValue: string,
+  replaceValue: string
+) {
+  const normValue = normalizeJsonPath(value);
+  const normSearchValue = normalizeJsonPath(searchValue);
+
+  // search [1,2], value: [1,2,3]
+  if (jsonPathSegmentStartsWith(normValue, normSearchValue)) {
+    // format([3], replaceValue)
+    return formatJsonPath(
+      normValue.slice(normSearchValue.length),
+      replaceValue
+    );
+  }
+  return value;
+}
+
+export function escapeRegExp(str: string) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"); // $& means the whole matched string
+}

@@ -323,13 +323,13 @@ test("let empty", () => {
 test("shadow", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {
-    const a = ""; // a
-    const a__2 = ""; // take a future updated name, a__2
+    const a = "1"; // a
+    const a__2 = "2"; // take a future updated name, a__2
     for (const b in [1, 2, 3]) {
-      const a = ""; // take a future real name, a__1
-      const a__1 = ""; // name already exists, will use a__1__1
-      if (a === "") {
-        const a = ""; // a__3
+      const a = "3"; // take a future real name, a__1
+      const a__1 = "4"; // name already exists, will use a__1__1
+      if (a === "3") {
+        const a = "6"; // a__3
         return `${a}${b}${a__1}`;
       }
     }
@@ -2144,6 +2144,27 @@ test("[1,2,3,4].filter(item => item > 2)", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("[1,2,3,4].filter(item => item > 2) assign", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    const a = [1, 2, 3, 4].filter((item) => item > 2);
+    return a;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("[1,2,3,4].filter(item => item > 2) assign obj", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return {
+      a: [1, 2, 3, 4].filter((item) => item > 2),
+    };
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("[1,2,3,4].filter(item => item > 1 + 2)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
@@ -2591,6 +2612,16 @@ test("$SFN.map([1, 2, 3], (item) => nitem)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
     return $SFN.map([1, 2, 3], (item) => `n${item}`);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("$SFN.map([1, 2, 3], (item) => naitem)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    const a = "a";
+    return $SFN.map([1, 2, 3], (item) => `n${a}${item}`);
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -4015,6 +4046,37 @@ describe("binding", () => {
         return a;
       }
     ).definition;
+
+    expect(normalizeDefinition(definition)).toMatchSnapshot();
+  });
+
+  // TODO: https://github.com/functionless/functionless/issues/420
+  // https://mathiasbynens.be/notes/javascript-properties
+  test.skip("unicode variable names", () => {
+    const { stack } = initStepFunctionApp();
+    const definition = new StepFunction(stack, "machine1", async () => {
+      var H̹̙̦̮͉̩̗̗ͧ̇̏̊̾Eͨ͆͒̆ͮ̃͏̷̮̣̫̤̣Cͯ̂͐͏̨̛͔̦̟͈̻O̜͎͍͙͚̬̝̣̽ͮ͐͗̀ͤ̍̀͢M̴̡̲̭͍͇̼̟̯̦̉̒͠Ḛ̛̙̞̪̗ͥͤͩ̾͑̔͐ͅṮ̴̷̷̗̼͍̿̿̓̽͐H̙̙̔̄͜ = 42;
+      const _ = "___";
+      const $ = "$$";
+      const ƒ = {
+        π: Math.PI,
+        ø: [],
+        Ø: NaN,
+        e: 2.7182818284590452353602874713527,
+        root2: 2.7182818284590452353602874713527,
+        α: 2.5029,
+        δ: 4.6692,
+        ζ: 1.2020569,
+        φ: 1.61803398874,
+        γ: 1.30357,
+        K: 2.685452001,
+        oo: 9999999999e999 * 9999999999e9999,
+        A: 1.2824271291,
+        C10: 0.12345678910111213141516171819202122232425252728293031323334353637,
+        c: 299792458,
+      };
+      return { ƒ, out: `${H̹̙̦̮͉̩̗̗ͧ̇̏̊̾Eͨ͆͒̆ͮ̃͏̷̮̣̫̤̣Cͯ̂͐͏̨̛͔̦̟͈̻O̜͎͍͙͚̬̝̣̽ͮ͐͗̀ͤ̍̀͢M̴̡̲̭͍͇̼̟̯̦̉̒͠Ḛ̛̙̞̪̗ͥͤͩ̾͑̔͐ͅṮ̴̷̷̗̼͍̿̿̓̽͐H̙̙̔̄͜}${_}${$}` };
+    }).definition;
 
     expect(normalizeDefinition(definition)).toMatchSnapshot();
   });
