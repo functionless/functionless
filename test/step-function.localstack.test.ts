@@ -609,14 +609,57 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     (parent) => {
       return new StepFunction(parent, "sfn2", async (input) => {
         const c = input.a && input.b;
+        let x = "";
+        let notNullishCoalAssign = "a";
+        let nullishCoalAssign = null;
+        let truthyAndAssign = "a";
+        let falsyAndAssign = "";
+        let truthyOrAssign = "a";
+        let falsyOrAssign = "";
+
+        notNullishCoalAssign ??= "b"; // "a"
+        nullishCoalAssign ??= "b"; // "b"
+        truthyAndAssign &&= "b"; // "b"
+        falsyAndAssign &&= "b"; // ""
+        truthyOrAssign ||= "b"; // "a"
+        falsyOrAssign ||= "b"; // "b"
+
+        let y = "";
+
+        if ((y = `${y}1`) && ((y = `${y}2`), false) && (y = `${y}3`)) {
+          y = `${y}4`;
+        }
+
+        if (((y = `${y}5`), false) || ((y = `${y}6`), true) || (y = `${y}7`)) {
+          y = `${y}8`;
+        }
+
         return {
           andVar: c,
           and: input.a && input.b,
           or: input.a || input.b,
-          nullCoal: input.v ?? input.nv,
-          invNullCoal: input.nv ?? input.v,
+          invNullCoal: input.nv ?? ((x = `${x}1`), input.v),
+          nullCoal: input.v ?? ((x = `${x}2`), input.nv),
           nullNull: input.nv ?? null,
           nullVal: null ?? input.v,
+          falsyChainOr:
+            input.b ||
+            input.z ||
+            ((x = `${x}3`), true) ||
+            ((x = `${x}4`), false) ||
+            input.v, // sets x+=1 returns true
+          truthyChainOr: input.b || ((x = `${x}5`), false) || input.arr, // sets x+=3 returns v
+          falsyChainAnd: input.z && ((x = `${x}6`), true), // returns zero
+          truthyChainAnd:
+            input.a && input.v && ((x = `${x}7`), true) && input.v, // sets x+=5, returns v
+          x,
+          y,
+          notNullishCoalAssign,
+          nullishCoalAssign,
+          truthyAndAssign,
+          falsyAndAssign,
+          truthyOrAssign,
+          falsyOrAssign,
         };
       });
     },
@@ -628,8 +671,20 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       invNullCoal: "val",
       nullNull: null,
       nullVal: "val",
+      falsyChainOr: true,
+      truthyChainOr: ["1", "2"],
+      falsyChainAnd: 0,
+      truthyChainAnd: "val",
+      x: "1357",
+      notNullishCoalAssign: "a",
+      nullishCoalAssign: "b",
+      truthyAndAssign: "b",
+      falsyAndAssign: "",
+      truthyOrAssign: "a",
+      falsyOrAssign: "b",
+      y: "12568",
     },
-    { a: true, b: false, v: "val", nv: undefined }
+    { a: true, b: false, v: "val", nv: undefined, z: 0, arr: ["1", "2"] }
   );
 
   test(
@@ -935,10 +990,10 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           }`
         );
 
-        return `the result: ${result.str}`;
+        return `the result: ${result.str} ${input.obj.str === "hullo"}`;
       });
     },
-    "the result: hullo hello hello default 1",
+    "the result: hullo hello hello default 1 true",
     { obj: { str: "hullo", items: [1] } }
   );
 
@@ -1650,6 +1705,38 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         return `${res}-${a}${b}${c}${d}${e}${f}-${z}`;
       }),
     "034567-034561-034511-034111-031111-011111-111111-0"
+  );
+
+  test(
+    "boolean",
+    (parent) =>
+      new StepFunction(parent, "sfn", (input) => {
+        return {
+          trueString: Boolean("1"),
+          trueBoolean: Boolean(true),
+          trueNumber: Boolean(1),
+          trueObject: Boolean({}),
+          truthyVar: Boolean(input.value),
+          falseString: Boolean(""),
+          falseBoolean: Boolean(false),
+          falseNumber: Boolean(0),
+          falsyVar: Boolean(input.nv),
+          empty: Boolean(),
+        };
+      }),
+    {
+      trueString: true,
+      trueBoolean: true,
+      trueNumber: true,
+      trueObject: true,
+      falseString: false,
+      falseBoolean: false,
+      falseNumber: false,
+      empty: false,
+      truthyVar: true,
+      falsyVar: false,
+    },
+    { value: "hello", nv: "" }
   );
 });
 

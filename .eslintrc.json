@@ -37,6 +37,12 @@
   },
   "ignorePatterns": [
     "jest.config.ts",
+    "*.js",
+    "!.projenrc.ts",
+    "*.d.ts",
+    "node_modules/",
+    "*.generated.ts",
+    "coverage",
     "!.projenrc.ts",
     "!projenrc/**/*.ts"
   ],

@@ -321,13 +321,20 @@ export class GetAccessorDecl<F extends () => any = () => any> extends BaseDecl<
      * }
      * ```
      */
-    readonly ownedBy: ReferenceExpr<AnyClass | object> | undefined
+    readonly ownedBy: ReferenceExpr<AnyClass | object> | undefined,
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.GetAccessorDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
     this.ensure(isStatic, "isStatic", ["undefined", "boolean"]);
     this.ensure(ownedBy, "ownedBy", ["undefined", NodeKind.ReferenceExpr]);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 export class SetAccessorDecl<
@@ -389,7 +396,14 @@ export class SetAccessorDecl<
      * }
      * ```
      */
-    readonly ownedBy: ReferenceExpr<AnyClass | object> | undefined
+    readonly ownedBy: ReferenceExpr<AnyClass | object> | undefined,
+
+    /**
+     * Name of the source file this node originates from.
+     *
+     * Only set on the root of the tree, i.e. when `this` is `undefined`.
+     */
+    readonly filename?: string
   ) {
     super(NodeKind.SetAccessorDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
@@ -397,6 +411,7 @@ export class SetAccessorDecl<
     this.ensure(body, "body", [NodeKind.BlockStmt]);
     this.ensure(isStatic, "isStatic", ["undefined", "boolean"]);
     this.ensure(ownedBy, "ownedBy", ["undefined", NodeKind.ReferenceExpr]);
+    this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
 

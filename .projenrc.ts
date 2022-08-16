@@ -85,7 +85,7 @@ const project = new CustomTypescriptProject({
     "fs-extra",
     "minimatch",
     "@functionless/nodejs-closure-serializer",
-    "@functionless/ast-reflection@file:../ast-reflection",
+    "@functionless/ast-reflection@^0.1.2",
     "@swc/cli",
     "@swc/core@1.2.218",
     "@swc/register",
@@ -144,9 +144,9 @@ const project = new CustomTypescriptProject({
     "typescript@^4.7.2",
   ],
   eslintOptions: {
-    lintProjenRc: false,
     dirs: ["src", "test"],
     ignorePatterns: ["jest.config.ts"],
+    lintProjenRc: false,
   },
   tsconfig: {
     compilerOptions: {

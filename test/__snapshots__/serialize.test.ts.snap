@@ -12529,15 +12529,7 @@ function __f3(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0) {
   return (function() {
@@ -12566,157 +12558,89 @@ function __f3(__0, __1) {
     let c = __f2;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f9(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    const payload = {
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    };
-    return dynamo.getItem(payload).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; const payload = { ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }; return dynamo.getItem(payload).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f8() {
   return (function() {
     let c = __f9;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f11(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f10() {
   return (function() {
     let c = __f11;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f13(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, Item, ...rest } = input;
-    return dynamo.putItem({
-        ...rest,
-        Item: Item,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, Item, ...rest } = input; return dynamo.putItem({ ...rest, Item: Item, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f12() {
   return (function() {
     let c = __f13;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f15(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.query({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.query({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f14() {
   return (function() {
     let c = __f15;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f17(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.scan({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.scan({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f16() {
   return (function() {
     let c = __f17;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f18() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f20(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async ([request], preWarmContext) => {
-    const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-    return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-            ...e
-        }))
-    }).promise();
-});;
+    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f19() {
   return (function() {
     let c = __f20;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f21() {
   return (function() {
@@ -12811,10 +12735,7 @@ function __f2(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-      }).promise();
+      return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -12864,11 +12785,7 @@ function __f9(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      const payload = {
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      };
+      const payload = { ...rest, AttributesToGet, TableName: table.tableName };
       return dynamo.getItem(payload).promise();
     };
     ;
@@ -12891,10 +12808,7 @@ function __f11(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -12916,11 +12830,7 @@ function __f13(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, Item, ...rest } = input;
-      return dynamo.putItem({
-        ...rest,
-        Item,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.putItem({ ...rest, Item, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -12942,11 +12852,7 @@ function __f15(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.query({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.query({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -12968,11 +12874,7 @@ function __f17(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.scan({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.scan({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13000,11 +12902,7 @@ function __f20(__0, __1) {
     let function_prewarm_1 = __function_prewarm_1;
     return async ([request], preWarmContext) => {
       const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-      return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-          ...e
-        }))
-      }).promise();
+      return eventBridge.putEvents({ Entries: request.Entries.map((e) => ({ ...e })) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13080,19 +12978,7 @@ function __f3(__0, __1) {
     let function_prewarm_1 = __function_prewarm_1;
     let eventBusName = process.env.env__functionless0;
 
-    return (async (args, preWarmContext) => {
-    const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-    await eventBridge.putEvents({
-        Entries: args.map((event) => ({
-            Detail: JSON.stringify(event.detail),
-            EventBusName: eventBusName,
-            DetailType: event[\\"detail-type\\"],
-            Resources: event.resources,
-            Source: event.source,
-            Time: typeof event.time === \\"number\\" ? new Date(event.time) : undefined
-        }))
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE); await eventBridge.putEvents({ Entries: args.map(event => ({ Detail: JSON.stringify(event.detail), EventBusName: eventBusName, DetailType: event[\\"detail-type\\"], Resources: event.resources, Source: event.source, Time: typeof event.time === \\"number\\" ? new Date(event.time) : undefined })) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f4(__0) {
   return (function() {
@@ -13121,9 +13007,7 @@ function __f3(__0, __1) {
     let c = __f2;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
@@ -13174,16 +13058,7 @@ function __f2(__0, __1) {
     let eventBusName = process.env.env__functionless0;
     return async (args, preWarmContext) => {
       const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-      await eventBridge.putEvents({
-        Entries: args.map((event) => ({
-          Detail: JSON.stringify(event.detail),
-          EventBusName: eventBusName,
-          DetailType: event[\\"detail-type\\"],
-          Resources: event.resources,
-          Source: event.source,
-          Time: typeof event.time === \\"number\\" ? new Date(event.time) : void 0
-        }))
-      }).promise();
+      await eventBridge.putEvents({ Entries: args.map((event) => ({ Detail: JSON.stringify(event.detail), EventBusName: eventBusName, DetailType: event[\\"detail-type\\"], Resources: event.resources, Source: event.source, Time: typeof event.time === \\"number\\" ? new Date(event.time) : void 0 })) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13274,18 +13149,7 @@ function __f3(__0, __1) {
     let function_prewarm_1 = __function_prewarm_1;
     let functionName = process.env.env__functionless0;
 
-    return (async (args, prewarmContext) => {
-    var _a;
-    const [payload] = args;
-    const lambdaClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.LAMBDA);
-    const response = (_a = (await lambdaClient.invoke({
-        FunctionName: functionName,
-        ...payload ? {
-            Payload: JSON.stringify(payload)
-        } : undefined
-    }).promise()).Payload) === null || _a === void 0 ? void 0 : _a.toString();
-    return response ? JSON.parse(response) : undefined;
-});;
+    return (async (args, prewarmContext) => { var _a; const [payload] = args; const lambdaClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.LAMBDA); const response = (_a = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : undefined }).promise()).Payload) === null || _a === void 0 ? void 0 : _a.toString(); return response ? JSON.parse(response) : undefined; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f4(__0) {
   return (function() {
@@ -13314,9 +13178,7 @@ function __f3(__0, __1) {
     let c = __f2;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
@@ -13365,12 +13227,7 @@ function __f2(__0, __1) {
       var _a;
       const [payload] = args;
       const lambdaClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.LAMBDA);
-      const response = (_a = (await lambdaClient.invoke({
-        FunctionName: functionName,
-        ...payload ? {
-          Payload: JSON.stringify(payload)
-        } : void 0
-      }).promise()).Payload) === null || _a === void 0 ? void 0 : _a.toString();
+      const response = (_a = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : void 0 }).promise()).Payload) === null || _a === void 0 ? void 0 : _a.toString();
       return response ? JSON.parse(response) : void 0;
     };
     ;
@@ -13498,15 +13355,7 @@ function __f3(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f6(__0) {
   return (function() {
@@ -13535,157 +13384,89 @@ function __f3(__0, __1) {
     let c = __f2;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f10(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    const payload = {
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    };
-    return dynamo.getItem(payload).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; const payload = { ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }; return dynamo.getItem(payload).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f9() {
   return (function() {
     let c = __f10;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f12(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f11() {
   return (function() {
     let c = __f12;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f14(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, Item, ...rest } = input;
-    return dynamo.putItem({
-        ...rest,
-        Item: Item,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, Item, ...rest } = input; return dynamo.putItem({ ...rest, Item: Item, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f13() {
   return (function() {
     let c = __f14;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f16(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.query({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.query({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f15() {
   return (function() {
     let c = __f16;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f18(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.scan({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.scan({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f17() {
   return (function() {
     let c = __f18;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f19() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f21(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async ([request], preWarmContext) => {
-    const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-    return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-            ...e
-        }))
-    }).promise();
-});;
+    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f20() {
   return (function() {
     let c = __f21;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f22() {
   return (function() {
@@ -13701,27 +13482,14 @@ function __f3(__0, __1) {
     let function_prewarm_1 = __function_prewarm_1;
     let functionName = process.env.env__functionless0;
 
-    return (async (args, prewarmContext) => {
-    var _a;
-    const [payload] = args;
-    const lambdaClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.LAMBDA);
-    const response = (_a = (await lambdaClient.invoke({
-        FunctionName: functionName,
-        ...payload ? {
-            Payload: JSON.stringify(payload)
-        } : undefined
-    }).promise()).Payload) === null || _a === void 0 ? void 0 : _a.toString();
-    return response ? JSON.parse(response) : undefined;
-});;
+    return (async (args, prewarmContext) => { var _a; const [payload] = args; const lambdaClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.LAMBDA); const response = (_a = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : undefined }).promise()).Payload) === null || _a === void 0 ? void 0 : _a.toString(); return response ? JSON.parse(response) : undefined; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f23() {
   return (function() {
     let c = __f24;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
@@ -13816,10 +13584,7 @@ function __f2(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-      }).promise();
+      return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13869,11 +13634,7 @@ function __f10(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      const payload = {
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      };
+      const payload = { ...rest, AttributesToGet, TableName: table.tableName };
       return dynamo.getItem(payload).promise();
     };
     ;
@@ -13896,10 +13657,7 @@ function __f12(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13921,11 +13679,7 @@ function __f14(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, Item, ...rest } = input;
-      return dynamo.putItem({
-        ...rest,
-        Item,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.putItem({ ...rest, Item, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13947,11 +13701,7 @@ function __f16(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.query({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.query({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13973,11 +13723,7 @@ function __f18(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.scan({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.scan({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14005,11 +13751,7 @@ function __f21(__0, __1) {
     let function_prewarm_1 = __function_prewarm_1;
     return async ([request], preWarmContext) => {
       const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-      return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-          ...e
-        }))
-      }).promise();
+      return eventBridge.putEvents({ Entries: request.Entries.map((e) => ({ ...e })) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14042,12 +13784,7 @@ function __f24(__0, __1) {
       var _a;
       const [payload] = args;
       const lambdaClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.LAMBDA);
-      const response = (_a = (await lambdaClient.invoke({
-        FunctionName: functionName,
-        ...payload ? {
-          Payload: JSON.stringify(payload)
-        } : void 0
-      }).promise()).Payload) === null || _a === void 0 ? void 0 : _a.toString();
+      const response = (_a = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : void 0 }).promise()).Payload) === null || _a === void 0 ? void 0 : _a.toString();
       return response ? JSON.parse(response) : void 0;
     };
     ;
@@ -14137,16 +13874,7 @@ function __f3(__0, __1) {
     let function_prewarm_1 = __function_prewarm_1;
     let stateMachineArn = process.env.env__functionless0;
 
-    return (async (args, prewarmContext) => {
-    const stepFunctionsClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.STEP_FUNCTIONS);
-    const [payload] = args;
-    const result = await stepFunctionsClient.startExecution({
-        ...payload,
-        stateMachineArn: stateMachineArn,
-        input: payload.input ? JSON.stringify(payload.input) : undefined
-    }).promise();
-    return result;
-});;
+    return (async (args, prewarmContext) => { const stepFunctionsClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.STEP_FUNCTIONS); const [payload] = args; const result = await stepFunctionsClient.startExecution({ ...payload, stateMachineArn: stateMachineArn, input: payload.input ? JSON.stringify(payload.input) : undefined }).promise(); return result; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f4(__0) {
   return (function() {
@@ -14175,39 +13903,27 @@ function __f3(__0, __1) {
     let c = __f2;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f8(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, prewarmContext) => {
-    const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.STEP_FUNCTIONS);
-    const [arn] = args;
-    return stepFunctionClient.describeExecution({
-        executionArn: arn
-    }).promise();
-});;
+    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.STEP_FUNCTIONS); const [arn] = args; return stepFunctionClient.describeExecution({ executionArn: arn }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f7() {
   return (function() {
     let c = __f8;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f9(__0, __1) {
   return (function() {
     let asl_1 = __asl_1;
     let vtl_1 = __vtl_1;
 
-    return ((kind, contextKind) => {
-    throw new Error(\`\${kind} is only available in the \${asl_1.ASL.ContextName} and \${vtl_1.VTL.ContextName} context, but was used in \${contextKind}.\`);
-});;
+    return ((kind, contextKind) => { throw new Error(\`\${kind} is only available in the \${asl_1.ASL.ContextName} and \${vtl_1.VTL.ContextName} context, but was used in \${contextKind}.\`); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
@@ -14283,11 +13999,7 @@ function __f2(__0, __1) {
     return async (args, prewarmContext) => {
       const stepFunctionsClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.STEP_FUNCTIONS);
       const [payload] = args;
-      const result = await stepFunctionsClient.startExecution({
-        ...payload,
-        stateMachineArn,
-        input: payload.input ? JSON.stringify(payload.input) : void 0
-      }).promise();
+      const result = await stepFunctionsClient.startExecution({ ...payload, stateMachineArn, input: payload.input ? JSON.stringify(payload.input) : void 0 }).promise();
       return result;
     };
     ;
@@ -14337,9 +14049,7 @@ function __f8(__0, __1) {
     return async (args, prewarmContext) => {
       const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.STEP_FUNCTIONS);
       const [arn] = args;
-      return stepFunctionClient.describeExecution({
-        executionArn: arn
-      }).promise();
+      return stepFunctionClient.describeExecution({ executionArn: arn }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14474,15 +14184,7 @@ function __f3(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0) {
   return (function() {
@@ -14511,157 +14213,89 @@ function __f3(__0, __1) {
     let c = __f2;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f9(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    const payload = {
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    };
-    return dynamo.getItem(payload).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; const payload = { ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }; return dynamo.getItem(payload).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f8() {
   return (function() {
     let c = __f9;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f11(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f10() {
   return (function() {
     let c = __f11;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f13(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, Item, ...rest } = input;
-    return dynamo.putItem({
-        ...rest,
-        Item: Item,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, Item, ...rest } = input; return dynamo.putItem({ ...rest, Item: Item, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f12() {
   return (function() {
     let c = __f13;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f15(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.query({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.query({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f14() {
   return (function() {
     let c = __f15;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f17(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.scan({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.scan({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f16() {
   return (function() {
     let c = __f17;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f18() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f20(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async ([request], preWarmContext) => {
-    const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-    return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-            ...e
-        }))
-    }).promise();
-});;
+    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f19() {
   return (function() {
     let c = __f20;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f21() {
   return (function() {
@@ -14674,39 +14308,27 @@ function __f3(__0, __1) {
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f22() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f23() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f24() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f25() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f26() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f27() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
@@ -14803,10 +14425,7 @@ function __f2(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-      }).promise();
+      return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14856,11 +14475,7 @@ function __f9(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      const payload = {
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      };
+      const payload = { ...rest, AttributesToGet, TableName: table.tableName };
       return dynamo.getItem(payload).promise();
     };
     ;
@@ -14883,10 +14498,7 @@ function __f11(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14908,11 +14520,7 @@ function __f13(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, Item, ...rest } = input;
-      return dynamo.putItem({
-        ...rest,
-        Item,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.putItem({ ...rest, Item, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14934,11 +14542,7 @@ function __f15(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.query({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.query({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14960,11 +14564,7 @@ function __f17(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.scan({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.scan({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14992,11 +14592,7 @@ function __f20(__0, __1) {
     let function_prewarm_1 = __function_prewarm_1;
     return async ([request], preWarmContext) => {
       const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-      return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-          ...e
-        }))
-      }).promise();
+      return eventBridge.putEvents({ Entries: request.Entries.map((e) => ({ ...e })) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15160,15 +14756,7 @@ function __f3(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0) {
   return (function() {
@@ -15197,157 +14785,89 @@ function __f3(__0, __1) {
     let c = __f2;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f9(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    const payload = {
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    };
-    return dynamo.getItem(payload).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; const payload = { ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }; return dynamo.getItem(payload).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f8() {
   return (function() {
     let c = __f9;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f11(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f10() {
   return (function() {
     let c = __f11;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f13(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, Item, ...rest } = input;
-    return dynamo.putItem({
-        ...rest,
-        Item: Item,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, Item, ...rest } = input; return dynamo.putItem({ ...rest, Item: Item, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f12() {
   return (function() {
     let c = __f13;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f15(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.query({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.query({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f14() {
   return (function() {
     let c = __f15;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f17(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.scan({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.scan({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f16() {
   return (function() {
     let c = __f17;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f18() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f20(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async ([request], preWarmContext) => {
-    const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-    return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-            ...e
-        }))
-    }).promise();
-});;
+    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f19() {
   return (function() {
     let c = __f20;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f21() {
   return (function() {
@@ -15360,39 +14880,27 @@ function __f3(__0, __1) {
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f22() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f23() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f24() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f25() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f26() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f27() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
@@ -15489,10 +14997,7 @@ function __f2(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-      }).promise();
+      return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15542,11 +15047,7 @@ function __f9(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      const payload = {
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      };
+      const payload = { ...rest, AttributesToGet, TableName: table.tableName };
       return dynamo.getItem(payload).promise();
     };
     ;
@@ -15569,10 +15070,7 @@ function __f11(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15594,11 +15092,7 @@ function __f13(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, Item, ...rest } = input;
-      return dynamo.putItem({
-        ...rest,
-        Item,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.putItem({ ...rest, Item, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15620,11 +15114,7 @@ function __f15(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.query({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.query({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15646,11 +15136,7 @@ function __f17(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.scan({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.scan({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15678,11 +15164,7 @@ function __f20(__0, __1) {
     let function_prewarm_1 = __function_prewarm_1;
     return async ([request], preWarmContext) => {
       const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-      return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-          ...e
-        }))
-      }).promise();
+      return eventBridge.putEvents({ Entries: request.Entries.map((e) => ({ ...e })) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15816,17 +15298,7 @@ function __f3(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    const payload = {
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    };
-    return dynamo.getItem(payload).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; const payload = { ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }; return dynamo.getItem(payload).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f4(__0) {
   return (function() {
@@ -15855,45 +15327,31 @@ function __f3(__0, __1) {
     let c = __f2;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f7() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f8() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f9() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f10() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f11() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f12() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
@@ -15959,11 +15417,7 @@ function __f2(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      const payload = {
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      };
+      const payload = { ...rest, AttributesToGet, TableName: table.tableName };
       return dynamo.getItem(payload).promise();
     };
     ;
@@ -16146,15 +15600,7 @@ function __f3(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0) {
   return (function() {
@@ -16183,157 +15629,89 @@ function __f3(__0, __1) {
     let c = __f2;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f9(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    const payload = {
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    };
-    return dynamo.getItem(payload).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; const payload = { ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }; return dynamo.getItem(payload).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f8() {
   return (function() {
     let c = __f9;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f11(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f10() {
   return (function() {
     let c = __f11;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f13(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, Item, ...rest } = input;
-    return dynamo.putItem({
-        ...rest,
-        Item: Item,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, Item, ...rest } = input; return dynamo.putItem({ ...rest, Item: Item, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f12() {
   return (function() {
     let c = __f13;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f15(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.query({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.query({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f14() {
   return (function() {
     let c = __f15;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f17(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.scan({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.scan({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f16() {
   return (function() {
     let c = __f17;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f18() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f20(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async ([request], preWarmContext) => {
-    const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-    return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-            ...e
-        }))
-    }).promise();
-});;
+    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f19() {
   return (function() {
     let c = __f20;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f21() {
   return (function() {
@@ -16346,39 +15724,27 @@ function __f3(__0, __1) {
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f22() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f23() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f24() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f25() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f26() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f27() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
@@ -16475,10 +15841,7 @@ function __f2(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-      }).promise();
+      return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -16528,11 +15891,7 @@ function __f9(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      const payload = {
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      };
+      const payload = { ...rest, AttributesToGet, TableName: table.tableName };
       return dynamo.getItem(payload).promise();
     };
     ;
@@ -16555,10 +15914,7 @@ function __f11(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -16580,11 +15936,7 @@ function __f13(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, Item, ...rest } = input;
-      return dynamo.putItem({
-        ...rest,
-        Item,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.putItem({ ...rest, Item, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -16606,11 +15958,7 @@ function __f15(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.query({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.query({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -16632,11 +15980,7 @@ function __f17(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.scan({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.scan({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -16664,11 +16008,7 @@ function __f20(__0, __1) {
     let function_prewarm_1 = __function_prewarm_1;
     return async ([request], preWarmContext) => {
       const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-      return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-          ...e
-        }))
-      }).promise();
+      return eventBridge.putEvents({ Entries: request.Entries.map((e) => ({ ...e })) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -16832,15 +16172,7 @@ function __f3(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0) {
   return (function() {
@@ -16869,157 +16201,89 @@ function __f3(__0, __1) {
     let c = __f2;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f9(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    const payload = {
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    };
-    return dynamo.getItem(payload).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; const payload = { ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }; return dynamo.getItem(payload).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f8() {
   return (function() {
     let c = __f9;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f11(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f10() {
   return (function() {
     let c = __f11;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f13(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, Item, ...rest } = input;
-    return dynamo.putItem({
-        ...rest,
-        Item: Item,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, Item, ...rest } = input; return dynamo.putItem({ ...rest, Item: Item, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f12() {
   return (function() {
     let c = __f13;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f15(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.query({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.query({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f14() {
   return (function() {
     let c = __f15;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f17(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.scan({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.scan({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f16() {
   return (function() {
     let c = __f17;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f18() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f20(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async ([request], preWarmContext) => {
-    const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-    return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-            ...e
-        }))
-    }).promise();
-});;
+    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f19() {
   return (function() {
     let c = __f20;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f21() {
   return (function() {
@@ -17032,39 +16296,27 @@ function __f3(__0, __1) {
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f22() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f23() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f24() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f25() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f26() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f27() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
@@ -17170,10 +16422,7 @@ function __f2(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-      }).promise();
+      return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -17223,11 +16472,7 @@ function __f9(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      const payload = {
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      };
+      const payload = { ...rest, AttributesToGet, TableName: table.tableName };
       return dynamo.getItem(payload).promise();
     };
     ;
@@ -17250,10 +16495,7 @@ function __f11(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -17275,11 +16517,7 @@ function __f13(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, Item, ...rest } = input;
-      return dynamo.putItem({
-        ...rest,
-        Item,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.putItem({ ...rest, Item, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -17301,11 +16539,7 @@ function __f15(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.query({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.query({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -17327,11 +16561,7 @@ function __f17(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.scan({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.scan({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -17359,11 +16589,7 @@ function __f20(__0, __1) {
     let function_prewarm_1 = __function_prewarm_1;
     return async ([request], preWarmContext) => {
       const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-      return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-          ...e
-        }))
-      }).promise();
+      return eventBridge.putEvents({ Entries: request.Entries.map((e) => ({ ...e })) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -17536,15 +16762,7 @@ function __f3(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0) {
   return (function() {
@@ -17573,157 +16791,89 @@ function __f3(__0, __1) {
     let c = __f2;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f9(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    const payload = {
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    };
-    return dynamo.getItem(payload).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; const payload = { ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }; return dynamo.getItem(payload).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f8() {
   return (function() {
     let c = __f9;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f11(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f10() {
   return (function() {
     let c = __f11;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f13(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, Item, ...rest } = input;
-    return dynamo.putItem({
-        ...rest,
-        Item: Item,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, Item, ...rest } = input; return dynamo.putItem({ ...rest, Item: Item, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f12() {
   return (function() {
     let c = __f13;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f15(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.query({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.query({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f14() {
   return (function() {
     let c = __f15;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f17(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.scan({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.scan({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f16() {
   return (function() {
     let c = __f17;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f18() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f20(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async ([request], preWarmContext) => {
-    const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-    return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-            ...e
-        }))
-    }).promise();
-});;
+    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f19() {
   return (function() {
     let c = __f20;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f21() {
   return (function() {
@@ -17736,39 +16886,27 @@ function __f3(__0, __1) {
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f22() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f23() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f24() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f25() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f26() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f27() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
@@ -17869,10 +17007,7 @@ function __f2(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-      }).promise();
+      return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -17922,11 +17057,7 @@ function __f9(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      const payload = {
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      };
+      const payload = { ...rest, AttributesToGet, TableName: table.tableName };
       return dynamo.getItem(payload).promise();
     };
     ;
@@ -17949,10 +17080,7 @@ function __f11(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -17974,11 +17102,7 @@ function __f13(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, Item, ...rest } = input;
-      return dynamo.putItem({
-        ...rest,
-        Item,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.putItem({ ...rest, Item, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -18000,11 +17124,7 @@ function __f15(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.query({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.query({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -18026,11 +17146,7 @@ function __f17(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.scan({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.scan({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -18058,11 +17174,7 @@ function __f20(__0, __1) {
     let function_prewarm_1 = __function_prewarm_1;
     return async ([request], preWarmContext) => {
       const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-      return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-          ...e
-        }))
-      }).promise();
+      return eventBridge.putEvents({ Entries: request.Entries.map((e) => ({ ...e })) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -18230,15 +17342,7 @@ function __f3(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0) {
   return (function() {
@@ -18267,157 +17371,89 @@ function __f3(__0, __1) {
     let c = __f2;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f9(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    const payload = {
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    };
-    return dynamo.getItem(payload).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; const payload = { ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }; return dynamo.getItem(payload).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f8() {
   return (function() {
     let c = __f9;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f11(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, ...rest } = input;
-    return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, ...rest } = input; return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f10() {
   return (function() {
     let c = __f11;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f13(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, Item, ...rest } = input;
-    return dynamo.putItem({
-        ...rest,
-        Item: Item,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, Item, ...rest } = input; return dynamo.putItem({ ...rest, Item: Item, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f12() {
   return (function() {
     let c = __f13;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f15(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.query({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.query({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f14() {
   return (function() {
     let c = __f15;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f17(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async (args, preWarmContext) => {
-    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
-    const [input] = args;
-    const { Table: table, AttributesToGet, ...rest } = input;
-    return dynamo.scan({
-        ...rest,
-        AttributesToGet: AttributesToGet,
-        TableName: table.tableName
-    }).promise();
-});;
+    return (async (args, preWarmContext) => { const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO); const [input] = args; const { Table: table, AttributesToGet, ...rest } = input; return dynamo.scan({ ...rest, AttributesToGet: AttributesToGet, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f16() {
   return (function() {
     let c = __f17;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f18() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f20(__0, __1) {
   return (function() {
     let function_prewarm_1 = __function_prewarm_1;
 
-    return (async ([request], preWarmContext) => {
-    const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-    return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-            ...e
-        }))
-    }).promise();
-});;
+    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f19() {
   return (function() {
     let c = __f20;
     let preWarmContext = __preWarmContext;
 
-    return (function __computed(...args) {
-    return c(args, preWarmContext);
-});;
+    return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f21() {
   return (function() {
@@ -18430,39 +17466,27 @@ function __f3(__0, __1) {
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f22() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f23() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f24() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f25() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f26() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f27() {
   return (function() {
-    return (function __computed() {
-    throw new Error();
-});;
+    return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
@@ -18554,10 +17578,7 @@ function __f2(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.deleteItem({
-        ...rest,
-        TableName: input.Table.tableName
-      }).promise();
+      return dynamo.deleteItem({ ...rest, TableName: input.Table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -18607,11 +17628,7 @@ function __f9(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      const payload = {
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      };
+      const payload = { ...rest, AttributesToGet, TableName: table.tableName };
       return dynamo.getItem(payload).promise();
     };
     ;
@@ -18634,10 +17651,7 @@ function __f11(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, ...rest } = input;
-      return dynamo.updateItem({
-        ...rest,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.updateItem({ ...rest, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -18659,11 +17673,7 @@ function __f13(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, Item, ...rest } = input;
-      return dynamo.putItem({
-        ...rest,
-        Item,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.putItem({ ...rest, Item, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -18685,11 +17695,7 @@ function __f15(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.query({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.query({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -18711,11 +17717,7 @@ function __f17(__0, __1) {
       const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
       const [input] = args;
       const { Table: table, AttributesToGet, ...rest } = input;
-      return dynamo.scan({
-        ...rest,
-        AttributesToGet,
-        TableName: table.tableName
-      }).promise();
+      return dynamo.scan({ ...rest, AttributesToGet, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -18743,11 +17745,7 @@ function __f20(__0, __1) {
     let function_prewarm_1 = __function_prewarm_1;
     return async ([request], preWarmContext) => {
       const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
-      return eventBridge.putEvents({
-        Entries: request.Entries.map((e) => ({
-          ...e
-        }))
-      }).promise();
+      return eventBridge.putEvents({ Entries: request.Entries.map((e) => ({ ...e })) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
