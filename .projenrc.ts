@@ -195,7 +195,7 @@ new JsonFile(project, ".swcrc", {
         plugins: [["@functionless/ast-reflection", {}]],
       },
     },
-    minify: false,
+    minify: true,
     sourceMaps: "inline",
     module: {
       type: "commonjs",
