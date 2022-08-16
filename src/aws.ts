@@ -35,6 +35,7 @@ import {
   isReferenceExpr,
   isStringLiteralExpr,
 } from "./guards";
+import { IAM_SERVICE_PREFIX } from "./iam";
 import {
   IntegrationCall,
   IntegrationInput,
@@ -521,7 +522,9 @@ export namespace $AWS {
           {},
           {
             get: (_, methodName: string) => {
-              const defaultServicePrefix = serviceName.toLowerCase();
+              // if not explicitly mapped default to the lowercase service name, which is correct ~60% of the time
+              const defaultServicePrefix =
+                IAM_SERVICE_PREFIX[serviceName] ?? serviceName.toLowerCase();
               const defaultMethod =
                 methodName.charAt(0).toUpperCase() + methodName.slice(1);
               const defaultIamActions = [
@@ -655,9 +658,12 @@ type AWSServiceClass = { new (): AWSService };
  *
  * @returns "AccessAnalyzer" | "Account" | ... | "XRay"
  */
-type ServiceKeys = {
-  [K in keyof typeof AWS]: typeof AWS[K] extends AWSServiceClass ? K : never;
-}[keyof typeof AWS];
+type ServiceKeys = Exclude<
+  {
+    [K in keyof typeof AWS]: typeof AWS[K] extends AWSServiceClass ? K : never;
+  }[keyof typeof AWS],
+  "Service"
+>;
 
 type SDK = {
   [serviceName in ServiceKeys]: typeof AWS[serviceName] extends new (
