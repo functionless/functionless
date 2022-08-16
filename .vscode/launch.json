@@ -37,8 +37,8 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--nolazy"],
-      "args": ["./lib/message-board.js"],
+      "runtimeArgs": ["--nolazy", "-r", "./hook"],
+      "args": ["./src/message-board.ts"],
       "outFiles": [
         "${workspaceRoot}/lib/**/*.js",
         "${workspaceRoot}/test-app/lib/**/*.js",

@@ -728,7 +728,7 @@ export class Function<
           await callbackLambdaCode.generate(
             nativeIntegrationsPrewarm,
             // TODO: make default ASYNC until we are happy
-            props?.serializer ?? SerializerImpl.EXPERIMENTAL_SWC
+            props?.serializer ?? SerializerImpl.STABLE_DEBUGGER
           );
         } catch (e) {
           if (e instanceof SynthError) {
@@ -831,7 +831,11 @@ export class CallbackLambdaCode extends aws_lambda.Code {
       serializerImpl,
       this.props
     );
-    const bundled = await bundle(serialized);
+    const bundled =
+      serializerImpl === SerializerImpl.STABLE_DEBUGGER
+        ? (await bundle(serialized)).contents
+        : // the SWC implementation runs es-build automatically
+          serialized;
 
     const asset = aws_lambda.Code.fromAsset("", {
       assetHashType: AssetHashType.OUTPUT,
@@ -841,10 +845,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
         user: scope.node.addr,
         local: {
           tryBundle(outdir, _opts) {
-            fs.writeFileSync(
-              path.resolve(outdir, "index.js"),
-              bundled.contents
-            );
+            fs.writeFileSync(path.resolve(outdir, "index.js"), bundled);
             return true;
           },
         },

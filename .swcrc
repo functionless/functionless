@@ -21,7 +21,7 @@
       ]
     }
   },
-  "minify": false,
+  "minify": true,
   "sourceMaps": "inline",
   "module": {
     "type": "commonjs"

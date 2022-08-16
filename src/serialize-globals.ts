@@ -1,5 +1,6 @@
 // sourced from the lib.*.d.ts files
-import { globals, modules } from "./serialize-globals.json";
+import module from "module";
+import globals from "./serialize-globals.json";
 import { callExpr, idExpr, propAccessExpr, stringExpr } from "./serialize-util";
 
 export const Globals = new Map<any, () => ts.Expression>();
@@ -10,37 +11,50 @@ for (const valueName of globals) {
   }
 }
 
-for (const moduleName of modules) {
-  registerValue(
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require(moduleName),
-    callExpr(idExpr("require"), [stringExpr(moduleName)])
-  );
+for (const moduleName of module.builtinModules) {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const module = require(moduleName);
+  const requireModule = callExpr(idExpr("require"), [stringExpr(moduleName)]);
+  registerValue(module, requireModule);
+  registerOwnProperties(module, requireModule, true);
 }
 
 function registerValue(value: any, expr: ts.Expression) {
   if (Globals.has(value)) {
     return;
   }
-  Globals.set(value, () => expr);
-  registerOwnProperties(value, expr);
-  if (typeof value === "function") {
-    registerValue(value.prototype, propAccessExpr(expr, "prototype"));
-  } else if (value && typeof value === "object") {
-    registerValue(value.constructor, propAccessExpr(expr, "constructor"));
+  if (typeof value === "object" || typeof value === "function") {
+    Globals.set(value, () => expr);
+    registerOwnProperties(value, expr, false);
+    if (typeof value === "function") {
+      registerValue(value.prototype, propAccessExpr(expr, "prototype"));
+    } else if (value && typeof value === "object") {
+      // registerValue(value.constructor, propAccessExpr(expr, "constructor"));
+    }
   }
 }
 
-function registerOwnProperties(value: any, expr: ts.Expression) {
-  if (value && (typeof value === "object" || typeof value === "function")) {
+function registerOwnProperties(
+  value: any,
+  expr: ts.Expression,
+  isModule: boolean
+) {
+  if (
+    value &&
+    (typeof value === "object" || typeof value === "function") &&
+    !(Array.isArray(value) && value !== Array.prototype)
+  ) {
     // go through each of its properties
+
     for (const propName of Object.getOwnPropertyNames(value)) {
       if (value === process && propName === "env") {
         // never serialize environment variables
         continue;
       }
       const propDesc = Object.getOwnPropertyDescriptor(value, propName);
-      if (!propDesc?.writable || propDesc?.get || propDesc.set) {
+      if (propDesc?.get && isModule) {
+        registerValue(propDesc.get(), propAccessExpr(expr, propName));
+      } else if (!propDesc?.writable) {
         continue;
       }
       registerValue(propDesc.value, propAccessExpr(expr, propName));

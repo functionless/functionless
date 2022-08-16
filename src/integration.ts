@@ -307,7 +307,7 @@ export function findDeepIntegrations(
             node.fork(
               new CallExpr(
                 node.span,
-                new ReferenceExpr(node.expr.span, "", () => integration, 0),
+                new ReferenceExpr(node.expr.span, "", () => integration, 0, 0),
                 node.args.map((arg) => arg.clone())
               )
             )

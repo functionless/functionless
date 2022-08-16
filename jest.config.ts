@@ -1,16 +1,14 @@
 // ensure the SWC require-hook is installed before anything else runs
-import register from "@swc/register/lib/node";
+import "@swc/register";
 
-register({
-  ignore: [
-    (file) => {
-      if (file.includes("aws-sdk")) {
-        console.log(file);
-      }
-      return false;
-    },
-  ],
-});
+// uncomment to apply the transformer to all node_modules
+// register({
+//   ignore: [
+//     (file) => {
+//       return false;
+//     },
+//   ],
+// });
 
 import fs from "fs";
 import path from "path";
@@ -29,6 +27,6 @@ export default async (): Promise<Config.InitialOptions> => {
   return {
     // override defaults programmatically if needed
     ...defaults,
-    transformIgnorePatterns: ["node_modules/typescript/.*"],
+    // transformIgnorePatterns: ["node_modules/typescript/.*"],
   };
 };

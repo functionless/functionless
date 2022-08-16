@@ -12,7 +12,7 @@ import {
   SetAccessorDecl,
   VariableDeclKind,
 } from "./declaration";
-import { ClassExpr } from "./expression";
+import { BinaryOp, ClassExpr } from "./expression";
 import {
   isArgument,
   isArrayBinding,
@@ -220,10 +220,10 @@ export function serializeClosure(
 
   const statements: ts.Statement[] = [];
 
-  const singleton = (() => {
-    // stores a map of value to a ts.Expression producing that value
-    const valueIds = new Map<any, ts.Expression>();
+  // stores a map of value to a ts.Expression producing that value
+  const valueIds = new Map<any, ts.Expression>();
 
+  const singleton = (() => {
     return function <T extends ts.Expression>(value: any, produce: () => T): T {
       // optimize for number of map get/set operations as this is hot code
       let expr = valueIds.get(value);
@@ -358,10 +358,11 @@ export function serializeClosure(
   }
 
   function serialize(value: any): ts.Expression {
-    return singleton(value, () => serializeValue(value));
+    return valueIds.get(value) ?? serializeValue(value);
   }
 
   function serializeValue(value: any): ts.Expression {
+    ts.SyntaxKind;
     if (value === undefined) {
       return undefinedExpr();
     } else if (value === null) {
@@ -376,20 +377,22 @@ export function serializeClosure(
       return ts.factory.createBigIntLiteral(value.toString(10));
     } else if (typeof value === "symbol") {
       const symbol = serialize(Symbol);
-      if (typeof value.description === "string") {
-        if (value === Symbol.for(value.description)) {
-          // Symbol.for(description)
-          return callExpr(propAccessExpr(symbol, "for"), [
-            stringExpr(value.description),
-          ]);
+      return singleton(value, () => {
+        if (typeof value.description === "string") {
+          if (value === Symbol.for(value.description)) {
+            // Symbol.for(description)
+            return callExpr(propAccessExpr(symbol, "for"), [
+              stringExpr(value.description),
+            ]);
+          } else {
+            // Symbol(description)
+            return callExpr(symbol, [stringExpr(value.description)]);
+          }
         } else {
-          // Symbol(description)
-          return callExpr(symbol, [stringExpr(value.description)]);
+          // Symbol()
+          return callExpr(symbol, []);
         }
-      } else {
-        // Symbol()
-        return callExpr(symbol, []);
-      }
+      });
     } else if (typeof value === "string") {
       if (options?.serialize) {
         const result = options.serialize(value);
@@ -403,11 +406,19 @@ export function serializeClosure(
       }
       return stringExpr(value);
     } else if (value instanceof RegExp) {
-      return ts.factory.createRegularExpressionLiteral(value.source);
+      return singleton(value, () =>
+        ts.factory.createRegularExpressionLiteral(
+          `/${value.source}/${value.global ? "g" : ""}${
+            value.ignoreCase ? "i" : ""
+          }${value.multiline ? "m" : ""}`
+        )
+      );
     } else if (value instanceof Date) {
-      return ts.factory.createNewExpression(idExpr("Date"), undefined, [
-        numberExpr(value.getTime()),
-      ]);
+      return singleton(value, () =>
+        ts.factory.createNewExpression(idExpr("Date"), undefined, [
+          numberExpr(value.getTime()),
+        ])
+      );
     } else if (Array.isArray(value)) {
       // TODO: should we check the array's prototype?
 
@@ -499,7 +510,9 @@ export function serializeClosure(
       }
 
       if (Globals.has(value)) {
-        return emitVarDecl("const", uniqueName(), Globals.get(value)!());
+        return singleton(value, () =>
+          emitVarDecl("const", uniqueName(), Globals.get(value)!())
+        );
       }
 
       // if this is not compiled by functionless, we can only serialize it if it is exported by a module
@@ -530,7 +543,6 @@ export function serializeClosure(
     }
 
     // eslint-disable-next-line no-debugger
-    debugger;
     throw new Error("not implemented");
   }
 
@@ -566,6 +578,8 @@ export function serializeClosure(
     if (value.name === "bound requireModuleOrMock") {
       // heuristic to catch Jest's hacked-up require
       return idExpr("require");
+    } else if (value.name.startsWith("bound ")) {
+      // TODO
     } else if (value.name === "Object") {
       //
       return serialize(Object);
@@ -573,11 +587,9 @@ export function serializeClosure(
       value.toString() === `function ${value.name}() { [native code] }`
     ) {
       // eslint-disable-next-line no-debugger
-      debugger;
     }
 
     // eslint-disable-next-line no-debugger
-    debugger;
     throw new Error(
       `cannot serialize closures that were not compiled with Functionless unless they are exported by a module: ${func}`
     );
@@ -589,12 +601,10 @@ export function serializeClosure(
   ): ts.Expression {
     // emit the class to the closure
     const classDecl = singleton(classVal, () =>
-      emitVarDecl(
-        "const",
-        uniqueName(classAST),
-        toTS(classAST) as ts.Expression
-      )
+      emitVarDecl("var", uniqueName(classAST))
     );
+
+    emit(exprStmt(assignExpr(classDecl, toTS(classAST) as ts.Expression)));
 
     monkeyPatch(classDecl, classVal, classVal, ["prototype"]);
     monkeyPatch(
@@ -622,36 +632,49 @@ export function serializeClosure(
           (options?.shouldCaptureProp?.(value, propName) ?? true)
       )
       .forEach((propName) => {
-        const propDescriptor = Object.getOwnPropertyDescriptor(value, propName);
-        if (propDescriptor?.writable) {
-          if (
-            propDescriptor.get === undefined &&
-            propDescriptor.set === undefined
-          ) {
-            emit(
-              setPropertyStmt(expr, propName, serialize(propDescriptor.value))
-            );
-          } else {
-            const getter = propDescriptor.get
-              ? serialize(propDescriptor.get)
-              : undefinedExpr();
-            const setter = propDescriptor.set
-              ? serialize(propDescriptor.set)
-              : undefinedExpr();
+        const propDescriptor = Object.getOwnPropertyDescriptor(
+          value,
+          propName
+        )!;
 
-            emit(
-              exprStmt(
-                definePropertyExpr(
-                  expr,
-                  stringExpr(propName),
-                  objectExpr({
-                    get: getter,
-                    set: setter,
-                  })
-                )
+        if (
+          !propDescriptor.writable &&
+          (propName === "length" ||
+            propName === "name" ||
+            propName === "arguments" ||
+            propName === "caller")
+        ) {
+          // don't attempt to write Function's length and name properties
+          return;
+        }
+
+        if (
+          propDescriptor.get === undefined &&
+          propDescriptor.set === undefined
+        ) {
+          emit(
+            setPropertyStmt(expr, propName, serialize(propDescriptor.value))
+          );
+        } else {
+          const getter = propDescriptor.get
+            ? serialize(propDescriptor.get)
+            : undefinedExpr();
+          const setter = propDescriptor.set
+            ? serialize(propDescriptor.set)
+            : undefinedExpr();
+
+          emit(
+            exprStmt(
+              definePropertyExpr(
+                expr,
+                stringExpr(propName),
+                objectExpr({
+                  get: getter,
+                  set: setter,
+                })
               )
-            );
-          }
+            )
+          );
         }
       });
   }
@@ -788,7 +811,9 @@ export function serializeClosure(
         }
       } else if (propDescriptor.writable) {
         // this is a literal value, like an object, so let's serialize it and set
-        emit(setPropertyStmt(varName, propName, propDescriptor.value));
+        emit(
+          setPropertyStmt(varName, propName, serialize(propDescriptor.value))
+        );
       }
     }
   }
@@ -941,13 +966,6 @@ export function serializeClosure(
     } else if (isPrivateIdentifier(node)) {
       return ts.factory.createPrivateIdentifier(node.name);
     } else if (isPropAccessExpr(node)) {
-      if (isRef(node)) {
-        const value = deRef(node);
-        if (typeof value !== "function") {
-          return serialize(value);
-        }
-      }
-
       return ts.factory.createPropertyAccessChain(
         toTS(node.expr) as ts.Expression,
         node.isOptional
@@ -955,31 +973,6 @@ export function serializeClosure(
           : undefined,
         toTS(node.name) as ts.MemberName
       );
-
-      function deRef(expr: FunctionlessNode): any {
-        if (isReferenceExpr(expr)) {
-          return expr.ref();
-        } else if (isPropAccessExpr(expr)) {
-          return deRef(expr.expr)?.[expr.name.name];
-        }
-        throw new Error(`was not rooted`);
-      }
-
-      function isRef(expr: FunctionlessNode): boolean {
-        if (isReferenceExpr(expr)) {
-          return true;
-        } else if (isPropAccessExpr(expr)) {
-          if (isReferenceExpr(expr.expr)) {
-            const ref = expr.expr.ref();
-            if (ref === process && expr.name.name === "env") {
-              // process.env, we should never serialize these values literally
-              return false;
-            }
-          }
-          return isRef(expr.expr);
-        }
-        return false;
-      }
     } else if (isElementAccessExpr(node)) {
       return ts.factory.createElementAccessChain(
         toTS(node.expr) as ts.Expression,
@@ -1209,91 +1202,7 @@ export function serializeClosure(
     } else if (isBinaryExpr(node)) {
       return ts.factory.createBinaryExpression(
         toTS(node.left) as ts.Expression,
-        node.op === "!="
-          ? ts.SyntaxKind.ExclamationEqualsToken
-          : node.op === "!=="
-          ? ts.SyntaxKind.ExclamationEqualsEqualsToken
-          : node.op === "=="
-          ? ts.SyntaxKind.EqualsEqualsToken
-          : node.op === "==="
-          ? ts.SyntaxKind.EqualsEqualsEqualsToken
-          : node.op === "%"
-          ? ts.SyntaxKind.PercentToken
-          : node.op === "%="
-          ? ts.SyntaxKind.PercentEqualsToken
-          : node.op === "&&"
-          ? ts.SyntaxKind.AmpersandAmpersandToken
-          : node.op === "&"
-          ? ts.SyntaxKind.AmpersandAmpersandToken
-          : node.op === "*"
-          ? ts.SyntaxKind.AsteriskToken
-          : node.op === "**"
-          ? ts.SyntaxKind.AsteriskToken
-          : node.op === "&&="
-          ? ts.SyntaxKind.AmpersandAmpersandEqualsToken
-          : node.op === "&="
-          ? ts.SyntaxKind.AmpersandEqualsToken
-          : node.op === "**="
-          ? ts.SyntaxKind.AsteriskAsteriskEqualsToken
-          : node.op === "*="
-          ? ts.SyntaxKind.AsteriskEqualsToken
-          : node.op === "+"
-          ? ts.SyntaxKind.PlusToken
-          : node.op === "+="
-          ? ts.SyntaxKind.PlusEqualsToken
-          : node.op === ","
-          ? ts.SyntaxKind.CommaToken
-          : node.op === "-"
-          ? ts.SyntaxKind.MinusToken
-          : node.op === "-="
-          ? ts.SyntaxKind.MinusEqualsToken
-          : node.op === "/"
-          ? ts.SyntaxKind.SlashToken
-          : node.op === "/="
-          ? ts.SyntaxKind.SlashEqualsToken
-          : node.op === "<"
-          ? ts.SyntaxKind.LessThanToken
-          : node.op === "<="
-          ? ts.SyntaxKind.LessThanEqualsToken
-          : node.op === "<<"
-          ? ts.SyntaxKind.LessThanLessThanToken
-          : node.op === "<<="
-          ? ts.SyntaxKind.LessThanLessThanEqualsToken
-          : node.op === "="
-          ? ts.SyntaxKind.EqualsToken
-          : node.op === ">"
-          ? ts.SyntaxKind.GreaterThanToken
-          : node.op === ">>"
-          ? ts.SyntaxKind.GreaterThanGreaterThanToken
-          : node.op === ">>>"
-          ? ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken
-          : node.op === ">="
-          ? ts.SyntaxKind.GreaterThanEqualsToken
-          : node.op === ">>="
-          ? ts.SyntaxKind.GreaterThanGreaterThanEqualsToken
-          : node.op === ">>>="
-          ? ts.SyntaxKind.GreaterThanGreaterThanGreaterThanEqualsToken
-          : node.op === "??"
-          ? ts.SyntaxKind.QuestionQuestionToken
-          : node.op === "??="
-          ? ts.SyntaxKind.QuestionQuestionEqualsToken
-          : node.op === "^"
-          ? ts.SyntaxKind.CaretToken
-          : node.op === "^="
-          ? ts.SyntaxKind.CaretEqualsToken
-          : node.op === "in"
-          ? ts.SyntaxKind.InKeyword
-          : node.op === "instanceof"
-          ? ts.SyntaxKind.InstanceOfKeyword
-          : node.op === "|"
-          ? ts.SyntaxKind.BarToken
-          : node.op === "||"
-          ? ts.SyntaxKind.BarBarToken
-          : node.op === "|="
-          ? ts.SyntaxKind.BarEqualsToken
-          : node.op === "||="
-          ? ts.SyntaxKind.BarBarEqualsToken
-          : assertNever(node.op),
+        toTSOperator(node.op),
         toTS(node.right) as ts.Expression
       );
     } else if (isConditionExpr(node)) {
@@ -1342,13 +1251,21 @@ export function serializeClosure(
         node.isAwait
           ? ts.factory.createToken(ts.SyntaxKind.AwaitKeyword)
           : undefined,
-        toTS(node.initializer) as ts.ForInitializer,
+        isVariableDecl(node.initializer)
+          ? ts.factory.createVariableDeclarationList([
+              toTS(node.initializer) as ts.VariableDeclaration,
+            ])
+          : (toTS(node.initializer) as ts.ForInitializer),
         toTS(node.expr) as ts.Expression,
         toTS(node.body) as ts.Statement
       );
     } else if (isForInStmt(node)) {
       return ts.factory.createForInStatement(
-        toTS(node.initializer) as ts.ForInitializer,
+        isVariableDecl(node.initializer)
+          ? ts.factory.createVariableDeclarationList([
+              toTS(node.initializer) as ts.VariableDeclaration,
+            ])
+          : (toTS(node.initializer) as ts.ForInitializer),
         toTS(node.expr) as ts.Expression,
         toTS(node.body) as ts.Statement
       );
@@ -1401,7 +1318,7 @@ export function serializeClosure(
         toTS(node.expr) as ts.Expression
       );
     } else if (isRegexExpr(node)) {
-      return ts.factory.createRegularExpressionLiteral(node.regex.source);
+      return ts.factory.createRegularExpressionLiteral(node.regex.toString());
     } else if (isTemplateExpr(node)) {
       return ts.factory.createTemplateExpression(
         toTS(node.head) as ts.TemplateHead,
@@ -1453,4 +1370,92 @@ export function serializeClosure(
       return assertNever(node);
     }
   }
+}
+
+function toTSOperator(op: BinaryOp): ts.BinaryOperator {
+  return op === "!="
+    ? ts.SyntaxKind.ExclamationEqualsToken
+    : op === "!=="
+    ? ts.SyntaxKind.ExclamationEqualsEqualsToken
+    : op === "=="
+    ? ts.SyntaxKind.EqualsEqualsToken
+    : op === "==="
+    ? ts.SyntaxKind.EqualsEqualsEqualsToken
+    : op === "%"
+    ? ts.SyntaxKind.PercentToken
+    : op === "%="
+    ? ts.SyntaxKind.PercentEqualsToken
+    : op === "&&"
+    ? ts.SyntaxKind.AmpersandAmpersandToken
+    : op === "&"
+    ? ts.SyntaxKind.AmpersandAmpersandToken
+    : op === "*"
+    ? ts.SyntaxKind.AsteriskToken
+    : op === "**"
+    ? ts.SyntaxKind.AsteriskToken
+    : op === "&&="
+    ? ts.SyntaxKind.AmpersandAmpersandEqualsToken
+    : op === "&="
+    ? ts.SyntaxKind.AmpersandEqualsToken
+    : op === "**="
+    ? ts.SyntaxKind.AsteriskAsteriskEqualsToken
+    : op === "*="
+    ? ts.SyntaxKind.AsteriskEqualsToken
+    : op === "+"
+    ? ts.SyntaxKind.PlusToken
+    : op === "+="
+    ? ts.SyntaxKind.PlusEqualsToken
+    : op === ","
+    ? ts.SyntaxKind.CommaToken
+    : op === "-"
+    ? ts.SyntaxKind.MinusToken
+    : op === "-="
+    ? ts.SyntaxKind.MinusEqualsToken
+    : op === "/"
+    ? ts.SyntaxKind.SlashToken
+    : op === "/="
+    ? ts.SyntaxKind.SlashEqualsToken
+    : op === "<"
+    ? ts.SyntaxKind.LessThanToken
+    : op === "<="
+    ? ts.SyntaxKind.LessThanEqualsToken
+    : op === "<<"
+    ? ts.SyntaxKind.LessThanLessThanToken
+    : op === "<<="
+    ? ts.SyntaxKind.LessThanLessThanEqualsToken
+    : op === "="
+    ? ts.SyntaxKind.EqualsToken
+    : op === ">"
+    ? ts.SyntaxKind.GreaterThanToken
+    : op === ">>"
+    ? ts.SyntaxKind.GreaterThanGreaterThanToken
+    : op === ">>>"
+    ? ts.SyntaxKind.GreaterThanGreaterThanGreaterThanToken
+    : op === ">="
+    ? ts.SyntaxKind.GreaterThanEqualsToken
+    : op === ">>="
+    ? ts.SyntaxKind.GreaterThanGreaterThanEqualsToken
+    : op === ">>>="
+    ? ts.SyntaxKind.GreaterThanGreaterThanGreaterThanEqualsToken
+    : op === "??"
+    ? ts.SyntaxKind.QuestionQuestionToken
+    : op === "??="
+    ? ts.SyntaxKind.QuestionQuestionEqualsToken
+    : op === "^"
+    ? ts.SyntaxKind.CaretToken
+    : op === "^="
+    ? ts.SyntaxKind.CaretEqualsToken
+    : op === "in"
+    ? ts.SyntaxKind.InKeyword
+    : op === "instanceof"
+    ? ts.SyntaxKind.InstanceOfKeyword
+    : op === "|"
+    ? ts.SyntaxKind.BarToken
+    : op === "||"
+    ? ts.SyntaxKind.BarBarToken
+    : op === "|="
+    ? ts.SyntaxKind.BarEqualsToken
+    : op === "||="
+    ? ts.SyntaxKind.BarBarEqualsToken
+    : assertNever(op);
 }
