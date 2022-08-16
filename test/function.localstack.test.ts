@@ -1,4 +1,5 @@
 import {
+  aws_cloudwatch,
   aws_dynamodb,
   aws_events,
   CfnMapping,
@@ -428,6 +429,37 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       mapToken: "value",
       ref: "paramValue",
     })
+  );
+
+  test(
+    "Call Lambda CloudWatch SDK",
+    (parent) => {
+      const alarm = new aws_cloudwatch.Alarm(parent, "Alarm", {
+        evaluationPeriods: 1,
+        threshold: 1,
+        metric: new aws_cloudwatch.Metric({
+          namespace: "AWS/Lambda",
+          metricName: "Errors",
+        }),
+      });
+
+      return new Function(
+        parent,
+        "function",
+        localstackClientConfig,
+        async () => {
+          const result = await $AWS.SDK.CloudWatch.describeAlarms(
+            {
+              AlarmNames: [alarm.alarmName],
+            },
+            { iamResources: [alarm.alarmArn] }
+          );
+
+          return result.MetricAlarms?.[0]?.Namespace;
+        }
+      );
+    },
+    "AWS/Lambda"
   );
 
   test(

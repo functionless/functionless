@@ -1,4 +1,4 @@
-import { Duration } from "aws-cdk-lib";
+import { Duration, aws_cloudwatch } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
@@ -368,6 +368,40 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       });
     },
     [1, 2]
+  );
+
+  test(
+    "$AWS.SDK.CloudWatch",
+    (parent) => {
+      const alarm = new aws_cloudwatch.Alarm(parent, "Alarm", {
+        evaluationPeriods: 1,
+        threshold: 1,
+        metric: new aws_cloudwatch.Metric({
+          namespace: "AWS/Lambda",
+          metricName: "Errors",
+        }),
+      });
+
+      return new StepFunction<{}, string | undefined>(
+        parent,
+        "fn",
+        async () => {
+          const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
+            {
+              AlarmNames: [alarm.alarmName],
+            },
+            { iamResources: [alarm.alarmArn] }
+          );
+
+          if (!MetricAlarms) {
+            return;
+          }
+
+          return MetricAlarms[0]?.Namespace;
+        }
+      );
+    },
+    "AWS/Lambda"
   );
 
   test(
