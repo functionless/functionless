@@ -1,6 +1,7 @@
 import { aws_stepfunctions, Stack } from "aws-cdk-lib";
 import { Pass } from "aws-cdk-lib/aws-stepfunctions";
 import "jest";
+import type * as AWS from "aws-sdk";
 import * as functionless from "../src";
 import {
   $AWS,
@@ -1348,6 +1349,50 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
       name: person.Item.name.S,
       score,
     };
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("return AWS.SDK.CloudWatch.describeAlarms", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    undefined,
+    AWS.CloudWatch.MetricAlarms | undefined
+  >(stack, "fn", async () => {
+    const alarms = await $AWS.SDK.CloudWatch.describeAlarms(
+      {},
+      { iamResources: ["*"] }
+    );
+
+    if (alarms.MetricAlarms === undefined) {
+      return;
+    }
+
+    return alarms.MetricAlarms;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("return AWS.SDK.CloudWatch.describeAlarms dynamic parameters", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { prefix: string | undefined },
+    AWS.CloudWatch.MetricAlarms | undefined
+  >(stack, "fn", async (input) => {
+    const alarms = await $AWS.SDK.CloudWatch.describeAlarms(
+      {
+        AlarmNamePrefix: input.prefix ?? "default",
+      },
+      { iamResources: ["*"] }
+    );
+
+    if (alarms.MetricAlarms === undefined) {
+      return;
+    }
+
+    return alarms.MetricAlarms;
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
