@@ -288,10 +288,7 @@ export const normalizeCDKJson = (json: object) => {
   return JSON.parse(
     JSON.stringify(json)
       .replace(/\$\{Token\[[a-zA-Z0-9.-_]*\]\}/g, "__REPLACED_TOKEN")
-      // TODO: do not replace sdk call arns
-      .replace(
-        /\"arn:(?<partition>[\w*-]*):(?!states:::aws-sdk)(?<service>[\w*-]*):(?<region>[0-9a-z-*]*):(?<account>[0-9*]*):(?<resource_type>[\w*-]*)[:\/](?<resource_id>[^\"]*)\"/g,
-        `"__REPLACED_ARN"`
-      )
+      // do not replace arns that are for aws sdk service integrations
+      .replace(/\"arn:(?!aws:states:::aws-sdk)[^\"]*\"/g, `"__REPLACED_ARN"`)
   );
 };
