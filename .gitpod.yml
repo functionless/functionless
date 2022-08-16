@@ -1,0 +1,15 @@
+tasks:
+  - name: Install
+    init: yarn install
+
+ports:
+  - name: LocalStack
+    description: The default port range used by LocalStack
+    port: 4510-4559
+    onOpen: ignore
+
+vscode:
+  extensions:
+    - dbaeumer.vscode-eslint
+    - streetsidesoftware.code-spell-checker
+    - esbenp.prettier-vscode
