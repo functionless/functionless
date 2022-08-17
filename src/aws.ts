@@ -533,21 +533,11 @@ export namespace $AWS {
                 kind: `$AWS.SDK.${serviceName}`,
                 native: {
                   bind(context, args) {
-                    const options =
-                      args[1] &&
-                      (evalToConstant(args[1])?.constant as SdkCallOptions);
-
-                    if (!options) {
-                      throw new SynthError(
-                        ErrorCodes.Expected_an_object_literal,
-                        "Second argument ('options') into a SDK call is required"
-                      );
-                    } else if (typeof options !== "object") {
-                      throw new SynthError(
-                        ErrorCodes.Expected_an_object_literal,
-                        "Second argument ('options') into a SDK call must be an object"
-                      );
-                    }
+                    const [_, optionsArg] = args;
+                    const options = optionsArg
+                      ? evalToConstant(optionsArg)?.constant
+                      : undefined;
+                    validateSdkCallOptions(options);
 
                     context.resource.addToRolePolicy(
                       new aws_iam.PolicyStatement({
@@ -580,22 +570,11 @@ export namespace $AWS {
                   },
                 },
                 asl: (call, context) => {
-                  const options =
-                    call.args[1]?.expr &&
-                    (evalToConstant(call.args[1]?.expr)
-                      ?.constant as SdkCallOptions);
-
-                  if (!options) {
-                    throw new SynthError(
-                      ErrorCodes.Expected_an_object_literal,
-                      "Second argument ('options') into a SDK call is required"
-                    );
-                  } else if (typeof options !== "object") {
-                    throw new SynthError(
-                      ErrorCodes.Expected_an_object_literal,
-                      "Second argument ('options') into a SDK call must be an object"
-                    );
-                  }
+                  const [payloadArg, optionsArg] = call.args;
+                  const options = optionsArg
+                    ? evalToConstant(optionsArg)?.constant
+                    : undefined;
+                  validateSdkCallOptions(options);
 
                   context.role.addToPrincipalPolicy(
                     new aws_iam.PolicyStatement({
@@ -610,7 +589,7 @@ export namespace $AWS {
                     options.aslServiceName ??
                     SDK_INTEGRATION_SERVICE_NAME[serviceName] ??
                     serviceName.toLowerCase();
-                  const input = call.args[0]?.expr;
+                  const input = payloadArg?.expr;
 
                   if (!input) {
                     throw (
@@ -837,6 +816,20 @@ function getTableArgument(op: string, args: Argument[] | Expr[]) {
   }
 
   return table;
+}
+
+function validateSdkCallOptions(value: any): asserts value is SdkCallOptions {
+  if (!value) {
+    throw new SynthError(
+      ErrorCodes.Expected_an_object_literal,
+      "Second argument ('options') into a SDK call is required"
+    );
+  } else if (typeof value !== "object") {
+    throw new SynthError(
+      ErrorCodes.Expected_an_object_literal,
+      "Second argument ('options') into a SDK call must be an object"
+    );
+  }
 }
 
 // to prevent the closure serializer from trying to import all of functionless.
