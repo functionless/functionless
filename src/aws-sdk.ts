@@ -37,7 +37,7 @@ export interface SdkCallOptions {
    * @example ["arn:aws:s3:::my_bucket"]
    * @see https://docs.aws.amazon.com/IAM/latest/UserGuide/reference_policies_elements_resource.html
    */
-  iamResources: string[];
+  iamResources: [string, ...string[]];
 
   /**
    * The action for the IAM statement that will be added to the state machine role's
