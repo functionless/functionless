@@ -19,6 +19,7 @@ export * from "./s-expression";
 export * from "./statement";
 export * from "./step-function";
 export * from "./table";
+export * from "./user-pool";
 export * from "./util";
 
 // to prevent the closure serializer from trying to import all of functionless.

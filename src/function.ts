@@ -568,7 +568,7 @@ export interface FunctionProps<in P = any, O = any, OutP extends P = P>
  */
 export class Function<
   in Payload,
-  Out,
+  Out = any,
   OutPayload extends Payload = Payload
 > extends FunctionBase<Payload, Out> {
   /**
