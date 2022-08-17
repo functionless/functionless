@@ -592,9 +592,9 @@ export namespace $AWS {
                   const input = payloadArg?.expr;
 
                   if (!input) {
-                    throw (
-                      (new SynthError(ErrorCodes.Invalid_Input),
-                      "SDK integrations need a single input")
+                    throw new SynthError(
+                      ErrorCodes.Invalid_Input,
+                      "SDK integrations need a single input"
                     );
                   }
 
@@ -602,6 +602,17 @@ export namespace $AWS {
                   return context.evalExprToJsonPathOrLiteral(
                     input,
                     (output) => {
+                      if (
+                        ASLGraph.isLiteralValue(output) &&
+                        typeof output.value !== "object"
+                      ) {
+                        // could still be not an object at runtime, but at least we validate passing non-object literals.
+                        throw new SynthError(
+                          ErrorCodes.Invalid_Input,
+                          "SDK integrations require a object literal or a reference to an object."
+                        );
+                      }
+
                       return context.stateWithHeapOutput(
                         // can add LiteralValue or JsonPath as the parameter to a task.
                         ASLGraph.taskWithInput(
