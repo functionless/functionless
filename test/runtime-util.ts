@@ -2,15 +2,18 @@
 import { Lambda, StepFunctions } from "aws-sdk";
 import { clientConfig } from "./localstack";
 
-const lambda = new Lambda(clientConfig);
-const sfn = new StepFunctions({ ...clientConfig, hostPrefixEnabled: false });
+export const localLambda = new Lambda(clientConfig);
+export const localSFN = new StepFunctions({
+  ...clientConfig,
+  hostPrefixEnabled: false,
+});
 
 export const testFunction = async (
   functionName: string,
   payload: any,
   expected: any
 ) => {
-  const result = await lambda
+  const result = await localLambda
     .invoke({
       FunctionName: functionName,
       Payload: JSON.stringify(payload),
@@ -36,7 +39,7 @@ export const testExprStepFunction = async (
   payload: any,
   expected: any
 ) => {
-  const result = await sfn
+  const result = await localSFN
     .startSyncExecution({
       stateMachineArn,
       input: JSON.stringify(payload),
@@ -56,7 +59,7 @@ export const testStepFunction = async (
   stateMachineArn: string,
   payload: any
 ) => {
-  const execResult = await sfn
+  const execResult = await localSFN
     .startExecution({
       stateMachineArn,
       input: JSON.stringify(payload),
@@ -65,7 +68,7 @@ export const testStepFunction = async (
 
   return retry(
     () =>
-      sfn
+      localSFN
         .describeExecution({
           executionArn: execResult.executionArn,
         })

@@ -6,7 +6,9 @@ export interface PrewarmClientInitializer<T, O> {
   init: (key: string, props?: PrewarmProps) => O;
 }
 
+// TODO: use names that align with the AWS.SDK
 export type ClientName =
+  | "SECRETS_MANAGER"
   | "LAMBDA"
   | "EVENT_BRIDGE"
   | "STEP_FUNCTIONS"
@@ -50,6 +52,14 @@ export const PrewarmClients = {
     init: (key, props) =>
       // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
       new (require("aws-sdk").DynamoDB)(props?.clientConfigRetriever?.(key)),
+  },
+  SECRETS_MANAGER: {
+    key: "SECRETS_MANAGER",
+    init: (key, props) =>
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
+      new (require("aws-sdk").SecretsManager)(
+        props?.clientConfigRetriever?.(key)
+      ),
   },
 } as Record<ClientName, PrewarmClientInitializer<ClientName, any>>;
 

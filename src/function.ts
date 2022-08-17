@@ -57,6 +57,7 @@ import {
   isIntegration,
 } from "./integration";
 import { ReflectionSymbols, validateFunctionLike } from "./reflect";
+import { isSecret } from "./secret";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
 import { AnyAsyncFunction, AnyFunction } from "./util";
@@ -1074,7 +1075,8 @@ export async function serialize(
               (isFunction(integ) ||
                 isTable(integ) ||
                 isStepFunction(integ) ||
-                isEventBus(integ))
+                isEventBus(integ) ||
+                isSecret(integ))
             ) {
               const { resource, ...rest } = integ;
 

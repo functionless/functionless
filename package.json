@@ -88,6 +88,7 @@
     "@swc/core": "1.2.218",
     "@swc/register": "^0.1.10",
     "@types/aws-lambda": "^8.10.101",
+    "aws-sdk": "^2.1196.0",
     "fs-extra": "^10.1.0",
     "minimatch": "^5.1.0"
   },
