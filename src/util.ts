@@ -409,6 +409,10 @@ export const invertBinaryOperator = (op: BinaryOp): BinaryOp => {
   }
 };
 
+/**
+ * @author BlueJeansAndRain
+ * {@link https://www.reddit.com/r/typescript/comments/v6cgmz/how_to_turn_a_function_overload_signature/ | Redit post}
+ */
 type _OverloadUnion<TOverload, TPartialOverload = unknown> = TPartialOverload &
   TOverload extends (...args: infer TArgs) => infer TReturn
   ? // Prevent infinite recursion by stopping recursion when TPartialOverload
