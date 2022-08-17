@@ -517,15 +517,6 @@ export namespace $AWS {
           {},
           {
             get: (_, methodName: string) => {
-              // if not explicitly mapped default to the lowercase service name, which is correct ~60% of the time
-              const defaultServicePrefix =
-                IAM_SERVICE_PREFIX[serviceName] ?? serviceName.toLowerCase();
-              const defaultMethod =
-                methodName.charAt(0).toUpperCase() + methodName.slice(1);
-              const defaultIamActions = [
-                `${defaultServicePrefix}:${defaultMethod}`,
-              ];
-
               return makeIntegration<
                 `$AWS.SDK.${ServiceKeys}`,
                 (input: any) => Promise<any>
@@ -540,12 +531,11 @@ export namespace $AWS {
                     validateSdkCallOptions(options);
 
                     context.resource.addToRolePolicy(
-                      new aws_iam.PolicyStatement({
-                        effect: aws_iam.Effect.ALLOW,
-                        actions: options.iamActions ?? defaultIamActions,
-                        resources: options.iamResources,
-                        conditions: options.iamConditions,
-                      })
+                      policyStatementForSdkCall(
+                        serviceName,
+                        methodName,
+                        options
+                      )
                     );
                   },
                   preWarm(preWarmContext) {
@@ -577,12 +567,7 @@ export namespace $AWS {
                   validateSdkCallOptions(options);
 
                   context.role.addToPrincipalPolicy(
-                    new aws_iam.PolicyStatement({
-                      effect: aws_iam.Effect.ALLOW,
-                      actions: options.iamActions ?? defaultIamActions,
-                      resources: options.iamResources,
-                      conditions: options.iamConditions,
-                    })
+                    policyStatementForSdkCall(serviceName, methodName, options)
                   );
 
                   const sdkIntegrationServiceName =
@@ -827,6 +812,26 @@ function getTableArgument(op: string, args: Argument[] | Expr[]) {
   }
 
   return table;
+}
+
+function policyStatementForSdkCall(
+  serviceName: ServiceKeys,
+  methodName: string,
+  options: SdkCallOptions
+): aws_iam.PolicyStatement {
+  // if not explicitly mapped default to the lowercase service name, which is correct ~60% of the time
+  const defaultServicePrefix =
+    IAM_SERVICE_PREFIX[serviceName] ?? serviceName.toLowerCase();
+  const defaultMethod =
+    methodName.charAt(0).toUpperCase() + methodName.slice(1);
+  const defaultIamActions = [`${defaultServicePrefix}:${defaultMethod}`];
+
+  return new aws_iam.PolicyStatement({
+    effect: aws_iam.Effect.ALLOW,
+    actions: options.iamActions ?? defaultIamActions,
+    resources: options.iamResources,
+    conditions: options.iamConditions,
+  });
 }
 
 function validateSdkCallOptions(value: any): asserts value is SdkCallOptions {
