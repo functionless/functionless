@@ -1,5 +1,5 @@
 ---
-title: Table
+title: User Pool
 sidebar_position: 6
 ---
 
