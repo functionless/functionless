@@ -136,7 +136,7 @@ const project = new CustomTypescriptProject({
   },
   peerDeps: [
     `aws-cdk-lib@^${MIN_CDK_VERSION}`,
-    "aws-sdk@^2",
+    "aws-sdk",
     "constructs@^10.0.0",
     "esbuild",
     "typesafe-dynamodb@^0.1.5",

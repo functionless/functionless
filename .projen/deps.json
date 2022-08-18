@@ -71,7 +71,6 @@
     },
     {
       "name": "aws-sdk",
-      "version": "2.0.0",
       "type": "build"
     },
     {
@@ -197,7 +196,6 @@
     },
     {
       "name": "aws-sdk",
-      "version": "^2",
       "type": "peer"
     },
     {
