@@ -1,7 +1,7 @@
 import type { Service as AWSService } from "aws-sdk";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import type * as AWS from "aws-sdk";
-import { AnyFunction, OverloadUnion } from "./util";
+import { AnyFunction, OverloadUnion } from "../util";
 
 type AWSServiceClass = { new (): AWSService };
 

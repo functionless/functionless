@@ -1,4 +1,4 @@
-import type { ServiceKeys } from "./aws-sdk";
+import type { ServiceKeys } from "./types";
 
 export const IAM_SERVICE_PREFIX: Record<ServiceKeys, string> = {
   AccessAnalyzer: "access-analyzer",
