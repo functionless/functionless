@@ -17,99 +17,121 @@ import { SDK_INTEGRATION_SERVICE_NAME } from "./asl";
 import { IAM_SERVICE_PREFIX } from "./iam";
 import type { SDK as TSDK, ServiceKeys, SdkCallInput } from "./types";
 
-export const SDK: TSDK = new Proxy<any>(
-  {},
-  {
-    get(_, serviceName: ServiceKeys) {
-      return new Proxy<any>(
-        {},
-        {
-          get: (_, methodName: string) => {
-            return makeIntegration<
-              `$AWS.SDK.${ServiceKeys}`,
-              (input: any) => Promise<any>
-            >({
-              kind: `$AWS.SDK.${serviceName}`,
-              native: {
-                bind(context, args) {
-                  const [optionsArg] = args;
-                  const options = validateSdkCallArgument(optionsArg);
+export const SDK: TSDK = new Proxy<any>(AWS, {
+  isExtensible() {
+    return false;
+  },
+  setPrototypeOf() {
+    return false;
+  },
+  set() {
+    return false;
+  },
+  get(_, serviceName: ServiceKeys) {
+    return new ServiceProxy(serviceName);
+  },
+});
 
-                  context.resource.addToRolePolicy(
-                    policyStatementForSdkCall(serviceName, methodName, options)
-                  );
-                },
-                preWarm(preWarmContext) {
-                  preWarmContext.getOrInit({
-                    key: `$AWS.SDK.${serviceName}`,
-                    init: (key, props) =>
-                      new AWS[serviceName](props?.clientConfigRetriever?.(key)),
-                  });
-                },
-                call(args, preWarmContext) {
-                  const client: any = preWarmContext.getOrInit({
-                    key: `$AWS.SDK.${serviceName}`,
-                    init: (key, props) =>
-                      new AWS[serviceName](props?.clientConfigRetriever?.(key)),
-                  });
-
-                  return client[methodName](args[0].params).promise();
-                },
-              },
-              asl: (call, context) => {
-                const [optionsArg] = call.args;
-                const options = validateSdkCallArgument(optionsArg);
-
-                context.role.addToPrincipalPolicy(
-                  policyStatementForSdkCall(serviceName, methodName, options)
-                );
-
-                const sdkIntegrationServiceName =
-                  options.aslServiceName ??
-                  SDK_INTEGRATION_SERVICE_NAME[serviceName] ??
-                  serviceName.toLowerCase();
-                const input = options.params?.expr;
-
-                if (!input) {
-                  throw new SynthError(
-                    ErrorCodes.Invalid_Input,
-                    "SDK integrations need parameters"
-                  );
-                }
-
-                // normalized any output to a jsonPath or literal
-                return context.evalExprToJsonPathOrLiteral(input, (output) => {
-                  if (
-                    ASLGraph.isLiteralValue(output) &&
-                    typeof output.value !== "object"
-                  ) {
-                    // could still be not an object at runtime, but at least we validate passing non-object literals.
-                    throw new SynthError(
-                      ErrorCodes.Invalid_Input,
-                      "SDK integrations require a object literal or a reference to an object."
-                    );
-                  }
-
-                  return context.stateWithHeapOutput(
-                    // can add LiteralValue or JsonPath as the parameter to a task.
-                    ASLGraph.taskWithInput(
-                      {
-                        Type: "Task",
-                        Resource: `arn:aws:states:::aws-sdk:${sdkIntegrationServiceName}:${methodName}`,
-                        Next: ASLGraph.DeferNext,
-                      },
-                      output
-                    )
-                  );
-                });
-              },
-            });
-          },
-        }
-      );
-    },
+class ServiceProxy {
+  constructor(serviceName: ServiceKeys) {
+    return new Proxy(new AWS[serviceName](), {
+      isExtensible() {
+        return false;
+      },
+      setPrototypeOf() {
+        return false;
+      },
+      set() {
+        return false;
+      },
+      get: (_, methodName: string) => {
+        return makeSdkIntegration(serviceName, methodName);
+      },
+    });
   }
-);
+}
+
+function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
+  return makeIntegration<
+    `$AWS.SDK.${ServiceKeys}`,
+    (input: any) => Promise<any>
+  >({
+    kind: `$AWS.SDK.${serviceName}`,
+    native: {
+      bind(context, args) {
+        const [optionsArg] = args;
+        const options = validateSdkCallArgument(optionsArg);
+
+        context.resource.addToRolePolicy(
+          policyStatementForSdkCall(serviceName, methodName, options)
+        );
+      },
+      preWarm(preWarmContext) {
+        preWarmContext.getOrInit({
+          key: `$AWS.SDK.${serviceName}`,
+          init: (key, props) =>
+            new AWS[serviceName](props?.clientConfigRetriever?.(key)),
+        });
+      },
+      call(args, preWarmContext) {
+        const client: any = preWarmContext.getOrInit({
+          key: `$AWS.SDK.${serviceName}`,
+          init: (key, props) =>
+            new AWS[serviceName](props?.clientConfigRetriever?.(key)),
+        });
+
+        return client[methodName](args[0].params).promise();
+      },
+    },
+    asl: (call, context) => {
+      const [optionsArg] = call.args;
+      const options = validateSdkCallArgument(optionsArg);
+
+      context.role.addToPrincipalPolicy(
+        policyStatementForSdkCall(serviceName, methodName, options)
+      );
+
+      const sdkIntegrationServiceName =
+        options.aslServiceName ??
+        SDK_INTEGRATION_SERVICE_NAME[serviceName] ??
+        serviceName.toLowerCase();
+      const input = options.params?.expr;
+
+      if (!input) {
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "SDK integrations need parameters"
+        );
+      }
+
+      // normalized any output to a jsonPath or literal
+      return context.evalExprToJsonPathOrLiteral(input, (output) => {
+        if (
+          ASLGraph.isLiteralValue(output) &&
+          typeof output.value !== "object"
+        ) {
+          // could still be not an object at runtime, but at least we validate passing non-object literals.
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "SDK integrations require a object literal or a reference to an object."
+          );
+        }
+
+        return context.stateWithHeapOutput(
+          // can add LiteralValue or JsonPath as the parameter to a task.
+          ASLGraph.taskWithInput(
+            {
+              Type: "Task",
+              Resource: `arn:aws:states:::aws-sdk:${sdkIntegrationServiceName}:${methodName}`,
+              Next: ASLGraph.DeferNext,
+            },
+            output
+          )
+        );
+      });
+    },
+  });
+}
 
 function policyStatementForSdkCall(
   serviceName: ServiceKeys,
