@@ -74,9 +74,11 @@ export abstract class Secret<SecretValue = any> {
       props = args[2] as SecretProps;
       this.resource = new aws_secretsmanager.Secret(args[0], args[1], props);
     }
+    // we must store references to these values or else the Debugger-based serializer
+    // complains about capturing `this`. We should be able to avoid this once we migrate
+    // to the new serializer - https://github.com/functionless/functionless/pull/402
     const serialize = this.serialize;
     const deserialize = this.deserialize;
-
     const secretArn = this.resource.secretArn;
 
     this.putSecretValue = makeIntegration<
@@ -93,7 +95,7 @@ export abstract class Secret<SecretValue = any> {
         preWarm: initClient,
         call: async ([input], context) =>
           context
-            .getOrInit<AWS.SecretsManager>(PrewarmClients.SECRETS_MANAGER)
+            .getOrInit<AWS.SecretsManager>(PrewarmClients.SecretsManager)
             .putSecretValue({
               ClientRequestToken: input.ClientRequestToken,
               VersionStages: input.VersionStages,
@@ -118,7 +120,7 @@ export abstract class Secret<SecretValue = any> {
         preWarm: initClient,
         async call([input], context) {
           const client = context.getOrInit<AWS.SecretsManager>(
-            PrewarmClients.SECRETS_MANAGER
+            PrewarmClients.SecretsManager
           );
           const response = await client
             .getSecretValue({
@@ -138,7 +140,7 @@ export abstract class Secret<SecretValue = any> {
     });
 
     function initClient(context: NativePreWarmContext) {
-      return context.getOrInit(PrewarmClients.SECRETS_MANAGER);
+      return context.getOrInit(PrewarmClients.SecretsManager);
     }
   }
 
