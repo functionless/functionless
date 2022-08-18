@@ -95,7 +95,8 @@ export abstract class Secret<SecretValue = any> {
           context
             .getOrInit<AWS.SecretsManager>(PrewarmClients.SECRETS_MANAGER)
             .putSecretValue({
-              ...input,
+              ClientRequestToken: input.ClientRequestToken,
+              VersionStages: input.VersionStages,
               SecretId: secretArn,
               ...serialize(input.SecretValue),
             })
@@ -198,8 +199,8 @@ export interface GetSecretValueResponse<SecretValue>
 
 export interface PutSecretValueRequest<SecretValue>
   extends Omit<
-    AWS.SecretsManager.PutSecretValueResponse,
-    "SecretString" | "SecretValue"
+    AWS.SecretsManager.PutSecretValueRequest,
+    "SecretId" | "SecretString" | "SecretValue"
   > {
   /**
    * The {@link SecretValue} to write to the Store.
