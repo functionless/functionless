@@ -12503,8 +12503,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f19.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = {putEvents: __f19};
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = undefined;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -12782,8 +12781,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f19.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = { putEvents: __f19 };
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = void 0;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -13467,8 +13465,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f20.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = {putEvents: __f20};
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = undefined;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -13781,8 +13778,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f20.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = { putEvents: __f20 };
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = void 0;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -14079,6 +14075,582 @@ function __f0() {
       return _fnls[\\"$AWS\\"].Lambda.Invoke({
         Function: func,
         Payload: void 0
+      });
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+"
+`;
+
+exports[`serialize sdk SDK.CloudWatch.describeAlarms 1`] = `
+"exports.handler = __f0;
+
+var __fnls = {};
+var __fnls_AWS = {};
+var __function_prewarm_1 = {};
+var __function_prewarm_1_PrewarmClients = {};
+var __function_prewarm_1_PrewarmClients_DYNAMO = {key: \\"DYNAMO\\", init: __f3};
+__function_prewarm_1_PrewarmClients.DYNAMO = __function_prewarm_1_PrewarmClients_DYNAMO;
+var __function_prewarm_1_PrewarmClients_EVENT_BRIDGE = {key: \\"EVENT_BRIDGE\\", init: __f4};
+__function_prewarm_1_PrewarmClients.EVENT_BRIDGE = __function_prewarm_1_PrewarmClients_EVENT_BRIDGE;
+__function_prewarm_1.PrewarmClients = __function_prewarm_1_PrewarmClients;
+var __preWarmContext_proto = {};
+Object.defineProperty(__f5, \\"prototype\\", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, \\"constructor\\", { configurable: true, writable: true, value: __f5 });
+Object.defineProperty(__preWarmContext_proto, \\"get\\", { configurable: true, writable: true, value: __f6 });
+Object.defineProperty(__preWarmContext_proto, \\"getOrInit\\", { configurable: true, writable: true, value: __f7 });
+var __preWarmContext = Object.create(__preWarmContext_proto);
+__preWarmContext.props = undefined;
+var __preWarmContext_cache = {};
+__preWarmContext.cache = __preWarmContext_cache;
+__f1.kind = \\"$AWS.DynamoDB.deleteItem\\";
+__f8.kind = \\"$AWS.DynamoDB.getItem\\";
+__f10.kind = \\"$AWS.DynamoDB.updateItem\\";
+__f12.kind = \\"$AWS.DynamoDB.putItem\\";
+__f14.kind = \\"$AWS.DynamoDB.query\\";
+__f16.kind = \\"$AWS.DynamoDB.scan\\";
+var __fnls_AWS_DynamoDB = {DeleteItem: __f1, GetItem: __f8, UpdateItem: __f10, PutItem: __f12, Query: __f14, Scan: __f16};
+__fnls_AWS.DynamoDB = __fnls_AWS_DynamoDB;
+__f18.kind = \\"$AWS.Lambda.Invoke\\";
+var __fnls_AWS_Lambda = {Invoke: __f18};
+__fnls_AWS.Lambda = __fnls_AWS_Lambda;
+__f19.kind = \\"$AWS.EventBridge.putEvent\\";
+var __fnls_AWS_EventBridge = {putEvents: __f19};
+__fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
+__fnls_AWS.SDK = undefined;
+var __m = Object.create(global.constructor.prototype);
+Object.defineProperty(__m, \\"__esModule\\", { value: true });
+__m[\\"$AWS\\"] = __fnls_AWS;
+__m.deploymentOnlyModule = true;
+Object.defineProperty(__fnls, \\"$AWS\\", { enumerable: true, get: __f21 });
+function __f3(__0, __1) {
+  return (function() {
+    return ((key, props) => {
+    var _a;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
+    return new (require(\\"aws-sdk\\")).DynamoDB((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f4(__0, __1) {
+  return (function() {
+    return ((key, props) => {
+    var _a;
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
+    return new (require(\\"aws-sdk\\")).EventBridge((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f2(__0, __1) {
+  return (function() {
+    let function_prewarm_1 = __function_prewarm_1;
+
+    return (async (args, preWarmContext) => {
+    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
+    const [input] = args;
+    const { Table: table, ...rest } = input;
+    return dynamo.deleteItem({
+        ...rest,
+        TableName: input.Table.tableName
+    }).promise();
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f5(__0) {
+  return (function() {
+    return (function constructor(props) {
+    this.props = props;
+    this.cache = {};
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f6(__0) {
+  return (function() {
+    return (function (key) {
+    return this.cache[key];
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f7(__0) {
+  return (function() {
+    return (function getOrInit(client) {
+    if (!this.cache[client.key]) {
+        this.cache[client.key] = client.init(client.key, this.props);
+    }
+    return this.cache[client.key];
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f1() {
+  return (function() {
+    let c = __f2;
+    let preWarmContext = __preWarmContext;
+
+    return (function __computed(...args) {
+    return c(args, preWarmContext);
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f9(__0, __1) {
+  return (function() {
+    let function_prewarm_1 = __function_prewarm_1;
+
+    return (async (args, preWarmContext) => {
+    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
+    const [input] = args;
+    const { Table: table, AttributesToGet, ...rest } = input;
+    const payload = {
+        ...rest,
+        AttributesToGet: AttributesToGet,
+        TableName: table.tableName
+    };
+    return dynamo.getItem(payload).promise();
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f8() {
+  return (function() {
+    let c = __f9;
+    let preWarmContext = __preWarmContext;
+
+    return (function __computed(...args) {
+    return c(args, preWarmContext);
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f11(__0, __1) {
+  return (function() {
+    let function_prewarm_1 = __function_prewarm_1;
+
+    return (async (args, preWarmContext) => {
+    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
+    const [input] = args;
+    const { Table: table, ...rest } = input;
+    return dynamo.updateItem({
+        ...rest,
+        TableName: table.tableName
+    }).promise();
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f10() {
+  return (function() {
+    let c = __f11;
+    let preWarmContext = __preWarmContext;
+
+    return (function __computed(...args) {
+    return c(args, preWarmContext);
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f13(__0, __1) {
+  return (function() {
+    let function_prewarm_1 = __function_prewarm_1;
+
+    return (async (args, preWarmContext) => {
+    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
+    const [input] = args;
+    const { Table: table, Item, ...rest } = input;
+    return dynamo.putItem({
+        ...rest,
+        Item: Item,
+        TableName: table.tableName
+    }).promise();
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f12() {
+  return (function() {
+    let c = __f13;
+    let preWarmContext = __preWarmContext;
+
+    return (function __computed(...args) {
+    return c(args, preWarmContext);
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f15(__0, __1) {
+  return (function() {
+    let function_prewarm_1 = __function_prewarm_1;
+
+    return (async (args, preWarmContext) => {
+    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
+    const [input] = args;
+    const { Table: table, AttributesToGet, ...rest } = input;
+    return dynamo.query({
+        ...rest,
+        AttributesToGet: AttributesToGet,
+        TableName: table.tableName
+    }).promise();
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f14() {
+  return (function() {
+    let c = __f15;
+    let preWarmContext = __preWarmContext;
+
+    return (function __computed(...args) {
+    return c(args, preWarmContext);
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f17(__0, __1) {
+  return (function() {
+    let function_prewarm_1 = __function_prewarm_1;
+
+    return (async (args, preWarmContext) => {
+    const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
+    const [input] = args;
+    const { Table: table, AttributesToGet, ...rest } = input;
+    return dynamo.scan({
+        ...rest,
+        AttributesToGet: AttributesToGet,
+        TableName: table.tableName
+    }).promise();
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f16() {
+  return (function() {
+    let c = __f17;
+    let preWarmContext = __preWarmContext;
+
+    return (function __computed(...args) {
+    return c(args, preWarmContext);
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f18() {
+  return (function() {
+    return (function __computed() {
+    throw new Error();
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f20(__0, __1) {
+  return (function() {
+    let function_prewarm_1 = __function_prewarm_1;
+
+    return (async ([request], preWarmContext) => {
+    const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
+    return eventBridge.putEvents({
+        Entries: request.Entries.map((e) => ({
+            ...e
+        }))
+    }).promise();
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f19() {
+  return (function() {
+    let c = __f20;
+    let preWarmContext = __preWarmContext;
+
+    return (function __computed(...args) {
+    return c(args, preWarmContext);
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f21() {
+  return (function() {
+    let m = __m;
+    let k = \\"$AWS\\";
+
+    return (function __computed() {
+    return m[k];
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f0() {
+  return (function() {
+    let _fnls = __fnls;
+
+    return (() => {
+    return _fnls[\\"$AWS\\"].SDK.CloudWatch.describeAlarms({
+        params: {},
+        iamResources: [
+            \\"*\\"
+        ]
+    });
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}"
+`;
+
+exports[`serialize sdk SDK.CloudWatch.describeAlarms 2`] = `
+"// <stdin>
+exports.handler = __f0;
+var __fnls = {};
+var __fnls_AWS = {};
+var __function_prewarm_1 = {};
+var __function_prewarm_1_PrewarmClients = {};
+var __function_prewarm_1_PrewarmClients_DYNAMO = { key: \\"DYNAMO\\", init: __f3 };
+__function_prewarm_1_PrewarmClients.DYNAMO = __function_prewarm_1_PrewarmClients_DYNAMO;
+var __function_prewarm_1_PrewarmClients_EVENT_BRIDGE = { key: \\"EVENT_BRIDGE\\", init: __f4 };
+__function_prewarm_1_PrewarmClients.EVENT_BRIDGE = __function_prewarm_1_PrewarmClients_EVENT_BRIDGE;
+__function_prewarm_1.PrewarmClients = __function_prewarm_1_PrewarmClients;
+var __preWarmContext_proto = {};
+Object.defineProperty(__f5, \\"prototype\\", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, \\"constructor\\", { configurable: true, writable: true, value: __f5 });
+Object.defineProperty(__preWarmContext_proto, \\"get\\", { configurable: true, writable: true, value: __f6 });
+Object.defineProperty(__preWarmContext_proto, \\"getOrInit\\", { configurable: true, writable: true, value: __f7 });
+var __preWarmContext = Object.create(__preWarmContext_proto);
+__preWarmContext.props = void 0;
+var __preWarmContext_cache = {};
+__preWarmContext.cache = __preWarmContext_cache;
+__f1.kind = \\"$AWS.DynamoDB.deleteItem\\";
+__f8.kind = \\"$AWS.DynamoDB.getItem\\";
+__f10.kind = \\"$AWS.DynamoDB.updateItem\\";
+__f12.kind = \\"$AWS.DynamoDB.putItem\\";
+__f14.kind = \\"$AWS.DynamoDB.query\\";
+__f16.kind = \\"$AWS.DynamoDB.scan\\";
+var __fnls_AWS_DynamoDB = { DeleteItem: __f1, GetItem: __f8, UpdateItem: __f10, PutItem: __f12, Query: __f14, Scan: __f16 };
+__fnls_AWS.DynamoDB = __fnls_AWS_DynamoDB;
+__f18.kind = \\"$AWS.Lambda.Invoke\\";
+var __fnls_AWS_Lambda = { Invoke: __f18 };
+__fnls_AWS.Lambda = __fnls_AWS_Lambda;
+__f19.kind = \\"$AWS.EventBridge.putEvent\\";
+var __fnls_AWS_EventBridge = { putEvents: __f19 };
+__fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
+__fnls_AWS.SDK = void 0;
+var __m = Object.create(global.constructor.prototype);
+Object.defineProperty(__m, \\"__esModule\\", { value: true });
+__m[\\"$AWS\\"] = __fnls_AWS;
+__m.deploymentOnlyModule = true;
+Object.defineProperty(__fnls, \\"$AWS\\", { enumerable: true, get: __f21 });
+function __f3(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require(\\"aws-sdk\\")).DynamoDB((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f4(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require(\\"aws-sdk\\")).EventBridge((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f2(__0, __1) {
+  return function() {
+    let function_prewarm_1 = __function_prewarm_1;
+    return async (args, preWarmContext) => {
+      const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
+      const [input] = args;
+      const { Table: table, ...rest } = input;
+      return dynamo.deleteItem({
+        ...rest,
+        TableName: input.Table.tableName
+      }).promise();
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f5(__0) {
+  return function() {
+    return function constructor(props) {
+      this.props = props;
+      this.cache = {};
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f6(__0) {
+  return function() {
+    return function(key) {
+      return this.cache[key];
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f7(__0) {
+  return function() {
+    return function getOrInit(client) {
+      if (!this.cache[client.key]) {
+        this.cache[client.key] = client.init(client.key, this.props);
+      }
+      return this.cache[client.key];
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f1() {
+  return function() {
+    let c = __f2;
+    let preWarmContext = __preWarmContext;
+    return function __computed(...args) {
+      return c(args, preWarmContext);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f9(__0, __1) {
+  return function() {
+    let function_prewarm_1 = __function_prewarm_1;
+    return async (args, preWarmContext) => {
+      const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
+      const [input] = args;
+      const { Table: table, AttributesToGet, ...rest } = input;
+      const payload = {
+        ...rest,
+        AttributesToGet,
+        TableName: table.tableName
+      };
+      return dynamo.getItem(payload).promise();
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f8() {
+  return function() {
+    let c = __f9;
+    let preWarmContext = __preWarmContext;
+    return function __computed(...args) {
+      return c(args, preWarmContext);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f11(__0, __1) {
+  return function() {
+    let function_prewarm_1 = __function_prewarm_1;
+    return async (args, preWarmContext) => {
+      const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
+      const [input] = args;
+      const { Table: table, ...rest } = input;
+      return dynamo.updateItem({
+        ...rest,
+        TableName: table.tableName
+      }).promise();
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f10() {
+  return function() {
+    let c = __f11;
+    let preWarmContext = __preWarmContext;
+    return function __computed(...args) {
+      return c(args, preWarmContext);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f13(__0, __1) {
+  return function() {
+    let function_prewarm_1 = __function_prewarm_1;
+    return async (args, preWarmContext) => {
+      const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
+      const [input] = args;
+      const { Table: table, Item, ...rest } = input;
+      return dynamo.putItem({
+        ...rest,
+        Item,
+        TableName: table.tableName
+      }).promise();
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f12() {
+  return function() {
+    let c = __f13;
+    let preWarmContext = __preWarmContext;
+    return function __computed(...args) {
+      return c(args, preWarmContext);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f15(__0, __1) {
+  return function() {
+    let function_prewarm_1 = __function_prewarm_1;
+    return async (args, preWarmContext) => {
+      const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
+      const [input] = args;
+      const { Table: table, AttributesToGet, ...rest } = input;
+      return dynamo.query({
+        ...rest,
+        AttributesToGet,
+        TableName: table.tableName
+      }).promise();
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f14() {
+  return function() {
+    let c = __f15;
+    let preWarmContext = __preWarmContext;
+    return function __computed(...args) {
+      return c(args, preWarmContext);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f17(__0, __1) {
+  return function() {
+    let function_prewarm_1 = __function_prewarm_1;
+    return async (args, preWarmContext) => {
+      const dynamo = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.DYNAMO);
+      const [input] = args;
+      const { Table: table, AttributesToGet, ...rest } = input;
+      return dynamo.scan({
+        ...rest,
+        AttributesToGet,
+        TableName: table.tableName
+      }).promise();
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f16() {
+  return function() {
+    let c = __f17;
+    let preWarmContext = __preWarmContext;
+    return function __computed(...args) {
+      return c(args, preWarmContext);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f18() {
+  return function() {
+    return function __computed() {
+      throw new Error();
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f20(__0, __1) {
+  return function() {
+    let function_prewarm_1 = __function_prewarm_1;
+    return async ([request], preWarmContext) => {
+      const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EVENT_BRIDGE);
+      return eventBridge.putEvents({
+        Entries: request.Entries.map((e) => ({
+          ...e
+        }))
+      }).promise();
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f19() {
+  return function() {
+    let c = __f20;
+    let preWarmContext = __preWarmContext;
+    return function __computed(...args) {
+      return c(args, preWarmContext);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f21() {
+  return function() {
+    let m = __m;
+    let k = \\"$AWS\\";
+    return function __computed() {
+      return m[k];
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f0() {
+  return function() {
+    let _fnls = __fnls;
+    return () => {
+      return _fnls[\\"$AWS\\"].SDK.CloudWatch.describeAlarms({
+        params: {},
+        iamResources: [
+          \\"*\\"
+        ]
       });
     };
     ;
@@ -14446,8 +15018,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f19.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = {putEvents: __f19};
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = undefined;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -14772,8 +15343,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f19.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = { putEvents: __f19 };
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = void 0;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -15136,8 +15706,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f19.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = {putEvents: __f19};
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = undefined;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -15462,8 +16031,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f19.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = { putEvents: __f19 };
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = void 0;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -16126,8 +16694,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f19.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = {putEvents: __f19};
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = undefined;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -16452,8 +17019,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f19.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = { putEvents: __f19 };
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = void 0;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -16816,8 +17382,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f19.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = {putEvents: __f19};
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = undefined;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -17151,8 +17716,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f19.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = { putEvents: __f19 };
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = void 0;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -17524,8 +18088,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f19.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = {putEvents: __f19};
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = undefined;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -17854,8 +18417,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f19.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = { putEvents: __f19 };
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = void 0;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -18222,8 +18784,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f19.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = {putEvents: __f19};
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = undefined;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
@@ -18543,8 +19104,7 @@ __fnls_AWS.Lambda = __fnls_AWS_Lambda;
 __f19.kind = \\"$AWS.EventBridge.putEvent\\";
 var __fnls_AWS_EventBridge = { putEvents: __f19 };
 __fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
+__fnls_AWS.SDK = void 0;
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, \\"__esModule\\", { value: true });
 __m[\\"$AWS\\"] = __fnls_AWS;
