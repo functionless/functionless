@@ -41,5 +41,5 @@
   "eslint.format.enable": false,
   "typescript.tsdk": "node_modules/typescript/lib",
   "jest.jestCommandLine": "node_modules/.bin/jest",
-  "cSpell.words": ["localstack"]
+  "cSpell.words": ["localstack", "typesafe"]
 }
