@@ -22,7 +22,7 @@ import { aws_cognito } from "aws-cdk-lib";
 const userPoolConstruct = new aws_cognito.UserPool(stack, "UserPool");
 
 // then, wrap the CDK UserPool
-const userPool = new UserPool(userPoolConstruct);
+const userPool = UserPool.from(userPoolConstruct);
 ```
 
 ## Customize with a Lambda Function Trigger
@@ -76,7 +76,7 @@ userPool.on(
 );
 ```
 
-3. Call the specific `userPool.onX` method:
+3. Call the specific `userPool.onXXX` method:
 
 ```ts
 userPool.onCreateAuthChallenge(

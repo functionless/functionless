@@ -27,7 +27,6 @@ import {
 } from "./guards";
 import { FunctionlessNode } from "./node";
 
-export type Mixin<T> = T;
 export type AnyClass = new (...args: any[]) => any;
 export type AnyFunction = (...args: any[]) => any;
 export type AnyAsyncFunction = (...args: any[]) => Promise<any>;
