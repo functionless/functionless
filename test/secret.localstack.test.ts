@@ -1,6 +1,6 @@
 import { Duration } from "aws-cdk-lib";
 import "jest";
-import { Function, FunctionProps, Secret } from "../src";
+import { Function, FunctionProps, JsonSecret } from "../src";
 import { localstackTestSuite } from "./localstack";
 import { localLambda } from "./runtime-util";
 
@@ -22,7 +22,7 @@ localstackTestSuite("secretsManagerStack", (test) => {
   test(
     "should be able to get and put secret values",
     (scope) => {
-      const secret = new Secret<UserPass>(scope, "Secret");
+      const secret = new JsonSecret<UserPass>(scope, "Secret");
 
       const func = new Function(
         scope,
@@ -32,7 +32,7 @@ localstackTestSuite("secretsManagerStack", (test) => {
         },
         async (input: "get" | UserPass) => {
           if (input === "get") {
-            return secret.getJsonValue();
+            return secret.getSecretValue();
           } else {
             return secret.putSecretValue({
               SecretValue: input,
