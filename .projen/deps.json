@@ -117,6 +117,10 @@
       "type": "build"
     },
     {
+      "name": "flatted",
+      "type": "build"
+    },
+    {
       "name": "graphql-request",
       "type": "build"
     },

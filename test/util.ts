@@ -8,6 +8,7 @@ import {
 import * as amplify from "amplify-appsync-simulator/lib/velocity";
 import { App, aws_dynamodb, aws_events, aws_lambda, Stack } from "aws-cdk-lib";
 import { Rule } from "aws-cdk-lib/aws-events";
+import { stringify, parse } from "flatted";
 import {
   AppsyncResolver,
   FunctionLike,
@@ -18,7 +19,6 @@ import {
   ResolverFunction,
   ResolverArguments,
 } from "../src";
-
 import { Err } from "../src/error";
 import {
   synthesizeEventPattern,
@@ -285,8 +285,8 @@ export function ebEventTargetTestCaseError<T extends Event>(
 }
 
 export const normalizeCDKJson = (json: object) => {
-  return JSON.parse(
-    JSON.stringify(json)
+  return parse(
+    stringify(json)
       .replace(/\$\{Token\[[a-zA-Z0-9.-_]*\]\}/g, "__REPLACED_TOKEN")
       // do not replace arns that are for aws sdk service integrations
       .replace(/\"arn:(?!aws:states:::aws-sdk)[^\"]*\"/g, `"__REPLACED_ARN"`)

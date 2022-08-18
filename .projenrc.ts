@@ -101,6 +101,7 @@ const project = new CustomTypescriptProject({
     "graphql-request",
     "ts-node",
     "ts-patch",
+    "flatted",
     /**
      * For CDK Local Stack tests
      */

@@ -1368,7 +1368,7 @@ test("iam policy for AWS.SDK.CloudWatch.describeAlarms", () => {
     return MetricAlarms;
   });
 
-  expect(resource.role).toMatchSnapshot();
+  expect(normalizeCDKJson(resource.role)).toMatchSnapshot();
 });
 
 test("overwrite aslServiceName AWS.SDK.CloudWatch.describeAlarms", () => {
@@ -1404,7 +1404,7 @@ test("overwrite iamActions AWS.SDK.CloudWatch.describeAlarms", () => {
     return MetricAlarms;
   });
 
-  expect(resource.role).toMatchSnapshot();
+  expect(normalizeCDKJson(resource.role)).toMatchSnapshot();
 });
 
 test("add iamConditions AWS.SDK.CloudWatch.describeAlarms", () => {
@@ -1426,7 +1426,7 @@ test("add iamConditions AWS.SDK.CloudWatch.describeAlarms", () => {
     return MetricAlarms;
   });
 
-  expect(resource.role).toMatchSnapshot();
+  expect(normalizeCDKJson(resource.role)).toMatchSnapshot();
 });
 
 test("non-literal params AWS.SDK.CloudWatch.describeAlarms", () => {
