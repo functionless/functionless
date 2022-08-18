@@ -27,7 +27,12 @@ export type SDK = {
     : never;
 };
 
-export interface SdkCallOptions {
+export interface SdkCallInput<Params extends object> {
+  /**
+   * The parameters to the api call
+   */
+  params: Params;
+
   /**
    * The resources for the IAM statement that will be added to the state machine
    * role's policy to allow the state machine to make the API call.
@@ -91,8 +96,8 @@ export interface SdkCallOptions {
 
 export type SdkMethod<API> = API extends AnyFunction
   ? Exclude<OverloadUnion<API>, (cb: AnyFunction) => any> extends (
-      input: infer Input extends {}
+      input: infer Params extends {}
     ) => AWS.Request<infer Output, any>
-    ? (input: Input, options: SdkCallOptions) => Promise<Output>
+    ? (input: SdkCallInput<Params>) => Promise<Output>
     : never
   : never;

@@ -22,7 +22,7 @@ import {
   UpdateItemOutput,
 } from "typesafe-dynamodb/lib/update-item";
 import { ASLGraph, SDK_INTEGRATION_SERVICE_NAME } from "./asl";
-import { ServiceKeys, SDK, SdkCallOptions } from "./aws-sdk";
+import { ServiceKeys, SDK, SdkCallInput } from "./aws-sdk";
 import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, Expr } from "./expression";
 import { Function, isFunction, NativeIntegration } from "./function";
@@ -524,7 +524,7 @@ export namespace $AWS {
                 kind: `$AWS.SDK.${serviceName}`,
                 native: {
                   bind(context, args) {
-                    const [_, optionsArg] = args;
+                    const [optionsArg] = args;
                     const options = optionsArg
                       ? evalToConstant(optionsArg)?.constant
                       : undefined;
@@ -556,11 +556,11 @@ export namespace $AWS {
                         ),
                     });
 
-                    return client[methodName](args[0]).promise();
+                    return client[methodName](args[0].params).promise();
                   },
                 },
                 asl: (call, context) => {
-                  const [payloadArg, optionsArg] = call.args;
+                  const [optionsArg] = call.args;
                   const options = optionsArg
                     ? evalToConstant(optionsArg)?.constant
                     : undefined;
@@ -574,12 +574,12 @@ export namespace $AWS {
                     options.aslServiceName ??
                     SDK_INTEGRATION_SERVICE_NAME[serviceName] ??
                     serviceName.toLowerCase();
-                  const input = payloadArg?.expr;
+                  const input = options.params;
 
                   if (!input) {
                     throw new SynthError(
                       ErrorCodes.Invalid_Input,
-                      "SDK integrations need a single input"
+                      "SDK integrations need parameters"
                     );
                   }
 
@@ -817,7 +817,7 @@ function getTableArgument(op: string, args: Argument[] | Expr[]) {
 function policyStatementForSdkCall(
   serviceName: ServiceKeys,
   methodName: string,
-  options: SdkCallOptions
+  options: SdkCallInput<any>
 ): aws_iam.PolicyStatement {
   // if not explicitly mapped default to the lowercase service name, which is correct ~60% of the time
   const defaultServicePrefix =
@@ -834,16 +834,18 @@ function policyStatementForSdkCall(
   });
 }
 
-function validateSdkCallOptions(value: any): asserts value is SdkCallOptions {
+function validateSdkCallOptions(
+  value: any
+): asserts value is SdkCallInput<any> {
   if (!value) {
     throw new SynthError(
       ErrorCodes.Expected_an_object_literal,
-      "Second argument ('options') into a SDK call is required"
+      "Argument ('input') into a SDK call is required"
     );
   } else if (typeof value !== "object") {
     throw new SynthError(
       ErrorCodes.Expected_an_object_literal,
-      "Second argument ('options') into a SDK call must be an object"
+      "Argument ('input') into a SDK call must be an object"
     );
   }
 }
