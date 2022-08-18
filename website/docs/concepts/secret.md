@@ -61,7 +61,7 @@ The interface is the same as TextSecret, except that the secret value is wrapped
 
 ## JsonSecret
 
-The `JsonSecret` secret provides a type-safe interface over a Secret and automatic serialization to and from JSON. It is recommended to use JsonSecret when storing structured Secret data.
+The `JsonSecret` provides a type-safe interface over a Secret and automatic serialization to and from JSON. It is recommended to use JsonSecret when storing structured Secret data.
 
 ```ts
 interface UserPass {
