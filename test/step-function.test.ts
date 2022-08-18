@@ -1354,16 +1354,118 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("iam policy for AWS.SDK.CloudWatch.describeAlarms", () => {
+  const { stack } = initStepFunctionApp();
+  const { resource } = new ExpressStepFunction<
+    undefined,
+    AWS.CloudWatch.MetricAlarms | undefined
+  >(stack, "fn", async () => {
+    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({
+      iamResources: ["*"],
+      params: {},
+    });
+
+    return MetricAlarms;
+  });
+
+  expect(resource.role).toMatchSnapshot();
+});
+
+test("overwrite aslServiceName AWS.SDK.CloudWatch.describeAlarms", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    undefined,
+    AWS.CloudWatch.MetricAlarms | undefined
+  >(stack, "fn", async () => {
+    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({
+      iamResources: ["*"],
+      params: {},
+      aslServiceName: "cw",
+    });
+
+    return MetricAlarms;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("overwrite iamActions AWS.SDK.CloudWatch.describeAlarms", () => {
+  const { stack } = initStepFunctionApp();
+  const { resource } = new ExpressStepFunction<
+    undefined,
+    AWS.CloudWatch.MetricAlarms | undefined
+  >(stack, "fn", async () => {
+    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({
+      iamResources: ["*"],
+      params: {},
+      iamActions: ["cloudwatch:Describe*"],
+    });
+
+    return MetricAlarms;
+  });
+
+  expect(resource.role).toMatchSnapshot();
+});
+
+test("add iamConditions AWS.SDK.CloudWatch.describeAlarms", () => {
+  const { stack } = initStepFunctionApp();
+  const { resource } = new ExpressStepFunction<
+    undefined,
+    AWS.CloudWatch.MetricAlarms | undefined
+  >(stack, "fn", async () => {
+    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({
+      iamResources: ["*"],
+      params: {},
+      iamConditions: {
+        StringEquals: {
+          "aws:ResourceTag/env": ["test"],
+        },
+      },
+    });
+
+    return MetricAlarms;
+  });
+
+  expect(resource.role).toMatchSnapshot();
+});
+
+test("non-literal params AWS.SDK.CloudWatch.describeAlarms", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<undefined, void>(
+    stack,
+    "fn",
+    async () => {
+      const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({
+        iamResources: ["*"],
+        params: {},
+      });
+
+      if (MetricAlarms === undefined) {
+        return;
+      }
+
+      await $AWS.SDK.CloudWatch.deleteAlarms({
+        iamResources: ["*"],
+        params: {
+          AlarmNames: MetricAlarms.map((a) => a.AlarmName as string),
+        },
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("return AWS.SDK.CloudWatch.describeAlarms", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<
     undefined,
     AWS.CloudWatch.MetricAlarms | undefined
   >(stack, "fn", async () => {
-    const alarms = await $AWS.SDK.CloudWatch.describeAlarms(
-      {},
-      { iamResources: ["*"] }
-    );
+    const alarms = await $AWS.SDK.CloudWatch.describeAlarms({
+      iamResources: ["*"],
+      params: {},
+    });
 
     if (alarms.MetricAlarms === undefined) {
       return;
@@ -1381,12 +1483,10 @@ test("return AWS.SDK.CloudWatch.describeAlarms dynamic parameters", () => {
     { prefix: string | undefined },
     AWS.CloudWatch.MetricAlarms | undefined
   >(stack, "fn", async (input) => {
-    const alarms = await $AWS.SDK.CloudWatch.describeAlarms(
-      {
-        AlarmNamePrefix: input.prefix ?? "default",
-      },
-      { iamResources: ["*"] }
-    );
+    const alarms = await $AWS.SDK.CloudWatch.describeAlarms({
+      params: { AlarmNamePrefix: input.prefix ?? "default" },
+      iamResources: ["*"],
+    });
 
     if (alarms.MetricAlarms === undefined) {
       return;

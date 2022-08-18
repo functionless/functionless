@@ -3,6 +3,14 @@ import { aws_iam } from "aws-cdk-lib";
 import * as AWS from "aws-sdk";
 import { ASLGraph } from "../asl";
 import { ErrorCodes, SynthError } from "../error-code";
+import { Expr, Argument } from "../expression";
+import {
+  isArgument,
+  isObjectLiteralExpr,
+  isStringLiteralExpr,
+  isArrayLiteralExpr,
+  isPropAssignExpr,
+} from "../guards";
 import { makeIntegration } from "../integration";
 import { evalToConstant } from "../util";
 import { SDK_INTEGRATION_SERVICE_NAME } from "./asl";
@@ -25,10 +33,7 @@ export const SDK: TSDK = new Proxy<any>(
               native: {
                 bind(context, args) {
                   const [optionsArg] = args;
-                  const options = optionsArg
-                    ? evalToConstant(optionsArg)?.constant
-                    : undefined;
-                  validateSdkCallOptions(options);
+                  const options = validateSdkCallArgument(optionsArg);
 
                   context.resource.addToRolePolicy(
                     policyStatementForSdkCall(serviceName, methodName, options)
@@ -53,10 +58,7 @@ export const SDK: TSDK = new Proxy<any>(
               },
               asl: (call, context) => {
                 const [optionsArg] = call.args;
-                const options = optionsArg
-                  ? evalToConstant(optionsArg)?.constant
-                  : undefined;
-                validateSdkCallOptions(options);
+                const options = validateSdkCallArgument(optionsArg);
 
                 context.role.addToPrincipalPolicy(
                   policyStatementForSdkCall(serviceName, methodName, options)
@@ -66,7 +68,7 @@ export const SDK: TSDK = new Proxy<any>(
                   options.aslServiceName ??
                   SDK_INTEGRATION_SERVICE_NAME[serviceName] ??
                   serviceName.toLowerCase();
-                const input = options.params;
+                const input = options.params?.expr;
 
                 if (!input) {
                   throw new SynthError(
@@ -129,18 +131,89 @@ function policyStatementForSdkCall(
   });
 }
 
-function validateSdkCallOptions(
-  value: any
-): asserts value is SdkCallInput<any> {
-  if (!value) {
+function validateSdkCallArgument(
+  arg: Argument | Expr | undefined
+): SdkCallInput<any> {
+  const inputExpr = isArgument(arg) ? arg.expr : arg;
+
+  if (!inputExpr) {
     throw new SynthError(
       ErrorCodes.Expected_an_object_literal,
       "Argument ('input') into a SDK call is required"
     );
-  } else if (typeof value !== "object") {
+  }
+
+  if (!isObjectLiteralExpr(inputExpr)) {
     throw new SynthError(
       ErrorCodes.Expected_an_object_literal,
-      "Argument ('input') into a SDK call must be an object"
+      `Argument ('input') into a SDK call should be an object, found ${inputExpr.kindName}`
     );
   }
+
+  const params = inputExpr.getProperty("params");
+  const iamResources = inputExpr.getProperty("iamResources");
+  const iamActions = inputExpr.getProperty("iamActions");
+  const iamConditions = inputExpr.getProperty("iamConditions");
+  const aslServiceName = inputExpr.getProperty("aslServiceName");
+
+  if (!iamResources) {
+    throw new SynthError(
+      ErrorCodes.Invalid_Input,
+      `Option 'iamResources' of a SDK call is required`
+    );
+  }
+
+  if (
+    !isPropAssignExpr(iamResources) ||
+    !isArrayLiteralExpr(iamResources.expr)
+  ) {
+    throw new SynthError(
+      ErrorCodes.Invalid_Input,
+      `Option 'iamResources' of a SDK call should be an array, found ${iamResources.kindName}`
+    );
+  }
+
+  if (
+    iamActions &&
+    (!isPropAssignExpr(iamActions) || !isArrayLiteralExpr(iamActions.expr))
+  ) {
+    throw new SynthError(
+      ErrorCodes.Invalid_Input,
+      `Option 'iamActions' of a SDK call should be an array, found ${iamActions.kindName}`
+    );
+  }
+
+  if (
+    aslServiceName &&
+    (!isPropAssignExpr(aslServiceName) ||
+      !isStringLiteralExpr(aslServiceName.expr))
+  ) {
+    throw new SynthError(
+      ErrorCodes.Invalid_Input,
+      `Option 'iamActions' of a SDK call should be an array, found ${aslServiceName.kindName}`
+    );
+  }
+
+  if (
+    iamConditions &&
+    (!isPropAssignExpr(iamConditions) ||
+      // TODO: I don't think this is correct as the iamConditions most likely can be a variable as well, maybe a evalConstant here?
+      !isObjectLiteralExpr(iamConditions.expr))
+  ) {
+    throw new SynthError(
+      ErrorCodes.Expected_an_object_literal,
+      `Option 'iamConditions' of a SDK call should be an object, found ${iamConditions.kindName}`
+    );
+  }
+
+  return {
+    params,
+    iamResources: evalToConstant(iamResources.expr)?.constant as any,
+    iamActions:
+      iamActions && (evalToConstant(iamActions.expr)?.constant as any),
+    iamConditions:
+      iamConditions && (evalToConstant(iamConditions.expr)?.constant as any),
+    aslServiceName:
+      aslServiceName && (evalToConstant(aslServiceName.expr)?.constant as any),
+  };
 }
