@@ -89,7 +89,6 @@ const project = new CustomTypescriptProject({
     "@swc/cli",
     "@swc/core@1.2.218",
     "@swc/register",
-    "aws-sdk",
   ],
   devDeps: [
     `@aws-cdk/aws-appsync-alpha@${MIN_CDK_VERSION}-alpha.0`,
@@ -137,6 +136,7 @@ const project = new CustomTypescriptProject({
   },
   peerDeps: [
     `aws-cdk-lib@^${MIN_CDK_VERSION}`,
+    "aws-sdk@^2",
     "constructs@^10.0.0",
     "esbuild",
     "typesafe-dynamodb@^0.1.5",
