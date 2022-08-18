@@ -4794,27 +4794,17 @@ export namespace ASLGraph {
   ): States {
     const namedStates = internal(startState, states, { localNames: {} });
 
+    const reducedGraph = reduceGraph(
+      startState,
+      Object.fromEntries(namedStates)
+    );
+
     /**
      * Find any choice states that can be joined with their target state.
      * TODO: generalize the optimization statements.
      */
-    const updatedStates = joinChainedChoices(
-      startState,
-      /**
-       * Remove any states with no effect (Pass, generally)
-       * The incoming states to the empty states are re-wired to the outgoing transition of the empty state.
-       */
-      reduceGraph(startState, Object.fromEntries(namedStates))
-    );
-
-    const reachableStates = findReachableStates(startState, updatedStates);
-
-    // only take the reachable states
-    return Object.fromEntries(
-      Object.entries(updatedStates).filter(([name]) =>
-        reachableStates.has(name)
-      )
-    );
+    const updatedStates = joinChainedChoices(startState, reducedGraph);
+    return removeUnreachableStates(startState, updatedStates);
 
     function internal(
       parentName: string,
@@ -4850,6 +4840,15 @@ export namespace ASLGraph {
         });
       }
     }
+  }
+
+  function removeUnreachableStates(startState: string, states: States): States {
+    const reachableStates = findReachableStates(startState, states);
+
+    // only take the reachable states
+    return Object.fromEntries(
+      Object.entries(states).filter(([name]) => reachableStates.has(name))
+    );
   }
 
   /**
@@ -4919,10 +4918,15 @@ export namespace ASLGraph {
       ),
     ];
 
+    const variableUsageWithId = variableAssignments.map((u, i) => ({
+      id: i,
+      usage: u,
+    }));
+
     const stats = variableNamePrefixes.map((v) => ({
       variable: v,
-      assigns: variableAssignments
-        .filter((usage) => {
+      assigns: variableUsageWithId
+        .filter(({ usage }) => {
           if (
             usage.type === "Assignment" ||
             usage.type === "PropAssignment" ||
@@ -4946,11 +4950,11 @@ export namespace ASLGraph {
           }
         })
         .map((s) => ({
-          usage: s,
-          index: topo.findIndex((t) => t[0] === s.state),
+          ...s,
+          index: topo.findIndex((t) => t[0] === s.usage.state),
         })),
-      usage: variableAssignments
-        .filter((usage) => {
+      usage: variableUsageWithId
+        .filter(({ usage }) => {
           if (
             usage.type === "Assignment" ||
             usage.type === "Intrinsic" ||
@@ -4974,8 +4978,8 @@ export namespace ASLGraph {
           }
         })
         .map((s) => ({
-          usage: s,
-          index: topo.findIndex((t) => t[0] === s.state),
+          ...s,
+          index: topo.findIndex((t) => t[0] === s.usage.state),
         })),
     }));
 
@@ -5418,7 +5422,7 @@ export namespace ASLGraph {
     const updatedStates = { ...states };
     const { stats } = analyzeVariables(startState, states);
 
-    const statsMap: Record<string, typeof stats[number]> = Object.fromEntries(
+    let statsMap: Record<string, typeof stats[number]> = Object.fromEntries(
       stats.map((s) => [s.variable, s])
     );
 
@@ -5441,8 +5445,7 @@ export namespace ASLGraph {
         ) {
           return;
         }
-        const sourceAssigns: {
-          index: number;
+        const sourceAssigns: (typeof statsMap[string]["assigns"][number] & {
           usage: (
             | VariableAssignment
             // TODO support filter
@@ -5450,15 +5453,13 @@ export namespace ASLGraph {
           ) & {
             state: string;
           };
-        }[] = sourceStats.assigns as any;
+        })[] = sourceStats.assigns as any;
 
-        const singleUsage = sourceStats.usage[0];
-        if (!singleUsage || sourceStats.usage.length > 1) {
+        const targetUsage = sourceStats.usage[0];
+        if (!targetUsage || sourceStats.usage.length > 1) {
           // only update variables with a single assignment
           return;
         }
-
-        const { usage, index } = singleUsage;
 
         /**
          * When the target variable is being assigned to from the source (literal, filter, or reference)
@@ -5466,8 +5467,8 @@ export namespace ASLGraph {
          * > note: ASL doesn't have a concept of variable declaration without initialization. The let/var/const is assumed.
          * > note: we only support single usage right now, so if `a` is used after `b` in the below example, optimization won't happen.
          */
-        if (usage.type === "Assignment") {
-          const targetVariable = usage.to;
+        if (targetUsage.usage.type === "Assignment") {
+          const targetVariable = targetUsage.usage.to;
           const targetStats = statsMap[targetVariable];
           if (!targetStats) {
             return;
@@ -5484,48 +5485,32 @@ export namespace ASLGraph {
           const sourceAssign = sourceAssigns[0];
 
           // the source state is, do not remove the target (maybe).
-          const state = updatedStates[usage.state]!;
+          const state = updatedStates[targetUsage.usage.state]!;
           if (!isPassState(state)) {
             throw new Error("Expected state with assignment to be a Pass");
           }
           if (sourceAssign.usage.type === "LiteralAssignment") {
             const value = accessLiteralAtJsonPathSuffix(
-              usage.from,
+              targetUsage.usage.from,
               sourceAssign.usage.to,
               sourceAssign.usage.value
             );
-            /**
-             * Update the target's stats to contain the new assign and remove the old one.
-             */
-            const targetStats = statsMap[targetVariable];
-            // some targets don't have stats, like when a parameter map is the input to a task or map state.
-            if (targetStats) {
-              statsMap[targetVariable] = {
-                ...targetStats,
-                assigns: [
-                  ...targetStats.assigns.filter((a) => a !== sourceAssign),
-                  {
-                    index,
-                    usage: {
-                      ...usage,
-                      type: "LiteralAssignment",
-                      value,
-                    },
-                  },
-                ],
-              };
-            }
+            // Update the target's stats to contain the new assign and remove the old one.
+            statsMap = replaceAssignment(targetVariable, targetUsage, {
+              ...targetUsage.usage,
+              type: "LiteralAssignment",
+              value,
+            });
+            // Update the source to remove the assignment.
+            statsMap = removeUsage(sourceVariable, targetUsage);
 
             // update the state's parameter to contain the constant value.
-            updatedStates[usage.state] = {
+            updatedStates[targetUsage.usage.state] = {
               ...state,
               Result: undefined,
               InputPath: undefined,
               Parameters: value,
             };
-
-            // when there is a single variable, zero out the usage on the source variable.
-            sourceStats.usage = [];
           } else if (sourceAssign.usage.type === "Assignment") {
             // if the "from" variable we intend to update the prop assignment with will be
             // assigned to after the source assignment, skip.
@@ -5533,7 +5518,8 @@ export namespace ASLGraph {
             const fromStats = statsMap[from];
             if (
               fromStats?.assigns.some(
-                (a) => a.index > sourceAssign.index && a.index < index
+                (a) =>
+                  a.index > sourceAssign.index && a.index < targetUsage.index
               ) ??
               false
             ) {
@@ -5541,7 +5527,7 @@ export namespace ASLGraph {
             }
 
             const updatedFrom = replaceJsonPathPrefix(
-              usage.from,
+              targetUsage.usage.from,
               sourceAssign.usage.to,
               sourceAssign.usage.from
             );
@@ -5549,27 +5535,15 @@ export namespace ASLGraph {
             /**
              * Update the target's stats to contain the new assign and remove the old one.
              */
-            const targetStats = statsMap[targetVariable];
-            // some targets don't have stats, like when a parameter map is the input to a task or map state.
-            if (targetStats) {
-              statsMap[targetVariable] = {
-                ...targetStats,
-                assigns: [
-                  ...targetStats.assigns.filter((a) => a !== sourceAssign),
-                  {
-                    index,
-                    usage: {
-                      ...usage,
-                      type: "Assignment",
-                      from: updatedFrom,
-                    },
-                  },
-                ],
-              };
-            }
+            statsMap = replaceAssignment(targetVariable, targetUsage, {
+              ...targetUsage.usage,
+              type: "Assignment",
+              from: updatedFrom,
+            });
+            statsMap = removeUsage(sourceVariable, targetUsage);
 
             // update the state's parameter to contain the constant value.
-            updatedStates[usage.state] = {
+            updatedStates[targetUsage.usage.state] = {
               ...state,
               Parameters: undefined,
               Result: undefined,
@@ -5583,16 +5557,14 @@ export namespace ASLGraph {
                */
               InputPath: updatedFrom,
             };
-            // when there is a single variable, zero out the usage on the source variable.
-            sourceStats.usage = [];
           }
           return;
         }
         // when the target is a property being assigned to from the source (literal, filter, or reference)
-        else if (usage.type === "PropAssignment") {
+        else if (targetUsage.usage.type === "PropAssignment") {
           // when updating a prop assignment, we can try to move the input to the original
           // assignment to the property assignment.
-          const targetVariable = usage.to;
+          const targetVariable = targetUsage.usage.to;
 
           const sourceAssign = sourceAssigns[0];
           if (sourceAssigns.length !== 1 || !sourceAssign) {
@@ -5626,7 +5598,7 @@ export namespace ASLGraph {
            * TODO: support filter assignment.
            */
           // the source state is, do not remove the target (maybe).
-          const state = updatedStates[usage.state] as
+          const state = updatedStates[targetUsage.usage.state] as
             | Pass
             | Task
             | MapTask
@@ -5641,43 +5613,30 @@ export namespace ASLGraph {
             );
           }
 
-          const targetStats = statsMap[targetVariable];
           if (sourceAssign.usage.type === "LiteralAssignment") {
             const value = accessLiteralAtJsonPathSuffix(
-              usage.from,
+              targetUsage.usage.from,
               sourceAssign.usage.to,
               sourceAssign.usage.value
             );
-            // some targets don't have stats, like when a parameter map is the input to a task or map state.
-            if (targetStats) {
-              statsMap[targetVariable] = {
-                ...targetStats,
-                assigns: [
-                  ...targetStats.assigns.filter((a) => a !== sourceAssign),
-                  {
-                    index,
-                    usage: {
-                      ...usage,
-                      type: "LiteralPropAssignment",
-                      value,
-                    },
-                  },
-                ],
-              };
-            }
+
+            statsMap = replaceAssignment(targetVariable, targetUsage, {
+              ...targetUsage.usage,
+              type: "LiteralPropAssignment",
+              value,
+            });
+            statsMap = removeUsage(sourceVariable, targetUsage);
+
             // update the state's parameter to contain the constant value.
-            updatedStates[usage.state] = {
+            updatedStates[targetUsage.usage.state] = {
               ...state,
               Parameters: updateParameters(
-                usage.props,
+                targetUsage.usage.props,
                 state.Parameters!,
                 value,
                 false
               ),
             };
-
-            // when there is a single variable, zero out the usage on the source variable.
-            sourceStats.usage = [];
           } else {
             // if the "from" variable we intend to update the prop assignment with will be
             // assigned to after the source assignment, skip.
@@ -5692,7 +5651,8 @@ export namespace ASLGraph {
             const fromStats = statsMap[from];
             if (
               fromStats?.assigns.some(
-                (a) => a.index > sourceAssign.index && a.index < index
+                (a) =>
+                  a.index > sourceAssign.index && a.index < targetUsage.index
               ) ??
               false
             ) {
@@ -5708,45 +5668,34 @@ export namespace ASLGraph {
              * => $.from[0]
              */
             const updatedFrom = replaceJsonPathPrefix(
-              usage.from,
+              targetUsage.usage.from,
               sourceAssign.usage.to,
               sourceAssign.usage.from
             );
-            // some targets don't have stats, like when a parameter map is the input to a task or map state.
-            if (targetStats) {
-              statsMap[targetVariable] = {
-                ...targetStats,
-                assigns: [
-                  ...targetStats.assigns.filter((a) => a !== sourceAssign),
-                  {
-                    index,
-                    usage: {
-                      ...usage,
-                      type: "PropAssignment",
-                      from: updatedFrom,
-                    },
-                  },
-                ],
-              };
-            }
+
+            statsMap = replaceAssignment(targetVariable, targetUsage, {
+              ...targetUsage.usage,
+              type: "PropAssignment",
+              from: updatedFrom,
+            });
+            statsMap = removeUsage(sourceVariable, targetUsage);
+
             // update the state's parameter to contain the constant value.
-            updatedStates[usage.state] = {
+            updatedStates[targetUsage.usage.state] = {
               ...state,
               Parameters: updateParameters(
-                usage.props,
+                targetUsage.usage.props,
                 state.Parameters!,
                 updatedFrom,
                 true
               ),
             };
-            // when there is a single variable, zero out the usage on the source variable.
-            sourceStats.usage = [];
           }
           return;
-        } else if (usage.type === "Intrinsic") {
+        } else if (targetUsage.usage.type === "Intrinsic") {
           // when updating a intrinsic assignment, we can try to move the input to the original
           // assignment to the intrinsic assignment.
-          const targetVariable = usage.to;
+          const targetVariable = targetUsage.usage.to;
           const sourceAssign = sourceAssigns[0];
           if (sourceAssigns.length !== 1 || !sourceAssign) {
             // if the input variable is assigned to multiple times (for example, a ternary), do not re-write this usage.
@@ -5779,7 +5728,7 @@ export namespace ASLGraph {
            * TODO: support filter assignment.
            */
           // the source state is, do not remove the target (maybe).
-          const state = updatedStates[usage.state] as
+          const state = updatedStates[targetUsage.usage.state] as
             | Pass
             | Task
             | MapTask
@@ -5808,7 +5757,8 @@ export namespace ASLGraph {
             const fromStats = statsMap[from];
             if (
               fromStats?.assigns.some(
-                (a) => a.index > sourceAssign.index && a.index < index
+                (a) =>
+                  a.index > sourceAssign.index && a.index < targetUsage.index
               ) ??
               false
             ) {
@@ -5819,104 +5769,89 @@ export namespace ASLGraph {
           /**
            * Update the target's stats to contain the new assign and remove the old one.
            */
-          const targetStats = statsMap[targetVariable];
-          // some targets don't have stats, like when a parameter map is the input to a task or map state.
-          if (targetStats) {
-            statsMap[targetVariable] = {
-              ...targetStats,
-              assigns: [
-                ...targetStats.assigns.filter((a) => a !== sourceAssign),
-                ...(sourceAssign.usage.type === "LiteralAssignment"
-                  ? []
-                  : [
-                      {
-                        index,
-                        usage: {
-                          ...usage,
-                          type: "Intrinsic" as const,
-                          // update the from
-                          from: sourceAssign.usage.from,
-                        },
-                      },
-                    ]),
-              ],
-            };
-          }
-
-          // when there is a single variable, zero out the usage on the source variable.
-          sourceStats.usage = [];
-
-          // update the state's parameter to contain the constant value.
-          updatedStates[usage.state] = {
-            ...state,
-            Parameters: updateParameters(
-              usage.props,
-              state.Parameters!,
-              (original) => {
-                const intrinsic = original;
-                if (typeof intrinsic !== "string") {
-                  throw new Error(
-                    "Expected intrinsic property value to be a string."
+          if (sourceAssign.usage.type === "LiteralAssignment") {
+            const value = accessLiteralAtJsonPathSuffix(
+              targetUsage.usage.from,
+              sourceAssign.usage.to,
+              sourceAssign.usage.value
+            );
+            // literals are inlined into the intrinsic function, remove the assignment
+            statsMap = removeAssignment(targetVariable, targetUsage);
+            statsMap = removeUsage(sourceVariable, targetUsage);
+            updatedStates[targetUsage.usage.state] = {
+              ...state,
+              Parameters: updateParameters(
+                targetUsage.usage.props,
+                state.Parameters!,
+                (original) => {
+                  const intrinsic = original;
+                  if (typeof intrinsic !== "string") {
+                    throw new Error(
+                      "Expected intrinsic property value to be a string."
+                    );
+                  }
+                  const originalFrom = (<VariableIntrinsicUsage>(
+                    targetUsage.usage
+                  )).from;
+                  // States.Format($.heap0) => States.Format($.v)
+                  // States.Format($.heap0) => States.Format("someString")
+                  // States.Format($.heap0) => States.Format(0)
+                  return intrinsic.replace(
+                    new RegExp(escapeRegExp(originalFrom), "g"),
+                    typeof value === "string" ? `'${value}'` : `${value}`
                   );
-                }
-                const originalFrom = usage.from;
-                // States.Format($.heap0) => States.Format($.v)
-                // States.Format($.heap0) => States.Format("someString")
-                // States.Format($.heap0) => States.Format(0)
-                if (sourceAssign.usage.type === "Assignment") {
-                  const updatedFrom = replaceJsonPathPrefix(
-                    usage.from,
-                    sourceAssign.usage.to,
-                    sourceAssign.usage.from
-                  )
-                    .split("$")
-                    .join("$$");
+                },
+                true
+              ),
+            };
+          } else {
+            const updatedFrom = replaceJsonPathPrefix(
+              (<VariableIntrinsicUsage>targetUsage.usage).from,
+              sourceAssign.usage.to,
+              sourceAssign.usage.from
+            )
+              .split("$")
+              .join("$$");
+            statsMap = replaceAssignment(targetVariable, targetUsage, {
+              ...targetUsage.usage,
+              type: "Intrinsic" as const,
+              // update the from
+              from: sourceAssign.usage.from,
+            });
+            statsMap = removeUsage(sourceVariable, targetUsage);
+            // update the state's parameter to contain the constant value.
+            updatedStates[targetUsage.usage.state] = {
+              ...state,
+              Parameters: updateParameters(
+                targetUsage.usage.props,
+                state.Parameters!,
+                (original) => {
+                  const intrinsic = original;
+                  if (typeof intrinsic !== "string") {
+                    throw new Error(
+                      "Expected intrinsic property value to be a string."
+                    );
+                  }
+                  const originalFrom = (<VariableIntrinsicUsage>(
+                    targetUsage.usage
+                  )).from;
+                  // States.Format($.heap0) => States.Format($.v)
+                  // States.Format($.heap0) => States.Format("someString")
+                  // States.Format($.heap0) => States.Format(0)
                   return intrinsic.replace(
                     new RegExp(escapeRegExp(originalFrom), "g"),
                     updatedFrom
                   );
-                } else {
-                  const value = accessLiteralAtJsonPathSuffix(
-                    usage.from,
-                    sourceAssign.usage.to,
-                    sourceAssign.usage.value
-                  );
-                  return intrinsic.replace(
-                    new RegExp(escapeRegExp(originalFrom), "g"),
-                    typeof sourceAssign.usage.value === "string"
-                      ? `'${value}'`
-                      : `${value}`
-                  );
-                }
-              },
-              true
-            ),
-          };
-          return;
-        } else if (usage.type === "StateInput") {
-          // only update when all of the assignments of the current variable are from variables that will not be changed after this point.
-          // let a = "a";
-          // let d = a;
-          // a = "b"
-          // return d;
-          //        ^ the return cannot use a because a changed value on line 3 while d did not.
-          if (
-            sourceAssigns.some((s) => {
-              if (s.usage.type === "LiteralAssignment") return false;
-              const from = s.usage.from;
-              const fromStats = statsMap[from]!;
-              // use this assign if the from variable is not assigned to after this variable.
-              return (
-                fromStats?.assigns.some(
-                  (a) => a.index > s.index && a.index < index
-                ) ?? false
-              );
-            })
-          ) {
-            return;
+                },
+                true
+              ),
+            };
           }
-
-          const state = updatedStates[usage.state] as Task | MapTask;
+          return;
+        } else if (targetUsage.usage.type === "StateInput") {
+          const state = updatedStates[targetUsage.usage.state] as
+            | Task
+            | MapTask;
 
           const sourceAssign = sourceAssigns[0];
           if (sourceAssigns.length !== 1 || !sourceAssign) {
@@ -5942,7 +5877,8 @@ export namespace ASLGraph {
             const fromStats = statsMap[from];
             if (
               fromStats?.assigns.some(
-                (a) => a.index > sourceAssign.index && a.index < index
+                (a) =>
+                  a.index > sourceAssign.index && a.index < targetUsage.index
               ) ??
               false
             ) {
@@ -5955,13 +5891,14 @@ export namespace ASLGraph {
             if (sourceAssign.usage.type === "LiteralAssignment") {
               return;
             }
-            updatedStates[usage.state] = {
+
+            updatedStates[targetUsage.usage.state] = {
               ...state,
               ItemsPath: sourceAssign.usage.from,
             };
           } else if (state.Type === "Task") {
             // update the state's parameter to contain the constant value.
-            updatedStates[usage.state] =
+            updatedStates[targetUsage.usage.state] =
               sourceAssign.usage.type === "LiteralAssignment"
                 ? {
                     ...state,
@@ -5975,27 +5912,28 @@ export namespace ASLGraph {
           } else {
             assertNever(state);
           }
+          // TODO: add assignment to the updated from...
           // when there is a single variable, zero out the usage on the source variable.
-          sourceStats.usage = [];
+          statsMap = removeUsage(sourceVariable, targetUsage);
 
           return;
         } else if (
-          usage.type === "Filter" ||
-          usage.type === "FilterPropAssignment" ||
-          usage.type === "ReturnUsage"
+          targetUsage.usage.type === "Filter" ||
+          targetUsage.usage.type === "FilterPropAssignment" ||
+          targetUsage.usage.type === "ReturnUsage"
         ) {
           // TODO: support more cases.
           return;
         } else if (
-          usage.type === "LiteralAssignment" ||
-          usage.type === "LiteralPropAssignment" ||
-          usage.type === "StateOutput" ||
-          usage.type === "Condition"
+          targetUsage.usage.type === "LiteralAssignment" ||
+          targetUsage.usage.type === "LiteralPropAssignment" ||
+          targetUsage.usage.type === "StateOutput" ||
+          targetUsage.usage.type === "Condition"
         ) {
           // nothing else to simplify here.
           return;
         } else {
-          return assertNever(usage);
+          return assertNever(targetUsage.usage);
         }
       });
 
@@ -6054,6 +5992,69 @@ export namespace ASLGraph {
         ];
       })
     );
+
+    function removeUsage(
+      variable: string,
+      originalAssignment: typeof statsMap[string]["assigns"][number]
+    ) {
+      const stats = statsMap[variable];
+      // some targets don't have stats, like when a parameter map is the input to a task or map state.
+      if (stats) {
+        return {
+          ...statsMap,
+          [variable]: {
+            ...stats,
+            usage: stats.usage.filter((a) => a.id !== originalAssignment.id),
+          },
+        };
+      }
+      return statsMap;
+    }
+
+    function removeAssignment(
+      variable: string,
+      originalAssignment: typeof statsMap[string]["assigns"][number]
+    ) {
+      const stats = statsMap[variable];
+      // some targets don't have stats, like when a parameter map is the input to a task or map state.
+      if (stats) {
+        return {
+          ...statsMap,
+          [variable]: {
+            ...stats,
+            assigns: stats.assigns.filter(
+              (a) => a.id !== originalAssignment.id
+            ),
+          },
+        };
+      }
+      return statsMap;
+    }
+
+    function replaceAssignment(
+      variable: string,
+      originalAssignment: typeof statsMap[string]["assigns"][number],
+      updatedAssignment: typeof statsMap[string]["assigns"][number]["usage"]
+    ): typeof statsMap {
+      const stats = statsMap[variable];
+      // some targets don't have stats, like when a parameter map is the input to a task or map state.
+      if (stats) {
+        return {
+          ...statsMap,
+          [variable]: {
+            ...stats,
+            assigns: [
+              ...stats.assigns.filter((a) => a.id !== originalAssignment.id),
+              {
+                ...originalAssignment,
+                usage: updatedAssignment,
+              },
+            ],
+          },
+        };
+      }
+      return statsMap;
+    }
 
     function accessLiteralAtJsonPathSuffix(
       originalJsonPath: string,
