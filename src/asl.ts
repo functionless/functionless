@@ -4908,8 +4908,18 @@ export namespace ASLGraph {
     depthFirst(startState);
 
     const variableNamesArray = [...variableNames];
+    // grab all of the variable prefixes.
+    const variableNamePrefixes = [
+      ...new Set(
+        variableNamesArray
+          // ignore the root `$`
+          .filter((v) => v !== "$")
+          .map((v) => normalizeJsonPath(v)[0]!)
+          .map((v) => formatJsonPath([v]))
+      ),
+    ];
 
-    const stats = variableNamesArray.map((v) => ({
+    const stats = variableNamePrefixes.map((v) => ({
       variable: v,
       assigns: variableAssignments
         .filter((usage) => {
@@ -4951,10 +4961,7 @@ export namespace ASLGraph {
             usage.type === "FilterPropAssignment" ||
             usage.type === "ReturnUsage"
           ) {
-            return (
-              jsonPathStartsWith(usage.from, v) ||
-              jsonPathStartsWith(v, usage.from)
-            );
+            return jsonPathStartsWith(usage.from, v);
           } else if (
             // stateoutput and literal assignments cannot use other variables
             usage.type === "LiteralAssignment" ||
@@ -5135,7 +5142,10 @@ export namespace ASLGraph {
               },
             ];
           } else if (state.InputPath) {
-            if (state.InputPath.includes("?(")) {
+            if (
+              state.InputPath.includes("?(") ||
+              state.InputPath.includes(":")
+            ) {
               return extractVariableReferences(state.InputPath).map((v) => ({
                 type: "Filter",
                 from: v,
@@ -5346,7 +5356,7 @@ export namespace ASLGraph {
             to: resultPath,
             props,
           }));
-        } else if (parameters.includes("?(")) {
+        } else if (parameters.includes("?(") || parameters.includes(":")) {
           return extractVariableReferences(parameters).map((x) => ({
             type: "FilterPropAssignment",
             from: x,
@@ -5407,13 +5417,6 @@ export namespace ASLGraph {
   function reduceGraph(startState: string, states: States): States {
     const updatedStates = { ...states };
     const { stats } = analyzeVariables(startState, states);
-
-    const removedState = new Set<string>();
-    const removedVars = new Set<string>();
-
-    const emptyStates = findEmptyStates(startState, states);
-
-    emptyStates.forEach((s) => removedState.add(s));
 
     const statsMap: Record<string, typeof stats[number]> = Object.fromEntries(
       stats.map((s) => [s.variable, s])
@@ -5526,7 +5529,6 @@ export namespace ASLGraph {
           } else if (sourceAssign.usage.type === "Assignment") {
             // if the "from" variable we intend to update the prop assignment with will be
             // assigned to after the source assignment, skip.
-
             const from = sourceAssign.usage.from;
             const fromStats = statsMap[from];
             if (
@@ -5861,15 +5863,31 @@ export namespace ASLGraph {
                 // States.Format($.heap0) => States.Format($.v)
                 // States.Format($.heap0) => States.Format("someString")
                 // States.Format($.heap0) => States.Format(0)
-                return intrinsic.replace(
-                  new RegExp(escapeRegExp(originalFrom), "g"),
-                  sourceAssign.usage.type === "Assignment"
-                    ? // https://stackoverflow.com/questions/38866071/javascript-replace-method-dollar-signs
-                      sourceAssign.usage.from.split("$").join("$$")
-                    : typeof sourceAssign.usage.value === "string"
-                    ? `'${sourceAssign.usage.value}'`
-                    : `${sourceAssign.usage.value}`
-                );
+                if (sourceAssign.usage.type === "Assignment") {
+                  const updatedFrom = replaceJsonPathPrefix(
+                    usage.from,
+                    sourceAssign.usage.to,
+                    sourceAssign.usage.from
+                  )
+                    .split("$")
+                    .join("$$");
+                  return intrinsic.replace(
+                    new RegExp(escapeRegExp(originalFrom), "g"),
+                    updatedFrom
+                  );
+                } else {
+                  const value = accessLiteralAtJsonPathSuffix(
+                    usage.from,
+                    sourceAssign.usage.to,
+                    sourceAssign.usage.value
+                  );
+                  return intrinsic.replace(
+                    new RegExp(escapeRegExp(originalFrom), "g"),
+                    typeof sourceAssign.usage.value === "string"
+                      ? `'${value}'`
+                      : `${value}`
+                  );
+                }
               },
               true
             ),
@@ -5981,6 +5999,62 @@ export namespace ASLGraph {
         }
       });
 
+    const unused = Object.values(statsMap).filter((s) => s.usage.length === 0);
+    const unassigned = Object.values(statsMap).filter(
+      (s) => s.assigns.length === 0
+    );
+
+    console.log(JSON.stringify(unused, null, 2));
+    console.log(JSON.stringify(unassigned, null, 2));
+
+    const removedStates = [
+      ...findEmptyStates(startState, updatedStates),
+      ...unused.flatMap((u) =>
+        u.assigns.flatMap((a) => {
+          // TODO: eww mutation in a map... :( sad sam
+          if (a.usage.type === "StateOutput" || a.usage.state === startState) {
+            // state outputs should not be removed as they can still have effects.
+            // Also do not remove the start states of sub-graphs.
+            // Instead we will update their result path to be null
+            // @ts-ignore
+            updatedStates[a.usage.state] = {
+              ...updatedStates[a.usage.state],
+              ResultPath: null,
+            };
+            return [];
+          }
+          return [a.usage.state];
+        })
+      ),
+    ];
+
+    console.log(removedStates);
+
+    const removedTransitions = computeRemovedStateToUpdatedTransition(
+      new Set(removedStates),
+      updatedStates
+    );
+
+    // return the updated set of name to state.
+    return Object.fromEntries(
+      Object.entries(updatedStates).flatMap(([name, state]) => {
+        if (name in removedTransitions) {
+          return [];
+        }
+
+        return [
+          [
+            name,
+            visitTransition(state, (transition) =>
+              transition in removedTransitions
+                ? removedTransitions[transition]!
+                : transition
+            ),
+          ],
+        ];
+      })
+    );
+
     function accessLiteralAtJsonPathSuffix(
       originalJsonPath: string,
       prefixJsonPath: string,
@@ -6002,7 +6076,7 @@ export namespace ASLGraph {
         } else if (typeof value === "object") {
           if (Array.isArray(value)) {
             const index = Number(segment);
-            if (index === NaN) {
+            if (Number.isNaN(index)) {
               throw new Error(
                 "Expected number to access an array literal literal, found: " +
                   segment
@@ -6072,62 +6146,6 @@ export namespace ASLGraph {
         };
       }
     }
-
-    const unused = Object.values(statsMap).filter((s) => s.usage.length === 0);
-    const unassigned = Object.values(statsMap).filter(
-      (s) => s.assigns.length === 0
-    );
-
-    console.log(JSON.stringify(unused, null, 2));
-    console.log(JSON.stringify(unassigned, null, 2));
-
-    unused
-      .flatMap((u) =>
-        u.assigns.flatMap((a) => {
-          // TODO: eww mutation in a map... :( sad sam
-          if (a.usage.type === "StateOutput" || a.usage.state === startState) {
-            // state outputs should not be removed as they can still have effects.
-            // Also do not remove the start states of sub-graphs.
-            // Instead we will update their result path to be null
-            // @ts-ignore
-            updatedStates[a.usage.state] = {
-              ...updatedStates[a.usage.state],
-              ResultPath: null,
-            };
-            return [];
-          }
-          return [a.usage.state];
-        })
-      )
-      .forEach((s) => removedState.add(s));
-
-    console.log(removedState);
-    console.log(removedVars);
-
-    const removedTransitions = computeRemovedStateToUpdatedTransition(
-      removedState,
-      updatedStates
-    );
-
-    // return the updated set of name to state.
-    return Object.fromEntries(
-      Object.entries(updatedStates).flatMap(([name, state]) => {
-        if (name in removedTransitions) {
-          return [];
-        }
-
-        return [
-          [
-            name,
-            visitTransition(state, (transition) =>
-              transition in removedTransitions
-                ? removedTransitions[transition]!
-                : transition
-            ),
-          ],
-        ];
-      })
-    );
 
     /**
      * Find the updated next value for all of the empty states.

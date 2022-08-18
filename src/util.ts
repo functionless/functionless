@@ -485,27 +485,28 @@ export function jsonPathEquals(path1: string, path2: string): boolean {
  *
  * @param prefix - Default: $., when provided acts as the prefix to the resulting json path. `[prefix].segment1['segment 2'][0]`
  */
-export function formatJsonPath(segments: (string | number)[], prefix?: string) {
-  const _prefix = prefix ?? "$.";
-
-  return append(segments, _prefix);
-
-  function append(segments: (string | number)[], prefix: string) {
-    const [segment] = segments;
-    if (segment === undefined) {
-      return prefix;
-    } else if (typeof segment === "number") {
-      // $[0]
-      return `${prefix}[${segment}]`;
-    } else {
-      return `${prefix}${
+export function formatJsonPath(
+  segments: (string | number)[],
+  prefix?: string
+): string {
+  const _prefix = prefix ?? "$";
+  const [segment, ...tail] = segments;
+  if (segment === undefined) {
+    return _prefix;
+  } else if (typeof segment === "number") {
+    // $[0]
+    return formatJsonPath(tail, `${_prefix}[${segment}]`);
+  } else {
+    return formatJsonPath(
+      tail,
+      `${_prefix}${
         segment.match(/[a-zA-Z][a-zA-Z0-9_]*/)
           ? // $.var
             `.${segment}`
           : // $['var with $$$ stuff in it']
             `['${segment}']`
-      }`;
-    }
+      }`
+    );
   }
 }
 
