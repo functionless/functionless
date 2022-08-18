@@ -57,6 +57,7 @@ import {
   isIntegration,
 } from "./integration";
 import { ReflectionSymbols, validateFunctionLike } from "./reflect";
+import { isSecret } from "./secret";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
 import { AnyAsyncFunction, AnyFunction } from "./util";
@@ -315,7 +316,7 @@ abstract class FunctionBase<in Payload, Out>
        * The pre-warm client supports singleton invocation of clients (or other logic) across all integrations in the caller function.
        */
       preWarm: (preWarmContext: NativePreWarmContext) => {
-        preWarmContext.getOrInit(PrewarmClients.LAMBDA);
+        preWarmContext.getOrInit(PrewarmClients.Lambda);
       },
       /**
        * This method is called from the calling runtime lambda code (context) to invoke this lambda function.
@@ -324,7 +325,7 @@ abstract class FunctionBase<in Payload, Out>
       call: async (args, prewarmContext) => {
         const [payload] = args;
         const lambdaClient = prewarmContext.getOrInit<AWS.Lambda>(
-          PrewarmClients.LAMBDA
+          PrewarmClients.Lambda
         );
         const response = (
           await lambdaClient
@@ -1074,7 +1075,8 @@ export async function serialize(
               (isFunction(integ) ||
                 isTable(integ) ||
                 isStepFunction(integ) ||
-                isEventBus(integ))
+                isEventBus(integ) ||
+                isSecret(integ))
             ) {
               const { resource, ...rest } = integ;
 

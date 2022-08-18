@@ -1,6 +1,6 @@
 ---
 title: User Pool
-sidebar_position: 6
+sidebar_position: 5.5
 ---
 
 # User Pool
