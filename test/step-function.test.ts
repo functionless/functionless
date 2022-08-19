@@ -884,7 +884,7 @@ test("put an event bus event", () => {
     {
       Parameters: { Entries: [{ EventBusName: bus.eventBusArn }] },
     },
-    "bus.putEvents"
+    "1__await bus.putEvents"
   );
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -1171,15 +1171,15 @@ test("return a single Lambda Function call", () => {
     return getPerson({ id: input.id });
   }).definition;
 
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+
   expectTaskToMatch(
     definition,
     {
       Resource: getPerson.resource.functionArn,
     },
-    "getPerson"
+    "1__return getPerson"
   );
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("task(-1)", () => {
@@ -1560,7 +1560,7 @@ test("conditionally call DynamoDB and then void", () => {
         TableName: personTable.resource.tableName,
       },
     },
-    "$AWS.DynamoDB.GetItem"
+    "1__await $AWS.DynamoDB.GetItem"
   );
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();

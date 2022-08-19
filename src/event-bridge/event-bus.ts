@@ -454,11 +454,11 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
           this.resource.grantPutEventsTo(context.resource);
         },
         preWarm: (prewarmContext: NativePreWarmContext) => {
-          prewarmContext.getOrInit(PrewarmClients.EVENT_BRIDGE);
+          prewarmContext.getOrInit(PrewarmClients.EventBridge);
         },
         call: async (args, preWarmContext) => {
           const eventBridge = preWarmContext.getOrInit(
-            PrewarmClients.EVENT_BRIDGE
+            PrewarmClients.EventBridge
           );
           await eventBridge
             .putEvents({

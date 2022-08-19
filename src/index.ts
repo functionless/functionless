@@ -18,6 +18,7 @@ export * from "./reflect";
 export * from "./s-expression";
 export * from "./statement";
 export * from "./step-function";
+export * from "./secret";
 export * from "./table";
 export * from "./util";
 

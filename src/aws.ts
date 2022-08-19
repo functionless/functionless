@@ -95,7 +95,7 @@ export namespace $AWS {
         call: async (args, preWarmContext) => {
           const dynamo = preWarmContext.getOrInit<
             TypeSafeDynamoDBv2<object, keyof object, any>
-          >(PrewarmClients.DYNAMO);
+          >(PrewarmClients.DynamoDB);
 
           const [input] = args;
 
@@ -168,7 +168,7 @@ export namespace $AWS {
         ) => {
           const dynamo = preWarmContext.getOrInit<
             TypeSafeDynamoDBv2<object, keyof object, any>
-          >(PrewarmClients.DYNAMO);
+          >(PrewarmClients.DynamoDB);
 
           const [input] = args;
 
@@ -236,7 +236,7 @@ export namespace $AWS {
         call: async (args, preWarmContext) => {
           const dynamo = preWarmContext.getOrInit<
             TypeSafeDynamoDBv2<object, keyof object, any>
-          >(PrewarmClients.DYNAMO);
+          >(PrewarmClients.DynamoDB);
 
           const [input] = args;
 
@@ -282,7 +282,7 @@ export namespace $AWS {
         call: async (args, preWarmContext) => {
           const dynamo = preWarmContext.getOrInit<
             TypeSafeDynamoDBv2<object, keyof object, any>
-          >(PrewarmClients.DYNAMO);
+          >(PrewarmClients.DynamoDB);
 
           const [input] = args;
 
@@ -332,7 +332,7 @@ export namespace $AWS {
         call: async (args, preWarmContext) => {
           const dynamo = preWarmContext.getOrInit<
             TypeSafeDynamoDBv2<object, keyof object, any>
-          >(PrewarmClients.DYNAMO);
+          >(PrewarmClients.DynamoDB);
 
           const [input] = args;
 
@@ -378,7 +378,7 @@ export namespace $AWS {
         call: async (args, preWarmContext) => {
           const dynamo = preWarmContext.getOrInit<
             TypeSafeDynamoDBv2<object, keyof object, any>
-          >(PrewarmClients.DYNAMO);
+          >(PrewarmClients.DynamoDB);
 
           const [input] = args;
 
@@ -490,11 +490,11 @@ export namespace $AWS {
         // Access needs to be granted manually
         bind: () => {},
         preWarm: (prewarmContext: NativePreWarmContext) => {
-          prewarmContext.getOrInit(PrewarmClients.EVENT_BRIDGE);
+          prewarmContext.getOrInit(PrewarmClients.EventBridge);
         },
         call: async ([request], preWarmContext) => {
           const eventBridge = preWarmContext.getOrInit<AWSEventBridge>(
-            PrewarmClients.EVENT_BRIDGE
+            PrewarmClients.EventBridge
           );
           return eventBridge
             .putEvents({
@@ -635,7 +635,7 @@ function makeDynamoIntegration<
         integration.native.bind(context, table);
       },
       preWarm(prewarmContext) {
-        prewarmContext.getOrInit(PrewarmClients.DYNAMO);
+        prewarmContext.getOrInit(PrewarmClients.DynamoDB);
       },
     },
   });
