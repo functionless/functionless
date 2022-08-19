@@ -5552,7 +5552,6 @@ namespace ASLOptimizer {
       usage: u,
     }));
 
-    // TODO extract to a new function.
     const stats = variableNamePrefixes.map((v) => ({
       variable: v,
       assigns: variableUsageWithId.filter(({ usage }) =>
@@ -6087,6 +6086,8 @@ namespace ASLOptimizer {
   }
 
   /**
+   * Attempts to re-write and collapse variable usage and assignments are unnecessary.
+   *
    * @returns states with assignments that are unused, updates graph states (with the unused ones)
    */
   function optimizeVariableAssignment(
@@ -6095,19 +6096,29 @@ namespace ASLOptimizer {
   ): [string[], States] {
     const { stats } = analyzeVariables(startState, states);
 
-    const [statsMap, updatedStates] = stats
-      .map((s) => s.variable)
-      .reduce(
-        ([statsMap, states], sourceVariable) => {
-          return (
-            tryRemoveVariable(sourceVariable, statsMap, states) ?? [
-              statsMap,
-              states,
-            ]
-          );
-        },
-        [Object.fromEntries(stats.map((s) => [s.variable, s])), states]
-      );
+    // sort the stats by the location of the first assignment.
+    const sortStats = stats.sort((first, second) => {
+      return firstAssignIndex(first) - firstAssignIndex(second);
+
+      function firstAssignIndex(stats: VariableStats) {
+        return stats.assigns.length === 0
+          ? 0
+          : Math.min(...stats.assigns.map((s) => s.index));
+      }
+    });
+
+    const [statsMap, updatedStates] = sortStats.reduce(
+      ([statsMap, states], sourceVariable) => {
+        return (
+          tryRemoveVariable(
+            statsMap[sourceVariable.variable]!,
+            statsMap,
+            states
+          ) ?? [statsMap, states]
+        );
+      },
+      [Object.fromEntries(stats.map((s) => [s.variable, s])), states]
+    );
 
     const unusedAssignments = Object.values(statsMap).filter(
       (s) => s.usage.length === 0
@@ -6140,7 +6151,7 @@ namespace ASLOptimizer {
    * @return - the updated graph states and variable states after removing the variable or nothing if there was no change.
    */
   function tryRemoveVariable(
-    sourceVariable: string,
+    sourceVariable: VariableStats,
     statsMap: Record<string, VariableStats>,
     states: States
   ): [Record<string, VariableStats>, States] | undefined {
@@ -6163,8 +6174,7 @@ namespace ASLOptimizer {
      * ```
      *
      */
-    const [sourceAssign, ...otherAssign] =
-      statsMap[sourceVariable]?.assigns ?? [];
+    const [sourceAssign, ...otherAssign] = sourceVariable.assigns ?? [];
     if (
       otherAssign.length > 0 ||
       !sourceAssign ||
@@ -6186,7 +6196,7 @@ namespace ASLOptimizer {
      * const c = b; // target <--
      * ```
      */
-    const [targetUsage, ...otherUsages] = statsMap[sourceVariable]?.usage ?? [];
+    const [targetUsage, ...otherUsages] = sourceVariable.usage ?? [];
     if (otherUsages.length > 0 || !targetUsage) {
       // only update variables with a single assignment
       return;
