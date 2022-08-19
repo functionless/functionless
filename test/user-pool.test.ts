@@ -1,4 +1,5 @@
-import { Stack } from "aws-cdk-lib";
+import { aws_cognito, Stack } from "aws-cdk-lib";
+import { CreateAuthChallengeTriggerEvent } from "aws-lambda";
 import "jest";
 import { Function, UserPool } from "../src";
 
@@ -31,7 +32,7 @@ test("create user pool with triggers", async () => {
   });
 });
 
-test("add a trigger to a user pool", () => {
+test("add a trigger to a user pool using on(<string>)", () => {
   const stack = new Stack();
 
   const pool = new UserPool(stack, "UserPool");
@@ -50,6 +51,24 @@ test("add a trigger to a user pool", () => {
       new Function(stack, "InvalidCreateAuthChallenge", async (event) => {})
     );
   });
+});
+
+test("add a trigger to a user pool using on(aws_cognito.UserPoolOperation)", () => {
+  const stack = new Stack();
+
+  const pool = new UserPool(stack, "UserPool");
+
+  pool.on(
+    aws_cognito.UserPoolOperation.CREATE_AUTH_CHALLENGE,
+    new Function(
+      stack,
+      "CreateAuthChallenge",
+      // must provide explicit event type
+      async (event: CreateAuthChallengeTriggerEvent) => {
+        return event;
+      }
+    )
+  );
 });
 
 test("add a trigger to a user pool using a specific onX method", () => {

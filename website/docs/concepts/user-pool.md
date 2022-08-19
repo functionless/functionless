@@ -48,7 +48,7 @@ There are three ways to configure a Trigger:
 
 1. pass a [Function](./function/index.md) to the `lambdaTriggers` property when instantiating the `UserPool`.
 
-```ts
+````ts
 // option 1 - in-line the Function
 const userPool = new UserPool(stack, "UserPool", {
   lambdaTriggers: {
@@ -62,21 +62,8 @@ const userPool = new UserPool(stack, "UserPool", {
     ),
   },
 });
-```
 
-2. Call `userPool.on`.
-
-```ts
-userPool.on(
-  "createAuthChallenge",
-  new Function(stack, "CreateAuthChallenge", async (event) => {
-    // implement logic for the CreateAuthChallenge lifecycle event
-    return event;
-  })
-);
-```
-
-3. Call the specific `userPool.onXXX` method:
+2. Call the specific `userPool.onXXX` method:
 
 ```ts
 userPool.onCreateAuthChallenge(
@@ -85,4 +72,42 @@ userPool.onCreateAuthChallenge(
     return event;
   })
 );
+````
+
+3. Call `userPool.on`.
+
+```ts
+// use the string name of the trigger name
+userPool.on(
+  "createAuthChallenge",
+  new Function(stack, "CreateAuthChallenge", async (event) => {
+    // implement logic for the CreateAuthChallenge lifecycle event
+    return event;
+  })
+);
+
+// or: use the AWS CDK's underlying UserPoolOperation type.
+userPool.on(
+  aws_cognito.CREATE_AUTH_CHALLENGE,
+  new Function(
+    stack,
+    "CreateAuthChallenge",
+    async (event: CreateAuthChallengeTriggerEvent) => {
+      // implement logic for the CreateAuthChallenge lifecycle event
+      return event;
+    }
+  )
+);
 ```
+
+:::warning
+If using the UserPoolOperation, the type of the `event` can not be inferred, so you must explicitly annotate the `event` parameter.
+
+```ts
+async (event: CreateAuthChallengeTriggerEvent) => {
+  // implement logic for the CreateAuthChallenge lifecycle event
+  return event;
+};
+```
+
+:::

@@ -314,6 +314,7 @@ export class UserPool {
   /**
    * Configure AWS Cognito to trigger a {@link Function}.
    *
+   * Usage Pattern 1 - on("<trigger name>")
    * ```ts
    * userPool.on("createAuthChallenge", new Function(scope, id, async (event) => {
    *   // handle event, set response properties, etc.
@@ -322,14 +323,28 @@ export class UserPool {
    * }))
    * ```
    *
+   * Usage Pattern 2 - {@link aws_cognito.UserPoolTriggers}.
+   * ```ts
+   * userPool.on()
+   * ```
+   *
    * @param triggerName name of a trigger in {@link UserPoolTriggers}
    * @param handler the {@link Function} to send the trigger events to.
    */
-  public on<TriggerName extends keyof UserPoolTriggers>(
+  public on<
+    TriggerName extends keyof UserPoolTriggers | aws_cognito.UserPoolOperation
+  >(
     triggerName: TriggerName,
-    handler: Exclude<UserPoolTriggers[TriggerName], undefined>
+    handler: TriggerName extends keyof UserPoolTriggers
+      ? Exclude<UserPoolTriggers[TriggerName], undefined>
+      : Exclude<UserPoolTriggers[keyof UserPoolTriggers], undefined>
   ): void {
-    this.resource.addTrigger(triggers[triggerName], handler.resource);
+    this.resource.addTrigger(
+      typeof triggerName === "object"
+        ? triggerName
+        : triggers[triggerName as keyof UserPoolTriggers]!,
+      handler.resource
+    );
   }
 
   /**
