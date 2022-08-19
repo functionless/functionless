@@ -4794,7 +4794,7 @@ export namespace ASLGraph {
   ): States {
     const namedStates = internal(startState, states, { localNames: {} });
 
-    const reducedGraph = reduceGraph(
+    const reducedGraph = ASLOptimizer.reduceGraph(
       startState,
       Object.fromEntries(namedStates)
     );
@@ -4803,8 +4803,11 @@ export namespace ASLGraph {
      * Find any choice states that can be joined with their target state.
      * TODO: generalize the optimization statements.
      */
-    const updatedStates = joinChainedChoices(startState, reducedGraph);
-    return removeUnreachableStates(startState, updatedStates);
+    const updatedStates = ASLOptimizer.joinChainedChoices(
+      startState,
+      reducedGraph
+    );
+    return ASLOptimizer.removeUnreachableStates(startState, updatedStates);
 
     function internal(
       parentName: string,
@@ -4842,7 +4845,422 @@ export namespace ASLGraph {
     }
   }
 
-  function removeUnreachableStates(startState: string, states: States): States {
+  /**
+   * Finds the local state name in the nameMap.
+   *
+   * If the name contains the prefix `../` the search will start up a level.
+   *
+   * If a name is not found at the current level, the parent names will be searched.
+   *
+   * If no local name is found, the next value is returned as is.
+   */
+  function rewriteStateTransitions(
+    state: ASLGraph.NodeState,
+    subStateNameMap: NameMap
+  ) {
+    return visitTransition(state, (next) =>
+      updateTransition(next, subStateNameMap)
+    );
+
+    function updateTransition(next: string, nameMap: NameMap): string {
+      if (next.startsWith("../")) {
+        if (nameMap.parent) {
+          return updateTransition(next.substring(3), nameMap.parent);
+        }
+        return next.substring(3);
+      } else {
+        const find = (nameMap: NameMap): string => {
+          if (next in nameMap.localNames) {
+            return nameMap.localNames[next]!;
+          } else if (nameMap.parent) {
+            return find(nameMap.parent);
+          } else {
+            return next;
+          }
+        };
+        return find(nameMap);
+      }
+    }
+  }
+
+  /**
+   * Normalized an ASL state to just the output (constant or variable).
+   */
+  export function getAslStateOutput(
+    state: ASLGraph.NodeResults
+  ): ASLGraph.Output {
+    return ASLGraph.isAslGraphOutput(state) ? state : state.output;
+  }
+
+  /**
+   * Applies an {@link ASLGraph.Output} to a partial {@link Pass}.
+   *
+   * {@link ASLGraph.ConditionOutput} must be first turned into a {@link ASLGraph.JsonPath}.
+   */
+  export function passWithInput(
+    pass: Omit<NodeState<Pass>, "Parameters" | "InputPath" | "Result"> &
+      CommonFields,
+    value: Exclude<ASLGraph.Output, ASLGraph.ConditionOutput>
+  ): Pass {
+    return {
+      ...pass,
+      ...(ASLGraph.isJsonPath(value)
+        ? {
+            InputPath: value.jsonPath,
+          }
+        : value.containsJsonPath
+        ? {
+            Parameters: value.value,
+          }
+        : {
+            Result: value.value,
+          }),
+    };
+  }
+
+  /**
+   * Applies an {@link ASLGraph.Output} to a partial {@link Task}
+   *
+   * {@link ASLGraph.ConditionOutput} must be first turned into a {@link ASLGraph.JsonPath}.
+   */
+  export function taskWithInput(
+    task: Omit<Task, "Parameters" | "InputPath"> & CommonFields,
+    value: Exclude<ASLGraph.Output, ASLGraph.ConditionOutput>
+  ): Task {
+    return {
+      ...task,
+      ...(ASLGraph.isJsonPath(value)
+        ? {
+            InputPath: value.jsonPath,
+          }
+        : {
+            Parameters: value.value,
+          }),
+    };
+  }
+
+  /**
+   * Compare any two {@link ASLGraph.Output} values.
+   */
+  export function compareOutputs(
+    leftOutput: ASLGraph.Output,
+    rightOutput: ASLGraph.Output,
+    operator: ASL.ValueComparisonOperators
+  ): Condition {
+    if (
+      ASLGraph.isLiteralValue(leftOutput) &&
+      ASLGraph.isLiteralValue(rightOutput)
+    ) {
+      return ((operator === "==" || operator === "===") &&
+        leftOutput.value === rightOutput.value) ||
+        ((operator === "!=" || operator === "!==") &&
+          leftOutput.value !== rightOutput.value) ||
+        (leftOutput.value !== null &&
+          rightOutput.value !== null &&
+          ((operator === ">" && leftOutput.value > rightOutput.value) ||
+            (operator === "<" && leftOutput.value < rightOutput.value) ||
+            (operator === "<=" && leftOutput.value <= rightOutput.value) ||
+            (operator === ">=" && leftOutput.value >= rightOutput.value)))
+        ? ASL.trueCondition()
+        : ASL.falseCondition();
+    }
+
+    const [left, right] =
+      ASLGraph.isJsonPath(leftOutput) || ASLGraph.isConditionOutput(leftOutput)
+        ? [leftOutput, rightOutput]
+        : [
+            rightOutput as ASLGraph.JsonPath | ASLGraph.ConditionOutput,
+            leftOutput,
+          ];
+    // if the right is a variable and the left isn't, invert the operator
+    // 1 >= a -> a <= 1
+    // a >= b -> a >= b
+    // a >= 1 -> a >= 1
+    const op = leftOutput === left ? operator : invertBinaryOperator(operator);
+
+    return ASLGraph.compare(left, right, op as any);
+  }
+
+  export function compare(
+    left: ASLGraph.JsonPath | ASLGraph.ConditionOutput,
+    right: ASLGraph.Output,
+    operator: ASL.ValueComparisonOperators | "!=" | "!=="
+  ): Condition {
+    if (
+      operator === "==" ||
+      operator === "===" ||
+      operator === ">" ||
+      operator === "<" ||
+      operator === ">=" ||
+      operator === "<="
+    ) {
+      if (ASLGraph.isConditionOutput(left)) {
+        return (
+          ASLGraph.booleanCompare(left, right, operator) ?? ASL.falseCondition()
+        );
+      }
+      const condition = ASL.or(
+        ASLGraph.nullCompare(left, right, operator),
+        ASLGraph.stringCompare(left, right, operator),
+        ASLGraph.booleanCompare(left, right, operator),
+        ASLGraph.numberCompare(left, right, operator)
+      );
+
+      if (ASLGraph.isJsonPath(right)) {
+        ASL.or(
+          // a === b while a and b are both not defined
+          ASL.not(
+            ASL.and(ASL.isPresent(left.jsonPath), ASL.isPresent(right.jsonPath))
+          ),
+          // a !== undefined && b !== undefined
+          ASL.and(
+            ASL.isPresent(left.jsonPath),
+            ASL.isPresent(right.jsonPath),
+            // && a [op] b
+            condition
+          )
+        );
+      }
+      return ASL.and(ASL.isPresent(left.jsonPath), condition);
+    } else if (operator === "!=" || operator === "!==") {
+      return ASL.not(ASLGraph.compare(left, right, "=="));
+    }
+
+    assertNever(operator);
+  }
+
+  // Assumes the variable(s) are present and not null
+  export function stringCompare(
+    left: ASLGraph.JsonPath,
+    right: ASLGraph.Output,
+    operator: ASL.ValueComparisonOperators
+  ) {
+    if (
+      ASLGraph.isJsonPath(right) ||
+      (ASLGraph.isLiteralValue(right) && typeof right.value === "string")
+    ) {
+      return ASL.and(
+        ASL.isString(left.jsonPath),
+        ASLGraph.isJsonPath(right)
+          ? ASL.comparePathOfType(
+              left.jsonPath,
+              operator,
+              right.jsonPath,
+              "string"
+            )
+          : ASL.compareValueOfType(
+              left.jsonPath,
+              operator,
+              right.value as string
+            )
+      );
+    }
+    return undefined;
+  }
+
+  export function numberCompare(
+    left: ASLGraph.JsonPath,
+    right: ASLGraph.Output,
+    operator: ASL.ValueComparisonOperators
+  ) {
+    if (
+      ASLGraph.isJsonPath(right) ||
+      (ASLGraph.isLiteralValue(right) && typeof right.value === "number")
+    ) {
+      return ASL.and(
+        ASL.isNumeric(left.jsonPath),
+        ASLGraph.isJsonPath(right)
+          ? ASL.comparePathOfType(
+              left.jsonPath,
+              operator,
+              right.jsonPath,
+              "number"
+            )
+          : ASL.compareValueOfType(
+              left.jsonPath,
+              operator,
+              right.value as number
+            )
+      );
+    }
+    return undefined;
+  }
+
+  export function booleanCompare(
+    left: ASLGraph.JsonPath | ASLGraph.ConditionOutput,
+    right: ASLGraph.Output,
+    operator: ASL.ValueComparisonOperators
+  ) {
+    // (z == b) === (a ==c c)
+    if (ASLGraph.isConditionOutput(left)) {
+      if (operator === "===" || operator === "==") {
+        if (ASLGraph.isConditionOutput(right)) {
+          // (!left && !right) || (left && right)
+          return ASL.or(
+            ASL.and(ASL.not(left.condition), ASL.not(right.condition)),
+            ASL.and(left.condition, right.condition)
+          );
+        } else if (
+          ASLGraph.isLiteralValue(right) &&
+          typeof right.value === "boolean"
+        ) {
+          // (a === b) === true
+          return right.value ? left.condition : ASL.not(left.condition);
+        } else if (ASLGraph.isJsonPath(right)) {
+          // (a === b) === c
+          return ASL.or(
+            ASL.and(
+              ASL.not(left.condition),
+              ASL.booleanEquals(right.jsonPath, false)
+            ),
+            ASL.and(left.condition, ASL.booleanEquals(right.jsonPath, true))
+          );
+        }
+      }
+      return undefined;
+    }
+    if (ASLGraph.isConditionOutput(right)) {
+      // a === (b === c)
+      return ASL.or(
+        ASL.and(
+          ASL.not(right.condition),
+          ASL.booleanEquals(left.jsonPath, false)
+        ),
+        ASL.and(right.condition, ASL.booleanEquals(left.jsonPath, true))
+      );
+    }
+    if (ASLGraph.isJsonPath(right) || typeof right.value === "boolean") {
+      return ASL.and(
+        ASL.isBoolean(left.jsonPath),
+        ASLGraph.isJsonPath(right)
+          ? ASL.comparePathOfType(
+              left.jsonPath,
+              operator,
+              right.jsonPath,
+              "boolean"
+            )
+          : ASL.compareValueOfType(
+              left.jsonPath,
+              operator,
+              right.value as boolean
+            )
+      );
+    }
+    return undefined;
+  }
+
+  export function nullCompare(
+    left: ASLGraph.JsonPath,
+    right: ASLGraph.Output,
+    operator: ASL.ValueComparisonOperators
+  ) {
+    if (operator === "==" || operator === "===") {
+      if (ASLGraph.isJsonPath(right)) {
+        return ASL.and(ASL.isNull(left.jsonPath), ASL.isNull(right.jsonPath));
+      } else if (ASLGraph.isLiteralValue(right) && right.value === null) {
+        return ASL.isNull(left.jsonPath);
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Returns a object with the key formatted based on the contents of the value.
+   * in ASL, object keys that reference json path values must have a suffix of ".$"
+   * { "input.$": "$.value" }
+   */
+  export function jsonAssignment(
+    key: string,
+    output: Exclude<ASLGraph.Output, ASLGraph.ConditionOutput>
+  ): Record<string, any> {
+    return {
+      [ASLGraph.isJsonPath(output) ? `${key}.$` : key]: ASLGraph.isLiteralValue(
+        output
+      )
+        ? output.value
+        : output.jsonPath,
+    };
+  }
+
+  export function isTruthyOutput(v: ASLGraph.Output): Condition {
+    return ASLGraph.isLiteralValue(v)
+      ? v.value
+        ? ASL.trueCondition()
+        : ASL.falseCondition()
+      : ASLGraph.isJsonPath(v)
+      ? ASL.isTruthy(v.jsonPath)
+      : v.condition;
+  }
+
+  export function elementIn(
+    element: string | number,
+    targetJsonPath: ASLGraph.JsonPath
+  ): Condition {
+    const accessed = ASLGraph.accessConstant(targetJsonPath, element);
+
+    if (ASLGraph.isLiteralValue(accessed)) {
+      return accessed.value === undefined
+        ? ASL.falseCondition()
+        : ASL.trueCondition();
+    } else {
+      return ASL.isPresent(accessed.jsonPath);
+    }
+  }
+
+  export function accessConstant(
+    value: ASLGraph.Output,
+    field: string | number
+  ): ASLGraph.JsonPath | ASLGraph.LiteralValue {
+    if (ASLGraph.isJsonPath(value)) {
+      return { jsonPath: formatJsonPath([field], value.jsonPath) };
+    }
+
+    if (ASLGraph.isLiteralValue(value) && value.value) {
+      const accessedValue = (() => {
+        if (Array.isArray(value.value)) {
+          if (typeof field === "number") {
+            return value.value[field];
+          }
+          throw new SynthError(
+            ErrorCodes.StepFunctions_Invalid_collection_access,
+            "Accessor to an array must be a constant number"
+          );
+        } else if (typeof value.value === "object") {
+          return value.value[field];
+        }
+        throw new SynthError(
+          ErrorCodes.StepFunctions_Invalid_collection_access,
+          "Only a constant object or array may be accessed."
+        );
+      })();
+
+      return typeof accessedValue === "string" &&
+        (accessedValue.startsWith("$") || accessedValue.startsWith("States."))
+        ? { jsonPath: accessedValue }
+        : {
+            value: accessedValue,
+            containsJsonPath: value.containsJsonPath,
+          };
+    }
+
+    throw new SynthError(
+      ErrorCodes.StepFunctions_Invalid_collection_access,
+      "Only a constant object or array may be accessed."
+    );
+  }
+}
+
+/**
+ * Operations that can help "optimize" an ASL state machine.
+ */
+namespace ASLOptimizer {
+  /**
+   * Traverses the graph and removes any nodes unreachable from the start state.
+   */
+  export function removeUnreachableStates(
+    startState: string,
+    states: States
+  ): States {
     const reachableStates = findReachableStates(startState, states);
 
     // only take the reachable states
@@ -4897,110 +5315,6 @@ export namespace ASLGraph {
       .map(([name]) => name);
   }
 
-  function analyzeVariables(startState: string, states: States) {
-    const variableAssignments: StateVariableUsage[] = [];
-    const variableNames = new Set<string>();
-    const visited = new Set<string>();
-
-    const topo = topoSort(startState, states);
-
-    depthFirst(startState);
-
-    const variableNamesArray = [...variableNames];
-    // grab all of the variable prefixes.
-    const variableNamePrefixes = [
-      ...new Set(
-        variableNamesArray
-          // ignore the root `$`
-          .filter((v) => v !== "$")
-          .map((v) => normalizeJsonPath(v)[0]!)
-          .map((v) => formatJsonPath([v]))
-      ),
-    ];
-
-    const variableUsageWithId = variableAssignments.map((u, i) => ({
-      id: i,
-      usage: u,
-    }));
-
-    const stats = variableNamePrefixes.map((v) => ({
-      variable: v,
-      assigns: variableUsageWithId
-        .filter(({ usage }) => {
-          if (
-            usage.type === "Assignment" ||
-            usage.type === "PropAssignment" ||
-            usage.type === "LiteralPropAssignment" ||
-            usage.type === "LiteralAssignment" ||
-            usage.type === "StateOutput" ||
-            usage.type === "Intrinsic" ||
-            usage.type === "Filter" ||
-            usage.type === "FilterPropAssignment"
-          ) {
-            return jsonPathStartsWith(usage.to, v);
-          } else if (
-            // condition and state input cases do not create or update variables.
-            usage.type === "Condition" ||
-            usage.type === "StateInput" ||
-            usage.type === "ReturnUsage"
-          ) {
-            return false;
-          } else {
-            return assertNever(usage);
-          }
-        })
-        .map((s) => ({
-          ...s,
-          index: topo.findIndex((t) => t[0] === s.usage.state),
-        })),
-      usage: variableUsageWithId
-        .filter(({ usage }) => {
-          if (
-            usage.type === "Assignment" ||
-            usage.type === "Intrinsic" ||
-            usage.type === "StateInput" ||
-            usage.type === "Condition" ||
-            usage.type === "PropAssignment" ||
-            usage.type === "Filter" ||
-            usage.type === "FilterPropAssignment" ||
-            usage.type === "ReturnUsage"
-          ) {
-            return jsonPathStartsWith(usage.from, v);
-          } else if (
-            // stateoutput and literal assignments cannot use other variables
-            usage.type === "LiteralAssignment" ||
-            usage.type === "LiteralPropAssignment" ||
-            usage.type === "StateOutput"
-          ) {
-            return false;
-          } else {
-            return assertNever(usage);
-          }
-        })
-        .map((s) => ({
-          ...s,
-          index: topo.findIndex((t) => t[0] === s.usage.state),
-        })),
-    }));
-
-    return { variableAssignments, variableNames: [...variableNames], stats };
-
-    function depthFirst(stateName: string) {
-      if (visited.has(stateName)) return;
-      visited.add(stateName);
-      const state = states[stateName]!;
-      variableAssignments.push(
-        ...getVariableUsage(state).map((usage) => ({
-          ...usage,
-          state: stateName,
-        }))
-      );
-      const names = getVariableNamesFromState(state);
-      names.forEach((n) => variableNames.add(n));
-      visitTransition(state, depthFirst);
-    }
-  }
-
   /**
    * A variable is assigned from one to another
    */
@@ -5051,6 +5365,9 @@ export namespace ASLGraph {
     to: string;
   }
 
+  /**
+   * Variables found in a json path filter in a parameters object.
+   */
   interface VariableFilterPropAssignment {
     type: "FilterPropAssignment";
     from: string;
@@ -5132,6 +5449,97 @@ export namespace ASLGraph {
   type StateVariableUsage = VariableUsage & {
     state: string;
   };
+
+  function isVariableAssignment(variable: string, usage: VariableUsage) {
+    return usage.type === "Assignment" ||
+      usage.type === "PropAssignment" ||
+      usage.type === "LiteralPropAssignment" ||
+      usage.type === "LiteralAssignment" ||
+      usage.type === "StateOutput" ||
+      usage.type === "Intrinsic" ||
+      usage.type === "Filter" ||
+      usage.type === "FilterPropAssignment"
+      ? jsonPathStartsWith(usage.to, variable)
+      : // condition and state input cases do not create or update variables.
+      usage.type === "Condition" ||
+        usage.type === "StateInput" ||
+        usage.type === "ReturnUsage"
+      ? false
+      : assertNever(usage);
+  }
+
+  function isVariableUsage(variable: string, usage: VariableUsage) {
+    return usage.type === "Assignment" ||
+      usage.type === "Intrinsic" ||
+      usage.type === "StateInput" ||
+      usage.type === "Condition" ||
+      usage.type === "PropAssignment" ||
+      usage.type === "Filter" ||
+      usage.type === "FilterPropAssignment" ||
+      usage.type === "ReturnUsage"
+      ? jsonPathStartsWith(usage.from, variable)
+      : // stateoutput and literal assignments cannot use other variables
+      usage.type === "LiteralAssignment" ||
+        usage.type === "LiteralPropAssignment" ||
+        usage.type === "StateOutput"
+      ? false
+      : assertNever(usage);
+  }
+
+  function analyzeVariables(startState: string, states: States) {
+    const variableAssignments: StateVariableUsage[] = [];
+    const variableNames = new Set<string>();
+    const visited = new Set<string>();
+
+    const topo = topoSort(startState, states);
+
+    depthFirst(startState);
+
+    const variableNamesArray = [...variableNames];
+    // grab all of the variable prefixes.
+    const variableNamePrefixes = [
+      ...new Set(
+        variableNamesArray
+          // ignore the root `$`
+          .filter((v) => v !== "$")
+          .map((v) => normalizeJsonPath(v)[0]!)
+          .map((v) => formatJsonPath([v]))
+      ),
+    ];
+
+    const variableUsageWithId = variableAssignments.map((u, i) => ({
+      id: i,
+      index: topo.findIndex((t) => t[0] === u.state),
+      usage: u,
+    }));
+
+    const stats = variableNamePrefixes.map((v) => ({
+      variable: v,
+      assigns: variableUsageWithId.filter(({ usage }) =>
+        isVariableAssignment(v, usage)
+      ),
+      usage: variableUsageWithId.filter(({ usage }) =>
+        isVariableUsage(v, usage)
+      ),
+    }));
+
+    return { variableAssignments, variableNames: [...variableNames], stats };
+
+    function depthFirst(stateName: string) {
+      if (visited.has(stateName)) return;
+      visited.add(stateName);
+      const state = states[stateName]!;
+      variableAssignments.push(
+        ...getVariableUsage(state).map((usage) => ({
+          ...usage,
+          state: stateName,
+        }))
+      );
+      const names = getVariableNamesFromState(state);
+      names.forEach((n) => variableNames.add(n));
+      visitTransition(state, depthFirst);
+    }
+  }
 
   function getVariableUsage(state: State): VariableUsage[] {
     const usages: VariableUsage[] = (() => {
@@ -5418,7 +5826,7 @@ export namespace ASLGraph {
     return names.filter((n): n is string => !!n);
   }
 
-  function reduceGraph(startState: string, states: States): States {
+  export function reduceGraph(startState: string, states: States): States {
     const updatedStates = { ...states };
     const { stats } = analyzeVariables(startState, states);
 
@@ -6260,7 +6668,7 @@ export namespace ASLGraph {
    * 5            - Task
    * 6            - Task
    */
-  function joinChainedChoices(startState: string, stateMap: States) {
+  export function joinChainedChoices(startState: string, stateMap: States) {
     const updatedStates: Record<string, State | null> = {};
 
     depthFirst(startState);
@@ -6349,449 +6757,6 @@ export namespace ASLGraph {
       marks[state] = true;
       nodes = [[state, stateObj], ...nodes];
     }
-  }
-
-  /**
-   * Visit each transition in each state.
-   * Use the callback to update the transition name.
-   */
-  function visitTransition(
-    state: State,
-    cb: (next: string) => string | undefined | void
-  ): State {
-    const cbOrNext = (next: string) => cb(next) ?? next;
-    if ("End" in state && state.End !== undefined) {
-      return state;
-    }
-    if (isChoiceState(state)) {
-      return {
-        ...state,
-        Choices: state.Choices.map((choice) => ({
-          ...choice,
-          Next: cbOrNext(choice.Next),
-        })),
-        Default: state.Default ? cbOrNext(state.Default) : undefined,
-      };
-    } else if ("Catch" in state) {
-      return {
-        ...state,
-        Catch: state.Catch?.map((_catch) => ({
-          ..._catch,
-          Next: _catch.Next ? cbOrNext(_catch.Next) : _catch.Next,
-        })),
-        Next: state.Next ? cbOrNext(state.Next) : state.Next,
-      };
-    } else if (!("Next" in state)) {
-      return state;
-    }
-    return {
-      ...state,
-      Next: state.Next ? cbOrNext(state.Next) : state.Next,
-    };
-  }
-
-  /**
-   * Finds the local state name in the nameMap.
-   *
-   * If the name contains the prefix `../` the search will start up a level.
-   *
-   * If a name is not found at the current level, the parent names will be searched.
-   *
-   * If no local name is found, the next value is returned as is.
-   */
-  function rewriteStateTransitions(
-    state: ASLGraph.NodeState,
-    subStateNameMap: NameMap
-  ) {
-    return visitTransition(state, (next) =>
-      updateTransition(next, subStateNameMap)
-    );
-
-    function updateTransition(next: string, nameMap: NameMap): string {
-      if (next.startsWith("../")) {
-        if (nameMap.parent) {
-          return updateTransition(next.substring(3), nameMap.parent);
-        }
-        return next.substring(3);
-      } else {
-        const find = (nameMap: NameMap): string => {
-          if (next in nameMap.localNames) {
-            return nameMap.localNames[next]!;
-          } else if (nameMap.parent) {
-            return find(nameMap.parent);
-          } else {
-            return next;
-          }
-        };
-        return find(nameMap);
-      }
-    }
-  }
-
-  /**
-   * Normalized an ASL state to just the output (constant or variable).
-   */
-  export function getAslStateOutput(
-    state: ASLGraph.NodeResults
-  ): ASLGraph.Output {
-    return ASLGraph.isAslGraphOutput(state) ? state : state.output;
-  }
-
-  /**
-   * Applies an {@link ASLGraph.Output} to a partial {@link Pass}.
-   *
-   * {@link ASLGraph.ConditionOutput} must be first turned into a {@link ASLGraph.JsonPath}.
-   */
-  export function passWithInput(
-    pass: Omit<NodeState<Pass>, "Parameters" | "InputPath" | "Result"> &
-      CommonFields,
-    value: Exclude<ASLGraph.Output, ASLGraph.ConditionOutput>
-  ): Pass {
-    return {
-      ...pass,
-      ...(ASLGraph.isJsonPath(value)
-        ? {
-            InputPath: value.jsonPath,
-          }
-        : value.containsJsonPath
-        ? {
-            Parameters: value.value,
-          }
-        : {
-            Result: value.value,
-          }),
-    };
-  }
-
-  /**
-   * Applies an {@link ASLGraph.Output} to a partial {@link Task}
-   *
-   * {@link ASLGraph.ConditionOutput} must be first turned into a {@link ASLGraph.JsonPath}.
-   */
-  export function taskWithInput(
-    task: Omit<Task, "Parameters" | "InputPath"> & CommonFields,
-    value: Exclude<ASLGraph.Output, ASLGraph.ConditionOutput>
-  ): Task {
-    return {
-      ...task,
-      ...(ASLGraph.isJsonPath(value)
-        ? {
-            InputPath: value.jsonPath,
-          }
-        : {
-            Parameters: value.value,
-          }),
-    };
-  }
-
-  /**
-   * Compare any two {@link ASLGraph.Output} values.
-   */
-  export function compareOutputs(
-    leftOutput: ASLGraph.Output,
-    rightOutput: ASLGraph.Output,
-    operator: ASL.ValueComparisonOperators
-  ): Condition {
-    if (
-      ASLGraph.isLiteralValue(leftOutput) &&
-      ASLGraph.isLiteralValue(rightOutput)
-    ) {
-      return ((operator === "==" || operator === "===") &&
-        leftOutput.value === rightOutput.value) ||
-        ((operator === "!=" || operator === "!==") &&
-          leftOutput.value !== rightOutput.value) ||
-        (leftOutput.value !== null &&
-          rightOutput.value !== null &&
-          ((operator === ">" && leftOutput.value > rightOutput.value) ||
-            (operator === "<" && leftOutput.value < rightOutput.value) ||
-            (operator === "<=" && leftOutput.value <= rightOutput.value) ||
-            (operator === ">=" && leftOutput.value >= rightOutput.value)))
-        ? ASL.trueCondition()
-        : ASL.falseCondition();
-    }
-
-    const [left, right] =
-      ASLGraph.isJsonPath(leftOutput) || ASLGraph.isConditionOutput(leftOutput)
-        ? [leftOutput, rightOutput]
-        : [
-            rightOutput as ASLGraph.JsonPath | ASLGraph.ConditionOutput,
-            leftOutput,
-          ];
-    // if the right is a variable and the left isn't, invert the operator
-    // 1 >= a -> a <= 1
-    // a >= b -> a >= b
-    // a >= 1 -> a >= 1
-    const op = leftOutput === left ? operator : invertBinaryOperator(operator);
-
-    return ASLGraph.compare(left, right, op as any);
-  }
-
-  export function compare(
-    left: ASLGraph.JsonPath | ASLGraph.ConditionOutput,
-    right: ASLGraph.Output,
-    operator: ASL.ValueComparisonOperators | "!=" | "!=="
-  ): Condition {
-    if (
-      operator === "==" ||
-      operator === "===" ||
-      operator === ">" ||
-      operator === "<" ||
-      operator === ">=" ||
-      operator === "<="
-    ) {
-      if (ASLGraph.isConditionOutput(left)) {
-        return (
-          ASLGraph.booleanCompare(left, right, operator) ?? ASL.falseCondition()
-        );
-      }
-      const condition = ASL.or(
-        ASLGraph.nullCompare(left, right, operator),
-        ASLGraph.stringCompare(left, right, operator),
-        ASLGraph.booleanCompare(left, right, operator),
-        ASLGraph.numberCompare(left, right, operator)
-      );
-
-      if (ASLGraph.isJsonPath(right)) {
-        ASL.or(
-          // a === b while a and b are both not defined
-          ASL.not(
-            ASL.and(ASL.isPresent(left.jsonPath), ASL.isPresent(right.jsonPath))
-          ),
-          // a !== undefined && b !== undefined
-          ASL.and(
-            ASL.isPresent(left.jsonPath),
-            ASL.isPresent(right.jsonPath),
-            // && a [op] b
-            condition
-          )
-        );
-      }
-      return ASL.and(ASL.isPresent(left.jsonPath), condition);
-    } else if (operator === "!=" || operator === "!==") {
-      return ASL.not(ASLGraph.compare(left, right, "=="));
-    }
-
-    assertNever(operator);
-  }
-
-  // Assumes the variable(s) are present and not null
-  export function stringCompare(
-    left: ASLGraph.JsonPath,
-    right: ASLGraph.Output,
-    operator: ASL.ValueComparisonOperators
-  ) {
-    if (
-      ASLGraph.isJsonPath(right) ||
-      (ASLGraph.isLiteralValue(right) && typeof right.value === "string")
-    ) {
-      return ASL.and(
-        ASL.isString(left.jsonPath),
-        ASLGraph.isJsonPath(right)
-          ? ASL.comparePathOfType(
-              left.jsonPath,
-              operator,
-              right.jsonPath,
-              "string"
-            )
-          : ASL.compareValueOfType(
-              left.jsonPath,
-              operator,
-              right.value as string
-            )
-      );
-    }
-    return undefined;
-  }
-
-  export function numberCompare(
-    left: ASLGraph.JsonPath,
-    right: ASLGraph.Output,
-    operator: ASL.ValueComparisonOperators
-  ) {
-    if (
-      ASLGraph.isJsonPath(right) ||
-      (ASLGraph.isLiteralValue(right) && typeof right.value === "number")
-    ) {
-      return ASL.and(
-        ASL.isNumeric(left.jsonPath),
-        ASLGraph.isJsonPath(right)
-          ? ASL.comparePathOfType(
-              left.jsonPath,
-              operator,
-              right.jsonPath,
-              "number"
-            )
-          : ASL.compareValueOfType(
-              left.jsonPath,
-              operator,
-              right.value as number
-            )
-      );
-    }
-    return undefined;
-  }
-
-  export function booleanCompare(
-    left: ASLGraph.JsonPath | ASLGraph.ConditionOutput,
-    right: ASLGraph.Output,
-    operator: ASL.ValueComparisonOperators
-  ) {
-    // (z == b) === (a ==c c)
-    if (ASLGraph.isConditionOutput(left)) {
-      if (operator === "===" || operator === "==") {
-        if (ASLGraph.isConditionOutput(right)) {
-          // (!left && !right) || (left && right)
-          return ASL.or(
-            ASL.and(ASL.not(left.condition), ASL.not(right.condition)),
-            ASL.and(left.condition, right.condition)
-          );
-        } else if (
-          ASLGraph.isLiteralValue(right) &&
-          typeof right.value === "boolean"
-        ) {
-          // (a === b) === true
-          return right.value ? left.condition : ASL.not(left.condition);
-        } else if (ASLGraph.isJsonPath(right)) {
-          // (a === b) === c
-          return ASL.or(
-            ASL.and(
-              ASL.not(left.condition),
-              ASL.booleanEquals(right.jsonPath, false)
-            ),
-            ASL.and(left.condition, ASL.booleanEquals(right.jsonPath, true))
-          );
-        }
-      }
-      return undefined;
-    }
-    if (ASLGraph.isConditionOutput(right)) {
-      // a === (b === c)
-      return ASL.or(
-        ASL.and(
-          ASL.not(right.condition),
-          ASL.booleanEquals(left.jsonPath, false)
-        ),
-        ASL.and(right.condition, ASL.booleanEquals(left.jsonPath, true))
-      );
-    }
-    if (ASLGraph.isJsonPath(right) || typeof right.value === "boolean") {
-      return ASL.and(
-        ASL.isBoolean(left.jsonPath),
-        ASLGraph.isJsonPath(right)
-          ? ASL.comparePathOfType(
-              left.jsonPath,
-              operator,
-              right.jsonPath,
-              "boolean"
-            )
-          : ASL.compareValueOfType(
-              left.jsonPath,
-              operator,
-              right.value as boolean
-            )
-      );
-    }
-    return undefined;
-  }
-
-  export function nullCompare(
-    left: ASLGraph.JsonPath,
-    right: ASLGraph.Output,
-    operator: ASL.ValueComparisonOperators
-  ) {
-    if (operator === "==" || operator === "===") {
-      if (ASLGraph.isJsonPath(right)) {
-        return ASL.and(ASL.isNull(left.jsonPath), ASL.isNull(right.jsonPath));
-      } else if (ASLGraph.isLiteralValue(right) && right.value === null) {
-        return ASL.isNull(left.jsonPath);
-      }
-    }
-    return undefined;
-  }
-
-  /**
-   * Returns a object with the key formatted based on the contents of the value.
-   * in ASL, object keys that reference json path values must have a suffix of ".$"
-   * { "input.$": "$.value" }
-   */
-  export function jsonAssignment(
-    key: string,
-    output: Exclude<ASLGraph.Output, ASLGraph.ConditionOutput>
-  ): Record<string, any> {
-    return {
-      [ASLGraph.isJsonPath(output) ? `${key}.$` : key]: ASLGraph.isLiteralValue(
-        output
-      )
-        ? output.value
-        : output.jsonPath,
-    };
-  }
-
-  export function isTruthyOutput(v: ASLGraph.Output): Condition {
-    return ASLGraph.isLiteralValue(v)
-      ? v.value
-        ? ASL.trueCondition()
-        : ASL.falseCondition()
-      : ASLGraph.isJsonPath(v)
-      ? ASL.isTruthy(v.jsonPath)
-      : v.condition;
-  }
-
-  export function elementIn(
-    element: string | number,
-    targetJsonPath: ASLGraph.JsonPath
-  ): Condition {
-    const accessed = ASLGraph.accessConstant(targetJsonPath, element);
-
-    if (ASLGraph.isLiteralValue(accessed)) {
-      return accessed.value === undefined
-        ? ASL.falseCondition()
-        : ASL.trueCondition();
-    } else {
-      return ASL.isPresent(accessed.jsonPath);
-    }
-  }
-
-  export function accessConstant(
-    value: ASLGraph.Output,
-    field: string | number
-  ): ASLGraph.JsonPath | ASLGraph.LiteralValue {
-    if (ASLGraph.isJsonPath(value)) {
-      return { jsonPath: formatJsonPath([field], value.jsonPath) };
-    }
-
-    if (ASLGraph.isLiteralValue(value) && value.value) {
-      const accessedValue = (() => {
-        if (Array.isArray(value.value)) {
-          if (typeof field === "number") {
-            return value.value[field];
-          }
-          throw new SynthError(
-            ErrorCodes.StepFunctions_Invalid_collection_access,
-            "Accessor to an array must be a constant number"
-          );
-        } else if (typeof value.value === "object") {
-          return value.value[field];
-        }
-        throw new SynthError(
-          ErrorCodes.StepFunctions_Invalid_collection_access,
-          "Only a constant object or array may be accessed."
-        );
-      })();
-
-      return typeof accessedValue === "string" &&
-        (accessedValue.startsWith("$") || accessedValue.startsWith("States."))
-        ? { jsonPath: accessedValue }
-        : {
-            value: accessedValue,
-            containsJsonPath: value.containsJsonPath,
-          };
-    }
-
-    throw new SynthError(
-      ErrorCodes.StepFunctions_Invalid_collection_access,
-      "Only a constant object or array may be accessed."
-    );
   }
 }
 
@@ -7282,6 +7247,45 @@ function toStateName(node?: FunctionlessNode): string {
     );
   }
   return assertNever(node);
+}
+
+/**
+ * Visit each transition in each state.
+ * Use the callback to update the transition name.
+ */
+function visitTransition(
+  state: State,
+  cb: (next: string) => string | undefined | void
+): State {
+  const cbOrNext = (next: string) => cb(next) ?? next;
+  if ("End" in state && state.End !== undefined) {
+    return state;
+  }
+  if (isChoiceState(state)) {
+    return {
+      ...state,
+      Choices: state.Choices.map((choice) => ({
+        ...choice,
+        Next: cbOrNext(choice.Next),
+      })),
+      Default: state.Default ? cbOrNext(state.Default) : undefined,
+    };
+  } else if ("Catch" in state) {
+    return {
+      ...state,
+      Catch: state.Catch?.map((_catch) => ({
+        ..._catch,
+        Next: _catch.Next ? cbOrNext(_catch.Next) : _catch.Next,
+      })),
+      Next: state.Next ? cbOrNext(state.Next) : state.Next,
+    };
+  } else if (!("Next" in state)) {
+    return state;
+  }
+  return {
+    ...state,
+    Next: state.Next ? cbOrNext(state.Next) : state.Next,
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

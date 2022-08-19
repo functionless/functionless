@@ -10,15 +10,9 @@ Object {
         "a.$": "$.obj.x",
         "b.$": "$.obj.x",
         "d.$": "$.obj['1']",
-        "e.$": "$.heap3",
+        "e": 1,
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "3__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]}": Object {
-      "Next": "1__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]}",
-      "Parameters": 1,
-      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -32,7 +26,7 @@ Object {
       "Type": "Pass",
     },
     "obj = {1: \\"a\\", x: \\"b\\"}": Object {
-      "Next": "3__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]}",
+      "Next": "1__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]}",
       "Result": Object {
         "1": "a",
         "x": "b",
@@ -64,23 +58,11 @@ Object {
         "e.$": "$.e",
         "f.$": "$.f",
         "g.$": "$.g",
-        "h.$": "$.heap21",
-        "i.$": "$.heap22",
+        "h.$": "$.heap10.arr",
+        "i.$": "$.heap13.string",
         "jj.$": "$.jj",
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "7__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i, jj: jj}": Object {
-      "InputPath": "$.heap10.arr",
-      "Next": "8__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i, jj: jj}",
-      "ResultPath": "$.heap21",
-      "Type": "Pass",
-    },
-    "8__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i, jj: jj}": Object {
-      "InputPath": "$.heap13.string",
-      "Next": "1__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i, jj: jj}",
-      "ResultPath": "$.heap22",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -202,7 +184,7 @@ Object {
       "Type": "Pass",
     },
     "hello  x x = \\"1\\" x = \\"3\\" , \\"2\\"x": Object {
-      "Next": "7__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i, jj: jj}",
+      "Next": "1__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i, jj: jj}",
       "Parameters": Object {
         "string.$": "States.Format('hello {} 1 2 {}',$.heap11,$.x)",
       },
@@ -4051,15 +4033,94 @@ Object {
           "Next": "8y",
           "Variable": "$$.Execution.Id",
         },
+        Object {
+          "Next": "true__input.a && input.b",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.input.a",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.input.a",
+                  },
+                ],
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.input.a",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.input.a",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.input.a",
+                      },
+                    ],
+                  },
+                ],
+              },
+            ],
+          },
+        },
       ],
-      "Default": "return {andVar: c, and: input.a && input.b, or: input.a || input.b, invNull",
+      "Default": "false__input.a && input.b",
       "Type": "Choice",
     },
     "1__return {andVar: c, and: input.a && input.b, or: input.a || input.b, invN": Object {
       "End": true,
       "Parameters": Object {
         "and.$": "$.heap20",
-        "andVar.$": "$.heap19",
+        "andVar.$": "$.heap0",
         "falsyAndAssign.$": "$.falsyAndAssign",
         "falsyChainAnd.$": "$.heap52",
         "falsyChainOr.$": "$.heap43",
@@ -5751,12 +5812,6 @@ Object {
       "Default": "false__nullishCoalAssign ??= \\"b\\"",
       "Type": "Choice",
     },
-    "return {andVar: c, and: input.a && input.b, or: input.a || input.b, invNull": Object {
-      "InputPath": "$.heap0",
-      "Next": "input.a && input.b",
-      "ResultPath": "$.heap19",
-      "Type": "Pass",
-    },
     "true__c = input.a && input.b": Object {
       "InputPath": "$.input.a",
       "Next": "x = \\"\\"",
@@ -6349,7 +6404,7 @@ Object {
     },
     "y = 8y 1": Object {
       "InputPath": "$.heap18.string",
-      "Next": "return {andVar: c, and: input.a && input.b, or: input.a || input.b, invNull",
+      "Next": "input.a && input.b",
       "ResultPath": "$.y",
       "Type": "Pass",
     },
@@ -7535,7 +7590,7 @@ Object {
       "Type": "Task",
     },
     "1__item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id": Object {
-      "Next": "item.Item.val.N",
+      "Next": "aitem.Item.val.N",
       "Parameters": Object {
         "ConsistentRead": true,
         "Key": Object {
@@ -7603,7 +7658,7 @@ Object {
     "aitem.Item.val.N": Object {
       "Next": "1__return aitem.Item.val.N",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}',$.a,$.heap13)",
+        "string.$": "States.Format('{}{}',$.a,$.heap11.Item.val.N)",
       },
       "ResultPath": "$.heap14",
       "Type": "Pass",
@@ -7774,12 +7829,6 @@ Object {
       "Default": "tail__for(i of [1, 2, 3, 4])",
       "Type": "Choice",
     },
-    "item.Item.val.N": Object {
-      "InputPath": "$.heap11.Item.val.N",
-      "Next": "aitem.Item.val.N",
-      "ResultPath": "$.heap13",
-      "Type": "Pass",
-    },
     "tail__for(i of [1, 2, 3, 4])": Object {
       "InputPath": "$.heap9[1:]",
       "Next": "hasNext__for(i of [1, 2, 3, 4])",
@@ -7837,24 +7886,12 @@ Object {
       "End": true,
       "Parameters": Object {
         "forV.$": "$.forV",
-        "map.$": "$.heap38",
+        "map.$": "$.heap11.string",
         "prop.$": "$.heap26.string",
-        "tr.$": "$.heap40",
+        "tr": "hi",
         "var.$": "$.heap36.string",
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "4__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV": Object {
-      "InputPath": "$.heap11.string",
-      "Next": "6__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV",
-      "ResultPath": "$.heap38",
-      "Type": "Pass",
-    },
-    "6__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV": Object {
-      "InputPath": "$.message",
-      "Next": "1__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV",
-      "ResultPath": "$.heap40",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -7870,15 +7907,15 @@ Object {
     "aacc": Object {
       "Next": "1__return aacc",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}',$.heap7,$.heap8)",
+        "string.$": "States.Format('{}{}',$.heap6.arr[0].aa,$.heap6.arr[0].bb[0])",
       },
       "ResultPath": "$.heap9",
       "Type": "Pass",
     },
     "abcdefarrRest[0]rm": Object {
-      "Next": "zwvxsuttserRra[0]",
+      "Next": "zwvxsuttserRra[0] 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}{}{}{}{}{}{}',$.heap17,$.heap18,$.c,$.heap20,$.heap21,$.heap22,$.arrRest[0],$.heap24,$.heap25)",
+        "string.$": "States.Format('{}{}{}{}{}{}{}{}{}',$$.Execution.Input.a,$$.Execution.Input.bb.value,$.c,$$.Execution.Input.arr[0],$$.Execution.Input.arr[2],$.heap2,$.arrRest[0],$$.Execution.Input.bb.ab,$.heap1)",
       },
       "ResultPath": "$.heap26",
       "Type": "Pass",
@@ -7895,12 +7932,6 @@ Object {
       "InputPath": "$$.Execution.Input.arr[3:]",
       "Next": "f = \\"sir\\"",
       "ResultPath": "$.arrRest",
-      "Type": "Pass",
-    },
-    "b": Object {
-      "InputPath": "$$.Execution.Input.bb.value",
-      "Next": "d",
-      "ResultPath": "$.heap18",
       "Type": "Pass",
     },
     "c": Object {
@@ -7920,34 +7951,16 @@ Object {
       "Default": "default__c = \\"what\\"",
       "Type": "Choice",
     },
-    "catch__try": Object {
-      "Next": "return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV: f",
-      "Parameters": "hi",
-      "ResultPath": "$.message",
-      "Type": "Pass",
-    },
-    "cc 1": Object {
-      "InputPath": "$.heap6.arr[0].bb[0]",
-      "Next": "aacc",
-      "ResultPath": "$.heap8",
-      "Type": "Pass",
-    },
     "check__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] })).j": Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "return aacc",
+          "Next": "aacc",
           "Variable": "$.heap6.arr[0]",
         },
       ],
       "Default": "end__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] })).joi",
       "Type": "Choice",
-    },
-    "d": Object {
-      "InputPath": "$$.Execution.Input.arr[0]",
-      "Next": "e 1",
-      "ResultPath": "$.heap20",
-      "Type": "Pass",
     },
     "default__c = \\"what\\"": Object {
       "Next": "c",
@@ -7979,24 +7992,12 @@ Object {
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
-    "e 1": Object {
-      "InputPath": "$$.Execution.Input.arr[2]",
-      "Next": "f 1",
-      "ResultPath": "$.heap21",
-      "Type": "Pass",
-    },
     "end__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] })).joi": Object {
       "Next": "set__end__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] })",
       "Parameters": Object {
         "result.$": "States.StringToJson(States.Format('{}]', $.heap6.arrStr))",
       },
       "ResultPath": "$.heap6",
-      "Type": "Pass",
-    },
-    "f 1": Object {
-      "InputPath": "$.heap2",
-      "Next": "r 1",
-      "ResultPath": "$.heap22",
       "Type": "Pass",
     },
     "f = \\"sir\\"": Object {
@@ -8038,15 +8039,9 @@ Object {
     "forVhl": Object {
       "Next": "forV = forVhl 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}',$.forV,$.heap13,$.heap14)",
+        "string.$": "States.Format('{}{}{}',$.forV,$.heap16[0].h,$.heap16[0].j[0])",
       },
       "ResultPath": "$.heap15",
-      "Type": "Pass",
-    },
-    "h": Object {
-      "InputPath": "$.heap16[0].h",
-      "Next": "l 1",
-      "ResultPath": "$.heap13",
       "Type": "Pass",
     },
     "handleResult__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ": Object {
@@ -8105,29 +8100,17 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "h",
+          "Next": "forVhl",
           "Variable": "$.heap16[0]",
         },
       ],
-      "Default": "catch__try",
+      "Default": "abcdefarrRest[0]rm",
       "Type": "Choice",
     },
     "initValue__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] }": Object {
       "InputPath": "$.heap10[0]",
       "Next": "tail__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] })).jo 1",
       "ResultPath": "$.heap11.string",
-      "Type": "Pass",
-    },
-    "l 1": Object {
-      "InputPath": "$.heap16[0].j[0]",
-      "Next": "forVhl",
-      "ResultPath": "$.heap14",
-      "Type": "Pass",
-    },
-    "m 1": Object {
-      "InputPath": "$.heap1",
-      "Next": "abcdefarrRest[0]rm",
-      "ResultPath": "$.heap25",
       "Type": "Pass",
     },
     "m = c": Object {
@@ -8141,46 +8124,16 @@ Object {
       "Default": "default__m = c",
       "Type": "Choice",
     },
-    "r 1": Object {
-      "InputPath": "$$.Execution.Input.bb.ab",
-      "Next": "m 1",
-      "ResultPath": "$.heap24",
-      "Type": "Pass",
-    },
-    "return aacc": Object {
-      "InputPath": "$.heap6.arr[0].aa",
-      "Next": "cc 1",
-      "ResultPath": "$.heap7",
-      "Type": "Pass",
-    },
-    "return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV: f": Object {
-      "InputPath": "$$.Execution.Input.a",
-      "Next": "b",
-      "ResultPath": "$.heap17",
-      "Type": "Pass",
-    },
     "returnEmpty__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ]": Object {
       "Next": "forV = \\"\\"",
       "Result": "",
       "ResultPath": "$.heap11.string",
       "Type": "Pass",
     },
-    "s": Object {
-      "InputPath": "$.value.rra[0]",
-      "Next": "u 1",
-      "ResultPath": "$.heap32",
-      "Type": "Pass",
-    },
     "set__end__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] })": Object {
       "InputPath": "$.heap6.result[1:]",
       "Next": "1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] })).join()",
       "ResultPath": "$.heap6",
-      "Type": "Pass",
-    },
-    "t 1": Object {
-      "InputPath": "$.heap4",
-      "Next": "zwvxsuttserRra[0] 1",
-      "ResultPath": "$.heap34",
       "Type": "Pass",
     },
     "t = \\"sir\\"": Object {
@@ -8210,18 +8163,6 @@ Object {
       "InputPath": "$.value.rra[3:]",
       "Next": "t = \\"sir\\"",
       "ResultPath": "$.tserRra",
-      "Type": "Pass",
-    },
-    "u 1": Object {
-      "InputPath": "$.value.rra[2]",
-      "Next": "t 1",
-      "ResultPath": "$.heap33",
-      "Type": "Pass",
-    },
-    "v 1": Object {
-      "InputPath": "$.value.yy.ab",
-      "Next": "x 1",
-      "ResultPath": "$.heap30",
       "Type": "Pass",
     },
     "value": Object {
@@ -8260,18 +8201,6 @@ Object {
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
-    "w": Object {
-      "InputPath": "$.value.yy.value",
-      "Next": "v 1",
-      "ResultPath": "$.heap29",
-      "Type": "Pass",
-    },
-    "x 1": Object {
-      "InputPath": "$.heap3",
-      "Next": "s",
-      "ResultPath": "$.heap31",
-      "Type": "Pass",
-    },
     "x = \\"what\\"": Object {
       "Choices": Array [
         Object {
@@ -8283,16 +8212,10 @@ Object {
       "Default": "default__x = \\"what\\"",
       "Type": "Choice",
     },
-    "zwvxsuttserRra[0]": Object {
-      "InputPath": "$.value.z",
-      "Next": "w",
-      "ResultPath": "$.heap28",
-      "Type": "Pass",
-    },
     "zwvxsuttserRra[0] 1": Object {
-      "Next": "4__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV",
+      "Next": "1__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}{}{}{}{}{}',$.heap28,$.heap29,$.heap30,$.heap31,$.heap32,$.heap33,$.heap34,$.tserRra[0])",
+        "string.$": "States.Format('{}{}{}{}{}{}{}{}',$.value.z,$.value.yy.value,$.value.yy.ab,$.heap3,$.value.rra[0],$.value.rra[2],$.heap4,$.tserRra[0])",
       },
       "ResultPath": "$.heap36",
       "Type": "Pass",
@@ -8343,16 +8266,10 @@ Object {
     "1__return {arr1: arr1, arr2: arr2}": Object {
       "End": true,
       "Parameters": Object {
-        "arr1.$": "$.heap9",
-        "arr2.$": "$.heap10",
+        "arr1.$": "$.heap0",
+        "arr2.$": "$.heap6",
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "1__return {arr1: arr1, arr2: arr2} 1": Object {
-      "InputPath": "$.heap6",
-      "Next": "1__return {arr1: arr1, arr2: arr2}",
-      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "2__return itemKey === hikey": Object {
@@ -8867,15 +8784,9 @@ Object {
       "Default": "false__return x <= index || first === x",
       "Type": "Choice",
     },
-    "return {arr1: arr1, arr2: arr2}": Object {
-      "InputPath": "$.heap0",
-      "Next": "1__return {arr1: arr1, arr2: arr2} 1",
-      "ResultPath": "$.heap9",
-      "Type": "Pass",
-    },
     "set__end__[4, 3, 2, 1].filter(function (x,index,[ first ]))": Object {
       "InputPath": "$.heap6.result[1:]",
-      "Next": "return {arr1: arr1, arr2: arr2}",
+      "Next": "1__return {arr1: arr1, arr2: arr2}",
       "ResultPath": "$.heap6",
       "Type": "Pass",
     },
@@ -9441,10 +9352,10 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__await func({n: i, id: input.id})": Object {
-      "Next": "await func({n: input.arr[j], id: input.id})",
+      "Next": "input.arr[j]",
       "Parameters": Object {
         "id.$": "$.input.id",
-        "n.$": "$.heap11",
+        "n.$": "$.heap26[0].index",
       },
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
@@ -9461,7 +9372,7 @@ Object {
       "Type": "Task",
     },
     "1__await func({n: input.arr[i], id: input.id}) 1 1": Object {
-      "Next": "await func({n: i, id: input.id})",
+      "Next": "1__await func({n: i, id: input.id})",
       "Parameters": Object {
         "id.$": "$.input.id",
         "n.$": "$.heap7.string",
@@ -9586,30 +9497,6 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "await func({n: i, id: input.id})": Object {
-      "InputPath": "$.heap26[0].index",
-      "Next": "1__await func({n: i, id: input.id})",
-      "ResultPath": "$.heap11",
-      "Type": "Pass",
-    },
-    "await func({n: input.arr[i], id: input.id})": Object {
-      "InputPath": "$.heap5[0].item",
-      "Next": "input.arr[i]",
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "await func({n: input.arr[i], id: input.id}) 1": Object {
-      "InputPath": "$.heap26[0].item",
-      "Next": "input.arr[i] 1",
-      "ResultPath": "$.heap6",
-      "Type": "Pass",
-    },
-    "await func({n: input.arr[j], id: input.id})": Object {
-      "InputPath": "$.heap22[0].item",
-      "Next": "input.arr[j]",
-      "ResultPath": "$.heap14",
-      "Type": "Pass",
-    },
     "for(i in input.arr)": Object {
       "InputPath": "$.input.arr",
       "Next": "1__for(i in input.arr)",
@@ -9632,7 +9519,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "await func({n: input.arr[i], id: input.id})",
+          "Next": "input.arr[i]",
           "Variable": "$.heap5[0]",
         },
       ],
@@ -9664,7 +9551,7 @@ Object {
     "input.arr[i]": Object {
       "Next": "1__await func({n: input.arr[i], id: input.id})",
       "Parameters": Object {
-        "string.$": "States.Format('{}',$.heap0)",
+        "string.$": "States.Format('{}',$.heap5[0].item)",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -9672,7 +9559,7 @@ Object {
     "input.arr[i] 1": Object {
       "Next": "1__await func({n: input.arr[i], id: input.id}) 1 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}',$.heap6)",
+        "string.$": "States.Format('{}',$.heap26[0].item)",
       },
       "ResultPath": "$.heap7",
       "Type": "Pass",
@@ -9680,7 +9567,7 @@ Object {
     "input.arr[j]": Object {
       "Next": "1__await func({n: input.arr[j], id: input.id})",
       "Parameters": Object {
-        "string.$": "States.Format('{}',$.heap14)",
+        "string.$": "States.Format('{}',$.heap22[0].item)",
       },
       "ResultPath": "$.heap15",
       "Type": "Pass",
@@ -9693,7 +9580,7 @@ Object {
     },
     "j": Object {
       "InputPath": "$.heap22[0].index",
-      "Next": "await func({n: input.arr[i], id: input.id}) 1",
+      "Next": "input.arr[i] 1",
       "ResultPath": "$.j",
       "Type": "Pass",
     },
@@ -9773,7 +9660,7 @@ Object {
     "ai": Object {
       "Next": "a = ai 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}',$.a,$.heap1)",
+        "string.$": "States.Format('{}{}',$.a,$.heap3[0])",
       },
       "ResultPath": "$.heap2",
       "Type": "Pass",
@@ -9781,7 +9668,7 @@ Object {
     "ai 1": Object {
       "Next": "a = ai 3",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}',$.a,$.heap5)",
+        "string.$": "States.Format('{}{}',$.a,$.heap7[0])",
       },
       "ResultPath": "$.heap6",
       "Type": "Pass",
@@ -9789,7 +9676,7 @@ Object {
     "ai 2": Object {
       "Next": "a = ai 5",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}',$.a,$.heap10)",
+        "string.$": "States.Format('{}{}',$.a,$.heap12[0])",
       },
       "ResultPath": "$.heap11",
       "Type": "Pass",
@@ -9827,7 +9714,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "i 1",
+          "Next": "ai",
           "Variable": "$.heap3[0]",
         },
       ],
@@ -9838,7 +9725,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "i 5",
+          "Next": "ai 2",
           "Variable": "$.heap12[0]",
         },
       ],
@@ -9849,30 +9736,12 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "i 3",
+          "Next": "ai 1",
           "Variable": "$.heap7[0]",
         },
       ],
       "Default": "for(i of await func())",
       "Type": "Choice",
-    },
-    "i 1": Object {
-      "InputPath": "$.heap3[0]",
-      "Next": "ai",
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "i 3": Object {
-      "InputPath": "$.heap7[0]",
-      "Next": "ai 1",
-      "ResultPath": "$.heap5",
-      "Type": "Pass",
-    },
-    "i 5": Object {
-      "InputPath": "$.heap12[0]",
-      "Next": "ai 2",
-      "ResultPath": "$.heap10",
-      "Type": "Pass",
     },
     "return \`madeit\`": Object {
       "End": true,
@@ -10338,7 +10207,7 @@ Object {
               ],
             },
           ],
-          "Next": "return vai",
+          "Next": "vai",
         },
       ],
       "Default": "tail__for(i of [1, 2, 3])",
@@ -10365,7 +10234,7 @@ Object {
               ],
             },
           ],
-          "Next": "return vai 1",
+          "Next": "vai 1",
         },
       ],
       "Default": "tail__for(i of input.arr)",
@@ -10392,7 +10261,7 @@ Object {
               ],
             },
           ],
-          "Next": "return vai 2",
+          "Next": "vai 2",
         },
       ],
       "Default": "tail__for(i of await func()) 1",
@@ -10438,24 +10307,6 @@ Object {
       "InputPath": "$.heap1",
       "Next": "hasNext__return b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")",
       "ResultPath": "$.heap22",
-      "Type": "Pass",
-    },
-    "return vai": Object {
-      "InputPath": "$.heap1.arr[0]",
-      "Next": "vai",
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
-    "return vai 1": Object {
-      "InputPath": "$.heap8.arr[0]",
-      "Next": "vai 1",
-      "ResultPath": "$.heap9",
-      "Type": "Pass",
-    },
-    "return vai 2": Object {
-      "InputPath": "$.heap15.arr[0]",
-      "Next": "vai 2",
-      "ResultPath": "$.heap17",
       "Type": "Pass",
     },
     "returnEmpty__c.join(\\"\\")": Object {
@@ -10533,7 +10384,7 @@ Object {
     "vai": Object {
       "Next": "1__return vai",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}',$.heap2,$.a,$.i)",
+        "string.$": "States.Format('{}{}{}',$.heap1.arr[0],$.a,$.i)",
       },
       "ResultPath": "$.heap5",
       "Type": "Pass",
@@ -10541,7 +10392,7 @@ Object {
     "vai 1": Object {
       "Next": "1__return vai 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}',$.heap9,$.a,$.i__1)",
+        "string.$": "States.Format('{}{}{}',$.heap8.arr[0],$.a,$.i__1)",
       },
       "ResultPath": "$.heap12",
       "Type": "Pass",
@@ -10549,7 +10400,7 @@ Object {
     "vai 2": Object {
       "Next": "1__return vai 2",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}',$.heap17,$.a,$.i__2)",
+        "string.$": "States.Format('{}{}{}',$.heap15.arr[0],$.a,$.i__2)",
       },
       "ResultPath": "$.heap20",
       "Type": "Pass",
@@ -10628,18 +10479,6 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "await func({n: i, id: input.id})": Object {
-      "InputPath": "$.heap5[0]",
-      "Next": "i 1",
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "await func({n: i, id: input.id}) 1": Object {
-      "InputPath": "$.heap22[0]",
-      "Next": "i 3",
-      "ResultPath": "$.heap6",
-      "Type": "Pass",
-    },
     "for(i of input.arr)": Object {
       "InputPath": "$.input.arr",
       "Next": "hasNext__for(i of input.arr)",
@@ -10662,7 +10501,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "await func({n: i, id: input.id})",
+          "Next": "i 1",
           "Variable": "$.heap5[0]",
         },
       ],
@@ -10694,7 +10533,7 @@ Object {
     "i 1": Object {
       "Next": "1__await func({n: i, id: input.id})",
       "Parameters": Object {
-        "string.$": "States.Format('{}',$.heap0)",
+        "string.$": "States.Format('{}',$.heap5[0])",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -10702,7 +10541,7 @@ Object {
     "i 3": Object {
       "Next": "1__await func({n: i, id: input.id}) 1 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}',$.heap6)",
+        "string.$": "States.Format('{}',$.heap22[0])",
       },
       "ResultPath": "$.heap7",
       "Type": "Pass",
@@ -10715,7 +10554,7 @@ Object {
     },
     "j": Object {
       "InputPath": "$.heap16[0]",
-      "Next": "await func({n: i, id: input.id}) 1",
+      "Next": "i 3",
       "ResultPath": "$.j",
       "Type": "Pass",
     },
@@ -10799,7 +10638,7 @@ Object {
     "aax": Object {
       "Next": "a = aax 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}a{}',$.a,$.heap2)",
+        "string.$": "States.Format('{}a{}',$.a,$.heap0.arr[0])",
       },
       "ResultPath": "$.heap3",
       "Type": "Pass",
@@ -10808,7 +10647,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "x 1",
+          "Next": "aax",
           "Variable": "$.heap0.arr[0]",
         },
       ],
@@ -10845,12 +10684,6 @@ Object {
       "InputPath": "$.heap0.arr[1:]",
       "Next": "check__input.arr.forEach(function (x))",
       "ResultPath": "$.heap0.arr",
-      "Type": "Pass",
-    },
-    "x 1": Object {
-      "InputPath": "$.heap0.arr[0]",
-      "Next": "aax",
-      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
   },
@@ -11383,7 +11216,7 @@ Object {
     "aax": Object {
       "Next": "a = aax 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}a{}',$.a,$.heap11)",
+        "string.$": "States.Format('{}a{}',$.a,$.heap9.arr[0])",
       },
       "ResultPath": "$.heap12",
       "Type": "Pass",
@@ -11392,7 +11225,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "return nx",
+          "Next": "nx",
           "Variable": "$.heap1.arr[0]",
         },
       ],
@@ -11403,7 +11236,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "x 3",
+          "Next": "aax",
           "Variable": "$.heap9.arr[0]",
         },
       ],
@@ -11414,7 +11247,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "return nixhead",
+          "Next": "nixhead",
           "Variable": "$.heap4.arr[0]",
         },
       ],
@@ -11470,12 +11303,6 @@ Object {
         "arrStr.$": "States.Format('{},{}', $.heap4.arrStr, States.JsonToString($.heap4.arr[0]))",
       },
       "ResultPath": "$.heap4",
-      "Type": "Pass",
-    },
-    "head 1": Object {
-      "InputPath": "$.input.arr[0]",
-      "Next": "nixhead",
-      "ResultPath": "$.heap7",
       "Type": "Pass",
     },
     "input.arr.map(function (x))": Object {
@@ -11541,7 +11368,7 @@ Object {
     "nixhead": Object {
       "Next": "1__return nixhead",
       "Parameters": Object {
-        "string.$": "States.Format('n{}{}{}',$.heap5,$.heap6,$.heap7)",
+        "string.$": "States.Format('n{}{}{}',$.heap4.arr[0].index,$.heap4.arr[0].item,$.input.arr[0])",
       },
       "ResultPath": "$.heap8",
       "Type": "Pass",
@@ -11549,7 +11376,7 @@ Object {
     "nx": Object {
       "Next": "1__return nx",
       "Parameters": Object {
-        "string.$": "States.Format('n{}',$.heap2)",
+        "string.$": "States.Format('n{}',$.heap1.arr[0])",
       },
       "ResultPath": "$.heap3",
       "Type": "Pass",
@@ -11558,18 +11385,6 @@ Object {
       "InputPath": "$.a",
       "Next": "handleResult__input.arr.map(function (x))",
       "ResultPath": "$.heap9.arr[0]",
-      "Type": "Pass",
-    },
-    "return nixhead": Object {
-      "InputPath": "$.heap4.arr[0].index",
-      "Next": "x 1",
-      "ResultPath": "$.heap5",
-      "Type": "Pass",
-    },
-    "return nx": Object {
-      "InputPath": "$.heap1.arr[0]",
-      "Next": "nx",
-      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "set__end__1__l = await func().map(function (x))": Object {
@@ -11588,18 +11403,6 @@ Object {
       "InputPath": "$.heap4.result[1:]",
       "Next": "l2",
       "ResultPath": "$.heap4",
-      "Type": "Pass",
-    },
-    "x 1": Object {
-      "InputPath": "$.heap4.arr[0].item",
-      "Next": "head 1",
-      "ResultPath": "$.heap6",
-      "Type": "Pass",
-    },
-    "x 3": Object {
-      "InputPath": "$.heap9.arr[0]",
-      "Next": "aax",
-      "ResultPath": "$.heap11",
       "Type": "Pass",
     },
   },
@@ -11652,7 +11455,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "x 1",
+          "Next": "input.prefixx",
           "Variable": "$.heap1.arr[0]",
         },
       ],
@@ -11663,7 +11466,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "x 3",
+          "Next": "input.prefixx 1",
           "Variable": "$.heap5.arr[0]",
         },
       ],
@@ -11707,7 +11510,7 @@ Object {
     "input.prefixx": Object {
       "Next": "1__return input.prefixx",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}',$.input.prefix,$.heap3)",
+        "string.$": "States.Format('{}{}',$.input.prefix,$.heap1.arr[0])",
       },
       "ResultPath": "$.heap4",
       "Type": "Pass",
@@ -11715,7 +11518,7 @@ Object {
     "input.prefixx 1": Object {
       "Next": "1__return input.prefixx 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}',$.input.prefix,$.heap7)",
+        "string.$": "States.Format('{}{}',$.input.prefix,$.heap5.arr[0])",
       },
       "ResultPath": "$.heap8",
       "Type": "Pass",
@@ -11766,18 +11569,6 @@ Object {
       "InputPath": "$.heap5.result[1:]",
       "Next": "l2",
       "ResultPath": "$.heap5",
-      "Type": "Pass",
-    },
-    "x 1": Object {
-      "InputPath": "$.heap1.arr[0]",
-      "Next": "input.prefixx",
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "x 3": Object {
-      "InputPath": "$.heap5.arr[0]",
-      "Next": "input.prefixx 1",
-      "ResultPath": "$.heap7",
       "Type": "Pass",
     },
   },
@@ -11841,7 +11632,7 @@ Object {
     "ax": Object {
       "Next": "a = ax 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}',$.a,$.heap8)",
+        "string.$": "States.Format('{}{}',$.a,$.heap10[0])",
       },
       "ResultPath": "$.heap9",
       "Type": "Pass",
@@ -11849,7 +11640,7 @@ Object {
     "ax 1": Object {
       "Next": "a = ax 3",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}',$.a,$.heap12)",
+        "string.$": "States.Format('{}{}',$.a,$.heap14[0])",
       },
       "ResultPath": "$.heap13",
       "Type": "Pass",
@@ -11858,7 +11649,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "return nx",
+          "Next": "nx",
           "Variable": "$.heap1.arr[0]",
         },
       ],
@@ -11869,7 +11660,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "return nx 1",
+          "Next": "nx 1",
           "Variable": "$.heap4.arr[0]",
         },
       ],
@@ -11926,7 +11717,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "x 3",
+          "Next": "ax",
           "Variable": "$.heap10[0]",
         },
       ],
@@ -11937,7 +11728,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "x 5",
+          "Next": "ax 1",
           "Variable": "$.heap14[0]",
         },
       ],
@@ -11963,7 +11754,7 @@ Object {
     "nx": Object {
       "Next": "1__return nx",
       "Parameters": Object {
-        "string.$": "States.Format('n{}',$.heap2)",
+        "string.$": "States.Format('n{}',$.heap1.arr[0])",
       },
       "ResultPath": "$.heap3",
       "Type": "Pass",
@@ -11971,7 +11762,7 @@ Object {
     "nx 1": Object {
       "Next": "1__return nx 1",
       "Parameters": Object {
-        "string.$": "States.Format('n{}',$.heap5)",
+        "string.$": "States.Format('n{}',$.heap4.arr[0])",
       },
       "ResultPath": "$.heap6",
       "Type": "Pass",
@@ -11980,18 +11771,6 @@ Object {
       "End": true,
       "InputPath": "$.a",
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "return nx": Object {
-      "InputPath": "$.heap1.arr[0]",
-      "Next": "nx",
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
-    "return nx 1": Object {
-      "InputPath": "$.heap4.arr[0]",
-      "Next": "nx 1",
-      "ResultPath": "$.heap5",
       "Type": "Pass",
     },
     "set__end__1__l = await func().map(function (x))": Object {
@@ -12016,18 +11795,6 @@ Object {
       "InputPath": "$.heap14[1:]",
       "Next": "hasNext__for(x of l2)",
       "ResultPath": "$.heap14",
-      "Type": "Pass",
-    },
-    "x 3": Object {
-      "InputPath": "$.heap10[0]",
-      "Next": "ax",
-      "ResultPath": "$.heap8",
-      "Type": "Pass",
-    },
-    "x 5": Object {
-      "InputPath": "$.heap14[0]",
-      "Next": "ax 1",
-      "ResultPath": "$.heap12",
       "Type": "Pass",
     },
   },
@@ -12096,61 +11863,21 @@ Object {
     "1__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x,": Object {
       "End": true,
       "Parameters": Object {
-        "a.$": "$.heap0",
-        "b.$": "$.heap1",
-        "c.$": "$.heap2",
-        "d.$": "$.heap3",
+        "a.$": "$.input.obj.a",
+        "b.$": "$.input.arr[0]",
+        "c": "a",
+        "d": 1,
         "t.$": "$.heap11.string",
-        "u.$": "$.u",
-        "v.$": "$.v",
-        "w.$": "$.heap7",
-        "x.$": "$.heap6",
-        "y.$": "$.heap5",
-        "z.$": "$.heap4",
+        "u": Object {
+          "f": "e",
+        },
+        "v": "d",
+        "w.$": "$.d.c",
+        "x.$": "$.c.c",
+        "y.$": "$.b",
+        "z.$": "$.a",
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "1__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x, 1": Object {
-      "InputPath": "$.input.arr[0]",
-      "Next": "2__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x,",
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "2__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x,": Object {
-      "Next": "3__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x,",
-      "Parameters": "a",
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
-    "3__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x,": Object {
-      "Next": "4__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x,",
-      "Parameters": 1,
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "4__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x,": Object {
-      "InputPath": "$.a",
-      "Next": "5__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x,",
-      "ResultPath": "$.heap4",
-      "Type": "Pass",
-    },
-    "5__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x,": Object {
-      "InputPath": "$.b",
-      "Next": "6__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x,",
-      "ResultPath": "$.heap5",
-      "Type": "Pass",
-    },
-    "6__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x,": Object {
-      "InputPath": "$.c.c",
-      "Next": "7__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x,",
-      "ResultPath": "$.heap6",
-      "Type": "Pass",
-    },
-    "7__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x,": Object {
-      "InputPath": "$.d.c",
-      "Next": "this g.e",
-      "ResultPath": "$.heap7",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -12228,13 +11955,13 @@ Object {
     },
     "d.c = xx": Object {
       "InputPath": "$.xx",
-      "Next": "v = e.d",
+      "Next": "this g.e 1",
       "ResultPath": "$.d.c",
       "Type": "Pass",
     },
     "d.c = yy": Object {
       "InputPath": "$.yy",
-      "Next": "v = e.d",
+      "Next": "this g.e 1",
       "ResultPath": "$.d.c",
       "Type": "Pass",
     },
@@ -12570,38 +12297,12 @@ Object {
       "Default": "d.c = yy",
       "Type": "Choice",
     },
-    "return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x, w:": Object {
-      "InputPath": "$.input.obj.a",
-      "Next": "1__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x, 1",
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "this g.e": Object {
-      "Next": "this g.e 1",
-      "Parameters": "f",
-      "ResultPath": "$.heap10",
-      "Type": "Pass",
-    },
     "this g.e 1": Object {
       "Next": "1__return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x,",
       "Parameters": Object {
-        "string.$": "States.Format('this {}',$.heap10)",
+        "string.$": "States.Format('this {}','f')",
       },
       "ResultPath": "$.heap11",
-      "Type": "Pass",
-    },
-    "u = f.e": Object {
-      "Next": "return {a: obj2.a, b: arr2[0], c: obj[\\"1\\"], d: arr[0], z: z, y: y, x: x, w:",
-      "Parameters": Object {
-        "f": "e",
-      },
-      "ResultPath": "$.u",
-      "Type": "Pass",
-    },
-    "v = e.d": Object {
-      "Next": "u = f.e",
-      "Parameters": "d",
-      "ResultPath": "$.v",
       "Type": "Pass",
     },
     "xx = {c: \\"1\\"}": Object {
@@ -12632,19 +12333,13 @@ Object {
       "End": true,
       "Parameters": Object {
         "a.$": "$.input.a",
-        "b.$": "$.heap1",
+        "b": "2",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "1__return {a: input.a, b: a} 1": Object {
-      "Next": "1__return {a: input.a, b: a}",
-      "Parameters": "2",
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
     "Initialize Functionless Context": Object {
-      "Next": "1__return {a: input.a, b: a} 1",
+      "Next": "1__return {a: input.a, b: a}",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -12689,7 +12384,7 @@ Object {
           },
         },
       },
-      "Next": "res = -rabcdef",
+      "Next": "-rabcdef",
       "Parameters": Object {
         "a__1.$": "$.a__1",
         "b__1.$": "$.b__1",
@@ -12707,7 +12402,7 @@ Object {
     "-rabcdef": Object {
       "Next": "res = -rabcdef 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}-{}{}{}{}{}{}',$.heap11,$.a__1,$.b__1,$.c__1,$.d__1,$.e__1,$.f)",
+        "string.$": "States.Format('{}-{}{}{}{}{}{}',$.heap10[0],$.a__1,$.b__1,$.c__1,$.d__1,$.e__1,$.f)",
       },
       "ResultPath": "$.heap18",
       "Type": "Pass",
@@ -12715,7 +12410,7 @@ Object {
     "-resabcde-fz": Object {
       "Next": "1__return -resabcde-fz",
       "Parameters": Object {
-        "string.$": "States.Format('{}-{}{}{}{}{}{}-{}',$.res,$.heap56,$.b,$.c,$.d,$.e,$.f,$.heap62)",
+        "string.$": "States.Format('{}-{}{}{}{}{}{}-{}',$.res,1,$.b,$.c,$.d,$.e,$.f,$.heap54[0])",
       },
       "ResultPath": "$.heap63",
       "Type": "Pass",
@@ -12841,12 +12536,6 @@ Object {
       "InputPath": "$.heap52[0].index",
       "Next": "for(b of [3])",
       "ResultPath": "$.a__1",
-      "Type": "Pass",
-    },
-    "a 6": Object {
-      "Next": "z 2",
-      "Parameters": 1,
-      "ResultPath": "$.heap56",
       "Type": "Pass",
     },
     "b 1": Object {
@@ -13044,12 +12733,6 @@ Object {
       "ResultPath": "$.res",
       "Type": "Pass",
     },
-    "res = -rabcdef": Object {
-      "InputPath": "$.heap10[0]",
-      "Next": "-rabcdef",
-      "ResultPath": "$.heap11",
-      "Type": "Pass",
-    },
     "res = -rabcdef 1": Object {
       "InputPath": "$.heap18.string",
       "Next": "e = 7",
@@ -13100,7 +12783,7 @@ Object {
     },
     "set__end__1__z = [0].map(function (z))[0]": Object {
       "InputPath": "$.heap54.result[1:]",
-      "Next": "a 6",
+      "Next": "-resabcde-fz",
       "ResultPath": "$.heap54",
       "Type": "Pass",
     },
@@ -13120,12 +12803,6 @@ Object {
       "InputPath": "$.heap54.arr[0]",
       "Next": "return z",
       "ResultPath": "$.z",
-      "Type": "Pass",
-    },
-    "z 2": Object {
-      "InputPath": "$.heap54[0]",
-      "Next": "-resabcde-fz",
-      "ResultPath": "$.heap62",
       "Type": "Pass",
     },
   },
@@ -13163,20 +12840,14 @@ Object {
     " input.obj.str \\"hello\\" partOfTheTemplateStringinput.obj.items[0]": Object {
       "Next": "1__result = await func( input.obj.str \\"hello\\" partOfTheTemplateStringinput.",
       "Parameters": Object {
-        "string.$": "States.Format('{} hello {} {}',$.input.obj.str,$.heap4,$.input.obj.items[0])",
+        "string.$": "States.Format('{} hello {} {}',$.input.obj.str,$.heap2.string,$.input.obj.items[0])",
       },
       "ResultPath": "$.heap6",
       "Type": "Pass",
     },
-    " partOfTheTemplateString": Object {
-      "InputPath": "$.heap2.string",
-      "Next": " input.obj.str \\"hello\\" partOfTheTemplateStringinput.obj.items[0]",
-      "ResultPath": "$.heap4",
-      "Type": "Pass",
-    },
     "1__result = await func( input.obj.str \\"hello\\" partOfTheTemplateStringinput.": Object {
       "InputPath": "$.heap6.string",
-      "Next": "return the result:  result.strinput.obj.str === \\"hullo\\"",
+      "Next": "input.obj.str === \\"hullo\\"",
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap7",
       "Type": "Task",
@@ -13211,7 +12882,7 @@ Object {
       "Type": "Pass",
     },
     "hello input.obj.str2 ?? \\"default\\"": Object {
-      "Next": " partOfTheTemplateString",
+      "Next": " input.obj.str \\"hello\\" partOfTheTemplateStringinput.obj.items[0]",
       "Parameters": Object {
         "string.$": "States.Format('hello {}',$.heap0)",
       },
@@ -13264,16 +12935,10 @@ Object {
       "Default": "false__partOfTheTemplateString = hello input.obj.str2 ?? \\"default\\"",
       "Type": "Choice",
     },
-    "return the result:  result.strinput.obj.str === \\"hullo\\"": Object {
-      "InputPath": "$.heap7.str",
-      "Next": "input.obj.str === \\"hullo\\"",
-      "ResultPath": "$.heap8",
-      "Type": "Pass",
-    },
     "the result:  result.strinput.obj.str === \\"hullo\\"": Object {
       "Next": "1__return the result:  result.strinput.obj.str === \\"hullo\\"",
       "Parameters": Object {
-        "string.$": "States.Format('the result: {} {}',$.heap8,$.heap9)",
+        "string.$": "States.Format('the result: {} {}',$.heap7.str,$.heap9)",
       },
       "ResultPath": "$.heap10",
       "Type": "Pass",
@@ -13305,7 +12970,7 @@ Object {
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return x",
+      "Next": "x",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -13315,16 +12980,10 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return x": Object {
-      "InputPath": "$.input.str",
-      "Next": "x",
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
     "x": Object {
       "Next": "1__return x",
       "Parameters": Object {
-        "string.$": "States.Format('{}',$.heap0)",
+        "string.$": "States.Format('{}',$.input.str)",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -14263,37 +13922,37 @@ Object {
     },
     "1__catch__try 10": Object {
       "InputPath": "$.fnl_tmp_11.0_ParsedError",
-      "Next": "err.errorMessage 4",
+      "Next": "sfnmapaerr.errorMessage",
       "ResultPath": "$.fnl_tmp_11",
       "Type": "Pass",
     },
     "1__catch__try 11": Object {
       "InputPath": "$.fnl_tmp_12.0_ParsedError",
-      "Next": "err.errorMessage 5",
+      "Next": "arrmapaerr.errorMessage",
       "ResultPath": "$.fnl_tmp_12",
       "Type": "Pass",
     },
     "1__catch__try 5": Object {
       "InputPath": "$.fnl_tmp_4.0_ParsedError",
-      "Next": "err.errorMessage",
+      "Next": "aerr.errorMessage",
       "ResultPath": "$.fnl_tmp_4",
       "Type": "Pass",
     },
     "1__catch__try 6": Object {
       "InputPath": "$.fnl_tmp_5.0_ParsedError",
-      "Next": "err.errorMessage 1",
+      "Next": "foraerr.errorMessage",
       "ResultPath": "$.fnl_tmp_5",
       "Type": "Pass",
     },
     "1__catch__try 8": Object {
       "InputPath": "$.fnl_tmp_9.0_ParsedError",
-      "Next": "err.errorMessage 2",
+      "Next": "whileaerr.errorMessage",
       "ResultPath": "$.fnl_tmp_9",
       "Type": "Pass",
     },
     "1__catch__try 9": Object {
       "InputPath": "$.fnl_tmp_10.0_ParsedError",
-      "Next": "err.errorMessage 3",
+      "Next": "doaerr.errorMessage",
       "ResultPath": "$.fnl_tmp_10",
       "Type": "Pass",
     },
@@ -14301,7 +13960,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "catch__try 7",
+          "Next": "recatchaerr.message",
           "Variable": "$.fnl_tmp_8",
         },
         Object {
@@ -14397,7 +14056,7 @@ Object {
     },
     "a = error1a": Object {
       "InputPath": "$.heap1.string",
-      "Next": "catch__try 1",
+      "Next": "aerr.message",
       "ResultPath": "$.a",
       "Type": "Pass",
     },
@@ -14464,7 +14123,7 @@ Object {
     "aerr.errorMessage": Object {
       "Next": "a = aerr.errorMessage 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}',$.a,$.heap18)",
+        "string.$": "States.Format('{}{}',$.a,$.fnl_tmp_4.errorMessage)",
       },
       "ResultPath": "$.heap19",
       "Type": "Pass",
@@ -14472,7 +14131,7 @@ Object {
     "aerr.message": Object {
       "Next": "a = aerr.message 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}',$.a,$.err.message)",
+        "string.$": "States.Format('{}{}',$.a,'Error2')",
       },
       "ResultPath": "$.heap4",
       "Type": "Pass",
@@ -14480,7 +14139,7 @@ Object {
     "arrmapaerr.errorMessage": Object {
       "Next": "a = arrmapaerr.errorMessage 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}arrmap{}',$.a,$.heap48)",
+        "string.$": "States.Format('{}arrmap{}',$.a,$.fnl_tmp_12.errorMessage)",
       },
       "ResultPath": "$.heap49",
       "Type": "Pass",
@@ -14533,14 +14192,6 @@ Object {
       "ResultPath": null,
       "Type": "Task",
     },
-    "catch__try 1": Object {
-      "Next": "aerr.message",
-      "Parameters": Object {
-        "message": "Error2",
-      },
-      "ResultPath": "$.err",
-      "Type": "Pass",
-    },
     "catch__try 10": Object {
       "Next": "1__catch__try 10",
       "Parameters": Object {
@@ -14571,12 +14222,6 @@ Object {
         "0_ParsedError.$": "States.StringToJson($.fnl_tmp_5.Cause)",
       },
       "ResultPath": "$.fnl_tmp_5",
-      "Type": "Pass",
-    },
-    "catch__try 7": Object {
-      "InputPath": "$.fnl_tmp_8",
-      "Next": "recatchaerr.message",
-      "ResultPath": "$.err__3",
       "Type": "Pass",
     },
     "catch__try 7 1": Object {
@@ -14617,7 +14262,7 @@ Object {
     "doaerr.errorMessage": Object {
       "Next": "a = doaerr.errorMessage 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}do{}',$.a,$.heap36)",
+        "string.$": "States.Format('{}do{}',$.a,$.fnl_tmp_10.errorMessage)",
       },
       "ResultPath": "$.heap37",
       "Type": "Pass",
@@ -14628,42 +14273,6 @@ Object {
         "result.$": "States.StringToJson(States.Format('{}]', $.heap45.arrStr))",
       },
       "ResultPath": "$.heap45",
-      "Type": "Pass",
-    },
-    "err.errorMessage": Object {
-      "InputPath": "$.fnl_tmp_4.errorMessage",
-      "Next": "aerr.errorMessage",
-      "ResultPath": "$.heap18",
-      "Type": "Pass",
-    },
-    "err.errorMessage 1": Object {
-      "InputPath": "$.fnl_tmp_5.errorMessage",
-      "Next": "foraerr.errorMessage",
-      "ResultPath": "$.heap23",
-      "Type": "Pass",
-    },
-    "err.errorMessage 2": Object {
-      "InputPath": "$.fnl_tmp_9.errorMessage",
-      "Next": "whileaerr.errorMessage",
-      "ResultPath": "$.heap32",
-      "Type": "Pass",
-    },
-    "err.errorMessage 3": Object {
-      "InputPath": "$.fnl_tmp_10.errorMessage",
-      "Next": "doaerr.errorMessage",
-      "ResultPath": "$.heap36",
-      "Type": "Pass",
-    },
-    "err.errorMessage 4": Object {
-      "InputPath": "$.fnl_tmp_11.errorMessage",
-      "Next": "sfnmapaerr.errorMessage",
-      "ResultPath": "$.heap42",
-      "Type": "Pass",
-    },
-    "err.errorMessage 5": Object {
-      "InputPath": "$.fnl_tmp_12.errorMessage",
-      "Next": "arrmapaerr.errorMessage",
-      "ResultPath": "$.heap48",
       "Type": "Pass",
     },
     "error1a": Object {
@@ -14717,7 +14326,7 @@ Object {
     "foraerr.errorMessage": Object {
       "Next": "a = foraerr.errorMessage 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}for{}',$.a,$.heap23)",
+        "string.$": "States.Format('{}for{}',$.a,$.fnl_tmp_5.errorMessage)",
       },
       "ResultPath": "$.heap24",
       "Type": "Pass",
@@ -14745,7 +14354,7 @@ Object {
     "recatchaerr.message": Object {
       "Next": "a = recatchaerr.message 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}recatch{}',$.a,$.err__3.message)",
+        "string.$": "States.Format('{}recatch{}',$.a,$.fnl_tmp_8.message)",
       },
       "ResultPath": "$.heap29",
       "Type": "Pass",
@@ -14789,7 +14398,7 @@ Object {
     "sfnmapaerr.errorMessage": Object {
       "Next": "a = sfnmapaerr.errorMessage 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}sfnmap{}',$.a,$.heap42)",
+        "string.$": "States.Format('{}sfnmap{}',$.a,$.fnl_tmp_11.errorMessage)",
       },
       "ResultPath": "$.heap43",
       "Type": "Pass",
@@ -14902,7 +14511,7 @@ Object {
     "whileaerr.errorMessage": Object {
       "Next": "a = whileaerr.errorMessage 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}while{}',$.a,$.heap32)",
+        "string.$": "States.Format('{}while{}',$.a,$.fnl_tmp_9.errorMessage)",
       },
       "ResultPath": "$.heap33",
       "Type": "Pass",
