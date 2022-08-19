@@ -4,13 +4,7 @@ import * as AWS from "aws-sdk";
 import { ASLGraph } from "../asl";
 import { ErrorCodes, SynthError } from "../error-code";
 import { Expr, Argument } from "../expression";
-import {
-  isArgument,
-  isObjectLiteralExpr,
-  isStringLiteralExpr,
-  isArrayLiteralExpr,
-  isPropAssignExpr,
-} from "../guards";
+import { isArgument } from "../guards";
 import { makeIntegration } from "../integration";
 import { evalToConstant } from "../util";
 import { SDK_INTEGRATION_SERVICE_NAME } from "./asl";
@@ -189,15 +183,23 @@ function validateSdkCallOptions(
     );
   }
 
-  if (!isObjectLiteralExpr(inputExpr)) {
+  const options = evalToConstant(inputExpr)?.constant as SdkCallOptions;
+
+  if (!options || typeof options !== "object") {
     throw new SynthError(
       ErrorCodes.Expected_an_object_literal,
-      `Argument ('input') into a SDK call should be an object, found ${inputExpr.kindName}`
+      `Argument ('options') into a SDK call should be an object literal, found ${inputExpr.kindName}`
     );
   }
 
-  const iam = inputExpr.getProperty("iam");
-  const aslServiceName = inputExpr.getProperty("aslServiceName");
+  const { iam, aslServiceName } = options;
+
+  if (aslServiceName && !(typeof aslServiceName === "string")) {
+    throw new SynthError(
+      ErrorCodes.Invalid_Input,
+      `Option 'aslServiceName' of a SDK call should be a string literal, found ${aslServiceName}`
+    );
+  }
 
   if (!iam) {
     throw new SynthError(
@@ -206,18 +208,9 @@ function validateSdkCallOptions(
     );
   }
 
-  if (!isPropAssignExpr(iam) || !isObjectLiteralExpr(iam.expr)) {
-    throw new SynthError(
-      ErrorCodes.Invalid_Input,
-      `Option 'iam' of a SDK call should be an object literal, found ${iam.kindName}`
-    );
-  }
+  const { resources, actions, conditions } = iam;
 
-  const iamResources = iam.expr.getProperty("resources");
-  const iamActions = iam.expr.getProperty("actions");
-  const iamConditions = iam.expr.getProperty("conditions");
-
-  if (!iamResources) {
+  if (!resources) {
     throw new SynthError(
       ErrorCodes.Invalid_Input,
       `Option 'iam.resources' of a SDK call is required`
@@ -225,56 +218,31 @@ function validateSdkCallOptions(
   }
 
   if (
-    !isPropAssignExpr(iamResources) ||
-    !isArrayLiteralExpr(iamResources.expr)
+    !Array.isArray(resources) ||
+    resources.some((r) => typeof r !== "string")
   ) {
     throw new SynthError(
       ErrorCodes.Invalid_Input,
-      `Option 'iam.resources' of a SDK call should be an array literal, found ${iamResources.kindName}`
+      `Option 'iam.resources' of a SDK call should be an array of strings, found ${resources}`
     );
   }
 
   if (
-    iamActions &&
-    (!isPropAssignExpr(iamActions) || !isArrayLiteralExpr(iamActions.expr))
+    actions &&
+    (!Array.isArray(actions) || actions.some((r) => typeof r !== "string"))
   ) {
     throw new SynthError(
       ErrorCodes.Invalid_Input,
-      `Option 'iam.actions' of a SDK call should be an array literal, found ${iamActions.kindName}`
+      `Option 'iam.actions' of a SDK call should be an array of strings, found ${actions}`
     );
   }
 
-  if (
-    aslServiceName &&
-    (!isPropAssignExpr(aslServiceName) ||
-      !isStringLiteralExpr(aslServiceName.expr))
-  ) {
+  if (conditions && !(typeof conditions === "object")) {
     throw new SynthError(
       ErrorCodes.Invalid_Input,
-      `Option 'aslServiceName' of a SDK call should be a string literal, found ${aslServiceName.kindName}`
+      `Option 'iam.conditions' of a SDK call should be an object, found ${conditions}`
     );
   }
 
-  if (
-    iamConditions &&
-    (!isPropAssignExpr(iamConditions) ||
-      // TODO: I don't think this is correct as the iamConditions most likely can be a variable as well, maybe a evalConstant here?
-      !isObjectLiteralExpr(iamConditions.expr))
-  ) {
-    throw new SynthError(
-      ErrorCodes.Expected_an_object_literal,
-      `Option 'iam.conditions' of a SDK call should be an object literal, found ${iamConditions.kindName}`
-    );
-  }
-
-  return {
-    iam: {
-      resources: evalToConstant(iamResources.expr)?.constant as any,
-      actions: iamActions && (evalToConstant(iamActions.expr)?.constant as any),
-      conditions:
-        iamConditions && (evalToConstant(iamConditions.expr)?.constant as any),
-    },
-    aslServiceName:
-      aslServiceName && (evalToConstant(aslServiceName.expr)?.constant as any),
-  };
+  return options;
 }
