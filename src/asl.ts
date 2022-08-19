@@ -5399,7 +5399,7 @@ namespace ASLOptimizer {
   }
 
   /**
-   * A parameter is the input to an opaque state.
+   * A input path is the input to an opaque state.
    *
    * For example, an input to a Task which invokes a lambda function.
    */
@@ -5407,6 +5407,18 @@ namespace ASLOptimizer {
     type: "StateInput";
     stateType: "Map" | "Task";
     from: string;
+  }
+
+  /**
+   * A input path is the input to an opaque state.
+   *
+   * For example, an input to a Task which invokes a lambda function.
+   */
+  interface StateInputProps {
+    type: "StateInputProps";
+    stateType: "Map" | "Task";
+    from: string;
+    props: string[];
   }
 
   /**
@@ -5444,6 +5456,7 @@ namespace ASLOptimizer {
     | VariableFilterPropAssignment
     | StateOutput
     | StateInput
+    | StateInputProps
     | ReturnUsage;
 
   type StateVariableUsage = VariableUsage & {
@@ -5463,6 +5476,7 @@ namespace ASLOptimizer {
       : // condition and state input cases do not create or update variables.
       usage.type === "Condition" ||
         usage.type === "StateInput" ||
+        usage.type === "StateInputProps" ||
         usage.type === "ReturnUsage"
       ? false
       : assertNever(usage);
@@ -5472,6 +5486,7 @@ namespace ASLOptimizer {
     return usage.type === "Assignment" ||
       usage.type === "Intrinsic" ||
       usage.type === "StateInput" ||
+      usage.type === "StateInputProps" ||
       usage.type === "Condition" ||
       usage.type === "PropAssignment" ||
       usage.type === "Filter" ||
@@ -5718,13 +5733,14 @@ namespace ASLOptimizer {
     function parametersAssignment(
       parameters: Parameters,
       containsJsonPath: boolean,
-      resultPath: string,
+      resultPath: string | "[[task]]" | "[[map]]",
       _props?: string[]
     ): (
       | PropertyAssignment
       | VariableLiteralPropAssignment
       | VariableIntrinsicUsage
       | VariableFilterPropAssignment
+      | StateInputProps
     )[] {
       const props: string[] = _props ?? [];
       if (!parameters) {
@@ -5779,12 +5795,19 @@ namespace ASLOptimizer {
       }
       // if the value is json path, it will not be a boolean or string
       return [
-        {
-          type: "PropAssignment",
-          from: parameters as string,
-          to: resultPath,
-          props,
-        },
+        resultPath === "[[task]]" || resultPath === "[[map]]"
+          ? {
+              type: "StateInputProps",
+              from: parameters as string,
+              props,
+              stateType: resultPath === "[[task]]" ? "Task" : "Map",
+            }
+          : {
+              type: "PropAssignment",
+              from: parameters as string,
+              to: resultPath,
+              props,
+            },
       ];
     }
 
@@ -5863,11 +5886,29 @@ namespace ASLOptimizer {
           };
         })[] = sourceStats.assigns as any;
 
-        const targetUsage = sourceStats.usage[0];
-        if (!targetUsage || sourceStats.usage.length > 1) {
+        /**
+         * For now, all optimization only support a single assignment of the target variable.
+         *
+         * The source assignment is the location at which the current variable is assigned a value.
+         */
+        const [sourceAssign] = sourceAssigns;
+        if (sourceAssigns.length !== 1 || !sourceAssign) {
+          return;
+        }
+
+        /**
+         * For now, all optimizations only support a single usage of the current variable.
+         *
+         * The target usage is the point at which the current variable is assigned to another variable.
+         */
+        const [targetUsage] = sourceStats.usage;
+        if (sourceStats.usage.length !== 1 || !targetUsage) {
           // only update variables with a single assignment
           return;
         }
+
+        // The state at the {@link targetUsage} which we will try to update.
+        const state = updatedStates[targetUsage.usage.state]!;
 
         /**
          * When the target variable is being assigned to from the source (literal, filter, or reference)
@@ -5882,35 +5923,23 @@ namespace ASLOptimizer {
             return;
           }
 
-          if (sourceAssigns.length !== 1 || !sourceAssigns[0]) {
-            // if the source variable is assigned to multiple times (for example, a ternary), do not re-write this usage for now.
-            // let a = ""'
-            // if(x) {
-            //    a = "b";
-            // }
-            return;
-          }
-          const sourceAssign = sourceAssigns[0];
-
-          // the source state is, do not remove the target (maybe).
-          const state = updatedStates[targetUsage.usage.state]!;
           if (!isPassState(state)) {
             throw new Error("Expected state with assignment to be a Pass");
           }
+
           if (sourceAssign.usage.type === "LiteralAssignment") {
             const value = accessLiteralAtJsonPathSuffix(
               targetUsage.usage.from,
               sourceAssign.usage.to,
               sourceAssign.usage.value
             );
+
             // Update the target's stats to contain the new assign and remove the old one.
-            statsMap = replaceAssignment(targetVariable, targetUsage, {
+            statsMap = updateVariableUsage(targetUsage, {
               ...targetUsage.usage,
               type: "LiteralAssignment",
               value,
             });
-            // Update the source to remove the assignment.
-            statsMap = removeUsage(sourceVariable, targetUsage);
 
             // update the state's parameter to contain the constant value.
             updatedStates[targetUsage.usage.state] = {
@@ -5919,17 +5948,17 @@ namespace ASLOptimizer {
               InputPath: undefined,
               Parameters: value,
             };
-          } else if (sourceAssign.usage.type === "Assignment") {
-            // if the "from" variable we intend to update the prop assignment with will be
-            // assigned to after the source assignment, skip.
-            const from = sourceAssign.usage.from;
-            const fromStats = statsMap[from];
+          } else {
+            /**
+             * if the "from" variable we intend to update the prop assignment with will be
+             *  assigned to after the source assignment and before the target assignment, skip.
+             */
             if (
-              fromStats?.assigns.some(
-                (a) =>
-                  a.index > sourceAssign.index && a.index < targetUsage.index
-              ) ??
-              false
+              isMutatedInRange(
+                sourceAssign.usage.from,
+                sourceAssign.index,
+                targetUsage.index
+              )
             ) {
               return;
             }
@@ -5943,12 +5972,10 @@ namespace ASLOptimizer {
             /**
              * Update the target's stats to contain the new assign and remove the old one.
              */
-            statsMap = replaceAssignment(targetVariable, targetUsage, {
+            statsMap = updateVariableUsage(targetUsage, {
               ...targetUsage.usage,
-              type: "Assignment",
               from: updatedFrom,
             });
-            statsMap = removeUsage(sourceVariable, targetUsage);
 
             // update the state's parameter to contain the constant value.
             updatedStates[targetUsage.usage.state] = {
@@ -5970,19 +5997,6 @@ namespace ASLOptimizer {
         }
         // when the target is a property being assigned to from the source (literal, filter, or reference)
         else if (targetUsage.usage.type === "PropAssignment") {
-          // when updating a prop assignment, we can try to move the input to the original
-          // assignment to the property assignment.
-          const targetVariable = targetUsage.usage.to;
-
-          const sourceAssign = sourceAssigns[0];
-          if (sourceAssigns.length !== 1 || !sourceAssign) {
-            // if the input variable is assigned to multiple times (for example, a ternary), do not re-write this usage.
-            // return {
-            //    a: x ? b : c,
-            // }
-            // however, the actual cases are based on the implementation of the interpreter.
-            return;
-          }
           /**
            * Handling a case where a property is being assigned a value from a constant or a reference.
            * const c = "a";
@@ -6005,20 +6019,18 @@ namespace ASLOptimizer {
            *
            * TODO: support filter assignment.
            */
-          // the source state is, do not remove the target (maybe).
-          const state = updatedStates[targetUsage.usage.state] as
-            | Pass
-            | Task
-            | MapTask
-            | ParallelTask;
           if (
+            !(
+              isPassState(state) ||
+              isParallelTaskState(state) ||
+              isMapTaskState(state) ||
+              isTaskState(state)
+            ) ||
             !state.Parameters ||
             typeof state.Parameters !== "object" ||
             Array.isArray(state.Parameters)
           ) {
-            throw new Error(
-              "Expected state with prop assignment to have parameters"
-            );
+            return;
           }
 
           if (sourceAssign.usage.type === "LiteralAssignment") {
@@ -6028,12 +6040,11 @@ namespace ASLOptimizer {
               sourceAssign.usage.value
             );
 
-            statsMap = replaceAssignment(targetVariable, targetUsage, {
+            statsMap = updateVariableUsage(targetUsage, {
               ...targetUsage.usage,
               type: "LiteralPropAssignment",
               value,
             });
-            statsMap = removeUsage(sourceVariable, targetUsage);
 
             // update the state's parameter to contain the constant value.
             updatedStates[targetUsage.usage.state] = {
@@ -6046,23 +6057,16 @@ namespace ASLOptimizer {
               ),
             };
           } else {
-            // if the "from" variable we intend to update the prop assignment with will be
-            // assigned to after the source assignment, skip.
             /**
-             * a = "a"
-             * source = a
-             * a = "b" // not ok, skip
-             * target = a
-             * a = "c" // ok assignment
+             * if the "from" variable we intend to update the prop assignment with will be
+             * assigned to after the source assignment and before the target assignment, skip.
              */
-            const from = sourceAssign.usage.from;
-            const fromStats = statsMap[from];
             if (
-              fromStats?.assigns.some(
-                (a) =>
-                  a.index > sourceAssign.index && a.index < targetUsage.index
-              ) ??
-              false
+              isMutatedInRange(
+                sourceAssign.usage.from,
+                sourceAssign.index,
+                targetUsage.index
+              )
             ) {
               return;
             }
@@ -6081,12 +6085,10 @@ namespace ASLOptimizer {
               sourceAssign.usage.from
             );
 
-            statsMap = replaceAssignment(targetVariable, targetUsage, {
+            statsMap = updateVariableUsage(targetUsage, {
               ...targetUsage.usage,
-              type: "PropAssignment",
               from: updatedFrom,
             });
-            statsMap = removeUsage(sourceVariable, targetUsage);
 
             // update the state's parameter to contain the constant value.
             updatedStates[targetUsage.usage.state] = {
@@ -6101,40 +6103,6 @@ namespace ASLOptimizer {
           }
           return;
         } else if (targetUsage.usage.type === "Intrinsic") {
-          // when updating a intrinsic assignment, we can try to move the input to the original
-          // assignment to the intrinsic assignment.
-          const targetVariable = targetUsage.usage.to;
-          const sourceAssign = sourceAssigns[0];
-          if (sourceAssigns.length !== 1 || !sourceAssign) {
-            // if the input variable is assigned to multiple times (for example, a ternary), do not re-write this usage.
-            // return {
-            //    a: x ? b : c,
-            // }
-            // however, the actual cases are based on the implementation of the interpreter.
-            return;
-          }
-          /**
-           * Handling a case where a property is being assigned a value from a constant or a reference.
-           * const c = "a";
-           * return {
-           *    b: c
-           * }
-           * =>
-           * return {
-           *    b: "a"
-           * }
-           *
-           * const c = a;
-           * return {
-           *    b: c
-           * }
-           * =>
-           * return {
-           *    b: a
-           * }
-           *
-           * TODO: support filter assignment.
-           */
           // the source state is, do not remove the target (maybe).
           const state = updatedStates[targetUsage.usage.state] as
             | Pass
@@ -6142,36 +6110,17 @@ namespace ASLOptimizer {
             | MapTask
             | ParallelTask;
           if (
+            !(
+              isPassState(state) ||
+              isParallelTaskState(state) ||
+              isMapTaskState(state) ||
+              isTaskState(state)
+            ) ||
             !state.Parameters ||
             typeof state.Parameters !== "object" ||
             Array.isArray(state.Parameters)
           ) {
-            throw new Error(
-              "Expected state with prop assignment to have parameters"
-            );
-          }
-
-          // if the "from" variable we intend to update the prop assignment with will be
-          // assigned to after the source assignment and before the target assignment, skip.
-          /**
-           * a = "a"
-           * source = a
-           * a = "b" // not ok, skip
-           * target = a
-           * a = "c" // ok assignment
-           */
-          if (sourceAssign.usage.type === "Assignment") {
-            const from = sourceAssign.usage.from;
-            const fromStats = statsMap[from];
-            if (
-              fromStats?.assigns.some(
-                (a) =>
-                  a.index > sourceAssign.index && a.index < targetUsage.index
-              ) ??
-              false
-            ) {
-              return;
-            }
+            return;
           }
 
           /**
@@ -6184,8 +6133,8 @@ namespace ASLOptimizer {
               sourceAssign.usage.value
             );
             // literals are inlined into the intrinsic function, remove the assignment
-            statsMap = removeAssignment(targetVariable, targetUsage);
-            statsMap = removeUsage(sourceVariable, targetUsage);
+            statsMap = updateVariableUsage(targetUsage);
+
             updatedStates[targetUsage.usage.state] = {
               ...state,
               Parameters: updateParameters(
@@ -6213,6 +6162,20 @@ namespace ASLOptimizer {
               ),
             };
           } else {
+            /**
+             * if the "from" variable we intend to update the prop assignment with will be
+             *  assigned to after the source assignment and before the target assignment, skip.
+             */
+            if (
+              isMutatedInRange(
+                sourceAssign.usage.from,
+                sourceAssign.index,
+                targetUsage.index
+              )
+            ) {
+              return;
+            }
+
             const updatedFrom = replaceJsonPathPrefix(
               (<VariableIntrinsicUsage>targetUsage.usage).from,
               sourceAssign.usage.to,
@@ -6220,13 +6183,13 @@ namespace ASLOptimizer {
             )
               .split("$")
               .join("$$");
-            statsMap = replaceAssignment(targetVariable, targetUsage, {
+
+            statsMap = updateVariableUsage(targetUsage, {
               ...targetUsage.usage,
-              type: "Intrinsic" as const,
               // update the from
-              from: sourceAssign.usage.from,
+              from: updatedFrom,
             });
-            statsMap = removeUsage(sourceVariable, targetUsage);
+
             // update the state's parameter to contain the constant value.
             updatedStates[targetUsage.usage.state] = {
               ...state,
@@ -6257,78 +6220,76 @@ namespace ASLOptimizer {
           }
           return;
         } else if (targetUsage.usage.type === "StateInput") {
-          const state = updatedStates[targetUsage.usage.state] as
-            | Task
-            | MapTask;
-
-          const sourceAssign = sourceAssigns[0];
-          if (sourceAssigns.length !== 1 || !sourceAssign) {
-            // if the input variable is assigned to multiple times (for example, a ternary), do not re-write this usage.
-            // return {
-            //    a: x ? b : c,
-            // }
-            // however, the actual cases are based on the implementation of the interpreter.
+          if (!(isMapTaskState(state) || isTaskState(state))) {
             return;
           }
 
-          // if the "from" variable we intend to update the prop assignment with will be
-          // assigned to after the source assignment and before the target assignment, skip.
-          /**
-           * a = "a"
-           * source = a
-           * a = "b" // not ok, skip
-           * target = a
-           * a = "c" // ok assignment
-           */
-          if (sourceAssign.usage.type === "Assignment") {
-            const from = sourceAssign.usage.from;
-            const fromStats = statsMap[from];
-            if (
-              fromStats?.assigns.some(
-                (a) =>
-                  a.index > sourceAssign.index && a.index < targetUsage.index
-              ) ??
-              false
-            ) {
-              return;
-            }
-          }
+          if (sourceAssign.usage.type === "LiteralAssignment") {
+            const value = accessLiteralAtJsonPathSuffix(
+              targetUsage.usage.from,
+              sourceAssign.usage.to,
+              sourceAssign.usage.value
+            );
 
-          if (state.Type === "Map") {
-            // map items cannot be a literal value
-            if (sourceAssign.usage.type === "LiteralAssignment") {
+            // map items cannot be a literal
+            if (state.Type === "Map") {
               return;
             }
 
             updatedStates[targetUsage.usage.state] = {
               ...state,
-              ItemsPath: sourceAssign.usage.from,
+              InputPath: undefined,
+              Parameters: value,
             };
-          } else if (state.Type === "Task") {
-            // update the state's parameter to contain the constant value.
-            updatedStates[targetUsage.usage.state] =
-              sourceAssign.usage.type === "LiteralAssignment"
-                ? {
-                    ...state,
-                    InputPath: undefined,
-                    Parameters: sourceAssign.usage.value,
-                  }
-                : {
-                    ...state,
-                    InputPath: sourceAssign.usage.from,
-                  };
+            // the state takes a literal, clear the usage.
+            updateVariableUsage(targetUsage);
           } else {
-            assertNever(state);
-          }
-          // TODO: add assignment to the updated from...
-          // when there is a single variable, zero out the usage on the source variable.
-          statsMap = removeUsage(sourceVariable, targetUsage);
+            /**
+             * if the "from" variable we intend to update the prop assignment with will be
+             *  assigned to after the source assignment and before the target assignment, skip.
+             */
+            if (
+              isMutatedInRange(
+                sourceAssign.usage.from,
+                sourceAssign.index,
+                targetUsage.index
+              )
+            ) {
+              return;
+            }
 
+            const updatedFrom = replaceJsonPathPrefix(
+              targetUsage.usage.from,
+              sourceAssign.usage.to,
+              sourceAssign.usage.from
+            );
+
+            if (state.Type === "Map") {
+              updatedStates[targetUsage.usage.state] = {
+                ...state,
+                ItemsPath: sourceAssign.usage.from,
+              };
+            } else if (state.Type === "Task") {
+              // update the state's parameter to contain the constant value.
+              updatedStates[targetUsage.usage.state] = {
+                ...state,
+                InputPath: updatedFrom,
+              };
+            } else {
+              assertNever(state);
+            }
+
+            statsMap = updateVariableUsage(targetUsage, {
+              ...targetUsage.usage,
+              from: updatedFrom,
+            });
+          }
           return;
         } else if (
           targetUsage.usage.type === "Filter" ||
           targetUsage.usage.type === "FilterPropAssignment" ||
-          targetUsage.usage.type === "ReturnUsage"
+          targetUsage.usage.type === "ReturnUsage" ||
+          targetUsage.usage.type === "StateInputProps"
         ) {
           // TODO: support more cases.
           return;
@@ -6401,67 +6362,92 @@ namespace ASLOptimizer {
       })
     );
 
-    function removeUsage(
-      variable: string,
-      originalAssignment: typeof statsMap[string]["assigns"][number]
-    ) {
-      const stats = statsMap[variable];
-      // some targets don't have stats, like when a parameter map is the input to a task or map state.
-      if (stats) {
-        return {
-          ...statsMap,
-          [variable]: {
-            ...stats,
-            usage: stats.usage.filter((a) => a.id !== originalAssignment.id),
-          },
-        };
-      }
-      return statsMap;
+    function jsonPathPrefix(jsonPath: string) {
+      return formatJsonPath([normalizeJsonPath(jsonPath)[0]!]);
     }
 
-    function removeAssignment(
+    /**
+     * Determines if a variable is mutated between the (topologically sorted) node indices given.
+     *
+     * a = "a"
+     * source = a
+     * a = "b" // mutated in range
+     * target = a
+     * a = "c" // mutated out of range.
+     */
+    function isMutatedInRange(
       variable: string,
-      originalAssignment: typeof statsMap[string]["assigns"][number]
+      startNodeIndex: number,
+      endNodeIndex: number
     ) {
-      const stats = statsMap[variable];
-      // some targets don't have stats, like when a parameter map is the input to a task or map state.
-      if (stats) {
-        return {
-          ...statsMap,
-          [variable]: {
-            ...stats,
-            assigns: stats.assigns.filter(
-              (a) => a.id !== originalAssignment.id
-            ),
-          },
-        };
-      }
-      return statsMap;
+      const variableStats = statsMap[jsonPathPrefix(variable)];
+      return (
+        variableStats?.assigns.some(
+          (a) => a.index > startNodeIndex && a.index < endNodeIndex
+        ) ?? false
+      );
     }
 
-    function replaceAssignment(
-      variable: string,
-      originalAssignment: typeof statsMap[string]["assigns"][number],
-      updatedAssignment: typeof statsMap[string]["assigns"][number]["usage"]
+    function updateVariableUsage(
+      originalUsage: typeof statsMap[string]["assigns"][number],
+      updatedUsage?: StateVariableUsage
     ): typeof statsMap {
-      const stats = statsMap[variable];
-      // some targets don't have stats, like when a parameter map is the input to a task or map state.
-      if (stats) {
-        return {
-          ...statsMap,
-          [variable]: {
-            ...stats,
-            assigns: [
-              ...stats.assigns.filter((a) => a.id !== originalAssignment.id),
+      // all variables in the stats map should be the prefix of the json path.
+      const originalTo =
+        "to" in originalUsage.usage && originalUsage.usage.to
+          ? jsonPathPrefix(originalUsage.usage.to)
+          : undefined;
+      const originalFrom =
+        "from" in originalUsage.usage && originalUsage.usage.from
+          ? jsonPathPrefix(originalUsage.usage.from)
+          : undefined;
+      const updatedTo =
+        updatedUsage && "to" in updatedUsage && updatedUsage.to
+          ? jsonPathPrefix(updatedUsage.to)
+          : undefined;
+      const updatedFrom =
+        updatedUsage && "from" in updatedUsage && updatedUsage.from
+          ? jsonPathPrefix(updatedUsage.from)
+          : undefined;
+
+      const uniqueTargets = [
+        ...new Set([originalTo, originalFrom, updatedTo, updatedFrom]),
+      ].filter((s): s is string => !!s);
+
+      const newUsage = updatedUsage
+        ? {
+            ...originalUsage,
+            usage: updatedUsage,
+          }
+        : undefined;
+
+      return {
+        ...statsMap,
+        ...Object.fromEntries(
+          uniqueTargets.map((variable) => {
+            const usage = statsMap[variable] ?? {
+              variable,
+              assigns: [],
+              usage: [],
+            };
+
+            return [
+              variable,
               {
-                ...originalAssignment,
-                usage: updatedAssignment,
+                ...usage,
+                assigns: [
+                  ...usage.assigns.filter((a) => a.id !== originalUsage.id),
+                  ...(newUsage && variable === updatedTo ? [newUsage] : []),
+                ],
+                usage: [
+                  ...usage.usage.filter((a) => a.id !== originalUsage.id),
+                  ...(newUsage && variable === updatedFrom ? [newUsage] : []),
+                ],
               },
-            ],
-          },
-        };
-      }
-      return statsMap;
+            ];
+          })
+        ),
+      };
     }
 
     function accessLiteralAtJsonPathSuffix(
