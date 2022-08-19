@@ -41,7 +41,7 @@ import {
   makeIntegration,
 } from "./integration";
 import { AnyTable, isTable, ITable } from "./table";
-import { AnyAsyncFunction } from "./util";
+import type { AnyAsyncFunction } from "./util";
 
 /**
  * The `AWS` namespace exports functions that map to AWS Step Functions AWS-SDK Integrations.
