@@ -5463,6 +5463,20 @@ namespace ASLOptimizer {
     state: string;
   };
 
+  interface VariableStats {
+    variable: string;
+    assigns: {
+      id: number;
+      index: number;
+      usage: StateVariableUsage;
+    }[];
+    usage: {
+      id: number;
+      index: number;
+      usage: StateVariableUsage;
+    }[];
+  }
+
   function isVariableAssignment(variable: string, usage: VariableUsage) {
     return usage.type === "Assignment" ||
       usage.type === "PropAssignment" ||
@@ -5501,8 +5515,15 @@ namespace ASLOptimizer {
       : assertNever(usage);
   }
 
-  function analyzeVariables(startState: string, states: States) {
-    const variableAssignments: StateVariableUsage[] = [];
+  function analyzeVariables(
+    startState: string,
+    states: States
+  ): {
+    variableUsages: StateVariableUsage[];
+    variableNames: string[];
+    stats: VariableStats[];
+  } {
+    const variableUsages: StateVariableUsage[] = [];
     const variableNames = new Set<string>();
     const visited = new Set<string>();
 
@@ -5522,12 +5543,13 @@ namespace ASLOptimizer {
       ),
     ];
 
-    const variableUsageWithId = variableAssignments.map((u, i) => ({
+    const variableUsageWithId = variableUsages.map((u, i) => ({
       id: i,
       index: topo.findIndex((t) => t[0] === u.state),
       usage: u,
     }));
 
+    // TODO extract to a new function.
     const stats = variableNamePrefixes.map((v) => ({
       variable: v,
       assigns: variableUsageWithId.filter(({ usage }) =>
@@ -5538,13 +5560,13 @@ namespace ASLOptimizer {
       ),
     }));
 
-    return { variableAssignments, variableNames: [...variableNames], stats };
+    return { variableUsages, variableNames: [...variableNames], stats };
 
     function depthFirst(stateName: string) {
       if (visited.has(stateName)) return;
       visited.add(stateName);
       const state = states[stateName]!;
-      variableAssignments.push(
+      variableUsages.push(
         ...getVariableUsage(state).map((usage) => ({
           ...usage,
           state: stateName,
@@ -5850,534 +5872,23 @@ namespace ASLOptimizer {
   }
 
   export function reduceGraph(startState: string, states: States): States {
-    const updatedStates = { ...states };
     const { stats } = analyzeVariables(startState, states);
 
-    let statsMap: Record<string, typeof stats[number]> = Object.fromEntries(
-      stats.map((s) => [s.variable, s])
-    );
-
-    console.log(JSON.stringify(stats, null, 2));
-
-    stats
+    const [statsMap, updatedStates] = stats
       .map((s) => s.variable)
-      .forEach((sourceVariable) => {
-        const sourceStats = statsMap[sourceVariable];
-        if (!sourceStats) return;
-        if (
-          // only support simple assignments for now
-          sourceStats.assigns.some(
-            (s) =>
-              !(
-                s.usage.type === "Assignment" ||
-                s.usage.type === "LiteralAssignment"
-              )
-          )
-        ) {
-          return;
-        }
-        const sourceAssigns: (typeof statsMap[string]["assigns"][number] & {
-          usage: (
-            | VariableAssignment
-            // TODO support filter
-            | VariableLiteralAssignment
-          ) & {
-            state: string;
-          };
-        })[] = sourceStats.assigns as any;
-
-        /**
-         * For now, all optimization only support a single assignment of the target variable.
-         *
-         * The source assignment is the location at which the current variable is assigned a value.
-         */
-        const [sourceAssign] = sourceAssigns;
-        if (sourceAssigns.length !== 1 || !sourceAssign) {
-          return;
-        }
-
-        /**
-         * For now, all optimizations only support a single usage of the current variable.
-         *
-         * The target usage is the point at which the current variable is assigned to another variable.
-         */
-        const [targetUsage] = sourceStats.usage;
-        if (sourceStats.usage.length !== 1 || !targetUsage) {
-          // only update variables with a single assignment
-          return;
-        }
-
-        // The state at the {@link targetUsage} which we will try to update.
-        const state = updatedStates[targetUsage.usage.state]!;
-
-        /**
-         * When the target variable is being assigned to from the source (literal, filter, or reference)
-         *
-         * > note: ASL doesn't have a concept of variable declaration without initialization. The let/var/const is assumed.
-         * > note: we only support single usage right now, so if `a` is used after `b` in the below example, optimization won't happen.
-         */
-        if (targetUsage.usage.type === "Assignment") {
-          const targetVariable = targetUsage.usage.to;
-          const targetStats = statsMap[targetVariable];
-          if (!targetStats) {
-            return;
-          }
-
-          if (!isPassState(state)) {
-            throw new Error("Expected state with assignment to be a Pass");
-          }
-
-          if (sourceAssign.usage.type === "LiteralAssignment") {
-            const value = accessLiteralAtJsonPathSuffix(
-              targetUsage.usage.from,
-              sourceAssign.usage.to,
-              sourceAssign.usage.value
-            );
-
-            // Update the target's stats to contain the new assign and remove the old one.
-            statsMap = updateVariableUsage(targetUsage, {
-              ...targetUsage.usage,
-              type: "LiteralAssignment",
-              value,
-            });
-
-            // update the state's parameter to contain the constant value.
-            updatedStates[targetUsage.usage.state] = {
-              ...state,
-              Result: undefined,
-              InputPath: undefined,
-              Parameters: value,
-            };
-          } else {
-            /**
-             * if the "from" variable we intend to update the prop assignment with will be
-             *  assigned to after the source assignment and before the target assignment, skip.
-             */
-            if (
-              isMutatedInRange(
-                sourceAssign.usage.from,
-                sourceAssign.index,
-                targetUsage.index
-              )
-            ) {
-              return;
-            }
-
-            const updatedFrom = replaceJsonPathPrefix(
-              targetUsage.usage.from,
-              sourceAssign.usage.to,
-              sourceAssign.usage.from
-            );
-
-            /**
-             * Update the target's stats to contain the new assign and remove the old one.
-             */
-            statsMap = updateVariableUsage(targetUsage, {
-              ...targetUsage.usage,
-              from: updatedFrom,
-            });
-
-            // update the state's parameter to contain the constant value.
-            updatedStates[targetUsage.usage.state] = {
-              ...state,
-              Parameters: undefined,
-              Result: undefined,
-              /**
-               * Search assignment to value should be a prefix of the old `usage.from`.
-               * Maintain the tail of the `usage.from`, but replace the prefix with `sourceAssign.usage.from`
-               * Value: $.source[0]
-               * Search Value: $.source
-               * Replace Value: $.from
-               * => $.from[0]
-               */
-              InputPath: updatedFrom,
-            };
-          }
-          return;
-        }
-        // when the target is a property being assigned to from the source (literal, filter, or reference)
-        else if (targetUsage.usage.type === "PropAssignment") {
-          /**
-           * Handling a case where a property is being assigned a value from a constant or a reference.
-           * const c = "a";
-           * return {
-           *    b: c
-           * }
-           * =>
-           * return {
-           *    b: "a"
-           * }
-           *
-           * const c = a;
-           * return {
-           *    b: c
-           * }
-           * =>
-           * return {
-           *    b: a
-           * }
-           *
-           * TODO: support filter assignment.
-           */
-          if (
-            !(
-              isPassState(state) ||
-              isParallelTaskState(state) ||
-              isMapTaskState(state) ||
-              isTaskState(state)
-            ) ||
-            !state.Parameters ||
-            typeof state.Parameters !== "object" ||
-            Array.isArray(state.Parameters)
-          ) {
-            return;
-          }
-
-          if (sourceAssign.usage.type === "LiteralAssignment") {
-            const value = accessLiteralAtJsonPathSuffix(
-              targetUsage.usage.from,
-              sourceAssign.usage.to,
-              sourceAssign.usage.value
-            );
-
-            statsMap = updateVariableUsage(targetUsage, {
-              ...targetUsage.usage,
-              type: "LiteralPropAssignment",
-              value,
-            });
-
-            // update the state's parameter to contain the constant value.
-            updatedStates[targetUsage.usage.state] = {
-              ...state,
-              Parameters: updateParameters(
-                targetUsage.usage.props,
-                state.Parameters!,
-                value,
-                false
-              ),
-            };
-          } else {
-            /**
-             * if the "from" variable we intend to update the prop assignment with will be
-             * assigned to after the source assignment and before the target assignment, skip.
-             */
-            if (
-              isMutatedInRange(
-                sourceAssign.usage.from,
-                sourceAssign.index,
-                targetUsage.index
-              )
-            ) {
-              return;
-            }
-
-            /**
-             * Search assignment to value should be a prefix of the old `usage.from`.
-             * Maintain the tail of the `usage.from`, but replace the prefix with `sourceAssign.usage.from`
-             * Value: $.source[0]
-             * Search Value: $.source
-             * Replace Value: $.from
-             * => $.from[0]
-             */
-            const updatedFrom = replaceJsonPathPrefix(
-              targetUsage.usage.from,
-              sourceAssign.usage.to,
-              sourceAssign.usage.from
-            );
-
-            statsMap = updateVariableUsage(targetUsage, {
-              ...targetUsage.usage,
-              from: updatedFrom,
-            });
-
-            // update the state's parameter to contain the constant value.
-            updatedStates[targetUsage.usage.state] = {
-              ...state,
-              Parameters: updateParameters(
-                targetUsage.usage.props,
-                state.Parameters!,
-                updatedFrom,
-                true
-              ),
-            };
-          }
-          return;
-        } else if (targetUsage.usage.type === "Intrinsic") {
-          // the source state is, do not remove the target (maybe).
-          const state = updatedStates[targetUsage.usage.state] as
-            | Pass
-            | Task
-            | MapTask
-            | ParallelTask;
-          if (
-            !(
-              isPassState(state) ||
-              isParallelTaskState(state) ||
-              isMapTaskState(state) ||
-              isTaskState(state)
-            ) ||
-            !state.Parameters ||
-            typeof state.Parameters !== "object" ||
-            Array.isArray(state.Parameters)
-          ) {
-            return;
-          }
-
-          /**
-           * Update the target's stats to contain the new assign and remove the old one.
-           */
-          if (sourceAssign.usage.type === "LiteralAssignment") {
-            const value = accessLiteralAtJsonPathSuffix(
-              targetUsage.usage.from,
-              sourceAssign.usage.to,
-              sourceAssign.usage.value
-            );
-            // literals are inlined into the intrinsic function, remove the assignment
-            statsMap = updateVariableUsage(targetUsage);
-
-            updatedStates[targetUsage.usage.state] = {
-              ...state,
-              Parameters: updateParameters(
-                targetUsage.usage.props,
-                state.Parameters!,
-                (original) => {
-                  const intrinsic = original;
-                  if (typeof intrinsic !== "string") {
-                    throw new Error(
-                      "Expected intrinsic property value to be a string."
-                    );
-                  }
-                  const originalFrom = (<VariableIntrinsicUsage>(
-                    targetUsage.usage
-                  )).from;
-                  // States.Format($.heap0) => States.Format($.v)
-                  // States.Format($.heap0) => States.Format("someString")
-                  // States.Format($.heap0) => States.Format(0)
-                  return intrinsic.replace(
-                    new RegExp(escapeRegExp(originalFrom), "g"),
-                    typeof value === "string" ? `'${value}'` : `${value}`
-                  );
-                },
-                true
-              ),
-            };
-          } else {
-            /**
-             * if the "from" variable we intend to update the prop assignment with will be
-             *  assigned to after the source assignment and before the target assignment, skip.
-             */
-            if (
-              isMutatedInRange(
-                sourceAssign.usage.from,
-                sourceAssign.index,
-                targetUsage.index
-              )
-            ) {
-              return;
-            }
-
-            const updatedFrom = replaceJsonPathPrefix(
-              (<VariableIntrinsicUsage>targetUsage.usage).from,
-              sourceAssign.usage.to,
-              sourceAssign.usage.from
-            )
-              .split("$")
-              .join("$$");
-
-            statsMap = updateVariableUsage(targetUsage, {
-              ...targetUsage.usage,
-              // update the from
-              from: updatedFrom,
-            });
-
-            // update the state's parameter to contain the constant value.
-            updatedStates[targetUsage.usage.state] = {
-              ...state,
-              Parameters: updateParameters(
-                targetUsage.usage.props,
-                state.Parameters!,
-                (original) => {
-                  const intrinsic = original;
-                  if (typeof intrinsic !== "string") {
-                    throw new Error(
-                      "Expected intrinsic property value to be a string."
-                    );
-                  }
-                  const originalFrom = (<VariableIntrinsicUsage>(
-                    targetUsage.usage
-                  )).from;
-                  // States.Format($.heap0) => States.Format($.v)
-                  // States.Format($.heap0) => States.Format("someString")
-                  // States.Format($.heap0) => States.Format(0)
-                  return intrinsic.replace(
-                    new RegExp(escapeRegExp(originalFrom), "g"),
-                    updatedFrom
-                  );
-                },
-                true
-              ),
-            };
-          }
-          return;
-        } else if (targetUsage.usage.type === "StateInput") {
-          if (!(isMapTaskState(state) || isTaskState(state))) {
-            return;
-          }
-
-          if (sourceAssign.usage.type === "LiteralAssignment") {
-            const value = accessLiteralAtJsonPathSuffix(
-              targetUsage.usage.from,
-              sourceAssign.usage.to,
-              sourceAssign.usage.value
-            );
-
-            // map items cannot be a literal
-            if (state.Type === "Map") {
-              return;
-            }
-
-            updatedStates[targetUsage.usage.state] = {
-              ...state,
-              InputPath: undefined,
-              Parameters: value,
-            };
-            // the state takes a literal, clear the usage.
-            statsMap = updateVariableUsage(targetUsage);
-          } else {
-            /**
-             * if the "from" variable we intend to update the prop assignment with will be
-             *  assigned to after the source assignment and before the target assignment, skip.
-             */
-            if (
-              isMutatedInRange(
-                sourceAssign.usage.from,
-                sourceAssign.index,
-                targetUsage.index
-              )
-            ) {
-              return;
-            }
-
-            const updatedFrom = replaceJsonPathPrefix(
-              targetUsage.usage.from,
-              sourceAssign.usage.to,
-              sourceAssign.usage.from
-            );
-
-            if (state.Type === "Map") {
-              updatedStates[targetUsage.usage.state] = {
-                ...state,
-                ItemsPath: sourceAssign.usage.from,
-              };
-            } else if (state.Type === "Task") {
-              // update the state's parameter to contain the constant value.
-              updatedStates[targetUsage.usage.state] = {
-                ...state,
-                InputPath: updatedFrom,
-              };
-            } else {
-              assertNever(state);
-            }
-
-            statsMap = updateVariableUsage(targetUsage, {
-              ...targetUsage.usage,
-              from: updatedFrom,
-            });
-          }
-          return;
-        } else if (targetUsage.usage.type === "StateInputProps") {
-          if (
-            !(isMapTaskState(state) || isTaskState(state)) ||
-            typeof state.Parameters !== "object" ||
-            Array.isArray(state.Parameters)
-          ) {
-            return;
-          }
-
-          if (sourceAssign.usage.type === "LiteralAssignment") {
-            const value = accessLiteralAtJsonPathSuffix(
-              targetUsage.usage.from,
-              sourceAssign.usage.to,
-              sourceAssign.usage.value
-            );
-
-            // update the state's parameter to contain the constant value.
-            updatedStates[targetUsage.usage.state] = {
-              ...state,
-              Parameters: updateParameters(
-                targetUsage.usage.props,
-                state.Parameters!,
-                value,
-                false
-              ),
-            };
-
-            // the state takes a literal, clear the usage.
-            statsMap = updateVariableUsage(targetUsage);
-          } else {
-            /**
-             * if the "from" variable we intend to update the prop assignment with will be
-             *  assigned to after the source assignment and before the target assignment, skip.
-             */
-            if (
-              isMutatedInRange(
-                sourceAssign.usage.from,
-                sourceAssign.index,
-                targetUsage.index
-              )
-            ) {
-              return;
-            }
-
-            const updatedFrom = replaceJsonPathPrefix(
-              targetUsage.usage.from,
-              sourceAssign.usage.to,
-              sourceAssign.usage.from
-            );
-
-            updatedStates[targetUsage.usage.state] = {
-              ...state,
-              Parameters: updateParameters(
-                targetUsage.usage.props,
-                state.Parameters!,
-                updatedFrom,
-                true
-              ),
-            };
-
-            statsMap = updateVariableUsage(targetUsage, {
-              ...targetUsage.usage,
-              from: updatedFrom,
-            });
-          }
-          return;
-        } else if (
-          targetUsage.usage.type === "Filter" ||
-          targetUsage.usage.type === "FilterPropAssignment" ||
-          targetUsage.usage.type === "ReturnUsage"
-        ) {
-          // TODO: support more cases.
-          return;
-        } else if (
-          targetUsage.usage.type === "LiteralAssignment" ||
-          targetUsage.usage.type === "LiteralPropAssignment" ||
-          targetUsage.usage.type === "StateOutput" ||
-          targetUsage.usage.type === "Condition"
-        ) {
-          // nothing else to simplify here.
-          return;
-        } else {
-          return assertNever(targetUsage.usage);
-        }
-      });
+      .reduce(
+        ([statsMap, states], sourceVariable) => {
+          return (
+            tryRemoveVariable(sourceVariable, statsMap, states) ?? [
+              statsMap,
+              states,
+            ]
+          );
+        },
+        [Object.fromEntries(stats.map((s) => [s.variable, s])), states]
+      );
 
     const unused = Object.values(statsMap).filter((s) => s.usage.length === 0);
-    const unassigned = Object.values(statsMap).filter(
-      (s) => s.assigns.length === 0
-    );
-
-    console.log(JSON.stringify(unused, null, 2));
-    console.log(JSON.stringify(unassigned, null, 2));
 
     const removedStates = [
       ...findEmptyStates(startState, updatedStates),
@@ -6399,8 +5910,6 @@ namespace ASLOptimizer {
         })
       ),
     ];
-
-    console.log(removedStates);
 
     const removedTransitions = computeRemovedStateToUpdatedTransition(
       new Set(removedStates),
@@ -6427,8 +5936,629 @@ namespace ASLOptimizer {
       })
     );
 
-    function jsonPathPrefix(jsonPath: string) {
-      return formatJsonPath([normalizeJsonPath(jsonPath)[0]!]);
+    /**
+     * Find the updated next value for all of the empty states.
+     * If the updated Next cannot be determined, do not remove the state.
+     */
+    function computeRemovedStateToUpdatedTransition(
+      removedStates: Set<string>,
+      states: States
+    ) {
+      return Object.fromEntries(
+        [...removedStates]
+          // assume removed states have Next for now
+          .map((s): [string, State & Pick<Pass, "Next">] => [
+            s,
+            states[s]! as State & Pick<Pass, "Next">,
+          ])
+          .flatMap(([name, { Next }]) => {
+            const newNext = Next ? getNext(Next, []) : Next;
+
+            /**
+             * If the updated Next value for this state cannot be determined,
+             * do not remove the state.
+             *
+             * This can because the state has no Next value (Functionless bug)
+             * or because all of the states in a cycle are empty.
+             */
+            if (!newNext) {
+              return [];
+            }
+
+            return [[name, newNext]];
+
+            /**
+             * When all states in a cycle are empty, the cycle will be impossible to exit.
+             *
+             * Note: This should be a rare case and is not an attempt to find any non-terminating logic.
+             *       ex: `for(;;){}`
+             *       Adding most conditions, incrementors, or bodies will not run into this issue.
+             *
+             * ```ts
+             * {
+             *   1: { Type: "???", Next: 2 },
+             *   2: { Type: "Pass", Next: 3 },
+             *   3: { Type: "Pass", Next: 4 },
+             *   4: { Type: "Pass", Next: 2 }
+             * }
+             * ```
+             *
+             * State 1 is any state that transitions to state 2.
+             * State 2 transitions to empty state 3
+             * State 3 transitions to empty state 4
+             * State 4 transitions back to empty state 2.
+             *
+             * Empty Pass states provide no value and will be removed.
+             * Empty Pass states can never fail and no factor can change where it goes.
+             *
+             * This is not an issue for other states which may fail or inject other logic to change the next state.
+             * Even the Wait stat could be used in an infinite loop if the machine is terminated from external source.
+             *
+             * If this happens, return undefined.
+             */
+            function getNext(
+              transition: string,
+              seen: string[] = []
+            ): string | undefined {
+              if (seen?.includes(transition)) {
+                return undefined;
+              }
+              return removedStates.has(transition)
+                ? getNext(
+                    // assuming the removes states have Next
+                    (states[transition]! as State & Pick<Pass, "Next">).Next!,
+                    seen ? [...seen, transition] : [transition]
+                  )
+                : transition;
+            }
+          })
+      );
+    }
+  }
+
+  /**
+   * Given a variable name, attempt to remove it from the graph by updating its usage(s)
+   * without changing the behavior of the graph.
+   *
+   * @return - the updated graph states and variable states after removing the variable or nothing if there was no change.
+   */
+  function tryRemoveVariable(
+    sourceVariable: string,
+    statsMap: Record<string, VariableStats>,
+    states: States
+  ): [Record<string, VariableStats>, States] | undefined {
+    /**
+     * The source assignment is the location at which the current variable is assigned a value.
+     *
+     * ```ts
+     * const b = a; // source <--
+     * const c = b; // target
+     * ```
+     *
+     * For now, all optimization only support a single assignment of the target variable.
+     *
+     * Also only support for simple source assignment.
+     *
+     * ```ts
+     * const b = "a"; // LiteralAssignment
+     * const c = b; // Assignment
+     *
+     * ```
+     *
+     */
+    const [sourceAssign, ...otherAssign] =
+      statsMap[sourceVariable]?.assigns ?? [];
+    if (
+      otherAssign.length > 0 ||
+      !sourceAssign ||
+      !(
+        sourceAssign.usage.type === "Assignment" ||
+        sourceAssign.usage.type === "LiteralAssignment"
+      )
+    ) {
+      return;
+    }
+
+    /**
+     * For now, all optimizations only support a single usage of the current variable.
+     *
+     * The target usage is the point at which the current variable is assigned to another variable.
+     *
+     * ```ts
+     * const b = a; // source
+     * const c = b; // target <--
+     * ```
+     */
+    const [targetUsage, ...otherUsages] = statsMap[sourceVariable]?.usage ?? [];
+    if (otherUsages.length > 0 || !targetUsage) {
+      // only update variables with a single assignment
+      return;
+    }
+
+    /**
+     * The state at the {@link targetUsage} which we will try to update.
+     */
+    const state = states[targetUsage.usage.state]!;
+
+    /**
+     * Assignment of a literal or variable to another variable.
+     *
+     * ```ts
+     * const a = "a" // source - literal
+     * const b = a; // target - assignment
+     * // =>
+     * const b = "a";
+     * ```
+     *
+     * ```ts
+     * const a = x; // source - literal
+     * const b = a; // target - assignment
+     * // =>
+     * const b = x;
+     * ```
+     */
+    if (targetUsage.usage.type === "Assignment") {
+      if (!isPassState(state)) {
+        return;
+      }
+
+      if (sourceAssign.usage.type === "LiteralAssignment") {
+        const value = accessLiteralAtJsonPathSuffix(
+          targetUsage.usage.from,
+          sourceAssign.usage.to,
+          sourceAssign.usage.value
+        );
+
+        return [
+          updateVariableUsage(targetUsage, {
+            ...targetUsage.usage,
+            type: "LiteralAssignment",
+            value,
+          }),
+          {
+            ...states,
+            [targetUsage.usage.state]: {
+              ...state,
+              Result: undefined,
+              InputPath: undefined,
+              Parameters: value,
+            },
+          },
+        ];
+      } else {
+        /**
+         * if the "from" variable we intend to update the prop assignment with will be
+         *  assigned to after the source assignment and before the target assignment, skip.
+         */
+        if (
+          isMutatedInRange(
+            sourceAssign.usage.from,
+            sourceAssign.index,
+            targetUsage.index
+          )
+        ) {
+          return;
+        }
+
+        const updatedFrom = replaceJsonPathPrefix(
+          targetUsage.usage.from,
+          sourceAssign.usage.to,
+          sourceAssign.usage.from
+        );
+
+        return [
+          /**
+           * Update the target's stats to contain the new assign and remove the old one.
+           */
+          updateVariableUsage(targetUsage, {
+            ...targetUsage.usage,
+            from: updatedFrom,
+          }),
+          {
+            ...states,
+            [targetUsage.usage.state]: {
+              ...state,
+              Parameters: undefined,
+              Result: undefined,
+              /**
+               * Search assignment to value should be a prefix of the old `usage.from`.
+               * Maintain the tail of the `usage.from`, but replace the prefix with `sourceAssign.usage.from`
+               * Value: $.source[0]
+               * Search Value: $.source
+               * Replace Value: $.from
+               * => $.from[0]
+               */
+              InputPath: updatedFrom,
+            },
+          },
+        ];
+      }
+      return;
+    } else if (
+      targetUsage.usage.type === "PropAssignment" ||
+      targetUsage.usage.type === "StateInputProps"
+    ) {
+      /**
+       * Assignment of a literal or variable to property on a pass, task, map, or parallel state.
+       *
+       * ```ts
+       * const a = "a" // source - literal
+       * const b = {
+       *   c: a // target - prop assignment
+       * };
+       * // =>
+       * const b = {
+       *    c: "a"
+       * };
+       * ```
+       *
+       * ```ts
+       * const a = x; // source - literal
+       * const b = {
+       *    c: // target - prop assignment
+       * };
+       * // =>
+       * const b = {
+       *    c: x
+       * };
+       * ```
+       */
+      if (
+        !(
+          isPassState(state) ||
+          isParallelTaskState(state) ||
+          isMapTaskState(state) ||
+          isTaskState(state)
+        ) ||
+        !state.Parameters ||
+        typeof state.Parameters !== "object" ||
+        Array.isArray(state.Parameters)
+      ) {
+        return;
+      }
+
+      if (sourceAssign.usage.type === "LiteralAssignment") {
+        const value = accessLiteralAtJsonPathSuffix(
+          targetUsage.usage.from,
+          sourceAssign.usage.to,
+          sourceAssign.usage.value
+        );
+
+        return [
+          updateVariableUsage(
+            targetUsage,
+            targetUsage.usage.type === "PropAssignment"
+              ? {
+                  ...targetUsage.usage,
+                  type: "LiteralPropAssignment",
+                  value,
+                }
+              : undefined
+          ),
+          {
+            ...states,
+            [targetUsage.usage.state]: {
+              ...state,
+              Parameters: updateParameters(
+                targetUsage.usage.props,
+                state.Parameters!,
+                value,
+                false
+              ),
+            },
+          },
+        ];
+      } else {
+        /**
+         * if the "from" variable we intend to update the prop assignment with will be
+         * assigned to after the source assignment and before the target assignment, skip.
+         */
+        if (
+          isMutatedInRange(
+            sourceAssign.usage.from,
+            sourceAssign.index,
+            targetUsage.index
+          )
+        ) {
+          return;
+        }
+
+        /**
+         * Search assignment to value should be a prefix of the old `usage.from`.
+         * Maintain the tail of the `usage.from`, but replace the prefix with `sourceAssign.usage.from`
+         * Value: $.source[0]
+         * Search Value: $.source
+         * Replace Value: $.from
+         * => $.from[0]
+         */
+        const updatedFrom = replaceJsonPathPrefix(
+          targetUsage.usage.from,
+          sourceAssign.usage.to,
+          sourceAssign.usage.from
+        );
+
+        return [
+          updateVariableUsage(targetUsage, {
+            ...targetUsage.usage,
+            from: updatedFrom,
+          }),
+          // update the state's parameter to contain the new input variable.
+          {
+            ...states,
+            [targetUsage.usage.state]: {
+              ...state,
+              Parameters: updateParameters(
+                targetUsage.usage.props,
+                state.Parameters!,
+                updatedFrom,
+                true
+              ),
+            },
+          },
+        ];
+      }
+      return;
+    } else if (targetUsage.usage.type === "Intrinsic") {
+      /**
+       * Use of a literal or variable to property in an intrinsic function.
+       * Note: intrinsic properties must be in Parameter objects.
+       *
+       * ```ts
+       * const a = "a" // source - literal
+       * const b = {
+       *   c: `format ${a}` // target - intrinsic
+       * };
+       * // =>
+       * const b = {
+       *    c: `format a`
+       * };
+       * ```
+       *
+       * ```ts
+       * const a = x; // source - literal
+       * const b = {
+       *   c: `format ${a}` // target - intrinsic
+       * };
+       * // =>
+       * const b = {
+       *   c: `format ${x}` // target - intrinsic
+       * };
+       * ```
+       */
+      if (
+        !(
+          isPassState(state) ||
+          isParallelTaskState(state) ||
+          isMapTaskState(state) ||
+          isTaskState(state)
+        ) ||
+        !state.Parameters ||
+        typeof state.Parameters !== "object" ||
+        Array.isArray(state.Parameters)
+      ) {
+        return;
+      }
+
+      /**
+       * Update the target's stats to contain the new assign and remove the old one.
+       */
+      if (sourceAssign.usage.type === "LiteralAssignment") {
+        const value = accessLiteralAtJsonPathSuffix(
+          targetUsage.usage.from,
+          sourceAssign.usage.to,
+          sourceAssign.usage.value
+        );
+        // literals are inlined into the intrinsic function, remove the assignment
+        statsMap = updateVariableUsage(targetUsage);
+
+        const from = targetUsage.usage.from;
+
+        return [
+          updateVariableUsage(targetUsage),
+          {
+            ...states,
+            [targetUsage.usage.state]: {
+              ...state,
+              Parameters: updateParameters(
+                targetUsage.usage.props,
+                state.Parameters!,
+                (original) => {
+                  const intrinsic = original;
+                  if (typeof intrinsic !== "string") {
+                    throw new Error(
+                      "Expected intrinsic property value to be a string."
+                    );
+                  }
+                  // States.Format($.heap0) => States.Format($.v)
+                  // States.Format($.heap0) => States.Format("someString")
+                  // States.Format($.heap0) => States.Format(0)
+                  return intrinsic.replace(
+                    new RegExp(escapeRegExp(from), "g"),
+                    typeof value === "string" ? `'${value}'` : `${value}`
+                  );
+                },
+                true
+              ),
+            },
+          },
+        ];
+      } else {
+        /**
+         * if the "from" variable we intend to update the prop assignment with will be
+         *  assigned to after the source assignment and before the target assignment, skip.
+         */
+        if (
+          isMutatedInRange(
+            sourceAssign.usage.from,
+            sourceAssign.index,
+            targetUsage.index
+          )
+        ) {
+          return;
+        }
+
+        const updatedFrom = replaceJsonPathPrefix(
+          (<VariableIntrinsicUsage>targetUsage.usage).from,
+          sourceAssign.usage.to,
+          sourceAssign.usage.from
+        )
+          .split("$")
+          .join("$$");
+
+        return [
+          updateVariableUsage(targetUsage, {
+            ...targetUsage.usage,
+            // update the from
+            from: updatedFrom,
+          }),
+          {
+            ...states,
+            [targetUsage.usage.state]: {
+              ...state,
+              Parameters: updateParameters(
+                targetUsage.usage.props,
+                state.Parameters!,
+                (original) => {
+                  const intrinsic = original;
+                  if (typeof intrinsic !== "string") {
+                    throw new Error(
+                      "Expected intrinsic property value to be a string."
+                    );
+                  }
+                  const originalFrom = (<VariableIntrinsicUsage>(
+                    targetUsage.usage
+                  )).from;
+                  // States.Format($.heap0) => States.Format($.v)
+                  // States.Format($.heap0) => States.Format("someString")
+                  // States.Format($.heap0) => States.Format(0)
+                  return intrinsic.replace(
+                    new RegExp(escapeRegExp(originalFrom), "g"),
+                    updatedFrom
+                  );
+                },
+                true
+              ),
+            },
+          },
+        ];
+      }
+      return;
+    } else if (targetUsage.usage.type === "StateInput") {
+      /**
+       * Use of a literal or variable to property in a task/map input.
+       * Note: this is a special case because:
+       *       1. Task does not support Result as input, only Parameters (literal) or InputPath (reference)
+       *       2. Map's reference input is the ItemsPath and does not support literal inputs for the array input
+       *       3. Neither Map nor Task have a named output (to), only an input (from) as both are black boxes.
+       *
+       * ```ts
+       * const a = arr // source - assignment
+       * a.map(x => {}); // target - state input
+       * // =>
+       * arr.map(x => {});
+       * ```
+       *
+       * ```ts
+       * const a = "a"; // source - literal
+       * func(a); // target - state input
+       * // =>
+       * func("a");
+       * ```
+       *
+       * ```ts
+       * const a = x; // source - assignment
+       * func(x); // target - state input
+       * // =>
+       * func(x);
+       * ```
+       */
+      if (!(isMapTaskState(state) || isTaskState(state))) {
+        return;
+      }
+
+      if (sourceAssign.usage.type === "LiteralAssignment") {
+        const value = accessLiteralAtJsonPathSuffix(
+          targetUsage.usage.from,
+          sourceAssign.usage.to,
+          sourceAssign.usage.value
+        );
+
+        // map items cannot be a literal
+        if (state.Type === "Map") {
+          return;
+        }
+
+        return [
+          // the state takes a literal, clear the usage.
+          updateVariableUsage(targetUsage),
+          {
+            ...states,
+            [targetUsage.usage.state]: {
+              ...state,
+              InputPath: undefined,
+              Parameters: value,
+            },
+          },
+        ];
+      } else {
+        /**
+         * if the "from" variable we intend to update the prop assignment with will be
+         *  assigned to after the source assignment and before the target assignment, skip.
+         */
+        if (
+          isMutatedInRange(
+            sourceAssign.usage.from,
+            sourceAssign.index,
+            targetUsage.index
+          )
+        ) {
+          return;
+        }
+
+        const updatedFrom = replaceJsonPathPrefix(
+          targetUsage.usage.from,
+          sourceAssign.usage.to,
+          sourceAssign.usage.from
+        );
+
+        return [
+          updateVariableUsage(targetUsage, {
+            ...targetUsage.usage,
+            from: updatedFrom,
+          }),
+          {
+            ...states,
+            [targetUsage.usage.state]:
+              state.Type === "Map"
+                ? {
+                    ...state,
+                    ItemsPath: sourceAssign.usage.from,
+                  }
+                : {
+                    ...state,
+                    InputPath: updatedFrom,
+                  },
+          },
+        ];
+      }
+      return;
+    } else if (
+      targetUsage.usage.type === "Filter" ||
+      targetUsage.usage.type === "FilterPropAssignment" ||
+      targetUsage.usage.type === "ReturnUsage"
+    ) {
+      // TODO: support more cases.
+      return;
+    } else if (
+      targetUsage.usage.type === "LiteralAssignment" ||
+      targetUsage.usage.type === "LiteralPropAssignment" ||
+      targetUsage.usage.type === "StateOutput" ||
+      targetUsage.usage.type === "Condition"
+    ) {
+      // nothing else to simplify here.
+      return;
+    } else {
+      return assertNever(targetUsage.usage);
     }
 
     /**
@@ -6451,6 +6581,10 @@ namespace ASLOptimizer {
           (a) => a.index > startNodeIndex && a.index < endNodeIndex
         ) ?? false
       );
+    }
+
+    function jsonPathPrefix(jsonPath: string) {
+      return formatJsonPath([normalizeJsonPath(jsonPath)[0]!]);
     }
 
     function updateVariableUsage(
@@ -6605,85 +6739,6 @@ namespace ASLOptimizer {
           [segment]: updateParameters(tail, _params, value, isValueJsonPath),
         };
       }
-    }
-
-    /**
-     * Find the updated next value for all of the empty states.
-     * If the updated Next cannot be determined, do not remove the state.
-     */
-    function computeRemovedStateToUpdatedTransition(
-      removedStates: Set<string>,
-      states: States
-    ) {
-      return Object.fromEntries(
-        [...removedStates]
-          // assume removed states have Next for now
-          .map((s): [string, State & Pick<Pass, "Next">] => [
-            s,
-            states[s]! as State & Pick<Pass, "Next">,
-          ])
-          .flatMap(([name, { Next }]) => {
-            const newNext = Next ? getNext(Next, []) : Next;
-
-            /**
-             * If the updated Next value for this state cannot be determined,
-             * do not remove the state.
-             *
-             * This can because the state has no Next value (Functionless bug)
-             * or because all of the states in a cycle are empty.
-             */
-            if (!newNext) {
-              return [];
-            }
-
-            return [[name, newNext]];
-
-            /**
-             * When all states in a cycle are empty, the cycle will be impossible to exit.
-             *
-             * Note: This should be a rare case and is not an attempt to find any non-terminating logic.
-             *       ex: `for(;;){}`
-             *       Adding most conditions, incrementors, or bodies will not run into this issue.
-             *
-             * ```ts
-             * {
-             *   1: { Type: "???", Next: 2 },
-             *   2: { Type: "Pass", Next: 3 },
-             *   3: { Type: "Pass", Next: 4 },
-             *   4: { Type: "Pass", Next: 2 }
-             * }
-             * ```
-             *
-             * State 1 is any state that transitions to state 2.
-             * State 2 transitions to empty state 3
-             * State 3 transitions to empty state 4
-             * State 4 transitions back to empty state 2.
-             *
-             * Empty Pass states provide no value and will be removed.
-             * Empty Pass states can never fail and no factor can change where it goes.
-             *
-             * This is not an issue for other states which may fail or inject other logic to change the next state.
-             * Even the Wait stat could be used in an infinite loop if the machine is terminated from external source.
-             *
-             * If this happens, return undefined.
-             */
-            function getNext(
-              transition: string,
-              seen: string[] = []
-            ): string | undefined {
-              if (seen?.includes(transition)) {
-                return undefined;
-              }
-              return removedStates.has(transition)
-                ? getNext(
-                    // assuming the removes states have Next
-                    (states[transition]! as State & Pick<Pass, "Next">).Next!,
-                    seen ? [...seen, transition] : [transition]
-                  )
-                : transition;
-            }
-          })
-      );
     }
   }
 
