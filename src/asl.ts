@@ -518,6 +518,15 @@ const FUNCTIONLESS_CONTEXT_NAME = "fnl_context";
  */
 const FUNCTIONLESS_CONTEXT_JSON_PATH = `$.${FUNCTIONLESS_CONTEXT_NAME}`;
 
+export interface ASLOptions {
+  /**
+   * Options for the ASL Optimizer.
+   *
+   * Default: Suggested
+   */
+  optimization?: ASLOptimizer.OptimizeOptions;
+}
+
 /**
  * Amazon States Language (ASL) Generator.
  */
@@ -569,7 +578,8 @@ export class ASL {
   constructor(
     readonly scope: Construct,
     readonly role: aws_iam.IRole,
-    decl: FunctionLike
+    decl: FunctionLike,
+    private options?: ASLOptions
   ) {
     this.decl = decl = visitEachChild(decl, function normalizeAST(node):
       | FunctionlessNode
@@ -768,7 +778,8 @@ export class ASL {
                 : this.createUniqueStateName(`${name}__${parentName}`),
             ])
           );
-        }
+        },
+        this.options
       ),
     };
   }
@@ -4790,13 +4801,15 @@ export namespace ASLGraph {
     getStateNames: (
       parentName: string,
       states: ASLGraph.SubState
-    ) => Record<string, string>
+    ) => Record<string, string>,
+    options?: ASLOptions
   ): States {
     const namedStates = internal(startState, states, { localNames: {} });
 
     return ASLOptimizer.optimizeGraph(
       startState,
-      Object.fromEntries(namedStates)
+      Object.fromEntries(namedStates),
+      options?.optimization
     );
 
     function internal(
@@ -5869,16 +5882,68 @@ namespace ASLOptimizer {
   };
 
   export interface OptimizeOptions {
+    /**
+     * Attempts to collapse assignments that provide no functional value.
+     *
+     * Collapses assignments created by the interpreter and the input source.
+     *
+     * ```ts
+     * const a = "a"
+     * const b = a;
+     * =>
+     * const b = "a"
+     * ```
+     */
     optimizeVariableAssignments: boolean;
+    /**
+     * Traverses the graph transitions and removes any states that cannot be reached.
+     * Unreachable states will fail on deployment to AWS Step Functions.
+     *
+     * Note: If this optimization is turned off, it is likely the output ASL will fail.
+     *       Functionless creates some unreachable that this logic is expected to remove.
+     *       Only turn this off if you intend to preform similar logic or use the ASL for another
+     *       purpose than AWS Step Functions.
+     */
     removeUnreachableStates: boolean;
+    /**
+     * When {@link Choice} states are chained together, they can be simplified by merging the branches together.
+     *
+     * ```ts
+     * if(a) {
+     *   if(b) {
+     *   } else {
+     *   }
+     * }
+     *
+     * =>
+     *
+     * ```ts
+     * if(a && b) {}
+     * else(a) {}
+     * ```
+     *
+     * In ASL this may remove unnecessary state transitions without any impact on the logic.
+     *
+     * Note: This could make the ASL itself larger when the same Choice is merged into multiple calling choices.
+     *       Turn off at the cost of adding more state transitions.
+     */
     joinConsecutiveChoices: boolean;
+    /**
+     * The Functionless transpiler and sometimes user can can create states that don't do anything.
+     *
+     * Functionless does this to make the transpilation logic simpler by adding empty, targetable named nodes.
+     *
+     * This optimization flag finds all {@link Pass} states that do nothing but transition to another state and removes it from the graph.
+     *
+     * The previous and next states are then wired together with no impact on the logic.
+     */
     removeNoOpStates: boolean;
   }
 
   export function optimizeGraph(
     startState: string,
     states: States,
-    _options: Partial<OptimizeOptions>
+    _options?: Partial<OptimizeOptions>
   ): States {
     const options = {
       ...DefaultOptimizeOptions,
@@ -5893,6 +5958,9 @@ namespace ASLOptimizer {
       : reducedGraph;
   }
 
+  /**
+   * Run optimizations that reduce the number of states in the graph
+   */
   function reduceGraph(
     startState: string,
     states: States,

@@ -14,7 +14,7 @@ import {
   SynthError,
   StepFunctionError,
 } from "../src";
-import { StateMachine, States, Task } from "../src/asl";
+import { ASLOptions, StateMachine, States, Task } from "../src/asl";
 import { Function } from "../src/function";
 import { initStepFunctionApp, normalizeCDKJson, Person } from "./util";
 
@@ -504,6 +504,88 @@ test("boolean logic", () => {
       orTruthyConstantString: "hi" || input.s,
       orAllConstant: false || true,
       orVariable: input.b || input.s,
+    };
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test.each([
+  ["with", undefined],
+  [
+    "without",
+    {
+      optimization: {
+        joinConsecutiveChoices: false,
+        optimizeVariableAssignments: false,
+        removeNoOpStates: false,
+        removeUnreachableStates: false,
+      },
+    } as ASLOptions,
+  ],
+])("%s optimizer", (_, opt) => {
+  const { stack } = initStepFunctionApp();
+
+  const definition = new StepFunction<
+    {
+      obj: { a: string };
+      arr: number[];
+      x: boolean;
+    },
+    any
+  >(stack, "sfn2", { asl: opt }, async (input) => {
+    const obj = { 1: "a" };
+    const arr = [1];
+    const obj2 = input.obj;
+    const arr2 = input.arr;
+    let a;
+    if (input.x) {
+      a = "a";
+    } else {
+      a = "b";
+    }
+    const z = a;
+    // does not optimize
+    let b = { c: "" };
+    if (input.x) {
+      b.c = "a";
+    } else {
+      b.c = "b";
+    }
+    const y = b;
+    let c = { c: "" };
+    if (input.x) {
+      c.c = "a";
+    } else {
+      c.c = "b";
+    }
+    const x = c.c;
+    let d = { c: { c: "" } };
+    const xx = { c: "1" };
+    const yy = { c: "2" };
+    if (input.x) {
+      d.c = xx;
+    } else {
+      d.c = yy;
+    }
+    const w = d.c;
+    const e = { d: "d" };
+    const v = e.d;
+    const f = { e: { f: "e" } };
+    const u = f.e;
+    const g = { e: "f" };
+    return {
+      a: obj2.a,
+      b: arr2[0],
+      c: obj["1"],
+      d: arr[0],
+      z,
+      y,
+      x,
+      w,
+      v,
+      u,
+      t: `this ${g.e}`,
     };
   }).definition;
 

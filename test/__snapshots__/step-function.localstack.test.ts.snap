@@ -4119,87 +4119,8 @@ Object {
           "Next": "8y",
           "Variable": "$$.Execution.Id",
         },
-        Object {
-          "Next": "true__input.a && input.b",
-          "Not": Object {
-            "And": Array [
-              Object {
-                "And": Array [
-                  Object {
-                    "IsPresent": true,
-                    "Variable": "$.input.a",
-                  },
-                  Object {
-                    "IsNull": false,
-                    "Variable": "$.input.a",
-                  },
-                ],
-              },
-              Object {
-                "Or": Array [
-                  Object {
-                    "And": Array [
-                      Object {
-                        "IsString": true,
-                        "Variable": "$.input.a",
-                      },
-                      Object {
-                        "Not": Object {
-                          "And": Array [
-                            Object {
-                              "IsString": true,
-                              "Variable": "$.input.a",
-                            },
-                            Object {
-                              "StringEquals": "",
-                              "Variable": "$.input.a",
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                  Object {
-                    "And": Array [
-                      Object {
-                        "IsNumeric": true,
-                        "Variable": "$.input.a",
-                      },
-                      Object {
-                        "Not": Object {
-                          "And": Array [
-                            Object {
-                              "IsNumeric": true,
-                              "Variable": "$.input.a",
-                            },
-                            Object {
-                              "NumericEquals": 0,
-                              "Variable": "$.input.a",
-                            },
-                          ],
-                        },
-                      },
-                    ],
-                  },
-                  Object {
-                    "And": Array [
-                      Object {
-                        "IsBoolean": true,
-                        "Variable": "$.input.a",
-                      },
-                      Object {
-                        "BooleanEquals": true,
-                        "Variable": "$.input.a",
-                      },
-                    ],
-                  },
-                ],
-              },
-            ],
-          },
-        },
       ],
-      "Default": "false__input.a && input.b",
+      "Default": "input.a && input.b",
       "Type": "Choice",
     },
     "1__return {andVar: c, and: input.a && input.b, or: input.a || input.b, invN": Object {
@@ -9819,7 +9740,7 @@ Object {
     },
     "return item.Item.val.N": Object {
       "End": true,
-      "InputPath": "$.item.Item.val.N",
+      "InputPath": "$.heap28.Item.val.N",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -10857,7 +10778,7 @@ Object {
     },
     "return item.Item.val.N": Object {
       "End": true,
-      "InputPath": "$.item.Item.val.N",
+      "InputPath": "$.heap24.Item.val.N",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -12287,14 +12208,18 @@ Object {
       "Type": "Pass",
     },
     "d.c = xx": Object {
-      "InputPath": "$.xx",
       "Next": "e = {d: \\"d\\"}",
+      "Parameters": Object {
+        "c": "1",
+      },
       "ResultPath": "$.d.c",
       "Type": "Pass",
     },
     "d.c = yy": Object {
-      "InputPath": "$.yy",
       "Next": "e = {d: \\"d\\"}",
+      "Parameters": Object {
+        "c": "2",
+      },
       "ResultPath": "$.d.c",
       "Type": "Pass",
     },
@@ -12984,7 +12909,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "z 1",
+          "Next": "return z",
           "Variable": "$.heap54.arr[0]",
         },
       ],
@@ -13177,7 +13102,7 @@ Object {
       "Type": "Pass",
     },
     "return z": Object {
-      "InputPath": "$.z",
+      "InputPath": "$.heap54.arr[0]",
       "Next": "handleResult__1__z = [0].map(function (z))[0]",
       "ResultPath": "$.heap54.arr[0]",
       "Type": "Pass",
@@ -13204,12 +13129,6 @@ Object {
       "InputPath": "$.heap43[1:]",
       "Next": "hasNext__for(b of [3])",
       "ResultPath": "$.heap43",
-      "Type": "Pass",
-    },
-    "z 1": Object {
-      "InputPath": "$.heap54.arr[0]",
-      "Next": "return z",
-      "ResultPath": "$.z",
       "Type": "Pass",
     },
     "z = [0].map(function (z))[0]": Object {
@@ -13851,85 +13770,8 @@ Object {
           ],
           "Next": "1__{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if 1",
         },
-        Object {
-          "And": Array [
-            Object {
-              "And": Array [
-                Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.f",
-                },
-                Object {
-                  "IsNull": false,
-                  "Variable": "$.input.f",
-                },
-              ],
-            },
-            Object {
-              "Or": Array [
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.input.f",
-                    },
-                    Object {
-                      "Not": Object {
-                        "And": Array [
-                          Object {
-                            "IsString": true,
-                            "Variable": "$.input.f",
-                          },
-                          Object {
-                            "StringEquals": "",
-                            "Variable": "$.input.f",
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsNumeric": true,
-                      "Variable": "$.input.f",
-                    },
-                    Object {
-                      "Not": Object {
-                        "And": Array [
-                          Object {
-                            "IsNumeric": true,
-                            "Variable": "$.input.f",
-                          },
-                          Object {
-                            "NumericEquals": 0,
-                            "Variable": "$.input.f",
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.input.f",
-                    },
-                    Object {
-                      "BooleanEquals": true,
-                      "Variable": "$.input.f",
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-          "Next": "1__{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if 3",
-        },
       ],
-      "Default": "1__{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if 5",
+      "Default": "if(input.f)",
       "Type": "Choice",
     },
     "if(input.t) 1": Object {
@@ -13939,163 +13781,6 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsPresent": true,
-                      "Variable": "$.input.t",
-                    },
-                    Object {
-                      "IsNull": false,
-                      "Variable": "$.input.t",
-                    },
-                  ],
-                },
-                Object {
-                  "Or": Array [
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.input.t",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsString": true,
-                                "Variable": "$.input.t",
-                              },
-                              Object {
-                                "StringEquals": "",
-                                "Variable": "$.input.t",
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.input.t",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsNumeric": true,
-                                "Variable": "$.input.t",
-                              },
-                              Object {
-                                "NumericEquals": 0,
-                                "Variable": "$.input.t",
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.input.t",
-                        },
-                        Object {
-                          "BooleanEquals": true,
-                          "Variable": "$.input.t",
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsPresent": true,
-                      "Variable": "$.input.t",
-                    },
-                    Object {
-                      "IsNull": false,
-                      "Variable": "$.input.t",
-                    },
-                  ],
-                },
-                Object {
-                  "Or": Array [
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.input.t",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsString": true,
-                                "Variable": "$.input.t",
-                              },
-                              Object {
-                                "StringEquals": "",
-                                "Variable": "$.input.t",
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.input.t",
-                        },
-                        Object {
-                          "Not": Object {
-                            "And": Array [
-                              Object {
-                                "IsNumeric": true,
-                                "Variable": "$.input.t",
-                              },
-                              Object {
-                                "NumericEquals": 0,
-                                "Variable": "$.input.t",
-                              },
-                            ],
-                          },
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.input.t",
-                        },
-                        Object {
-                          "BooleanEquals": true,
-                          "Variable": "$.input.t",
-                        },
-                      ],
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-          "Next": "true__return {true: if(input.t), false: if(input.f), constantTrue: if(true)",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "And": Array [
-                Object {
                   "IsPresent": true,
                   "Variable": "$.input.t",
                 },
@@ -14166,7 +13851,7 @@ Object {
               ],
             },
           ],
-          "Next": "false__return {true: if(input.t), false: if(input.f), constantTrue: if(true",
+          "Next": "return {true: if(input.t), false: if(input.f), constantTrue: if(true), cons",
         },
       ],
       "Default": "1__{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if 7",
