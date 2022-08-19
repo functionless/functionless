@@ -224,6 +224,24 @@ describe("serialize", () => {
       expect(bundled.text).toMatchSnapshot();
       expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
     });
+
+    const describeAlarms = $AWS.SDK.CloudWatch.describeAlarms;
+
+    test("SDK.CloudWatch.describeAlarms referenced", async () => {
+      const [srlz] = await serialize(async () => {
+        return describeAlarms(
+          {},
+          {
+            iam: { resources: ["*"] },
+          }
+        );
+      }, []);
+      expect(srlz).toMatchSnapshot();
+
+      const bundled = await bundle(srlz);
+      expect(bundled.text).toMatchSnapshot();
+      expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
+    });
   });
 
   describe("sfn", () => {
