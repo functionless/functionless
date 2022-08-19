@@ -48,7 +48,7 @@ There are three ways to configure a Trigger:
 
 1. pass a [Function](./function/index.md) to the `lambdaTriggers` property when instantiating the `UserPool`.
 
-````ts
+```ts
 // option 1 - in-line the Function
 const userPool = new UserPool(stack, "UserPool", {
   lambdaTriggers: {
@@ -62,6 +62,7 @@ const userPool = new UserPool(stack, "UserPool", {
     ),
   },
 });
+```
 
 2. Call the specific `userPool.onXXX` method:
 
@@ -72,7 +73,7 @@ userPool.onCreateAuthChallenge(
     return event;
   })
 );
-````
+```
 
 3. Call `userPool.on`.
 

@@ -245,27 +245,9 @@ export interface UserPoolProps
   readonly lambdaTriggers?: UserPoolTriggers;
 }
 
-/**
- * Defines an AWS Cognito User Pool.
- */
-export class UserPool {
+class BaseUserPool {
   public static readonly FunctionlessType = "UserPool";
   public readonly FunctionlessType = UserPool.FunctionlessType;
-
-  /**
-   * Create a {@link UserPool} from a pre-existing {@link aws_cognito.UserPool}.
-   *
-   * @param resource a pre-existing CDK User Pool L2 Construct.
-   * @returns a Functionless {@link UserPool}.
-   */
-  public static from(resource: aws_cognito.UserPool): UserPool {
-    return new UserPool(resource);
-  }
-
-  /**
-   * The underlying {@link aws_cognito.UserPool} instance.
-   */
-  readonly resource: aws_cognito.UserPool;
 
   /**
    * Create a new {@link UserPool} from an existing {@link aws_cognito.UserPool}.
@@ -274,42 +256,12 @@ export class UserPool {
    * @param resource an existing UserPool Construct.
    * @see {@link aws_cognito.UserPool}
    */
-  constructor(resource: aws_cognito.UserPool);
-
-  /**
-   * Create a new AWS Cognito {@link UserPool}.
-   *
-   * @param scope Construct scope to instantiate the UserPool in.
-   * @param id id of this UserPool within
-   * @param props the {@link UserPoolProps}.
-   * @see {@link aws_cognito.UserPool}
-   */
-  constructor(scope: Construct, id: string, props?: UserPoolProps);
-
   constructor(
-    ...args:
-      | [resource: aws_cognito.UserPool]
-      | [scope: Construct, id: string, props?: UserPoolProps]
-  ) {
-    if (args.length === 1) {
-      this.resource = args[0];
-    } else {
-      const [scope, id, props] = args;
-      this.resource = new aws_cognito.UserPool(scope, id, {
-        ...props,
-        lambdaTriggers: props?.lambdaTriggers
-          ? Object.fromEntries(
-              Object.entries(props.lambdaTriggers).map(
-                ([triggerName, triggerHandler]) => [
-                  triggerName,
-                  triggerHandler.resource,
-                ]
-              )
-            )
-          : undefined,
-      });
-    }
-  }
+    /**
+     * The underlying {@link aws_cognito.UserPool} instance.
+     */
+    readonly resource: aws_cognito.UserPool
+  ) {}
 
   /**
    * Configure AWS Cognito to trigger a {@link Function}.
@@ -583,5 +535,66 @@ export class UserPool {
     handler: Trigger<lambda.VerifyAuthChallengeResponseTriggerEvent>
   ): void {
     return this.on("verifyAuthChallengeResponse", handler);
+  }
+}
+
+/**
+ * An AWS Cognito User Pool.
+ */
+export interface IUserPool extends BaseUserPool {}
+
+/**
+ * Defines an AWS Cognito User Pool.
+ *
+ * ```ts
+ * const userPool = new UserPool(stack, "UserPool", {
+ *   lambdaTriggers: {
+ *     createAuthChallenge: new Function(
+ *       stack,
+ *       "CreateAuthChallenge",
+ *       async (event) => {
+ *         // implement logic for the CreateAuthChallenge lifecycle event
+ *         return event;
+ *       }
+ *     ),
+ *   },
+ * });
+ * ```
+ */
+export class UserPool extends BaseUserPool implements IUserPool {
+  /**
+   * Create a {@link UserPool} from a pre-existing {@link aws_cognito.UserPool}.
+   *
+   * @param resource a pre-existing CDK User Pool L2 Construct.
+   * @returns a Functionless {@link UserPool}.
+   */
+  public static from(resource: aws_cognito.UserPool): IUserPool {
+    return new BaseUserPool(resource);
+  }
+
+  /**
+   * Create a new AWS Cognito {@link UserPool}.
+   *
+   * @param scope Construct scope to instantiate the UserPool in.
+   * @param id id of this UserPool within
+   * @param props the {@link UserPoolProps}.
+   * @see {@link aws_cognito.UserPool}
+   */
+  constructor(scope: Construct, id: string, props?: UserPoolProps) {
+    super(
+      new aws_cognito.UserPool(scope, id, {
+        ...props,
+        lambdaTriggers: props?.lambdaTriggers
+          ? Object.fromEntries(
+              Object.entries(props.lambdaTriggers).map(
+                ([triggerName, triggerHandler]) => [
+                  triggerName,
+                  triggerHandler.resource,
+                ]
+              )
+            )
+          : undefined,
+      })
+    );
   }
 }
