@@ -4794,20 +4794,10 @@ export namespace ASLGraph {
   ): States {
     const namedStates = internal(startState, states, { localNames: {} });
 
-    const reducedGraph = ASLOptimizer.reduceGraph(
+    return ASLOptimizer.optimizeGraph(
       startState,
       Object.fromEntries(namedStates)
     );
-
-    /**
-     * Find any choice states that can be joined with their target state.
-     * TODO: generalize the optimization statements.
-     */
-    const updatedStates = ASLOptimizer.joinChainedChoices(
-      startState,
-      reducedGraph
-    );
-    return ASLOptimizer.removeUnreachableStates(startState, updatedStates);
 
     function internal(
       parentName: string,
@@ -5871,45 +5861,57 @@ namespace ASLOptimizer {
     return names.filter((n): n is string => !!n);
   }
 
-  export function reduceGraph(startState: string, states: States): States {
-    const { stats } = analyzeVariables(startState, states);
+  export const DefaultOptimizeOptions: OptimizeOptions = {
+    optimizeVariableAssignments: true,
+    removeUnreachableStates: true,
+    joinConsecutiveChoices: true,
+    removeNoOpStates: true,
+  };
 
-    const [statsMap, updatedStates] = stats
-      .map((s) => s.variable)
-      .reduce(
-        ([statsMap, states], sourceVariable) => {
-          return (
-            tryRemoveVariable(sourceVariable, statsMap, states) ?? [
-              statsMap,
-              states,
-            ]
-          );
-        },
-        [Object.fromEntries(stats.map((s) => [s.variable, s])), states]
-      );
+  export interface OptimizeOptions {
+    optimizeVariableAssignments: boolean;
+    removeUnreachableStates: boolean;
+    joinConsecutiveChoices: boolean;
+    removeNoOpStates: boolean;
+  }
 
-    const unused = Object.values(statsMap).filter((s) => s.usage.length === 0);
+  export function optimizeGraph(
+    startState: string,
+    states: States,
+    _options: Partial<OptimizeOptions>
+  ): States {
+    const options = {
+      ...DefaultOptimizeOptions,
+      ..._options,
+    };
 
-    const removedStates = [
-      ...findEmptyStates(startState, updatedStates),
-      ...unused.flatMap((u) =>
-        u.assigns.flatMap((a) => {
-          // TODO: eww mutation in a map... :( sad sam
-          if (a.usage.type === "StateOutput" || a.usage.state === startState) {
-            // state outputs should not be removed as they can still have effects.
-            // Also do not remove the start states of sub-graphs.
-            // Instead we will update their result path to be null
-            // @ts-ignore
-            updatedStates[a.usage.state] = {
-              ...updatedStates[a.usage.state],
-              ResultPath: null,
-            };
-            return [];
-          }
-          return [a.usage.state];
-        })
-      ),
-    ];
+    const reducedGraph = reduceGraph(startState, states, options);
+
+    // finally run remove unreachable states (when enabled) to ensure any isolated sub-graphs are removed.
+    return options.removeUnreachableStates
+      ? removeUnreachableStates(startState, reducedGraph)
+      : reducedGraph;
+  }
+
+  function reduceGraph(
+    startState: string,
+    states: States,
+    options: OptimizeOptions
+  ): States {
+    const collapsedStates = options.joinConsecutiveChoices
+      ? joinChainedChoices(startState, states)
+      : states;
+
+    const [unusedAssignmentStates, updatedStates] =
+      options.optimizeVariableAssignments
+        ? optimizeVariableAssignment(startState, collapsedStates)
+        : [[], collapsedStates];
+
+    const noOpStates = options.removeNoOpStates
+      ? findEmptyStates(startState, updatedStates)
+      : [];
+
+    const removedStates = [...noOpStates, ...unusedAssignmentStates];
 
     const removedTransitions = computeRemovedStateToUpdatedTransition(
       new Set(removedStates),
@@ -6014,6 +6016,53 @@ namespace ASLOptimizer {
           })
       );
     }
+  }
+
+  /**
+   * @returns states with assignments that are unused, updates graph states (with the unused ones)
+   */
+  function optimizeVariableAssignment(
+    startState: string,
+    states: States
+  ): [string[], States] {
+    const { stats } = analyzeVariables(startState, states);
+
+    const [statsMap, updatedStates] = stats
+      .map((s) => s.variable)
+      .reduce(
+        ([statsMap, states], sourceVariable) => {
+          return (
+            tryRemoveVariable(sourceVariable, statsMap, states) ?? [
+              statsMap,
+              states,
+            ]
+          );
+        },
+        [Object.fromEntries(stats.map((s) => [s.variable, s])), states]
+      );
+
+    const unusedAssignments = Object.values(statsMap).filter(
+      (s) => s.usage.length === 0
+    );
+
+    const unusedAssignmentStates = unusedAssignments.flatMap((u) =>
+      u.assigns.flatMap((a) => {
+        if (a.usage.type === "StateOutput" || a.usage.state === startState) {
+          // state outputs should not be removed as they can still have effects.
+          // Also do not remove the start states of sub-graphs.
+          // Instead we will update their result path to be null
+          // @ts-ignore
+          updatedStates[a.usage.state] = {
+            ...updatedStates[a.usage.state],
+            ResultPath: null,
+          };
+          return [];
+        }
+        return [a.usage.state];
+      })
+    );
+
+    return [unusedAssignmentStates, updatedStates];
   }
 
   /**
@@ -6774,7 +6823,7 @@ namespace ASLOptimizer {
    * 5            - Task
    * 6            - Task
    */
-  export function joinChainedChoices(startState: string, stateMap: States) {
+  function joinChainedChoices(startState: string, stateMap: States) {
     const updatedStates: Record<string, State | null> = {};
 
     depthFirst(startState);
