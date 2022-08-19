@@ -15,6 +15,7 @@ Functionless supports integrations between some AWS services and Event Bridge. S
 | Table          |                 |               |                                        |
 | App Sync       |                 | Coming Soon   |                                        |
 | API Gateway    |                 | &#x2705;      |                                        |
+| Secret         |                 |               |                                        |
 
 See [issues](https://github.com/functionless/functionless/issues?q=is%3Aissue+is%3Aopen+label%3Aevent-bridge) for progress or create a new issue in the form `Event Bridge + [Service]`.
 

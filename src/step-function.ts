@@ -1104,11 +1104,11 @@ class BaseExpressStepFunction<
         this.resource.grantStartSyncExecution(context.resource);
       },
       preWarm(preWarmContext) {
-        preWarmContext.getOrInit(PrewarmClients.STEP_FUNCTIONS);
+        preWarmContext.getOrInit(PrewarmClients.StepFunctions);
       },
       call: async (args, prewarmContext) => {
         const stepFunctionsClient = prewarmContext.getOrInit<StepFunctions>(
-          PrewarmClients.STEP_FUNCTIONS
+          PrewarmClients.StepFunctions
         );
         const [payload] = args;
         const result = await stepFunctionsClient
@@ -1386,11 +1386,11 @@ class BaseStandardStepFunction<
         this.resource.grantStartExecution(context.resource);
       },
       preWarm(preWarmContext) {
-        preWarmContext.getOrInit(PrewarmClients.STEP_FUNCTIONS);
+        preWarmContext.getOrInit(PrewarmClients.StepFunctions);
       },
       call: async (args, prewarmContext) => {
         const stepFunctionsClient = prewarmContext.getOrInit<StepFunctions>(
-          PrewarmClients.STEP_FUNCTIONS
+          PrewarmClients.StepFunctions
         );
         const [payload] = args;
         const result = await stepFunctionsClient
@@ -1451,11 +1451,11 @@ class BaseStandardStepFunction<
     native: {
       bind: (context) => this.resource.grantRead(context.resource),
       preWarm(prewarmContext) {
-        prewarmContext.getOrInit(PrewarmClients.STEP_FUNCTIONS);
+        prewarmContext.getOrInit(PrewarmClients.StepFunctions);
       },
       call: async (args, prewarmContext) => {
         const stepFunctionClient = prewarmContext.getOrInit<StepFunctions>(
-          PrewarmClients.STEP_FUNCTIONS
+          PrewarmClients.StepFunctions
         );
 
         const [arn] = args;
