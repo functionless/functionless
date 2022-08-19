@@ -211,10 +211,12 @@ describe("serialize", () => {
   describe("sdk", () => {
     test("SDK.CloudWatch.describeAlarms", async () => {
       const [srlz] = await serialize(() => {
-        return $AWS.SDK.CloudWatch.describeAlarms({
-          params: {},
-          iamResources: ["*"],
-        });
+        return $AWS.SDK.CloudWatch.describeAlarms(
+          {},
+          {
+            iam: { resources: ["*"] },
+          }
+        );
       }, []);
       expect(srlz).toMatchSnapshot();
 

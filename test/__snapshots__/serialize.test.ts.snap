@@ -14347,11 +14347,12 @@ function __f3(__0, __1) {
     let _fnls = __fnls;
 
     return (() => {
-    return _fnls[\\"$AWS\\"].SDK.CloudWatch.describeAlarms({
-        params: {},
-        iamResources: [
-            \\"*\\"
-        ]
+    return _fnls[\\"$AWS\\"].SDK.CloudWatch.describeAlarms({}, {
+        iam: {
+            resources: [
+                \\"*\\"
+            ]
+        }
     });
 });;
   }).apply(undefined, undefined).apply(this, arguments);
@@ -14646,11 +14647,12 @@ function __f0() {
   return function() {
     let _fnls = __fnls;
     return () => {
-      return _fnls[\\"$AWS\\"].SDK.CloudWatch.describeAlarms({
-        params: {},
-        iamResources: [
-          \\"*\\"
-        ]
+      return _fnls[\\"$AWS\\"].SDK.CloudWatch.describeAlarms({}, {
+        iam: {
+          resources: [
+            \\"*\\"
+          ]
+        }
       });
     };
     ;

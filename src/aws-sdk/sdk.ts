@@ -15,7 +15,7 @@ import { makeIntegration } from "../integration";
 import { evalToConstant } from "../util";
 import { SDK_INTEGRATION_SERVICE_NAME } from "./asl";
 import { IAM_SERVICE_PREFIX } from "./iam";
-import type { SDK as TSDK, ServiceKeys, SdkCallInput } from "./types";
+import type { SDK as TSDK, ServiceKeys, SdkCallOptions } from "./types";
 
 export const SDK: TSDK = new Proxy<any>(AWS, {
   isExtensible() {
@@ -59,8 +59,8 @@ function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
     kind: `$AWS.SDK.${serviceName}`,
     native: {
       bind(context, args) {
-        const [optionsArg] = args;
-        const options = validateSdkCallArgument(optionsArg);
+        const [_, optionsArg] = args;
+        const options = validateSdkCallOptions(optionsArg);
 
         context.resource.addToRolePolicy(
           policyStatementForSdkCall(serviceName, methodName, options)
@@ -80,12 +80,14 @@ function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
             new AWS[serviceName](props?.clientConfigRetriever?.(key)),
         });
 
-        return client[methodName](args[0].params).promise();
+        const [payloadArg] = args;
+
+        return client[methodName](payloadArg).promise();
       },
     },
     asl: (call, context) => {
-      const [optionsArg] = call.args;
-      const options = validateSdkCallArgument(optionsArg);
+      const [payloadArg, optionsArg] = call.args;
+      const options = validateSdkCallOptions(optionsArg);
 
       context.role.addToPrincipalPolicy(
         policyStatementForSdkCall(serviceName, methodName, options)
@@ -95,7 +97,7 @@ function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
         options.aslServiceName ??
         SDK_INTEGRATION_SERVICE_NAME[serviceName] ??
         serviceName.toLowerCase();
-      const input = options.params?.expr;
+      const input = payloadArg?.expr;
 
       if (!input) {
         throw new SynthError(
@@ -133,10 +135,26 @@ function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
   });
 }
 
+/**
+ * This generates the iam.PolicyStatement
+ *
+ * @param serviceName the name of the AWS Service to call, in Pascal Case (e.g. `CloudWatch`)
+ * @param methodName the api method used (e.g. `describeAlarms`)
+ * @param options additional options to the sdk call including iam overrides
+ * @returns the iam PolicyStatement that grant the caller the requested permissions
+ *
+ * @example
+ * policyStatementForSdkCall("CloudWatch", "describeAlarms", { iam: { resources: ["arn:aws:cloudwatch:us-east-1:123456789012:alarm/test-*"] } }) =>
+ * {
+ *   "Effect": "Allow",
+ *   "Action": "cloudwatch:DescribeAlarms",
+ *   "Resource": "arn:aws:cloudwatch:us-east-1:123456789012:alarm/test-*"
+ * }
+ */
 function policyStatementForSdkCall(
   serviceName: ServiceKeys,
   methodName: string,
-  options: SdkCallInput<any>
+  options: SdkCallOptions
 ): aws_iam.PolicyStatement {
   // if not explicitly mapped default to the lowercase service name, which is correct ~60% of the time
   const defaultServicePrefix =
@@ -147,15 +165,15 @@ function policyStatementForSdkCall(
 
   return new aws_iam.PolicyStatement({
     effect: aws_iam.Effect.ALLOW,
-    actions: options.iamActions ?? defaultIamActions,
-    resources: options.iamResources,
-    conditions: options.iamConditions,
+    actions: options.iam.actions ?? defaultIamActions,
+    resources: options.iam.resources,
+    conditions: options.iam.conditions,
   });
 }
 
-function validateSdkCallArgument(
+function validateSdkCallOptions(
   arg: Argument | Expr | undefined
-): SdkCallInput<any> {
+): SdkCallOptions {
   const inputExpr = isArgument(arg) ? arg.expr : arg;
 
   if (!inputExpr) {
@@ -172,16 +190,31 @@ function validateSdkCallArgument(
     );
   }
 
-  const params = inputExpr.getProperty("params");
-  const iamResources = inputExpr.getProperty("iamResources");
-  const iamActions = inputExpr.getProperty("iamActions");
-  const iamConditions = inputExpr.getProperty("iamConditions");
+  const iam = inputExpr.getProperty("iam");
   const aslServiceName = inputExpr.getProperty("aslServiceName");
+
+  if (!iam) {
+    throw new SynthError(
+      ErrorCodes.Invalid_Input,
+      `Option 'iam' of a SDK call is required`
+    );
+  }
+
+  if (!isPropAssignExpr(iam) || !isObjectLiteralExpr(iam.expr)) {
+    throw new SynthError(
+      ErrorCodes.Invalid_Input,
+      `Option 'iam' of a SDK call should be an object literal, found ${iam.kindName}`
+    );
+  }
+
+  const iamResources = iam.expr.getProperty("resources");
+  const iamActions = iam.expr.getProperty("actions");
+  const iamConditions = iam.expr.getProperty("conditions");
 
   if (!iamResources) {
     throw new SynthError(
       ErrorCodes.Invalid_Input,
-      `Option 'iamResources' of a SDK call is required`
+      `Option 'iam.resources' of a SDK call is required`
     );
   }
 
@@ -191,7 +224,7 @@ function validateSdkCallArgument(
   ) {
     throw new SynthError(
       ErrorCodes.Invalid_Input,
-      `Option 'iamResources' of a SDK call should be an array, found ${iamResources.kindName}`
+      `Option 'iam.resources' of a SDK call should be an array literal, found ${iamResources.kindName}`
     );
   }
 
@@ -201,7 +234,7 @@ function validateSdkCallArgument(
   ) {
     throw new SynthError(
       ErrorCodes.Invalid_Input,
-      `Option 'iamActions' of a SDK call should be an array, found ${iamActions.kindName}`
+      `Option 'iam.actions' of a SDK call should be an array literal, found ${iamActions.kindName}`
     );
   }
 
@@ -212,7 +245,7 @@ function validateSdkCallArgument(
   ) {
     throw new SynthError(
       ErrorCodes.Invalid_Input,
-      `Option 'iamActions' of a SDK call should be an array, found ${aslServiceName.kindName}`
+      `Option 'aslServiceName' of a SDK call should be a string literal, found ${aslServiceName.kindName}`
     );
   }
 
@@ -224,17 +257,17 @@ function validateSdkCallArgument(
   ) {
     throw new SynthError(
       ErrorCodes.Expected_an_object_literal,
-      `Option 'iamConditions' of a SDK call should be an object, found ${iamConditions.kindName}`
+      `Option 'iam.conditions' of a SDK call should be an object literal, found ${iamConditions.kindName}`
     );
   }
 
   return {
-    params,
-    iamResources: evalToConstant(iamResources.expr)?.constant as any,
-    iamActions:
-      iamActions && (evalToConstant(iamActions.expr)?.constant as any),
-    iamConditions:
-      iamConditions && (evalToConstant(iamConditions.expr)?.constant as any),
+    iam: {
+      resources: evalToConstant(iamResources.expr)?.constant as any,
+      actions: iamActions && (evalToConstant(iamActions.expr)?.constant as any),
+      conditions:
+        iamConditions && (evalToConstant(iamConditions.expr)?.constant as any),
+    },
     aslServiceName:
       aslServiceName && (evalToConstant(aslServiceName.expr)?.constant as any),
   };

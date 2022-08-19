@@ -448,12 +448,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          const result = await $AWS.SDK.CloudWatch.describeAlarms({
-            params: {
+          const result = await $AWS.SDK.CloudWatch.describeAlarms(
+            {
               AlarmNames: [alarm.alarmName],
             },
-            iamResources: [alarm.alarmArn],
-          });
+            {
+              iam: { resources: [alarm.alarmArn] },
+            }
+          );
 
           return result.MetricAlarms?.[0]?.Namespace;
         }

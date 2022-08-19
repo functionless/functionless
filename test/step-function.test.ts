@@ -1360,10 +1360,12 @@ test("iam policy for AWS.SDK.CloudWatch.describeAlarms", () => {
     undefined,
     AWS.CloudWatch.MetricAlarms | undefined
   >(stack, "fn", async () => {
-    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({
-      iamResources: ["*"],
-      params: {},
-    });
+    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
+      {},
+      {
+        iam: { resources: ["*"] },
+      }
+    );
 
     return MetricAlarms;
   });
@@ -1377,11 +1379,13 @@ test("overwrite aslServiceName AWS.SDK.CloudWatch.describeAlarms", () => {
     undefined,
     AWS.CloudWatch.MetricAlarms | undefined
   >(stack, "fn", async () => {
-    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({
-      iamResources: ["*"],
-      params: {},
-      aslServiceName: "cw",
-    });
+    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
+      {},
+      {
+        iam: { resources: ["*"] },
+        aslServiceName: "cw",
+      }
+    );
 
     return MetricAlarms;
   }).definition;
@@ -1395,11 +1399,12 @@ test("overwrite iamActions AWS.SDK.CloudWatch.describeAlarms", () => {
     undefined,
     AWS.CloudWatch.MetricAlarms | undefined
   >(stack, "fn", async () => {
-    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({
-      iamResources: ["*"],
-      params: {},
-      iamActions: ["cloudwatch:Describe*"],
-    });
+    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
+      {},
+      {
+        iam: { resources: ["*"], actions: ["cloudwatch:Describe*"] },
+      }
+    );
 
     return MetricAlarms;
   });
@@ -1413,15 +1418,19 @@ test("add iamConditions AWS.SDK.CloudWatch.describeAlarms", () => {
     undefined,
     AWS.CloudWatch.MetricAlarms | undefined
   >(stack, "fn", async () => {
-    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({
-      iamResources: ["*"],
-      params: {},
-      iamConditions: {
-        StringEquals: {
-          "aws:ResourceTag/env": ["test"],
+    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
+      {},
+      {
+        iam: {
+          resources: ["*"],
+          conditions: {
+            StringEquals: {
+              "aws:ResourceTag/env": ["test"],
+            },
+          },
         },
-      },
-    });
+      }
+    );
 
     return MetricAlarms;
   });
@@ -1429,27 +1438,29 @@ test("add iamConditions AWS.SDK.CloudWatch.describeAlarms", () => {
   expect(normalizeCDKJson(resource.role)).toMatchSnapshot();
 });
 
-test("non-literal params AWS.SDK.CloudWatch.describeAlarms", () => {
+test("non-literal params AWS.SDK.CloudWatch.deleteAlarms", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction<undefined, void>(
     stack,
     "fn",
     async () => {
-      const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({
-        iamResources: ["*"],
-        params: {},
-      });
+      const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
+        {},
+        {
+          iam: { resources: ["*"] },
+        }
+      );
 
       if (MetricAlarms === undefined) {
         return;
       }
 
-      await $AWS.SDK.CloudWatch.deleteAlarms({
-        iamResources: ["*"],
-        params: {
-          AlarmNames: MetricAlarms.map((a) => a.AlarmName as string),
-        },
-      });
+      await $AWS.SDK.CloudWatch.deleteAlarms(
+        { AlarmNames: MetricAlarms.map((a) => a.AlarmName as string) },
+        {
+          iam: { resources: ["*"] },
+        }
+      );
     }
   ).definition;
 
@@ -1462,10 +1473,12 @@ test("return AWS.SDK.CloudWatch.describeAlarms", () => {
     undefined,
     AWS.CloudWatch.MetricAlarms | undefined
   >(stack, "fn", async () => {
-    const alarms = await $AWS.SDK.CloudWatch.describeAlarms({
-      iamResources: ["*"],
-      params: {},
-    });
+    const alarms = await $AWS.SDK.CloudWatch.describeAlarms(
+      {},
+      {
+        iam: { resources: ["*"] },
+      }
+    );
 
     if (alarms.MetricAlarms === undefined) {
       return;
@@ -1483,10 +1496,14 @@ test("return AWS.SDK.CloudWatch.describeAlarms dynamic parameters", () => {
     { prefix: string | undefined },
     AWS.CloudWatch.MetricAlarms | undefined
   >(stack, "fn", async (input) => {
-    const alarms = await $AWS.SDK.CloudWatch.describeAlarms({
-      params: { AlarmNamePrefix: input.prefix ?? "default" },
-      iamResources: ["*"],
-    });
+    const alarms = await $AWS.SDK.CloudWatch.describeAlarms(
+      {
+        AlarmNamePrefix: input.prefix ?? "default",
+      },
+      {
+        iam: { resources: ["*"] },
+      }
+    );
 
     if (alarms.MetricAlarms === undefined) {
       return;
