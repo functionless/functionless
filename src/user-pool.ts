@@ -266,7 +266,7 @@ class BaseUserPool {
   /**
    * Configure AWS Cognito to trigger a {@link Function}.
    *
-   * Usage Pattern 1 - on("<trigger name>")
+   * Usage Pattern 1 - on("triggerName")
    * ```ts
    * userPool.on("createAuthChallenge", new Function(scope, id, async (event) => {
    *   // handle event, set response properties, etc.
@@ -276,8 +276,16 @@ class BaseUserPool {
    * ```
    *
    * Usage Pattern 2 - {@link aws_cognito.UserPoolTriggers}.
+   *
    * ```ts
-   * userPool.on()
+   * userPool.on(
+   *   aws_cognito.UserPoolOperation.CREATE_AUTH_CHALLENGE,
+   *   new Function(scope, id, async (event: CreateAuthChallengeTriggerEvent) => {
+   *                                          // ^ you must explicitly type the even in this case
+   *     // handle event, set response properties, etc.
+   *     event.response... = ..
+   *     return event;
+   *   }));
    * ```
    *
    * @param triggerName name of a trigger in {@link UserPoolTriggers}
