@@ -6242,7 +6242,7 @@ namespace ASLOptimizer {
               Parameters: value,
             };
             // the state takes a literal, clear the usage.
-            updateVariableUsage(targetUsage);
+            statsMap = updateVariableUsage(targetUsage);
           } else {
             /**
              * if the "from" variable we intend to update the prop assignment with will be
@@ -6285,11 +6285,76 @@ namespace ASLOptimizer {
             });
           }
           return;
+        } else if (targetUsage.usage.type === "StateInputProps") {
+          if (
+            !(isMapTaskState(state) || isTaskState(state)) ||
+            typeof state.Parameters !== "object" ||
+            Array.isArray(state.Parameters)
+          ) {
+            return;
+          }
+
+          if (sourceAssign.usage.type === "LiteralAssignment") {
+            const value = accessLiteralAtJsonPathSuffix(
+              targetUsage.usage.from,
+              sourceAssign.usage.to,
+              sourceAssign.usage.value
+            );
+
+            // update the state's parameter to contain the constant value.
+            updatedStates[targetUsage.usage.state] = {
+              ...state,
+              Parameters: updateParameters(
+                targetUsage.usage.props,
+                state.Parameters!,
+                value,
+                false
+              ),
+            };
+
+            // the state takes a literal, clear the usage.
+            statsMap = updateVariableUsage(targetUsage);
+          } else {
+            /**
+             * if the "from" variable we intend to update the prop assignment with will be
+             *  assigned to after the source assignment and before the target assignment, skip.
+             */
+            if (
+              isMutatedInRange(
+                sourceAssign.usage.from,
+                sourceAssign.index,
+                targetUsage.index
+              )
+            ) {
+              return;
+            }
+
+            const updatedFrom = replaceJsonPathPrefix(
+              targetUsage.usage.from,
+              sourceAssign.usage.to,
+              sourceAssign.usage.from
+            );
+
+            updatedStates[targetUsage.usage.state] = {
+              ...state,
+              Parameters: updateParameters(
+                targetUsage.usage.props,
+                state.Parameters!,
+                updatedFrom,
+                true
+              ),
+            };
+
+            statsMap = updateVariableUsage(targetUsage, {
+              ...targetUsage.usage,
+              from: updatedFrom,
+            });
+          }
+          return;
         } else if (
           targetUsage.usage.type === "Filter" ||
           targetUsage.usage.type === "FilterPropAssignment" ||
-          targetUsage.usage.type === "ReturnUsage" ||
-          targetUsage.usage.type === "StateInputProps"
+          targetUsage.usage.type === "ReturnUsage"
         ) {
           // TODO: support more cases.
           return;

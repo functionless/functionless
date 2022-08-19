@@ -7094,7 +7094,7 @@ Object {
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "obj = {str: \\"hello world\\"}",
+      "Next": "return await $AWS.Lambda.Invoke({Function: func, Payload: obj}).Payload.str",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -7103,19 +7103,13 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "obj = {str: \\"hello world\\"}": Object {
-      "Next": "return await $AWS.Lambda.Invoke({Function: func, Payload: obj}).Payload.str",
-      "Result": Object {
-        "str": "hello world",
-      },
-      "ResultPath": "$.obj",
-      "Type": "Pass",
-    },
     "return await $AWS.Lambda.Invoke({Function: func, Payload: obj}).Payload.str": Object {
       "Next": "1__return await $AWS.Lambda.Invoke({Function: func, Payload: obj}).Payload.",
       "Parameters": Object {
         "FunctionName": "__REPLACED_TOKEN",
-        "Payload.$": "$.obj",
+        "Payload": Object {
+          "str": "hello world",
+        },
       },
       "Resource": "__REPLACED_ARN",
       "ResultPath": "$.heap0",
@@ -7201,23 +7195,13 @@ Object {
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "arr = [1, 2, 3]",
+      "Next": "return func(arr)",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
         },
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "arr = [1, 2, 3]": Object {
-      "Next": "return func(arr)",
-      "Result": Array [
-        1,
-        2,
-        3,
-      ],
-      "ResultPath": "$.arr",
       "Type": "Pass",
     },
     "return func(arr)": Object {
@@ -7279,21 +7263,13 @@ Object {
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "obj = {str: \\"hello world\\"}",
+      "Next": "return await func(obj).str",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
         },
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "obj = {str: \\"hello world\\"}": Object {
-      "Next": "return await func(obj).str",
-      "Result": Object {
-        "str": "hello world",
-      },
-      "ResultPath": "$.obj",
       "Type": "Pass",
     },
     "return await func(obj).str": Object {
@@ -7753,7 +7729,7 @@ Object {
       "Parameters": Object {
         "ExpressionAttributeValues": Object {
           ":inc": Object {
-            "N.$": "$.heap7",
+            "N.$": "$.heap6.string",
           },
           ":start": Object {
             "N": "0",
@@ -7761,7 +7737,7 @@ Object {
         },
         "Key": Object {
           "id": Object {
-            "S.$": "$.heap4",
+            "S.$": "$.input.id",
           },
         },
         "TableName": "__REPLACED_TOKEN",
@@ -7777,7 +7753,7 @@ Object {
         "ConsistentRead": true,
         "Key": Object {
           "id": Object {
-            "S.$": "$.heap10",
+            "S.$": "$.input.id",
           },
         },
         "TableName": "__REPLACED_TOKEN",
@@ -7790,12 +7766,6 @@ Object {
       "End": true,
       "InputPath": "$.heap14.string",
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "1__{N: i}": Object {
-      "InputPath": "$.heap6.string",
-      "Next": "1__await $AWS.DynamoDB.UpdateItem({Table: table, Key: {id: {S: input.id}}, ",
-      "ResultPath": "$.heap7",
       "Type": "Pass",
     },
     "1a": Object {
@@ -7851,12 +7821,6 @@ Object {
       "ResultPath": "$.heap14",
       "Type": "Pass",
     },
-    "await $AWS.DynamoDB.UpdateItem({Table: table, Key: {id: {S: input.id}}, Upd": Object {
-      "InputPath": "$.input.id",
-      "Next": "i 1",
-      "ResultPath": "$.heap4",
-      "Type": "Pass",
-    },
     "for(i of [1, 2, 3, 4])": Object {
       "Next": "hasNext__for(i of [1, 2, 3, 4])",
       "Result": Array [
@@ -7876,7 +7840,7 @@ Object {
           "Variable": "$.heap9[0]",
         },
       ],
-      "Default": "item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}},",
+      "Default": "1__item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id",
       "Type": "Choice",
     },
     "i": Object {
@@ -7886,7 +7850,7 @@ Object {
       "Type": "Pass",
     },
     "i 1": Object {
-      "Next": "1__{N: i}",
+      "Next": "1__await $AWS.DynamoDB.UpdateItem({Table: table, Key: {id: {S: input.id}}, ",
       "Parameters": Object {
         "string.$": "States.Format('{}',$.i)",
       },
@@ -7993,7 +7957,7 @@ Object {
           "Next": "tail__for(i of [1, 2, 3, 4])",
         },
       ],
-      "Default": "await $AWS.DynamoDB.UpdateItem({Table: table, Key: {id: {S: input.id}}, Upd",
+      "Default": "i 1",
       "Type": "Choice",
     },
     "if(i === 3)": Object {
@@ -8017,17 +7981,11 @@ Object {
               ],
             },
           ],
-          "Next": "item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}},",
+          "Next": "1__item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id",
         },
       ],
       "Default": "tail__for(i of [1, 2, 3, 4])",
       "Type": "Choice",
-    },
-    "item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}},": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id",
-      "ResultPath": "$.heap10",
-      "Type": "Pass",
     },
     "tail__for(i of [1, 2, 3, 4])": Object {
       "InputPath": "$.heap9[1:]",
@@ -9611,72 +9569,48 @@ Object {
     "1__await func({n: i, id: input.id})": Object {
       "Next": "input.arr[j]",
       "Parameters": Object {
-        "id.$": "$.heap12",
-        "n.$": "$.heap11",
+        "id.$": "$.input.id",
+        "n.$": "$.i__1",
       },
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
       "Type": "Task",
-    },
-    "1__await func({n: i, id: input.id}) 1": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__await func({n: i, id: input.id})",
-      "ResultPath": "$.heap12",
-      "Type": "Pass",
     },
     "1__await func({n: input.arr[i], id: input.id})": Object {
       "Next": "tail__for(i in input.arr)",
       "Parameters": Object {
-        "id.$": "$.heap3",
-        "n.$": "$.heap2",
+        "id.$": "$.input.id",
+        "n.$": "$.heap1.string",
       },
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
       "Type": "Task",
-    },
-    "1__await func({n: input.arr[i], id: input.id}) 1": Object {
-      "InputPath": "$.heap1.string",
-      "Next": "2__await func({n: input.arr[i], id: input.id})",
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
     },
     "1__await func({n: input.arr[i], id: input.id}) 1 1": Object {
-      "Next": "await func({n: i, id: input.id})",
+      "Next": "1__await func({n: i, id: input.id})",
       "Parameters": Object {
-        "id.$": "$.heap9",
-        "n.$": "$.heap8",
+        "id.$": "$.input.id",
+        "n.$": "$.heap7.string",
       },
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
       "Type": "Task",
-    },
-    "1__await func({n: input.arr[i], id: input.id}) 1 2": Object {
-      "InputPath": "$.heap7.string",
-      "Next": "2__await func({n: input.arr[i], id: input.id}) 1",
-      "ResultPath": "$.heap8",
-      "Type": "Pass",
     },
     "1__await func({n: input.arr[j], id: input.id})": Object {
-      "Next": "await func({n: j, id: input.id}) 1",
+      "Next": "1__await func({n: j, id: input.id}) 1",
       "Parameters": Object {
-        "id.$": "$.heap17",
-        "n.$": "$.heap16",
+        "id.$": "$.input.id",
+        "n.$": "$.heap15.string",
       },
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
       "Type": "Task",
-    },
-    "1__await func({n: input.arr[j], id: input.id}) 1": Object {
-      "InputPath": "$.heap15.string",
-      "Next": "2__await func({n: input.arr[j], id: input.id})",
-      "ResultPath": "$.heap16",
-      "Type": "Pass",
     },
     "1__await func({n: j, id: input.id})": Object {
       "Next": "tail__for(i in input.arr) 1",
       "Parameters": Object {
-        "id.$": "$.heap24",
-        "n.$": "$.heap23",
+        "id.$": "$.input.id",
+        "n.$": "$.j",
       },
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
@@ -9685,24 +9619,12 @@ Object {
     "1__await func({n: j, id: input.id}) 1": Object {
       "Next": "tail__for(j in input.arr)",
       "Parameters": Object {
-        "id.$": "$.heap20",
-        "n.$": "$.heap19",
+        "id.$": "$.input.id",
+        "n.$": "$.j",
       },
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
       "Type": "Task",
-    },
-    "1__await func({n: j, id: input.id}) 1 1": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__await func({n: j, id: input.id}) 1",
-      "ResultPath": "$.heap20",
-      "Type": "Pass",
-    },
-    "1__await func({n: j, id: input.id}) 2": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__await func({n: j, id: input.id})",
-      "ResultPath": "$.heap24",
-      "Type": "Pass",
     },
     "1__for(i in input.arr)": Object {
       "ItemsPath": "$.heap5",
@@ -9770,7 +9692,7 @@ Object {
         "ConsistentRead": true,
         "Key": Object {
           "id": Object {
-            "S.$": "$.heap27",
+            "S.$": "$.input.id",
           },
         },
         "TableName": "__REPLACED_TOKEN",
@@ -9778,24 +9700,6 @@ Object {
       "Resource": "__REPLACED_ARN",
       "ResultPath": "$.heap28",
       "Type": "Task",
-    },
-    "2__await func({n: input.arr[i], id: input.id})": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__await func({n: input.arr[i], id: input.id})",
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "2__await func({n: input.arr[i], id: input.id}) 1": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__await func({n: input.arr[i], id: input.id}) 1 1",
-      "ResultPath": "$.heap9",
-      "Type": "Pass",
-    },
-    "2__await func({n: input.arr[j], id: input.id})": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__await func({n: input.arr[j], id: input.id})",
-      "ResultPath": "$.heap17",
-      "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
       "Next": "for(i in input.arr)",
@@ -9808,22 +9712,10 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "await func({n: i, id: input.id})": Object {
-      "InputPath": "$.heap26[0].index",
-      "Next": "1__await func({n: i, id: input.id}) 1",
-      "ResultPath": "$.heap11",
-      "Type": "Pass",
-    },
-    "await func({n: j, id: input.id})": Object {
-      "InputPath": "$.j",
-      "Next": "1__await func({n: j, id: input.id}) 2",
-      "ResultPath": "$.heap23",
-      "Type": "Pass",
-    },
-    "await func({n: j, id: input.id}) 1": Object {
-      "InputPath": "$.j",
-      "Next": "1__await func({n: j, id: input.id}) 1 1",
-      "ResultPath": "$.heap19",
+    "assignValue__i 1": Object {
+      "InputPath": "$.heap26[0].item",
+      "Next": "j = \\"1\\"",
+      "ResultPath": "$.fnls__0__i__1",
       "Type": "Pass",
     },
     "for(i in input.arr)": Object {
@@ -9859,11 +9751,11 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "j = \\"1\\"",
+          "Next": "i 1",
           "Variable": "$.heap26[0]",
         },
       ],
-      "Default": "item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}},",
+      "Default": "1__item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id",
       "Type": "Choice",
     },
     "hasNext__for(j in input.arr)": Object {
@@ -9874,11 +9766,17 @@ Object {
           "Variable": "$.heap22[0]",
         },
       ],
-      "Default": "await func({n: j, id: input.id})",
+      "Default": "1__await func({n: j, id: input.id})",
       "Type": "Choice",
     },
+    "i 1": Object {
+      "InputPath": "$.heap26[0].index",
+      "Next": "assignValue__i 1",
+      "ResultPath": "$.i__1",
+      "Type": "Pass",
+    },
     "input.arr[i]": Object {
-      "Next": "1__await func({n: input.arr[i], id: input.id}) 1",
+      "Next": "1__await func({n: input.arr[i], id: input.id})",
       "Parameters": Object {
         "string.$": "States.Format('{}',$.heap5[0].item)",
       },
@@ -9886,15 +9784,15 @@ Object {
       "Type": "Pass",
     },
     "input.arr[i] 1": Object {
-      "Next": "1__await func({n: input.arr[i], id: input.id}) 1 2",
+      "Next": "1__await func({n: input.arr[i], id: input.id}) 1 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}',$.heap26[0].item)",
+        "string.$": "States.Format('{}',$.fnls__0__i__1)",
       },
       "ResultPath": "$.heap7",
       "Type": "Pass",
     },
     "input.arr[j]": Object {
-      "Next": "1__await func({n: input.arr[j], id: input.id}) 1",
+      "Next": "1__await func({n: input.arr[j], id: input.id})",
       "Parameters": Object {
         "string.$": "States.Format('{}',$.heap22[0].item)",
       },
@@ -9905,12 +9803,6 @@ Object {
       "InputPath": "$.heap28",
       "Next": "return item.Item.val.N",
       "ResultPath": "$.item",
-      "Type": "Pass",
-    },
-    "item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}},": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id",
-      "ResultPath": "$.heap27",
       "Type": "Pass",
     },
     "j": Object {
@@ -10242,7 +10134,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "for(i of [1, 2, 3])",
+          "Next": "v",
           "Variable": "$.heap1.arr[0]",
         },
       ],
@@ -10253,7 +10145,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "for(i of input.arr)",
+          "Next": "v 1",
           "Variable": "$.heap8.arr[0]",
         },
       ],
@@ -10264,7 +10156,7 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "for(i of await func())",
+          "Next": "v 2",
           "Variable": "$.heap15.arr[0]",
         },
       ],
@@ -10740,10 +10632,28 @@ Object {
       "ResultPath": "$.heap22",
       "Type": "Pass",
     },
+    "v": Object {
+      "InputPath": "$.heap1.arr[0]",
+      "Next": "for(i of [1, 2, 3])",
+      "ResultPath": "$.v",
+      "Type": "Pass",
+    },
+    "v 1": Object {
+      "InputPath": "$.heap8.arr[0]",
+      "Next": "for(i of input.arr)",
+      "ResultPath": "$.v__1",
+      "Type": "Pass",
+    },
+    "v 2": Object {
+      "InputPath": "$.heap15.arr[0]",
+      "Next": "for(i of await func())",
+      "ResultPath": "$.v__2",
+      "Type": "Pass",
+    },
     "vai": Object {
       "Next": "1__return vai",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}',$.heap1.arr[0],$.a,$.i)",
+        "string.$": "States.Format('{}{}{}',$.v,$.a,$.i)",
       },
       "ResultPath": "$.heap5",
       "Type": "Pass",
@@ -10751,7 +10661,7 @@ Object {
     "vai 1": Object {
       "Next": "1__return vai 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}',$.heap8.arr[0],$.a,$.i__1)",
+        "string.$": "States.Format('{}{}{}',$.v__1,$.a,$.i__1)",
       },
       "ResultPath": "$.heap12",
       "Type": "Pass",
@@ -10759,7 +10669,7 @@ Object {
     "vai 2": Object {
       "Next": "1__return vai 2",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}',$.heap15.arr[0],$.a,$.i__2)",
+        "string.$": "States.Format('{}{}{}',$.v__2,$.a,$.i__2)",
       },
       "ResultPath": "$.heap20",
       "Type": "Pass",
@@ -10775,40 +10685,28 @@ Object {
     "1__await func({n: i, id: input.id})": Object {
       "Next": "tail__for(i of input.arr)",
       "Parameters": Object {
-        "id.$": "$.heap3",
-        "n.$": "$.heap2",
+        "id.$": "$.input.id",
+        "n.$": "$.heap1.string",
       },
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
       "Type": "Task",
-    },
-    "1__await func({n: i, id: input.id}) 1": Object {
-      "InputPath": "$.heap1.string",
-      "Next": "2__await func({n: i, id: input.id})",
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
     },
     "1__await func({n: i, id: input.id}) 1 1": Object {
       "Next": "j 1",
       "Parameters": Object {
-        "id.$": "$.heap9",
-        "n.$": "$.heap8",
+        "id.$": "$.input.id",
+        "n.$": "$.heap7.string",
       },
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
       "Type": "Task",
     },
-    "1__await func({n: i, id: input.id}) 1 2": Object {
-      "InputPath": "$.heap7.string",
-      "Next": "2__await func({n: i, id: input.id}) 1",
-      "ResultPath": "$.heap8",
-      "Type": "Pass",
-    },
     "1__await func({n: j, id: input.id})": Object {
       "Next": "tail__for(i of input.arr) 1",
       "Parameters": Object {
-        "id.$": "$.heap20",
-        "n.$": "$.heap19",
+        "id.$": "$.input.id",
+        "n.$": "$.heap18.string",
       },
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
@@ -10817,24 +10715,12 @@ Object {
     "1__await func({n: j, id: input.id}) 1": Object {
       "Next": "tail__for(j of input.arr)",
       "Parameters": Object {
-        "id.$": "$.heap14",
-        "n.$": "$.heap13",
+        "id.$": "$.input.id",
+        "n.$": "$.heap12.string",
       },
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": null,
       "Type": "Task",
-    },
-    "1__await func({n: j, id: input.id}) 1 1": Object {
-      "InputPath": "$.heap12.string",
-      "Next": "2__await func({n: j, id: input.id}) 1",
-      "ResultPath": "$.heap13",
-      "Type": "Pass",
-    },
-    "1__await func({n: j, id: input.id}) 2": Object {
-      "InputPath": "$.heap18.string",
-      "Next": "2__await func({n: j, id: input.id})",
-      "ResultPath": "$.heap19",
-      "Type": "Pass",
     },
     "1__item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id": Object {
       "Next": "item",
@@ -10842,7 +10728,7 @@ Object {
         "ConsistentRead": true,
         "Key": Object {
           "id": Object {
-            "S.$": "$.heap23",
+            "S.$": "$.input.id",
           },
         },
         "TableName": "__REPLACED_TOKEN",
@@ -10850,30 +10736,6 @@ Object {
       "Resource": "__REPLACED_ARN",
       "ResultPath": "$.heap24",
       "Type": "Task",
-    },
-    "2__await func({n: i, id: input.id})": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__await func({n: i, id: input.id})",
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "2__await func({n: i, id: input.id}) 1": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__await func({n: i, id: input.id}) 1 1",
-      "ResultPath": "$.heap9",
-      "Type": "Pass",
-    },
-    "2__await func({n: j, id: input.id})": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__await func({n: j, id: input.id})",
-      "ResultPath": "$.heap20",
-      "Type": "Pass",
-    },
-    "2__await func({n: j, id: input.id}) 1": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__await func({n: j, id: input.id}) 1",
-      "ResultPath": "$.heap14",
-      "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
       "Next": "for(i of input.arr)",
@@ -10919,11 +10781,11 @@ Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
-          "Next": "j = 1",
+          "Next": "i 2",
           "Variable": "$.heap22[0]",
         },
       ],
-      "Default": "item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}},",
+      "Default": "1__item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id",
       "Type": "Choice",
     },
     "hasNext__for(j of input.arr)": Object {
@@ -10938,17 +10800,23 @@ Object {
       "Type": "Choice",
     },
     "i 1": Object {
-      "Next": "1__await func({n: i, id: input.id}) 1",
+      "Next": "1__await func({n: i, id: input.id})",
       "Parameters": Object {
         "string.$": "States.Format('{}',$.heap5[0])",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
+    "i 2": Object {
+      "InputPath": "$.heap22[0]",
+      "Next": "j = 1",
+      "ResultPath": "$.i__1",
+      "Type": "Pass",
+    },
     "i 3": Object {
-      "Next": "1__await func({n: i, id: input.id}) 1 2",
+      "Next": "1__await func({n: i, id: input.id}) 1 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}',$.heap22[0])",
+        "string.$": "States.Format('{}',$.i__1)",
       },
       "ResultPath": "$.heap7",
       "Type": "Pass",
@@ -10959,12 +10827,6 @@ Object {
       "ResultPath": "$.item",
       "Type": "Pass",
     },
-    "item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}},": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__item = await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id",
-      "ResultPath": "$.heap23",
-      "Type": "Pass",
-    },
     "j": Object {
       "InputPath": "$.heap16[0]",
       "Next": "i 3",
@@ -10972,7 +10834,7 @@ Object {
       "Type": "Pass",
     },
     "j 1": Object {
-      "Next": "1__await func({n: j, id: input.id}) 1 1",
+      "Next": "1__await func({n: j, id: input.id}) 1",
       "Parameters": Object {
         "string.$": "States.Format('{}',$.j)",
       },
@@ -10980,7 +10842,7 @@ Object {
       "Type": "Pass",
     },
     "j 2": Object {
-      "Next": "1__await func({n: j, id: input.id}) 2",
+      "Next": "1__await func({n: j, id: input.id})",
       "Parameters": Object {
         "string.$": "States.Format('{}',$.j)",
       },
@@ -13554,7 +13416,7 @@ Object {
       "Parameters": Object {
         "Key": Object {
           "id": Object {
-            "S.$": "$.heap19",
+            "S.$": "$.input.id",
           },
         },
         "TableName": "__REPLACED_TOKEN",
@@ -13588,7 +13450,7 @@ Object {
         },
         "Key": Object {
           "id": Object {
-            "S.$": "$.heap0",
+            "S.$": "$.input.id",
           },
         },
         "TableName": "__REPLACED_TOKEN",
@@ -13611,7 +13473,7 @@ Object {
         },
         "Key": Object {
           "id": Object {
-            "S.$": "$.heap3",
+            "S.$": "$.input.id",
           },
         },
         "TableName": "__REPLACED_TOKEN",
@@ -13634,7 +13496,7 @@ Object {
         },
         "Key": Object {
           "id": Object {
-            "S.$": "$.heap5",
+            "S.$": "$.input.id",
           },
         },
         "TableName": "__REPLACED_TOKEN",
@@ -13657,7 +13519,7 @@ Object {
         },
         "Key": Object {
           "id": Object {
-            "S.$": "$.heap8",
+            "S.$": "$.input.id",
           },
         },
         "TableName": "__REPLACED_TOKEN",
@@ -13682,12 +13544,6 @@ Object {
         "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}}}).Item.": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}}}).It",
-      "ResultPath": "$.heap19",
       "Type": "Pass",
     },
     "await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}}}).Item. 1": Object {
@@ -13716,7 +13572,7 @@ Object {
       "Type": "Pass",
     },
     "false__if(false)": Object {
-      "Next": "await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}}}).Item.",
+      "Next": "1__await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}}}).It",
       "Result": "d",
       "ResultPath": "$.heap17",
       "Type": "Pass",
@@ -13827,10 +13683,10 @@ Object {
               ],
             },
           ],
-          "Next": "{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if_no 1",
+          "Next": "1__{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if 3",
         },
       ],
-      "Default": "{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if_no 2",
+      "Default": "1__{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if 5",
       "Type": "Choice",
     },
     "if(input.f) 1": Object {
@@ -13993,7 +13849,7 @@ Object {
               ],
             },
           ],
-          "Next": "{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if_no",
+          "Next": "1__{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if 1",
         },
         Object {
           "And": Array [
@@ -14070,10 +13926,10 @@ Object {
               ],
             },
           ],
-          "Next": "{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if_no 1",
+          "Next": "1__{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if 3",
         },
       ],
-      "Default": "{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if_no 2",
+      "Default": "1__{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if 5",
       "Type": "Choice",
     },
     "if(input.t) 1": Object {
@@ -14313,7 +14169,7 @@ Object {
           "Next": "false__return {true: if(input.t), false: if(input.f), constantTrue: if(true",
         },
       ],
-      "Default": "{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if_no 3",
+      "Default": "1__{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if 7",
       "Type": "Choice",
     },
     "if(true)": Object {
@@ -14417,7 +14273,7 @@ Object {
       "Type": "Pass",
     },
     "true__if(false)": Object {
-      "Next": "await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}}}).Item.",
+      "Next": "1__await $AWS.DynamoDB.GetItem({Table: table, Key: {id: {S: input.id}}}).It",
       "Result": "c",
       "ResultPath": "$.heap17",
       "Type": "Pass",
@@ -14438,30 +14294,6 @@ Object {
       "Next": "if(input.f) 1",
       "Result": "a",
       "ResultPath": "$.heap11",
-      "Type": "Pass",
-    },
-    "{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if_no": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if 1",
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if_no 1": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if 3",
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if_no 2": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if 5",
-      "ResultPath": "$.heap5",
-      "Type": "Pass",
-    },
-    "{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if_no 3": Object {
-      "InputPath": "$.input.id",
-      "Next": "1__{Table: table, Key: {id: {S: input.id}}, UpdateExpression: \\"SET val = if 7",
-      "ResultPath": "$.heap8",
       "Type": "Pass",
     },
   },
