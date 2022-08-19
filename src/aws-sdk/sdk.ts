@@ -17,6 +17,12 @@ import { SDK_INTEGRATION_SERVICE_NAME } from "./asl";
 import { IAM_SERVICE_PREFIX } from "./iam";
 import type { SDK as TSDK, ServiceKeys, SdkCallOptions } from "./types";
 
+/**
+ * A proxy to the AWS JavaScript SDK that allows to call any SDK method
+ * in a StepFunctions StateMachine or a Lambda Function.
+ *
+ * The returned proxy does not allow to override any properties
+ */
 export const SDK: TSDK = new Proxy<any>(AWS, {
   isExtensible() {
     return false;
