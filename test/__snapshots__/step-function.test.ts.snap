@@ -1873,7 +1873,7 @@ Object {
             "Resource": Object {
               "_cfnProperties": Object {
                 "groups": Array [
-                  "#{Token[TOKEN.3285]}",
+                  "#{Token[TOKEN.3281]}",
                 ],
                 "policyDocument": Object {
                   "Statement": Array [
@@ -1894,17 +1894,17 @@ Object {
                 },
                 "policyName": "__REPLACED_TOKEN",
                 "roles": Array [
-                  "#{Token[TOKEN.3283]}",
+                  "#{Token[TOKEN.3279]}",
                 ],
                 "users": Array [
-                  "#{Token[TOKEN.3284]}",
+                  "#{Token[TOKEN.3280]}",
                 ],
               },
               "cfnOptions": Object {},
               "cfnResourceType": "AWS::IAM::Policy",
               "dependsOn": Object {},
               "groups": Array [
-                "#{Token[TOKEN.3285]}",
+                "#{Token[TOKEN.3281]}",
               ],
               "logicalId": "__REPLACED_TOKEN",
               "node": Object {
@@ -1943,7 +1943,7 @@ Object {
               "policyName": "__REPLACED_TOKEN",
               "rawOverrides": Object {},
               "roles": Array [
-                "#{Token[TOKEN.3283]}",
+                "#{Token[TOKEN.3279]}",
               ],
               "stack": Object {
                 "_logicalIds": Object {
@@ -2025,7 +2025,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3245]}",
+                                  "#{Token[TOKEN.3241]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -2048,7 +2048,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -2117,7 +2117,7 @@ Object {
                               "functionName": "testFunction",
                               "handler": "index.handler",
                               "layers": Array [
-                                "#{Token[TOKEN.3252]}",
+                                "#{Token[TOKEN.3248]}",
                               ],
                               "role": "__REPLACED_TOKEN",
                               "runtime": "nodejs14.x",
@@ -2133,7 +2133,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3252]}",
+                              "#{Token[TOKEN.3248]}",
                             ],
                             "logicalId": "__REPLACED_TOKEN",
                             "node": Object {
@@ -2214,7 +2214,7 @@ Object {
                                       "Version": "2012-10-17",
                                     },
                                     "managedPolicyArns": Array [
-                                      "#{Token[TOKEN.3245]}",
+                                      "#{Token[TOKEN.3241]}",
                                     ],
                                     "roleName": "__REPLACED_TOKEN",
                                   },
@@ -2237,7 +2237,7 @@ Object {
                                   "dependsOn": Object {},
                                   "logicalId": "__REPLACED_TOKEN",
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3245]}",
+                                    "#{Token[TOKEN.3241]}",
                                   ],
                                   "node": Object {
                                     "_children": Object {},
@@ -2316,7 +2316,7 @@ Object {
                               "functionName": "testFunction",
                               "handler": "index.handler",
                               "layers": Array [
-                                "#{Token[TOKEN.3252]}",
+                                "#{Token[TOKEN.3248]}",
                               ],
                               "role": "__REPLACED_TOKEN",
                               "runtime": "nodejs14.x",
@@ -2332,7 +2332,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3252]}",
+                              "#{Token[TOKEN.3248]}",
                             ],
                             "logicalId": "__REPLACED_TOKEN",
                             "node": Object {
@@ -2413,7 +2413,7 @@ Object {
                                       "Version": "2012-10-17",
                                     },
                                     "managedPolicyArns": Array [
-                                      "#{Token[TOKEN.3245]}",
+                                      "#{Token[TOKEN.3241]}",
                                     ],
                                     "roleName": "__REPLACED_TOKEN",
                                   },
@@ -2436,7 +2436,7 @@ Object {
                                   "dependsOn": Object {},
                                   "logicalId": "__REPLACED_TOKEN",
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3245]}",
+                                    "#{Token[TOKEN.3241]}",
                                   ],
                                   "node": Object {
                                     "_children": Object {},
@@ -2553,7 +2553,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3245]}",
+                                  "#{Token[TOKEN.3241]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -2576,7 +2576,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -3014,9 +3014,9 @@ Object {
                   "scope": Object {
                     "_assemblyBuilder": Object {
                       "artifacts": Object {},
-                      "assetOutdir": "/tmp/cdk.outNx8jJ4",
+                      "assetOutdir": "/tmp/cdk.outN5soLL",
                       "missing": Array [],
-                      "outdir": "/tmp/cdk.outNx8jJ4",
+                      "outdir": "/tmp/cdk.outN5soLL",
                     },
                     "node": Object {
                       "_children": Object {
@@ -3080,7 +3080,7 @@ Object {
                 "templateOptions": Object {},
               },
               "users": Array [
-                "#{Token[TOKEN.3284]}",
+                "#{Token[TOKEN.3280]}",
               ],
             },
           },
@@ -3180,7 +3180,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3245]}",
+                            "#{Token[TOKEN.3241]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -3203,7 +3203,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3245]}",
+                          "#{Token[TOKEN.3241]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -3272,7 +3272,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3252]}",
+                          "#{Token[TOKEN.3248]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -3288,7 +3288,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3252]}",
+                        "#{Token[TOKEN.3248]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -3369,7 +3369,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -3392,7 +3392,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3245]}",
+                              "#{Token[TOKEN.3241]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -3471,7 +3471,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3252]}",
+                          "#{Token[TOKEN.3248]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -3487,7 +3487,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3252]}",
+                        "#{Token[TOKEN.3248]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -3568,7 +3568,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -3591,7 +3591,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3245]}",
+                              "#{Token[TOKEN.3241]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -3708,7 +3708,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3245]}",
+                            "#{Token[TOKEN.3241]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -3731,7 +3731,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3245]}",
+                          "#{Token[TOKEN.3241]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -4169,9 +4169,9 @@ Object {
             "scope": Object {
               "_assemblyBuilder": Object {
                 "artifacts": Object {},
-                "assetOutdir": "/tmp/cdk.outNx8jJ4",
+                "assetOutdir": "/tmp/cdk.outN5soLL",
                 "missing": Array [],
-                "outdir": "/tmp/cdk.outNx8jJ4",
+                "outdir": "/tmp/cdk.outN5soLL",
               },
               "node": Object {
                 "_children": Object {
@@ -4270,7 +4270,7 @@ Object {
         "Resource": Object {
           "_cfnProperties": Object {
             "groups": Array [
-              "#{Token[TOKEN.3285]}",
+              "#{Token[TOKEN.3281]}",
             ],
             "policyDocument": Object {
               "Statement": Array [
@@ -4291,17 +4291,17 @@ Object {
             },
             "policyName": "__REPLACED_TOKEN",
             "roles": Array [
-              "#{Token[TOKEN.3283]}",
+              "#{Token[TOKEN.3279]}",
             ],
             "users": Array [
-              "#{Token[TOKEN.3284]}",
+              "#{Token[TOKEN.3280]}",
             ],
           },
           "cfnOptions": Object {},
           "cfnResourceType": "AWS::IAM::Policy",
           "dependsOn": Object {},
           "groups": Array [
-            "#{Token[TOKEN.3285]}",
+            "#{Token[TOKEN.3281]}",
           ],
           "logicalId": "__REPLACED_TOKEN",
           "node": Object {
@@ -4340,7 +4340,7 @@ Object {
           "policyName": "__REPLACED_TOKEN",
           "rawOverrides": Object {},
           "roles": Array [
-            "#{Token[TOKEN.3283]}",
+            "#{Token[TOKEN.3279]}",
           ],
           "stack": Object {
             "_logicalIds": Object {
@@ -4422,7 +4422,7 @@ Object {
                               "Version": "2012-10-17",
                             },
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3245]}",
+                              "#{Token[TOKEN.3241]}",
                             ],
                             "roleName": "__REPLACED_TOKEN",
                           },
@@ -4445,7 +4445,7 @@ Object {
                           "dependsOn": Object {},
                           "logicalId": "__REPLACED_TOKEN",
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3245]}",
+                            "#{Token[TOKEN.3241]}",
                           ],
                           "node": Object {
                             "_children": Object {},
@@ -4514,7 +4514,7 @@ Object {
                           "functionName": "testFunction",
                           "handler": "index.handler",
                           "layers": Array [
-                            "#{Token[TOKEN.3252]}",
+                            "#{Token[TOKEN.3248]}",
                           ],
                           "role": "__REPLACED_TOKEN",
                           "runtime": "nodejs14.x",
@@ -4530,7 +4530,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3252]}",
+                          "#{Token[TOKEN.3248]}",
                         ],
                         "logicalId": "__REPLACED_TOKEN",
                         "node": Object {
@@ -4611,7 +4611,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3245]}",
+                                  "#{Token[TOKEN.3241]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -4634,7 +4634,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -4713,7 +4713,7 @@ Object {
                           "functionName": "testFunction",
                           "handler": "index.handler",
                           "layers": Array [
-                            "#{Token[TOKEN.3252]}",
+                            "#{Token[TOKEN.3248]}",
                           ],
                           "role": "__REPLACED_TOKEN",
                           "runtime": "nodejs14.x",
@@ -4729,7 +4729,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3252]}",
+                          "#{Token[TOKEN.3248]}",
                         ],
                         "logicalId": "__REPLACED_TOKEN",
                         "node": Object {
@@ -4810,7 +4810,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3245]}",
+                                  "#{Token[TOKEN.3241]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -4833,7 +4833,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -4950,7 +4950,7 @@ Object {
                               "Version": "2012-10-17",
                             },
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3245]}",
+                              "#{Token[TOKEN.3241]}",
                             ],
                             "roleName": "__REPLACED_TOKEN",
                           },
@@ -4973,7 +4973,7 @@ Object {
                           "dependsOn": Object {},
                           "logicalId": "__REPLACED_TOKEN",
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3245]}",
+                            "#{Token[TOKEN.3241]}",
                           ],
                           "node": Object {
                             "_children": Object {},
@@ -5411,9 +5411,9 @@ Object {
               "scope": Object {
                 "_assemblyBuilder": Object {
                   "artifacts": Object {},
-                  "assetOutdir": "/tmp/cdk.outNx8jJ4",
+                  "assetOutdir": "/tmp/cdk.outN5soLL",
                   "missing": Array [],
-                  "outdir": "/tmp/cdk.outNx8jJ4",
+                  "outdir": "/tmp/cdk.outN5soLL",
                 },
                 "node": Object {
                   "_children": Object {
@@ -5477,7 +5477,7 @@ Object {
             "templateOptions": Object {},
           },
           "users": Array [
-            "#{Token[TOKEN.3284]}",
+            "#{Token[TOKEN.3280]}",
           ],
         },
       },
@@ -5577,7 +5577,7 @@ Object {
                         "Version": "2012-10-17",
                       },
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3245]}",
+                        "#{Token[TOKEN.3241]}",
                       ],
                       "roleName": "__REPLACED_TOKEN",
                     },
@@ -5600,7 +5600,7 @@ Object {
                     "dependsOn": Object {},
                     "logicalId": "__REPLACED_TOKEN",
                     "managedPolicyArns": Array [
-                      "#{Token[TOKEN.3245]}",
+                      "#{Token[TOKEN.3241]}",
                     ],
                     "node": Object {
                       "_children": Object {},
@@ -5669,7 +5669,7 @@ Object {
                     "functionName": "testFunction",
                     "handler": "index.handler",
                     "layers": Array [
-                      "#{Token[TOKEN.3252]}",
+                      "#{Token[TOKEN.3248]}",
                     ],
                     "role": "__REPLACED_TOKEN",
                     "runtime": "nodejs14.x",
@@ -5685,7 +5685,7 @@ Object {
                   "functionName": "testFunction",
                   "handler": "index.handler",
                   "layers": Array [
-                    "#{Token[TOKEN.3252]}",
+                    "#{Token[TOKEN.3248]}",
                   ],
                   "logicalId": "__REPLACED_TOKEN",
                   "node": Object {
@@ -5766,7 +5766,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3245]}",
+                            "#{Token[TOKEN.3241]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -5789,7 +5789,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3245]}",
+                          "#{Token[TOKEN.3241]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -5868,7 +5868,7 @@ Object {
                     "functionName": "testFunction",
                     "handler": "index.handler",
                     "layers": Array [
-                      "#{Token[TOKEN.3252]}",
+                      "#{Token[TOKEN.3248]}",
                     ],
                     "role": "__REPLACED_TOKEN",
                     "runtime": "nodejs14.x",
@@ -5884,7 +5884,7 @@ Object {
                   "functionName": "testFunction",
                   "handler": "index.handler",
                   "layers": Array [
-                    "#{Token[TOKEN.3252]}",
+                    "#{Token[TOKEN.3248]}",
                   ],
                   "logicalId": "__REPLACED_TOKEN",
                   "node": Object {
@@ -5965,7 +5965,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3245]}",
+                            "#{Token[TOKEN.3241]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -5988,7 +5988,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3245]}",
+                          "#{Token[TOKEN.3241]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -6105,7 +6105,7 @@ Object {
                         "Version": "2012-10-17",
                       },
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3245]}",
+                        "#{Token[TOKEN.3241]}",
                       ],
                       "roleName": "__REPLACED_TOKEN",
                     },
@@ -6128,7 +6128,7 @@ Object {
                     "dependsOn": Object {},
                     "logicalId": "__REPLACED_TOKEN",
                     "managedPolicyArns": Array [
-                      "#{Token[TOKEN.3245]}",
+                      "#{Token[TOKEN.3241]}",
                     ],
                     "node": Object {
                       "_children": Object {},
@@ -6566,9 +6566,9 @@ Object {
         "scope": Object {
           "_assemblyBuilder": Object {
             "artifacts": Object {},
-            "assetOutdir": "/tmp/cdk.outNx8jJ4",
+            "assetOutdir": "/tmp/cdk.outN5soLL",
             "missing": Array [],
-            "outdir": "/tmp/cdk.outNx8jJ4",
+            "outdir": "/tmp/cdk.outN5soLL",
           },
           "node": Object {
             "_children": Object {
@@ -6675,7 +6675,7 @@ Object {
             "Resource": Object {
               "_cfnProperties": Object {
                 "groups": Array [
-                  "#{Token[TOKEN.3285]}",
+                  "#{Token[TOKEN.3281]}",
                 ],
                 "policyDocument": Object {
                   "Statement": Array [
@@ -6696,17 +6696,17 @@ Object {
                 },
                 "policyName": "__REPLACED_TOKEN",
                 "roles": Array [
-                  "#{Token[TOKEN.3283]}",
+                  "#{Token[TOKEN.3279]}",
                 ],
                 "users": Array [
-                  "#{Token[TOKEN.3284]}",
+                  "#{Token[TOKEN.3280]}",
                 ],
               },
               "cfnOptions": Object {},
               "cfnResourceType": "AWS::IAM::Policy",
               "dependsOn": Object {},
               "groups": Array [
-                "#{Token[TOKEN.3285]}",
+                "#{Token[TOKEN.3281]}",
               ],
               "logicalId": "__REPLACED_TOKEN",
               "node": Object {
@@ -6745,7 +6745,7 @@ Object {
               "policyName": "__REPLACED_TOKEN",
               "rawOverrides": Object {},
               "roles": Array [
-                "#{Token[TOKEN.3283]}",
+                "#{Token[TOKEN.3279]}",
               ],
               "stack": Object {
                 "_logicalIds": Object {
@@ -6827,7 +6827,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3245]}",
+                                  "#{Token[TOKEN.3241]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -6850,7 +6850,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -6919,7 +6919,7 @@ Object {
                               "functionName": "testFunction",
                               "handler": "index.handler",
                               "layers": Array [
-                                "#{Token[TOKEN.3252]}",
+                                "#{Token[TOKEN.3248]}",
                               ],
                               "role": "__REPLACED_TOKEN",
                               "runtime": "nodejs14.x",
@@ -6935,7 +6935,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3252]}",
+                              "#{Token[TOKEN.3248]}",
                             ],
                             "logicalId": "__REPLACED_TOKEN",
                             "node": Object {
@@ -7016,7 +7016,7 @@ Object {
                                       "Version": "2012-10-17",
                                     },
                                     "managedPolicyArns": Array [
-                                      "#{Token[TOKEN.3245]}",
+                                      "#{Token[TOKEN.3241]}",
                                     ],
                                     "roleName": "__REPLACED_TOKEN",
                                   },
@@ -7039,7 +7039,7 @@ Object {
                                   "dependsOn": Object {},
                                   "logicalId": "__REPLACED_TOKEN",
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3245]}",
+                                    "#{Token[TOKEN.3241]}",
                                   ],
                                   "node": Object {
                                     "_children": Object {},
@@ -7118,7 +7118,7 @@ Object {
                               "functionName": "testFunction",
                               "handler": "index.handler",
                               "layers": Array [
-                                "#{Token[TOKEN.3252]}",
+                                "#{Token[TOKEN.3248]}",
                               ],
                               "role": "__REPLACED_TOKEN",
                               "runtime": "nodejs14.x",
@@ -7134,7 +7134,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3252]}",
+                              "#{Token[TOKEN.3248]}",
                             ],
                             "logicalId": "__REPLACED_TOKEN",
                             "node": Object {
@@ -7215,7 +7215,7 @@ Object {
                                       "Version": "2012-10-17",
                                     },
                                     "managedPolicyArns": Array [
-                                      "#{Token[TOKEN.3245]}",
+                                      "#{Token[TOKEN.3241]}",
                                     ],
                                     "roleName": "__REPLACED_TOKEN",
                                   },
@@ -7238,7 +7238,7 @@ Object {
                                   "dependsOn": Object {},
                                   "logicalId": "__REPLACED_TOKEN",
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3245]}",
+                                    "#{Token[TOKEN.3241]}",
                                   ],
                                   "node": Object {
                                     "_children": Object {},
@@ -7355,7 +7355,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3245]}",
+                                  "#{Token[TOKEN.3241]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -7378,7 +7378,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -7816,9 +7816,9 @@ Object {
                   "scope": Object {
                     "_assemblyBuilder": Object {
                       "artifacts": Object {},
-                      "assetOutdir": "/tmp/cdk.outNx8jJ4",
+                      "assetOutdir": "/tmp/cdk.outN5soLL",
                       "missing": Array [],
-                      "outdir": "/tmp/cdk.outNx8jJ4",
+                      "outdir": "/tmp/cdk.outN5soLL",
                     },
                     "node": Object {
                       "_children": Object {
@@ -7882,7 +7882,7 @@ Object {
                 "templateOptions": Object {},
               },
               "users": Array [
-                "#{Token[TOKEN.3284]}",
+                "#{Token[TOKEN.3280]}",
               ],
             },
           },
@@ -7982,7 +7982,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3245]}",
+                            "#{Token[TOKEN.3241]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -8005,7 +8005,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3245]}",
+                          "#{Token[TOKEN.3241]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -8074,7 +8074,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3252]}",
+                          "#{Token[TOKEN.3248]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -8090,7 +8090,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3252]}",
+                        "#{Token[TOKEN.3248]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -8171,7 +8171,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -8194,7 +8194,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3245]}",
+                              "#{Token[TOKEN.3241]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -8273,7 +8273,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3252]}",
+                          "#{Token[TOKEN.3248]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -8289,7 +8289,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3252]}",
+                        "#{Token[TOKEN.3248]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -8370,7 +8370,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -8393,7 +8393,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3245]}",
+                              "#{Token[TOKEN.3241]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -8510,7 +8510,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3245]}",
+                            "#{Token[TOKEN.3241]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -8533,7 +8533,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3245]}",
+                          "#{Token[TOKEN.3241]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -8971,9 +8971,9 @@ Object {
             "scope": Object {
               "_assemblyBuilder": Object {
                 "artifacts": Object {},
-                "assetOutdir": "/tmp/cdk.outNx8jJ4",
+                "assetOutdir": "/tmp/cdk.outN5soLL",
                 "missing": Array [],
-                "outdir": "/tmp/cdk.outNx8jJ4",
+                "outdir": "/tmp/cdk.outN5soLL",
               },
               "node": Object {
                 "_children": Object {
@@ -9053,7 +9053,7 @@ Object {
             "Version": "2012-10-17",
           },
           "managedPolicyArns": Array [
-            "#{Token[TOKEN.3268]}",
+            "#{Token[TOKEN.3264]}",
           ],
           "roleName": "__REPLACED_TOKEN",
         },
@@ -9076,7 +9076,7 @@ Object {
         "dependsOn": Object {},
         "logicalId": "__REPLACED_TOKEN",
         "managedPolicyArns": Array [
-          "#{Token[TOKEN.3268]}",
+          "#{Token[TOKEN.3264]}",
         ],
         "node": Object {
           "_children": Object {},
@@ -9176,7 +9176,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3245]}",
+                            "#{Token[TOKEN.3241]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -9199,7 +9199,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3245]}",
+                          "#{Token[TOKEN.3241]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -9268,7 +9268,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3252]}",
+                          "#{Token[TOKEN.3248]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -9284,7 +9284,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3252]}",
+                        "#{Token[TOKEN.3248]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -9365,7 +9365,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -9388,7 +9388,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3245]}",
+                              "#{Token[TOKEN.3241]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -9467,7 +9467,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3252]}",
+                          "#{Token[TOKEN.3248]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -9483,7 +9483,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3252]}",
+                        "#{Token[TOKEN.3248]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -9564,7 +9564,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -9587,7 +9587,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3245]}",
+                              "#{Token[TOKEN.3241]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -9704,7 +9704,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3245]}",
+                            "#{Token[TOKEN.3241]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -9727,7 +9727,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3245]}",
+                          "#{Token[TOKEN.3241]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -10165,9 +10165,9 @@ Object {
             "scope": Object {
               "_assemblyBuilder": Object {
                 "artifacts": Object {},
-                "assetOutdir": "/tmp/cdk.outNx8jJ4",
+                "assetOutdir": "/tmp/cdk.outN5soLL",
                 "missing": Array [],
-                "outdir": "/tmp/cdk.outNx8jJ4",
+                "outdir": "/tmp/cdk.outN5soLL",
               },
               "node": Object {
                 "_children": Object {
@@ -10370,7 +10370,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -10393,7 +10393,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3245]}",
+                              "#{Token[TOKEN.3241]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -10462,7 +10462,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3252]}",
+                              "#{Token[TOKEN.3248]}",
                             ],
                             "role": "__REPLACED_TOKEN",
                             "runtime": "nodejs14.x",
@@ -10478,7 +10478,7 @@ Object {
                           "functionName": "testFunction",
                           "handler": "index.handler",
                           "layers": Array [
-                            "#{Token[TOKEN.3252]}",
+                            "#{Token[TOKEN.3248]}",
                           ],
                           "logicalId": "__REPLACED_TOKEN",
                           "node": Object {
@@ -10559,7 +10559,7 @@ Object {
                                     "Version": "2012-10-17",
                                   },
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3245]}",
+                                    "#{Token[TOKEN.3241]}",
                                   ],
                                   "roleName": "__REPLACED_TOKEN",
                                 },
@@ -10582,7 +10582,7 @@ Object {
                                 "dependsOn": Object {},
                                 "logicalId": "__REPLACED_TOKEN",
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3245]}",
+                                  "#{Token[TOKEN.3241]}",
                                 ],
                                 "node": Object {
                                   "_children": Object {},
@@ -10661,7 +10661,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3252]}",
+                              "#{Token[TOKEN.3248]}",
                             ],
                             "role": "__REPLACED_TOKEN",
                             "runtime": "nodejs14.x",
@@ -10677,7 +10677,7 @@ Object {
                           "functionName": "testFunction",
                           "handler": "index.handler",
                           "layers": Array [
-                            "#{Token[TOKEN.3252]}",
+                            "#{Token[TOKEN.3248]}",
                           ],
                           "logicalId": "__REPLACED_TOKEN",
                           "node": Object {
@@ -10758,7 +10758,7 @@ Object {
                                     "Version": "2012-10-17",
                                   },
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3245]}",
+                                    "#{Token[TOKEN.3241]}",
                                   ],
                                   "roleName": "__REPLACED_TOKEN",
                                 },
@@ -10781,7 +10781,7 @@ Object {
                                 "dependsOn": Object {},
                                 "logicalId": "__REPLACED_TOKEN",
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3245]}",
+                                  "#{Token[TOKEN.3241]}",
                                 ],
                                 "node": Object {
                                   "_children": Object {},
@@ -10898,7 +10898,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -10921,7 +10921,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3245]}",
+                              "#{Token[TOKEN.3241]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -11289,9 +11289,9 @@ Object {
                 "scope": Object {
                   "_assemblyBuilder": Object {
                     "artifacts": Object {},
-                    "assetOutdir": "/tmp/cdk.outNx8jJ4",
+                    "assetOutdir": "/tmp/cdk.outN5soLL",
                     "missing": Array [],
-                    "outdir": "/tmp/cdk.outNx8jJ4",
+                    "outdir": "/tmp/cdk.outN5soLL",
                   },
                   "node": Object {
                     "_children": Object {
@@ -11455,7 +11455,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3245]}",
+                            "#{Token[TOKEN.3241]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -11478,7 +11478,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3245]}",
+                          "#{Token[TOKEN.3241]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -11547,7 +11547,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3252]}",
+                          "#{Token[TOKEN.3248]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -11563,7 +11563,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3252]}",
+                        "#{Token[TOKEN.3248]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -11644,7 +11644,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -11667,7 +11667,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3245]}",
+                              "#{Token[TOKEN.3241]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -11746,7 +11746,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3252]}",
+                          "#{Token[TOKEN.3248]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -11762,7 +11762,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3252]}",
+                        "#{Token[TOKEN.3248]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -11843,7 +11843,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3245]}",
+                                "#{Token[TOKEN.3241]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -11866,7 +11866,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3245]}",
+                              "#{Token[TOKEN.3241]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -11983,7 +11983,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3245]}",
+                            "#{Token[TOKEN.3241]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -12006,7 +12006,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3245]}",
+                          "#{Token[TOKEN.3241]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -12374,9 +12374,9 @@ Object {
             "scope": Object {
               "_assemblyBuilder": Object {
                 "artifacts": Object {},
-                "assetOutdir": "/tmp/cdk.outNx8jJ4",
+                "assetOutdir": "/tmp/cdk.outN5soLL",
                 "missing": Array [],
-                "outdir": "/tmp/cdk.outNx8jJ4",
+                "outdir": "/tmp/cdk.outN5soLL",
               },
               "node": Object {
                 "_children": Object {
@@ -12522,7 +12522,7 @@ Object {
                           "Version": "2012-10-17",
                         },
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3245]}",
+                          "#{Token[TOKEN.3241]}",
                         ],
                         "roleName": "__REPLACED_TOKEN",
                       },
@@ -12545,7 +12545,7 @@ Object {
                       "dependsOn": Object {},
                       "logicalId": "__REPLACED_TOKEN",
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3245]}",
+                        "#{Token[TOKEN.3241]}",
                       ],
                       "node": Object {
                         "_children": Object {},
@@ -12614,7 +12614,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3252]}",
+                        "#{Token[TOKEN.3248]}",
                       ],
                       "role": "__REPLACED_TOKEN",
                       "runtime": "nodejs14.x",
@@ -12630,7 +12630,7 @@ Object {
                     "functionName": "testFunction",
                     "handler": "index.handler",
                     "layers": Array [
-                      "#{Token[TOKEN.3252]}",
+                      "#{Token[TOKEN.3248]}",
                     ],
                     "logicalId": "__REPLACED_TOKEN",
                     "node": Object {
@@ -12711,7 +12711,7 @@ Object {
                               "Version": "2012-10-17",
                             },
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3245]}",
+                              "#{Token[TOKEN.3241]}",
                             ],
                             "roleName": "__REPLACED_TOKEN",
                           },
@@ -12734,7 +12734,7 @@ Object {
                           "dependsOn": Object {},
                           "logicalId": "__REPLACED_TOKEN",
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3245]}",
+                            "#{Token[TOKEN.3241]}",
                           ],
                           "node": Object {
                             "_children": Object {},
@@ -12813,7 +12813,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3252]}",
+                        "#{Token[TOKEN.3248]}",
                       ],
                       "role": "__REPLACED_TOKEN",
                       "runtime": "nodejs14.x",
@@ -12829,7 +12829,7 @@ Object {
                     "functionName": "testFunction",
                     "handler": "index.handler",
                     "layers": Array [
-                      "#{Token[TOKEN.3252]}",
+                      "#{Token[TOKEN.3248]}",
                     ],
                     "logicalId": "__REPLACED_TOKEN",
                     "node": Object {
@@ -12910,7 +12910,7 @@ Object {
                               "Version": "2012-10-17",
                             },
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3245]}",
+                              "#{Token[TOKEN.3241]}",
                             ],
                             "roleName": "__REPLACED_TOKEN",
                           },
@@ -12933,7 +12933,7 @@ Object {
                           "dependsOn": Object {},
                           "logicalId": "__REPLACED_TOKEN",
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3245]}",
+                            "#{Token[TOKEN.3241]}",
                           ],
                           "node": Object {
                             "_children": Object {},
@@ -13050,7 +13050,7 @@ Object {
                           "Version": "2012-10-17",
                         },
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3245]}",
+                          "#{Token[TOKEN.3241]}",
                         ],
                         "roleName": "__REPLACED_TOKEN",
                       },
@@ -13073,7 +13073,7 @@ Object {
                       "dependsOn": Object {},
                       "logicalId": "__REPLACED_TOKEN",
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3245]}",
+                        "#{Token[TOKEN.3241]}",
                       ],
                       "node": Object {
                         "_children": Object {},
@@ -13441,9 +13441,9 @@ Object {
           "scope": Object {
             "_assemblyBuilder": Object {
               "artifacts": Object {},
-              "assetOutdir": "/tmp/cdk.outNx8jJ4",
+              "assetOutdir": "/tmp/cdk.outN5soLL",
               "missing": Array [],
-              "outdir": "/tmp/cdk.outNx8jJ4",
+              "outdir": "/tmp/cdk.outN5soLL",
             },
             "node": Object {
               "_children": Object {
@@ -13604,7 +13604,7 @@ Object {
                       "Version": "2012-10-17",
                     },
                     "managedPolicyArns": Array [
-                      "#{Token[TOKEN.3245]}",
+                      "#{Token[TOKEN.3241]}",
                     ],
                     "roleName": "__REPLACED_TOKEN",
                   },
@@ -13627,7 +13627,7 @@ Object {
                   "dependsOn": Object {},
                   "logicalId": "__REPLACED_TOKEN",
                   "managedPolicyArns": Array [
-                    "#{Token[TOKEN.3245]}",
+                    "#{Token[TOKEN.3241]}",
                   ],
                   "node": Object {
                     "_children": Object {},
@@ -13696,7 +13696,7 @@ Object {
                   "functionName": "testFunction",
                   "handler": "index.handler",
                   "layers": Array [
-                    "#{Token[TOKEN.3252]}",
+                    "#{Token[TOKEN.3248]}",
                   ],
                   "role": "__REPLACED_TOKEN",
                   "runtime": "nodejs14.x",
@@ -13712,7 +13712,7 @@ Object {
                 "functionName": "testFunction",
                 "handler": "index.handler",
                 "layers": Array [
-                  "#{Token[TOKEN.3252]}",
+                  "#{Token[TOKEN.3248]}",
                 ],
                 "logicalId": "__REPLACED_TOKEN",
                 "node": Object {
@@ -13793,7 +13793,7 @@ Object {
                           "Version": "2012-10-17",
                         },
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3245]}",
+                          "#{Token[TOKEN.3241]}",
                         ],
                         "roleName": "__REPLACED_TOKEN",
                       },
@@ -13816,7 +13816,7 @@ Object {
                       "dependsOn": Object {},
                       "logicalId": "__REPLACED_TOKEN",
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3245]}",
+                        "#{Token[TOKEN.3241]}",
                       ],
                       "node": Object {
                         "_children": Object {},
@@ -13895,7 +13895,7 @@ Object {
                   "functionName": "testFunction",
                   "handler": "index.handler",
                   "layers": Array [
-                    "#{Token[TOKEN.3252]}",
+                    "#{Token[TOKEN.3248]}",
                   ],
                   "role": "__REPLACED_TOKEN",
                   "runtime": "nodejs14.x",
@@ -13911,7 +13911,7 @@ Object {
                 "functionName": "testFunction",
                 "handler": "index.handler",
                 "layers": Array [
-                  "#{Token[TOKEN.3252]}",
+                  "#{Token[TOKEN.3248]}",
                 ],
                 "logicalId": "__REPLACED_TOKEN",
                 "node": Object {
@@ -13992,7 +13992,7 @@ Object {
                           "Version": "2012-10-17",
                         },
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3245]}",
+                          "#{Token[TOKEN.3241]}",
                         ],
                         "roleName": "__REPLACED_TOKEN",
                       },
@@ -14015,7 +14015,7 @@ Object {
                       "dependsOn": Object {},
                       "logicalId": "__REPLACED_TOKEN",
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3245]}",
+                        "#{Token[TOKEN.3241]}",
                       ],
                       "node": Object {
                         "_children": Object {},
@@ -14132,7 +14132,7 @@ Object {
                       "Version": "2012-10-17",
                     },
                     "managedPolicyArns": Array [
-                      "#{Token[TOKEN.3245]}",
+                      "#{Token[TOKEN.3241]}",
                     ],
                     "roleName": "__REPLACED_TOKEN",
                   },
@@ -14155,7 +14155,7 @@ Object {
                   "dependsOn": Object {},
                   "logicalId": "__REPLACED_TOKEN",
                   "managedPolicyArns": Array [
-                    "#{Token[TOKEN.3245]}",
+                    "#{Token[TOKEN.3241]}",
                   ],
                   "node": Object {
                     "_children": Object {},
@@ -14593,9 +14593,9 @@ Object {
       "scope": Object {
         "_assemblyBuilder": Object {
           "artifacts": Object {},
-          "assetOutdir": "/tmp/cdk.outNx8jJ4",
+          "assetOutdir": "/tmp/cdk.outN5soLL",
           "missing": Array [],
-          "outdir": "/tmp/cdk.outNx8jJ4",
+          "outdir": "/tmp/cdk.outN5soLL",
         },
         "node": Object {
           "_children": Object {
@@ -21534,7 +21534,7 @@ Object {
             "Resource": Object {
               "_cfnProperties": Object {
                 "groups": Array [
-                  "#{Token[TOKEN.3150]}",
+                  "#{Token[TOKEN.3146]}",
                 ],
                 "policyDocument": Object {
                   "Statement": Array [
@@ -21548,17 +21548,17 @@ Object {
                 },
                 "policyName": "__REPLACED_TOKEN",
                 "roles": Array [
-                  "#{Token[TOKEN.3148]}",
+                  "#{Token[TOKEN.3144]}",
                 ],
                 "users": Array [
-                  "#{Token[TOKEN.3149]}",
+                  "#{Token[TOKEN.3145]}",
                 ],
               },
               "cfnOptions": Object {},
               "cfnResourceType": "AWS::IAM::Policy",
               "dependsOn": Object {},
               "groups": Array [
-                "#{Token[TOKEN.3150]}",
+                "#{Token[TOKEN.3146]}",
               ],
               "logicalId": "__REPLACED_TOKEN",
               "node": Object {
@@ -21590,7 +21590,7 @@ Object {
               "policyName": "__REPLACED_TOKEN",
               "rawOverrides": Object {},
               "roles": Array [
-                "#{Token[TOKEN.3148]}",
+                "#{Token[TOKEN.3144]}",
               ],
               "stack": Object {
                 "_logicalIds": Object {
@@ -21672,7 +21672,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3110]}",
+                                  "#{Token[TOKEN.3106]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -21695,7 +21695,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -21764,7 +21764,7 @@ Object {
                               "functionName": "testFunction",
                               "handler": "index.handler",
                               "layers": Array [
-                                "#{Token[TOKEN.3117]}",
+                                "#{Token[TOKEN.3113]}",
                               ],
                               "role": "__REPLACED_TOKEN",
                               "runtime": "nodejs14.x",
@@ -21780,7 +21780,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3117]}",
+                              "#{Token[TOKEN.3113]}",
                             ],
                             "logicalId": "__REPLACED_TOKEN",
                             "node": Object {
@@ -21861,7 +21861,7 @@ Object {
                                       "Version": "2012-10-17",
                                     },
                                     "managedPolicyArns": Array [
-                                      "#{Token[TOKEN.3110]}",
+                                      "#{Token[TOKEN.3106]}",
                                     ],
                                     "roleName": "__REPLACED_TOKEN",
                                   },
@@ -21884,7 +21884,7 @@ Object {
                                   "dependsOn": Object {},
                                   "logicalId": "__REPLACED_TOKEN",
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3110]}",
+                                    "#{Token[TOKEN.3106]}",
                                   ],
                                   "node": Object {
                                     "_children": Object {},
@@ -21963,7 +21963,7 @@ Object {
                               "functionName": "testFunction",
                               "handler": "index.handler",
                               "layers": Array [
-                                "#{Token[TOKEN.3117]}",
+                                "#{Token[TOKEN.3113]}",
                               ],
                               "role": "__REPLACED_TOKEN",
                               "runtime": "nodejs14.x",
@@ -21979,7 +21979,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3117]}",
+                              "#{Token[TOKEN.3113]}",
                             ],
                             "logicalId": "__REPLACED_TOKEN",
                             "node": Object {
@@ -22060,7 +22060,7 @@ Object {
                                       "Version": "2012-10-17",
                                     },
                                     "managedPolicyArns": Array [
-                                      "#{Token[TOKEN.3110]}",
+                                      "#{Token[TOKEN.3106]}",
                                     ],
                                     "roleName": "__REPLACED_TOKEN",
                                   },
@@ -22083,7 +22083,7 @@ Object {
                                   "dependsOn": Object {},
                                   "logicalId": "__REPLACED_TOKEN",
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3110]}",
+                                    "#{Token[TOKEN.3106]}",
                                   ],
                                   "node": Object {
                                     "_children": Object {},
@@ -22200,7 +22200,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3110]}",
+                                  "#{Token[TOKEN.3106]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -22223,7 +22223,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -22661,9 +22661,9 @@ Object {
                   "scope": Object {
                     "_assemblyBuilder": Object {
                       "artifacts": Object {},
-                      "assetOutdir": "/tmp/cdk.outrEgFD5",
+                      "assetOutdir": "/tmp/cdk.outKvtXEN",
                       "missing": Array [],
-                      "outdir": "/tmp/cdk.outrEgFD5",
+                      "outdir": "/tmp/cdk.outKvtXEN",
                     },
                     "node": Object {
                       "_children": Object {
@@ -22727,7 +22727,7 @@ Object {
                 "templateOptions": Object {},
               },
               "users": Array [
-                "#{Token[TOKEN.3149]}",
+                "#{Token[TOKEN.3145]}",
               ],
             },
           },
@@ -22827,7 +22827,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3110]}",
+                            "#{Token[TOKEN.3106]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -22850,7 +22850,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3110]}",
+                          "#{Token[TOKEN.3106]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -22919,7 +22919,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3117]}",
+                          "#{Token[TOKEN.3113]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -22935,7 +22935,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3117]}",
+                        "#{Token[TOKEN.3113]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -23016,7 +23016,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -23039,7 +23039,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3110]}",
+                              "#{Token[TOKEN.3106]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -23118,7 +23118,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3117]}",
+                          "#{Token[TOKEN.3113]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -23134,7 +23134,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3117]}",
+                        "#{Token[TOKEN.3113]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -23215,7 +23215,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -23238,7 +23238,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3110]}",
+                              "#{Token[TOKEN.3106]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -23355,7 +23355,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3110]}",
+                            "#{Token[TOKEN.3106]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -23378,7 +23378,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3110]}",
+                          "#{Token[TOKEN.3106]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -23816,9 +23816,9 @@ Object {
             "scope": Object {
               "_assemblyBuilder": Object {
                 "artifacts": Object {},
-                "assetOutdir": "/tmp/cdk.outrEgFD5",
+                "assetOutdir": "/tmp/cdk.outKvtXEN",
                 "missing": Array [],
-                "outdir": "/tmp/cdk.outrEgFD5",
+                "outdir": "/tmp/cdk.outKvtXEN",
               },
               "node": Object {
                 "_children": Object {
@@ -23910,7 +23910,7 @@ Object {
         "Resource": Object {
           "_cfnProperties": Object {
             "groups": Array [
-              "#{Token[TOKEN.3150]}",
+              "#{Token[TOKEN.3146]}",
             ],
             "policyDocument": Object {
               "Statement": Array [
@@ -23924,17 +23924,17 @@ Object {
             },
             "policyName": "__REPLACED_TOKEN",
             "roles": Array [
-              "#{Token[TOKEN.3148]}",
+              "#{Token[TOKEN.3144]}",
             ],
             "users": Array [
-              "#{Token[TOKEN.3149]}",
+              "#{Token[TOKEN.3145]}",
             ],
           },
           "cfnOptions": Object {},
           "cfnResourceType": "AWS::IAM::Policy",
           "dependsOn": Object {},
           "groups": Array [
-            "#{Token[TOKEN.3150]}",
+            "#{Token[TOKEN.3146]}",
           ],
           "logicalId": "__REPLACED_TOKEN",
           "node": Object {
@@ -23966,7 +23966,7 @@ Object {
           "policyName": "__REPLACED_TOKEN",
           "rawOverrides": Object {},
           "roles": Array [
-            "#{Token[TOKEN.3148]}",
+            "#{Token[TOKEN.3144]}",
           ],
           "stack": Object {
             "_logicalIds": Object {
@@ -24048,7 +24048,7 @@ Object {
                               "Version": "2012-10-17",
                             },
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3110]}",
+                              "#{Token[TOKEN.3106]}",
                             ],
                             "roleName": "__REPLACED_TOKEN",
                           },
@@ -24071,7 +24071,7 @@ Object {
                           "dependsOn": Object {},
                           "logicalId": "__REPLACED_TOKEN",
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3110]}",
+                            "#{Token[TOKEN.3106]}",
                           ],
                           "node": Object {
                             "_children": Object {},
@@ -24140,7 +24140,7 @@ Object {
                           "functionName": "testFunction",
                           "handler": "index.handler",
                           "layers": Array [
-                            "#{Token[TOKEN.3117]}",
+                            "#{Token[TOKEN.3113]}",
                           ],
                           "role": "__REPLACED_TOKEN",
                           "runtime": "nodejs14.x",
@@ -24156,7 +24156,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3117]}",
+                          "#{Token[TOKEN.3113]}",
                         ],
                         "logicalId": "__REPLACED_TOKEN",
                         "node": Object {
@@ -24237,7 +24237,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3110]}",
+                                  "#{Token[TOKEN.3106]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -24260,7 +24260,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -24339,7 +24339,7 @@ Object {
                           "functionName": "testFunction",
                           "handler": "index.handler",
                           "layers": Array [
-                            "#{Token[TOKEN.3117]}",
+                            "#{Token[TOKEN.3113]}",
                           ],
                           "role": "__REPLACED_TOKEN",
                           "runtime": "nodejs14.x",
@@ -24355,7 +24355,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3117]}",
+                          "#{Token[TOKEN.3113]}",
                         ],
                         "logicalId": "__REPLACED_TOKEN",
                         "node": Object {
@@ -24436,7 +24436,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3110]}",
+                                  "#{Token[TOKEN.3106]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -24459,7 +24459,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -24576,7 +24576,7 @@ Object {
                               "Version": "2012-10-17",
                             },
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3110]}",
+                              "#{Token[TOKEN.3106]}",
                             ],
                             "roleName": "__REPLACED_TOKEN",
                           },
@@ -24599,7 +24599,7 @@ Object {
                           "dependsOn": Object {},
                           "logicalId": "__REPLACED_TOKEN",
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3110]}",
+                            "#{Token[TOKEN.3106]}",
                           ],
                           "node": Object {
                             "_children": Object {},
@@ -25037,9 +25037,9 @@ Object {
               "scope": Object {
                 "_assemblyBuilder": Object {
                   "artifacts": Object {},
-                  "assetOutdir": "/tmp/cdk.outrEgFD5",
+                  "assetOutdir": "/tmp/cdk.outKvtXEN",
                   "missing": Array [],
-                  "outdir": "/tmp/cdk.outrEgFD5",
+                  "outdir": "/tmp/cdk.outKvtXEN",
                 },
                 "node": Object {
                   "_children": Object {
@@ -25103,7 +25103,7 @@ Object {
             "templateOptions": Object {},
           },
           "users": Array [
-            "#{Token[TOKEN.3149]}",
+            "#{Token[TOKEN.3145]}",
           ],
         },
       },
@@ -25203,7 +25203,7 @@ Object {
                         "Version": "2012-10-17",
                       },
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3110]}",
+                        "#{Token[TOKEN.3106]}",
                       ],
                       "roleName": "__REPLACED_TOKEN",
                     },
@@ -25226,7 +25226,7 @@ Object {
                     "dependsOn": Object {},
                     "logicalId": "__REPLACED_TOKEN",
                     "managedPolicyArns": Array [
-                      "#{Token[TOKEN.3110]}",
+                      "#{Token[TOKEN.3106]}",
                     ],
                     "node": Object {
                       "_children": Object {},
@@ -25295,7 +25295,7 @@ Object {
                     "functionName": "testFunction",
                     "handler": "index.handler",
                     "layers": Array [
-                      "#{Token[TOKEN.3117]}",
+                      "#{Token[TOKEN.3113]}",
                     ],
                     "role": "__REPLACED_TOKEN",
                     "runtime": "nodejs14.x",
@@ -25311,7 +25311,7 @@ Object {
                   "functionName": "testFunction",
                   "handler": "index.handler",
                   "layers": Array [
-                    "#{Token[TOKEN.3117]}",
+                    "#{Token[TOKEN.3113]}",
                   ],
                   "logicalId": "__REPLACED_TOKEN",
                   "node": Object {
@@ -25392,7 +25392,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3110]}",
+                            "#{Token[TOKEN.3106]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -25415,7 +25415,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3110]}",
+                          "#{Token[TOKEN.3106]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -25494,7 +25494,7 @@ Object {
                     "functionName": "testFunction",
                     "handler": "index.handler",
                     "layers": Array [
-                      "#{Token[TOKEN.3117]}",
+                      "#{Token[TOKEN.3113]}",
                     ],
                     "role": "__REPLACED_TOKEN",
                     "runtime": "nodejs14.x",
@@ -25510,7 +25510,7 @@ Object {
                   "functionName": "testFunction",
                   "handler": "index.handler",
                   "layers": Array [
-                    "#{Token[TOKEN.3117]}",
+                    "#{Token[TOKEN.3113]}",
                   ],
                   "logicalId": "__REPLACED_TOKEN",
                   "node": Object {
@@ -25591,7 +25591,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3110]}",
+                            "#{Token[TOKEN.3106]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -25614,7 +25614,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3110]}",
+                          "#{Token[TOKEN.3106]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -25731,7 +25731,7 @@ Object {
                         "Version": "2012-10-17",
                       },
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3110]}",
+                        "#{Token[TOKEN.3106]}",
                       ],
                       "roleName": "__REPLACED_TOKEN",
                     },
@@ -25754,7 +25754,7 @@ Object {
                     "dependsOn": Object {},
                     "logicalId": "__REPLACED_TOKEN",
                     "managedPolicyArns": Array [
-                      "#{Token[TOKEN.3110]}",
+                      "#{Token[TOKEN.3106]}",
                     ],
                     "node": Object {
                       "_children": Object {},
@@ -26192,9 +26192,9 @@ Object {
         "scope": Object {
           "_assemblyBuilder": Object {
             "artifacts": Object {},
-            "assetOutdir": "/tmp/cdk.outrEgFD5",
+            "assetOutdir": "/tmp/cdk.outKvtXEN",
             "missing": Array [],
-            "outdir": "/tmp/cdk.outrEgFD5",
+            "outdir": "/tmp/cdk.outKvtXEN",
           },
           "node": Object {
             "_children": Object {
@@ -26294,7 +26294,7 @@ Object {
             "Resource": Object {
               "_cfnProperties": Object {
                 "groups": Array [
-                  "#{Token[TOKEN.3150]}",
+                  "#{Token[TOKEN.3146]}",
                 ],
                 "policyDocument": Object {
                   "Statement": Array [
@@ -26308,17 +26308,17 @@ Object {
                 },
                 "policyName": "__REPLACED_TOKEN",
                 "roles": Array [
-                  "#{Token[TOKEN.3148]}",
+                  "#{Token[TOKEN.3144]}",
                 ],
                 "users": Array [
-                  "#{Token[TOKEN.3149]}",
+                  "#{Token[TOKEN.3145]}",
                 ],
               },
               "cfnOptions": Object {},
               "cfnResourceType": "AWS::IAM::Policy",
               "dependsOn": Object {},
               "groups": Array [
-                "#{Token[TOKEN.3150]}",
+                "#{Token[TOKEN.3146]}",
               ],
               "logicalId": "__REPLACED_TOKEN",
               "node": Object {
@@ -26350,7 +26350,7 @@ Object {
               "policyName": "__REPLACED_TOKEN",
               "rawOverrides": Object {},
               "roles": Array [
-                "#{Token[TOKEN.3148]}",
+                "#{Token[TOKEN.3144]}",
               ],
               "stack": Object {
                 "_logicalIds": Object {
@@ -26432,7 +26432,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3110]}",
+                                  "#{Token[TOKEN.3106]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -26455,7 +26455,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -26524,7 +26524,7 @@ Object {
                               "functionName": "testFunction",
                               "handler": "index.handler",
                               "layers": Array [
-                                "#{Token[TOKEN.3117]}",
+                                "#{Token[TOKEN.3113]}",
                               ],
                               "role": "__REPLACED_TOKEN",
                               "runtime": "nodejs14.x",
@@ -26540,7 +26540,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3117]}",
+                              "#{Token[TOKEN.3113]}",
                             ],
                             "logicalId": "__REPLACED_TOKEN",
                             "node": Object {
@@ -26621,7 +26621,7 @@ Object {
                                       "Version": "2012-10-17",
                                     },
                                     "managedPolicyArns": Array [
-                                      "#{Token[TOKEN.3110]}",
+                                      "#{Token[TOKEN.3106]}",
                                     ],
                                     "roleName": "__REPLACED_TOKEN",
                                   },
@@ -26644,7 +26644,7 @@ Object {
                                   "dependsOn": Object {},
                                   "logicalId": "__REPLACED_TOKEN",
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3110]}",
+                                    "#{Token[TOKEN.3106]}",
                                   ],
                                   "node": Object {
                                     "_children": Object {},
@@ -26723,7 +26723,7 @@ Object {
                               "functionName": "testFunction",
                               "handler": "index.handler",
                               "layers": Array [
-                                "#{Token[TOKEN.3117]}",
+                                "#{Token[TOKEN.3113]}",
                               ],
                               "role": "__REPLACED_TOKEN",
                               "runtime": "nodejs14.x",
@@ -26739,7 +26739,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3117]}",
+                              "#{Token[TOKEN.3113]}",
                             ],
                             "logicalId": "__REPLACED_TOKEN",
                             "node": Object {
@@ -26820,7 +26820,7 @@ Object {
                                       "Version": "2012-10-17",
                                     },
                                     "managedPolicyArns": Array [
-                                      "#{Token[TOKEN.3110]}",
+                                      "#{Token[TOKEN.3106]}",
                                     ],
                                     "roleName": "__REPLACED_TOKEN",
                                   },
@@ -26843,7 +26843,7 @@ Object {
                                   "dependsOn": Object {},
                                   "logicalId": "__REPLACED_TOKEN",
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3110]}",
+                                    "#{Token[TOKEN.3106]}",
                                   ],
                                   "node": Object {
                                     "_children": Object {},
@@ -26960,7 +26960,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3110]}",
+                                  "#{Token[TOKEN.3106]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -26983,7 +26983,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -27421,9 +27421,9 @@ Object {
                   "scope": Object {
                     "_assemblyBuilder": Object {
                       "artifacts": Object {},
-                      "assetOutdir": "/tmp/cdk.outrEgFD5",
+                      "assetOutdir": "/tmp/cdk.outKvtXEN",
                       "missing": Array [],
-                      "outdir": "/tmp/cdk.outrEgFD5",
+                      "outdir": "/tmp/cdk.outKvtXEN",
                     },
                     "node": Object {
                       "_children": Object {
@@ -27487,7 +27487,7 @@ Object {
                 "templateOptions": Object {},
               },
               "users": Array [
-                "#{Token[TOKEN.3149]}",
+                "#{Token[TOKEN.3145]}",
               ],
             },
           },
@@ -27587,7 +27587,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3110]}",
+                            "#{Token[TOKEN.3106]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -27610,7 +27610,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3110]}",
+                          "#{Token[TOKEN.3106]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -27679,7 +27679,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3117]}",
+                          "#{Token[TOKEN.3113]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -27695,7 +27695,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3117]}",
+                        "#{Token[TOKEN.3113]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -27776,7 +27776,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -27799,7 +27799,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3110]}",
+                              "#{Token[TOKEN.3106]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -27878,7 +27878,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3117]}",
+                          "#{Token[TOKEN.3113]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -27894,7 +27894,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3117]}",
+                        "#{Token[TOKEN.3113]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -27975,7 +27975,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -27998,7 +27998,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3110]}",
+                              "#{Token[TOKEN.3106]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -28115,7 +28115,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3110]}",
+                            "#{Token[TOKEN.3106]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -28138,7 +28138,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3110]}",
+                          "#{Token[TOKEN.3106]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -28576,9 +28576,9 @@ Object {
             "scope": Object {
               "_assemblyBuilder": Object {
                 "artifacts": Object {},
-                "assetOutdir": "/tmp/cdk.outrEgFD5",
+                "assetOutdir": "/tmp/cdk.outKvtXEN",
                 "missing": Array [],
-                "outdir": "/tmp/cdk.outrEgFD5",
+                "outdir": "/tmp/cdk.outKvtXEN",
               },
               "node": Object {
                 "_children": Object {
@@ -28658,7 +28658,7 @@ Object {
             "Version": "2012-10-17",
           },
           "managedPolicyArns": Array [
-            "#{Token[TOKEN.3133]}",
+            "#{Token[TOKEN.3129]}",
           ],
           "roleName": "__REPLACED_TOKEN",
         },
@@ -28681,7 +28681,7 @@ Object {
         "dependsOn": Object {},
         "logicalId": "__REPLACED_TOKEN",
         "managedPolicyArns": Array [
-          "#{Token[TOKEN.3133]}",
+          "#{Token[TOKEN.3129]}",
         ],
         "node": Object {
           "_children": Object {},
@@ -28781,7 +28781,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3110]}",
+                            "#{Token[TOKEN.3106]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -28804,7 +28804,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3110]}",
+                          "#{Token[TOKEN.3106]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -28873,7 +28873,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3117]}",
+                          "#{Token[TOKEN.3113]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -28889,7 +28889,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3117]}",
+                        "#{Token[TOKEN.3113]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -28970,7 +28970,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -28993,7 +28993,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3110]}",
+                              "#{Token[TOKEN.3106]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -29072,7 +29072,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3117]}",
+                          "#{Token[TOKEN.3113]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -29088,7 +29088,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3117]}",
+                        "#{Token[TOKEN.3113]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -29169,7 +29169,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -29192,7 +29192,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3110]}",
+                              "#{Token[TOKEN.3106]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -29309,7 +29309,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3110]}",
+                            "#{Token[TOKEN.3106]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -29332,7 +29332,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3110]}",
+                          "#{Token[TOKEN.3106]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -29770,9 +29770,9 @@ Object {
             "scope": Object {
               "_assemblyBuilder": Object {
                 "artifacts": Object {},
-                "assetOutdir": "/tmp/cdk.outrEgFD5",
+                "assetOutdir": "/tmp/cdk.outKvtXEN",
                 "missing": Array [],
-                "outdir": "/tmp/cdk.outrEgFD5",
+                "outdir": "/tmp/cdk.outKvtXEN",
               },
               "node": Object {
                 "_children": Object {
@@ -29975,7 +29975,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -29998,7 +29998,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3110]}",
+                              "#{Token[TOKEN.3106]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -30067,7 +30067,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3117]}",
+                              "#{Token[TOKEN.3113]}",
                             ],
                             "role": "__REPLACED_TOKEN",
                             "runtime": "nodejs14.x",
@@ -30083,7 +30083,7 @@ Object {
                           "functionName": "testFunction",
                           "handler": "index.handler",
                           "layers": Array [
-                            "#{Token[TOKEN.3117]}",
+                            "#{Token[TOKEN.3113]}",
                           ],
                           "logicalId": "__REPLACED_TOKEN",
                           "node": Object {
@@ -30164,7 +30164,7 @@ Object {
                                     "Version": "2012-10-17",
                                   },
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3110]}",
+                                    "#{Token[TOKEN.3106]}",
                                   ],
                                   "roleName": "__REPLACED_TOKEN",
                                 },
@@ -30187,7 +30187,7 @@ Object {
                                 "dependsOn": Object {},
                                 "logicalId": "__REPLACED_TOKEN",
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3110]}",
+                                  "#{Token[TOKEN.3106]}",
                                 ],
                                 "node": Object {
                                   "_children": Object {},
@@ -30266,7 +30266,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3117]}",
+                              "#{Token[TOKEN.3113]}",
                             ],
                             "role": "__REPLACED_TOKEN",
                             "runtime": "nodejs14.x",
@@ -30282,7 +30282,7 @@ Object {
                           "functionName": "testFunction",
                           "handler": "index.handler",
                           "layers": Array [
-                            "#{Token[TOKEN.3117]}",
+                            "#{Token[TOKEN.3113]}",
                           ],
                           "logicalId": "__REPLACED_TOKEN",
                           "node": Object {
@@ -30363,7 +30363,7 @@ Object {
                                     "Version": "2012-10-17",
                                   },
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3110]}",
+                                    "#{Token[TOKEN.3106]}",
                                   ],
                                   "roleName": "__REPLACED_TOKEN",
                                 },
@@ -30386,7 +30386,7 @@ Object {
                                 "dependsOn": Object {},
                                 "logicalId": "__REPLACED_TOKEN",
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3110]}",
+                                  "#{Token[TOKEN.3106]}",
                                 ],
                                 "node": Object {
                                   "_children": Object {},
@@ -30503,7 +30503,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -30526,7 +30526,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3110]}",
+                              "#{Token[TOKEN.3106]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -30894,9 +30894,9 @@ Object {
                 "scope": Object {
                   "_assemblyBuilder": Object {
                     "artifacts": Object {},
-                    "assetOutdir": "/tmp/cdk.outrEgFD5",
+                    "assetOutdir": "/tmp/cdk.outKvtXEN",
                     "missing": Array [],
-                    "outdir": "/tmp/cdk.outrEgFD5",
+                    "outdir": "/tmp/cdk.outKvtXEN",
                   },
                   "node": Object {
                     "_children": Object {
@@ -31060,7 +31060,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3110]}",
+                            "#{Token[TOKEN.3106]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -31083,7 +31083,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3110]}",
+                          "#{Token[TOKEN.3106]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -31152,7 +31152,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3117]}",
+                          "#{Token[TOKEN.3113]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -31168,7 +31168,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3117]}",
+                        "#{Token[TOKEN.3113]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -31249,7 +31249,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -31272,7 +31272,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3110]}",
+                              "#{Token[TOKEN.3106]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -31351,7 +31351,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3117]}",
+                          "#{Token[TOKEN.3113]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -31367,7 +31367,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3117]}",
+                        "#{Token[TOKEN.3113]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -31448,7 +31448,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3110]}",
+                                "#{Token[TOKEN.3106]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -31471,7 +31471,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3110]}",
+                              "#{Token[TOKEN.3106]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -31588,7 +31588,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3110]}",
+                            "#{Token[TOKEN.3106]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -31611,7 +31611,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3110]}",
+                          "#{Token[TOKEN.3106]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -31979,9 +31979,9 @@ Object {
             "scope": Object {
               "_assemblyBuilder": Object {
                 "artifacts": Object {},
-                "assetOutdir": "/tmp/cdk.outrEgFD5",
+                "assetOutdir": "/tmp/cdk.outKvtXEN",
                 "missing": Array [],
-                "outdir": "/tmp/cdk.outrEgFD5",
+                "outdir": "/tmp/cdk.outKvtXEN",
               },
               "node": Object {
                 "_children": Object {
@@ -32127,7 +32127,7 @@ Object {
                           "Version": "2012-10-17",
                         },
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3110]}",
+                          "#{Token[TOKEN.3106]}",
                         ],
                         "roleName": "__REPLACED_TOKEN",
                       },
@@ -32150,7 +32150,7 @@ Object {
                       "dependsOn": Object {},
                       "logicalId": "__REPLACED_TOKEN",
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3110]}",
+                        "#{Token[TOKEN.3106]}",
                       ],
                       "node": Object {
                         "_children": Object {},
@@ -32219,7 +32219,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3117]}",
+                        "#{Token[TOKEN.3113]}",
                       ],
                       "role": "__REPLACED_TOKEN",
                       "runtime": "nodejs14.x",
@@ -32235,7 +32235,7 @@ Object {
                     "functionName": "testFunction",
                     "handler": "index.handler",
                     "layers": Array [
-                      "#{Token[TOKEN.3117]}",
+                      "#{Token[TOKEN.3113]}",
                     ],
                     "logicalId": "__REPLACED_TOKEN",
                     "node": Object {
@@ -32316,7 +32316,7 @@ Object {
                               "Version": "2012-10-17",
                             },
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3110]}",
+                              "#{Token[TOKEN.3106]}",
                             ],
                             "roleName": "__REPLACED_TOKEN",
                           },
@@ -32339,7 +32339,7 @@ Object {
                           "dependsOn": Object {},
                           "logicalId": "__REPLACED_TOKEN",
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3110]}",
+                            "#{Token[TOKEN.3106]}",
                           ],
                           "node": Object {
                             "_children": Object {},
@@ -32418,7 +32418,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3117]}",
+                        "#{Token[TOKEN.3113]}",
                       ],
                       "role": "__REPLACED_TOKEN",
                       "runtime": "nodejs14.x",
@@ -32434,7 +32434,7 @@ Object {
                     "functionName": "testFunction",
                     "handler": "index.handler",
                     "layers": Array [
-                      "#{Token[TOKEN.3117]}",
+                      "#{Token[TOKEN.3113]}",
                     ],
                     "logicalId": "__REPLACED_TOKEN",
                     "node": Object {
@@ -32515,7 +32515,7 @@ Object {
                               "Version": "2012-10-17",
                             },
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3110]}",
+                              "#{Token[TOKEN.3106]}",
                             ],
                             "roleName": "__REPLACED_TOKEN",
                           },
@@ -32538,7 +32538,7 @@ Object {
                           "dependsOn": Object {},
                           "logicalId": "__REPLACED_TOKEN",
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3110]}",
+                            "#{Token[TOKEN.3106]}",
                           ],
                           "node": Object {
                             "_children": Object {},
@@ -32655,7 +32655,7 @@ Object {
                           "Version": "2012-10-17",
                         },
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3110]}",
+                          "#{Token[TOKEN.3106]}",
                         ],
                         "roleName": "__REPLACED_TOKEN",
                       },
@@ -32678,7 +32678,7 @@ Object {
                       "dependsOn": Object {},
                       "logicalId": "__REPLACED_TOKEN",
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3110]}",
+                        "#{Token[TOKEN.3106]}",
                       ],
                       "node": Object {
                         "_children": Object {},
@@ -33046,9 +33046,9 @@ Object {
           "scope": Object {
             "_assemblyBuilder": Object {
               "artifacts": Object {},
-              "assetOutdir": "/tmp/cdk.outrEgFD5",
+              "assetOutdir": "/tmp/cdk.outKvtXEN",
               "missing": Array [],
-              "outdir": "/tmp/cdk.outrEgFD5",
+              "outdir": "/tmp/cdk.outKvtXEN",
             },
             "node": Object {
               "_children": Object {
@@ -33209,7 +33209,7 @@ Object {
                       "Version": "2012-10-17",
                     },
                     "managedPolicyArns": Array [
-                      "#{Token[TOKEN.3110]}",
+                      "#{Token[TOKEN.3106]}",
                     ],
                     "roleName": "__REPLACED_TOKEN",
                   },
@@ -33232,7 +33232,7 @@ Object {
                   "dependsOn": Object {},
                   "logicalId": "__REPLACED_TOKEN",
                   "managedPolicyArns": Array [
-                    "#{Token[TOKEN.3110]}",
+                    "#{Token[TOKEN.3106]}",
                   ],
                   "node": Object {
                     "_children": Object {},
@@ -33301,7 +33301,7 @@ Object {
                   "functionName": "testFunction",
                   "handler": "index.handler",
                   "layers": Array [
-                    "#{Token[TOKEN.3117]}",
+                    "#{Token[TOKEN.3113]}",
                   ],
                   "role": "__REPLACED_TOKEN",
                   "runtime": "nodejs14.x",
@@ -33317,7 +33317,7 @@ Object {
                 "functionName": "testFunction",
                 "handler": "index.handler",
                 "layers": Array [
-                  "#{Token[TOKEN.3117]}",
+                  "#{Token[TOKEN.3113]}",
                 ],
                 "logicalId": "__REPLACED_TOKEN",
                 "node": Object {
@@ -33398,7 +33398,7 @@ Object {
                           "Version": "2012-10-17",
                         },
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3110]}",
+                          "#{Token[TOKEN.3106]}",
                         ],
                         "roleName": "__REPLACED_TOKEN",
                       },
@@ -33421,7 +33421,7 @@ Object {
                       "dependsOn": Object {},
                       "logicalId": "__REPLACED_TOKEN",
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3110]}",
+                        "#{Token[TOKEN.3106]}",
                       ],
                       "node": Object {
                         "_children": Object {},
@@ -33500,7 +33500,7 @@ Object {
                   "functionName": "testFunction",
                   "handler": "index.handler",
                   "layers": Array [
-                    "#{Token[TOKEN.3117]}",
+                    "#{Token[TOKEN.3113]}",
                   ],
                   "role": "__REPLACED_TOKEN",
                   "runtime": "nodejs14.x",
@@ -33516,7 +33516,7 @@ Object {
                 "functionName": "testFunction",
                 "handler": "index.handler",
                 "layers": Array [
-                  "#{Token[TOKEN.3117]}",
+                  "#{Token[TOKEN.3113]}",
                 ],
                 "logicalId": "__REPLACED_TOKEN",
                 "node": Object {
@@ -33597,7 +33597,7 @@ Object {
                           "Version": "2012-10-17",
                         },
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3110]}",
+                          "#{Token[TOKEN.3106]}",
                         ],
                         "roleName": "__REPLACED_TOKEN",
                       },
@@ -33620,7 +33620,7 @@ Object {
                       "dependsOn": Object {},
                       "logicalId": "__REPLACED_TOKEN",
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3110]}",
+                        "#{Token[TOKEN.3106]}",
                       ],
                       "node": Object {
                         "_children": Object {},
@@ -33737,7 +33737,7 @@ Object {
                       "Version": "2012-10-17",
                     },
                     "managedPolicyArns": Array [
-                      "#{Token[TOKEN.3110]}",
+                      "#{Token[TOKEN.3106]}",
                     ],
                     "roleName": "__REPLACED_TOKEN",
                   },
@@ -33760,7 +33760,7 @@ Object {
                   "dependsOn": Object {},
                   "logicalId": "__REPLACED_TOKEN",
                   "managedPolicyArns": Array [
-                    "#{Token[TOKEN.3110]}",
+                    "#{Token[TOKEN.3106]}",
                   ],
                   "node": Object {
                     "_children": Object {},
@@ -34198,9 +34198,9 @@ Object {
       "scope": Object {
         "_assemblyBuilder": Object {
           "artifacts": Object {},
-          "assetOutdir": "/tmp/cdk.outrEgFD5",
+          "assetOutdir": "/tmp/cdk.outKvtXEN",
           "missing": Array [],
-          "outdir": "/tmp/cdk.outrEgFD5",
+          "outdir": "/tmp/cdk.outKvtXEN",
         },
         "node": Object {
           "_children": Object {
@@ -37790,7 +37790,7 @@ Object {
             "Resource": Object {
               "_cfnProperties": Object {
                 "groups": Array [
-                  "#{Token[TOKEN.3240]}",
+                  "#{Token[TOKEN.3236]}",
                 ],
                 "policyDocument": Object {
                   "Statement": Array [
@@ -37804,17 +37804,17 @@ Object {
                 },
                 "policyName": "__REPLACED_TOKEN",
                 "roles": Array [
-                  "#{Token[TOKEN.3238]}",
+                  "#{Token[TOKEN.3234]}",
                 ],
                 "users": Array [
-                  "#{Token[TOKEN.3239]}",
+                  "#{Token[TOKEN.3235]}",
                 ],
               },
               "cfnOptions": Object {},
               "cfnResourceType": "AWS::IAM::Policy",
               "dependsOn": Object {},
               "groups": Array [
-                "#{Token[TOKEN.3240]}",
+                "#{Token[TOKEN.3236]}",
               ],
               "logicalId": "__REPLACED_TOKEN",
               "node": Object {
@@ -37846,7 +37846,7 @@ Object {
               "policyName": "__REPLACED_TOKEN",
               "rawOverrides": Object {},
               "roles": Array [
-                "#{Token[TOKEN.3238]}",
+                "#{Token[TOKEN.3234]}",
               ],
               "stack": Object {
                 "_logicalIds": Object {
@@ -37928,7 +37928,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3200]}",
+                                  "#{Token[TOKEN.3196]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -37951,7 +37951,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -38020,7 +38020,7 @@ Object {
                               "functionName": "testFunction",
                               "handler": "index.handler",
                               "layers": Array [
-                                "#{Token[TOKEN.3207]}",
+                                "#{Token[TOKEN.3203]}",
                               ],
                               "role": "__REPLACED_TOKEN",
                               "runtime": "nodejs14.x",
@@ -38036,7 +38036,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3207]}",
+                              "#{Token[TOKEN.3203]}",
                             ],
                             "logicalId": "__REPLACED_TOKEN",
                             "node": Object {
@@ -38117,7 +38117,7 @@ Object {
                                       "Version": "2012-10-17",
                                     },
                                     "managedPolicyArns": Array [
-                                      "#{Token[TOKEN.3200]}",
+                                      "#{Token[TOKEN.3196]}",
                                     ],
                                     "roleName": "__REPLACED_TOKEN",
                                   },
@@ -38140,7 +38140,7 @@ Object {
                                   "dependsOn": Object {},
                                   "logicalId": "__REPLACED_TOKEN",
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3200]}",
+                                    "#{Token[TOKEN.3196]}",
                                   ],
                                   "node": Object {
                                     "_children": Object {},
@@ -38219,7 +38219,7 @@ Object {
                               "functionName": "testFunction",
                               "handler": "index.handler",
                               "layers": Array [
-                                "#{Token[TOKEN.3207]}",
+                                "#{Token[TOKEN.3203]}",
                               ],
                               "role": "__REPLACED_TOKEN",
                               "runtime": "nodejs14.x",
@@ -38235,7 +38235,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3207]}",
+                              "#{Token[TOKEN.3203]}",
                             ],
                             "logicalId": "__REPLACED_TOKEN",
                             "node": Object {
@@ -38316,7 +38316,7 @@ Object {
                                       "Version": "2012-10-17",
                                     },
                                     "managedPolicyArns": Array [
-                                      "#{Token[TOKEN.3200]}",
+                                      "#{Token[TOKEN.3196]}",
                                     ],
                                     "roleName": "__REPLACED_TOKEN",
                                   },
@@ -38339,7 +38339,7 @@ Object {
                                   "dependsOn": Object {},
                                   "logicalId": "__REPLACED_TOKEN",
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3200]}",
+                                    "#{Token[TOKEN.3196]}",
                                   ],
                                   "node": Object {
                                     "_children": Object {},
@@ -38456,7 +38456,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3200]}",
+                                  "#{Token[TOKEN.3196]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -38479,7 +38479,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -38917,9 +38917,9 @@ Object {
                   "scope": Object {
                     "_assemblyBuilder": Object {
                       "artifacts": Object {},
-                      "assetOutdir": "/tmp/cdk.out5LWdE5",
+                      "assetOutdir": "/tmp/cdk.outL4nytL",
                       "missing": Array [],
-                      "outdir": "/tmp/cdk.out5LWdE5",
+                      "outdir": "/tmp/cdk.outL4nytL",
                     },
                     "node": Object {
                       "_children": Object {
@@ -38983,7 +38983,7 @@ Object {
                 "templateOptions": Object {},
               },
               "users": Array [
-                "#{Token[TOKEN.3239]}",
+                "#{Token[TOKEN.3235]}",
               ],
             },
           },
@@ -39083,7 +39083,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3200]}",
+                            "#{Token[TOKEN.3196]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -39106,7 +39106,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3200]}",
+                          "#{Token[TOKEN.3196]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -39175,7 +39175,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3207]}",
+                          "#{Token[TOKEN.3203]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -39191,7 +39191,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3207]}",
+                        "#{Token[TOKEN.3203]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -39272,7 +39272,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -39295,7 +39295,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3200]}",
+                              "#{Token[TOKEN.3196]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -39374,7 +39374,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3207]}",
+                          "#{Token[TOKEN.3203]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -39390,7 +39390,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3207]}",
+                        "#{Token[TOKEN.3203]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -39471,7 +39471,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -39494,7 +39494,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3200]}",
+                              "#{Token[TOKEN.3196]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -39611,7 +39611,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3200]}",
+                            "#{Token[TOKEN.3196]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -39634,7 +39634,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3200]}",
+                          "#{Token[TOKEN.3196]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -40072,9 +40072,9 @@ Object {
             "scope": Object {
               "_assemblyBuilder": Object {
                 "artifacts": Object {},
-                "assetOutdir": "/tmp/cdk.out5LWdE5",
+                "assetOutdir": "/tmp/cdk.outL4nytL",
                 "missing": Array [],
-                "outdir": "/tmp/cdk.out5LWdE5",
+                "outdir": "/tmp/cdk.outL4nytL",
               },
               "node": Object {
                 "_children": Object {
@@ -40166,7 +40166,7 @@ Object {
         "Resource": Object {
           "_cfnProperties": Object {
             "groups": Array [
-              "#{Token[TOKEN.3240]}",
+              "#{Token[TOKEN.3236]}",
             ],
             "policyDocument": Object {
               "Statement": Array [
@@ -40180,17 +40180,17 @@ Object {
             },
             "policyName": "__REPLACED_TOKEN",
             "roles": Array [
-              "#{Token[TOKEN.3238]}",
+              "#{Token[TOKEN.3234]}",
             ],
             "users": Array [
-              "#{Token[TOKEN.3239]}",
+              "#{Token[TOKEN.3235]}",
             ],
           },
           "cfnOptions": Object {},
           "cfnResourceType": "AWS::IAM::Policy",
           "dependsOn": Object {},
           "groups": Array [
-            "#{Token[TOKEN.3240]}",
+            "#{Token[TOKEN.3236]}",
           ],
           "logicalId": "__REPLACED_TOKEN",
           "node": Object {
@@ -40222,7 +40222,7 @@ Object {
           "policyName": "__REPLACED_TOKEN",
           "rawOverrides": Object {},
           "roles": Array [
-            "#{Token[TOKEN.3238]}",
+            "#{Token[TOKEN.3234]}",
           ],
           "stack": Object {
             "_logicalIds": Object {
@@ -40304,7 +40304,7 @@ Object {
                               "Version": "2012-10-17",
                             },
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3200]}",
+                              "#{Token[TOKEN.3196]}",
                             ],
                             "roleName": "__REPLACED_TOKEN",
                           },
@@ -40327,7 +40327,7 @@ Object {
                           "dependsOn": Object {},
                           "logicalId": "__REPLACED_TOKEN",
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3200]}",
+                            "#{Token[TOKEN.3196]}",
                           ],
                           "node": Object {
                             "_children": Object {},
@@ -40396,7 +40396,7 @@ Object {
                           "functionName": "testFunction",
                           "handler": "index.handler",
                           "layers": Array [
-                            "#{Token[TOKEN.3207]}",
+                            "#{Token[TOKEN.3203]}",
                           ],
                           "role": "__REPLACED_TOKEN",
                           "runtime": "nodejs14.x",
@@ -40412,7 +40412,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3207]}",
+                          "#{Token[TOKEN.3203]}",
                         ],
                         "logicalId": "__REPLACED_TOKEN",
                         "node": Object {
@@ -40493,7 +40493,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3200]}",
+                                  "#{Token[TOKEN.3196]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -40516,7 +40516,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -40595,7 +40595,7 @@ Object {
                           "functionName": "testFunction",
                           "handler": "index.handler",
                           "layers": Array [
-                            "#{Token[TOKEN.3207]}",
+                            "#{Token[TOKEN.3203]}",
                           ],
                           "role": "__REPLACED_TOKEN",
                           "runtime": "nodejs14.x",
@@ -40611,7 +40611,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3207]}",
+                          "#{Token[TOKEN.3203]}",
                         ],
                         "logicalId": "__REPLACED_TOKEN",
                         "node": Object {
@@ -40692,7 +40692,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3200]}",
+                                  "#{Token[TOKEN.3196]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -40715,7 +40715,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -40832,7 +40832,7 @@ Object {
                               "Version": "2012-10-17",
                             },
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3200]}",
+                              "#{Token[TOKEN.3196]}",
                             ],
                             "roleName": "__REPLACED_TOKEN",
                           },
@@ -40855,7 +40855,7 @@ Object {
                           "dependsOn": Object {},
                           "logicalId": "__REPLACED_TOKEN",
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3200]}",
+                            "#{Token[TOKEN.3196]}",
                           ],
                           "node": Object {
                             "_children": Object {},
@@ -41293,9 +41293,9 @@ Object {
               "scope": Object {
                 "_assemblyBuilder": Object {
                   "artifacts": Object {},
-                  "assetOutdir": "/tmp/cdk.out5LWdE5",
+                  "assetOutdir": "/tmp/cdk.outL4nytL",
                   "missing": Array [],
-                  "outdir": "/tmp/cdk.out5LWdE5",
+                  "outdir": "/tmp/cdk.outL4nytL",
                 },
                 "node": Object {
                   "_children": Object {
@@ -41359,7 +41359,7 @@ Object {
             "templateOptions": Object {},
           },
           "users": Array [
-            "#{Token[TOKEN.3239]}",
+            "#{Token[TOKEN.3235]}",
           ],
         },
       },
@@ -41459,7 +41459,7 @@ Object {
                         "Version": "2012-10-17",
                       },
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3200]}",
+                        "#{Token[TOKEN.3196]}",
                       ],
                       "roleName": "__REPLACED_TOKEN",
                     },
@@ -41482,7 +41482,7 @@ Object {
                     "dependsOn": Object {},
                     "logicalId": "__REPLACED_TOKEN",
                     "managedPolicyArns": Array [
-                      "#{Token[TOKEN.3200]}",
+                      "#{Token[TOKEN.3196]}",
                     ],
                     "node": Object {
                       "_children": Object {},
@@ -41551,7 +41551,7 @@ Object {
                     "functionName": "testFunction",
                     "handler": "index.handler",
                     "layers": Array [
-                      "#{Token[TOKEN.3207]}",
+                      "#{Token[TOKEN.3203]}",
                     ],
                     "role": "__REPLACED_TOKEN",
                     "runtime": "nodejs14.x",
@@ -41567,7 +41567,7 @@ Object {
                   "functionName": "testFunction",
                   "handler": "index.handler",
                   "layers": Array [
-                    "#{Token[TOKEN.3207]}",
+                    "#{Token[TOKEN.3203]}",
                   ],
                   "logicalId": "__REPLACED_TOKEN",
                   "node": Object {
@@ -41648,7 +41648,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3200]}",
+                            "#{Token[TOKEN.3196]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -41671,7 +41671,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3200]}",
+                          "#{Token[TOKEN.3196]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -41750,7 +41750,7 @@ Object {
                     "functionName": "testFunction",
                     "handler": "index.handler",
                     "layers": Array [
-                      "#{Token[TOKEN.3207]}",
+                      "#{Token[TOKEN.3203]}",
                     ],
                     "role": "__REPLACED_TOKEN",
                     "runtime": "nodejs14.x",
@@ -41766,7 +41766,7 @@ Object {
                   "functionName": "testFunction",
                   "handler": "index.handler",
                   "layers": Array [
-                    "#{Token[TOKEN.3207]}",
+                    "#{Token[TOKEN.3203]}",
                   ],
                   "logicalId": "__REPLACED_TOKEN",
                   "node": Object {
@@ -41847,7 +41847,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3200]}",
+                            "#{Token[TOKEN.3196]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -41870,7 +41870,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3200]}",
+                          "#{Token[TOKEN.3196]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -41987,7 +41987,7 @@ Object {
                         "Version": "2012-10-17",
                       },
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3200]}",
+                        "#{Token[TOKEN.3196]}",
                       ],
                       "roleName": "__REPLACED_TOKEN",
                     },
@@ -42010,7 +42010,7 @@ Object {
                     "dependsOn": Object {},
                     "logicalId": "__REPLACED_TOKEN",
                     "managedPolicyArns": Array [
-                      "#{Token[TOKEN.3200]}",
+                      "#{Token[TOKEN.3196]}",
                     ],
                     "node": Object {
                       "_children": Object {},
@@ -42448,9 +42448,9 @@ Object {
         "scope": Object {
           "_assemblyBuilder": Object {
             "artifacts": Object {},
-            "assetOutdir": "/tmp/cdk.out5LWdE5",
+            "assetOutdir": "/tmp/cdk.outL4nytL",
             "missing": Array [],
-            "outdir": "/tmp/cdk.out5LWdE5",
+            "outdir": "/tmp/cdk.outL4nytL",
           },
           "node": Object {
             "_children": Object {
@@ -42550,7 +42550,7 @@ Object {
             "Resource": Object {
               "_cfnProperties": Object {
                 "groups": Array [
-                  "#{Token[TOKEN.3240]}",
+                  "#{Token[TOKEN.3236]}",
                 ],
                 "policyDocument": Object {
                   "Statement": Array [
@@ -42564,17 +42564,17 @@ Object {
                 },
                 "policyName": "__REPLACED_TOKEN",
                 "roles": Array [
-                  "#{Token[TOKEN.3238]}",
+                  "#{Token[TOKEN.3234]}",
                 ],
                 "users": Array [
-                  "#{Token[TOKEN.3239]}",
+                  "#{Token[TOKEN.3235]}",
                 ],
               },
               "cfnOptions": Object {},
               "cfnResourceType": "AWS::IAM::Policy",
               "dependsOn": Object {},
               "groups": Array [
-                "#{Token[TOKEN.3240]}",
+                "#{Token[TOKEN.3236]}",
               ],
               "logicalId": "__REPLACED_TOKEN",
               "node": Object {
@@ -42606,7 +42606,7 @@ Object {
               "policyName": "__REPLACED_TOKEN",
               "rawOverrides": Object {},
               "roles": Array [
-                "#{Token[TOKEN.3238]}",
+                "#{Token[TOKEN.3234]}",
               ],
               "stack": Object {
                 "_logicalIds": Object {
@@ -42688,7 +42688,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3200]}",
+                                  "#{Token[TOKEN.3196]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -42711,7 +42711,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -42780,7 +42780,7 @@ Object {
                               "functionName": "testFunction",
                               "handler": "index.handler",
                               "layers": Array [
-                                "#{Token[TOKEN.3207]}",
+                                "#{Token[TOKEN.3203]}",
                               ],
                               "role": "__REPLACED_TOKEN",
                               "runtime": "nodejs14.x",
@@ -42796,7 +42796,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3207]}",
+                              "#{Token[TOKEN.3203]}",
                             ],
                             "logicalId": "__REPLACED_TOKEN",
                             "node": Object {
@@ -42877,7 +42877,7 @@ Object {
                                       "Version": "2012-10-17",
                                     },
                                     "managedPolicyArns": Array [
-                                      "#{Token[TOKEN.3200]}",
+                                      "#{Token[TOKEN.3196]}",
                                     ],
                                     "roleName": "__REPLACED_TOKEN",
                                   },
@@ -42900,7 +42900,7 @@ Object {
                                   "dependsOn": Object {},
                                   "logicalId": "__REPLACED_TOKEN",
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3200]}",
+                                    "#{Token[TOKEN.3196]}",
                                   ],
                                   "node": Object {
                                     "_children": Object {},
@@ -42979,7 +42979,7 @@ Object {
                               "functionName": "testFunction",
                               "handler": "index.handler",
                               "layers": Array [
-                                "#{Token[TOKEN.3207]}",
+                                "#{Token[TOKEN.3203]}",
                               ],
                               "role": "__REPLACED_TOKEN",
                               "runtime": "nodejs14.x",
@@ -42995,7 +42995,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3207]}",
+                              "#{Token[TOKEN.3203]}",
                             ],
                             "logicalId": "__REPLACED_TOKEN",
                             "node": Object {
@@ -43076,7 +43076,7 @@ Object {
                                       "Version": "2012-10-17",
                                     },
                                     "managedPolicyArns": Array [
-                                      "#{Token[TOKEN.3200]}",
+                                      "#{Token[TOKEN.3196]}",
                                     ],
                                     "roleName": "__REPLACED_TOKEN",
                                   },
@@ -43099,7 +43099,7 @@ Object {
                                   "dependsOn": Object {},
                                   "logicalId": "__REPLACED_TOKEN",
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3200]}",
+                                    "#{Token[TOKEN.3196]}",
                                   ],
                                   "node": Object {
                                     "_children": Object {},
@@ -43216,7 +43216,7 @@ Object {
                                   "Version": "2012-10-17",
                                 },
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3200]}",
+                                  "#{Token[TOKEN.3196]}",
                                 ],
                                 "roleName": "__REPLACED_TOKEN",
                               },
@@ -43239,7 +43239,7 @@ Object {
                               "dependsOn": Object {},
                               "logicalId": "__REPLACED_TOKEN",
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "node": Object {
                                 "_children": Object {},
@@ -43677,9 +43677,9 @@ Object {
                   "scope": Object {
                     "_assemblyBuilder": Object {
                       "artifacts": Object {},
-                      "assetOutdir": "/tmp/cdk.out5LWdE5",
+                      "assetOutdir": "/tmp/cdk.outL4nytL",
                       "missing": Array [],
-                      "outdir": "/tmp/cdk.out5LWdE5",
+                      "outdir": "/tmp/cdk.outL4nytL",
                     },
                     "node": Object {
                       "_children": Object {
@@ -43743,7 +43743,7 @@ Object {
                 "templateOptions": Object {},
               },
               "users": Array [
-                "#{Token[TOKEN.3239]}",
+                "#{Token[TOKEN.3235]}",
               ],
             },
           },
@@ -43843,7 +43843,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3200]}",
+                            "#{Token[TOKEN.3196]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -43866,7 +43866,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3200]}",
+                          "#{Token[TOKEN.3196]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -43935,7 +43935,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3207]}",
+                          "#{Token[TOKEN.3203]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -43951,7 +43951,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3207]}",
+                        "#{Token[TOKEN.3203]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -44032,7 +44032,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -44055,7 +44055,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3200]}",
+                              "#{Token[TOKEN.3196]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -44134,7 +44134,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3207]}",
+                          "#{Token[TOKEN.3203]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -44150,7 +44150,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3207]}",
+                        "#{Token[TOKEN.3203]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -44231,7 +44231,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -44254,7 +44254,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3200]}",
+                              "#{Token[TOKEN.3196]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -44371,7 +44371,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3200]}",
+                            "#{Token[TOKEN.3196]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -44394,7 +44394,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3200]}",
+                          "#{Token[TOKEN.3196]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -44832,9 +44832,9 @@ Object {
             "scope": Object {
               "_assemblyBuilder": Object {
                 "artifacts": Object {},
-                "assetOutdir": "/tmp/cdk.out5LWdE5",
+                "assetOutdir": "/tmp/cdk.outL4nytL",
                 "missing": Array [],
-                "outdir": "/tmp/cdk.out5LWdE5",
+                "outdir": "/tmp/cdk.outL4nytL",
               },
               "node": Object {
                 "_children": Object {
@@ -44914,7 +44914,7 @@ Object {
             "Version": "2012-10-17",
           },
           "managedPolicyArns": Array [
-            "#{Token[TOKEN.3223]}",
+            "#{Token[TOKEN.3219]}",
           ],
           "roleName": "__REPLACED_TOKEN",
         },
@@ -44937,7 +44937,7 @@ Object {
         "dependsOn": Object {},
         "logicalId": "__REPLACED_TOKEN",
         "managedPolicyArns": Array [
-          "#{Token[TOKEN.3223]}",
+          "#{Token[TOKEN.3219]}",
         ],
         "node": Object {
           "_children": Object {},
@@ -45037,7 +45037,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3200]}",
+                            "#{Token[TOKEN.3196]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -45060,7 +45060,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3200]}",
+                          "#{Token[TOKEN.3196]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -45129,7 +45129,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3207]}",
+                          "#{Token[TOKEN.3203]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -45145,7 +45145,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3207]}",
+                        "#{Token[TOKEN.3203]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -45226,7 +45226,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -45249,7 +45249,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3200]}",
+                              "#{Token[TOKEN.3196]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -45328,7 +45328,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3207]}",
+                          "#{Token[TOKEN.3203]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -45344,7 +45344,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3207]}",
+                        "#{Token[TOKEN.3203]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -45425,7 +45425,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -45448,7 +45448,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3200]}",
+                              "#{Token[TOKEN.3196]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -45565,7 +45565,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3200]}",
+                            "#{Token[TOKEN.3196]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -45588,7 +45588,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3200]}",
+                          "#{Token[TOKEN.3196]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -46026,9 +46026,9 @@ Object {
             "scope": Object {
               "_assemblyBuilder": Object {
                 "artifacts": Object {},
-                "assetOutdir": "/tmp/cdk.out5LWdE5",
+                "assetOutdir": "/tmp/cdk.outL4nytL",
                 "missing": Array [],
-                "outdir": "/tmp/cdk.out5LWdE5",
+                "outdir": "/tmp/cdk.outL4nytL",
               },
               "node": Object {
                 "_children": Object {
@@ -46231,7 +46231,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -46254,7 +46254,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3200]}",
+                              "#{Token[TOKEN.3196]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -46323,7 +46323,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3207]}",
+                              "#{Token[TOKEN.3203]}",
                             ],
                             "role": "__REPLACED_TOKEN",
                             "runtime": "nodejs14.x",
@@ -46339,7 +46339,7 @@ Object {
                           "functionName": "testFunction",
                           "handler": "index.handler",
                           "layers": Array [
-                            "#{Token[TOKEN.3207]}",
+                            "#{Token[TOKEN.3203]}",
                           ],
                           "logicalId": "__REPLACED_TOKEN",
                           "node": Object {
@@ -46420,7 +46420,7 @@ Object {
                                     "Version": "2012-10-17",
                                   },
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3200]}",
+                                    "#{Token[TOKEN.3196]}",
                                   ],
                                   "roleName": "__REPLACED_TOKEN",
                                 },
@@ -46443,7 +46443,7 @@ Object {
                                 "dependsOn": Object {},
                                 "logicalId": "__REPLACED_TOKEN",
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3200]}",
+                                  "#{Token[TOKEN.3196]}",
                                 ],
                                 "node": Object {
                                   "_children": Object {},
@@ -46522,7 +46522,7 @@ Object {
                             "functionName": "testFunction",
                             "handler": "index.handler",
                             "layers": Array [
-                              "#{Token[TOKEN.3207]}",
+                              "#{Token[TOKEN.3203]}",
                             ],
                             "role": "__REPLACED_TOKEN",
                             "runtime": "nodejs14.x",
@@ -46538,7 +46538,7 @@ Object {
                           "functionName": "testFunction",
                           "handler": "index.handler",
                           "layers": Array [
-                            "#{Token[TOKEN.3207]}",
+                            "#{Token[TOKEN.3203]}",
                           ],
                           "logicalId": "__REPLACED_TOKEN",
                           "node": Object {
@@ -46619,7 +46619,7 @@ Object {
                                     "Version": "2012-10-17",
                                   },
                                   "managedPolicyArns": Array [
-                                    "#{Token[TOKEN.3200]}",
+                                    "#{Token[TOKEN.3196]}",
                                   ],
                                   "roleName": "__REPLACED_TOKEN",
                                 },
@@ -46642,7 +46642,7 @@ Object {
                                 "dependsOn": Object {},
                                 "logicalId": "__REPLACED_TOKEN",
                                 "managedPolicyArns": Array [
-                                  "#{Token[TOKEN.3200]}",
+                                  "#{Token[TOKEN.3196]}",
                                 ],
                                 "node": Object {
                                   "_children": Object {},
@@ -46759,7 +46759,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -46782,7 +46782,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3200]}",
+                              "#{Token[TOKEN.3196]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -47150,9 +47150,9 @@ Object {
                 "scope": Object {
                   "_assemblyBuilder": Object {
                     "artifacts": Object {},
-                    "assetOutdir": "/tmp/cdk.out5LWdE5",
+                    "assetOutdir": "/tmp/cdk.outL4nytL",
                     "missing": Array [],
-                    "outdir": "/tmp/cdk.out5LWdE5",
+                    "outdir": "/tmp/cdk.outL4nytL",
                   },
                   "node": Object {
                     "_children": Object {
@@ -47316,7 +47316,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3200]}",
+                            "#{Token[TOKEN.3196]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -47339,7 +47339,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3200]}",
+                          "#{Token[TOKEN.3196]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -47408,7 +47408,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3207]}",
+                          "#{Token[TOKEN.3203]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -47424,7 +47424,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3207]}",
+                        "#{Token[TOKEN.3203]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -47505,7 +47505,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -47528,7 +47528,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3200]}",
+                              "#{Token[TOKEN.3196]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -47607,7 +47607,7 @@ Object {
                         "functionName": "testFunction",
                         "handler": "index.handler",
                         "layers": Array [
-                          "#{Token[TOKEN.3207]}",
+                          "#{Token[TOKEN.3203]}",
                         ],
                         "role": "__REPLACED_TOKEN",
                         "runtime": "nodejs14.x",
@@ -47623,7 +47623,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3207]}",
+                        "#{Token[TOKEN.3203]}",
                       ],
                       "logicalId": "__REPLACED_TOKEN",
                       "node": Object {
@@ -47704,7 +47704,7 @@ Object {
                                 "Version": "2012-10-17",
                               },
                               "managedPolicyArns": Array [
-                                "#{Token[TOKEN.3200]}",
+                                "#{Token[TOKEN.3196]}",
                               ],
                               "roleName": "__REPLACED_TOKEN",
                             },
@@ -47727,7 +47727,7 @@ Object {
                             "dependsOn": Object {},
                             "logicalId": "__REPLACED_TOKEN",
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3200]}",
+                              "#{Token[TOKEN.3196]}",
                             ],
                             "node": Object {
                               "_children": Object {},
@@ -47844,7 +47844,7 @@ Object {
                             "Version": "2012-10-17",
                           },
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3200]}",
+                            "#{Token[TOKEN.3196]}",
                           ],
                           "roleName": "__REPLACED_TOKEN",
                         },
@@ -47867,7 +47867,7 @@ Object {
                         "dependsOn": Object {},
                         "logicalId": "__REPLACED_TOKEN",
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3200]}",
+                          "#{Token[TOKEN.3196]}",
                         ],
                         "node": Object {
                           "_children": Object {},
@@ -48235,9 +48235,9 @@ Object {
             "scope": Object {
               "_assemblyBuilder": Object {
                 "artifacts": Object {},
-                "assetOutdir": "/tmp/cdk.out5LWdE5",
+                "assetOutdir": "/tmp/cdk.outL4nytL",
                 "missing": Array [],
-                "outdir": "/tmp/cdk.out5LWdE5",
+                "outdir": "/tmp/cdk.outL4nytL",
               },
               "node": Object {
                 "_children": Object {
@@ -48383,7 +48383,7 @@ Object {
                           "Version": "2012-10-17",
                         },
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3200]}",
+                          "#{Token[TOKEN.3196]}",
                         ],
                         "roleName": "__REPLACED_TOKEN",
                       },
@@ -48406,7 +48406,7 @@ Object {
                       "dependsOn": Object {},
                       "logicalId": "__REPLACED_TOKEN",
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3200]}",
+                        "#{Token[TOKEN.3196]}",
                       ],
                       "node": Object {
                         "_children": Object {},
@@ -48475,7 +48475,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3207]}",
+                        "#{Token[TOKEN.3203]}",
                       ],
                       "role": "__REPLACED_TOKEN",
                       "runtime": "nodejs14.x",
@@ -48491,7 +48491,7 @@ Object {
                     "functionName": "testFunction",
                     "handler": "index.handler",
                     "layers": Array [
-                      "#{Token[TOKEN.3207]}",
+                      "#{Token[TOKEN.3203]}",
                     ],
                     "logicalId": "__REPLACED_TOKEN",
                     "node": Object {
@@ -48572,7 +48572,7 @@ Object {
                               "Version": "2012-10-17",
                             },
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3200]}",
+                              "#{Token[TOKEN.3196]}",
                             ],
                             "roleName": "__REPLACED_TOKEN",
                           },
@@ -48595,7 +48595,7 @@ Object {
                           "dependsOn": Object {},
                           "logicalId": "__REPLACED_TOKEN",
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3200]}",
+                            "#{Token[TOKEN.3196]}",
                           ],
                           "node": Object {
                             "_children": Object {},
@@ -48674,7 +48674,7 @@ Object {
                       "functionName": "testFunction",
                       "handler": "index.handler",
                       "layers": Array [
-                        "#{Token[TOKEN.3207]}",
+                        "#{Token[TOKEN.3203]}",
                       ],
                       "role": "__REPLACED_TOKEN",
                       "runtime": "nodejs14.x",
@@ -48690,7 +48690,7 @@ Object {
                     "functionName": "testFunction",
                     "handler": "index.handler",
                     "layers": Array [
-                      "#{Token[TOKEN.3207]}",
+                      "#{Token[TOKEN.3203]}",
                     ],
                     "logicalId": "__REPLACED_TOKEN",
                     "node": Object {
@@ -48771,7 +48771,7 @@ Object {
                               "Version": "2012-10-17",
                             },
                             "managedPolicyArns": Array [
-                              "#{Token[TOKEN.3200]}",
+                              "#{Token[TOKEN.3196]}",
                             ],
                             "roleName": "__REPLACED_TOKEN",
                           },
@@ -48794,7 +48794,7 @@ Object {
                           "dependsOn": Object {},
                           "logicalId": "__REPLACED_TOKEN",
                           "managedPolicyArns": Array [
-                            "#{Token[TOKEN.3200]}",
+                            "#{Token[TOKEN.3196]}",
                           ],
                           "node": Object {
                             "_children": Object {},
@@ -48911,7 +48911,7 @@ Object {
                           "Version": "2012-10-17",
                         },
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3200]}",
+                          "#{Token[TOKEN.3196]}",
                         ],
                         "roleName": "__REPLACED_TOKEN",
                       },
@@ -48934,7 +48934,7 @@ Object {
                       "dependsOn": Object {},
                       "logicalId": "__REPLACED_TOKEN",
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3200]}",
+                        "#{Token[TOKEN.3196]}",
                       ],
                       "node": Object {
                         "_children": Object {},
@@ -49302,9 +49302,9 @@ Object {
           "scope": Object {
             "_assemblyBuilder": Object {
               "artifacts": Object {},
-              "assetOutdir": "/tmp/cdk.out5LWdE5",
+              "assetOutdir": "/tmp/cdk.outL4nytL",
               "missing": Array [],
-              "outdir": "/tmp/cdk.out5LWdE5",
+              "outdir": "/tmp/cdk.outL4nytL",
             },
             "node": Object {
               "_children": Object {
@@ -49465,7 +49465,7 @@ Object {
                       "Version": "2012-10-17",
                     },
                     "managedPolicyArns": Array [
-                      "#{Token[TOKEN.3200]}",
+                      "#{Token[TOKEN.3196]}",
                     ],
                     "roleName": "__REPLACED_TOKEN",
                   },
@@ -49488,7 +49488,7 @@ Object {
                   "dependsOn": Object {},
                   "logicalId": "__REPLACED_TOKEN",
                   "managedPolicyArns": Array [
-                    "#{Token[TOKEN.3200]}",
+                    "#{Token[TOKEN.3196]}",
                   ],
                   "node": Object {
                     "_children": Object {},
@@ -49557,7 +49557,7 @@ Object {
                   "functionName": "testFunction",
                   "handler": "index.handler",
                   "layers": Array [
-                    "#{Token[TOKEN.3207]}",
+                    "#{Token[TOKEN.3203]}",
                   ],
                   "role": "__REPLACED_TOKEN",
                   "runtime": "nodejs14.x",
@@ -49573,7 +49573,7 @@ Object {
                 "functionName": "testFunction",
                 "handler": "index.handler",
                 "layers": Array [
-                  "#{Token[TOKEN.3207]}",
+                  "#{Token[TOKEN.3203]}",
                 ],
                 "logicalId": "__REPLACED_TOKEN",
                 "node": Object {
@@ -49654,7 +49654,7 @@ Object {
                           "Version": "2012-10-17",
                         },
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3200]}",
+                          "#{Token[TOKEN.3196]}",
                         ],
                         "roleName": "__REPLACED_TOKEN",
                       },
@@ -49677,7 +49677,7 @@ Object {
                       "dependsOn": Object {},
                       "logicalId": "__REPLACED_TOKEN",
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3200]}",
+                        "#{Token[TOKEN.3196]}",
                       ],
                       "node": Object {
                         "_children": Object {},
@@ -49756,7 +49756,7 @@ Object {
                   "functionName": "testFunction",
                   "handler": "index.handler",
                   "layers": Array [
-                    "#{Token[TOKEN.3207]}",
+                    "#{Token[TOKEN.3203]}",
                   ],
                   "role": "__REPLACED_TOKEN",
                   "runtime": "nodejs14.x",
@@ -49772,7 +49772,7 @@ Object {
                 "functionName": "testFunction",
                 "handler": "index.handler",
                 "layers": Array [
-                  "#{Token[TOKEN.3207]}",
+                  "#{Token[TOKEN.3203]}",
                 ],
                 "logicalId": "__REPLACED_TOKEN",
                 "node": Object {
@@ -49853,7 +49853,7 @@ Object {
                           "Version": "2012-10-17",
                         },
                         "managedPolicyArns": Array [
-                          "#{Token[TOKEN.3200]}",
+                          "#{Token[TOKEN.3196]}",
                         ],
                         "roleName": "__REPLACED_TOKEN",
                       },
@@ -49876,7 +49876,7 @@ Object {
                       "dependsOn": Object {},
                       "logicalId": "__REPLACED_TOKEN",
                       "managedPolicyArns": Array [
-                        "#{Token[TOKEN.3200]}",
+                        "#{Token[TOKEN.3196]}",
                       ],
                       "node": Object {
                         "_children": Object {},
@@ -49993,7 +49993,7 @@ Object {
                       "Version": "2012-10-17",
                     },
                     "managedPolicyArns": Array [
-                      "#{Token[TOKEN.3200]}",
+                      "#{Token[TOKEN.3196]}",
                     ],
                     "roleName": "__REPLACED_TOKEN",
                   },
@@ -50016,7 +50016,7 @@ Object {
                   "dependsOn": Object {},
                   "logicalId": "__REPLACED_TOKEN",
                   "managedPolicyArns": Array [
-                    "#{Token[TOKEN.3200]}",
+                    "#{Token[TOKEN.3196]}",
                   ],
                   "node": Object {
                     "_children": Object {},
@@ -50454,9 +50454,9 @@ Object {
       "scope": Object {
         "_assemblyBuilder": Object {
           "artifacts": Object {},
-          "assetOutdir": "/tmp/cdk.out5LWdE5",
+          "assetOutdir": "/tmp/cdk.outL4nytL",
           "missing": Array [],
-          "outdir": "/tmp/cdk.out5LWdE5",
+          "outdir": "/tmp/cdk.outL4nytL",
         },
         "node": Object {
           "_children": Object {
