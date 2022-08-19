@@ -31,8 +31,7 @@ export const IAM_SERVICE_PREFIX: Record<ServiceKeys, string> = {
   AutoScalingPlans: "autoscaling-plans",
   Backup: "backup",
   BackupGateway: "backup-gateway",
-  // BackupStorage is missing in AWS type :shrug:
-  // BackupStorage: "backup-storage",
+  BackupStorage: "backup-storage",
   Batch: "batch",
   Billingconductor: "billingconductor",
   Braket: "braket",
@@ -234,6 +233,7 @@ export const IAM_SERVICE_PREFIX: Record<ServiceKeys, string> = {
   PinpointSMSVoiceV2: "sms-voice",
   Polly: "polly",
   Pricing: "pricing",
+  PrivateNetworks: "private-networks",
   Proton: "proton",
   QLDB: "qldb",
   QLDBSession: "qldb",
