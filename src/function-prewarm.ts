@@ -7,10 +7,11 @@ export interface PrewarmClientInitializer<T, O> {
 }
 
 export type ClientName =
-  | "LAMBDA"
-  | "EVENT_BRIDGE"
-  | "STEP_FUNCTIONS"
-  | "DYNAMO";
+  | "DynamoDB"
+  | "EventBridge"
+  | "Lambda"
+  | "SecretsManager"
+  | "StepFunctions";
 
 /**
  * Known, shared clients to use.
@@ -24,34 +25,45 @@ export type ClientName =
  * })
  * ```
  */
-export const PrewarmClients = {
-  LAMBDA: {
-    key: "LAMBDA",
+export const PrewarmClients: Record<
+  ClientName,
+  PrewarmClientInitializer<ClientName, any>
+> = {
+  Lambda: {
+    key: "Lambda",
     init: (key, props) =>
       // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
       new (require("aws-sdk").Lambda)(props?.clientConfigRetriever?.(key)),
   },
-  EVENT_BRIDGE: {
-    key: "EVENT_BRIDGE",
+  EventBridge: {
+    key: "EventBridge",
     init: (key, props) =>
       // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
       new (require("aws-sdk").EventBridge)(props?.clientConfigRetriever?.(key)),
   },
-  STEP_FUNCTIONS: {
-    key: "STEP_FUNCTIONS",
+  StepFunctions: {
+    key: "StepFunctions",
     init: (key, props) =>
       // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
       new (require("aws-sdk").StepFunctions)(
         props?.clientConfigRetriever?.(key)
       ),
   },
-  DYNAMO: {
-    key: "DYNAMO",
+  DynamoDB: {
+    key: "DynamoDB",
     init: (key, props) =>
       // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
       new (require("aws-sdk").DynamoDB)(props?.clientConfigRetriever?.(key)),
   },
-} as Record<ClientName, PrewarmClientInitializer<ClientName, any>>;
+  SecretsManager: {
+    key: "SecretsManager",
+    init: (key, props) =>
+      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
+      new (require("aws-sdk").SecretsManager)(
+        props?.clientConfigRetriever?.(key)
+      ),
+  },
+};
 
 export interface PrewarmProps {
   clientConfigRetriever?: (

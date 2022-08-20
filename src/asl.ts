@@ -8,7 +8,6 @@ import {
   FunctionLike,
   ParameterDecl,
   VariableDecl,
-  VariableDeclList,
 } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
@@ -52,7 +51,6 @@ import {
   isElementAccessExpr,
   isEmptyStmt,
   isErr,
-  isExpr,
   isExprStmt,
   isForInStmt,
   isForOfStmt,
@@ -1962,19 +1960,45 @@ export class ASL {
     }
 
     if (isTemplateExpr(expr)) {
-      return this.evalContext(expr, ({ evalExprToJsonPathOrLiteral }) => {
+      return this.evalContext(expr, ({ evalExpr, addState }) => {
         const elementOutputs = [
           {
             value: expr.head.text,
             containsJsonPath: false,
           },
-          ...expr.spans.flatMap((span) => [
-            evalExprToJsonPathOrLiteral(span.expr),
-            {
-              value: span.literal.text,
-              containsJsonPath: false,
-            },
-          ]),
+          ...expr.spans.flatMap((span) => {
+            const out = evalExpr(span.expr);
+
+            /**
+             * It is possible that expressions in the template can update variables used in the template.
+             * For JsonPath outputs assign the output of any json path to a new heap variable
+             * instead of whatever json path they return. Do the same for conditions, they need have a boolean assigned
+             * to a heap variable anyways. We can handle jsonPath and conditions in the same way.
+             *
+             *
+             * ```ts
+             * let x = "1";
+             * ${x} ${(x = "2")}` // should output `1 2`
+             * ```
+             *
+             * If the heap assignment isn't necessary, we will optimize out the extra assignment later.
+             */
+            const safeOut = ASLGraph.isLiteralValue(out)
+              ? out
+              : this.assignValue(span, out);
+
+            if (ASLGraph.isStateOrSubState(safeOut)) {
+              addState(safeOut);
+            }
+
+            return [
+              ASLGraph.isAslGraphOutput(safeOut) ? safeOut : safeOut.output,
+              {
+                value: span.literal.text,
+                containsJsonPath: false,
+              },
+            ];
+          }),
         ];
 
         /**
@@ -2156,7 +2180,7 @@ export class ASL {
         }
       }
       throw new Error(
-        `call must be a service call or list .slice, .map, .forEach or .filter: ${nodeToString(
+        `call must be a service call or list .slice, .map, .forEach or .filter: ${toStateName(
           expr
         )}`
       );
@@ -2198,57 +2222,84 @@ export class ASL {
       }
       assertNever(expr);
     } else if (isObjectLiteralExpr(expr)) {
-      return this.evalContext(expr, ({ evalExprToJsonPathOrLiteral }) => {
-        return expr.properties.reduce(
-          (obj: ASLGraph.LiteralValue, prop) => {
-            if (!isPropAssignExpr(prop)) {
-              throw new Error(
-                `${prop.kindName} is not supported in Amazon States Language`
-              );
-            }
-            if (
-              (isComputedPropertyNameExpr(prop.name) &&
-                isStringLiteralExpr(prop.name.expr)) ||
-              isIdentifier(prop.name) ||
-              isStringLiteralExpr(prop.name)
-            ) {
-              const name = isIdentifier(prop.name)
-                ? prop.name.name
-                : isStringLiteralExpr(prop.name)
-                ? prop.name.value
-                : isStringLiteralExpr(prop.name.expr)
-                ? prop.name.expr.value
-                : undefined;
-              if (!name) {
+      return this.evalContext(
+        expr,
+        ({ evalExprToJsonPathOrLiteral, addState }) => {
+          return expr.properties.reduce(
+            (obj: ASLGraph.LiteralValue, prop) => {
+              if (!isPropAssignExpr(prop)) {
+                throw new Error(
+                  `${prop.kindName} is not supported in Amazon States Language`
+                );
+              }
+              if (
+                (isComputedPropertyNameExpr(prop.name) &&
+                  isStringLiteralExpr(prop.name.expr)) ||
+                isIdentifier(prop.name) ||
+                isStringLiteralExpr(prop.name)
+              ) {
+                const name = isIdentifier(prop.name)
+                  ? prop.name.name
+                  : isStringLiteralExpr(prop.name)
+                  ? prop.name.value
+                  : isStringLiteralExpr(prop.name.expr)
+                  ? prop.name.expr.value
+                  : undefined;
+                if (!name) {
+                  throw new SynthError(
+                    ErrorCodes.StepFunctions_property_names_must_be_constant
+                  );
+                }
+
+                const valueOutput = evalExprToJsonPathOrLiteral(prop.expr);
+
+                // if the value is a json path, assign to a new heap value that will not change
+                // we do this to prevent the edge case where a variable reference changes
+                // between evaluation and assignment. we'll optimize this out later.
+                const assign = ASLGraph.isJsonPath(valueOutput)
+                  ? this.stateWithHeapOutput({
+                      ...ASLGraph.passWithInput(
+                        {
+                          Type: "Pass",
+                          Next: ASLGraph.DeferNext,
+                        },
+                        valueOutput
+                      ),
+                    })
+                  : undefined;
+
+                if (assign) {
+                  addState(assign);
+                }
+
+                return {
+                  value: {
+                    ...(obj.value as Record<string, any>),
+                    ...ASLGraph.jsonAssignment(
+                      name,
+                      assign ? assign.output : valueOutput
+                    ),
+                  },
+                  containsJsonPath:
+                    obj.containsJsonPath ||
+                    ASLGraph.isJsonPath(valueOutput) ||
+                    valueOutput.containsJsonPath,
+                };
+              } else {
                 throw new SynthError(
                   ErrorCodes.StepFunctions_property_names_must_be_constant
                 );
               }
-              const valueOutput = evalExprToJsonPathOrLiteral(prop.expr);
-              return {
-                value: {
-                  ...(obj.value as Record<string, any>),
-                  ...ASLGraph.jsonAssignment(name, valueOutput),
-                },
-                containsJsonPath:
-                  obj.containsJsonPath ||
-                  ASLGraph.isJsonPath(valueOutput) ||
-                  valueOutput.containsJsonPath,
-              };
-            } else {
-              throw new SynthError(
-                ErrorCodes.StepFunctions_property_names_must_be_constant
-              );
+            },
+            {
+              value: {},
+              containsJsonPath: false,
             }
-          },
-          {
-            value: {},
-            containsJsonPath: false,
-          }
-        );
-      });
+          );
+        }
+      );
     } else if (isArrayLiteralExpr(expr)) {
-      return this.evalContext(expr, ({ evalExprToJsonPathOrLiteral }) => {
+      return this.evalContext(expr, ({ evalExpr, addState }) => {
         // evaluate each item
         const items = expr.items.map((item) => {
           if (isOmittedExpr(item)) {
@@ -2257,7 +2308,15 @@ export class ASL {
               `omitted expressions in an array create an undefined value which cannot be represented in Step Functions`
             );
           }
-          return evalExprToJsonPathOrLiteral(item);
+          const value = evalExpr(item);
+          const assign = ASLGraph.isLiteralValue(value)
+            ? undefined
+            : this.assignValue(undefined, value);
+          if (assign) {
+            addState(assign);
+            return assign.output;
+          }
+          return value as ASLGraph.LiteralValue;
         });
         const heapLocation = this.newHeapVariable();
 
@@ -2362,7 +2421,10 @@ export class ASL {
             );
           }
 
-          return this.assignValue(expr, right, left.jsonPath);
+          return {
+            ...this.assignValue(expr, right, left.jsonPath),
+            output: right,
+          };
         });
       } else if (expr.op === "in") {
         return this.evalContext(expr, ({ evalExpr }) => {
@@ -2453,7 +2515,7 @@ export class ASL {
             if (expr.op === "&&") {
               return !leftOutput.value ? leftOutput : right;
             } else if (expr.op === "||") {
-              return !!leftOutput.value ? leftOutput : right;
+              return leftOutput.value ? leftOutput : right;
             } else {
               return leftOutput.value !== null && leftOutput.value !== undefined
                 ? leftOutput
@@ -5764,177 +5826,134 @@ export namespace ASL {
  *
  * @returns [state name, optionally updated cache key (node)]
  */
-function toStateName(node: FunctionlessNode): string {
+function toStateName(node?: FunctionlessNode): string {
   /**
    * Special case that updates the statement used (cache key)
    */
-  if (isBlockStmt(node)) {
+  if (!node) {
+    return "";
+  } else if (isBlockStmt(node)) {
     if (node.isFinallyBlock()) {
       return "finally";
     } else {
       const step = node.step();
       return step ? toStateName(step) : "<block>";
     }
-  }
-  function inner(node: Exclude<FunctionlessNode, BlockStmt>): string {
-    if (isExpr(node)) {
-      return nodeToString(node);
-    } else if (isIfStmt(node)) {
-      return `if(${nodeToString(node.when)})`;
-    } else if (isExprStmt(node)) {
-      return nodeToString(node.expr);
-    } else if (isBreakStmt(node)) {
-      return "break";
-    } else if (isContinueStmt(node)) {
-      return "continue";
-    } else if (isCatchClause(node)) {
-      return `catch${
-        node.variableDecl ? `(${nodeToString(node.variableDecl)})` : ""
-      }`;
-    } else if (isDoStmt(node)) {
-      return `while (${nodeToString(node.condition)})`;
-    } else if (isForInStmt(node)) {
-      return `for(${
-        isIdentifier(node.initializer)
-          ? nodeToString(node.initializer)
-          : nodeToString(node.initializer.name)
-      } in ${nodeToString(node.expr)})`;
-    } else if (isForOfStmt(node)) {
-      return `for(${nodeToString(node.initializer)} of ${nodeToString(
-        node.expr
-      )})`;
-    } else if (isForStmt(node)) {
-      // for(;;)
-      return `for(${
-        node.initializer && isVariableDeclList(node.initializer)
-          ? inner(node.initializer)
-          : nodeToString(node.initializer)
-      };${nodeToString(node.condition)};${nodeToString(node.incrementor)})`;
-    } else if (isReturnStmt(node)) {
-      if (node.expr) {
-        return `return ${nodeToString(node.expr)}`;
-      } else {
-        return "return";
-      }
-    } else if (isThrowStmt(node)) {
-      return `throw ${nodeToString(node.expr)}`;
-    } else if (isTryStmt(node)) {
-      return "try";
-    } else if (isVariableStmt(node)) {
-      return inner(node.declList);
-    } else if (isVariableDeclList(node)) {
-      return `${node.decls.map((v) => inner(v)).join(",")}`;
-    } else if (isVariableDecl(node)) {
-      return node.initializer
-        ? `${nodeToString(node.name)} = ${nodeToString(node.initializer)}`
-        : nodeToString(node.name);
-    } else if (isWhileStmt(node)) {
-      return `while (${nodeToString(node.condition)})`;
-    } else if (isBindingElem(node)) {
-      const binding = node.propertyName
-        ? `${inner(node.propertyName)}: ${inner(node.name)}`
-        : `${inner(node.name)}`;
-      return node.initializer
-        ? `${binding} = ${nodeToString(node.initializer)}`
-        : binding;
-    } else if (isObjectBinding(node)) {
-      return `{ ${node.bindings.map(inner).join(", ")} }`;
-    } else if (isArrayBinding(node)) {
-      return `[ ${node.bindings.map((b) => (!b ? "" : inner(b))).join(", ")} ]`;
-    } else if (isFunctionLike(node)) {
-      return `function (${node.parameters.map(inner).join(",")})`;
-    } else if (isParameterDecl(node)) {
-      return inner(node.name);
-    } else if (isErr(node)) {
-      throw node.error;
-    } else if (isEmptyStmt(node)) {
-      return ";";
-    } else if (
-      isCaseClause(node) ||
-      isClassDecl(node) ||
-      isClassStaticBlockDecl(node) ||
-      isConstructorDecl(node) ||
-      isDebuggerStmt(node) ||
-      isDefaultClause(node) ||
-      isGetAccessorDecl(node) ||
-      isImportKeyword(node) ||
-      isLabelledStmt(node) ||
-      isMethodDecl(node) ||
-      isPropDecl(node) ||
-      isSetAccessorDecl(node) ||
-      isSuperKeyword(node) ||
-      isSuperKeyword(node) ||
-      isSwitchStmt(node) ||
-      isWithStmt(node) ||
-      isYieldExpr(node) ||
-      isTemplateHead(node) ||
-      isTemplateMiddle(node) ||
-      isTemplateTail(node) ||
-      isTemplateSpan(node)
-    ) {
-      throw new SynthError(
-        ErrorCodes.Unsupported_Feature,
-        `Unsupported kind: ${node.kindName}`
-      );
+  } else if (isIfStmt(node)) {
+    return `if(${toStateName(node.when)})`;
+  } else if (isExprStmt(node)) {
+    return toStateName(node.expr);
+  } else if (isBreakStmt(node)) {
+    return "break";
+  } else if (isContinueStmt(node)) {
+    return "continue";
+  } else if (isCatchClause(node)) {
+    return `catch${
+      node.variableDecl ? `(${toStateName(node.variableDecl)})` : ""
+    }`;
+  } else if (isDoStmt(node)) {
+    return `while (${toStateName(node.condition)})`;
+  } else if (isForInStmt(node)) {
+    return `for(${
+      isIdentifier(node.initializer)
+        ? toStateName(node.initializer)
+        : toStateName(node.initializer.name)
+    } in ${toStateName(node.expr)})`;
+  } else if (isForOfStmt(node)) {
+    return `for(${toStateName(node.initializer)} of ${toStateName(node.expr)})`;
+  } else if (isForStmt(node)) {
+    // for(;;)
+    return `for(${
+      node.initializer && isVariableDeclList(node.initializer)
+        ? toStateName(node.initializer)
+        : toStateName(node.initializer)
+    };${toStateName(node.condition)};${toStateName(node.incrementor)})`;
+  } else if (isReturnStmt(node)) {
+    if (node.expr) {
+      return `return ${toStateName(node.expr)}`;
     } else {
-      return assertNever(node);
+      return "return";
     }
-  }
-
-  return inner(node);
-}
-
-function nodeToString(
-  expr?:
-    | Expr
-    | ParameterDecl
-    | BindingName
-    | BindingElem
-    | VariableDecl
-    | VariableDeclList
-    | SuperKeyword
-): string {
-  if (!expr) {
-    return "";
-  } else if (isArgument(expr)) {
-    return nodeToString(expr.expr);
-  } else if (isArrayLiteralExpr(expr)) {
-    return `[${expr.items
-      .map((item) => (item ? nodeToString(item) : "null"))
+  } else if (isThrowStmt(node)) {
+    return `throw ${toStateName(node.expr)}`;
+  } else if (isTryStmt(node)) {
+    return "try";
+  } else if (isVariableStmt(node)) {
+    return toStateName(node.declList);
+  } else if (isVariableDeclList(node)) {
+    return `${node.decls.map((v) => toStateName(v)).join(",")}`;
+  } else if (isVariableDecl(node)) {
+    return node.initializer
+      ? `${toStateName(node.name)} = ${toStateName(node.initializer)}`
+      : toStateName(node.name);
+  } else if (isWhileStmt(node)) {
+    return `while (${toStateName(node.condition)})`;
+  } else if (isBindingElem(node)) {
+    const binding = node.propertyName
+      ? `${toStateName(node.propertyName)}: ${toStateName(node.name)}`
+      : `${toStateName(node.name)}`;
+    return node.initializer
+      ? `${binding} = ${toStateName(node.initializer)}`
+      : binding;
+  } else if (isObjectBinding(node)) {
+    return `{ ${node.bindings.map(toStateName).join(", ")} }`;
+  } else if (isArrayBinding(node)) {
+    return `[ ${node.bindings
+      .map((b) => (!b ? "" : toStateName(b)))
+      .join(", ")} ]`;
+  } else if (isFunctionLike(node)) {
+    return `function (${node.parameters.map(toStateName).join(",")})`;
+  } else if (isParameterDecl(node)) {
+    return toStateName(node.name);
+  } else if (isErr(node)) {
+    throw node.error;
+  } else if (isEmptyStmt(node)) {
+    return ";";
+  } else if (isTemplateHead(node)) {
+    return node.text;
+  } else if (isTemplateMiddle(node)) {
+    return node.text;
+  } else if (isTemplateTail(node)) {
+    return node.text;
+  } else if (isTemplateSpan(node)) {
+    return `${toStateName(node.literal)}${toStateName(node.expr)}`;
+  } else if (isArgument(node)) {
+    return toStateName(node.expr);
+  } else if (isArrayLiteralExpr(node)) {
+    return `[${node.items
+      .map((item) => (item ? toStateName(item) : "null"))
       .join(", ")}]`;
-  } else if (isBigIntExpr(expr)) {
-    return expr.value.toString(10);
-  } else if (isBinaryExpr(expr)) {
-    return `${nodeToString(expr.left)} ${expr.op} ${nodeToString(expr.right)}`;
-  } else if (isBooleanLiteralExpr(expr)) {
-    return `${expr.value}`;
-  } else if (isCallExpr(expr) || isNewExpr(expr)) {
-    if (isSuperKeyword(expr.expr) || isImportKeyword(expr.expr)) {
-      throw new Error(`calling ${expr.expr.kindName} is unsupported in ASL`);
+  } else if (isBigIntExpr(node)) {
+    return node.value.toString(10);
+  } else if (isBinaryExpr(node)) {
+    return `${toStateName(node.left)} ${node.op} ${toStateName(node.right)}`;
+  } else if (isBooleanLiteralExpr(node)) {
+    return `${node.value}`;
+  } else if (isCallExpr(node) || isNewExpr(node)) {
+    if (isSuperKeyword(node.expr) || isImportKeyword(node.expr)) {
+      throw new Error(`calling ${node.expr.kindName} is unsupported in ASL`);
     }
-    return `${isNewExpr(expr) ? "new " : ""}${nodeToString(
-      expr.expr
-    )}(${expr.args
+    return `${isNewExpr(node) ? "new " : ""}${toStateName(
+      node.expr
+    )}(${node.args
       // Assume that undefined args are in order.
       .filter((arg) => arg && !isUndefinedLiteralExpr(arg))
-      .map(nodeToString)
+      .map(toStateName)
       .join(", ")})`;
-  } else if (isConditionExpr(expr)) {
-    return `if(${nodeToString(expr.when)})`;
-  } else if (isComputedPropertyNameExpr(expr)) {
-    return `[${nodeToString(expr.expr)}]`;
-  } else if (isElementAccessExpr(expr)) {
-    return `${nodeToString(expr.expr)}[${nodeToString(expr.element)}]`;
-  } else if (isFunctionLike(expr)) {
-    return `function(${expr.parameters.map(nodeToString).join(", ")})`;
-  } else if (isIdentifier(expr)) {
-    return expr.name;
-  } else if (isNullLiteralExpr(expr)) {
+  } else if (isConditionExpr(node)) {
+    return `if(${toStateName(node.when)})`;
+  } else if (isComputedPropertyNameExpr(node)) {
+    return `[${toStateName(node.expr)}]`;
+  } else if (isElementAccessExpr(node)) {
+    return `${toStateName(node.expr)}[${toStateName(node.element)}]`;
+  } else if (isIdentifier(node)) {
+    return node.name;
+  } else if (isNullLiteralExpr(node)) {
     return "null";
-  } else if (isNumberLiteralExpr(expr)) {
-    return `${expr.value}`;
-  } else if (isObjectLiteralExpr(expr)) {
-    return `{${expr.properties
+  } else if (isNumberLiteralExpr(node)) {
+    return `${node.value}`;
+  } else if (isObjectLiteralExpr(node)) {
+    return `{${node.properties
       .map((prop) => {
         if (
           isSetAccessorDecl(prop) ||
@@ -5946,99 +5965,98 @@ function nodeToString(
             `${prop.kindName} is not supported by Step Functions`
           );
         }
-
-        return nodeToString(prop);
+        return toStateName(prop);
       })
       .join(", ")}}`;
-  } else if (isPropAccessExpr(expr)) {
-    return `${nodeToString(expr.expr)}.${expr.name.name}`;
-  } else if (isPropAssignExpr(expr)) {
+  } else if (isPropAccessExpr(node)) {
+    return `${toStateName(node.expr)}.${node.name.name}`;
+  } else if (isPropAssignExpr(node)) {
     return `${
-      isIdentifier(expr.name) || isPrivateIdentifier(expr.name)
-        ? expr.name.name
-        : isStringLiteralExpr(expr.name)
-        ? expr.name.value
-        : isNumberLiteralExpr(expr.name)
-        ? expr.name.value
-        : isComputedPropertyNameExpr(expr.name)
-        ? isStringLiteralExpr(expr.name.expr)
-          ? expr.name.expr.value
-          : nodeToString(expr.name.expr)
-        : assertNever(expr.name)
-    }: ${nodeToString(expr.expr)}`;
-  } else if (isReferenceExpr(expr)) {
-    return expr.name;
-  } else if (isSpreadAssignExpr(expr)) {
-    return `...${nodeToString(expr.expr)}`;
-  } else if (isSpreadElementExpr(expr)) {
-    return `...${nodeToString(expr.expr)}`;
-  } else if (isStringLiteralExpr(expr)) {
-    return `"${expr.value}"`;
-  } else if (isTemplateExpr(expr)) {
-    return `${expr.head.text}${expr.spans
-      .map((span) => `\${${nodeToString(span.expr)}}${span.literal.text}`)
-      .join("")}`;
-  } else if (isNoSubstitutionTemplateLiteral(expr)) {
-    return `\`${expr.text}\``;
-  } else if (isTypeOfExpr(expr)) {
-    return `typeof ${nodeToString(expr.expr)}`;
-  } else if (isUnaryExpr(expr)) {
-    return `${expr.op}${nodeToString(expr.expr)}`;
-  } else if (isPostfixUnaryExpr(expr)) {
-    return `${nodeToString(expr.expr)}${expr.op}`;
-  } else if (isUndefinedLiteralExpr(expr)) {
+      isIdentifier(node.name) || isPrivateIdentifier(node.name)
+        ? node.name.name
+        : isStringLiteralExpr(node.name)
+        ? node.name.value
+        : isNumberLiteralExpr(node.name)
+        ? node.name.value
+        : isComputedPropertyNameExpr(node.name)
+        ? isStringLiteralExpr(node.name.expr)
+          ? node.name.expr.value
+          : toStateName(node.name.expr)
+        : assertNever(node.name)
+    }: ${toStateName(node.expr)}`;
+  } else if (isReferenceExpr(node)) {
+    return node.name;
+  } else if (isSpreadAssignExpr(node)) {
+    return `...${toStateName(node.expr)}`;
+  } else if (isSpreadElementExpr(node)) {
+    return `...${toStateName(node.expr)}`;
+  } else if (isStringLiteralExpr(node)) {
+    return `"${node.value}"`;
+  } else if (isTemplateExpr(node)) {
+    return `${toStateName(node.head)}${node.spans.map(toStateName).join("")}`;
+  } else if (isNoSubstitutionTemplateLiteral(node)) {
+    return `\`${node.text}\``;
+  } else if (isTypeOfExpr(node)) {
+    return `typeof ${toStateName(node.expr)}`;
+  } else if (isUnaryExpr(node)) {
+    return `${node.op}${toStateName(node.expr)}`;
+  } else if (isPostfixUnaryExpr(node)) {
+    return `${toStateName(node.expr)}${node.op}`;
+  } else if (isUndefinedLiteralExpr(node)) {
     return "undefined";
-  } else if (isAwaitExpr(expr)) {
-    return `await ${nodeToString(expr.expr)}`;
-  } else if (isThisExpr(expr)) {
+  } else if (isAwaitExpr(node)) {
+    return `await ${toStateName(node.expr)}`;
+  } else if (isThisExpr(node)) {
     return "this";
-  } else if (isClassExpr(expr)) {
+  } else if (isClassExpr(node)) {
     throw new SynthError(
       ErrorCodes.Unsupported_Feature,
       `ClassDecl is not supported in StepFunctions`
     );
-  } else if (isPrivateIdentifier(expr)) {
-    return expr.name;
-  } else if (isYieldExpr(expr)) {
-    return `yield${expr.delegate ? "*" : ""} ${nodeToString(expr.expr)}`;
-  } else if (isRegexExpr(expr)) {
-    return expr.regex.source;
-  } else if (isDeleteExpr(expr)) {
-    return `delete ${nodeToString(expr.expr)}`;
-  } else if (isVoidExpr(expr)) {
-    return `void ${nodeToString(expr.expr)}`;
-  } else if (isParenthesizedExpr(expr)) {
-    return nodeToString(expr.expr);
-  } else if (isObjectBinding(expr)) {
-    return `{${expr.bindings.map(nodeToString).join(",")}}`;
-  } else if (isArrayBinding(expr)) {
-    return `[${expr.bindings.map(nodeToString).join(",")}]`;
-  } else if (isBindingElem(expr)) {
-    return `${expr.rest ? "..." : ""}${
-      expr.propertyName
-        ? `${nodeToString(expr.propertyName)}:${nodeToString(expr.name)}`
-        : `${nodeToString(expr.name)}`
-    }`;
-  } else if (isVariableDecl(expr)) {
-    return `${nodeToString(expr.name)}${
-      expr.initializer ? ` = ${nodeToString(expr.initializer)}` : ""
-    }`;
-  } else if (isVariableDeclList(expr)) {
-    return expr.decls.map(nodeToString).join(", ");
-  } else if (isParameterDecl(expr)) {
-    return nodeToString(expr.name);
-  } else if (isTaggedTemplateExpr(expr)) {
+  } else if (isPrivateIdentifier(node)) {
+    return node.name;
+  } else if (isYieldExpr(node)) {
+    return `yield${node.delegate ? "*" : ""} ${toStateName(node.expr)}`;
+  } else if (isRegexExpr(node)) {
+    return node.regex.source;
+  } else if (isDeleteExpr(node)) {
+    return `delete ${toStateName(node.expr)}`;
+  } else if (isVoidExpr(node)) {
+    return `void ${toStateName(node.expr)}`;
+  } else if (isParenthesizedExpr(node)) {
+    return toStateName(node.expr);
+  } else if (isTaggedTemplateExpr(node)) {
     throw new SynthError(
       ErrorCodes.Unsupported_Feature,
-      `${expr.kindName} is not supported by Step Functions`
+      `${node.kindName} is not supported by Step Functions`
     );
-  } else if (isOmittedExpr(expr)) {
-    return "undefined";
-  } else if (isSuperKeyword(expr)) {
-    return "super";
-  } else {
-    return assertNever(expr);
+  } else if (isOmittedExpr(node)) {
+    return "";
+  } else if (
+    isCaseClause(node) ||
+    isClassDecl(node) ||
+    isClassStaticBlockDecl(node) ||
+    isConstructorDecl(node) ||
+    isDebuggerStmt(node) ||
+    isDefaultClause(node) ||
+    isGetAccessorDecl(node) ||
+    isImportKeyword(node) ||
+    isLabelledStmt(node) ||
+    isMethodDecl(node) ||
+    isPropDecl(node) ||
+    isSetAccessorDecl(node) ||
+    isSuperKeyword(node) ||
+    isSuperKeyword(node) ||
+    isSwitchStmt(node) ||
+    isWithStmt(node) ||
+    isYieldExpr(node)
+  ) {
+    throw new SynthError(
+      ErrorCodes.Unsupported_Feature,
+      `Unsupported kind: ${node.kindName}`
+    );
   }
+  return assertNever(node);
 }
 
 // to prevent the closure serializer from trying to import all of functionless.
