@@ -1,49 +1,7 @@
-import { aws_sqs, aws_lambda_event_sources } from "aws-cdk-lib";
+import { aws_sqs, aws_lambda_event_sources, aws_lambda } from "aws-cdk-lib";
 import lambda from "aws-lambda";
 import { Construct } from "constructs";
-import { Function } from "./function";
-
-class BaseQueue<T> {
-  readonly resource: aws_sqs.IQueue;
-
-  constructor(scope: Construct, id: string, props?: QueueProps);
-  constructor(resource: aws_sqs.IQueue, props?: QueueProps);
-  constructor(
-    ...args:
-      | [secret: aws_sqs.IQueue, props?: QueueProps]
-      | [scope: Construct, id: string, props?: QueueProps]
-  ) {
-    let props: QueueProps | undefined;
-    if (typeof args[1] !== "string") {
-      this.resource = args[0] as aws_sqs.IQueue;
-      props = args[1];
-    } else {
-      props = args[2] as QueueProps;
-      this.resource = new aws_sqs.Queue(args[0], args[1], props);
-    }
-  }
-
-  public get queueArn() {
-    return this.resource.queueArn;
-  }
-
-  public get queueName() {
-    return this.resource.queueName;
-  }
-
-  public get queueUrl() {
-    return this.resource.queueUrl;
-  }
-
-  public forEach(
-    handler: Function<SQSEvent<T>, lambda.SQSBatchResponse>,
-    props?: aws_lambda_event_sources.SqsEventSourceProps
-  ): void {
-    handler.resource.addEventSource(
-      new aws_lambda_event_sources.SqsEventSource(this.resource, props)
-    );
-  }
-}
+import { Enumerable } from "./enumerable";
 
 export interface SQSEvent<T> {
   Records: SQSRecord<T>[];
@@ -57,6 +15,54 @@ export interface QueueProps extends aws_sqs.QueueProps {}
 
 export interface IQueue<T = string> extends BaseQueue<T> {}
 
-// export interface QueueEvent
+abstract class BaseQueue<T> extends Enumerable<
+  aws_sqs.IQueue,
+  aws_sqs.QueueProps,
+  lambda.SQSEvent,
+  SQSEvent<T>,
+  lambda.SQSBatchResponse,
+  aws_lambda_event_sources.SqsEventSourceProps
+> {
+  public get queueArn() {
+    return this.resource.queueArn;
+  }
 
-export class Queue<T = string> extends BaseQueue<T> implements IQueue<T> {}
+  public get queueName() {
+    return this.resource.queueName;
+  }
+
+  public get queueUrl() {
+    return this.resource.queueUrl;
+  }
+
+  protected createResource(
+    scope: Construct,
+    id: string,
+    config: aws_sqs.QueueProps
+  ): aws_sqs.IQueue {
+    return new aws_sqs.Queue(scope, id, config);
+  }
+
+  protected createEventSource(
+    config: aws_lambda_event_sources.SqsEventSourceProps
+  ): aws_lambda.IEventSource {
+    return new aws_lambda_event_sources.SqsEventSource(this.resource, config);
+  }
+}
+
+export class TextQueue extends BaseQueue<string> implements IQueue<string> {
+  protected createPreProcessor(): (event: lambda.SQSEvent) => SQSEvent<string> {
+    return (event) => event;
+  }
+}
+
+export class JsonQueue<T> extends BaseQueue<T> implements IQueue<T> {
+  protected createPreProcessor(): (event: lambda.SQSEvent) => SQSEvent<T> {
+    return (event) => ({
+      Records: event.Records.map((record) => ({
+        ...record,
+        body: JSON.parse(record.body) as T,
+      })),
+    });
+  }
+}

@@ -1,9 +1,9 @@
 import "jest";
 
 import { aws_dynamodb, Duration } from "aws-cdk-lib";
-import { SQSBatchResponse, SQSEvent } from "aws-lambda";
+import { SQSBatchResponse } from "aws-lambda";
 import { v4 } from "uuid";
-import { $AWS, Function, FunctionProps, Queue, Table } from "../src";
+import { $AWS, FunctionProps, TextQueue, Table } from "../src";
 import { localstackTestSuite } from "./localstack";
 import { localDynamoDB, localSQS, retry } from "./runtime-util";
 
@@ -18,7 +18,7 @@ const localstackClientConfig: FunctionProps = {
 
 localstackTestSuite("queueStack", (test) => {
   test(
-    "forEach queue message",
+    "forEach queue message (props, handler)",
     (scope) => {
       const table = new Table(scope, "Table", {
         partitionKey: {
@@ -26,38 +26,30 @@ localstackTestSuite("queueStack", (test) => {
           type: aws_dynamodb.AttributeType.STRING,
         },
       });
-      const queue = new Queue(scope, "queue");
-      queue.forEach(
-        new Function(
-          scope,
-          "forEach",
-          localstackClientConfig,
-          // we must use explicit types when specifying FunctionProps
-          // see: https://github.com/functionless/functionless/issues/427
-          async (event: SQSEvent) => {
-            await Promise.all(
-              event.Records.map(async (record) => {
-                const json = JSON.parse(record.body);
-                await $AWS.DynamoDB.PutItem({
-                  Table: table,
-                  Item: {
-                    id: {
-                      S: json.id,
-                    },
-                    data: {
-                      S: json.data,
-                    },
-                  },
-                });
-              })
-            );
+      const queue = new TextQueue(scope, "queue");
 
-            return <SQSBatchResponse>{
-              batchItemFailures: [],
-            };
-          }
-        )
-      );
+      queue.forEach(localstackClientConfig, async (event) => {
+        await Promise.all(
+          event.Records.map(async (record) => {
+            const json = JSON.parse(record.body);
+            await $AWS.DynamoDB.PutItem({
+              Table: table,
+              Item: {
+                id: {
+                  S: json.id,
+                },
+                data: {
+                  S: json.data,
+                },
+              },
+            });
+          })
+        );
+
+        return <SQSBatchResponse>{
+          batchItemFailures: [],
+        };
+      });
       return {
         outputs: {
           tableName: table.tableName,
@@ -65,36 +57,81 @@ localstackTestSuite("queueStack", (test) => {
         },
       };
     },
-    async (context) => {
-      const message = {
-        id: v4(),
-        data: "hello world",
-      };
-      const messageJSON = JSON.stringify(message);
-      await localSQS
-        .sendMessage({
-          MessageBody: messageJSON,
-          QueueUrl: context.queueUrl,
-        })
-        .promise();
+    assertForEach
+  );
 
-      await retry(
-        async () =>
-          localDynamoDB
-            .getItem({
-              TableName: context.tableName,
-              Key: {
+  test(
+    "forEach queue message (id, props, handler)",
+    (scope) => {
+      const table = new Table(scope, "Table", {
+        partitionKey: {
+          name: "id",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+      const queue = new TextQueue(scope, "queue");
+
+      queue.forEach("id", localstackClientConfig, async (event) => {
+        await Promise.all(
+          event.Records.map(async (record) => {
+            const json = JSON.parse(record.body);
+            await $AWS.DynamoDB.PutItem({
+              Table: table,
+              Item: {
                 id: {
-                  S: message.id,
+                  S: json.id,
+                },
+                data: {
+                  S: json.data,
                 },
               },
-            })
-            .promise(),
-        (result) => result.Item?.data?.S === message.data,
-        10,
-        1000,
-        2
-      );
-    }
+            });
+          })
+        );
+
+        return <SQSBatchResponse>{
+          batchItemFailures: [],
+        };
+      });
+      return {
+        outputs: {
+          tableName: table.tableName,
+          queueUrl: queue.queueUrl,
+        },
+      };
+    },
+    assertForEach
   );
 });
+
+async function assertForEach(context: { tableName: string; queueUrl: string }) {
+  const message = {
+    id: v4(),
+    data: "hello world",
+  };
+  const messageJSON = JSON.stringify(message);
+  await localSQS
+    .sendMessage({
+      MessageBody: messageJSON,
+      QueueUrl: context.queueUrl,
+    })
+    .promise();
+
+  await retry(
+    async () =>
+      localDynamoDB
+        .getItem({
+          TableName: context.tableName,
+          Key: {
+            id: {
+              S: message.id,
+            },
+          },
+        })
+        .promise(),
+    (result) => result.Item?.data?.S === message.data,
+    10,
+    1000,
+    2
+  );
+}
