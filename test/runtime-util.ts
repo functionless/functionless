@@ -1,9 +1,17 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { Lambda, StepFunctions } from "aws-sdk";
+import { DynamoDB, Lambda, StepFunctions, SQS } from "aws-sdk";
 import { clientConfig } from "./localstack";
 
 export const localLambda = new Lambda(clientConfig);
 export const localSFN = new StepFunctions({
+  ...clientConfig,
+  hostPrefixEnabled: false,
+});
+export const localSQS = new SQS({
+  ...clientConfig,
+  hostPrefixEnabled: false,
+});
+export const localDynamoDB = new DynamoDB({
   ...clientConfig,
   hostPrefixEnabled: false,
 });

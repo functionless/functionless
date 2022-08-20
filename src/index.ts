@@ -14,11 +14,12 @@ export * from "./function";
 export * from "./guards";
 export * from "./node-kind";
 export * from "./node";
+export * from "./queue";
 export * from "./reflect";
 export * from "./s-expression";
+export * from "./secret";
 export * from "./statement";
 export * from "./step-function";
-export * from "./secret";
 export * from "./table";
 export * from "./util";
 

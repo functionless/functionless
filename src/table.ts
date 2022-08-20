@@ -470,8 +470,8 @@ export type DynamoAppSyncIntegrationCall<
  * @see https://github.com/sam-goodwin/typesafe-dynamodb - for more information on how to model your DynamoDB table with TypeScript
  */
 export class Table<
-  Item extends object,
-  PartitionKey extends keyof Item,
+  Item extends object = any,
+  PartitionKey extends keyof Item = any,
   RangeKey extends keyof Item | undefined = undefined
 > extends BaseTable<Item, PartitionKey, RangeKey> {
   /**
