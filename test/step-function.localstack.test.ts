@@ -388,7 +388,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         async () => {
           const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
             {
-              AlarmNames: [alarm.alarmName],
+              AlarmNames: [alarm.alarmArn],
             },
             {
               iam: { resources: [alarm.alarmArn] },

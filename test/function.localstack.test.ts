@@ -16,6 +16,7 @@ import {
 import axios from "axios";
 import { Construct } from "constructs";
 import {
+  SDK,
   $AWS,
   EventBus,
   Event,
@@ -448,7 +449,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          const result = await $AWS.SDK.CloudWatch.describeAlarms(
+          const result = await SDK.CloudWatch.describeAlarms(
             {
               AlarmNames: [alarm.alarmName],
             },

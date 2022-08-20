@@ -7,6 +7,7 @@ import {
   Stack,
   aws_events,
   Duration,
+  aws_cloudwatch,
 } from "aws-cdk-lib";
 import {
   $AWS,
@@ -436,6 +437,15 @@ const exprSfn = new ExpressStepFunction(stack, "exp", () => {
   return "woo";
 });
 
+const alarm = new aws_cloudwatch.Alarm(stack, "Alarm", {
+  evaluationPeriods: 1,
+  threshold: 1,
+  metric: new aws_cloudwatch.Metric({
+    namespace: "AWS/Lambda",
+    metricName: "Errors",
+  }),
+});
+
 new Function(
   stack,
   "testFunc",
@@ -494,6 +504,14 @@ new Function(
       Key: { pk: { S: "Post|1" }, sk: { S: "Post" } },
     });
     console.log(item.Item?.pk?.S);
+    await SDK.CloudWatch.describeAlarms(
+      {
+        AlarmNames: [alarm.alarmName],
+      },
+      {
+        iam: { resources: [alarm.alarmArn] },
+      }
+    );
     return exprSfn({});
     // return "hi";
   }
