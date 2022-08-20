@@ -3,7 +3,8 @@ import "jest";
 import { aws_dynamodb, Duration } from "aws-cdk-lib";
 import { SQSBatchResponse } from "aws-lambda";
 import { v4 } from "uuid";
-import { $AWS, FunctionProps, TextQueue, Table } from "../src";
+import { $AWS, FunctionProps, Queue, Table } from "../src";
+import { JsonSerializer } from "../src/serializer";
 import { localstackTestSuite } from "./localstack";
 import { localDynamoDB, localSQS, retry } from "./runtime-util";
 
@@ -18,7 +19,7 @@ const localstackClientConfig: FunctionProps = {
 
 localstackTestSuite("queueStack", (test) => {
   test(
-    "forEach queue message (props, handler)",
+    "onEvent(props, handler)",
     (scope) => {
       const table = new Table(scope, "Table", {
         partitionKey: {
@@ -26,7 +27,7 @@ localstackTestSuite("queueStack", (test) => {
           type: aws_dynamodb.AttributeType.STRING,
         },
       });
-      const queue = new TextQueue(scope, "queue");
+      const queue = new Queue(scope, "queue");
 
       queue.onEvent(localstackClientConfig, async (event) => {
         await Promise.all(
@@ -61,7 +62,7 @@ localstackTestSuite("queueStack", (test) => {
   );
 
   test(
-    "forEach queue message (id, props, handler)",
+    "onEvent(id, props, handler)",
     (scope) => {
       const table = new Table(scope, "Table", {
         partitionKey: {
@@ -69,7 +70,7 @@ localstackTestSuite("queueStack", (test) => {
           type: aws_dynamodb.AttributeType.STRING,
         },
       });
-      const queue = new TextQueue(scope, "queue");
+      const queue = new Queue(scope, "queue");
 
       queue.onEvent("id", localstackClientConfig, async (event) => {
         await Promise.all(
@@ -92,6 +93,98 @@ localstackTestSuite("queueStack", (test) => {
         return <SQSBatchResponse>{
           batchItemFailures: [],
         };
+      });
+      return {
+        outputs: {
+          tableName: table.tableName,
+          queueUrl: queue.queueUrl,
+        },
+      };
+    },
+    assertForEach
+  );
+
+  test(
+    "onEvent with JsonSerializer",
+    (scope) => {
+      const table = new Table(scope, "Table", {
+        partitionKey: {
+          name: "id",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+
+      interface Message {
+        id: string;
+        data: string;
+      }
+
+      const queue = new Queue(scope, "queue", {
+        serializer: new JsonSerializer<Message>(),
+      });
+
+      queue.onEvent(localstackClientConfig, async (event) => {
+        await Promise.all(
+          event.Records.map(async (record) => {
+            await $AWS.DynamoDB.PutItem({
+              Table: table,
+              Item: {
+                id: {
+                  S: record.message.id,
+                },
+                data: {
+                  S: record.message.data,
+                },
+              },
+            });
+          })
+        );
+
+        return <SQSBatchResponse>{
+          batchItemFailures: [],
+        };
+      });
+      return {
+        outputs: {
+          tableName: table.tableName,
+          queueUrl: queue.queueUrl,
+        },
+      };
+    },
+    assertForEach
+  );
+
+  test(
+    "forEach with JsonSerializer",
+    (scope) => {
+      const table = new Table(scope, "Table", {
+        partitionKey: {
+          name: "id",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+
+      interface Message {
+        id: string;
+        data: string;
+      }
+
+      const queue = new Queue(scope, "queue", {
+        serializer: new JsonSerializer<Message>(),
+      });
+
+      queue.forEach(localstackClientConfig, async (message) => {
+        await $AWS.DynamoDB.PutItem({
+          Table: table,
+          Item: {
+            id: {
+              S: message.id,
+            },
+            data: {
+              S: message.data,
+            },
+          },
+        });
       });
       return {
         outputs: {
@@ -130,7 +223,7 @@ async function assertForEach(context: { tableName: string; queueUrl: string }) {
         })
         .promise(),
     (result) => result.Item?.data?.S === message.data,
-    10,
+    5,
     1000,
     2
   );
