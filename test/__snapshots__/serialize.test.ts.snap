@@ -8,9 +8,7 @@ function __f0() {
   return (function() {
     let _axios = __axios;
 
-    return (async () => {
-    return _axios.default.get(\\"https://functionless.org\\");
-});;
+    return (async () => { return _axios.default.get(\\"https://functionless.org\\"); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -12639,15 +12637,7 @@ function __f3(__0, __1) {
     let _fnls = __fnls;
     let bus = __bus;
 
-    return (() => {
-    return _fnls[\\"$AWS\\"].EventBridge.putEvents({
-        Entries: [
-            {
-                EventBusName: bus.eventBusName
-            },
-        ]
-    });
-});;
+    return (() => { return _fnls[\\"$AWS\\"].EventBridge.putEvents({ Entries: [{ EventBusName: bus.eventBusName },] }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -12916,13 +12906,7 @@ function __f0() {
     let _fnls = __fnls;
     let bus = __bus;
     return () => {
-      return _fnls[\\"$AWS\\"].EventBridge.putEvents({
-        Entries: [
-          {
-            EventBusName: bus.eventBusName
-          }
-        ]
-      });
+      return _fnls[\\"$AWS\\"].EventBridge.putEvents({ Entries: [{ EventBusName: bus.eventBusName }] });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -12985,13 +12969,7 @@ function __f3(__0, __1) {
   return (function() {
     let bus = __bus;
 
-    return (() => {
-    return bus.putEvents({
-        \\"detail-type\\": \\"test\\",
-        detail: {},
-        source: \\"\\"
-    });
-});;
+    return (() => { return bus.putEvents({ \\"detail-type\\": \\"test\\", detail: {}, source: \\"\\" }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -13077,11 +13055,7 @@ function __f0() {
   return function() {
     let bus = __bus;
     return () => {
-      return bus.putEvents({
-        \\"detail-type\\": \\"test\\",
-        detail: {},
-        source: \\"\\"
-      });
+      return bus.putEvents({ \\"detail-type\\": \\"test\\", detail: {}, source: \\"\\" });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13144,9 +13118,7 @@ function __f3(__0, __1) {
   return (function() {
     let func = __f1;
 
-    return (() => {
-    return func();
-});;
+    return (() => { return func(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -13435,12 +13407,7 @@ function __f3(__0, __1) {
     let _fnls = __fnls;
     let func = __f23;
 
-    return (() => {
-    return _fnls[\\"$AWS\\"].Lambda.Invoke({
-        Function: func,
-        Payload: undefined
-    });
-});;
+    return (() => { return _fnls[\\"$AWS\\"].Lambda.Invoke({ Function: func, Payload: undefined }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -13745,10 +13712,7 @@ function __f0() {
     let _fnls = __fnls;
     let func = __f23;
     return () => {
-      return _fnls[\\"$AWS\\"].Lambda.Invoke({
-        Function: func,
-        Payload: void 0
-      });
+      return _fnls[\\"$AWS\\"].Lambda.Invoke({ Function: func, Payload: void 0 });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13925,15 +13889,7 @@ function __f3(__0, __1) {
   return (function() {
     let _fnls = __fnls;
 
-    return (() => {
-    return _fnls[\\"$AWS\\"].SDK.CloudWatch.describeAlarms({}, {
-        iam: {
-            resources: [
-                \\"*\\"
-            ]
-        }
-    });
-});;
+    return (() => { return _fnls[\\"$AWS\\"].SDK.CloudWatch.describeAlarms({}, { iam: { resources: [\\"*\\"] } }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -14200,13 +14156,7 @@ function __f0() {
   return function() {
     let _fnls = __fnls;
     return () => {
-      return _fnls[\\"$AWS\\"].SDK.CloudWatch.describeAlarms({}, {
-        iam: {
-          resources: [
-            \\"*\\"
-          ]
-        }
-      });
+      return _fnls[\\"$AWS\\"].SDK.CloudWatch.describeAlarms({}, { iam: { resources: [\\"*\\"] } });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14315,11 +14265,7 @@ function __f3(__0, __1) {
   return (function() {
     let sfn = __f1;
 
-    return (() => {
-    return sfn({
-        input: {}
-    });
-});;
+    return (() => { return sfn({ input: {} }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -14464,9 +14410,7 @@ function __f0() {
   return function() {
     let sfn = __f1;
     return () => {
-      return sfn({
-        input: {}
-      });
+      return sfn({ input: {} });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14478,9 +14422,7 @@ exports[`serialize simple 1`] = `
 "exports.handler = __f0;
 function __f0() {
   return (function() {
-    return (async () => {
-    return \\"hello\\";
-});;
+    return (async () => { return \\"hello\\"; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -14704,16 +14646,7 @@ function __f3(__0, __1) {
     let _fnls = __fnls;
     let table = __f22;
 
-    return (async () => {
-    return _fnls[\\"$AWS\\"].DynamoDB.DeleteItem({
-        Table: table,
-        Key: {
-            id: {
-                S: \\"key\\"
-            }
-        }
-    });
-});;
+    return (async () => { return _fnls[\\"$AWS\\"].DynamoDB.DeleteItem({ Table: table, Key: { id: { S: \\"key\\" } } }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -15040,14 +14973,7 @@ function __f0() {
     let _fnls = __fnls;
     let table = __f22;
     return async () => {
-      return _fnls[\\"$AWS\\"].DynamoDB.DeleteItem({
-        Table: table,
-        Key: {
-          id: {
-            S: \\"key\\"
-          }
-        }
-      });
+      return _fnls[\\"$AWS\\"].DynamoDB.DeleteItem({ Table: table, Key: { id: { S: \\"key\\" } } });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15260,16 +15186,7 @@ function __f3(__0, __1) {
     let _fnls = __fnls;
     let table = __f22;
 
-    return (() => {
-    return _fnls[\\"$AWS\\"].DynamoDB.GetItem({
-        Table: table,
-        Key: {
-            id: {
-                S: \\"id\\"
-            }
-        }
-    });
-});;
+    return (() => { return _fnls[\\"$AWS\\"].DynamoDB.GetItem({ Table: table, Key: { id: { S: \\"id\\" } } }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -15596,14 +15513,7 @@ function __f0() {
     let _fnls = __fnls;
     let table = __f22;
     return () => {
-      return _fnls[\\"$AWS\\"].DynamoDB.GetItem({
-        Table: table,
-        Key: {
-          id: {
-            S: \\"id\\"
-          }
-        }
-      });
+      return _fnls[\\"$AWS\\"].DynamoDB.GetItem({ Table: table, Key: { id: { S: \\"id\\" } } });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15700,16 +15610,7 @@ function __f3(__0, __1) {
     let GetItem = __f1;
     let table = __f7;
 
-    return (async () => {
-    return GetItem({
-        Table: table,
-        Key: {
-            id: {
-                S: \\"id\\"
-            }
-        }
-    });
-});;
+    return (async () => { return GetItem({ Table: table, Key: { id: { S: \\"id\\" } } }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -15856,14 +15757,7 @@ function __f0() {
     let GetItem = __f1;
     let table = __f7;
     return async () => {
-      return GetItem({
-        Table: table,
-        Key: {
-          id: {
-            S: \\"id\\"
-          }
-        }
-      });
+      return GetItem({ Table: table, Key: { id: { S: \\"id\\" } } });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -16076,16 +15970,7 @@ function __f3(__0, __1) {
     let _fnls = __fnls;
     let table = __f22;
 
-    return (async () => {
-    return _fnls[\\"$AWS\\"].DynamoDB.PutItem({
-        Table: table,
-        Item: {
-            id: {
-                S: \\"key\\"
-            }
-        }
-    });
-});;
+    return (async () => { return _fnls[\\"$AWS\\"].DynamoDB.PutItem({ Table: table, Item: { id: { S: \\"key\\" } } }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -16412,14 +16297,7 @@ function __f0() {
     let _fnls = __fnls;
     let table = __f22;
     return async () => {
-      return _fnls[\\"$AWS\\"].DynamoDB.PutItem({
-        Table: table,
-        Item: {
-          id: {
-            S: \\"key\\"
-          }
-        }
-      });
+      return _fnls[\\"$AWS\\"].DynamoDB.PutItem({ Table: table, Item: { id: { S: \\"key\\" } } });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -16632,25 +16510,7 @@ function __f3(__0, __1) {
     let _fnls = __fnls;
     let table = __f22;
 
-    return (async () => {
-    return _fnls[\\"$AWS\\"].DynamoDB.UpdateItem({
-        Table: table,
-        Key: {
-            id: {
-                S: \\"key\\"
-            }
-        },
-        UpdateExpression: \\"set #value = :value\\",
-        ExpressionAttributeValues: {
-            \\":value\\": {
-                S: \\"value\\"
-            }
-        },
-        ExpressionAttributeNames: {
-            \\"#value\\": \\"value\\"
-        }
-    });
-});;
+    return (async () => { return _fnls[\\"$AWS\\"].DynamoDB.UpdateItem({ Table: table, Key: { id: { S: \\"key\\" } }, UpdateExpression: \\"set #value = :value\\", ExpressionAttributeValues: { \\":value\\": { S: \\"value\\" } }, ExpressionAttributeNames: { \\"#value\\": \\"value\\" } }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -16977,23 +16837,7 @@ function __f0() {
     let _fnls = __fnls;
     let table = __f22;
     return async () => {
-      return _fnls[\\"$AWS\\"].DynamoDB.UpdateItem({
-        Table: table,
-        Key: {
-          id: {
-            S: \\"key\\"
-          }
-        },
-        UpdateExpression: \\"set #value = :value\\",
-        ExpressionAttributeValues: {
-          \\":value\\": {
-            S: \\"value\\"
-          }
-        },
-        ExpressionAttributeNames: {
-          \\"#value\\": \\"value\\"
-        }
-      });
+      return _fnls[\\"$AWS\\"].DynamoDB.UpdateItem({ Table: table, Key: { id: { S: \\"key\\" } }, UpdateExpression: \\"set #value = :value\\", ExpressionAttributeValues: { \\":value\\": { S: \\"value\\" } }, ExpressionAttributeNames: { \\"#value\\": \\"value\\" } });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -17206,20 +17050,7 @@ function __f3(__0, __1) {
     let _fnls = __fnls;
     let table = __f22;
 
-    return (async () => {
-    return _fnls[\\"$AWS\\"].DynamoDB.Query({
-        Table: table,
-        KeyConditionExpression: \\"#key = :key\\",
-        ExpressionAttributeValues: {
-            \\":key\\": {
-                S: \\"key\\"
-            }
-        },
-        ExpressionAttributeNames: {
-            \\"#key\\": \\"key\\"
-        }
-    });
-});;
+    return (async () => { return _fnls[\\"$AWS\\"].DynamoDB.Query({ Table: table, KeyConditionExpression: \\"#key = :key\\", ExpressionAttributeValues: { \\":key\\": { S: \\"key\\" } }, ExpressionAttributeNames: { \\"#key\\": \\"key\\" } }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -17546,18 +17377,7 @@ function __f0() {
     let _fnls = __fnls;
     let table = __f22;
     return async () => {
-      return _fnls[\\"$AWS\\"].DynamoDB.Query({
-        Table: table,
-        KeyConditionExpression: \\"#key = :key\\",
-        ExpressionAttributeValues: {
-          \\":key\\": {
-            S: \\"key\\"
-          }
-        },
-        ExpressionAttributeNames: {
-          \\"#key\\": \\"key\\"
-        }
-      });
+      return _fnls[\\"$AWS\\"].DynamoDB.Query({ Table: table, KeyConditionExpression: \\"#key = :key\\", ExpressionAttributeValues: { \\":key\\": { S: \\"key\\" } }, ExpressionAttributeNames: { \\"#key\\": \\"key\\" } });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -17770,11 +17590,7 @@ function __f3(__0, __1) {
     let _fnls = __fnls;
     let table = __f22;
 
-    return (async () => {
-    return _fnls[\\"$AWS\\"].DynamoDB.Scan({
-        Table: table
-    });
-});;
+    return (async () => { return _fnls[\\"$AWS\\"].DynamoDB.Scan({ Table: table }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -18101,9 +17917,7 @@ function __f0() {
     let _fnls = __fnls;
     let table = __f22;
     return async () => {
-      return _fnls[\\"$AWS\\"].DynamoDB.Scan({
-        Table: table
-      });
+      return _fnls[\\"$AWS\\"].DynamoDB.Scan({ Table: table });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -18117,9 +17931,7 @@ function __f0() {
   return (function() {
     let _uuid = require(\\"uuid\\");
 
-    return (async () => {
-    return (0, _uuid.v4)();
-});;
+    return (async () => { return (0, _uuid.v4)(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
