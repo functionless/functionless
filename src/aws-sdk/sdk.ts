@@ -1,4 +1,5 @@
 import { aws_iam } from "aws-cdk-lib";
+import * as AWS from "aws-sdk";
 import { ASLGraph } from "../asl";
 import { ErrorCodes, SynthError } from "../error-code";
 import { Expr, Argument } from "../expression";
@@ -15,45 +16,36 @@ import type { SDK as TSDK, ServiceKeys, SdkCallOptions } from "./types";
  *
  * The returned proxy does not allow to override any properties
  */
-export const SDK: TSDK = new Proxy<any>(
-  {},
-  {
-    isExtensible() {
-      return false;
-    },
-    setPrototypeOf() {
-      return false;
-    },
-    set() {
-      return false;
-    },
-    get(_, serviceName: ServiceKeys) {
-      return new ServiceProxy(serviceName);
-    },
-  }
-);
+export const SDK = Object.fromEntries(
+  // @ts-ignore
+  Object.entries(AWS.apiLoader.services)
+    .map((e) => e[1])
+    .map((s) => {
+      // @ts-ignore
+      const versions = Object.keys(s);
+      // @ts-ignore
+      const version = versions.sort().reverse()[0];
+      // @ts-ignore
+      const serviceName = s[version].metadata.serviceId;
+      return [
+        serviceName,
+        // @ts-ignore
+        Object.fromEntries(
+          // @ts-ignore
+          Object.keys(s[version].operations).map((k) => {
+            const operationName = `${k.charAt(0).toLowerCase()}${k.substring(
+              1
+            )}`;
 
-class ServiceProxy {
-  constructor(serviceName: ServiceKeys) {
-    return new Proxy(
-      {},
-      {
-        isExtensible() {
-          return false;
-        },
-        setPrototypeOf() {
-          return false;
-        },
-        set() {
-          return false;
-        },
-        get: (_, methodName: string) => {
-          return makeSdkIntegration(serviceName, methodName);
-        },
-      }
-    );
-  }
-}
+            return [
+              operationName,
+              makeSdkIntegration(serviceName, operationName),
+            ];
+          })
+        ),
+      ];
+    })
+) as TSDK;
 
 function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
   return makeIntegration<

@@ -449,12 +449,12 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         "function",
         localstackClientConfig,
         async () => {
-          const result = await SDK.CloudWatch.describeAlarms(
+          const result = await $AWS.SDK.CloudWatch.describeAlarms(
             {
               AlarmNames: [alarm.alarmName],
             },
             {
-              iam: { resources: [alarm.alarmArn] },
+              iam: { resources: ["*"] },
             }
           );
 

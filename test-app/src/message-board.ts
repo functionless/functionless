@@ -504,7 +504,7 @@ new Function(
       Key: { pk: { S: "Post|1" }, sk: { S: "Post" } },
     });
     console.log(item.Item?.pk?.S);
-    await SDK.CloudWatch.describeAlarms(
+    await $AWS.SDK.CloudWatch.describeAlarms(
       {
         AlarmNames: [alarm.alarmName],
       },

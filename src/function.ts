@@ -1039,19 +1039,10 @@ export async function serialize(
            */
           function transformIntegration(integ: unknown): any {
             if (integ && isIntegration(integ)) {
-              const c = integ.native?.call;
-              const call =
-                typeof c !== "undefined"
-                  ? function (...args: any[]) {
-                      return c(args, preWarmContext);
-                    }
-                  : integ.unhandledContext
-                  ? function () {
-                      integ.unhandledContext!(integ.kind, "Function");
-                    }
-                  : function () {
-                      throw new Error();
-                    };
+              const c = new IntegrationImpl(integ).native.call;
+              const call = function (...args: any[]) {
+                return c(args, preWarmContext);
+              };
 
               for (const prop in integ) {
                 if (!INTEGRATION_TYPE_KEYS.includes(prop as any)) {

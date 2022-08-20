@@ -24,7 +24,8 @@ import { VTL } from "./vtl";
 
 export const isIntegration = <I extends Integration<string, AnyFunction>>(
   i: any
-): i is I => typeof i === "object" && "kind" in i;
+): i is I | (() => I) =>
+  (typeof i === "object" || typeof i === "function") && "kind" in i;
 
 export interface IntegrationCallExpr extends CallExpr {}
 
@@ -210,11 +211,14 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
   implements IntegrationMethods<F>
 {
   readonly kind: string;
-  constructor(readonly integration: Integration) {
+  readonly integration: Integration;
+  constructor(integration: Integration | (() => Integration)) {
     if (!integration) {
       throw Error("Integrations cannot be undefined.");
     }
-    this.kind = integration.kind;
+    this.integration =
+      typeof integration === "function" ? integration() : integration;
+    this.kind = this.integration.kind;
   }
 
   private assertIntegrationDefined<I>(
@@ -266,6 +270,15 @@ export type IntegrationCall<K extends string, F extends AnyFunction> = {
   kind: K;
   __functionBrand: F;
 } & F;
+
+export function makeLazyIntegration<K extends string, F extends AnyFunction>(
+  kind: K,
+  creator: () => IntegrationInput<K, F>
+): IntegrationCall<K, F> {
+  (<IntegrationCall<K, F>>creator).FunctionlessType = kind;
+  (<IntegrationCall<K, F>>creator).kind = kind;
+  return creator as IntegrationCall<K, F>;
+}
 
 /**
  * Helper method which masks an {@link Integration} object as a function of any form.
@@ -336,7 +349,7 @@ export function findDeepIntegrations(
  */
 export function tryFindIntegration(
   node: FunctionlessNode
-): Integration | undefined {
+): Integration | (() => Integration) | undefined {
   const integrations = tryFindIntegrations(node);
   if (integrations?.length === 1) {
     return integrations[0];
@@ -378,7 +391,9 @@ export function tryFindIntegration(
  * @param node the node to resolve the possible {@link Integration}s of.
  * @returns a list of all the {@link Integration}s that the {@link node} could evaluate to.
  */
-export function tryFindIntegrations(node: FunctionlessNode): Integration[] {
+export function tryFindIntegrations(
+  node: FunctionlessNode
+): (Integration | (() => Integration))[] {
   return tryResolveReferences(node, undefined).filter(isIntegration);
 }
 
