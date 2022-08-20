@@ -2,23 +2,23 @@ import { aws_sqs, aws_lambda } from "aws-cdk-lib";
 import { Construct, IConstruct } from "constructs";
 import { Function, FunctionProps } from "./function";
 
-export interface IEnumerable<Event, Response, EventSourceConfig> {
-  forEach(
+export interface IEventSource<Event, Response, EventSourceConfig> {
+  onEvent(
     handler: (event: Event) => Promise<Response>
   ): Function<Event, Response>;
 
-  forEach(
+  onEvent(
     props: FunctionProps<Event, Response> & EventSourceConfig,
     handler: (event: Event) => Promise<Response>
   ): Function<Event, Response>;
 
-  forEach(
+  onEvent(
     id: string,
     props: FunctionProps<Event, Response> & EventSourceConfig,
     handler: (event: Event) => Promise<Response>
   ): Function<Event, Response>;
 
-  forEach(
+  onEvent(
     scope: Construct,
     id: string,
     props: FunctionProps<Event, Response> & EventSourceConfig,
@@ -26,16 +26,16 @@ export interface IEnumerable<Event, Response, EventSourceConfig> {
   ): Function<Event, Response>;
 }
 
-export interface Enumerable<
+export interface EventSource<
   Resource extends IConstruct,
   ResourceProps,
   RawEvent,
   Event,
   Response,
   EventSourceConfig
-> extends IEnumerable<Event, Response, EventSourceConfig> {}
+> extends IEventSource<Event, Response, EventSourceConfig> {}
 
-export abstract class Enumerable<
+export abstract class EventSource<
   Resource extends IConstruct,
   ResourceProps,
   RawEvent,
@@ -62,8 +62,7 @@ export abstract class Enumerable<
       );
     }
 
-    // @ts-ignore
-    this.forEach = function (...args: any[]) {
+    this.onEvent = function (...args: any[]) {
       const [scope, id, props, handler] = (
         typeof args[1] === "string"
           ? args
@@ -75,13 +74,13 @@ export abstract class Enumerable<
       ) as [
         scope: Construct,
         id: string,
-        props: FunctionProps<Event, Response> & EventSourceConfig,
+        props: FunctionProps<any, Response> & EventSourceConfig,
         handler: (event: Event) => Promise<Response>
       ];
 
       const preProcess = this.createPreProcessor();
 
-      const func = new Function(scope, id, props as any, (event: RawEvent) => {
+      const func = new Function(scope, id, props, (event: any) => {
         return handler(preProcess(event));
       });
       func.resource.addEventSource(this.createEventSource(props));

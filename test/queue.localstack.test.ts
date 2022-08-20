@@ -28,7 +28,7 @@ localstackTestSuite("queueStack", (test) => {
       });
       const queue = new TextQueue(scope, "queue");
 
-      queue.forEach(localstackClientConfig, async (event) => {
+      queue.onEvent(localstackClientConfig, async (event) => {
         await Promise.all(
           event.Records.map(async (record) => {
             const json = JSON.parse(record.body);
@@ -71,7 +71,7 @@ localstackTestSuite("queueStack", (test) => {
       });
       const queue = new TextQueue(scope, "queue");
 
-      queue.forEach("id", localstackClientConfig, async (event) => {
+      queue.onEvent("id", localstackClientConfig, async (event) => {
         await Promise.all(
           event.Records.map(async (record) => {
             const json = JSON.parse(record.body);

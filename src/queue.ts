@@ -1,7 +1,7 @@
 import { aws_sqs, aws_lambda_event_sources, aws_lambda } from "aws-cdk-lib";
 import lambda from "aws-lambda";
 import { Construct } from "constructs";
-import { Enumerable } from "./enumerable";
+import { EventSource } from "./event-source";
 
 export interface SQSEvent<T> {
   Records: SQSRecord<T>[];
@@ -15,7 +15,7 @@ export interface QueueProps extends aws_sqs.QueueProps {}
 
 export interface IQueue<T = string> extends BaseQueue<T> {}
 
-abstract class BaseQueue<T> extends Enumerable<
+abstract class BaseQueue<T> extends EventSource<
   aws_sqs.IQueue,
   aws_sqs.QueueProps,
   lambda.SQSEvent,
