@@ -1,4 +1,5 @@
 import { aws_stepfunctions, Stack } from "aws-cdk-lib";
+import { Template } from "aws-cdk-lib/assertions";
 import { Pass } from "aws-cdk-lib/aws-stepfunctions";
 import "jest";
 import type * as AWS from "aws-sdk";
@@ -1356,21 +1357,22 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
 
 test("iam policy for AWS.SDK.CloudWatch.describeAlarms", () => {
   const { stack } = initStepFunctionApp();
-  const { resource } = new ExpressStepFunction<
-    undefined,
-    AWS.CloudWatch.MetricAlarms | undefined
-  >(stack, "fn", async () => {
-    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
-      {},
-      {
-        iam: { resources: ["*"] },
-      }
-    );
+  new ExpressStepFunction<undefined, AWS.CloudWatch.MetricAlarms | undefined>(
+    stack,
+    "fn",
+    async () => {
+      const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
+        {},
+        {
+          iam: { resources: ["*"] },
+        }
+      );
 
-    return MetricAlarms;
-  });
+      return MetricAlarms;
+    }
+  );
 
-  expect(normalizeCDKJson(resource.role)).toMatchSnapshot();
+  expect(Template.fromStack(stack)).toMatchSnapshot();
 });
 
 test("overwrite aslServiceName AWS.SDK.CloudWatch.describeAlarms", () => {
@@ -1395,47 +1397,49 @@ test("overwrite aslServiceName AWS.SDK.CloudWatch.describeAlarms", () => {
 
 test("overwrite iamActions AWS.SDK.CloudWatch.describeAlarms", () => {
   const { stack } = initStepFunctionApp();
-  const { resource } = new ExpressStepFunction<
-    undefined,
-    AWS.CloudWatch.MetricAlarms | undefined
-  >(stack, "fn", async () => {
-    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
-      {},
-      {
-        iam: { resources: ["*"], actions: ["cloudwatch:Describe*"] },
-      }
-    );
+  new ExpressStepFunction<undefined, AWS.CloudWatch.MetricAlarms | undefined>(
+    stack,
+    "fn",
+    async () => {
+      const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
+        {},
+        {
+          iam: { resources: ["*"], actions: ["cloudwatch:Describe*"] },
+        }
+      );
 
-    return MetricAlarms;
-  });
+      return MetricAlarms;
+    }
+  );
 
-  expect(normalizeCDKJson(resource.role)).toMatchSnapshot();
+  expect(Template.fromStack(stack)).toMatchSnapshot();
 });
 
 test("add iamConditions AWS.SDK.CloudWatch.describeAlarms", () => {
   const { stack } = initStepFunctionApp();
-  const { resource } = new ExpressStepFunction<
-    undefined,
-    AWS.CloudWatch.MetricAlarms | undefined
-  >(stack, "fn", async () => {
-    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
-      {},
-      {
-        iam: {
-          resources: ["*"],
-          conditions: {
-            StringEquals: {
-              "aws:ResourceTag/env": ["test"],
+  new ExpressStepFunction<undefined, AWS.CloudWatch.MetricAlarms | undefined>(
+    stack,
+    "fn",
+    async () => {
+      const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
+        {},
+        {
+          iam: {
+            resources: ["*"],
+            conditions: {
+              StringEquals: {
+                "aws:ResourceTag/env": ["test"],
+              },
             },
           },
-        },
-      }
-    );
+        }
+      );
 
-    return MetricAlarms;
-  });
+      return MetricAlarms;
+    }
+  );
 
-  expect(normalizeCDKJson(resource.role)).toMatchSnapshot();
+  expect(Template.fromStack(stack)).toMatchSnapshot();
 });
 
 test("non-literal params AWS.SDK.CloudWatch.deleteAlarms", () => {

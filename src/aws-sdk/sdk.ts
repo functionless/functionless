@@ -4,7 +4,7 @@ import { ASLGraph } from "../asl";
 import { ErrorCodes, SynthError } from "../error-code";
 import { Expr, Argument } from "../expression";
 import { isArgument } from "../guards";
-import { makeIntegration } from "../integration";
+import { IntegrationInput, makeLazyIntegration } from "../integration";
 import { evalToConstant } from "../util";
 import { SDK_INTEGRATION_SERVICE_NAME } from "./asl";
 import { IAM_SERVICE_PREFIX } from "./iam";
@@ -47,11 +47,11 @@ export const SDK = Object.fromEntries(
     })
 ) as TSDK;
 
-function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
-  return makeIntegration<
-    `$AWS.SDK.${ServiceKeys}`,
-    (input: any) => Promise<any>
-  >({
+function getIntegration(
+  serviceName: ServiceKeys,
+  methodName: string
+): IntegrationInput<`$AWS.SDK.${ServiceKeys}`, (input: any) => Promise<any>> {
+  return {
     kind: `$AWS.SDK.${serviceName}`,
     native: {
       bind(context, args) {
@@ -127,7 +127,14 @@ function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
         );
       });
     },
-  });
+  };
+}
+
+function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
+  return makeLazyIntegration<
+    `$AWS.SDK.${ServiceKeys}`,
+    (input: any) => Promise<any>
+  >(`$AWS.SDK.${serviceName}`, () => getIntegration(serviceName, methodName));
 }
 
 /**

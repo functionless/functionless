@@ -1,9 +1,9 @@
 import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph } from "./asl";
-import { EventBus, EventBusTargetIntegration } from "./event-bridge";
+import { EventBusTargetIntegration } from "./event-bridge";
 import { AwaitExpr, CallExpr, ReferenceExpr } from "./expression";
-import { Function, NativeIntegration } from "./function";
+import { NativeIntegration } from "./function";
 import {
   isAwaitExpr,
   isBindingElem,
@@ -20,7 +20,6 @@ import {
 import { FunctionlessNode } from "./node";
 import { AnyFunction, evalToConstant } from "./util";
 import { visitEachChild } from "./visit";
-import { VTL } from "./vtl";
 
 export const isIntegration = <I extends Integration<string, AnyFunction>>(
   i: any
@@ -187,10 +186,7 @@ export interface Integration<
    * @param kind - The Kind of the integration.
    * @param contextKind - the Kind of the context attempting to use the integration.
    */
-  readonly unhandledContext?: (
-    kind: string,
-    contextKind: CallContext["kind"]
-  ) => Error;
+  readonly unhandledContext?: (kind: string, contextKind: string) => Error;
 }
 
 /**
@@ -221,10 +217,7 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
     this.kind = this.integration.kind;
   }
 
-  private assertIntegrationDefined<I>(
-    contextKind: CallContext["kind"],
-    integration?: I
-  ): I {
+  private assertIntegrationDefined<I>(contextKind: string, integration?: I): I {
     if (integration) {
       return integration;
     } else if (this.integration.unhandledContext) {
@@ -304,8 +297,6 @@ export function makeIntegration<K extends string, F extends AnyFunction>(
 ): IntegrationCall<K, F> {
   return integration as unknown as IntegrationCall<K, F>;
 }
-
-export type CallContext = ASL | VTL | Function<any, any> | EventBus<any>;
 
 export function findDeepIntegrations(
   ast: FunctionlessNode
