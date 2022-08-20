@@ -2,7 +2,12 @@ import { aws_sqs, aws_lambda } from "aws-cdk-lib";
 import { Construct, IConstruct } from "constructs";
 import { Function, FunctionProps } from "./function";
 
-export interface IEventSource<RawEvent, Event, Response, EventSourceConfig> {
+export interface IEventSource<
+  RawEvent = any,
+  Event = any,
+  Response = any,
+  EventSourceConfig = any
+> {
   onEvent(
     handler: (parsed: Event, raw: RawEvent) => Promise<Response>
   ): Function<RawEvent, Response>;
@@ -36,12 +41,16 @@ export interface EventSource<
 > extends IEventSource<RawEvent, ParsedEvent, Response, EventSourceConfig> {}
 
 export abstract class EventSource<
-  Resource extends IConstruct,
-  ResourceProps,
-  RawEvent,
-  ParsedEvent,
-  Response,
-  EventSourceConfig
+  Resource extends IConstruct = IConstruct,
+  ResourceProps = any,
+  RawEvent = any,
+  ParsedEvent extends {
+    Records: any[];
+  } = {
+    Records: any[];
+  },
+  Response = any,
+  EventSourceConfig = any
 > {
   readonly resource: Resource;
 
@@ -64,7 +73,7 @@ export abstract class EventSource<
 
     this.onEvent = function (...args: any[]) {
       const [scope, id, props, handler] =
-        this.parseEventSourceArgs<
+        this.parseArgs<
           (event: ParsedEvent, payload: RawEvent) => Promise<Response>
         >(args);
 
@@ -74,34 +83,11 @@ export abstract class EventSource<
         console.log(event);
         return handler(parse(event), event);
       });
+
       func.resource.addEventSource(this.createEventSource(props));
+
       return func;
     };
-  }
-
-  protected parseEventSourceArgs<F>(
-    args: any[],
-    /**
-     * Optionally specify an override for the default Construct ID
-     *
-     * @default "onEvent"
-     */
-    defaultId?: string
-  ): [
-    scope: Construct,
-    id: string,
-    props: FunctionProps<any, Response> & EventSourceConfig,
-    handler: F
-  ] {
-    if (typeof args[1] === "string") {
-      return args as any;
-    } else if (typeof args[0] === "string") {
-      return [this.resource, ...args] as any;
-    } else if (typeof args[0] === "object") {
-      return [this.resource, defaultId ?? "onEvent", ...args] as any;
-    } else {
-      return [this.resource, defaultId ?? "onEvent", {}, ...args] as any;
-    }
   }
 
   protected abstract createParser(): (event: RawEvent) => ParsedEvent;
@@ -115,4 +101,23 @@ export abstract class EventSource<
   protected abstract createEventSource(
     config: EventSourceConfig
   ): aws_lambda.IEventSource;
+
+  public parseArgs<F>(
+    args: any[]
+  ): [
+    scope: Construct,
+    id: string,
+    props: FunctionProps<any, Response> & EventSourceConfig,
+    handler: F
+  ] {
+    if (typeof args[1] === "string") {
+      return args as any;
+    } else if (typeof args[0] === "string") {
+      return [this.resource, ...args] as any;
+    } else if (typeof args[0] === "object") {
+      return [this.resource, "onEvent", ...args] as any;
+    } else {
+      return [this.resource, "onEvent", {}, ...args] as any;
+    }
+  }
 }
