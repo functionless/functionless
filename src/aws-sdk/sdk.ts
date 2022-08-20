@@ -1,6 +1,4 @@
 import { aws_iam } from "aws-cdk-lib";
-// eslint-disable-next-line import/no-extraneous-dependencies
-import * as AWS from "aws-sdk";
 import { ASLGraph } from "../asl";
 import { ErrorCodes, SynthError } from "../error-code";
 import { Expr, Argument } from "../expression";
@@ -17,37 +15,43 @@ import type { SDK as TSDK, ServiceKeys, SdkCallOptions } from "./types";
  *
  * The returned proxy does not allow to override any properties
  */
-export const SDK: TSDK = new Proxy<any>(AWS, {
-  isExtensible() {
-    return false;
-  },
-  setPrototypeOf() {
-    return false;
-  },
-  set() {
-    return false;
-  },
-  get(_, serviceName: ServiceKeys) {
-    return new ServiceProxy(serviceName);
-  },
-});
+export const SDK: TSDK = new Proxy<any>(
+  {},
+  {
+    isExtensible() {
+      return false;
+    },
+    setPrototypeOf() {
+      return false;
+    },
+    set() {
+      return false;
+    },
+    get(_, serviceName: ServiceKeys) {
+      return new ServiceProxy(serviceName);
+    },
+  }
+);
 
 class ServiceProxy {
   constructor(serviceName: ServiceKeys) {
-    return new Proxy(new AWS[serviceName](), {
-      isExtensible() {
-        return false;
-      },
-      setPrototypeOf() {
-        return false;
-      },
-      set() {
-        return false;
-      },
-      get: (_, methodName: string) => {
-        return makeSdkIntegration(serviceName, methodName);
-      },
-    });
+    return new Proxy(
+      {},
+      {
+        isExtensible() {
+          return false;
+        },
+        setPrototypeOf() {
+          return false;
+        },
+        set() {
+          return false;
+        },
+        get: (_, methodName: string) => {
+          return makeSdkIntegration(serviceName, methodName);
+        },
+      }
+    );
   }
 }
 
@@ -70,14 +74,20 @@ function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
         preWarmContext.getOrInit({
           key: `$AWS.SDK.${serviceName}`,
           init: (key, props) =>
-            new AWS[serviceName](props?.clientConfigRetriever?.(key)),
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            new (require("aws-sdk")[serviceName])(
+              props?.clientConfigRetriever?.(key)
+            ),
         });
       },
       call(args, preWarmContext) {
         const client: any = preWarmContext.getOrInit({
           key: `$AWS.SDK.${serviceName}`,
           init: (key, props) =>
-            new AWS[serviceName](props?.clientConfigRetriever?.(key)),
+            // eslint-disable-next-line @typescript-eslint/no-require-imports
+            new (require("aws-sdk")[serviceName])(
+              props?.clientConfigRetriever?.(key)
+            ),
         });
 
         const [payloadArg] = args;
