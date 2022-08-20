@@ -44,6 +44,7 @@ All integrations in Functionless follow this same pattern. Using Functionless sh
 - [Step Function](../step-function/index.md#standard-step-function) - orchestrate long-running asynchronous workflows with AWS Step Functions.
 - [Express Step Function](../step-function/index.md#express-step-function) - short-running synchronous or asynchronous workflows. Express Step Functions can often be a great replacement for intermediate Lambda Functions in APIs.
 - [Event Bus Rule](../event-bridge/event-bus.md) - filter events flowing through an AWS Event Bridge Bus, optionally transform them and finally route them to a downstream integration, e.g. a Lambda Function, Step Function, SQS Queue, etc.
+- [User Pool](../user-pool.md) - manage user sign-up, sign-in, and access control for your application.
 - [Secret](../secret.md) - securely store and distribute sensitive data to parts of your application that require it.
 
 ## Integration Context

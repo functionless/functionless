@@ -59,14 +59,14 @@ export abstract class Secret<SecretValue = any> {
    */
   public readonly getSecretValue;
 
-  constructor(scope: Construct, id: string, props: SecretProps);
-  constructor(resource: aws_secretsmanager.ISecret, props: SecretProps);
+  constructor(resource: aws_secretsmanager.ISecret, props?: SecretProps);
+  constructor(scope: Construct, id: string, props?: SecretProps);
   constructor(
     ...args:
-      | [secret: aws_secretsmanager.ISecret, props: SecretProps]
-      | [scope: Construct, id: string, props: SecretProps]
+      | [secret: aws_secretsmanager.ISecret, props?: SecretProps]
+      | [scope: Construct, id: string, props?: SecretProps]
   ) {
-    let props: SecretProps;
+    let props: SecretProps | undefined;
     if (typeof args[1] !== "string") {
       this.resource = args[0] as aws_secretsmanager.ISecret;
       props = args[1];
@@ -210,6 +210,29 @@ export interface PutSecretValueRequest<SecretValue>
   SecretValue: SecretValue;
 }
 
+class BaseJsonSecret<SecretValue = any> extends Secret<SecretValue> {
+  protected serialize(secretValue: SecretValue) {
+    return {
+      SecretString: JSON.stringify(secretValue),
+    };
+  }
+
+  protected async deserialize(
+    response: SerializedSecretValue
+  ): Promise<SecretValue> {
+    const data = await parse(response);
+    return JSON.parse(typeof data === "string" ? data : data.toString("utf8"));
+  }
+}
+
+/**
+ * Interface for a {@link JsonSecret}.
+ *
+ * Produced by {@link JsonSecret.from}.
+ */
+export interface IJsonSecret<SecretValue = any>
+  extends BaseJsonSecret<SecretValue> {}
+
 /**
  * Securely stores a JSON-encoded {@link SecretValue}.
  *
@@ -236,20 +259,53 @@ export interface PutSecretValueRequest<SecretValue>
  * });
  * ```
  */
-export class JsonSecret<SecretValue = any> extends Secret<SecretValue> {
-  protected serialize(secretValue: SecretValue) {
+export class JsonSecret<SecretValue = any> extends BaseJsonSecret<SecretValue> {
+  /**
+   * Import a {@link JsonSecret} from an existing {@link aws_secretsmanager.ISecret}.
+   *
+   * ```ts
+   * import { aws_secretsmanager } from "aws-cdk-lib";
+   *
+   * const secret: aws_secretsmanager.ISecret;
+   *
+   * const jsonSecret = JsonSecret.from<UserPass>(secret);
+   * ```
+   *
+   * @param secret
+   * @returns
+   */
+  public static from<SecretValue = any>(
+    secret: aws_secretsmanager.ISecret
+  ): IJsonSecret<SecretValue> {
+    return new BaseJsonSecret(secret);
+  }
+
+  constructor(scope: Construct, id: string, props?: SecretProps) {
+    super(scope, id, props);
+  }
+}
+
+class BaseTextSecret extends Secret<AWS.SecretsManager.SecretStringType> {
+  protected serialize(secretValue: string) {
     return {
-      SecretString: JSON.stringify(secretValue),
+      SecretString: secretValue,
     };
   }
 
   protected async deserialize(
-    response: SerializedSecretValue
-  ): Promise<SecretValue> {
-    const data = await parse(response);
-    return JSON.parse(typeof data === "string" ? data : data.toString("utf8"));
+    secretValue: SerializedSecretValue
+  ): Promise<string> {
+    const data = await parse(secretValue);
+    return typeof data === "string" ? data : data.toString("utf8");
   }
 }
+
+/**
+ * Interface for a {@link TextSecret}.
+ *
+ * Produced by {@link TextSecret.from}.
+ */
+export interface ITextSecret extends BaseTextSecret {}
 
 /**
  * Securely stores a string-encoded secret.
@@ -266,20 +322,51 @@ export class JsonSecret<SecretValue = any> extends Secret<SecretValue> {
  * });
  * ```
  */
-export class TextSecret extends Secret<AWS.SecretsManager.SecretStringType> {
-  protected serialize(secretValue: string) {
+export class TextSecret extends BaseTextSecret implements ITextSecret {
+  /**
+   * Import a {@link TextSecret} from an existing {@link aws_secretsmanager.ISecret}.
+   *
+   * ```ts
+   * import { aws_secretsmanager } from "aws-cdk-lib";
+   *
+   * const secret: aws_secretsmanager.ISecret;
+   *
+   * const textSecret = TextSecret.from(secret);
+   * ```
+   *
+   * @param secret
+   * @returns
+   */
+  public static from(secret: aws_secretsmanager.ISecret): ITextSecret {
+    return new BaseTextSecret(secret);
+  }
+
+  constructor(scope: Construct, id: string, props?: SecretProps) {
+    super(scope, id, props);
+  }
+}
+
+class BaseBinarySecret extends Secret<Buffer> {
+  protected serialize(secretValue: Buffer): SerializedSecretValue {
     return {
-      SecretString: secretValue,
+      SecretBinary: secretValue,
     };
   }
 
   protected async deserialize(
     secretValue: SerializedSecretValue
-  ): Promise<string> {
+  ): Promise<Buffer> {
     const data = await parse(secretValue);
-    return typeof data === "string" ? data : data.toString("utf8");
+    return typeof data === "string" ? Buffer.from(data, "utf8") : data;
   }
 }
+
+/**
+ * Interface for a {@link BinarySecret}.
+ *
+ * Produced by {@link BinarySecret.from}.
+ */
+export interface IBinarySecret extends BaseBinarySecret {}
 
 /**
  * Securely stores a binary-encoded secret.
@@ -296,18 +383,27 @@ export class TextSecret extends Secret<AWS.SecretsManager.SecretStringType> {
  * });
  * ```
  */
-export class BinarySecret extends Secret<Buffer> {
-  protected serialize(secretValue: Buffer): SerializedSecretValue {
-    return {
-      SecretBinary: secretValue,
-    };
+export class BinarySecret extends BaseBinarySecret {
+  /**
+   * Import a {@link BinarySecret} from an existing {@link aws_secretsmanager.ISecret}.
+   *
+   * ```ts
+   * import { aws_secretsmanager } from "aws-cdk-lib";
+   *
+   * const secret: aws_secretsmanager.ISecret;
+   *
+   * const binarySecret = BinarySecret.from(secret);
+   * ```
+   *
+   * @param secret
+   * @returns
+   */
+  public static from(secret: aws_secretsmanager.ISecret): IBinarySecret {
+    return new BaseBinarySecret(secret);
   }
 
-  protected async deserialize(
-    secretValue: SerializedSecretValue
-  ): Promise<Buffer> {
-    const data = await parse(secretValue);
-    return typeof data === "string" ? Buffer.from(data, "utf8") : data;
+  constructor(scope: Construct, id: string, props?: SecretProps) {
+    super(scope, id, props);
   }
 }
 
