@@ -86,7 +86,7 @@
       "description": "Only compile",
       "steps": [
         {
-          "exec": "export NODE_OPTIONS=\"--max-old-space-size=8192\"; ts-node ./scripts/sdk-gen.ts"
+          "exec": "node --max-old-space-size=8192 -r ts-node/register ./scripts/sdk-gen.ts"
         },
         {
           "exec": "yarn link && cd ./test-app && yarn link functionless"

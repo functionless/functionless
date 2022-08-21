@@ -215,7 +215,7 @@ project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
 );
 project.compileTask.prependExec(
-  'export NODE_OPTIONS="--max-old-space-size=8192"; ts-node ./scripts/sdk-gen.ts'
+  "node --max-old-space-size=8192 -r ts-node/register ./scripts/sdk-gen.ts"
 );
 
 project.testTask.prependExec(
