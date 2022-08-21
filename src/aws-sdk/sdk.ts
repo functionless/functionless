@@ -61,40 +61,6 @@ function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
     (input: any) => Promise<any>
   >({
     kind: `$AWS.SDK.${serviceName}`,
-    native: {
-      bind(context, args) {
-        const [_, optionsArg] = args;
-        const options = validateSdkCallOptions(optionsArg);
-
-        context.resource.addToRolePolicy(
-          policyStatementForSdkCall(serviceName, methodName, options)
-        );
-      },
-      preWarm(preWarmContext) {
-        preWarmContext.getOrInit({
-          key: `$AWS.SDK.${serviceName}`,
-          init: (key, props) =>
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            new (require("aws-sdk")[serviceName])(
-              props?.clientConfigRetriever?.(key)
-            ),
-        });
-      },
-      call(args, preWarmContext) {
-        const client: any = preWarmContext.getOrInit({
-          key: `$AWS.SDK.${serviceName}`,
-          init: (key, props) =>
-            // eslint-disable-next-line @typescript-eslint/no-require-imports
-            new (require("aws-sdk")[serviceName])(
-              props?.clientConfigRetriever?.(key)
-            ),
-        });
-
-        const [payloadArg] = args;
-
-        return client[methodName](payloadArg).promise();
-      },
-    },
     asl: (call, context) => {
       const [payloadArg, optionsArg] = call.args;
       const options = validateSdkCallOptions(optionsArg);

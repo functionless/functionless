@@ -432,39 +432,6 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "Call Lambda CloudWatch SDK",
-    (parent) => {
-      const alarm = new aws_cloudwatch.Alarm(parent, "Alarm", {
-        evaluationPeriods: 1,
-        threshold: 1,
-        metric: new aws_cloudwatch.Metric({
-          namespace: "AWS/Lambda",
-          metricName: "Errors",
-        }),
-      });
-
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          const result = await $AWS.SDK.CloudWatch.describeAlarms(
-            {
-              AlarmNames: [alarm.alarmName],
-            },
-            {
-              iam: { resources: [alarm.alarmArn] },
-            }
-          );
-
-          return result.MetricAlarms?.[0]?.Namespace;
-        }
-      );
-    },
-    "AWS/Lambda"
-  );
-
-  test(
     "Call Lambda put events",
     (parent) => {
       const bus = new EventBus(parent, "bus");
