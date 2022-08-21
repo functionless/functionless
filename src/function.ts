@@ -1176,7 +1176,8 @@ export async function serialize(
           (isFunction(integ) ||
             isTable(integ) ||
             isStepFunction(integ) ||
-            isEventBus(integ))
+            isEventBus(integ) ||
+            isSecret(integ))
         ) {
           const { resource, ...rest } = integ;
 
