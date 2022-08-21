@@ -84,9 +84,12 @@
     "compile": {
       "name": "compile",
       "description": "Only compile",
+      "env": {
+        "NODE_OPTIONS": "--max-old-space-size=8192"
+      },
       "steps": [
         {
-          "exec": "node --max-old-space-size=8192 -r ts-node/register ./scripts/sdk-gen.ts"
+          "exec": "ts-node ./scripts/sdk-gen.ts"
         },
         {
           "exec": "yarn link && cd ./test-app && yarn link functionless"

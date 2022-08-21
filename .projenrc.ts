@@ -214,9 +214,8 @@ packageJson.addOverride("lint-staged", {
 project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
 );
-project.compileTask.prependExec(
-  "node --max-old-space-size=8192 -r ts-node/register ./scripts/sdk-gen.ts"
-);
+project.compileTask.prependExec("ts-node ./scripts/sdk-gen.ts");
+project.compileTask.env("NODE_OPTIONS", "--max-old-space-size=8192");
 
 project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth --quiet"
