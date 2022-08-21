@@ -64,161 +64,166 @@ export async function main() {
   }
 
   const serviceNames: string[] = [];
-  const interfaces = awsType.getProperties().flatMap((prop) => {
-    const serviceName = prop.escapedName as string;
+  const interfaces = awsType
+    .getProperties()
+    .flatMap((prop) => {
+      const serviceName = prop.escapedName as string;
 
-    const serviceClass = checker.getTypeOfSymbolAtLocation(prop, awsStmt);
-    const serviceInstance = getServiceType(serviceClass);
-    if (serviceInstance) {
-      serviceNames.push(serviceName);
-      return [
-        ts.factory.createInterfaceDeclaration(
-          undefined,
-          [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
-          serviceName,
-          undefined,
-          undefined,
-          serviceInstance.getProperties().flatMap((method) => {
-            const methodName = method.name;
-            const methodType = checker.getTypeOfSymbolAtLocation(
-              method,
-              awsStmt
-            );
-            const methodSignatures = methodType.getCallSignatures();
-            if (methodSignatures.length > 0) {
-              const methodSignature = methodSignatures.find(
-                (method) =>
-                  method.parameters.length > 1 &&
-                  method.parameters[0]?.escapedName === "params"
+      const serviceClass = checker.getTypeOfSymbolAtLocation(prop, awsStmt);
+      const serviceInstance = getServiceType(serviceClass);
+      if (serviceInstance) {
+        serviceNames.push(serviceName);
+        return [
+          ts.factory.createInterfaceDeclaration(
+            undefined,
+            [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
+            serviceName,
+            undefined,
+            undefined,
+            serviceInstance.getProperties().flatMap((method) => {
+              const methodName = method.name;
+              const methodType = checker.getTypeOfSymbolAtLocation(
+                method,
+                awsStmt
               );
-              if (methodSignature) {
-                const paramsType = checker.getTypeOfSymbolAtLocation(
-                  methodSignature.parameters[0]!,
-                  awsStmt
+              const methodSignatures = methodType.getCallSignatures();
+              if (methodSignatures.length > 0) {
+                const methodSignature = methodSignatures.find(
+                  (method) =>
+                    method.parameters.length > 1 &&
+                    method.parameters[0]?.escapedName === "params"
                 );
-                const paramsFqn = checker.getFullyQualifiedName(
-                  paramsType.symbol
-                );
-                const [paramsServiceName, paramsTypeName] = paramsFqn.split(
-                  ".",
-                  2
-                );
-                const returnType = methodSignature.getReturnType();
-                const promiseSym = returnType.getProperty("promise");
-                if (promiseSym) {
-                  // promise(): PromiseResult<Response<Payload, AWSErr>>
-                  const promiseType = checker
-                    .getTypeOfSymbolAtLocation(promiseSym, awsStmt)
-                    .getCallSignatures()[0]
-                    ?.getReturnType();
+                if (methodSignature) {
+                  const paramsType = checker.getTypeOfSymbolAtLocation(
+                    methodSignature.parameters[0]!,
+                    awsStmt
+                  );
+                  const paramsFqn = checker.getFullyQualifiedName(
+                    paramsType.symbol
+                  );
+                  const [paramsServiceName, paramsTypeName] = paramsFqn.split(
+                    ".",
+                    2
+                  );
+                  const returnType = methodSignature.getReturnType();
+                  const promiseSym = returnType.getProperty("promise");
+                  if (promiseSym) {
+                    // promise(): PromiseResult<Response<Payload, AWSErr>>
+                    const promiseType = checker
+                      .getTypeOfSymbolAtLocation(promiseSym, awsStmt)
+                      .getCallSignatures()[0]
+                      ?.getReturnType();
 
-                  if (promiseType) {
-                    // PromiseResult<Response<Payload, AWSErr>>
-                    const promiseResult = checker.getTypeArguments(
-                      promiseType as ts.TypeReference
-                    )[0];
-                    const $response = promiseResult?.getProperty("$response");
-                    if ($response) {
-                      // Response<Payload, AWSErr>
-                      const responseType = checker.getTypeOfSymbolAtLocation(
-                        $response,
-                        awsStmt
-                      );
-
-                      const responsePayloadType = checker.getTypeArguments(
-                        responseType as ts.TypeReference
+                    if (promiseType) {
+                      // PromiseResult<Response<Payload, AWSErr>>
+                      const promiseResult = checker.getTypeArguments(
+                        promiseType as ts.TypeReference
                       )[0];
-                      if (responsePayloadType) {
-                        responsePayloadType;
-                        const responseFqn = checker.getFullyQualifiedName(
-                          responsePayloadType.symbol
+                      const $response = promiseResult?.getProperty("$response");
+                      if ($response) {
+                        // Response<Payload, AWSErr>
+                        const responseType = checker.getTypeOfSymbolAtLocation(
+                          $response,
+                          awsStmt
                         );
-                        let type: ts.TypeNode;
-                        if (responseFqn === "__type") {
-                          // empty object {}
-                          type = ts.factory.createTypeLiteralNode([]);
-                        } else if (
-                          checker.typeToString(responsePayloadType) === "any"
-                        ) {
-                          type = ts.factory.createKeywordTypeNode(
-                            ts.SyntaxKind.AnyKeyword
+
+                        const responsePayloadType = checker.getTypeArguments(
+                          responseType as ts.TypeReference
+                        )[0];
+                        if (responsePayloadType) {
+                          responsePayloadType;
+                          const responseFqn = checker.getFullyQualifiedName(
+                            responsePayloadType.symbol
                           );
-                        } else if (responseFqn.indexOf(".") !== -1) {
-                          // <service-name>.<type-name>
-                          const [serviceName, typeName] = responseFqn.split(
-                            ".",
-                            2
-                          );
-                          type = ts.factory.createTypeReferenceNode(
-                            ts.factory.createQualifiedName(
+                          let type: ts.TypeNode;
+                          if (responseFqn === "__type") {
+                            // empty object {}
+                            type = ts.factory.createTypeLiteralNode([]);
+                          } else if (
+                            checker.typeToString(responsePayloadType) === "any"
+                          ) {
+                            type = ts.factory.createKeywordTypeNode(
+                              ts.SyntaxKind.AnyKeyword
+                            );
+                          } else if (responseFqn.indexOf(".") !== -1) {
+                            // <service-name>.<type-name>
+                            const [serviceName, typeName] = responseFqn.split(
+                              ".",
+                              2
+                            );
+                            type = ts.factory.createTypeReferenceNode(
                               ts.factory.createQualifiedName(
-                                ts.factory.createIdentifier("AWS"),
-                                ts.factory.createIdentifier(serviceName!)
-                              ),
-                              ts.factory.createIdentifier(typeName!)
-                            )
-                          );
-                        } else {
-                          return [];
-                        }
-
-                        const methodSig = ts.factory.createMethodSignature(
-                          undefined,
-                          methodName,
-                          undefined,
-                          undefined,
-                          [
-                            ts.factory.createParameterDeclaration(
-                              undefined,
-                              undefined,
-                              undefined,
-                              "params",
-                              undefined,
-                              ts.factory.createTypeReferenceNode(
                                 ts.factory.createQualifiedName(
-                                  ts.factory.createQualifiedName(
-                                    ts.factory.createIdentifier("AWS"),
-                                    ts.factory.createIdentifier(
-                                      paramsServiceName!
-                                    )
-                                  ),
-                                  ts.factory.createIdentifier(paramsTypeName!)
-                                )
+                                  ts.factory.createIdentifier("AWS"),
+                                  ts.factory.createIdentifier(serviceName!)
+                                ),
+                                ts.factory.createIdentifier(typeName!)
                               )
-                            ),
-                          ],
+                            );
+                          } else {
+                            return [];
+                          }
 
-                          ts.factory.createTypeReferenceNode("Promise", [type])
-                        );
+                          const methodSig = ts.factory.createMethodSignature(
+                            undefined,
+                            methodName,
+                            undefined,
+                            undefined,
+                            [
+                              ts.factory.createParameterDeclaration(
+                                undefined,
+                                undefined,
+                                undefined,
+                                "params",
+                                undefined,
+                                ts.factory.createTypeReferenceNode(
+                                  ts.factory.createQualifiedName(
+                                    ts.factory.createQualifiedName(
+                                      ts.factory.createIdentifier("AWS"),
+                                      ts.factory.createIdentifier(
+                                        paramsServiceName!
+                                      )
+                                    ),
+                                    ts.factory.createIdentifier(paramsTypeName!)
+                                  )
+                                )
+                              ),
+                            ],
 
-                        const commentText = ts.displayPartsToString(
-                          method.getDocumentationComment(checker)
-                        );
-
-                        if (commentText) {
-                          ts.addSyntheticLeadingComment(
-                            methodSig,
-                            ts.SyntaxKind.MultiLineCommentTrivia,
-                            `*\n* ${commentText}\n`,
-                            true
+                            ts.factory.createTypeReferenceNode("Promise", [
+                              type,
+                            ])
                           );
+
+                          const commentText = ts.displayPartsToString(
+                            method.getDocumentationComment(checker)
+                          );
+
+                          if (commentText) {
+                            ts.addSyntheticLeadingComment(
+                              methodSig,
+                              ts.SyntaxKind.MultiLineCommentTrivia,
+                              `*\n* ${commentText}\n`,
+                              true
+                            );
+                          }
+                          return [methodSig];
                         }
-                        return [methodSig];
                       }
                     }
                   }
                 }
               }
-            }
 
-            return [];
-          })
-        ),
-      ];
-    }
+              return [];
+            })
+          ),
+        ];
+      }
 
-    return [];
-  });
+      return [];
+    })
+    .sort((ifaceA, ifaceB) => ifaceA.name.text.localeCompare(ifaceB.name.text));
 
   const sourceFile = ts.factory.createSourceFile(
     [
@@ -239,14 +244,16 @@ export async function main() {
         "SDK",
         undefined,
         undefined,
-        serviceNames.map((serviceName) =>
-          ts.factory.createPropertySignature(
-            [ts.factory.createModifier(ts.SyntaxKind.ReadonlyKeyword)],
-            ts.factory.createIdentifier(serviceName),
-            undefined,
-            ts.factory.createTypeReferenceNode(serviceName)
+        serviceNames
+          .sort()
+          .map((serviceName) =>
+            ts.factory.createPropertySignature(
+              [ts.factory.createModifier(ts.SyntaxKind.ReadonlyKeyword)],
+              ts.factory.createIdentifier(serviceName),
+              undefined,
+              ts.factory.createTypeReferenceNode(serviceName)
+            )
           )
-        )
       ),
       ...interfaces,
     ],
