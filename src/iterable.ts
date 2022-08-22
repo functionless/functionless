@@ -15,11 +15,11 @@ export type Processor<
   raw: Raw
 ) => Processed | Promise<Processed>;
 
-export type BatchProcessor<Element, Response, Event, Raw> = (
+export type BatchProcessor<Element, Event, Raw> = (
   batch: Element[],
   event: Event,
   raw: Raw
-) => Promise<Response>;
+) => Promise<void>;
 
 export interface IIterable<
   Item,
@@ -96,25 +96,25 @@ export interface IIterable<
   ): Function<RawEvent, Response>;
 
   forEachBatch(
-    fn: BatchProcessor<Item, Response, ParsedEvent, RawEvent>
+    fn: BatchProcessor<Item, ParsedEvent, RawEvent>
   ): Function<RawEvent, Response>;
 
   forEachBatch(
     props: FunctionProps<any, any> & EventSourceConfig,
-    fn: BatchProcessor<Item, Response, ParsedEvent, RawEvent>
+    fn: BatchProcessor<Item, ParsedEvent, RawEvent>
   ): Function<RawEvent, Response>;
 
   forEachBatch(
     id: string,
     props: FunctionProps<any, any> & EventSourceConfig,
-    fn: BatchProcessor<Item, Response, ParsedEvent, RawEvent>
+    fn: BatchProcessor<Item, ParsedEvent, RawEvent>
   ): Function<RawEvent, Response>;
 
   forEachBatch(
     scope: Construct,
     id: string,
     props: FunctionProps<any, any> & EventSourceConfig,
-    fn: BatchProcessor<Item, Response, ParsedEvent, RawEvent>
+    fn: BatchProcessor<Item, ParsedEvent, RawEvent>
   ): Function<RawEvent, Response>;
 }
 
@@ -299,29 +299,68 @@ export class Iterable<
   }
 
   public forEachBatch(
-    fn: BatchProcessor<Item, Response, ParsedEvent, RawEvent>
+    fn: BatchProcessor<Item, ParsedEvent, RawEvent>
   ): Function<RawEvent, Response>;
 
   public forEachBatch(
     props: FunctionProps<any, any> & EventSourceConfig,
-    fn: BatchProcessor<Item, Response, ParsedEvent, RawEvent>
+    fn: BatchProcessor<Item, ParsedEvent, RawEvent>
   ): Function<RawEvent, Response>;
 
   public forEachBatch(
     id: string,
     props: FunctionProps<any, any> & EventSourceConfig,
-    fn: BatchProcessor<Item, Response, ParsedEvent, RawEvent>
+    fn: BatchProcessor<Item, ParsedEvent, RawEvent>
   ): Function<RawEvent, Response>;
 
   public forEachBatch(
     scope: Construct,
     id: string,
     props: FunctionProps<any, any> & EventSourceConfig,
-    fn: BatchProcessor<Item, Response, ParsedEvent, RawEvent>
+    fn: BatchProcessor<Item, ParsedEvent, RawEvent>
   ): Function<RawEvent, Response>;
 
-  public forEachBatch(..._args: any[]): Function<RawEvent, Response, RawEvent> {
-    throw new Error("Method not implemented.");
+  public forEachBatch(...args: any[]): Function<RawEvent, Response, RawEvent> {
+    const source = this.getSource();
+    const [scope, id, props, processFunc] =
+      source.parseArgs<(event: any) => any[] | Promise<any[]>>(args);
+
+    const chain = this.getCallChain();
+
+    const handleResponse = source.createResponseHandler();
+
+    const getPayload = source.createGetPayload();
+
+    return this.getSource().onEvent(scope, id, props, async (event, raw) => {
+      try {
+        const batch = (
+          await Promise.all(
+            event.Records.map(async (record) => {
+              const payload = getPayload(record);
+
+              let items: any[] = [payload];
+              for (const func of chain) {
+                items = (
+                  await Promise.all(
+                    items.map((item) =>
+                      awaitIfPromise(func(item, record, event, raw))
+                    )
+                  )
+                ).flat(1);
+              }
+              return items;
+            })
+          )
+        ).flat(1);
+        await awaitIfPromise(processFunc(batch));
+        return handleResponse([]);
+      } catch (err) {
+        console.error(err);
+        // an error occurred when processing the last batch, we cannot discern which message caused the
+        // failure so we report all errors as failed
+        return handleResponse(event.Records);
+      }
+    });
   }
 
   private getCallChain(): Processor[] {

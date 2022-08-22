@@ -245,6 +245,60 @@ localstackTestSuite("queueStack", (test) => {
     },
     assertForEach
   );
+
+  test(
+    "map, filter, flatMap, forEachBatch with JsonSerializer",
+    (scope) => {
+      const table = new Table<Message, "id">(scope, "Table", {
+        partitionKey: {
+          name: "id",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+
+      interface Message {
+        id: string;
+        data: string;
+      }
+
+      const queue = new Queue(scope, "queue", {
+        serializer: new JsonSerializer<Message>(),
+      });
+
+      queue
+        .messages()
+        .map((message) => message)
+        .map(async (message) => message)
+        .filter((message) => message === message)
+        .filter(async (message) => message === message)
+        .flatMap((message) => [message])
+        .flatMap(async (message) => [message])
+        .forEachBatch(localstackClientConfig, async (messages) => {
+          await Promise.all(
+            messages.map(async (message) => {
+              await $AWS.DynamoDB.PutItem({
+                Table: table,
+                Item: {
+                  id: {
+                    S: message.id,
+                  },
+                  data: {
+                    S: message.data,
+                  },
+                },
+              });
+            })
+          );
+        });
+      return {
+        outputs: {
+          tableName: table.tableName,
+          queueUrl: queue.queueUrl,
+        },
+      };
+    },
+    assertForEach
+  );
 });
 
 async function assertForEach(context: { tableName: string; queueUrl: string }) {
