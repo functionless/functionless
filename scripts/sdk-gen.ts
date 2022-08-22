@@ -1,6 +1,10 @@
 import fs from "fs";
 import path from "path";
+<<<<<<< HEAD
 import ts, { factory } from "typescript";
+=======
+import ts from "typescript";
+>>>>>>> main
 // eslint-disable-next-line import/no-extraneous-dependencies
 import prettier from "prettier";
 
@@ -188,7 +192,7 @@ export async function main() {
                                   )
                                 )
                               ),
-                              ts.factory.createParameterDeclaration(
+<                             ts.factory.createParameterDeclaration(
                                 undefined,
                                 undefined,
                                 undefined,
@@ -198,8 +202,7 @@ export async function main() {
                                   "SdkCallOptions"
                                 )
                               ),
-                            ],
-
+=                           ],
                             ts.factory.createTypeReferenceNode("Promise", [
                               type,
                             ])
@@ -248,6 +251,7 @@ export async function main() {
         ts.factory.createStringLiteral("aws-sdk"),
         undefined
       ),
+<<<<<<< HEAD
       // import {SdkCallOptions} from "./types";
       ts.factory.createImportDeclaration(
         undefined,
@@ -266,6 +270,8 @@ export async function main() {
         ts.factory.createStringLiteral("./types"),
         undefined
       ),
+=======
+>>>>>>> main
       ts.factory.createInterfaceDeclaration(
         undefined,
         [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
@@ -296,7 +302,11 @@ export async function main() {
   });
 
   await fs.promises.writeFile(
+<<<<<<< HEAD
     path.join(__dirname, "..", "src", "aws-sdk", "sdk.generated.ts"),
+=======
+    path.join(__dirname, "..", "src", "sdk.generated.ts"),
+>>>>>>> main
     text
   );
 }
