@@ -1,7 +1,7 @@
 import type { Service as AWSService } from "aws-sdk";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import type * as AWS from "aws-sdk";
-import { AnyFunction, OverloadUnion } from "../util";
+import type { AnyFunction } from "../util";
 
 type AWSServiceClient<T> = T extends new () => infer Client
   ? Client extends AWSService
@@ -11,10 +11,9 @@ type AWSServiceClient<T> = T extends new () => infer Client
 type TAWS = typeof AWS;
 export type Mixin<T> = T;
 
-interface SDKClients
-  extends Mixin<{
-    [K in Exclude<keyof TAWS, "Service">]: AWSServiceClient<TAWS[K]>;
-  }> {}
+type SDKClients = {
+  [K in Exclude<keyof TAWS, "Service">]: AWSServiceClient<TAWS[K]>;
+};
 
 /**
  * First we have to extract the names of all Services in the v2 AWS namespace
@@ -25,10 +24,9 @@ export type ServiceKeys = {
   [K in keyof SDKClients]: SDKClients[K] extends never ? never : K;
 }[keyof SDKClients];
 
-export interface SDK
-  extends Mixin<{
-    [serviceName in ServiceKeys]: SDKClient<SDKClients[serviceName]>;
-  }> {}
+export type SDK = {
+  [serviceName in ServiceKeys]: SDKClient<SDKClients[serviceName]>;
+};
 
 export type SDKClient<Client extends AWSService> = {
   [methodName in keyof Client]: SdkMethod<Client[methodName]>;
@@ -101,10 +99,12 @@ export interface SdkCallOptions {
   aslServiceName?: string;
 }
 
-export type SdkMethod<API> = API extends AnyFunction
-  ? Exclude<OverloadUnion<API>, (cb: AnyFunction) => any> extends (
-      input: infer Input extends {}
-    ) => AWS.Request<infer Output, any>
-    ? (input: Input, options: SdkCallOptions) => Promise<Output>
-    : never
+/**
+ * Influenced by: https://stackoverflow.com/questions/67760998/typescript-mapped-types-with-overload-functions
+ */
+export type SdkMethod<API> = API extends {
+  (params: infer Input, cb: AnyFunction): AWS.Request<infer Output, any>;
+  (cb: AnyFunction): any;
+}
+  ? (input: Input, options: SdkCallOptions) => Promise<Output>
   : never;
