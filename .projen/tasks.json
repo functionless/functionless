@@ -84,7 +84,13 @@
     "compile": {
       "name": "compile",
       "description": "Only compile",
+      "env": {
+        "NODE_OPTIONS": "--max-old-space-size=8192"
+      },
       "steps": [
+        {
+          "exec": "ts-node ./scripts/sdk-gen.ts"
+        },
         {
           "exec": "yarn link && cd ./test-app && yarn link functionless"
         },
@@ -183,6 +189,7 @@
       "name": "test",
       "description": "Run tests",
       "env": {
+        "NODE_OPTIONS": "--max-old-space-size=8192",
         "DEFAULT_REGION": "ap-northeast-1",
         "AWS_ACCOUNT_ID": "000000000000",
         "AWS_ACCESS_KEY_ID": "test",
