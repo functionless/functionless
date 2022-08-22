@@ -3,34 +3,39 @@ import type { Service as AWSService } from "aws-sdk";
 import type * as AWS from "aws-sdk";
 import type { AnyFunction } from "../util";
 
-type AWSServiceClient<T> = T extends new () => infer Client
-  ? Client extends AWSService
-    ? Client
-    : never
-  : never;
-type TAWS = typeof AWS;
-export type Mixin<T> = T;
+type Mixin<T> = T;
 
-type SDKClients = {
-  [K in Exclude<keyof TAWS, "Service">]: AWSServiceClient<TAWS[K]>;
-};
+/**
+ * The public SDK interface.
+ */
+export interface SDK
+  extends Mixin<{
+    [K in keyof typeof AWS as typeof AWS[K] extends new () => infer Client
+      ? Client extends AWSService
+        ? K extends "Service"
+          ? never
+          : K
+        : never
+      : never]: typeof AWS[K] extends new () => infer Client
+      ? Client extends AWSService
+        ? SDKClient<Client>
+        : never
+      : never;
+  }> {}
 
 /**
  * First we have to extract the names of all Services in the v2 AWS namespace
  *
  * @returns "AccessAnalyzer" | "Account" | ... | "XRay"
  */
-export type ServiceKeys = {
-  [K in keyof SDKClients]: SDKClients[K] extends never ? never : K;
-}[keyof SDKClients];
+export type ServiceKeys = keyof SDK;
 
-export type SDK = {
-  [serviceName in ServiceKeys]: SDKClient<SDKClients[serviceName]>;
-};
-
-export type SDKClient<Client extends AWSService> = {
+/**
+ * A client with only valid methods to their SDK Methods.
+ */
+export type SDKClient<Client extends AWSService> = Mixin<{
   [methodName in keyof Client]: SdkMethod<Client[methodName]>;
-};
+}>;
 
 export interface SdkCallOptions {
   /**
