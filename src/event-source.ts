@@ -4,54 +4,46 @@ import { Function, FunctionProps } from "./function";
 
 export interface IEventSource<
   RawEvent = any,
-  Event = any,
+  ParsedEvent = any,
   Response = any,
   EventSourceConfig = any
 > {
   onEvent(
-    handler: (parsed: Event, raw: RawEvent) => Promise<Response>
+    handler: (parsed: ParsedEvent, raw: RawEvent) => Promise<Response>
   ): Function<RawEvent, Response>;
 
   onEvent(
-    props: FunctionProps<Event, Response> & EventSourceConfig,
-    handler: (parsed: Event, raw: RawEvent) => Promise<Response>
+    props: FunctionProps<ParsedEvent, Response> & EventSourceConfig,
+    handler: (parsed: ParsedEvent, raw: RawEvent) => Promise<Response>
   ): Function<RawEvent, Response>;
 
   onEvent(
     id: string,
-    props: FunctionProps<Event, Response> & EventSourceConfig,
-    handler: (parsed: Event, raw: RawEvent) => Promise<Response>
+    props: FunctionProps<ParsedEvent, Response> & EventSourceConfig,
+    handler: (parsed: ParsedEvent, raw: RawEvent) => Promise<Response>
   ): Function<RawEvent, Response>;
 
   onEvent(
     scope: Construct,
     id: string,
-    props: FunctionProps<Event, Response> & EventSourceConfig,
-    handler: (parsed: Event, raw: RawEvent) => Promise<Response>
+    props: FunctionProps<ParsedEvent, Response> & EventSourceConfig,
+    handler: (parsed: ParsedEvent, raw: RawEvent) => Promise<Response>
   ): Function<RawEvent, Response>;
 }
 
-export interface EventSource<
-  Resource extends IConstruct,
-  ResourceProps,
-  RawEvent,
-  ParsedEvent,
-  Response,
-  EventSourceConfig
-> extends IEventSource<RawEvent, ParsedEvent, Response, EventSourceConfig> {}
+export interface EventBatch<Record = any> {
+  Records: Record[];
+}
 
 export abstract class EventSource<
   Resource extends IConstruct = IConstruct,
   ResourceProps = any,
-  RawEvent = any,
-  ParsedEvent extends {
-    Records: any[];
-  } = {
-    Records: any[];
-  },
+  RawEvent extends EventBatch = EventBatch,
+  ParsedEvent extends EventBatch = EventBatch,
   Response = any,
   EventSourceConfig = any
-> {
+> implements IEventSource<RawEvent, ParsedEvent, Response, EventSourceConfig>
+{
   readonly resource: Resource;
 
   readonly props: ResourceProps;
@@ -70,27 +62,56 @@ export abstract class EventSource<
       this.props = args[2] as ResourceProps;
       this.resource = this.createResource(args[0], args[1], this.props);
     }
+  }
 
-    this.onEvent = function (...args: any[]) {
-      const [scope, id, props, handler] =
-        this.parseArgs<
-          (event: ParsedEvent, payload: RawEvent) => Promise<Response>
-        >(args);
+  public onEvent(
+    handler: (parsed: ParsedEvent, raw: RawEvent) => Promise<Response>
+  ): Function<RawEvent, Response>;
 
-      const parse = this.createParser();
+  public onEvent(
+    props: FunctionProps<ParsedEvent, Response> & EventSourceConfig,
+    handler: (parsed: ParsedEvent, raw: RawEvent) => Promise<Response>
+  ): Function<RawEvent, Response>;
 
-      const func = new Function(scope, id, props, (event: any) => {
-        console.log(event);
-        return handler(parse(event), event);
-      });
+  public onEvent(
+    id: string,
+    props: FunctionProps<ParsedEvent, Response> & EventSourceConfig,
+    handler: (parsed: ParsedEvent, raw: RawEvent) => Promise<Response>
+  ): Function<RawEvent, Response>;
 
-      func.resource.addEventSource(this.createEventSource(props));
+  public onEvent(
+    scope: Construct,
+    id: string,
+    props: FunctionProps<ParsedEvent, Response> & EventSourceConfig,
+    handler: (parsed: ParsedEvent, raw: RawEvent) => Promise<Response>
+  ): Function<RawEvent, Response>;
 
-      return func;
-    };
+  public onEvent(...args: any[]) {
+    const [scope, id, props, handler] =
+      this.parseArgs<
+        (event: ParsedEvent, payload: RawEvent) => Promise<Response>
+      >(args);
+
+    const parse = this.createParser();
+
+    const func = new Function(scope, id, props, (event: any) => {
+      return handler(parse(event), event);
+    });
+
+    func.resource.addEventSource(this.createEventSource(props));
+
+    return func;
   }
 
   protected abstract createParser(): (event: RawEvent) => ParsedEvent;
+
+  public abstract createGetPayload(): (
+    event: ParsedEvent["Records"][number]
+  ) => any;
+
+  public abstract createResponseHandler(): (
+    failed: RawEvent["Records"]
+  ) => Response;
 
   protected abstract createResource(
     scope: Construct,

@@ -1,8 +1,8 @@
 import { aws_sqs, aws_lambda_event_sources, aws_lambda } from "aws-cdk-lib";
 import lambda from "aws-lambda";
 import { Construct } from "constructs";
+import { Chain } from "./enumerable";
 import { EventSource } from "./event-source";
-import { Function, FunctionProps } from "./function";
 import { Serializer } from "./serializer";
 
 export interface SQSEvent<T> {
@@ -33,6 +33,24 @@ abstract class BaseQueue<T> extends EventSource<
     return this.resource.queueUrl;
   }
 
+  public messages(): Chain<
+    T,
+    lambda.SQSEvent,
+    SQSEvent<T>,
+    SQSRecord<T>,
+    lambda.SQSBatchResponse,
+    aws_lambda_event_sources.SqsEventSourceProps
+  > {
+    return new Chain<
+      T,
+      lambda.SQSEvent,
+      SQSEvent<T>,
+      SQSRecord<T>,
+      lambda.SQSBatchResponse,
+      aws_lambda_event_sources.SqsEventSourceProps
+    >(this, (event) => event);
+  }
+
   protected createResource(
     scope: Construct,
     id: string,
@@ -60,121 +78,20 @@ abstract class BaseQueue<T> extends EventSource<
     });
   }
 
-  public forEach(
-    process: MessageProcessor<T>
-  ): Function<lambda.SQSEvent, lambda.SQSBatchResponse>;
-
-  public forEach(
-    props: MessageProcessorProps,
-    process: MessageProcessor<T>
-  ): Function<lambda.SQSEvent, lambda.SQSBatchResponse>;
-
-  public forEach(
-    id: string,
-    props: MessageProcessorProps,
-    process: MessageProcessor<T>
-  ): Function<lambda.SQSEvent, lambda.SQSBatchResponse>;
-
-  public forEach(
-    scope: Construct,
-    id: string,
-    props: MessageProcessorProps,
-    process: MessageProcessor<T>
-  ): Function<lambda.SQSEvent, lambda.SQSBatchResponse>;
-
-  public forEach(...args: any[]) {
-    const [scope, id, props, process] =
-      this.parseArgs<MessageProcessor<T>>(args);
-    return this.onEvent(scope, id, props, async (event, raw) => ({
-      batchItemFailures: (
-        await Promise.all(
-          event.Records.map(async (record) => {
-            try {
-              await process(record.message, record, event, raw);
-              return [];
-            } catch (err) {
-              console.log(err);
-              return [
-                <lambda.SQSBatchItemFailure>{
-                  itemIdentifier: record.messageId,
-                },
-              ];
-            }
-          })
-        )
-      ).flat(),
-    }));
-  }
-
-  public forEachBatch(
-    process: MessageProcessor<T>
-  ): Function<lambda.SQSEvent, lambda.SQSBatchResponse>;
-
-  public forEachBatch(
-    props: MessageProcessorProps,
-    process: BatchMessageProcessor<T>
-  ): Function<lambda.SQSEvent, lambda.SQSBatchResponse>;
-
-  public forEachBatch(
-    id: string,
-    props: MessageProcessorProps,
-    process: BatchMessageProcessor<T>
-  ): Function<lambda.SQSEvent, lambda.SQSBatchResponse>;
-
-  public forEachBatch(
-    scope: Construct,
-    id: string,
-    props: MessageProcessorProps,
-    process: BatchMessageProcessor<T>
-  ): Function<lambda.SQSEvent, lambda.SQSBatchResponse>;
-
-  public forEachBatch(
-    ...args: any[]
-  ): Function<lambda.SQSEvent, lambda.SQSBatchResponse> {
-    const [scope, id, props, process] =
-      this.parseArgs<BatchMessageProcessor<T>>(args);
-    return this.onEvent(scope, id, props, async (event, raw) => {
-      try {
-        const response = await process(
-          event.Records.map((record) => record.message),
-          event.Records,
-          event,
-          raw
-        );
-        if (response) {
-          return response;
-        } else {
-          return {
-            batchItemFailures: [],
-          };
-        }
-      } catch {
-        return {
-          batchItemFailures: event.Records.map((record) => ({
-            itemIdentifier: record.messageId,
-          })),
-        };
-      }
+  public createResponseHandler(): (
+    failed: lambda.SQSRecord[]
+  ) => lambda.SQSBatchResponse {
+    return (failed) => ({
+      batchItemFailures: failed.map((failed) => ({
+        itemIdentifier: failed.messageId,
+      })),
     });
   }
+
+  public createGetPayload(): (event: SQSRecord<T>) => any {
+    return (event) => event.message;
+  }
 }
-
-export type MessageProcessorProps =
-  aws_lambda_event_sources.SqsEventSourceProps & FunctionProps;
-
-export type MessageProcessor<T> = (
-  message: T,
-  record: SQSRecord<T>,
-  event: SQSEvent<T>,
-  raw: lambda.SQSEvent
-) => Promise<void>;
-
-export type BatchMessageProcessor<T> = (
-  messages: T[],
-  records: SQSRecord<T>[],
-  event: SQSEvent<T>,
-  raw: lambda.SQSEvent
-) => Promise<lambda.SQSBatchResponse | void>;
 
 export interface QueueProps<T> extends aws_sqs.QueueProps {
   serializer?: Serializer<T>;

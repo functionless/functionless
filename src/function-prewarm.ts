@@ -53,7 +53,9 @@ export const PrewarmClients: Record<
     key: "DynamoDB",
     init: (key, props) =>
       // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").DynamoDB)(props?.clientConfigRetriever?.(key)),
+      new (require("aws-sdk/clients/dynamodb"))(
+        props?.clientConfigRetriever?.(key)
+      ),
   },
   SecretsManager: {
     key: "SecretsManager",

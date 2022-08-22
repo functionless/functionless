@@ -157,7 +157,7 @@ localstackTestSuite("queueStack", (test) => {
   test(
     "forEach with JsonSerializer",
     (scope) => {
-      const table = new Table(scope, "Table", {
+      const table = new Table<Message, "id">(scope, "Table", {
         partitionKey: {
           name: "id",
           type: aws_dynamodb.AttributeType.STRING,
@@ -173,7 +173,7 @@ localstackTestSuite("queueStack", (test) => {
         serializer: new JsonSerializer<Message>(),
       });
 
-      queue.forEach(localstackClientConfig, async (message) => {
+      queue.messages().forEach(localstackClientConfig, async (message) => {
         await $AWS.DynamoDB.PutItem({
           Table: table,
           Item: {
@@ -186,6 +186,56 @@ localstackTestSuite("queueStack", (test) => {
           },
         });
       });
+      return {
+        outputs: {
+          tableName: table.tableName,
+          queueUrl: queue.queueUrl,
+        },
+      };
+    },
+    assertForEach
+  );
+
+  test(
+    "map, filter, flatMap, forEach with JsonSerializer",
+    (scope) => {
+      const table = new Table<Message, "id">(scope, "Table", {
+        partitionKey: {
+          name: "id",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+
+      interface Message {
+        id: string;
+        data: string;
+      }
+
+      const queue = new Queue(scope, "queue", {
+        serializer: new JsonSerializer<Message>(),
+      });
+
+      queue
+        .messages()
+        .map((message) => message)
+        .map(async (message) => message)
+        .filter((message) => message === message)
+        .filter(async (message) => message === message)
+        .flatMap((message) => [message])
+        .flatMap(async (message) => [message])
+        .forEach(localstackClientConfig, async (message) => {
+          await $AWS.DynamoDB.PutItem({
+            Table: table,
+            Item: {
+              id: {
+                S: message.id,
+              },
+              data: {
+                S: message.data,
+              },
+            },
+          });
+        });
       return {
         outputs: {
           tableName: table.tableName,
