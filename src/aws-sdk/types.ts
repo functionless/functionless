@@ -1,42 +1,6 @@
-import type { Service as AWSService } from "aws-sdk";
-// eslint-disable-next-line import/no-extraneous-dependencies
-import type * as AWS from "aws-sdk";
-import type { AnyFunction } from "../util";
-
-type Mixin<T> = T;
-
 /**
- * The public SDK interface.
+ * Options interface used in the sdk.generated {@link SDK} interfaces.
  */
-export interface SDK
-  extends Mixin<{
-    [K in keyof typeof AWS as typeof AWS[K] extends new () => infer Client
-      ? Client extends AWSService
-        ? K extends "Service"
-          ? never
-          : K
-        : never
-      : never]: typeof AWS[K] extends new () => infer Client
-      ? Client extends AWSService
-        ? SDKClient<Client>
-        : never
-      : never;
-  }> {}
-
-/**
- * First we have to extract the names of all Services in the v2 AWS namespace
- *
- * @returns "AccessAnalyzer" | "Account" | ... | "XRay"
- */
-export type ServiceKeys = keyof SDK;
-
-/**
- * A client with only valid methods to their SDK Methods.
- */
-export type SDKClient<Client extends AWSService> = Mixin<{
-  [methodName in keyof Client]: SdkMethod<Client[methodName]>;
-}>;
-
 export interface SdkCallOptions {
   /**
    * Information needed to construct/customize the iam policy generated for the SDK call
@@ -103,13 +67,3 @@ export interface SdkCallOptions {
    */
   aslServiceName?: string;
 }
-
-/**
- * Influenced by: https://stackoverflow.com/questions/67760998/typescript-mapped-types-with-overload-functions
- */
-export type SdkMethod<API> = API extends {
-  (params: infer Input, cb: AnyFunction): AWS.Request<infer Output, any>;
-  (cb: AnyFunction): any;
-}
-  ? (input: Input, options: SdkCallOptions) => Promise<Output>
-  : never;

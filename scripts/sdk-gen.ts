@@ -1,6 +1,6 @@
 import fs from "fs";
 import path from "path";
-import ts from "typescript";
+import ts, { factory } from "typescript";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import prettier from "prettier";
 
@@ -174,7 +174,7 @@ export async function main() {
                                 undefined,
                                 undefined,
                                 undefined,
-                                "params",
+                                "input",
                                 undefined,
                                 ts.factory.createTypeReferenceNode(
                                   ts.factory.createQualifiedName(
@@ -186,6 +186,16 @@ export async function main() {
                                     ),
                                     ts.factory.createIdentifier(paramsTypeName!)
                                   )
+                                )
+                              ),
+                              ts.factory.createParameterDeclaration(
+                                undefined,
+                                undefined,
+                                undefined,
+                                "options",
+                                undefined,
+                                ts.factory.createTypeReferenceNode(
+                                  "SdkCallOptions"
                                 )
                               ),
                             ],
@@ -238,6 +248,24 @@ export async function main() {
         ts.factory.createStringLiteral("aws-sdk"),
         undefined
       ),
+      // import {SdkCallOptions} from "./types";
+      ts.factory.createImportDeclaration(
+        undefined,
+        undefined,
+        ts.factory.createImportClause(
+          true,
+          undefined,
+          ts.factory.createNamedImports([
+            ts.factory.createImportSpecifier(
+              false,
+              undefined,
+              ts.factory.createIdentifier("SdkCallOptions")
+            ),
+          ])
+        ),
+        ts.factory.createStringLiteral("./types"),
+        undefined
+      ),
       ts.factory.createInterfaceDeclaration(
         undefined,
         [ts.factory.createModifier(ts.SyntaxKind.ExportKeyword)],
@@ -268,7 +296,7 @@ export async function main() {
   });
 
   await fs.promises.writeFile(
-    path.join(__dirname, "..", "src", "sdk.generated.ts"),
+    path.join(__dirname, "..", "src", "aws-sdk", "sdk.generated.ts"),
     text
   );
 }

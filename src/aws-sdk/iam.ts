@@ -1,6 +1,6 @@
-import type { ServiceKeys } from "./types";
+import type { SDK } from "./sdk.generated";
 
-export const IAM_SERVICE_PREFIX: Record<ServiceKeys, string> = {
+export const IAM_SERVICE_PREFIX: Record<keyof SDK, string> = {
   AccessAnalyzer: "access-analyzer",
   Account: "account",
   ACM: "acm",
