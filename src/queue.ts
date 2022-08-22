@@ -1,8 +1,8 @@
 import { aws_sqs, aws_lambda_event_sources, aws_lambda } from "aws-cdk-lib";
 import lambda from "aws-lambda";
 import { Construct } from "constructs";
-import { Chain } from "./enumerable";
 import { EventSource } from "./event-source";
+import { Iterable } from "./iterable";
 import { Serializer } from "./serializer";
 
 export interface SQSEvent<T> {
@@ -33,7 +33,7 @@ abstract class BaseQueue<T> extends EventSource<
     return this.resource.queueUrl;
   }
 
-  public messages(): Chain<
+  public messages(): Iterable<
     T,
     lambda.SQSEvent,
     SQSEvent<T>,
@@ -41,7 +41,7 @@ abstract class BaseQueue<T> extends EventSource<
     lambda.SQSBatchResponse,
     aws_lambda_event_sources.SqsEventSourceProps
   > {
-    return new Chain<
+    return new Iterable<
       T,
       lambda.SQSEvent,
       SQSEvent<T>,

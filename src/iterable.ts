@@ -21,7 +21,7 @@ export type BatchProcessor<Element, Response, Event, Raw> = (
   raw: Raw
 ) => Promise<Response>;
 
-export interface IEnumerable<
+export interface IIterable<
   Item,
   RawEvent,
   ParsedEvent,
@@ -31,7 +31,7 @@ export interface IEnumerable<
 > {
   map<U>(
     fn: Processor<Item, U, ParsedRecord, ParsedEvent, RawEvent>
-  ): IEnumerable<
+  ): IIterable<
     U,
     RawEvent,
     ParsedEvent,
@@ -42,7 +42,7 @@ export interface IEnumerable<
 
   flatMap<U>(
     fn: Processor<Item, U[], ParsedRecord, ParsedEvent, RawEvent>
-  ): IEnumerable<
+  ): IIterable<
     U,
     RawEvent,
     ParsedEvent,
@@ -53,7 +53,7 @@ export interface IEnumerable<
 
   filter<U extends Item>(
     predicate: (item: Item) => item is U
-  ): IEnumerable<
+  ): IIterable<
     U,
     RawEvent,
     ParsedEvent,
@@ -64,7 +64,7 @@ export interface IEnumerable<
 
   filter(
     predicate: (item: Item) => boolean | Promise<boolean>
-  ): IEnumerable<
+  ): IIterable<
     Item,
     RawEvent,
     ParsedEvent,
@@ -118,11 +118,11 @@ export interface IEnumerable<
   ): Function<RawEvent, Response>;
 }
 
-export function isChain(a: any): a is Chain {
-  return a?.kind === "Chain";
+export function isIterable(a: any): a is Iterable {
+  return a?.kind === "Iterable";
 }
 
-export class Chain<
+export class Iterable<
   Item = any,
   RawEvent extends EventBatch = any,
   ParsedEvent extends EventBatch = any,
@@ -130,7 +130,7 @@ export class Chain<
   Response = any,
   EventSourceConfig = any
 > implements
-    IEnumerable<
+    IIterable<
       Item,
       RawEvent,
       ParsedEvent,
@@ -139,12 +139,12 @@ export class Chain<
       EventSourceConfig
     >
 {
-  readonly kind = "Chain";
+  readonly kind = "Iterable";
 
   constructor(
     private readonly prev:
       | IEventSource<RawEvent, ParsedEvent, Response, EventSourceConfig>
-      | Chain<
+      | Iterable<
           any,
           RawEvent,
           ParsedEvent,
@@ -163,7 +163,7 @@ export class Chain<
 
   public map<U>(
     fn: Processor<Item, U, ParsedRecord, ParsedEvent, RawEvent>
-  ): IEnumerable<
+  ): IIterable<
     U,
     RawEvent,
     ParsedEvent,
@@ -176,7 +176,7 @@ export class Chain<
 
   public filter<U extends Item>(
     predicate: (item: Item) => item is U
-  ): IEnumerable<
+  ): IIterable<
     U,
     RawEvent,
     ParsedEvent,
@@ -187,7 +187,7 @@ export class Chain<
 
   public filter(
     predicate: (item: Item) => boolean | Promise<boolean>
-  ): IEnumerable<
+  ): IIterable<
     Item,
     RawEvent,
     ParsedEvent,
@@ -198,7 +198,7 @@ export class Chain<
 
   public filter(
     predicate: (item: Item) => boolean | Promise<boolean>
-  ): IEnumerable<
+  ): IIterable<
     any,
     RawEvent,
     ParsedEvent,
@@ -217,7 +217,7 @@ export class Chain<
 
   public flatMap<U>(
     fn: Processor<Item, U[], ParsedRecord, ParsedEvent, RawEvent>
-  ): IEnumerable<
+  ): IIterable<
     U,
     RawEvent,
     ParsedEvent,
@@ -225,7 +225,7 @@ export class Chain<
     Response,
     EventSourceConfig
   > {
-    return new Chain(this, fn);
+    return new Iterable(this, fn);
   }
 
   public forEach(
@@ -325,7 +325,7 @@ export class Chain<
   }
 
   private getCallChain(): Processor[] {
-    if (isChain(this.prev)) {
+    if (isIterable(this.prev)) {
       return [...this.prev.getCallChain(), this.fn];
     } else {
       return [this.fn];
@@ -340,7 +340,7 @@ export class Chain<
     Response,
     any
   > {
-    if (isChain(this.prev)) {
+    if (isIterable(this.prev)) {
       return this.prev.getSource();
     } else {
       return this.prev as any;
