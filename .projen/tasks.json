@@ -89,6 +89,9 @@
       },
       "steps": [
         {
+          "exec": "ts-node ./scripts/sdk-gen.ts"
+        },
+        {
           "exec": "yarn link && cd ./test-app && yarn link functionless"
         },
         {
