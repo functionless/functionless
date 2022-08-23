@@ -1,4 +1,4 @@
-import { Duration, aws_cloudwatch } from "aws-cdk-lib";
+import { Duration, aws_dynamodb } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
@@ -371,35 +371,38 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "$AWS.SDK.CloudWatch",
+    "$AWS.SDK.DynamoDB.describeTable",
     (parent) => {
-      const alarm = new aws_cloudwatch.Alarm(parent, "Alarm", {
-        evaluationPeriods: 1,
-        threshold: 1,
-        metric: new aws_cloudwatch.Metric({
-          namespace: "AWS/Lambda",
-          metricName: "Errors",
-        }),
+      const table = new Table<{ id: string }, "id">(parent, "myTable", {
+        partitionKey: {
+          name: "id",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
       });
 
-      return new StepFunction<{}, string | undefined>(
-        parent,
-        "fn",
-        async () => {
-          const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
-            {
-              AlarmNames: [alarm.alarmName],
-            },
-            {
-              iam: { resources: [alarm.alarmArn] },
-            }
-          );
+      return {
+        sfn: new StepFunction<{}, string | undefined>(
+          parent,
+          "fn",
+          async () => {
+            const tableInfo = await $AWS.SDK.DynamoDB.describeTable(
+              {
+                TableName: table.tableName,
+              },
+              {
+                iam: {
+                  resources: [table.tableArn],
+                },
+              }
+            );
 
-          return MetricAlarms?.[0]?.Namespace;
-        }
-      );
+            return tableInfo.Table?.TableArn;
+          }
+        ),
+        outputs: { tableArn: table.tableArn },
+      };
     },
-    "AWS/Lambda"
+    ({ tableArn }) => tableArn
   );
 
   test(

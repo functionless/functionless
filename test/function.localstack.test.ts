@@ -1,5 +1,4 @@
 import {
-  aws_cloudwatch,
   aws_dynamodb,
   aws_events,
   CfnMapping,

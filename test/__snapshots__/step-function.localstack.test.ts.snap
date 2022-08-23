@@ -1,5 +1,44 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`$AWS.SDK.CloudWatch 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "tableInfo = await $AWS.SDK.DynamoDB.describeTable({TableName: table.tableNa",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return tableInfo.Table.TableArn": Object {
+      "End": true,
+      "InputPath": "$.tableInfo.Table.TableArn",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tableInfo": Object {
+      "InputPath": "$.heap0",
+      "Next": "return tableInfo.Table.TableArn",
+      "ResultPath": "$.tableInfo",
+      "Type": "Pass",
+    },
+    "tableInfo = await $AWS.SDK.DynamoDB.describeTable({TableName: table.tableNa": Object {
+      "Next": "tableInfo",
+      "Parameters": Object {
+        "TableName": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:describeTable",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
 exports[`access 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
