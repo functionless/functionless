@@ -1467,11 +1467,6 @@ class BaseStandardStepFunction<
           .promise();
       },
     },
-    unhandledContext: (kind, contextKind) => {
-      throw new Error(
-        `${kind} is only available in the ${ASL.ContextName} and ${VTL.ContextName} context, but was used in ${contextKind}.`
-      );
-    },
   });
 }
 

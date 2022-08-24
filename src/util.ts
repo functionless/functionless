@@ -409,6 +409,13 @@ export const invertBinaryOperator = (op: BinaryOp): BinaryOp => {
   }
 };
 
+/**
+ * return the segments of a json path, excluding the "$".
+ *
+ * $.a['b'][0] => ["a", "b", 0]
+ *
+ * TODO: find a json parser that doesn't suck: https://twitter.com/sussmansa/status/1562523469094330369
+ */
 export function normalizeJsonPath(jsonPath: string): (string | number)[] {
   return (
     jsonPath.match(/(\.[a-zA-Z0-9_\$]*|\[\'?[^'\]]*\'?\])/g)?.map((seg) => {
@@ -425,6 +432,9 @@ export function normalizeJsonPath(jsonPath: string): (string | number)[] {
   );
 }
 
+/**
+ * @see jsonPathStartsWith
+ */
 function jsonPathSegmentStartsWith(
   p1: (string | number)[],
   p2: (string | number)[]
@@ -478,7 +488,7 @@ export function jsonPathEquals(path1: string, path2: string): boolean {
 /**
  * Formats a series of json path segments into a value json path.
  *
- * Attempts to determine of a segment can be represented using dot notation or element access notation.
+ * Attempts to determine if a segment can be represented using dot notation or element access notation.
  *
  * ['var1', 'var 2', 0]
  * => $.var1['var2'][0]

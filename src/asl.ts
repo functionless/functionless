@@ -522,7 +522,7 @@ export interface ASLOptions {
   /**
    * Options for the ASL Optimizer.
    *
-   * Default: Suggested
+   * @default ASLOptimizer.DefaultOptimizeOptions
    */
   optimization?: ASLOptimizer.OptimizeOptions;
 }
@@ -5791,6 +5791,10 @@ namespace ASLOptimizer {
         }
       }
       if (!containsJsonPath) {
+        // don't need to return anything for literal state inputs.
+        if (resultPath === "[[task]]" || resultPath === "[[map]]") {
+          return [];
+        }
         return [
           {
             type: "LiteralPropAssignment",
