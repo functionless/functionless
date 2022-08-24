@@ -3,17 +3,18 @@ import "jest";
 import { aws_dynamodb, Duration } from "aws-cdk-lib";
 import { SQSBatchResponse } from "aws-lambda";
 import { v4 } from "uuid";
-import { $AWS, FunctionProps, Queue, Table } from "../src";
+import { $AWS, Function, FunctionProps, Queue, Table } from "../src";
 import { JsonSerializer } from "../src/serializer";
 import { localstackTestSuite } from "./localstack";
-import { localDynamoDB, localSQS, retry } from "./runtime-util";
+import { localDynamoDB, localLambda, localSQS, retry } from "./runtime-util";
 
 // inject the localstack client config into the lambda clients
 // without this configuration, the functions will try to hit AWS proper
 const localstackClientConfig: FunctionProps = {
   timeout: Duration.seconds(20),
   clientConfigRetriever: () => ({
-    endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
+    // endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
+    endpoint: "http://localhost:4566",
   }),
 };
 
@@ -298,6 +299,69 @@ localstackTestSuite("queueStack", (test) => {
       };
     },
     assertForEach
+  );
+
+  // skip because localstack is being dumb - has been tested in the cloud
+  test(
+    "send and receive messages",
+    (scope) => {
+      interface Message {
+        id: string;
+        data: string;
+      }
+      const queue = new Queue<Message>(scope, "queue", {
+        serializer: new JsonSerializer(),
+      });
+
+      const send = new Function(
+        scope,
+        "send",
+        localstackClientConfig,
+        async (id: string) => {
+          await queue.sendMessage({
+            Message: {
+              id,
+              data: "data",
+            },
+          });
+        }
+      );
+
+      const receive = new Function(
+        scope,
+        "receive",
+        localstackClientConfig,
+        async () => {
+          return queue.receiveMessage({
+            WaitTimeSeconds: 10,
+          });
+        }
+      );
+
+      return {
+        outputs: {
+          send: send.resource.functionName,
+          receive: receive.resource.functionName,
+        },
+      };
+    },
+    async (context) => {
+      await localLambda
+        .invoke({
+          FunctionName: context.send,
+          Payload: '"id"',
+        })
+        .promise();
+
+      const response = await localLambda
+        .invoke({
+          FunctionName: context.receive,
+          Payload: "{}",
+        })
+        .promise();
+
+      expect(response).toEqual({});
+    }
   );
 });
 

@@ -7,6 +7,13 @@ import { makeIntegration } from "./integration";
 import { Iterable } from "./iterable";
 import { Serializer } from "./serializer";
 
+export interface Message<M> extends AWS.SQS.Message {
+  /**
+   * The parsed form of the {@link M} received from the {@link Queue}.
+   */
+  Message?: M;
+}
+
 /**
  * A parsed form of the {@link lambda.SQSEvent} where each of the {@link lambda.SQSRecord}s
  * have been parsed into a {@link SQSRecord<T>}.
@@ -26,12 +33,22 @@ export interface SQSRecord<Message> extends lambda.SQSRecord {
   message: Message;
 }
 
-export interface SendMessageRequest<Message>
-  extends Omit<AWS.SQS.SendMessageRequest, "MessageBody"> {
+export interface SendMessageRequest<M>
+  extends Omit<AWS.SQS.SendMessageRequest, "MessageBody" | "QueueUrl"> {
   /**
-   * The {@link Message} to be sent to the {@link Queue}.
+   * The {@link M} to be sent to the {@link Queue}.
    */
-  Message: Message;
+  Message: M;
+}
+
+export interface ReceiveMessageRequest
+  extends Omit<AWS.SQS.ReceiveMessageRequest, "QueueUrl"> {}
+
+export interface ReceiveMessageResult<M> extends AWS.SQS.ReceiveMessageResult {
+  /**
+   * The {@link M} to be sent to the {@link Queue}.
+   */
+  MessageList?: Message<M>[];
 }
 
 abstract class BaseQueue<Message> extends EventSource<
@@ -66,6 +83,12 @@ abstract class BaseQueue<Message> extends EventSource<
     return this.resource.queueUrl;
   }
 
+  public readonly sendMessage;
+
+  public readonly receiveMessage;
+
+  public readonly purge;
+
   constructor(scope: Construct, id: string, props: QueueProps<Message>);
   constructor(resource: aws_sqs.IQueue, props: QueueProps<Message>);
   constructor(
@@ -84,7 +107,6 @@ abstract class BaseQueue<Message> extends EventSource<
       (input: SendMessageRequest<Message>) => Promise<AWS.SQS.SendMessageResult>
     >({
       kind: "AWS.SQS.SendMessage",
-      // asl: (call, context) => {},
       native: {
         bind: (func) => this.resource.grantSendMessages(func.resource),
         preWarm: (context) => context.getOrInit(SQSClient),
@@ -97,9 +119,12 @@ abstract class BaseQueue<Message> extends EventSource<
             ? input.Message
             : (() => {
                 throw new Error(
-                  `Message must be a string if there is no 'serializer' configured`
+                  `Message must be a string if there is no 'serializer' configured, ${input.Message}`
                 );
               })();
+
+          // @ts-ignore
+          delete input.Message;
 
           const response = await sqs
             .sendMessage({
@@ -114,6 +139,54 @@ abstract class BaseQueue<Message> extends EventSource<
 
           return response;
         },
+      },
+    });
+
+    this.receiveMessage = makeIntegration<
+      "AWS.SQS.ReceiveMessage",
+      (input: ReceiveMessageRequest) => Promise<ReceiveMessageResult<Message>>
+    >({
+      kind: "AWS.SQS.ReceiveMessage",
+      // asl: (call, context) => {},
+      native: {
+        bind: (func) => this.resource.grantConsumeMessages(func.resource),
+        preWarm: (context) => context.getOrInit(SQSClient),
+        call: async ([input], context) => {
+          const sqs = context.getOrInit(SQSClient);
+
+          const response = await sqs
+            .receiveMessage({
+              ...input,
+              QueueUrl: queueUrl,
+            })
+            .promise();
+
+          return {
+            MessageList: response.Messages?.map((message) => ({
+              ...message,
+              Message:
+                serializer && message.Body
+                  ? serializer.read(message.Body)
+                  : (message.Body as unknown as Message),
+            })),
+          };
+        },
+      },
+    });
+
+    this.purge = makeIntegration<"AWS.SQS.PurgeQueue", () => Promise<{}>>({
+      kind: "AWS.SQS.PurgeQueue",
+      // asl: (call, context) => {},
+      native: {
+        bind: (func) => this.resource.grantPurge(func.resource),
+        preWarm: (context) => context.getOrInit(SQSClient),
+        call: async ([], context) =>
+          context
+            .getOrInit(SQSClient)
+            .purgeQueue({
+              QueueUrl: queueUrl,
+            })
+            .promise(),
       },
     });
   }
@@ -158,8 +231,6 @@ abstract class BaseQueue<Message> extends EventSource<
       aws_lambda_event_sources.SqsEventSourceProps
     >(this, (event) => event);
   }
-
-  public readonly sendMessage;
 
   protected createResource(
     scope: Construct,

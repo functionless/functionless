@@ -1,3 +1,5 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
+
 /**
  * This client is used at runtime. Keep the dependencies to a minimal and analyze the lambda bundles on output.
  */
@@ -32,19 +34,16 @@ export const PrewarmClients: Record<
   Lambda: {
     key: "Lambda",
     init: (key, props) =>
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
       new (require("aws-sdk").Lambda)(props?.clientConfigRetriever?.(key)),
   },
   EventBridge: {
     key: "EventBridge",
     init: (key, props) =>
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
       new (require("aws-sdk").EventBridge)(props?.clientConfigRetriever?.(key)),
   },
   StepFunctions: {
     key: "StepFunctions",
     init: (key, props) =>
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
       new (require("aws-sdk").StepFunctions)(
         props?.clientConfigRetriever?.(key)
       ),
@@ -52,28 +51,26 @@ export const PrewarmClients: Record<
   DynamoDB: {
     key: "DynamoDB",
     init: (key, props) =>
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
       new (require("aws-sdk/clients/dynamodb"))(
         props?.clientConfigRetriever?.(key)
       ),
   },
   SecretsManager: {
     key: "SecretsManager",
-    init: (key, props) =>
-      // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").SecretsManager)(
+    init: (key, props) => {
+      return new (require("aws-sdk").SecretsManager)(
         props?.clientConfigRetriever?.(key)
-      ),
+      );
+    },
   },
 };
 
 export const SQSClient: PrewarmClientInitializer<"SQS", AWS.SQS> = {
   key: "SQS",
-  init: (key, props) =>
-    // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-    new (require("aws-sdk/clients/sqs").SQS)(
-      props?.clientConfigRetriever?.(key)
-    ),
+  init: (key, props) => {
+    const SQS = require("aws-sdk/clients/sqs");
+    return new SQS(props?.clientConfigRetriever?.(key));
+  },
 };
 
 export interface PrewarmProps {

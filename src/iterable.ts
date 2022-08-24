@@ -870,6 +870,17 @@ export class Iterable<
     ParsedRecord,
     Response,
     EventSourceConfig
+  >;
+
+  public filter(
+    predicate: Processor<Item, boolean, ParsedRecord, ParsedEvent, RawEvent>
+  ): Iterable<
+    any,
+    RawEvent,
+    ParsedEvent,
+    ParsedRecord,
+    Response,
+    EventSourceConfig
   > {
     return this.flatMap(async (item, record, event, raw) => {
       let pred = predicate(item, record, event, raw);
