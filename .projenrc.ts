@@ -144,6 +144,7 @@ const project = new CustomTypescriptProject({
   ],
   eslintOptions: {
     dirs: ["src", "test"],
+    ignorePatterns: ["scripts/**"],
     lintProjenRc: false,
   },
   tsconfig: {
@@ -213,6 +214,8 @@ packageJson.addOverride("lint-staged", {
 project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
 );
+project.compileTask.env("NODE_OPTIONS", "--max-old-space-size=8192");
+project.compileTask.prependExec("ts-node ./scripts/sdk-gen.ts");
 
 project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth --quiet"
@@ -220,6 +223,7 @@ project.testTask.prependExec(
 project.testTask.prependExec("./scripts/localstack");
 project.testTask.exec("localstack stop");
 
+project.testTask.env("NODE_OPTIONS", "--max-old-space-size=8192");
 project.testTask.env("DEFAULT_REGION", "ap-northeast-1");
 project.testTask.env("AWS_ACCOUNT_ID", "000000000000");
 project.testTask.env("AWS_ACCESS_KEY_ID", "test");
