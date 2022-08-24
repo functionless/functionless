@@ -1,6 +1,8 @@
 import { aws_sqs, aws_lambda } from "aws-cdk-lib";
 import { Construct, IConstruct } from "constructs";
 import { Function, FunctionProps } from "./function";
+// @ts-ignore tsdoc
+import type { Iterable } from "./iterable";
 
 export interface IEventSource<
   RawEvent = any,
@@ -8,21 +10,143 @@ export interface IEventSource<
   Response = any,
   EventSourceConfig = any
 > {
+  /**
+   * Creates a Lambda {@link Function} and subscribes it to this {@link EventSource}. It
+   * will be invoked whenever events are received from the {@link EventSource} with a
+   * request and response contract identical to the contract defined by each corresponding
+   * AWS service.
+   *
+   * The {@link handler} function takes two arguments, {@link ParsedEvent} and {@link RawEvent}.
+   *
+   * {@link RawEvent} is the exact object received in the Invocation and {@link ParsedEvent} is
+   * derived from it. Each {@link EventSource} implementation, for example the SQS {@link Queue},
+   * perform pre-processing to parse JSON Strings into JS Objects.
+   *
+   * ```ts
+   * queue.onEvent(async (event) => {
+   *   event.Records.forEach(record => {
+   *     console.log(record.message);
+   *   });
+   * })
+   * ```
+   *
+   * @param handler the handler function to invoke when an {@link RawEvent} is received.
+   * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html
+   */
   onEvent(
     handler: (parsed: ParsedEvent, raw: RawEvent) => Promise<Response>
   ): Function<RawEvent, Response>;
 
+  /**
+   * Creates a Lambda {@link Function} and subscribes it to this {@link EventSource}. It
+   * will be invoked whenever events are received from the {@link EventSource} with a
+   * request and response contract identical to the contract defined by each corresponding
+   * AWS service.
+   *
+   * The {@link handler} function takes two arguments, {@link ParsedEvent} and {@link RawEvent}.
+   *
+   * {@link RawEvent} is the exact object received in the Invocation and {@link ParsedEvent} is
+   * derived from it. Each {@link EventSource} implementation, for example the SQS {@link Queue},
+   * perform pre-processing to parse JSON Strings into JS Objects.
+   *
+   * ```ts
+   * queue.onEvent({
+   *   // set the memory on the Lambda Function
+   *   memorySize: 512,
+   *   // configure the EventSource to batch messages into groups of 10 prior to invoking
+   *   batchSize: 10
+   * }, async (event) => {
+   *   event.Records.forEach(record => {
+   *     console.log(record.message);
+   *   });
+   * })
+   * ```
+   *
+   * @param props configuration properties for the Lambda {@link Function} and corresponding Event Source.
+   * @param handler the handler function to invoke when an {@link RawEvent} is received.
+   * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html
+   */
   onEvent(
     props: FunctionProps<ParsedEvent, Response> & EventSourceConfig,
     handler: (parsed: ParsedEvent, raw: RawEvent) => Promise<Response>
   ): Function<RawEvent, Response>;
 
+  /**
+   * Creates a Lambda {@link Function} and subscribes it to this {@link EventSource}. It
+   * will be invoked whenever events are received from the {@link EventSource} with a
+   * request and response contract identical to the contract defined by each corresponding
+   * AWS service.
+   *
+   * The {@link handler} function takes two arguments, {@link ParsedEvent} and {@link RawEvent}.
+   *
+   * {@link RawEvent} is the exact object received in the Invocation and {@link ParsedEvent} is
+   * derived from it. Each {@link EventSource} implementation, for example the SQS {@link Queue},
+   * perform pre-processing to parse JSON Strings into JS Objects.
+   *
+   * ```ts
+   * queue.onEvent(
+   *   "ProcessMessages",
+   *   {
+   *     // set the memory on the Lambda Function
+   *     memorySize: 512,
+   *     // configure the EventSource to batch messages into groups of 10 prior to invoking
+   *     batchSize: 10
+   *   },
+   *   async (event) => {
+   *     event.Records.forEach(record => {
+   *       console.log(record.message);
+   *     });
+   *   }
+   * );
+   * ```
+   *
+   * @param id ID of the created Lambda {@link Function} Construct added as a child of the underlying resource, e.g. a SQS {@link Queue}.
+   * @param props configuration properties for the Lambda {@link Function} and corresponding Event Source.
+   * @param handler the handler function to invoke when an {@link RawEvent} is received.
+   * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html
+   */
   onEvent(
     id: string,
     props: FunctionProps<ParsedEvent, Response> & EventSourceConfig,
     handler: (parsed: ParsedEvent, raw: RawEvent) => Promise<Response>
   ): Function<RawEvent, Response>;
 
+  /**
+   * Creates a Lambda {@link Function} and subscribes it to this {@link EventSource}. It
+   * will be invoked whenever events are received from the {@link EventSource} with a
+   * request and response contract identical to the contract defined by each corresponding
+   * AWS service.
+   *
+   * The {@link handler} function takes two arguments, {@link ParsedEvent} and {@link RawEvent}.
+   *
+   * {@link RawEvent} is the exact object received in the Invocation and {@link ParsedEvent} is
+   * derived from it. Each {@link EventSource} implementation, for example the SQS {@link Queue},
+   * perform pre-processing to parse JSON Strings into JS Objects.
+   *
+   * ```ts
+   * queue.onEvent(
+   *   scope,
+   *   "ProcessMessages",
+   *   {
+   *     // set the memory on the Lambda Function
+   *     memorySize: 512,
+   *     // configure the EventSource to batch messages into groups of 10 prior to invoking
+   *     batchSize: 10
+   *   },
+   *   async (event) => {
+   *     event.Records.forEach(record => {
+   *       console.log(record.message);
+   *     });
+   *   }
+   * );
+   * ```
+   *
+   * @param scope Construct to use as the parent of the created Lambda {@link Function}.
+   * @param id ID of the created Lambda {@link Function} Construct added as a child of the underlying resource, e.g. a SQS {@link Queue}.
+   * @param props configuration properties for the Lambda {@link Function} and corresponding Event Source.
+   * @param handler the handler function to invoke when an {@link RawEvent} is received.
+   * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html
+   */
   onEvent(
     scope: Construct,
     id: string,
@@ -100,21 +224,142 @@ export abstract class EventSource<
     }
   }
 
+  /**
+   * Creates a Lambda {@link Function} and subscribes it to this {@link EventSource}. It
+   * will be invoked whenever events are received from the {@link EventSource} with a
+   * request and response contract identical to the contract defined by each corresponding
+   * AWS service.
+   *
+   * The {@link handler} function takes two arguments, {@link ParsedEvent} and {@link RawEvent}.
+   *
+   * {@link RawEvent} is the exact object received in the Invocation and {@link ParsedEvent} is
+   * derived from it. Each {@link EventSource} implementation, for example the SQS {@link Queue},
+   * perform pre-processing to parse JSON Strings into JS Objects.
+   *
+   * ```ts
+   * queue.onEvent(async (event) => {
+   *   event.Records.forEach(record => {
+   *     console.log(record.message);
+   *   });
+   * })
+   * ```
+   *
+   * @param handler the handler function to invoke when an {@link RawEvent} is received.
+   * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html
+   */
   public onEvent(
     handler: (parsed: ParsedEvent, raw: RawEvent) => Promise<Response>
   ): Function<RawEvent, Response>;
 
+  /**
+   * Creates a Lambda {@link Function} and subscribes it to this {@link EventSource}. It
+   * will be invoked whenever events are received from the {@link EventSource} with a
+   * request and response contract identical to the contract defined by each corresponding
+   * AWS service.
+   *
+   * The {@link handler} function takes two arguments, {@link ParsedEvent} and {@link RawEvent}.
+   *
+   * {@link RawEvent} is the exact object received in the Invocation and {@link ParsedEvent} is
+   * derived from it. Each {@link EventSource} implementation, for example the SQS {@link Queue},
+   * perform pre-processing to parse JSON Strings into JS Objects.
+   *
+   * ```ts
+   * queue.onEvent({
+   *   // set the memory on the Lambda Function
+   *   memorySize: 512,
+   *   // configure the EventSource to batch messages into groups of 10 prior to invoking
+   *   batchSize: 10
+   * }, async (event) => {
+   *   event.Records.forEach(record => {
+   *     console.log(record.message);
+   *   });
+   * })
+   * ```
+   *
+   * @param props configuration properties for the Lambda {@link Function} and corresponding Event Source.
+   * @param handler the handler function to invoke when an {@link RawEvent} is received.
+   * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html
+   */
   public onEvent(
     props: FunctionProps<ParsedEvent, Response> & EventSourceConfig,
     handler: (parsed: ParsedEvent, raw: RawEvent) => Promise<Response>
   ): Function<RawEvent, Response>;
 
+  /**
+   * Creates a Lambda {@link Function} and subscribes it to this {@link EventSource}. It
+   * will be invoked whenever events are received from the {@link EventSource} with a
+   * request and response contract identical to the contract defined by each corresponding
+   * AWS service.
+   *
+   * The {@link handler} function takes two arguments, {@link ParsedEvent} and {@link RawEvent}.
+   *
+   * {@link RawEvent} is the exact object received in the Invocation and {@link ParsedEvent} is
+   * derived from it. Each {@link EventSource} implementation, for example the SQS {@link Queue},
+   * perform pre-processing to parse JSON Strings into JS Objects.
+   *
+   * ```ts
+   * queue.onEvent(
+   *   "ProcessMessages",
+   *   {
+   *     // set the memory on the Lambda Function
+   *     memorySize: 512,
+   *     // configure the EventSource to batch messages into groups of 10 prior to invoking
+   *     batchSize: 10
+   *   },
+   *   async (event) => {
+   *     event.Records.forEach(record => {
+   *       console.log(record.message);
+   *     });
+   *   }
+   * );
+   * ```
+   *
+   * @param id ID of the created Lambda {@link Function} Construct added as a child of the underlying resource, e.g. a SQS {@link Queue}.
+   * @param props configuration properties for the Lambda {@link Function} and corresponding Event Source.
+   * @param handler the handler function to invoke when an {@link RawEvent} is received.
+   * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html
+   */
   public onEvent(
     id: string,
     props: FunctionProps<ParsedEvent, Response> & EventSourceConfig,
     handler: (parsed: ParsedEvent, raw: RawEvent) => Promise<Response>
   ): Function<RawEvent, Response>;
 
+  /**
+   * Creates a Lambda {@link Function} and subscribes it to this {@link EventSource}. It
+   * will be invoked whenever events are received from the {@link EventSource} with a
+   * request and response contract identical to the contract defined by each corresponding
+   * AWS service.
+   *
+   * The {@link handler} function takes two arguments, {@link ParsedEvent} and {@link RawEvent}.
+   *
+   * {@link RawEvent} is the exact object received in the Invocation and {@link ParsedEvent} is
+   * derived from it. Each {@link EventSource} implementation, for example the SQS {@link Queue},
+   * perform pre-processing to parse JSON Strings into JS Objects.
+   *
+   * ```ts
+   * queue.onEvent(
+   *   "ProcessMessages",
+   *   {
+   *     // set the memory on the Lambda Function
+   *     memorySize: 512,
+   *     // configure the EventSource to batch messages into groups of 10 prior to invoking
+   *     batchSize: 10
+   *   },
+   *   async (event) => {
+   *     event.Records.forEach(record => {
+   *       console.log(record.message);
+   *     });
+   *   }
+   * );
+   * ```
+   *
+   * @param scope Construct to use as the parent of the created Lambda {@link Function}.
+   * @param id ID of the created Lambda {@link Function} Construct added as a child of the underlying resource, e.g. a SQS {@link Queue}.
+   * @param props configuration properties for the Lambda {@link Function} and corresponding Event Source.
+   * @param handler the handler function to invoke when an {@link RawEvent} is received.
+   * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html
+   */
   public onEvent(
     scope: Construct,
     id: string,
@@ -139,26 +384,68 @@ export abstract class EventSource<
     return func;
   }
 
+  /**
+   * Creates a closure that parses a {@link RawEvent} into a {@link ParsedEvent}.
+   *
+   * @note we return a closure because we need to serialize it into the closure which currently
+   * does not support capturing `this`.
+   */
   protected abstract createParser(): (event: RawEvent) => ParsedEvent;
 
+  /**
+   * Creates a closure that extracts the payload out of an event.
+   *
+   * @note we return a closure because we need to serialize it into the closure which currently
+   * does not support capturing `this`.
+   */
   public abstract createGetPayload(): (
     event: ParsedEvent["Records"][number]
   ) => any;
 
+  /**
+   * Creates a closure that formats a list of failed records into a {@link Response} expected
+   * by the {@link EventSource} contract.
+   *
+   * @note we return a closure because we need to serialize it into the closure which currently
+   * does not support capturing `this`.
+   */
   public abstract createResponseHandler(): (
     failed: RawEvent["Records"]
   ) => Response;
 
+  /**
+   * Create the underlying {@link Resource} required by this {@link EventSource}.
+   */
   protected abstract createResource(
     scope: Construct,
     id: string,
     props: ResourceProps
   ): Resource;
 
+  /**
+   * Create the {@link aws_lambda.IEventSource} configuration to attach to created Lambda {@link Function}s.
+   *
+   * @param config the {@link EventSourceConfig} properties.
+   */
   protected abstract createEventSource(
     config: EventSourceConfig
   ): aws_lambda.IEventSource;
 
+  /**
+   * A simple utility method for parsing an array of args for methods with the following patterns:
+   *
+   * ```ts
+   * forEach(() => {});
+   * forEach({ props }, () => {});
+   * forEach("id", { props }, () => {});
+   * forEach(scope, "id", { props }, () => {});
+   * ```
+   *
+   * This is seen in many of the methods in {@link EventSource} and {@link Iterable}.
+   *
+   * @param args an array of args
+   * @returns the [scope, id, props, handler] tuple with defaults filled in as necessary
+   */
   public parseArgs<F>(
     args: any[]
   ): [
