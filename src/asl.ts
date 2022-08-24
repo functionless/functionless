@@ -5321,25 +5321,35 @@ namespace ASLOptimizer {
   /**
    * A variable is assigned from one to another
    */
-  interface VariableAssignment {
-    type: "Assignment";
+  interface Assignment {
+    kind: "Assignment";
     from: string;
     to: string;
+  }
+
+  function isAssignment(usage: VariableUsage): usage is Assignment {
+    return usage.kind === "Assignment";
   }
 
   /**
    * A variable is assigned to a property in a map.
    */
   interface PropertyAssignment {
-    type: "PropAssignment";
+    kind: "PropAssignment";
     from: string;
     to: string;
     props: string[];
   }
 
+  function isPropertyAssignment(
+    usage: VariableUsage
+  ): usage is PropertyAssignment {
+    return usage.kind === "PropAssignment";
+  }
+
   /**
    * When a variable is used in an intrinsic function.
-   * Similar to {@link VariableAssignment},
+   * Similar to {@link Assignment},
    * but highlights that this is not a 1:1 assignment.
    *
    * {
@@ -5352,30 +5362,44 @@ namespace ASLOptimizer {
    * from: "$.var1"
    * to: "$.var2"
    */
-  interface VariableIntrinsicUsage {
-    type: "Intrinsic";
+  interface IntrinsicUsage {
+    kind: "Intrinsic";
     from: string;
     props: string[];
     to: string;
+  }
+
+  function isIntrinsicUsage(usage: VariableUsage): usage is IntrinsicUsage {
+    return usage.kind === "Intrinsic";
   }
 
   /**
    * Variables found in a json path filter.
    */
-  interface VariableFilterUsage {
-    type: "Filter";
+  interface FilterUsage {
+    kind: "Filter";
     from: string;
     to: string;
+  }
+
+  function isFilterUsage(usage: VariableUsage): usage is FilterUsage {
+    return usage.kind === "Filter";
   }
 
   /**
    * Variables found in a json path filter in a parameters object.
    */
-  interface VariableFilterPropAssignment {
-    type: "FilterPropAssignment";
+  interface FilterPropAssignment {
+    kind: "FilterPropAssignment";
     from: string;
     props: string[];
     to: string;
+  }
+
+  function isFilterPropAssignment(
+    usage: VariableUsage
+  ): usage is FilterPropAssignment {
+    return usage.kind === "FilterPropAssignment";
   }
 
   /**
@@ -5384,9 +5408,13 @@ namespace ASLOptimizer {
    * For example, the output of a task that invoked a lambda function.
    */
   interface StateOutput {
-    type: "StateOutput";
+    kind: "StateOutput";
     stateType: "Map" | "Parallel" | "Catch" | "Task";
     to: string;
+  }
+
+  function isStateOutput(usage: VariableUsage): usage is StateOutput {
+    return usage.kind === "StateOutput";
   }
 
   /**
@@ -5397,8 +5425,12 @@ namespace ASLOptimizer {
    * ```
    */
   interface ReturnUsage {
-    type: "ReturnUsage";
+    kind: "ReturnUsage";
     from: string;
+  }
+
+  function isReturnUsage(usage: VariableUsage): usage is ReturnUsage {
+    return usage.kind === "ReturnUsage";
   }
 
   /**
@@ -5407,9 +5439,13 @@ namespace ASLOptimizer {
    * For example, an input to a Task which invokes a lambda function.
    */
   interface StateInput {
-    type: "StateInput";
+    kind: "StateInput";
     stateType: "Map" | "Task";
     from: string;
+  }
+
+  function isStateInput(usage: VariableUsage): usage is StateInput {
+    return usage.kind === "StateInput";
   }
 
   /**
@@ -5418,45 +5454,65 @@ namespace ASLOptimizer {
    * For example, an input to a Task which invokes a lambda function.
    */
   interface StateInputProps {
-    type: "StateInputProps";
-    stateType: "Map" | "Task";
+    kind: "StateInputProps";
+    stateType: "Map" | "Task" | "Parallel";
     from: string;
     props: string[];
+  }
+
+  function isStateInputProps(usage: VariableUsage): usage is StateInputProps {
+    return usage.kind === "StateInputProps";
   }
 
   /**
    * When a variable is set using a constant value.
    */
-  interface VariableLiteralAssignment {
-    type: "LiteralAssignment";
+  interface LiteralAssignment {
+    kind: "LiteralAssignment";
     value: Parameters;
     to: string;
   }
 
-  interface VariableLiteralPropAssignment {
-    type: "LiteralPropAssignment";
+  function isLiteralAssignment(
+    usage: VariableUsage
+  ): usage is LiteralAssignment {
+    return usage.kind === "LiteralAssignment";
+  }
+
+  interface LiteralPropAssignment {
+    kind: "LiteralPropAssignment";
     value: Parameters;
     to: string;
     props: string[];
   }
 
+  function isLiteralPropAssignment(
+    usage: VariableUsage
+  ): usage is LiteralPropAssignment {
+    return usage.kind === "LiteralPropAssignment";
+  }
+
   /**
    * When a variable is used in a conditional statement.
    */
-  interface VariableConditionUsage {
-    type: "Condition";
+  interface ConditionUsage {
+    kind: "Condition";
     from: string;
   }
 
+  function isConditionUsage(usage: VariableUsage): usage is ConditionUsage {
+    return usage.kind === "Condition";
+  }
+
   type VariableUsage =
-    | VariableAssignment
+    | Assignment
     | PropertyAssignment
-    | VariableLiteralAssignment
-    | VariableLiteralPropAssignment
-    | VariableConditionUsage
-    | VariableIntrinsicUsage
-    | VariableFilterUsage
-    | VariableFilterPropAssignment
+    | LiteralAssignment
+    | LiteralPropAssignment
+    | ConditionUsage
+    | IntrinsicUsage
+    | FilterUsage
+    | FilterPropAssignment
     | StateOutput
     | StateInput
     | StateInputProps
@@ -5480,42 +5536,36 @@ namespace ASLOptimizer {
     }[];
   }
 
-  function isVariableAssignment(variable: string, usage: VariableUsage) {
-    return usage.type === "Assignment" ||
-      usage.type === "PropAssignment" ||
-      usage.type === "LiteralPropAssignment" ||
-      usage.type === "LiteralAssignment" ||
-      usage.type === "StateOutput" ||
-      usage.type === "Intrinsic" ||
-      usage.type === "Filter" ||
-      usage.type === "FilterPropAssignment"
-      ? jsonPathStartsWith(usage.to, variable)
-      : // condition and state input cases do not create or update variables.
-      usage.type === "Condition" ||
-        usage.type === "StateInput" ||
-        usage.type === "StateInputProps" ||
-        usage.type === "ReturnUsage"
-      ? false
-      : assertNever(usage);
+  const isVariableAssignment = anyOf(
+    isAssignment,
+    isLiteralPropAssignment,
+    isLiteralAssignment,
+    isStateOutput,
+    isIntrinsicUsage,
+    isFilterUsage,
+    isFilterPropAssignment
+  );
+
+  function isAssignmentTo(variable: string, usage: VariableUsage) {
+    return (
+      isVariableAssignment(usage) && jsonPathStartsWith(usage.to, variable)
+    );
   }
 
-  function isVariableUsage(variable: string, usage: VariableUsage) {
-    return usage.type === "Assignment" ||
-      usage.type === "Intrinsic" ||
-      usage.type === "StateInput" ||
-      usage.type === "StateInputProps" ||
-      usage.type === "Condition" ||
-      usage.type === "PropAssignment" ||
-      usage.type === "Filter" ||
-      usage.type === "FilterPropAssignment" ||
-      usage.type === "ReturnUsage"
-      ? jsonPathStartsWith(usage.from, variable)
-      : // stateoutput and literal assignments cannot use other variables
-      usage.type === "LiteralAssignment" ||
-        usage.type === "LiteralPropAssignment" ||
-        usage.type === "StateOutput"
-      ? false
-      : assertNever(usage);
+  const isVariableUsage = anyOf(
+    isAssignment,
+    isIntrinsicUsage,
+    isStateInput,
+    isStateInputProps,
+    isConditionUsage,
+    isPropertyAssignment,
+    isFilterUsage,
+    isFilterPropAssignment,
+    isReturnUsage
+  );
+
+  function isUsageOf(variable: string, usage: VariableUsage) {
+    return isVariableUsage(usage) && jsonPathStartsWith(usage.from, variable);
   }
 
   function analyzeVariables(
@@ -5555,11 +5605,9 @@ namespace ASLOptimizer {
     const stats = variableNamePrefixes.map((v) => ({
       variable: v,
       assigns: variableUsageWithId.filter(({ usage }) =>
-        isVariableAssignment(v, usage)
+        isAssignmentTo(v, usage)
       ),
-      usage: variableUsageWithId.filter(({ usage }) =>
-        isVariableUsage(v, usage)
-      ),
+      usage: variableUsageWithId.filter(({ usage }) => isUsageOf(v, usage)),
     }));
 
     return { variableUsages, variableNames: [...variableNames], stats };
@@ -5587,7 +5635,7 @@ namespace ASLOptimizer {
           if (state.Result !== undefined) {
             return [
               {
-                type: "LiteralAssignment",
+                kind: "LiteralAssignment",
                 to: state.ResultPath,
                 value: state.Result,
               },
@@ -5598,14 +5646,14 @@ namespace ASLOptimizer {
               state.InputPath.includes(":")
             ) {
               return extractVariableReferences(state.InputPath).map((v) => ({
-                type: "Filter",
+                kind: "Filter",
                 from: v,
                 to: state.ResultPath as string,
               }));
             }
             return [
               {
-                type: "Assignment",
+                kind: "Assignment",
                 from: state.InputPath,
                 to: state.ResultPath,
               },
@@ -5624,7 +5672,7 @@ namespace ASLOptimizer {
           ...(state.InputPath
             ? [
                 {
-                  type: "StateInput" as const,
+                  kind: "StateInput" as const,
                   stateType: "Task" as const,
                   from: state.InputPath,
                 },
@@ -5633,7 +5681,7 @@ namespace ASLOptimizer {
           ...(state.ResultPath
             ? [
                 {
-                  type: "StateOutput" as const,
+                  kind: "StateOutput" as const,
                   stateType: "Task" as const,
                   to: state.ResultPath,
                 },
@@ -5647,7 +5695,7 @@ namespace ASLOptimizer {
       } else if (isMapTaskState(state)) {
         if (state.ResultPath) {
           return [
-            { type: "StateOutput", stateType: "Map", to: state.ResultPath },
+            { kind: "StateOutput", stateType: "Map", to: state.ResultPath },
             ...catchAssignment(state.Catch),
             ...(state.Parameters
               ? parametersAssignment(state.Parameters, false, "[[map]]")
@@ -5655,7 +5703,7 @@ namespace ASLOptimizer {
             ...(state.ItemsPath
               ? [
                   {
-                    type: "StateInput" as const,
+                    kind: "StateInput" as const,
                     stateType: "Map" as const,
                     from: state.ItemsPath,
                   },
@@ -5668,7 +5716,7 @@ namespace ASLOptimizer {
         if (state.ResultPath) {
           return [
             {
-              type: "StateOutput",
+              kind: "StateOutput",
               stateType: "Parallel",
               to: state.ResultPath,
             },
@@ -5682,7 +5730,7 @@ namespace ASLOptimizer {
       } else if (isChoiceState(state)) {
         const vars = state.Choices.flatMap(choiceUsage);
         return [...new Set(vars)].map((v) => ({
-          type: "Condition",
+          kind: "Condition",
           from: v,
         }));
       } else if (
@@ -5704,7 +5752,7 @@ namespace ASLOptimizer {
       return [
         ...usages,
         {
-          type: "ReturnUsage" as const,
+          kind: "ReturnUsage" as const,
           from: state.ResultPath,
         },
       ];
@@ -5737,7 +5785,7 @@ namespace ASLOptimizer {
                 !!_catch.ResultPath
             )
             .map(({ ResultPath }) => ({
-              type: "StateOutput",
+              kind: "StateOutput",
               stateType: "Catch",
               to: ResultPath,
             }))
@@ -5757,13 +5805,13 @@ namespace ASLOptimizer {
     function parametersAssignment(
       parameters: Parameters,
       containsJsonPath: boolean,
-      resultPath: string | "[[task]]" | "[[map]]",
+      resultPath: string | "[[task]]" | "[[map]]" | "[[parallel]]",
       _props?: string[]
     ): (
       | PropertyAssignment
-      | VariableLiteralPropAssignment
-      | VariableIntrinsicUsage
-      | VariableFilterPropAssignment
+      | LiteralPropAssignment
+      | IntrinsicUsage
+      | FilterPropAssignment
       | StateInputProps
     )[] {
       const props: string[] = _props ?? [];
@@ -5774,7 +5822,7 @@ namespace ASLOptimizer {
         if (Array.isArray(parameters)) {
           return [
             {
-              type: "LiteralPropAssignment",
+              kind: "LiteralPropAssignment",
               to: resultPath,
               value: parameters,
               props,
@@ -5792,12 +5840,16 @@ namespace ASLOptimizer {
       }
       if (!containsJsonPath) {
         // don't need to return anything for literal state inputs.
-        if (resultPath === "[[task]]" || resultPath === "[[map]]") {
+        if (
+          resultPath === "[[task]]" ||
+          resultPath === "[[map]]" ||
+          resultPath === "[[parallel]]"
+        ) {
           return [];
         }
         return [
           {
-            type: "LiteralPropAssignment",
+            kind: "LiteralPropAssignment",
             to: resultPath,
             value: parameters,
             props,
@@ -5807,14 +5859,14 @@ namespace ASLOptimizer {
       if (typeof parameters === "string") {
         if (parameters.startsWith("States.")) {
           return extractVariableReferences(parameters).map((x) => ({
-            type: "Intrinsic",
+            kind: "Intrinsic",
             from: x,
             to: resultPath,
             props,
           }));
         } else if (parameters.includes("?(") || parameters.includes(":")) {
           return extractVariableReferences(parameters).map((x) => ({
-            type: "FilterPropAssignment",
+            kind: "FilterPropAssignment",
             from: x,
             to: resultPath,
             props,
@@ -5823,15 +5875,22 @@ namespace ASLOptimizer {
       }
       // if the value is json path, it will not be a boolean or string
       return [
-        resultPath === "[[task]]" || resultPath === "[[map]]"
+        resultPath === "[[task]]" ||
+        resultPath === "[[map]]" ||
+        resultPath === "[[parallel]]"
           ? {
-              type: "StateInputProps",
+              kind: "StateInputProps",
               from: parameters as string,
               props,
-              stateType: resultPath === "[[task]]" ? "Task" : "Map",
+              stateType:
+                resultPath === "[[task]]"
+                  ? "Task"
+                  : resultPath === "[[parallel]]"
+                  ? "Parallel"
+                  : "Map",
             }
           : {
-              type: "PropAssignment",
+              kind: "PropAssignment",
               from: parameters as string,
               to: resultPath,
               props,
@@ -6130,7 +6189,7 @@ namespace ASLOptimizer {
 
     const unusedAssignmentStates = unusedAssignments.flatMap((u) =>
       u.assigns.flatMap((a) => {
-        if (a.usage.type === "StateOutput" || a.usage.state === startState) {
+        if (isStateOutput(a.usage) || a.usage.state === startState) {
           // state outputs should not be removed as they can still have effects.
           // Also do not remove the start states of sub-graphs.
           // Instead we will update their result path to be null
@@ -6183,8 +6242,8 @@ namespace ASLOptimizer {
       otherAssign.length > 0 ||
       !sourceAssign ||
       !(
-        sourceAssign.usage.type === "Assignment" ||
-        sourceAssign.usage.type === "LiteralAssignment"
+        isAssignment(sourceAssign.usage) ||
+        isLiteralAssignment(sourceAssign.usage)
       )
     ) {
       return;
@@ -6228,12 +6287,12 @@ namespace ASLOptimizer {
      * const b = x;
      * ```
      */
-    if (targetUsage.usage.type === "Assignment") {
+    if (isAssignment(targetUsage.usage)) {
       if (!isPassState(state)) {
         return;
       }
 
-      if (sourceAssign.usage.type === "LiteralAssignment") {
+      if (isLiteralAssignment(sourceAssign.usage)) {
         const value = accessLiteralAtJsonPathSuffix(
           targetUsage.usage.from,
           sourceAssign.usage.to,
@@ -6243,7 +6302,7 @@ namespace ASLOptimizer {
         return [
           updateVariableUsage(targetUsage, {
             ...targetUsage.usage,
-            type: "LiteralAssignment",
+            kind: "LiteralAssignment",
             value,
           }),
           {
@@ -6306,8 +6365,8 @@ namespace ASLOptimizer {
       }
       return;
     } else if (
-      targetUsage.usage.type === "PropAssignment" ||
-      targetUsage.usage.type === "StateInputProps"
+      isPropertyAssignment(targetUsage.usage) ||
+      isStateInputProps(targetUsage.usage)
     ) {
       /**
        * Assignment of a literal or variable to property on a pass, task, map, or parallel state.
@@ -6348,7 +6407,7 @@ namespace ASLOptimizer {
         return;
       }
 
-      if (sourceAssign.usage.type === "LiteralAssignment") {
+      if (isLiteralAssignment(sourceAssign.usage)) {
         const value = accessLiteralAtJsonPathSuffix(
           targetUsage.usage.from,
           sourceAssign.usage.to,
@@ -6358,10 +6417,10 @@ namespace ASLOptimizer {
         return [
           updateVariableUsage(
             targetUsage,
-            targetUsage.usage.type === "PropAssignment"
+            isPropertyAssignment(targetUsage.usage)
               ? {
                   ...targetUsage.usage,
-                  type: "LiteralPropAssignment",
+                  kind: "LiteralPropAssignment",
                   value,
                 }
               : undefined
@@ -6429,7 +6488,7 @@ namespace ASLOptimizer {
         ];
       }
       return;
-    } else if (targetUsage.usage.type === "Intrinsic") {
+    } else if (isIntrinsicUsage(targetUsage.usage)) {
       /**
        * Use of a literal or variable to property in an intrinsic function.
        * Note: intrinsic properties must be in Parameter objects.
@@ -6473,7 +6532,7 @@ namespace ASLOptimizer {
       /**
        * Update the target's stats to contain the new assign and remove the old one.
        */
-      if (sourceAssign.usage.type === "LiteralAssignment") {
+      if (isLiteralAssignment(sourceAssign.usage)) {
         const value = accessLiteralAtJsonPathSuffix(
           targetUsage.usage.from,
           sourceAssign.usage.to,
@@ -6529,7 +6588,7 @@ namespace ASLOptimizer {
         }
 
         const updatedFrom = replaceJsonPathPrefix(
-          (<VariableIntrinsicUsage>targetUsage.usage).from,
+          (<IntrinsicUsage>targetUsage.usage).from,
           sourceAssign.usage.to,
           sourceAssign.usage.from
         )
@@ -6556,9 +6615,7 @@ namespace ASLOptimizer {
                       "Expected intrinsic property value to be a string."
                     );
                   }
-                  const originalFrom = (<VariableIntrinsicUsage>(
-                    targetUsage.usage
-                  )).from;
+                  const originalFrom = (<IntrinsicUsage>targetUsage.usage).from;
                   // States.Format($.heap0) => States.Format($.v)
                   // States.Format($.heap0) => States.Format("someString")
                   // States.Format($.heap0) => States.Format(0)
@@ -6574,7 +6631,7 @@ namespace ASLOptimizer {
         ];
       }
       return;
-    } else if (targetUsage.usage.type === "StateInput") {
+    } else if (isStateInput(targetUsage.usage)) {
       /**
        * Use of a literal or variable to property in a task/map input.
        * Note: this is a special case because:
@@ -6607,7 +6664,7 @@ namespace ASLOptimizer {
         return;
       }
 
-      if (sourceAssign.usage.type === "LiteralAssignment") {
+      if (isLiteralAssignment(sourceAssign.usage)) {
         const value = accessLiteralAtJsonPathSuffix(
           targetUsage.usage.from,
           sourceAssign.usage.to,
@@ -6674,17 +6731,17 @@ namespace ASLOptimizer {
       }
       return;
     } else if (
-      targetUsage.usage.type === "Filter" ||
-      targetUsage.usage.type === "FilterPropAssignment" ||
-      targetUsage.usage.type === "ReturnUsage"
+      isFilterUsage(targetUsage.usage) ||
+      isFilterPropAssignment(targetUsage.usage) ||
+      isReturnUsage(targetUsage.usage)
     ) {
       // TODO: support more cases.
       return;
     } else if (
-      targetUsage.usage.type === "LiteralAssignment" ||
-      targetUsage.usage.type === "LiteralPropAssignment" ||
-      targetUsage.usage.type === "StateOutput" ||
-      targetUsage.usage.type === "Condition"
+      isLiteralAssignment(targetUsage.usage) ||
+      isLiteralPropAssignment(targetUsage.usage) ||
+      isStateOutput(targetUsage.usage) ||
+      isConditionUsage(targetUsage.usage)
     ) {
       // nothing else to simplify here.
       return;
