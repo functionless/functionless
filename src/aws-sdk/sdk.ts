@@ -7,7 +7,10 @@ import { makeIntegration } from "../integration";
 import { evalToConstant } from "../util";
 import { SDK_INTEGRATION_SERVICE_NAME } from "./asl";
 import { IAM_SERVICE_PREFIX } from "./iam";
-import type { SDK as TSDK, ServiceKeys, SdkCallOptions } from "./types";
+import type { SDK as TSDK } from "./sdk.generated";
+import type { SdkCallOptions } from "./types";
+
+type ServiceKeys = keyof TSDK;
 
 /**
  * A proxy to the AWS JavaScript SDK that allows to call any SDK method
@@ -57,7 +60,7 @@ class ServiceProxy {
 
 function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
   return makeIntegration<
-    `$AWS.SDK.${ServiceKeys}`,
+    `$AWS.SDK.${typeof serviceName}`,
     (input: any) => Promise<any>
   >({
     kind: `$AWS.SDK.${serviceName}`,

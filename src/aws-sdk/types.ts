@@ -1,39 +1,6 @@
-import type { Service as AWSService } from "aws-sdk";
-// eslint-disable-next-line import/no-extraneous-dependencies
-import type * as AWS from "aws-sdk";
-import { AnyFunction, OverloadUnion } from "../util";
-
-type AWSServiceClient<T> = T extends new () => infer Client
-  ? Client extends AWSService
-    ? Client
-    : never
-  : never;
-type TAWS = typeof AWS;
-export type Mixin<T> = T;
-
-interface SDKClients
-  extends Mixin<{
-    [K in Exclude<keyof TAWS, "Service">]: AWSServiceClient<TAWS[K]>;
-  }> {}
-
 /**
- * First we have to extract the names of all Services in the v2 AWS namespace
- *
- * @returns "AccessAnalyzer" | "Account" | ... | "XRay"
+ * Options interface used in the sdk.generated {@link SDK} interfaces.
  */
-export type ServiceKeys = {
-  [K in keyof SDKClients]: SDKClients[K] extends never ? never : K;
-}[keyof SDKClients];
-
-export interface SDK
-  extends Mixin<{
-    [serviceName in ServiceKeys]: SDKClient<SDKClients[serviceName]>;
-  }> {}
-
-export type SDKClient<Client extends AWSService> = {
-  [methodName in keyof Client]: SdkMethod<Client[methodName]>;
-};
-
 export interface SdkCallOptions {
   /**
    * Information needed to construct/customize the iam policy generated for the SDK call
@@ -100,11 +67,3 @@ export interface SdkCallOptions {
    */
   aslServiceName?: string;
 }
-
-export type SdkMethod<API> = API extends AnyFunction
-  ? Exclude<OverloadUnion<API>, (cb: AnyFunction) => any> extends (
-      input: infer Input extends {}
-    ) => AWS.Request<infer Output, any>
-    ? (input: Input, options: SdkCallOptions) => Promise<Output>
-    : never
-  : never;
