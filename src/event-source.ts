@@ -35,6 +35,42 @@ export interface EventBatch<Record = any> {
   Records: Record[];
 }
 
+/**
+ * An {@link EventSource} is a Resource that emits Events that a Lambda Function
+ * can be subscribed to. When subscribed, the Lambda Function will be invoked
+ * whenever new Events arrive in the Event Source.
+ *
+ * For example, an SQS Queue is an EventSource containing Messages.
+ *
+ * ```ts
+ * // create a DynamoDB Table
+ * const myTable = new Table<Message, "id">(this, "table", { .. });
+ *
+ * const queue = new Queue(this, "queue");
+ *
+ * // create a Function to process each of the messages in the queues
+ * queue.messages().forEach(async (message) => {
+ *   // put each message from the Queue into a Table
+ *   await $AWS.DynamoDB.PutItem({
+ *     Table: myTable,
+ *     Item: {
+ *       id: { S: message.id },
+ *       message: { S: JSON.stringify(message) }
+ *     }
+ *   })
+ * });
+ *
+ * // for testing purpose, create an ExpressStepFunction to send messages to the queue
+ * new ExpressStepFunction(this, "func", async () => {
+ *   await queue.sendMessage({
+ *     id: "message id",
+ *     data: "message data"
+ *   })
+ * });
+ * ```
+ *
+ * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html
+ */
 export abstract class EventSource<
   Resource extends IConstruct = IConstruct,
   ResourceProps = any,

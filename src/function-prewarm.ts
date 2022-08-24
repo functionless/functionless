@@ -67,6 +67,15 @@ export const PrewarmClients: Record<
   },
 };
 
+export const SQSClient: PrewarmClientInitializer<"SQS", AWS.SQS> = {
+  key: "SQS",
+  init: (key, props) =>
+    // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
+    new (require("aws-sdk/clients/sqs").SQS)(
+      props?.clientConfigRetriever?.(key)
+    ),
+};
+
 export interface PrewarmProps {
   clientConfigRetriever?: (
     clientName: ClientName | string
