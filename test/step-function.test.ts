@@ -910,6 +910,26 @@ test("if if", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("if ifelse", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { val: string }) => {
+      if (input.val !== "a") {
+        if (input.val === "b") {
+          return "hullo";
+        } else {
+          return "wat";
+        }
+      }
+      return "woop";
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("if invoke", () => {
   const { stack, task } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {

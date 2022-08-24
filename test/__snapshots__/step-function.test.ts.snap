@@ -10010,6 +10010,119 @@ Object {
 }
 `;
 
+exports[`if ifelse 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "if(input.val !== \\"a\\")",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "if(input.val !== \\"a\\")": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "Not": Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.input.val",
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.val",
+                      },
+                      Object {
+                        "StringEquals": "a",
+                        "Variable": "$.input.val",
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.val",
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.val",
+                    },
+                    Object {
+                      "StringEquals": "b",
+                      "Variable": "$.input.val",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "return \\"hullo\\"",
+        },
+        Object {
+          "Next": "return \\"wat\\"",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "IsPresent": true,
+                "Variable": "$.input.val",
+              },
+              Object {
+                "And": Array [
+                  Object {
+                    "IsString": true,
+                    "Variable": "$.input.val",
+                  },
+                  Object {
+                    "StringEquals": "a",
+                    "Variable": "$.input.val",
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "return \\"woop\\"",
+      "Type": "Choice",
+    },
+    "return \\"hullo\\"": Object {
+      "End": true,
+      "Result": "hullo",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return \\"wat\\"": Object {
+      "End": true,
+      "Result": "wat",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return \\"woop\\"": Object {
+      "End": true,
+      "Result": "woop",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`if invoke 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",

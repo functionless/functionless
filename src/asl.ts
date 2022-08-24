@@ -5287,7 +5287,9 @@ namespace ASLOptimizer {
     return visited;
 
     function depthFirst(stateName: string) {
-      if (visited.has(stateName)) return;
+      if (visited.has(stateName)) {
+        return;
+      }
       visited.add(stateName);
       const state = states[stateName]!;
       visitTransition(state, depthFirst);
