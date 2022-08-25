@@ -85,7 +85,7 @@
       "name": "compile",
       "description": "Only compile",
       "env": {
-        "NODE_OPTIONS": "--max-old-space-size=8192"
+        "NODE_OPTIONS": "--max-old-space-size=4096"
       },
       "steps": [
         {
@@ -203,7 +203,7 @@
           "exec": "cd ./test-app && yarn && yarn build && yarn synth --quiet"
         },
         {
-          "exec": "jest --passWithNoTests --all --forceExit --updateSnapshot"
+          "exec": "jest --passWithNoTests --all --forceExit --testPathPattern localstack --updateSnapshot"
         },
         {
           "spawn": "eslint"

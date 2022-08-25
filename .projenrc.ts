@@ -130,7 +130,7 @@ const project = new CustomTypescriptProject({
         "^.+\\.(t|j)sx?$": ["@swc/jest", {}],
       },
     },
-    extraCliOptions: ["--forceExit"],
+    extraCliOptions: ["--forceExit", "--testPathPattern localstack"],
   },
   scripts: {
     localstack: "./scripts/localstack",
@@ -216,7 +216,7 @@ packageJson.addOverride("lint-staged", {
 project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
 );
-project.compileTask.env("NODE_OPTIONS", "--max-old-space-size=8192");
+project.compileTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
 project.compileTask.prependExec("ts-node ./scripts/sdk-gen.ts");
 
 project.testTask.prependExec(
