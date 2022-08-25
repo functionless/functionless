@@ -53,16 +53,6 @@ orderQueue.messages().forEach(async (order) => {
   });
 });
 
-// use a Standard Step Function to orchestrate order fulfillment
-const processOrder = new StepFunction(
-  stack,
-  "ProcessOrder",
-  async (order: OrderPlacedEvent) => {
-    await chargeCard(order);
-    await dispatchOrder(order);
-  }
-);
-
 const chargeCard = new Function(
   stack,
   "PlaceOrder",
@@ -87,3 +77,13 @@ failedOrderQueue.messages().forEach(async (message) => {
     DelaySeconds: 60,
   });
 });
+
+// use a Standard Step Function to orchestrate order fulfillment
+const processOrder = new StepFunction(
+  stack,
+  "ProcessOrder",
+  async (order: OrderPlacedEvent) => {
+    await chargeCard(order);
+    await dispatchOrder(order);
+  }
+);
