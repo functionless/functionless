@@ -130,7 +130,7 @@ const project = new CustomTypescriptProject({
         "^.+\\.(t|j)sx?$": ["@swc/jest", {}],
       },
     },
-    extraCliOptions: ["--detectOpenHandles"],
+    extraCliOptions: ["--forceExit"],
   },
   scripts: {
     localstack: "./scripts/localstack",
