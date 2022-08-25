@@ -1,4 +1,4 @@
-import { Duration } from "aws-cdk-lib";
+import { Duration, aws_dynamodb } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
@@ -368,6 +368,41 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       });
     },
     [1, 2]
+  );
+
+  test(
+    "$AWS.SDK.DynamoDB.describeTable",
+    (parent) => {
+      const table = new Table<{ id: string }, "id">(parent, "myTable", {
+        partitionKey: {
+          name: "id",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+
+      return {
+        sfn: new StepFunction<{}, string | undefined>(
+          parent,
+          "fn",
+          async () => {
+            const tableInfo = await $AWS.SDK.DynamoDB.describeTable(
+              {
+                TableName: table.tableName,
+              },
+              {
+                iam: {
+                  resources: [table.tableArn],
+                },
+              }
+            );
+
+            return tableInfo.Table?.TableArn;
+          }
+        ),
+        outputs: { tableArn: table.tableArn },
+      };
+    },
+    ({ tableArn }) => tableArn
   );
 
   test(

@@ -208,6 +208,41 @@ describe("serialize", () => {
     });
   });
 
+  describe("sdk", () => {
+    test("SDK.CloudWatch.describeAlarms", async () => {
+      const [srlz] = await serialize(() => {
+        return $AWS.SDK.CloudWatch.describeAlarms(
+          {},
+          {
+            iam: { resources: ["*"] },
+          }
+        );
+      }, []);
+      expect(srlz).toMatchSnapshot();
+
+      const bundled = await bundle(srlz);
+      expect(bundled.text).toMatchSnapshot();
+      expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
+    });
+
+    test.skip("SDK.CloudWatch.describeAlarms referenced", async () => {
+      const describeAlarms = $AWS.SDK.CloudWatch.describeAlarms;
+      const [srlz] = await serialize(async () => {
+        return describeAlarms(
+          {},
+          {
+            iam: { resources: ["*"] },
+          }
+        );
+      }, []);
+      expect(srlz).toMatchSnapshot();
+
+      const bundled = await bundle(srlz);
+      expect(bundled.text).toMatchSnapshot();
+      expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
+    });
+  });
+
   describe("sfn", () => {
     const stack = new Stack();
     const sfn = new StepFunction(stack, "id", () => {});

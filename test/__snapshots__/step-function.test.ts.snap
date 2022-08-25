@@ -1846,6 +1846,286 @@ Object {
 }
 `;
 
+exports[`add iamConditions AWS.SDK.CloudWatch.describeAlarms 1`] = `
+Object {
+  "Mappings": Object {
+    "ServiceprincipalMap": Object {
+      "af-south-1": Object {
+        "states": "states.af-south-1.amazonaws.com",
+      },
+      "ap-east-1": Object {
+        "states": "states.ap-east-1.amazonaws.com",
+      },
+      "ap-northeast-1": Object {
+        "states": "states.ap-northeast-1.amazonaws.com",
+      },
+      "ap-northeast-2": Object {
+        "states": "states.ap-northeast-2.amazonaws.com",
+      },
+      "ap-northeast-3": Object {
+        "states": "states.ap-northeast-3.amazonaws.com",
+      },
+      "ap-south-1": Object {
+        "states": "states.ap-south-1.amazonaws.com",
+      },
+      "ap-southeast-1": Object {
+        "states": "states.ap-southeast-1.amazonaws.com",
+      },
+      "ap-southeast-2": Object {
+        "states": "states.ap-southeast-2.amazonaws.com",
+      },
+      "ap-southeast-3": Object {
+        "states": "states.ap-southeast-3.amazonaws.com",
+      },
+      "ca-central-1": Object {
+        "states": "states.ca-central-1.amazonaws.com",
+      },
+      "cn-north-1": Object {
+        "states": "states.cn-north-1.amazonaws.com",
+      },
+      "cn-northwest-1": Object {
+        "states": "states.cn-northwest-1.amazonaws.com",
+      },
+      "eu-central-1": Object {
+        "states": "states.eu-central-1.amazonaws.com",
+      },
+      "eu-north-1": Object {
+        "states": "states.eu-north-1.amazonaws.com",
+      },
+      "eu-south-1": Object {
+        "states": "states.eu-south-1.amazonaws.com",
+      },
+      "eu-south-2": Object {
+        "states": "states.eu-south-2.amazonaws.com",
+      },
+      "eu-west-1": Object {
+        "states": "states.eu-west-1.amazonaws.com",
+      },
+      "eu-west-2": Object {
+        "states": "states.eu-west-2.amazonaws.com",
+      },
+      "eu-west-3": Object {
+        "states": "states.eu-west-3.amazonaws.com",
+      },
+      "me-south-1": Object {
+        "states": "states.me-south-1.amazonaws.com",
+      },
+      "sa-east-1": Object {
+        "states": "states.sa-east-1.amazonaws.com",
+      },
+      "us-east-1": Object {
+        "states": "states.us-east-1.amazonaws.com",
+      },
+      "us-east-2": Object {
+        "states": "states.us-east-2.amazonaws.com",
+      },
+      "us-gov-east-1": Object {
+        "states": "states.us-gov-east-1.amazonaws.com",
+      },
+      "us-gov-west-1": Object {
+        "states": "states.us-gov-west-1.amazonaws.com",
+      },
+      "us-iso-east-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-iso-west-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-isob-east-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-west-1": Object {
+        "states": "states.us-west-1.amazonaws.com",
+      },
+      "us-west-2": Object {
+        "states": "states.us-west-2.amazonaws.com",
+      },
+    },
+  },
+  "Parameters": Object {
+    "BootstrapVersion": Object {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": Object {
+    "FC4345940": Object {
+      "DependsOn": Array [
+        "FServiceRole3AC82EE1",
+      ],
+      "Properties": Object {
+        "Code": Object {
+          "ZipFile": "exports.handler = function() { return null; }",
+        },
+        "FunctionName": "testFunction",
+        "Handler": "index.handler",
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "FServiceRole3AC82EE1",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs14.x",
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "FServiceRole3AC82EE1": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": Array [
+          Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TableCD117FA1": Object {
+      "DeletionPolicy": "Retain",
+      "Properties": Object {
+        "AttributeDefinitions": Array [
+          Object {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+        ],
+        "KeySchema": Array [
+          Object {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+        ],
+        "ProvisionedThroughput": Object {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5,
+        },
+        "TableName": "testTable",
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "fn5FF616E3": Object {
+      "DependsOn": Array [
+        "fnRoleDefaultPolicy4FB655BE",
+        "fnRole50A611CF",
+      ],
+      "Properties": Object {
+        "DefinitionString": "{\\"StartAt\\":\\"Initialize Functionless Context\\",\\"States\\":{\\"Initialize Functionless Context\\":{\\"Type\\":\\"Pass\\",\\"Parameters\\":{\\"fnl_context\\":{\\"null\\":null}},\\"ResultPath\\":\\"$\\",\\"Next\\":\\"{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso\\"},\\"{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso\\":{\\"Type\\":\\"Task\\",\\"Resource\\":\\"arn:aws:states:::aws-sdk:cloudwatch:describeAlarms\\",\\"Next\\":\\"MetricAlarms\\",\\"Parameters\\":{},\\"ResultPath\\":\\"$.heap0\\"},\\"MetricAlarms\\":{\\"Type\\":\\"Pass\\",\\"Next\\":\\"return MetricAlarms\\",\\"ResultPath\\":\\"$.MetricAlarms\\",\\"InputPath\\":\\"$.heap0['MetricAlarms']\\"},\\"return MetricAlarms\\":{\\"Type\\":\\"Pass\\",\\"End\\":true,\\"ResultPath\\":\\"$\\",\\"InputPath\\":\\"$.MetricAlarms\\"}}}",
+        "RoleArn": Object {
+          "Fn::GetAtt": Array [
+            "fnRole50A611CF",
+            "Arn",
+          ],
+        },
+        "StateMachineType": "EXPRESS",
+      },
+      "Type": "AWS::StepFunctions::StateMachine",
+    },
+    "fnRole50A611CF": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": Object {
+                  "Fn::FindInMap": Array [
+                    "ServiceprincipalMap",
+                    Object {
+                      "Ref": "AWS::Region",
+                    },
+                    "states",
+                  ],
+                },
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "fnRoleDefaultPolicy4FB655BE": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "cloudwatch:DescribeAlarms",
+              "Condition": Object {
+                "StringEquals": Object {
+                  "aws:ResourceTag/env": Array [
+                    "test",
+                  ],
+                },
+              },
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "fnRoleDefaultPolicy4FB655BE",
+        "Roles": Array [
+          Object {
+            "Ref": "fnRole50A611CF",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+  "Rules": Object {
+    "CheckBootstrapVersion": Object {
+      "Assertions": Array [
+        Object {
+          "Assert": Object {
+            "Fn::Not": Array [
+              Object {
+                "Fn::Contains": Array [
+                  Array [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  Object {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
 exports[`await Promise.all(input.list.map((item) => task(item)))).filter 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -5428,7 +5708,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
       "ResultPath": "$.heap1",
       "Type": "Task",
     },
@@ -5651,7 +5931,7 @@ Object {
       "Parameters": Object {
         "ExecutionArn": "hello",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:describeExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -5685,7 +5965,7 @@ Object {
       "Parameters": Object {
         "ExecutionArn.$": "$.input.id",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:describeExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -5718,7 +5998,7 @@ Object {
       "Parameters": Object {
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -5744,7 +6024,7 @@ Object {
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap1",
       "Type": "Task",
     },
@@ -5796,7 +6076,7 @@ Object {
         "Input.$": "$.input",
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -5832,7 +6112,7 @@ Object {
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -5867,7 +6147,7 @@ Object {
         "StateMachineArn": "__REPLACED_TOKEN",
         "TraceHeader": "1",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -5903,7 +6183,7 @@ Object {
         "StateMachineArn": "__REPLACED_TOKEN",
         "TraceHeader.$": "$.input.header",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -5929,7 +6209,7 @@ Object {
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap2",
       "Type": "Task",
     },
@@ -6243,7 +6523,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
       "ResultPath": "$.heap1",
       "Type": "Task",
     },
@@ -9011,6 +9291,279 @@ Object {
 }
 `;
 
+exports[`iam policy for AWS.SDK.CloudWatch.describeAlarms 1`] = `
+Object {
+  "Mappings": Object {
+    "ServiceprincipalMap": Object {
+      "af-south-1": Object {
+        "states": "states.af-south-1.amazonaws.com",
+      },
+      "ap-east-1": Object {
+        "states": "states.ap-east-1.amazonaws.com",
+      },
+      "ap-northeast-1": Object {
+        "states": "states.ap-northeast-1.amazonaws.com",
+      },
+      "ap-northeast-2": Object {
+        "states": "states.ap-northeast-2.amazonaws.com",
+      },
+      "ap-northeast-3": Object {
+        "states": "states.ap-northeast-3.amazonaws.com",
+      },
+      "ap-south-1": Object {
+        "states": "states.ap-south-1.amazonaws.com",
+      },
+      "ap-southeast-1": Object {
+        "states": "states.ap-southeast-1.amazonaws.com",
+      },
+      "ap-southeast-2": Object {
+        "states": "states.ap-southeast-2.amazonaws.com",
+      },
+      "ap-southeast-3": Object {
+        "states": "states.ap-southeast-3.amazonaws.com",
+      },
+      "ca-central-1": Object {
+        "states": "states.ca-central-1.amazonaws.com",
+      },
+      "cn-north-1": Object {
+        "states": "states.cn-north-1.amazonaws.com",
+      },
+      "cn-northwest-1": Object {
+        "states": "states.cn-northwest-1.amazonaws.com",
+      },
+      "eu-central-1": Object {
+        "states": "states.eu-central-1.amazonaws.com",
+      },
+      "eu-north-1": Object {
+        "states": "states.eu-north-1.amazonaws.com",
+      },
+      "eu-south-1": Object {
+        "states": "states.eu-south-1.amazonaws.com",
+      },
+      "eu-south-2": Object {
+        "states": "states.eu-south-2.amazonaws.com",
+      },
+      "eu-west-1": Object {
+        "states": "states.eu-west-1.amazonaws.com",
+      },
+      "eu-west-2": Object {
+        "states": "states.eu-west-2.amazonaws.com",
+      },
+      "eu-west-3": Object {
+        "states": "states.eu-west-3.amazonaws.com",
+      },
+      "me-south-1": Object {
+        "states": "states.me-south-1.amazonaws.com",
+      },
+      "sa-east-1": Object {
+        "states": "states.sa-east-1.amazonaws.com",
+      },
+      "us-east-1": Object {
+        "states": "states.us-east-1.amazonaws.com",
+      },
+      "us-east-2": Object {
+        "states": "states.us-east-2.amazonaws.com",
+      },
+      "us-gov-east-1": Object {
+        "states": "states.us-gov-east-1.amazonaws.com",
+      },
+      "us-gov-west-1": Object {
+        "states": "states.us-gov-west-1.amazonaws.com",
+      },
+      "us-iso-east-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-iso-west-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-isob-east-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-west-1": Object {
+        "states": "states.us-west-1.amazonaws.com",
+      },
+      "us-west-2": Object {
+        "states": "states.us-west-2.amazonaws.com",
+      },
+    },
+  },
+  "Parameters": Object {
+    "BootstrapVersion": Object {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": Object {
+    "FC4345940": Object {
+      "DependsOn": Array [
+        "FServiceRole3AC82EE1",
+      ],
+      "Properties": Object {
+        "Code": Object {
+          "ZipFile": "exports.handler = function() { return null; }",
+        },
+        "FunctionName": "testFunction",
+        "Handler": "index.handler",
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "FServiceRole3AC82EE1",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs14.x",
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "FServiceRole3AC82EE1": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": Array [
+          Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TableCD117FA1": Object {
+      "DeletionPolicy": "Retain",
+      "Properties": Object {
+        "AttributeDefinitions": Array [
+          Object {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+        ],
+        "KeySchema": Array [
+          Object {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+        ],
+        "ProvisionedThroughput": Object {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5,
+        },
+        "TableName": "testTable",
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "fn5FF616E3": Object {
+      "DependsOn": Array [
+        "fnRoleDefaultPolicy4FB655BE",
+        "fnRole50A611CF",
+      ],
+      "Properties": Object {
+        "DefinitionString": "{\\"StartAt\\":\\"Initialize Functionless Context\\",\\"States\\":{\\"Initialize Functionless Context\\":{\\"Type\\":\\"Pass\\",\\"Parameters\\":{\\"fnl_context\\":{\\"null\\":null}},\\"ResultPath\\":\\"$\\",\\"Next\\":\\"{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso\\"},\\"{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso\\":{\\"Type\\":\\"Task\\",\\"Resource\\":\\"arn:aws:states:::aws-sdk:cloudwatch:describeAlarms\\",\\"Next\\":\\"MetricAlarms\\",\\"Parameters\\":{},\\"ResultPath\\":\\"$.heap0\\"},\\"MetricAlarms\\":{\\"Type\\":\\"Pass\\",\\"Next\\":\\"return MetricAlarms\\",\\"ResultPath\\":\\"$.MetricAlarms\\",\\"InputPath\\":\\"$.heap0['MetricAlarms']\\"},\\"return MetricAlarms\\":{\\"Type\\":\\"Pass\\",\\"End\\":true,\\"ResultPath\\":\\"$\\",\\"InputPath\\":\\"$.MetricAlarms\\"}}}",
+        "RoleArn": Object {
+          "Fn::GetAtt": Array [
+            "fnRole50A611CF",
+            "Arn",
+          ],
+        },
+        "StateMachineType": "EXPRESS",
+      },
+      "Type": "AWS::StepFunctions::StateMachine",
+    },
+    "fnRole50A611CF": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": Object {
+                  "Fn::FindInMap": Array [
+                    "ServiceprincipalMap",
+                    Object {
+                      "Ref": "AWS::Region",
+                    },
+                    "states",
+                  ],
+                },
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "fnRoleDefaultPolicy4FB655BE": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "cloudwatch:DescribeAlarms",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "fnRoleDefaultPolicy4FB655BE",
+        "Roles": Array [
+          Object {
+            "Ref": "fnRole50A611CF",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+  "Rules": Object {
+    "CheckBootstrapVersion": Object {
+      "Assertions": Array [
+        Object {
+          "Assert": Object {
+            "Fn::Not": Array [
+              Object {
+                "Fn::Contains": Array [
+                  Array [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  Object {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
 exports[`if (?? === typeof x) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -10672,7 +11225,7 @@ Object {
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -10708,7 +11261,7 @@ Object {
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -12282,6 +12835,138 @@ Object {
 }
 `;
 
+exports[`non-literal params AWS.SDK.CloudWatch.deleteAlarms 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(fun": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "AlarmNames.$": "$.heap2",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:cloudwatch:deleteAlarms",
+      "ResultPath": "$.heap3",
+      "Type": "Task",
+    },
+    "1__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(fun 1": Object {
+      "InputPath": "$.heap1",
+      "Next": "1__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(fun",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "MetricAlarms": Object {
+      "InputPath": "$.heap0['MetricAlarms']",
+      "Next": "if(MetricAlarms === undefined)",
+      "ResultPath": "$.MetricAlarms",
+      "Type": "Pass",
+    },
+    "a": Object {
+      "InputPath": "$.heap1.arr[0]",
+      "Next": "return a.AlarmName",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(functi": Object {
+      "Next": "check__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map",
+      "Parameters": Object {
+        "arr.$": "$.MetricAlarms",
+        "arrStr": "[null",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "check__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "a",
+          "Variable": "$.heap1.arr[0]",
+        },
+      ],
+      "Default": "end__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(f",
+      "Type": "Choice",
+    },
+    "end__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(f": Object {
+      "Next": "set__end__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "handleResult__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAla": Object {
+      "Next": "check__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map",
+      "Parameters": Object {
+        "arr.$": "$.heap1.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "if(MetricAlarms === undefined)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.MetricAlarms",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$$.Execution.Id",
+            },
+          ],
+          "Next": "return",
+        },
+      ],
+      "Default": "await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(functi",
+      "Type": "Choice",
+    },
+    "return": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return a.AlarmName": Object {
+      "InputPath": "$.a.AlarmName",
+      "Next": "handleResult__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAla",
+      "ResultPath": "$.heap1.arr[0]",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "set__end__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.": Object {
+      "InputPath": "$.heap1.result[1:]",
+      "Next": "1__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(fun 1",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso": Object {
+      "Next": "MetricAlarms",
+      "Parameters": Object {},
+      "Resource": "arn:aws:states:::aws-sdk:cloudwatch:describeAlarms",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
 exports[`null coalesce logic 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -12341,6 +13026,316 @@ Object {
       "Next": "1__return {null: input.a ?? input.b} 1",
       "ResultPath": "$.heap0",
       "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`overwrite aslServiceName AWS.SDK.CloudWatch.describeAlarms 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "MetricAlarms": Object {
+      "InputPath": "$.heap0['MetricAlarms']",
+      "Next": "return MetricAlarms",
+      "ResultPath": "$.MetricAlarms",
+      "Type": "Pass",
+    },
+    "return MetricAlarms": Object {
+      "End": true,
+      "InputPath": "$.MetricAlarms",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso": Object {
+      "Next": "MetricAlarms",
+      "Parameters": Object {},
+      "Resource": "arn:aws:states:::aws-sdk:cw:describeAlarms",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
+exports[`overwrite iamActions AWS.SDK.CloudWatch.describeAlarms 1`] = `
+Object {
+  "Mappings": Object {
+    "ServiceprincipalMap": Object {
+      "af-south-1": Object {
+        "states": "states.af-south-1.amazonaws.com",
+      },
+      "ap-east-1": Object {
+        "states": "states.ap-east-1.amazonaws.com",
+      },
+      "ap-northeast-1": Object {
+        "states": "states.ap-northeast-1.amazonaws.com",
+      },
+      "ap-northeast-2": Object {
+        "states": "states.ap-northeast-2.amazonaws.com",
+      },
+      "ap-northeast-3": Object {
+        "states": "states.ap-northeast-3.amazonaws.com",
+      },
+      "ap-south-1": Object {
+        "states": "states.ap-south-1.amazonaws.com",
+      },
+      "ap-southeast-1": Object {
+        "states": "states.ap-southeast-1.amazonaws.com",
+      },
+      "ap-southeast-2": Object {
+        "states": "states.ap-southeast-2.amazonaws.com",
+      },
+      "ap-southeast-3": Object {
+        "states": "states.ap-southeast-3.amazonaws.com",
+      },
+      "ca-central-1": Object {
+        "states": "states.ca-central-1.amazonaws.com",
+      },
+      "cn-north-1": Object {
+        "states": "states.cn-north-1.amazonaws.com",
+      },
+      "cn-northwest-1": Object {
+        "states": "states.cn-northwest-1.amazonaws.com",
+      },
+      "eu-central-1": Object {
+        "states": "states.eu-central-1.amazonaws.com",
+      },
+      "eu-north-1": Object {
+        "states": "states.eu-north-1.amazonaws.com",
+      },
+      "eu-south-1": Object {
+        "states": "states.eu-south-1.amazonaws.com",
+      },
+      "eu-south-2": Object {
+        "states": "states.eu-south-2.amazonaws.com",
+      },
+      "eu-west-1": Object {
+        "states": "states.eu-west-1.amazonaws.com",
+      },
+      "eu-west-2": Object {
+        "states": "states.eu-west-2.amazonaws.com",
+      },
+      "eu-west-3": Object {
+        "states": "states.eu-west-3.amazonaws.com",
+      },
+      "me-south-1": Object {
+        "states": "states.me-south-1.amazonaws.com",
+      },
+      "sa-east-1": Object {
+        "states": "states.sa-east-1.amazonaws.com",
+      },
+      "us-east-1": Object {
+        "states": "states.us-east-1.amazonaws.com",
+      },
+      "us-east-2": Object {
+        "states": "states.us-east-2.amazonaws.com",
+      },
+      "us-gov-east-1": Object {
+        "states": "states.us-gov-east-1.amazonaws.com",
+      },
+      "us-gov-west-1": Object {
+        "states": "states.us-gov-west-1.amazonaws.com",
+      },
+      "us-iso-east-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-iso-west-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-isob-east-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-west-1": Object {
+        "states": "states.us-west-1.amazonaws.com",
+      },
+      "us-west-2": Object {
+        "states": "states.us-west-2.amazonaws.com",
+      },
+    },
+  },
+  "Parameters": Object {
+    "BootstrapVersion": Object {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": Object {
+    "FC4345940": Object {
+      "DependsOn": Array [
+        "FServiceRole3AC82EE1",
+      ],
+      "Properties": Object {
+        "Code": Object {
+          "ZipFile": "exports.handler = function() { return null; }",
+        },
+        "FunctionName": "testFunction",
+        "Handler": "index.handler",
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "FServiceRole3AC82EE1",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs14.x",
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "FServiceRole3AC82EE1": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": Array [
+          Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TableCD117FA1": Object {
+      "DeletionPolicy": "Retain",
+      "Properties": Object {
+        "AttributeDefinitions": Array [
+          Object {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+        ],
+        "KeySchema": Array [
+          Object {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+        ],
+        "ProvisionedThroughput": Object {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5,
+        },
+        "TableName": "testTable",
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "fn5FF616E3": Object {
+      "DependsOn": Array [
+        "fnRoleDefaultPolicy4FB655BE",
+        "fnRole50A611CF",
+      ],
+      "Properties": Object {
+        "DefinitionString": "{\\"StartAt\\":\\"Initialize Functionless Context\\",\\"States\\":{\\"Initialize Functionless Context\\":{\\"Type\\":\\"Pass\\",\\"Parameters\\":{\\"fnl_context\\":{\\"null\\":null}},\\"ResultPath\\":\\"$\\",\\"Next\\":\\"{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso\\"},\\"{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso\\":{\\"Type\\":\\"Task\\",\\"Resource\\":\\"arn:aws:states:::aws-sdk:cloudwatch:describeAlarms\\",\\"Next\\":\\"MetricAlarms\\",\\"Parameters\\":{},\\"ResultPath\\":\\"$.heap0\\"},\\"MetricAlarms\\":{\\"Type\\":\\"Pass\\",\\"Next\\":\\"return MetricAlarms\\",\\"ResultPath\\":\\"$.MetricAlarms\\",\\"InputPath\\":\\"$.heap0['MetricAlarms']\\"},\\"return MetricAlarms\\":{\\"Type\\":\\"Pass\\",\\"End\\":true,\\"ResultPath\\":\\"$\\",\\"InputPath\\":\\"$.MetricAlarms\\"}}}",
+        "RoleArn": Object {
+          "Fn::GetAtt": Array [
+            "fnRole50A611CF",
+            "Arn",
+          ],
+        },
+        "StateMachineType": "EXPRESS",
+      },
+      "Type": "AWS::StepFunctions::StateMachine",
+    },
+    "fnRole50A611CF": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": Object {
+                  "Fn::FindInMap": Array [
+                    "ServiceprincipalMap",
+                    Object {
+                      "Ref": "AWS::Region",
+                    },
+                    "states",
+                  ],
+                },
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "fnRoleDefaultPolicy4FB655BE": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "cloudwatch:Describe*",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "fnRoleDefaultPolicy4FB655BE",
+        "Roles": Array [
+          Object {
+            "Ref": "fnRole50A611CF",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+  "Rules": Object {
+    "CheckBootstrapVersion": Object {
+      "Assertions": Array [
+        Object {
+          "Assert": Object {
+            "Fn::Not": Array [
+              Object {
+                "Fn::Contains": Array [
+                  Array [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  Object {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
     },
   },
 }
@@ -13163,7 +14158,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
       "ResultPath": "$.heap1",
       "Type": "Task",
     },
@@ -13254,7 +14249,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
       "ResultPath": "$.heap2",
       "Type": "Task",
     },
@@ -13429,6 +14424,170 @@ Object {
     "true__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.": Object {
       "InputPath": "$.input.id",
       "Next": "1__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id  2",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`return AWS.SDK.CloudWatch.describeAlarms 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "alarms = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {resources: [\\"*",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "alarms": Object {
+      "InputPath": "$.heap0",
+      "Next": "if(alarms.MetricAlarms === undefined)",
+      "ResultPath": "$.alarms",
+      "Type": "Pass",
+    },
+    "alarms = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {resources: [\\"*": Object {
+      "Next": "alarms",
+      "Parameters": Object {},
+      "Resource": "arn:aws:states:::aws-sdk:cloudwatch:describeAlarms",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "if(alarms.MetricAlarms === undefined)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.alarms.MetricAlarms",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$$.Execution.Id",
+            },
+          ],
+          "Next": "return",
+        },
+      ],
+      "Default": "return alarms.MetricAlarms",
+      "Type": "Choice",
+    },
+    "return": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return alarms.MetricAlarms": Object {
+      "End": true,
+      "InputPath": "$.alarms.MetricAlarms",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`return AWS.SDK.CloudWatch.describeAlarms dynamic parameters 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu": Object {
+      "Next": "alarms",
+      "Parameters": Object {
+        "AlarmNamePrefix.$": "$.heap1",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:cloudwatch:describeAlarms",
+      "ResultPath": "$.heap2",
+      "Type": "Task",
+    },
+    "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu 1": Object {
+      "InputPath": "$.heap0",
+      "Next": "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: input.p",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "alarms": Object {
+      "InputPath": "$.heap2",
+      "Next": "if(alarms.MetricAlarms === undefined)",
+      "ResultPath": "$.alarms",
+      "Type": "Pass",
+    },
+    "alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: input.p": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.prefix",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.input.prefix",
+            },
+          ],
+          "Next": "true__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: i",
+        },
+      ],
+      "Default": "false__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: ",
+      "Type": "Choice",
+    },
+    "false__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: ": Object {
+      "Next": "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu 1",
+      "Result": "default",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "if(alarms.MetricAlarms === undefined)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.alarms.MetricAlarms",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$$.Execution.Id",
+            },
+          ],
+          "Next": "return",
+        },
+      ],
+      "Default": "return alarms.MetricAlarms",
+      "Type": "Choice",
+    },
+    "return": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return alarms.MetricAlarms": Object {
+      "End": true,
+      "InputPath": "$.alarms.MetricAlarms",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "true__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: i": Object {
+      "InputPath": "$.input.prefix",
+      "Next": "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu 1",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },

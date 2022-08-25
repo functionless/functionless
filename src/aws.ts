@@ -4,6 +4,8 @@ import type {
   EventBridge as AWSEventBridge,
   Lambda as AWSLambda,
 } from "aws-sdk";
+// eslint-disable-next-line import/no-extraneous-dependencies
+import * as AWS from "aws-sdk";
 import { JsonFormat } from "typesafe-dynamodb";
 import { TypeSafeDynamoDBv2 } from "typesafe-dynamodb/lib/client-v2";
 import {
@@ -20,6 +22,7 @@ import {
   UpdateItemOutput,
 } from "typesafe-dynamodb/lib/update-item";
 import { ASLGraph } from "./asl";
+import { SDK as _SDK } from "./aws-sdk";
 import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, Expr } from "./expression";
 import { Function, isFunction, NativeIntegration } from "./function";
@@ -504,6 +507,8 @@ export namespace $AWS {
       },
     });
   }
+
+  export const SDK = _SDK;
 }
 
 export type OperationName =
