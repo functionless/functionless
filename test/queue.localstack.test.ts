@@ -1,6 +1,6 @@
 import "jest";
 
-import { aws_dynamodb, Duration } from "aws-cdk-lib";
+import { aws_dynamodb, aws_sqs, Duration } from "aws-cdk-lib";
 import { SQSBatchResponse } from "aws-lambda";
 import { v4 } from "uuid";
 import {
@@ -38,13 +38,16 @@ localstackTestSuite("queueStack", (test) => {
   test(
     "onEvent(props, handler)",
     (scope) => {
+      interface Message {
+        id: string;
+      }
       const table = new Table(scope, "Table", {
         partitionKey: {
           name: "id",
           type: aws_dynamodb.AttributeType.STRING,
         },
       });
-      const queue = new Queue(scope, "queue", localstackQueueConfig);
+      const queue = new Queue<Message>(scope, "queue", localstackQueueConfig);
 
       queue.onEvent(localstackClientConfig, async (event) => {
         await Promise.all(
@@ -321,7 +324,6 @@ localstackTestSuite("queueStack", (test) => {
     assertForEach
   );
 
-  // skip because localstack is being dumb - has been tested in the cloud
   test(
     "send and receive messages",
     (scope) => {
@@ -331,7 +333,8 @@ localstackTestSuite("queueStack", (test) => {
       }
       const queue = new Queue<Message>(scope, "queue", {
         ...localstackQueueConfig,
-        serializer: new JsonSerializer(),
+        fifo: true,
+        fifoThroughputLimit: aws_sqs.FifoThroughputLimit.PER_MESSAGE_GROUP_ID,
       });
 
       const send = new Function(
@@ -344,7 +347,44 @@ localstackTestSuite("queueStack", (test) => {
               id,
               data: "data",
             },
+            MessageGroupId: "messages",
+            MessageDeduplicationId: id,
           });
+        }
+      );
+
+      const sendBatch = new Function(
+        scope,
+        "sendBatch",
+        localstackClientConfig,
+        async () => {
+          const response = await queue.sendMessageBatch({
+            Entries: [
+              {
+                Id: "1",
+
+                Message: {
+                  id: "id-1",
+                  data: "data-1",
+                },
+                MessageGroupId: "messages",
+                MessageDeduplicationId: "id-1",
+              },
+              {
+                Id: "2",
+                Message: {
+                  id: "id-2",
+                  data: "data-2",
+                },
+                MessageGroupId: "messages",
+                MessageDeduplicationId: "id-2",
+              },
+            ],
+          });
+
+          if (response.Failed.length > 0) {
+            // re-try failed messages
+          }
         }
       );
 
@@ -355,6 +395,7 @@ localstackTestSuite("queueStack", (test) => {
         async () => {
           return queue.receiveMessage({
             WaitTimeSeconds: 10,
+            VisibilityTimeout: 60,
           });
         }
       );
@@ -362,6 +403,7 @@ localstackTestSuite("queueStack", (test) => {
       return {
         outputs: {
           send: send.resource.functionName,
+          sendBatch: sendBatch.resource.functionName,
           receive: receive.resource.functionName,
         },
       };
@@ -374,6 +416,13 @@ localstackTestSuite("queueStack", (test) => {
         })
         .promise();
 
+      await localLambda
+        .invoke({
+          FunctionName: context.sendBatch,
+          Payload: '"id"',
+        })
+        .promise();
+
       const response = await localLambda
         .invoke({
           FunctionName: context.receive,
@@ -381,6 +430,7 @@ localstackTestSuite("queueStack", (test) => {
         })
         .promise();
 
+      expect(response.FunctionError).toBeUndefined();
       expect(response.Payload).toContain('{"data":"data","id":"id"}');
     }
   );

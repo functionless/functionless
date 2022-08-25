@@ -5,7 +5,7 @@ export interface ReadCodec<T> {
   /**
    * Parse the serialized {@link value} into a data object, {@link T}.
    */
-  read(value: string | Buffer): T;
+  read(value: string): T;
 }
 
 /**
@@ -15,7 +15,7 @@ export interface WriteCodec<T> {
   /**
    * Serialize a data object, {@link T}, to a `string` or {@link Buffer}.
    */
-  write(value: T): string | Buffer;
+  write(value: T): string;
 }
 
 /**
@@ -31,6 +31,24 @@ export interface Serializer<T> {
    * Create a {@link Codec} for serializing data objects of type, {@link T}.
    */
   create(): Codec<T>;
+}
+
+export namespace Serializer {
+  export function text(): JsonSerializer<string> {
+    return new TextSerializer();
+  }
+  export function json<T>(props?: JsonSerializerProps<T>): JsonSerializer<T> {
+    return new JsonSerializer(props);
+  }
+}
+
+export class TextSerializer implements Serializer<string> {
+  public create(): Codec<string> {
+    return {
+      read: (value) => value,
+      write: (value) => value,
+    };
+  }
 }
 
 export interface JsonSerializerProps<T> {
@@ -65,8 +83,6 @@ export class JsonSerializer<T> implements Serializer<T> {
         let item: T;
         if (typeof value === "string") {
           item = JSON.parse(value, reviver);
-        } else if (Buffer.isBuffer(value)) {
-          item = JSON.parse(value.toString("utf-8"));
         } else {
           throw new Error();
         }
