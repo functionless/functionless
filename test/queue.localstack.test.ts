@@ -1,9 +1,16 @@
 import "jest";
 
-import { aws_dynamodb, Duration } from "aws-cdk-lib";
+import { aws_dynamodb, aws_sqs, Duration } from "aws-cdk-lib";
 import { SQSBatchResponse } from "aws-lambda";
 import { v4 } from "uuid";
-import { $AWS, Function, FunctionProps, Queue, Table } from "../src";
+import {
+  $AWS,
+  Function,
+  FunctionProps,
+  Queue,
+  SendMessageBatchRequestEntry,
+  Table,
+} from "../src";
 import { JsonSerializer } from "../src/serializer";
 import { localstackTestSuite } from "./localstack";
 import { localDynamoDB, localLambda, localSQS, retry } from "./runtime-util";
@@ -22,13 +29,30 @@ localstackTestSuite("queueStack", (test) => {
   test(
     "onEvent(props, handler)",
     (scope) => {
+      interface Message {
+        id: string;
+      }
       const table = new Table(scope, "Table", {
         partitionKey: {
           name: "id",
           type: aws_dynamodb.AttributeType.STRING,
         },
       });
-      const queue = new Queue(scope, "queue");
+
+      const deadMessages = new Queue<Message>(scope, "dead letter queue");
+
+      const liveMessages = new Queue<Message>(scope, "queue", {
+        deadLetterQueue: {
+          queue: deadMessages,
+          maxReceiveCount: 10,
+        },
+      });
+
+      deadMessages.messages().forEach(async (message) => {
+        await liveMessages.sendMessage({
+          Message: message,
+        });
+      });
 
       queue.onEvent(localstackClientConfig, async (event) => {
         await Promise.all(
@@ -302,7 +326,7 @@ localstackTestSuite("queueStack", (test) => {
   );
 
   // skip because localstack is being dumb - has been tested in the cloud
-  test(
+  test.skip(
     "send and receive messages",
     (scope) => {
       interface Message {
@@ -310,7 +334,8 @@ localstackTestSuite("queueStack", (test) => {
         data: string;
       }
       const queue = new Queue<Message>(scope, "queue", {
-        serializer: new JsonSerializer(),
+        fifo: true,
+        fifoThroughputLimit: aws_sqs.FifoThroughputLimit.PER_MESSAGE_GROUP_ID,
       });
 
       const send = new Function(
@@ -327,6 +352,37 @@ localstackTestSuite("queueStack", (test) => {
         }
       );
 
+      const sendBatch = new Function(
+        scope,
+        "send",
+        localstackClientConfig,
+        async () => {
+          const response = await queue.sendMessageBatch({
+            Entries: [
+              {
+                Id: "1",
+
+                Message: {
+                  id: "id-1",
+                  data: "data-1",
+                },
+              },
+              {
+                Id: "2",
+                Message: {
+                  id: "id-2",
+                  data: "data-2",
+                },
+              },
+            ],
+          });
+
+          if (response.Failed.length > 0) {
+            // re-try failed messages
+          }
+        }
+      );
+
       const receive = new Function(
         scope,
         "receive",
@@ -334,6 +390,7 @@ localstackTestSuite("queueStack", (test) => {
         async () => {
           return queue.receiveMessage({
             WaitTimeSeconds: 10,
+            VisibilityTimeout: 60,
           });
         }
       );
@@ -341,6 +398,7 @@ localstackTestSuite("queueStack", (test) => {
       return {
         outputs: {
           send: send.resource.functionName,
+          sendBatch: sendBatch.resource.functionName,
           receive: receive.resource.functionName,
         },
       };

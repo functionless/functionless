@@ -5,7 +5,8 @@ import { EventSource } from "./event-source";
 import { SQSClient } from "./function-prewarm";
 import { makeIntegration } from "./integration";
 import { Iterable } from "./iterable";
-import { Serializer } from "./serializer";
+// @ts-ignore tsdoc
+import { Serializer, JsonSerializer } from "./serializer";
 
 export interface Message<M> extends AWS.SQS.Message {
   /**
@@ -38,6 +39,16 @@ export interface SendMessageRequest<M>
   /**
    * The {@link M} to be sent to the {@link Queue}.
    */
+  Message: M;
+}
+
+export interface SendMessageBatchRequest<M>
+  extends Omit<AWS.SQS.SendMessageBatchRequest, "QueueUrl" | "Entries"> {
+  Entries: SendMessageBatchRequestEntry<M>[];
+}
+
+export interface SendMessageBatchRequestEntry<M>
+  extends Omit<AWS.SQS.SendMessageBatchRequestEntry, "MessageBody"> {
   Message: M;
 }
 
@@ -83,10 +94,198 @@ abstract class BaseQueue<Message> extends EventSource<
     return this.resource.queueUrl;
   }
 
+  /**
+   * Delivers a message to the specified queue.
+   *
+   * ```ts
+   * // model the type of data in the Queue
+   * interface Message {
+   *   key: string;
+   * }
+   *
+   * const queue = new Queue<Message>(scope, id);
+   *
+   * await queue.sendMessage({
+   *   Message: {
+   *     key: "value"
+   *   },
+   * });
+   * ```
+   *
+   * When working with FIFO queues, the {@link SendMessageRequest.MessageDeduplicationId} and
+   * {@link SendMessageRequest.MessageGroupId} properties become useful.
+   * - `MessageDeduplicationId` - ensures that any duplicate messages sent with the same ID in a
+   * 5 minute time window are ignored, ensuring that exactly one of those messages were delivered. If
+   * your FIFO Queue is configured with {@link aws_sqs.DeduplicationScope.MESSAGE_GROUP} then duplicate
+   * IDs are only considered duplicates when they also have the same `MessageGroupId`, otherwise
+   * de-duplication is applied globally. Global de-duplication limits the throughput of your entire Queue
+   * to 300-3000 messages per second, so use it only when you absolutely need.
+   * - `MessageGroupId` - Messages with the same MessageGroupId are guaranteed to be processed by consumers
+   * in FIFO order. The first message sent is the first message received. Subsequent messages cannot be
+   * processed until prior messages are deleted from the Queue.
+   *
+   * ```ts
+   * await queue.sendMessage({
+   *   Message: message,
+   *
+   *   // prevent delivering this message more than once in a 5 minute time window
+   *   MessageDeduplicationId: message.requestId,
+   *
+   *   // ensure messages with the same userId are processed in order
+   *   // only care about de-duplication in the scope of a single `userId`.
+   *   MessageGroupId: message.userId
+   * });
+   * ```
+   */
   public readonly sendMessage;
 
+  /**
+   * Delivers up to ten messages to the specified queue. This is a batch version of
+   * {@link sendMessage}. The maximum allowed individual message size and the maximum
+   * total payload size (the sum of the individual lengths of all of the batched messages)
+   * are both 256 KB (262,144 bytes).
+   *
+   * ```ts
+   * // model the type of data in the Queue
+   * interface Message {
+   *   key: string;
+   * }
+   *
+   * // create a Queue
+   * const queue = new Queue<Message>(scope, id);
+   *
+   * // send a batch of messages to the Queue
+   * await queue.sendMessageBatch({
+   *   Entries: [{
+   *     Id: "1",
+   *     // the message is a `Message` type - it will be automatically serialized as a JSON string
+   *     Message: {
+   *       key: "value"
+   *     }
+   *   }]
+   * })
+   * ```
+   *
+   * The result of sending each message is reported individually in the response.
+   * Because the batch request can result in a combination of successful and unsuccessful
+   * actions, you should check for batch errors even when the call returns an HTTP status
+   * code of 200.
+   *
+   * ```ts
+   * async function sendWithRetries(entries: SendMessageRequestEntry<Message>) {
+   *   // try and send the batch of messages
+   *   const response = await queue.sendMessageBatch({
+   *     Entries: entries,
+   *   });
+   *
+   *   if (response.Failed.length > 0) {
+   *     // try and send the failed messages again
+   *     await sendWithRetries(response.Failed.map((failed) =>
+   *       entries.find((entry) => entry.Id === failed.Id)
+   *     ));
+   *   }
+   * }
+   * ```
+   *
+   * When working with FIFO queues, the {@link SendMessageRequest.MessageDeduplicationId} and
+   * {@link SendMessageRequest.MessageGroupId} properties become useful.
+   * - `MessageDeduplicationId` - ensures that any duplicate messages sent with the same ID in a
+   * 5 minute time window are ignored, ensuring that exactly one of those messages were delivered. If
+   * your FIFO Queue is configured with {@link aws_sqs.DeduplicationScope.MESSAGE_GROUP} then duplicate
+   * IDs are only considered duplicates when they also have the same `MessageGroupId`, otherwise
+   * de-duplication is applied globally. Global de-duplication limits the throughput of your entire Queue
+   * to 300-3000 messages per second, so use it only when you absolutely need.
+   * - `MessageGroupId` - Messages with the same MessageGroupId are guaranteed to be processed by consumers
+   * in FIFO order. The first message sent is the first message received. Subsequent messages cannot be
+   * processed until prior messages are deleted from the Queue.
+   *
+   * ```ts
+   * await queue.sendMessageBatch({
+   *   Entries: [{
+   *     Message: message,
+   *
+   *     // prevent delivering this message more than once in a 5 minute time window
+   *     MessageDeduplicationId: message.requestId,
+   *
+   *     // ensure messages with the same userId are processed in order
+   *     // only care about de-duplication in the scope of a single `userId`.
+   *     MessageGroupId: message.userId
+   *   }]
+   * });
+   * ```
+   *
+   * If you don't specify the DelaySeconds parameter for an entry, Amazon SQS uses the default value
+   * for the queue. Some actions take lists of parameters. These lists are specified using the
+   * `param.n` notation - values of n are integers starting from 1.
+   *
+   * For example, a parameter list with two elements looks like this:
+   * ```
+   * &amp;AttributeName.1=first
+   * &amp;AttributeName.2=second
+   * ```
+   */
+  public readonly sendMessageBatch;
+
+  /**
+   * Retrieves one or more messages (up to 10), from the specified queue.
+   * Using the WaitTimeSeconds parameter enables long-poll support.
+   * For more information, see Amazon SQS Long Polling in the Amazon SQS Developer Guide.
+   *
+   * Short poll is the default behavior where a weighted random set of machines is sampled
+   * on a ReceiveMessage call. Thus, only the messages on the sampled machines are returned.
+   *
+   * If the number of messages in the queue is small (fewer than 1,000), you most likely get
+   * fewer messages than you requested per ReceiveMessage call. If the number of messages in
+   * the queue is extremely small, you might not receive any messages in a particular ReceiveMessage
+   * response. If this happens, repeat the request
+   *
+   * For each message returned, the response includes the following:
+   * - The message body.
+   * - An MD5 digest of the message body. For information about MD5, see RFC1321.
+   * - The MessageId you received when you sent the message to the queue.
+   * - The receipt handle - the identifier you must provide when deleting the message.
+   * - The message attributes.
+   * - An MD5 digest of the message attributes.
+   *
+   * For more information, see [Queue and Message Identifiers](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-queue-message-identifiers.html)
+   * in the Amazon SQS Developer Guide.
+   *
+   * You can provide the VisibilityTimeout parameter in your request. The parameter is applied to
+   * the messages that Amazon SQS returns in the response. If you don't include the parameter, the
+   * overall visibility timeout for the queue is used for the returned messages. For more information,
+   * see [Visibility Timeout](https://docs.aws.amazon.com/AWSSimpleQueueService/latest/SQSDeveloperGuide/sqs-visibility-timeout.html) in the Amazon SQS Developer Guide.
+   *
+   * ```ts
+   * queue.receiveMessage({
+   *   // we will have up to 60 seconds to process the received messages and delete them from the
+   *   // queue until they will again be visible to other consumers.
+   *   VisibilityTimeout: 60,
+   * })
+   * ```
+   *
+   * A message that isn't deleted or a message whose visibility isn't extended before the visibility
+   * timeout expires counts as a failed receive. Depending on the configuration of the queue, the
+   * message might be sent to the dead-letter queue.
+   *
+   * ```ts
+   * const dlq = new Queue<Message>(scope, id);
+   * const queue = new Queue<Message>(scope, id, {
+   *   deadLetterQueue: dql
+   * });
+   *
+   * dlq.messages().forEach(async (deadMessage) => {
+   *   console.log("oopsy whoopsy", deadMessage);
+   * });
+   * ```
+   *
+   * In the future, new attributes might be added.If you write code that calls this action, we recommend
+   * that you structure your code so that it can handle new attributes gracefully.
+   */
   public readonly receiveMessage;
 
+  /**
+   * Deletes the messages in a queue specified by the QueueURL parameter.  When you use the PurgeQueue action, you can't retrieve any messages deleted from a queue. The message deletion process takes up to 60 seconds. We recommend waiting for 60 seconds regardless of your queue's size.   Messages sent to the queue before you call PurgeQueue might be received but are deleted within the next minute. Messages sent to the queue after you call PurgeQueue might be deleted while the queue is being purged.
+   */
   public readonly purge;
 
   constructor(scope: Construct, id: string, props: QueueProps<Message>);
@@ -100,7 +299,21 @@ abstract class BaseQueue<Message> extends EventSource<
     super(...args);
 
     const queueUrl = this.queueUrl;
-    const serializer = this.props.serializer?.create();
+    const codec = (this.props.serializer ?? Serializer.json())?.create();
+
+    function serialize(message: Message): string {
+      if (codec) {
+        return codec.write(message);
+      } else if (typeof message === "string") {
+        return message;
+      } else if (Buffer.isBuffer(message)) {
+        return message.toString("utf8");
+      } else {
+        throw new Error(
+          `Message must be a string if there is no 'serializer' configured, ${message}`
+        );
+      }
+    }
 
     this.sendMessage = makeIntegration<
       "AWS.SQS.SendMessage",
@@ -113,15 +326,7 @@ abstract class BaseQueue<Message> extends EventSource<
         call: async ([input], context) => {
           const sqs = context.getOrInit(SQSClient);
 
-          const messageBody = serializer
-            ? serializer.write(input.Message)
-            : typeof input.Message === "string"
-            ? input.Message
-            : (() => {
-                throw new Error(
-                  `Message must be a string if there is no 'serializer' configured, ${input.Message}`
-                );
-              })();
+          const messageBody = serialize(input.Message);
 
           // @ts-ignore
           delete input.Message;
@@ -129,10 +334,36 @@ abstract class BaseQueue<Message> extends EventSource<
           const response = await sqs
             .sendMessage({
               ...input,
-              MessageBody:
-                typeof messageBody === "string"
-                  ? messageBody
-                  : messageBody.toString("utf8"),
+              MessageBody: messageBody,
+              QueueUrl: queueUrl,
+            })
+            .promise();
+
+          return response;
+        },
+      },
+    });
+
+    this.sendMessageBatch = makeIntegration<
+      "AWS.SQS.SendMessageBatch",
+      (
+        input: SendMessageBatchRequest<Message>
+      ) => Promise<AWS.SQS.SendMessageBatchResult>
+    >({
+      kind: "AWS.SQS.SendMessageBatch",
+      native: {
+        bind: (func) => this.resource.grantSendMessages(func.resource),
+        preWarm: (context) => context.getOrInit(SQSClient),
+        call: async ([input], context) => {
+          const sqs = context.getOrInit(SQSClient);
+
+          const response = await sqs
+            .sendMessageBatch({
+              ...input,
+              Entries: input.Entries.map(({ Message, ...entry }) => ({
+                ...entry,
+                MessageBody: serialize(Message),
+              })),
               QueueUrl: queueUrl,
             })
             .promise();
@@ -165,8 +396,8 @@ abstract class BaseQueue<Message> extends EventSource<
             MessageList: response.Messages?.map((message) => ({
               ...message,
               Message:
-                serializer && message.Body
-                  ? serializer.read(message.Body)
+                codec && message.Body
+                  ? codec.read(message.Body)
                   : (message.Body as unknown as Message),
             })),
           };
@@ -235,9 +466,17 @@ abstract class BaseQueue<Message> extends EventSource<
   protected createResource(
     scope: Construct,
     id: string,
-    config: aws_sqs.QueueProps
+    config: QueueProps<Message>
   ): aws_sqs.IQueue {
-    return new aws_sqs.Queue(scope, id, config);
+    return new aws_sqs.Queue(scope, id, {
+      ...config,
+      deadLetterQueue: config.deadLetterQueue
+        ? {
+            maxReceiveCount: config.deadLetterQueue.maxReceiveCount,
+            queue: config.deadLetterQueue.queue.resource,
+          }
+        : undefined,
+    });
   }
 
   protected createEventSource(
@@ -274,12 +513,30 @@ abstract class BaseQueue<Message> extends EventSource<
   }
 }
 
-export interface QueueProps<T> extends aws_sqs.QueueProps {
+export interface DeadLetterQueue<Message>
+  extends Omit<aws_sqs.DeadLetterQueue, "queue"> {
+  /**
+   * The dead-letter queue to which Amazon SQS moves messages after the value of maxReceiveCount is exceeded.
+   */
+  queue: IQueue<Message>;
+}
+
+export interface QueueProps<Message>
+  extends Omit<aws_sqs.QueueProps, "deadLetterQueue"> {
   /**
    * Specifies the {@link Serializer} instance to use for serializing messages
    * sent to the Queue and deserializing messages received from the Queue.
+   *
+   * @default {@link JsonSerializer}
    */
-  serializer?: Serializer<T>;
+  serializer?: Serializer<Message>;
+
+  /**
+   * Send messages to this queue if they were unsuccessfully dequeued a number of times.
+   *
+   * @default no dead-letter queue
+   */
+  deadLetterQueue?: DeadLetterQueue<Message>;
 }
 
 export interface IQueue<T = any> extends BaseQueue<T> {}
