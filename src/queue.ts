@@ -278,13 +278,24 @@ abstract class BaseQueue<Message> extends EventSource<
    * });
    * ```
    *
-   * In the future, new attributes might be added.If you write code that calls this action, we recommend
+   * In the future, new attributes might be added. If you write code that calls this action, we recommend
    * that you structure your code so that it can handle new attributes gracefully.
    */
   public readonly receiveMessage;
 
   /**
-   * Deletes the messages in a queue specified by the QueueURL parameter.  When you use the PurgeQueue action, you can't retrieve any messages deleted from a queue. The message deletion process takes up to 60 seconds. We recommend waiting for 60 seconds regardless of your queue's size.   Messages sent to the queue before you call PurgeQueue might be received but are deleted within the next minute. Messages sent to the queue after you call PurgeQueue might be deleted while the queue is being purged.
+   * Deletes the messages in this queue.
+   * ```ts
+   * await queue.purge();
+   * ```
+   *
+   * When you use the PurgeQueue action, you can't retrieve any messages deleted from a
+   * queue. The message deletion process takes up to 60 seconds. We recommend waiting
+   * for 60 seconds regardless of your queue's size.
+   *
+   * Messages sent to the queue before you call PurgeQueue might be received but are deleted within the
+   * next minute. Messages sent to the queue after you call PurgeQueue might be deleted while the queue
+   * is being purged.
    */
   public readonly purge;
 
