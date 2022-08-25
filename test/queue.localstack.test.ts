@@ -3,14 +3,7 @@ import "jest";
 import { aws_dynamodb, aws_sqs, Duration } from "aws-cdk-lib";
 import { SQSBatchResponse } from "aws-lambda";
 import { v4 } from "uuid";
-import {
-  $AWS,
-  Function,
-  FunctionProps,
-  Queue,
-  SendMessageBatchRequestEntry,
-  Table,
-} from "../src";
+import { $AWS, Function, FunctionProps, Queue, Table } from "../src";
 import { JsonSerializer } from "../src/serializer";
 import { localstackTestSuite } from "./localstack";
 import { localDynamoDB, localLambda, localSQS, retry } from "./runtime-util";
@@ -39,20 +32,7 @@ localstackTestSuite("queueStack", (test) => {
         },
       });
 
-      const deadMessages = new Queue<Message>(scope, "dead letter queue");
-
-      const liveMessages = new Queue<Message>(scope, "queue", {
-        deadLetterQueue: {
-          queue: deadMessages,
-          maxReceiveCount: 10,
-        },
-      });
-
-      deadMessages.messages().forEach(async (message) => {
-        await liveMessages.sendMessage({
-          Message: message,
-        });
-      });
+      const queue = new Queue<Message>(scope, "queue");
 
       queue.onEvent(localstackClientConfig, async (event) => {
         await Promise.all(
