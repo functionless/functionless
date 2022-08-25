@@ -35,7 +35,6 @@ const orderQueue = new Queue<OrderPlacedEvent>(stack, "queue", {
 
 // filter OrderEvents from the Event Bus and route them to the orderQueue
 events
-  .all()
   .when(
     stack,
     "Messages",
