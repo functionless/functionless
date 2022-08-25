@@ -225,7 +225,7 @@ project.testTask.prependExec(
 project.testTask.prependExec("./scripts/localstack");
 project.testTask.exec("localstack stop");
 
-project.testTask.env("NODE_OPTIONS", "--max-old-space-size=8192");
+project.testTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
 project.testTask.env("DEFAULT_REGION", "ap-northeast-1");
 project.testTask.env("AWS_ACCOUNT_ID", "000000000000");
 project.testTask.env("AWS_ACCESS_KEY_ID", "test");
