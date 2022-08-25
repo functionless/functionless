@@ -1,4 +1,3 @@
-import "jest";
 import { aws_events, Duration, Stack } from "aws-cdk-lib";
 import { Function } from "../src";
 

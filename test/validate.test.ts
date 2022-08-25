@@ -1,4 +1,3 @@
-import "jest";
 import fs from "fs";
 import path from "path";
 import ts from "typescript";

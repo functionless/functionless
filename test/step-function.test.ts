@@ -1,7 +1,6 @@
 import { aws_stepfunctions, Stack } from "aws-cdk-lib";
 import { Template } from "aws-cdk-lib/assertions";
 import { Pass } from "aws-cdk-lib/aws-stepfunctions";
-import "jest";
 import type * as AWS from "aws-sdk";
 import * as functionless from "../src";
 import {

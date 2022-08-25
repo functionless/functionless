@@ -1,4 +1,3 @@
-import "jest";
 import { isNode, parseSExpr, reflect } from "../src";
 
 test("s-expression isomorphism", () => {

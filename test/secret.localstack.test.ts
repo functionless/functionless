@@ -1,5 +1,4 @@
 import { Duration, SecretValue } from "aws-cdk-lib";
-import "jest";
 import {
   BinarySecret,
   Function,

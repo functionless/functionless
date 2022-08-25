@@ -1,5 +1,4 @@
 import { App, aws_lambda, Stack } from "aws-cdk-lib";
-import "jest";
 import {
   Function,
   AppsyncContext,

@@ -1,4 +1,3 @@
-import "jest";
 import { aws_apigateway, aws_dynamodb, Stack } from "aws-cdk-lib";
 import {
   AwsMethod,

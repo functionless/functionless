@@ -1,5 +1,4 @@
 import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
-import "jest";
 import {
   Table,
   $util,
