@@ -13869,6 +13869,31 @@ Object {
 }
 `;
 
+exports[`props 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "return context.StateMachine.Name",
+      "Parameters": Object {
+        "_.$": "$$.Execution.Input",
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return context.StateMachine.Name": Object {
+      "End": true,
+      "InputPath": "$$.StateMachine.Name",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`shadowing maintains state 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
