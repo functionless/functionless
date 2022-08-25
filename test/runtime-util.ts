@@ -1,5 +1,5 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { DynamoDB, Lambda, StepFunctions, SQS } from "aws-sdk";
+import { DynamoDB, Lambda, StepFunctions, SQS, EventBridge } from "aws-sdk";
 import { clientConfig } from "./localstack";
 
 export const localLambda = new Lambda(clientConfig);
@@ -11,6 +11,7 @@ export const localSQS = new SQS({
   ...clientConfig,
   hostPrefixEnabled: false,
 });
+export const localEventBridge = new EventBridge(clientConfig);
 export const localDynamoDB = new DynamoDB({
   ...clientConfig,
   hostPrefixEnabled: false,

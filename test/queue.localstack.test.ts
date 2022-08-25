@@ -1,10 +1,12 @@
 import "jest";
 
-import { aws_dynamodb, aws_sqs, Duration } from "aws-cdk-lib";
+import { aws_dynamodb, aws_sqs, CfnOutput, Duration } from "aws-cdk-lib";
 import { SQSBatchResponse } from "aws-lambda";
 import { v4 } from "uuid";
 import {
   $AWS,
+  EventBus,
+  Event,
   Function,
   FunctionProps,
   Queue,
@@ -13,7 +15,13 @@ import {
 } from "../src";
 import { JsonSerializer } from "../src/serializer";
 import { localstackTestSuite } from "./localstack";
-import { localDynamoDB, localLambda, localSQS, retry } from "./runtime-util";
+import {
+  localDynamoDB,
+  localEventBridge,
+  localLambda,
+  localSQS,
+  retry,
+} from "./runtime-util";
 
 // inject the localstack client config into the lambda clients
 // without this configuration, the functions will try to hit AWS proper
@@ -212,6 +220,132 @@ localstackTestSuite("queueStack", (test) => {
         outputs: {
           tableName: table.tableName,
           queueUrl: queue.queueUrl,
+        },
+      };
+    },
+    assertForEach
+  );
+
+  test(
+    "forEach event bus target",
+    (scope) => {
+      interface Message {
+        id: string;
+        data: string;
+      }
+
+      const addr = new CfnOutput(scope, "out", { value: "" });
+      const bus = new EventBus<Event<Message>>(scope, "bus", {
+        eventBusName: addr.node.addr,
+      });
+
+      const table = new Table<Message, "id">(scope, "Table", {
+        partitionKey: {
+          name: "id",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+
+      const queue = new Queue<Message>(scope, "queue", {
+        ...localstackQueueConfig,
+        serializer: new JsonSerializer<Message>(),
+      });
+
+      bus
+        .all()
+        .map((event) => event.detail)
+        .pipe(queue);
+
+      queue.messages().forEach(localstackClientConfig, async (message) => {
+        await $AWS.DynamoDB.PutItem({
+          Table: table,
+          Item: {
+            id: {
+              S: message.id,
+            },
+            data: {
+              S: message.data,
+            },
+          },
+        });
+      });
+      return {
+        outputs: {
+          tableName: table.tableName,
+          busName: addr.node.addr,
+          queueUrl: queue.queueUrl,
+        },
+      };
+    },
+    assertForEach
+  );
+
+  test(
+    "forEach event bus target fifo",
+    (scope) => {
+      interface Message {
+        id: string;
+        data: string;
+      }
+
+      const addr = new CfnOutput(scope, "out", { value: "" });
+      const bus = new EventBus<Event<Message>>(scope, "bus", {
+        eventBusName: addr.node.addr,
+      });
+
+      const table = new Table<Message & { messageGroupId?: string }, "id">(
+        scope,
+        "Table",
+        {
+          partitionKey: {
+            name: "id",
+            type: aws_dynamodb.AttributeType.STRING,
+          },
+        }
+      );
+
+      const queue = new Queue<Message>(scope, "queue", {
+        ...localstackQueueConfig,
+        serializer: new JsonSerializer<Message>(),
+        fifo: true,
+        fifoThroughputLimit: aws_sqs.FifoThroughputLimit.PER_MESSAGE_GROUP_ID,
+        contentBasedDeduplication: true,
+      });
+
+      bus
+        .all()
+        .map((event) => event.detail)
+        /**
+         * This value is a fixed string - there is currently no support to make this dependent on a value in the incoming event,
+         * which means all your messages will be in the same message group.
+         */
+        .pipe(queue, { messageGroupId: "busGroup" });
+
+      queue
+        .messages()
+        .forEach(
+          localstackClientConfig,
+          async (message, { attributes: { MessageGroupId } }) => {
+            await $AWS.DynamoDB.PutItem({
+              Table: table,
+              Item: {
+                id: {
+                  S: message.id,
+                },
+                data: {
+                  S: message.data,
+                },
+                messageGroupId: { S: MessageGroupId ?? "" },
+              },
+            });
+          }
+        );
+      return {
+        outputs: {
+          tableName: table.tableName,
+          busName: addr.node.addr,
+          queueUrl: queue.queueUrl,
+          messageGroupId: "busGroup",
         },
       };
     },
@@ -498,31 +632,52 @@ localstackTestSuite("queueStack", (test) => {
       expect(sendResponse.FunctionError).toEqual("Unhandled");
       expect(sendResponse.Payload).toContain("localhost");
 
-      const recieveResponse = await localLambda
+      const receiveResponse = await localLambda
         .invoke({
           FunctionName: context.receive,
           Payload: "{}",
         })
         .promise();
 
-      expect(recieveResponse.FunctionError).toEqual("Unhandled");
-      expect(recieveResponse.Payload).toContain("localhost");
+      expect(receiveResponse.FunctionError).toEqual("Unhandled");
+      expect(receiveResponse.Payload).toContain("localhost");
     }
   );
 });
 
-async function assertForEach(context: { tableName: string; queueUrl: string }) {
+async function assertForEach(context: {
+  tableName: string;
+  queueUrl: string;
+  busName?: string;
+  messageGroupId?: string;
+}) {
   const message = {
     id: v4(),
     data: "hello world",
   };
   const messageJSON = JSON.stringify(message);
-  await localSQS
-    .sendMessage({
-      MessageBody: messageJSON,
-      QueueUrl: context.queueUrl,
-    })
-    .promise();
+
+  if (context.busName) {
+    await localEventBridge
+      .putEvents({
+        Entries: [
+          {
+            Source: "test",
+            DetailType: "test",
+            Detail: JSON.stringify(message),
+            EventBusName: context.busName,
+          },
+        ],
+      })
+      .promise();
+  } else {
+    await localSQS
+      .sendMessage({
+        MessageBody: messageJSON,
+        QueueUrl: context.queueUrl,
+      })
+      .promise();
+  }
 
   await retry(
     async () =>
@@ -536,7 +691,10 @@ async function assertForEach(context: { tableName: string; queueUrl: string }) {
           },
         })
         .promise(),
-    (result) => result.Item?.data?.S === message.data,
+    (result) =>
+      result.Item?.data?.S === message.data &&
+      (!context.messageGroupId ||
+        context.messageGroupId === result.Item?.messageGroupId?.S),
     5,
     1000,
     2

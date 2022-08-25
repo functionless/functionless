@@ -1181,8 +1181,7 @@ export class Iterable<
 
   public forEach(...args: any[]): Function<RawEvent, Response, RawEvent> {
     const source = this.getSource();
-    const [scope, id, props, processFunc] =
-      source.parseArgs<(event: any) => any[] | Promise<any[]>>(args);
+    const [scope, id, props, processFunc] = source.parseArgs<Processor>(args);
 
     const chain = this.getCallChain();
 
@@ -1209,7 +1208,9 @@ export class Iterable<
                 }
 
                 await Promise.all(
-                  items.map(async (item) => awaitIfPromise(processFunc(item)))
+                  items.map(async (item) =>
+                    awaitIfPromise(processFunc(item, record, event, raw))
+                  )
                 );
                 return undefined;
               } catch (err) {

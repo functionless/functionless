@@ -42,7 +42,6 @@ events
       event["detail-type"] === "OrderPlacedEvent"
   )
   .map((envelope) => envelope.detail)
-  // TODO: support
   .pipe(orderQueue);
 
 // kick off a Step Function to reliably process each order

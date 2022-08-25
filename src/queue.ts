@@ -1,9 +1,16 @@
-import { aws_sqs, aws_lambda_event_sources, aws_lambda } from "aws-cdk-lib";
+import {
+  aws_sqs,
+  aws_lambda_event_sources,
+  aws_lambda,
+  aws_events_targets,
+} from "aws-cdk-lib";
 import lambda from "aws-lambda";
 import { Construct } from "constructs";
+import { EventBusTargetIntegration } from "./event-bridge";
+import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { EventSource } from "./event-source";
 import { SQSClient } from "./function-prewarm";
-import { makeIntegration } from "./integration";
+import { Integration, makeIntegration } from "./integration";
 import { Iterable } from "./iterable";
 // @ts-ignore tsdoc
 import { Serializer, JsonSerializer } from "./serializer";
@@ -62,14 +69,32 @@ export interface ReceiveMessageResult<M> extends AWS.SQS.ReceiveMessageResult {
   MessageList?: Message<M>[];
 }
 
-abstract class BaseQueue<Message> extends EventSource<
-  aws_sqs.IQueue,
-  QueueProps<Message>,
-  lambda.SQSEvent,
-  SQSEvent<Message>,
-  lambda.SQSBatchResponse,
-  aws_lambda_event_sources.SqsEventSourceProps
-> {
+abstract class BaseQueue<Message>
+  extends EventSource<
+    aws_sqs.IQueue,
+    QueueProps<Message>,
+    lambda.SQSEvent,
+    SQSEvent<Message>,
+    lambda.SQSBatchResponse,
+    aws_lambda_event_sources.SqsEventSourceProps
+  >
+  implements
+    Integration<
+      "Queue",
+      // queue is not directly invokable, only via event bridge pipe.
+      () => any,
+      EventBusTargetIntegration<
+        Message,
+        Omit<aws_events_targets.SqsQueueProps, "message"> | undefined
+      >
+    >
+{
+  public static readonly FunctionlessType = "Queue";
+  readonly functionlessKind = "Queue";
+  readonly kind = "Queue";
+  // @ts-ignore - value does not exist, is only available at compile time
+  readonly __functionBrand: () => Promise<void>;
+
   /**
    * The ARN of this queue
    * @attribute
@@ -536,6 +561,21 @@ abstract class BaseQueue<Message> extends EventSource<
   public createGetPayload(): (event: SQSRecord<Message>) => any {
     return (event) => event.message;
   }
+
+  /**
+   * Support `bus.when(...).pipe(queue)`
+   */
+  public readonly eventBus = makeEventBusIntegration<
+    Message,
+    Omit<aws_events_targets.SqsQueueProps, "message"> | undefined
+  >({
+    target: (props, targetInput?) => {
+      return new aws_events_targets.SqsQueue(this.resource, {
+        ...(props ?? {}),
+        message: targetInput,
+      });
+    },
+  });
 }
 
 export interface DeadLetterQueue<Message>
