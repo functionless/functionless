@@ -101,6 +101,7 @@ abstract class BaseQueue<Message> extends EventSource<
 
     const queueUrl = this.queueUrl;
     const serializer = this.props.serializer?.create();
+    const lambdaQueueUrlRetriever = this.props.lambda?.queueUrlRetriever;
 
     this.sendMessage = makeIntegration<
       "AWS.SQS.SendMessage",
@@ -126,6 +127,9 @@ abstract class BaseQueue<Message> extends EventSource<
           // @ts-ignore
           delete input.Message;
 
+          const updatedQueueUrl =
+            lambdaQueueUrlRetriever?.(queueUrl) ?? queueUrl;
+
           const response = await sqs
             .sendMessage({
               ...input,
@@ -133,7 +137,7 @@ abstract class BaseQueue<Message> extends EventSource<
                 typeof messageBody === "string"
                   ? messageBody
                   : messageBody.toString("utf8"),
-              QueueUrl: queueUrl,
+              QueueUrl: updatedQueueUrl,
             })
             .promise();
 
@@ -154,10 +158,13 @@ abstract class BaseQueue<Message> extends EventSource<
         call: async ([input], context) => {
           const sqs = context.getOrInit(SQSClient);
 
+          const updatedQueueUrl =
+            lambdaQueueUrlRetriever?.(queueUrl) ?? queueUrl;
+
           const response = await sqs
             .receiveMessage({
               ...input,
-              QueueUrl: queueUrl,
+              QueueUrl: updatedQueueUrl,
             })
             .promise();
 
@@ -180,13 +187,17 @@ abstract class BaseQueue<Message> extends EventSource<
       native: {
         bind: (func) => this.resource.grantPurge(func.resource),
         preWarm: (context) => context.getOrInit(SQSClient),
-        call: async ([], context) =>
-          context
+        call: async ([], context) => {
+          const updatedQueueUrl =
+            lambdaQueueUrlRetriever?.(queueUrl) ?? queueUrl;
+
+          return context
             .getOrInit(SQSClient)
             .purgeQueue({
-              QueueUrl: queueUrl,
+              QueueUrl: updatedQueueUrl,
             })
-            .promise(),
+            .promise();
+        },
       },
     });
   }
@@ -280,6 +291,25 @@ export interface QueueProps<T> extends aws_sqs.QueueProps {
    * sent to the Queue and deserializing messages received from the Queue.
    */
   serializer?: Serializer<T>;
+  /**
+   * Options related to using the Queue in a {@link Function}.S
+   */
+  lambda?: {
+    /**
+     * An optional callback which allows customization of the queue url when using Queue APIs in lambda.
+     *
+     * For example, when using Functionless with `localstack`, the queue url in CDK is different
+     * from the queue url in the lambda execution environment.
+     *
+     * ```ts
+     * lambdaQueueUrlRetriever: (queueUrl) =>
+     *    process.env.LOCALSTACK_HOSTNAME
+     *       ? queueUrl.replace("localhost", process.env.LOCALSTACK_HOSTNAME)
+     *       : queueUrl,
+     * ```
+     */
+    queueUrlRetriever?: (queueUrl: string) => string;
+  };
 }
 
 export interface IQueue<T = any> extends BaseQueue<T> {}
