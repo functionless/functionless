@@ -1,6 +1,8 @@
 tasks:
   - name: Install
-    init: yarn install
+    init: |
+      yarn install
+      yarn build
 
 ports:
   - name: LocalStack
