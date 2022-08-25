@@ -125,7 +125,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "props",
+    "step function props are passed through to the resource",
     (parent) => {
       return new StepFunction(
         parent,
