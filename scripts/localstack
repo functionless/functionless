@@ -2,6 +2,8 @@
 
 # Installs and runs localstack
 
+# run all lambdas in the same container. 
+export LAMBDA_EXECUTOR=docker-reuse
 # install LocalStack cli and awslocal
 pip install localstack --upgrade awscli-local[ver1]
 # install CDK Local
