@@ -125,6 +125,21 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
+    "step function props are passed through to the resource",
+    (parent) => {
+      return new StepFunction(
+        parent,
+        "sfn2",
+        { stateMachineName: "magicMachine" },
+        async (_, context) => {
+          return context.StateMachine.Name;
+        }
+      );
+    },
+    "magicMachine"
+  );
+
+  test(
     "duplicate nodes",
     (parent) => {
       return new StepFunction(parent, "sfn2", async () => {

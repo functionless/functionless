@@ -1579,9 +1579,9 @@ function getStepFunctionArgs<
     | [func: StepFunctionClosure<Payload, Out>]
 ) {
   const props =
-    isFunctionLike(args[0]) || isErr(args[0])
+    isFunctionLike(args[0]) || isErr(args[0]) || typeof args[0] === "function"
       ? {}
-      : (args[1] as StepFunctionProps);
+      : args[0];
   const func = validateFunctionLike(
     args.length > 1 ? args[1] : args[0],
     "StepFunction"
