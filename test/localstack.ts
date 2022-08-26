@@ -21,11 +21,7 @@ export const clientConfig = {
 
 const CF = new CloudFormation(clientConfig);
 
-// Inspiration for the current approach: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
-// Writeup on performance improvements: https://github.com/functionless/functionless/pull/184#issuecomment-1144767427
-export const deployStack = async (app: App, stack: Stack) => {
-  const cloudAssembly = await asyncSynth(app);
-
+async function getCfnClient() {
   const sdkProvider = await SdkProvider.withAwsCliCompatibleDefaults({
     httpOptions: clientConfig as any,
   });
@@ -41,18 +37,10 @@ export const deployStack = async (app: App, stack: Stack) => {
     credentials: clientConfig.credentials,
   };
 
-  const cfn = new CloudFormationDeployments({
+  return new CloudFormationDeployments({
     sdkProvider,
   });
-
-  const stackArtifact = cloudAssembly.getStackArtifact(
-    stack.artifactId
-  ) as unknown as cxapi.CloudFormationStackArtifact;
-  await cfn.deployStack({
-    stack: stackArtifact,
-    force: true,
-  });
-};
+}
 
 interface ResourceReference<
   Outputs extends Record<string, string>,
@@ -118,8 +106,11 @@ export const localstackTestSuite = (
   });
 
   let stackOutputs: CloudFormation.Outputs | undefined;
+  let stackArtifact: cxapi.CloudFormationStackArtifact | undefined;
+  let cfnClient: CloudFormationDeployments | undefined;
 
   beforeAll(async () => {
+    cfnClient = await getCfnClient();
     const anyOnly = tests.some((t) => t.only);
     testContexts = tests.map(({ resources, skip, only }, i) => {
       // create the construct on skip to reduce output changes when moving between skip and not skip
@@ -156,11 +147,27 @@ export const localstackTestSuite = (
 
     await Promise.all(Function.promises);
 
-    await deployStack(app, stack);
+    const cloudAssembly = await asyncSynth(app);
+    stackArtifact = cloudAssembly.getStackArtifact(
+      stack.artifactId
+    ) as unknown as cxapi.CloudFormationStackArtifact;
+
+    // Inspiration for the current approach: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
+    // Writeup on performance improvements: https://github.com/functionless/functionless/pull/184#issuecomment-1144767427
+    await cfnClient?.deployStack({
+      stack: stackArtifact,
+      force: true,
+    });
 
     stackOutputs = (
       await CF.describeStacks({ StackName: stack.stackName }).promise()
     ).Stacks?.[0]?.Outputs;
+  });
+
+  afterAll(async () => {
+    await cfnClient?.destroyStack({
+      stack: stackArtifact!,
+    });
   });
 
   // @ts-ignore
