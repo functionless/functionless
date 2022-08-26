@@ -85,7 +85,7 @@
       "name": "compile",
       "description": "Only compile",
       "env": {
-        "NODE_OPTIONS": "--max-old-space-size=4096"
+        "NODE_OPTIONS": "--max-old-space-size=6144"
       },
       "steps": [
         {
@@ -189,7 +189,7 @@
       "name": "test",
       "description": "Run tests",
       "env": {
-        "NODE_OPTIONS": "--max-old-space-size=4096",
+        "NODE_OPTIONS": "--max-old-space-size=6144",
         "DEFAULT_REGION": "ap-northeast-1",
         "AWS_ACCOUNT_ID": "000000000000",
         "AWS_ACCESS_KEY_ID": "test",
