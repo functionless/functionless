@@ -130,7 +130,6 @@ const project = new CustomTypescriptProject({
         "^.+\\.(t|j)sx?$": ["@swc/jest", {}],
       },
     },
-    extraCliOptions: ["--forceExit", "--testPathPattern localstack"],
   },
   scripts: {
     localstack: "./scripts/localstack",
