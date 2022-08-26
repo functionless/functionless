@@ -249,7 +249,7 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
     return this.assertIntegrationDefined(
       context.kind,
       this.integration.asl
-    ).bind(this.integration)(call, context);
+    ).call(this.integration, call, context);
   }
 
   public get eventBus(): EventBusTargetIntegration<any, any> {
