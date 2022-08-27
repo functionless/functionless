@@ -1,5 +1,44 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
+exports[`$AWS.SDK.DynamoDB.describeTable 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "tableInfo = await $AWS.SDK.DynamoDB.describeTable({TableName: table.tableNa",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return tableInfo.Table.TableArn": Object {
+      "End": true,
+      "InputPath": "$.tableInfo.Table.TableArn",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "tableInfo": Object {
+      "InputPath": "$.heap0",
+      "Next": "return tableInfo.Table.TableArn",
+      "ResultPath": "$.tableInfo",
+      "Type": "Pass",
+    },
+    "tableInfo = await $AWS.SDK.DynamoDB.describeTable({TableName: table.tableNa": Object {
+      "Next": "tableInfo",
+      "Parameters": Object {
+        "TableName": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:describeTable",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
 exports[`access 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -8335,7 +8374,7 @@ Object {
         "TableName": "__REPLACED_TOKEN",
         "UpdateExpression": "SET val = if_not_exists(val, :start) + :inc",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
       "ResultPath": "$.heap8",
       "Type": "Task",
     },
@@ -8350,7 +8389,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
       "ResultPath": "$.heap11",
       "Type": "Task",
     },
@@ -10732,7 +10771,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
       "ResultPath": "$.heap28",
       "Type": "Task",
     },
@@ -12008,7 +12047,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
       "ResultPath": "$.heap24",
       "Type": "Task",
     },
@@ -14634,6 +14673,31 @@ Object {
 }
 `;
 
+exports[`step function props are passed through to the resource 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "return context.StateMachine.Name",
+      "Parameters": Object {
+        "_.$": "$$.Execution.Input",
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return context.StateMachine.Name": Object {
+      "End": true,
+      "InputPath": "$$.StateMachine.Name",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`templates 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -14861,7 +14925,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
       "ResultPath": "$.heap20",
       "Type": "Task",
     },
@@ -14908,7 +14972,7 @@ Object {
         "TableName": "__REPLACED_TOKEN",
         "UpdateExpression": "SET val = if_not_exists(val, :start) + :inc",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
       "ResultPath": "$.heap1",
       "Type": "Task",
     },
@@ -14937,7 +15001,7 @@ Object {
         "TableName": "__REPLACED_TOKEN",
         "UpdateExpression": "SET val = if_not_exists(val, :start) + :inc",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
       "ResultPath": "$.heap4",
       "Type": "Task",
     },
@@ -14966,7 +15030,7 @@ Object {
         "TableName": "__REPLACED_TOKEN",
         "UpdateExpression": "SET val = if_not_exists(val, :start) + :inc",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
       "ResultPath": "$.heap6",
       "Type": "Task",
     },
@@ -14995,7 +15059,7 @@ Object {
         "TableName": "__REPLACED_TOKEN",
         "UpdateExpression": "SET val = if_not_exists(val, :start) + :inc",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
       "ResultPath": "$.heap9",
       "Type": "Task",
     },
