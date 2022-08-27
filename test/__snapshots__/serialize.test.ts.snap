@@ -14190,13 +14190,6 @@ __preWarmContext.cache = __preWarmContext_cache;
 __f1.kind = \\"StepFunction\\";
 __f1.functionlessKind = \\"StepFunction\\";
 __f7.kind = \\"StepFunction.describeExecution\\";
-var __asl_1 = {};
-var __asl_1_ASL = {ContextName: \\"Amazon States Language\\"};
-__asl_1.ASL = __asl_1_ASL;
-var __vtl_1 = {};
-var __vtl_1_VTL = {ContextName: \\"Velocity Template\\"};
-__vtl_1.VTL = __vtl_1_VTL;
-__f7.unhandledContext = __f9;
 __f1.describeExecution = __f7;
 var __f1_definition = {};
 __f1_definition.StartAt = \\"Initialize Functionless Context\\";
@@ -14260,13 +14253,6 @@ function __f3(__0, __1) {
 
     return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f9(__0, __1) {
-  return (function() {
-    let asl_1 = __asl_1;
-    let vtl_1 = __vtl_1;
-
-    return ((kind, contextKind) => { throw new Error(\`\${kind} is only available in the \${asl_1.ASL.ContextName} and \${vtl_1.VTL.ContextName} context, but was used in \${contextKind}.\`); });;
-  }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
     let sfn = __f1;
@@ -14296,13 +14282,6 @@ __preWarmContext.cache = __preWarmContext_cache;
 __f1.kind = \\"StepFunction\\";
 __f1.functionlessKind = \\"StepFunction\\";
 __f7.kind = \\"StepFunction.describeExecution\\";
-var __asl_1 = {};
-var __asl_1_ASL = { ContextName: \\"Amazon States Language\\" };
-__asl_1.ASL = __asl_1_ASL;
-var __vtl_1 = {};
-var __vtl_1_VTL = { ContextName: \\"Velocity Template\\" };
-__vtl_1.VTL = __vtl_1_VTL;
-__f7.unhandledContext = __f9;
 __f1.describeExecution = __f7;
 var __f1_definition = {};
 __f1_definition.StartAt = \\"Initialize Functionless Context\\";
@@ -14398,16 +14377,6 @@ function __f7() {
     let preWarmContext = __preWarmContext;
     return function __computed(...args) {
       return c(args, preWarmContext);
-    };
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
-function __f9(__0, __1) {
-  return function() {
-    let asl_1 = __asl_1;
-    let vtl_1 = __vtl_1;
-    return (kind, contextKind) => {
-      throw new Error(\`\${kind} is only available in the \${asl_1.ASL.ContextName} and \${vtl_1.VTL.ContextName} context, but was used in \${contextKind}.\`);
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
