@@ -3068,8 +3068,8 @@ export class ASL {
                 // not initialized, but the array is empty
                 {
                   ...ASL.and(
-                    ASL.not(ASL.isPresent(`${arrayPath}[0]`)),
-                    ASL.not(ASL.isPresent(resultVariable))
+                    ASL.isNotPresent(`${arrayPath}[0]`),
+                    ASL.isNotPresent(resultVariable)
                   ),
                   Next: "returnEmpty",
                 },
@@ -5248,6 +5248,15 @@ export namespace ASLGraph {
     return ASLGraph.compare(left, right, op as any);
   }
 
+  /**
+   * Compare a computed variable or unresolved conditional (left) to any other value (right).
+   *
+   * Comparing two literals is done with {@link ASLGraph.compareOutputs}.
+   *
+   * TODO: Implement abstract equality algorithm for `==` and `!=`
+   *       https://github.com/functionless/functionless/issues/445
+   *       Current `==` and `===` are treated the same.
+   */
   export function compare(
     left: ASLGraph.JsonPath | ASLGraph.ConditionOutput,
     right: ASLGraph.Output,
@@ -5261,11 +5270,17 @@ export namespace ASLGraph {
       operator === ">=" ||
       operator === "<="
     ) {
+      // left is a condition and right is any value
       if (ASLGraph.isConditionOutput(left)) {
         return (
           ASLGraph.booleanCompare(left, right, operator) ?? ASL.falseCondition()
         );
       }
+
+      // returns comparisons if there are valid comparisons to return.
+      // comparisons return undefined when the right is a literal and not the right
+      // type to compare (aString === aNumber) or when the operator doesn't make sense for the type (ex: less than boolean)
+      // when L and R are paths: typeof L === "string" && stringCompare(L, R)
       const condition = ASL.or(
         ASLGraph.nullCompare(left, right, operator),
         ASLGraph.stringCompare(left, right, operator),
@@ -5273,24 +5288,23 @@ export namespace ASLGraph {
         ASLGraph.numberCompare(left, right, operator)
       );
 
-      if (ASLGraph.isJsonPath(right)) {
-        ASL.or(
-          // a === b while a and b are both not defined
-          ASL.not(
-            ASL.and(ASL.isPresent(left.jsonPath), ASL.isPresent(right.jsonPath))
-          ),
-          // a !== undefined && b !== undefined
-          ASL.and(
-            ASL.isPresent(left.jsonPath),
-            ASL.isPresent(right.jsonPath),
-            // && a [op] b
-            condition
-          )
-        );
-      }
-      return ASL.and(ASL.isPresent(left.jsonPath), condition);
+      return ASL.or(
+        // a === b while a and b are both not defined
+        ASLGraph.undefinedCompare(left, right, operator),
+        // a !== undefined && b !== undefined
+        ASL.and(
+          ASL.isPresent(left.jsonPath),
+          ASLGraph.isJsonPath(right)
+            ? ASL.isPresent(right.jsonPath)
+            : undefined,
+          // && a [op] b
+          condition
+        )
+      );
     } else if (operator === "!=" || operator === "!==") {
-      return ASL.not(ASLGraph.compare(left, right, "=="));
+      return ASL.not(
+        ASLGraph.compare(left, right, operator === "!==" ? "===" : "==")
+      );
     }
 
     assertNever(operator);
@@ -5431,6 +5445,24 @@ export namespace ASLGraph {
     return undefined;
   }
 
+  export function undefinedCompare(
+    left: ASLGraph.JsonPath,
+    right: ASLGraph.Output,
+    operator: ASL.ValueComparisonOperators
+  ) {
+    if (operator === "==" || operator === "===") {
+      if (ASLGraph.isJsonPath(right)) {
+        return ASL.and(
+          ASL.isNotPresent(left.jsonPath),
+          ASL.isNotPresent(right.jsonPath)
+        );
+      } else if (ASLGraph.isLiteralValue(right) && right.value === undefined) {
+        return ASL.isNotPresent(left.jsonPath);
+      }
+    }
+    return undefined;
+  }
+
   /**
    * Returns a object with the key formatted based on the contents of the value.
    * in ASL, object keys that reference json path values must have a suffix of ".$"
@@ -5556,7 +5588,7 @@ export namespace ASL {
           Or: conds,
         }
       : conds.length === 0
-      ? ASL.trueCondition()
+      ? ASL.falseCondition()
       : conds[0]!;
   }
 
@@ -5569,6 +5601,13 @@ export namespace ASL {
   export function isPresent(Variable: string): Condition {
     return {
       IsPresent: true,
+      Variable,
+    };
+  }
+
+  export function isNotPresent(Variable: string): Condition {
+    return {
+      IsPresent: false,
       Variable,
     };
   }
