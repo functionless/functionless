@@ -396,18 +396,6 @@ Object {
                 Object {
                   "And": Array [
                     Object {
-                      "IsBoolean": true,
-                      "Variable": "$.item",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$$.Execution.Id",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
                       "IsNumeric": true,
                       "Variable": "$.item",
                     },
@@ -673,18 +661,6 @@ Object {
                 Object {
                   "And": Array [
                     Object {
-                      "IsBoolean": true,
-                      "Variable": "$.item",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$$.Execution.Id",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
                       "IsNumeric": true,
                       "Variable": "$.item",
                     },
@@ -944,18 +920,6 @@ Object {
                     Object {
                       "StringGreaterThanPath": "$.first",
                       "Variable": "$.item",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.item",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$$.Execution.Id",
                     },
                   ],
                 },

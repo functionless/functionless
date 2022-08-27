@@ -5315,7 +5315,14 @@ export namespace ASLGraph {
     assertNever(operator);
   }
 
-  // Assumes the variable(s) are present and not null
+  /**
+   * Provide comparison logic when right may be a string for any left value.
+   *
+   * if right is string literal or json path
+   *   typeof left === "string" && left === right
+   * else
+   *    undefined
+   */
   export function stringCompare(
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
@@ -5344,6 +5351,14 @@ export namespace ASLGraph {
     return undefined;
   }
 
+  /**
+   * Provide comparison logic when right may be a number for any left value.
+   *
+   * if right is number literal or json path
+   *   typeof left === "number" && left === right
+   * else
+   *    undefined
+   */
   export function numberCompare(
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
@@ -5372,14 +5387,32 @@ export namespace ASLGraph {
     return undefined;
   }
 
+  /**
+   * Provide comparison logic when right may be a boolean for any left value.
+   *
+   * If ==/===
+   *   if left is a conditional
+   *      if right is a conditional
+   *         (!left && !right) || (left && right)
+   *      if right is boolean literal
+   *         right ? left : !left
+   *      if right is jsonPath
+   *         (!left && right === false) || (left && right === true)
+   *   if right is conditional
+   *      (!right && left === false) || (right && left === true)
+   *   if right is boolean literal or json path
+   *      typeof left === "boolean" && left === right
+   * else
+   *   undefined
+   */
   export function booleanCompare(
     left: ASLGraph.JsonPath | ASLGraph.ConditionOutput,
     right: ASLGraph.Output,
     operator: ASL.ValueComparisonOperators
   ) {
-    // (z == b) === (a ==c c)
-    if (ASLGraph.isConditionOutput(left)) {
-      if (operator === "===" || operator === "==") {
+    if (operator === "===" || operator === "==") {
+      // (z == b) === (a ==c c)
+      if (ASLGraph.isConditionOutput(left)) {
         if (ASLGraph.isConditionOutput(right)) {
           // (!left && !right) || (left && right)
           return ASL.or(
@@ -5402,39 +5435,50 @@ export namespace ASLGraph {
             ASL.and(left.condition, ASL.booleanEquals(right.jsonPath, true))
           );
         }
+      } else if (ASLGraph.isConditionOutput(right)) {
+        // a === (b === c)
+        return ASL.or(
+          ASL.and(
+            ASL.not(right.condition),
+            ASL.booleanEquals(left.jsonPath, false)
+          ),
+          ASL.and(right.condition, ASL.booleanEquals(left.jsonPath, true))
+        );
+      } else if (
+        ASLGraph.isJsonPath(right) ||
+        typeof right.value === "boolean"
+      ) {
+        return ASL.and(
+          ASL.isBoolean(left.jsonPath),
+          ASLGraph.isJsonPath(right)
+            ? ASL.comparePathOfType(
+                left.jsonPath,
+                operator,
+                right.jsonPath,
+                "boolean"
+              )
+            : ASL.compareValueOfType(
+                left.jsonPath,
+                operator,
+                right.value as boolean
+              )
+        );
       }
-      return undefined;
-    }
-    if (ASLGraph.isConditionOutput(right)) {
-      // a === (b === c)
-      return ASL.or(
-        ASL.and(
-          ASL.not(right.condition),
-          ASL.booleanEquals(left.jsonPath, false)
-        ),
-        ASL.and(right.condition, ASL.booleanEquals(left.jsonPath, true))
-      );
-    }
-    if (ASLGraph.isJsonPath(right) || typeof right.value === "boolean") {
-      return ASL.and(
-        ASL.isBoolean(left.jsonPath),
-        ASLGraph.isJsonPath(right)
-          ? ASL.comparePathOfType(
-              left.jsonPath,
-              operator,
-              right.jsonPath,
-              "boolean"
-            )
-          : ASL.compareValueOfType(
-              left.jsonPath,
-              operator,
-              right.value as boolean
-            )
-      );
     }
     return undefined;
   }
 
+  /**
+   * Provide comparison logic when right may be null for any left value.
+   *
+   * If ==/===
+   *   if right is a variable - check for isNull(left) && isNull(right)
+   *   if right is null - check for isNull(left)
+   *   else
+   *     undefined
+   * else
+   *   undefined
+   */
   export function nullCompare(
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
@@ -5450,6 +5494,17 @@ export namespace ASLGraph {
     return undefined;
   }
 
+  /**
+   * Provide comparison logic when right may be undefined for any left value.
+   *
+   * If ==/===
+   *   if right is a variable - check for isNotPresent(left) && isNotPresent(right)
+   *   if right is undefined - check for isNotPresent(left)
+   *   else
+   *     undefined
+   * else
+   *   undefined
+   */
   export function undefinedCompare(
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
