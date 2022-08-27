@@ -294,6 +294,7 @@ export const IAM_SERVICE_PREFIX: Record<keyof SDK, string> = {
   StorageGateway: "storagegateway",
   STS: "sts",
   Support: "support",
+  SupportApp: "supportapp",
   SWF: "swf", // Amazon Simple Workflow Service
   Synthetics: "synthetics",
   Textract: "textract",
