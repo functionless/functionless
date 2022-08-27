@@ -5278,8 +5278,9 @@ export namespace ASLGraph {
       }
 
       // returns comparisons if there are valid comparisons to return.
-      // comparisons return undefined when the right is a literal and not the right
-      // type to compare (aString === aNumber) or when the operator doesn't make sense for the type (ex: less than boolean)
+      // comparisons return undefined when the right is a literal and
+      // not the correct type to compare (aString === aNumber) or when the
+      // operator doesn't make sense for the type (ex: less than boolean)
       // when L and R are paths: typeof L === "string" && stringCompare(L, R)
       const condition = ASL.or(
         ASLGraph.nullCompare(left, right, operator),
@@ -5289,15 +5290,19 @@ export namespace ASLGraph {
       );
 
       return ASL.or(
-        // a === b while a and b are both not defined
+        // for ==/===
+        // if right is undefined literal, check isNotPresent(left)
+        // if right is a variable, check isNotPresent(left) && isNotPresent(right)
         ASLGraph.undefinedCompare(left, right, operator),
-        // a !== undefined && b !== undefined
+        // ||
         ASL.and(
+          // left !== undefined
           ASL.isPresent(left.jsonPath),
+          // && right !== undefined (if right is a variable)
           ASLGraph.isJsonPath(right)
             ? ASL.isPresent(right.jsonPath)
             : undefined,
-          // && a [op] b
+          // && left [op] right
           condition
         )
       );
