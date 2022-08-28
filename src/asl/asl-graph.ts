@@ -915,6 +915,15 @@ export namespace ASLGraph {
     return ASLGraph.compare(left, right, op as any);
   }
 
+  /**
+   * Compare a computed variable or unresolved conditional (left) to any other value (right).
+   *
+   * Comparing two literals is done with {@link ASLGraph.compareOutputs}.
+   *
+   * TODO: Implement abstract equality algorithm for `==` and `!=`
+   *       https://github.com/functionless/functionless/issues/445
+   *       Current `==` and `===` are treated the same.
+   */
   export function compare(
     left: ASLGraph.JsonPath | ASLGraph.ConditionOutput,
     right: ASLGraph.Output,
@@ -928,11 +937,18 @@ export namespace ASLGraph {
       operator === ">=" ||
       operator === "<="
     ) {
+      // left is a condition and right is any value
       if (ASLGraph.isConditionOutput(left)) {
         return (
           ASLGraph.booleanCompare(left, right, operator) ?? ASL.falseCondition()
         );
       }
+
+      // returns comparisons if there are valid comparisons to return.
+      // comparisons return undefined when the right is a literal and
+      // not the correct type to compare (aString === aNumber) or when the
+      // operator doesn't make sense for the type (ex: less than boolean)
+      // when L and R are paths: typeof L === "string" && stringCompare(L, R)
       const condition = ASL.or(
         ASLGraph.nullCompare(left, right, operator),
         ASLGraph.stringCompare(left, right, operator),
@@ -940,30 +956,40 @@ export namespace ASLGraph {
         ASLGraph.numberCompare(left, right, operator)
       );
 
-      if (ASLGraph.isJsonPath(right)) {
-        ASL.or(
-          // a === b while a and b are both not defined
-          ASL.not(
-            ASL.and(ASL.isPresent(left.jsonPath), ASL.isPresent(right.jsonPath))
-          ),
-          // a !== undefined && b !== undefined
-          ASL.and(
-            ASL.isPresent(left.jsonPath),
-            ASL.isPresent(right.jsonPath),
-            // && a [op] b
-            condition
-          )
-        );
-      }
-      return ASL.and(ASL.isPresent(left.jsonPath), condition);
+      return ASL.or(
+        // for ==/===
+        // if right is undefined literal, check isNotPresent(left)
+        // if right is a variable, check isNotPresent(left) && isNotPresent(right)
+        ASLGraph.undefinedCompare(left, right, operator),
+        // ||
+        ASL.and(
+          // left !== undefined
+          ASL.isPresent(left.jsonPath),
+          // && right !== undefined (if right is a variable)
+          ASLGraph.isJsonPath(right)
+            ? ASL.isPresent(right.jsonPath)
+            : undefined,
+          // && left [op] right
+          condition
+        )
+      );
     } else if (operator === "!=" || operator === "!==") {
-      return ASL.not(ASLGraph.compare(left, right, "=="));
+      return ASL.not(
+        ASLGraph.compare(left, right, operator === "!==" ? "===" : "==")
+      );
     }
 
     assertNever(operator);
   }
 
-  // Assumes the variable(s) are present and not null
+  /**
+   * Provide comparison logic when right may be a string for any left value.
+   *
+   * if right is string literal or json path
+   *   typeof left === "string" && left === right
+   * else
+   *    undefined
+   */
   export function stringCompare(
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
@@ -992,6 +1018,14 @@ export namespace ASLGraph {
     return undefined;
   }
 
+  /**
+   * Provide comparison logic when right may be a number for any left value.
+   *
+   * if right is number literal or json path
+   *   typeof left === "number" && left === right
+   * else
+   *    undefined
+   */
   export function numberCompare(
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
@@ -1020,14 +1054,32 @@ export namespace ASLGraph {
     return undefined;
   }
 
+  /**
+   * Provide comparison logic when right may be a boolean for any left value.
+   *
+   * If ==/===
+   *   if left is a conditional
+   *      if right is a conditional
+   *         (!left && !right) || (left && right)
+   *      if right is boolean literal
+   *         right ? left : !left
+   *      if right is jsonPath
+   *         (!left && right === false) || (left && right === true)
+   *   if right is conditional
+   *      (!right && left === false) || (right && left === true)
+   *   if right is boolean literal or json path
+   *      typeof left === "boolean" && left === right
+   * else
+   *   undefined
+   */
   export function booleanCompare(
     left: ASLGraph.JsonPath | ASLGraph.ConditionOutput,
     right: ASLGraph.Output,
     operator: ASL.ValueComparisonOperators
   ) {
-    // (z == b) === (a ==c c)
-    if (ASLGraph.isConditionOutput(left)) {
-      if (operator === "===" || operator === "==") {
+    if (operator === "===" || operator === "==") {
+      // (z == b) === (a ==c c)
+      if (ASLGraph.isConditionOutput(left)) {
         if (ASLGraph.isConditionOutput(right)) {
           // (!left && !right) || (left && right)
           return ASL.or(
@@ -1050,39 +1102,50 @@ export namespace ASLGraph {
             ASL.and(left.condition, ASL.booleanEquals(right.jsonPath, true))
           );
         }
+      } else if (ASLGraph.isConditionOutput(right)) {
+        // a === (b === c)
+        return ASL.or(
+          ASL.and(
+            ASL.not(right.condition),
+            ASL.booleanEquals(left.jsonPath, false)
+          ),
+          ASL.and(right.condition, ASL.booleanEquals(left.jsonPath, true))
+        );
+      } else if (
+        ASLGraph.isJsonPath(right) ||
+        typeof right.value === "boolean"
+      ) {
+        return ASL.and(
+          ASL.isBoolean(left.jsonPath),
+          ASLGraph.isJsonPath(right)
+            ? ASL.comparePathOfType(
+                left.jsonPath,
+                operator,
+                right.jsonPath,
+                "boolean"
+              )
+            : ASL.compareValueOfType(
+                left.jsonPath,
+                operator,
+                right.value as boolean
+              )
+        );
       }
-      return undefined;
-    }
-    if (ASLGraph.isConditionOutput(right)) {
-      // a === (b === c)
-      return ASL.or(
-        ASL.and(
-          ASL.not(right.condition),
-          ASL.booleanEquals(left.jsonPath, false)
-        ),
-        ASL.and(right.condition, ASL.booleanEquals(left.jsonPath, true))
-      );
-    }
-    if (ASLGraph.isJsonPath(right) || typeof right.value === "boolean") {
-      return ASL.and(
-        ASL.isBoolean(left.jsonPath),
-        ASLGraph.isJsonPath(right)
-          ? ASL.comparePathOfType(
-              left.jsonPath,
-              operator,
-              right.jsonPath,
-              "boolean"
-            )
-          : ASL.compareValueOfType(
-              left.jsonPath,
-              operator,
-              right.value as boolean
-            )
-      );
     }
     return undefined;
   }
 
+  /**
+   * Provide comparison logic when right may be null for any left value.
+   *
+   * If ==/===
+   *   if right is a variable - check for isNull(left) && isNull(right)
+   *   if right is null - check for isNull(left)
+   *   else
+   *     undefined
+   * else
+   *   undefined
+   */
   export function nullCompare(
     left: ASLGraph.JsonPath,
     right: ASLGraph.Output,
@@ -1093,6 +1156,35 @@ export namespace ASLGraph {
         return ASL.and(ASL.isNull(left.jsonPath), ASL.isNull(right.jsonPath));
       } else if (ASLGraph.isLiteralValue(right) && right.value === null) {
         return ASL.isNull(left.jsonPath);
+      }
+    }
+    return undefined;
+  }
+
+  /**
+   * Provide comparison logic when right may be undefined for any left value.
+   *
+   * If ==/===
+   *   if right is a variable - check for isNotPresent(left) && isNotPresent(right)
+   *   if right is undefined - check for isNotPresent(left)
+   *   else
+   *     undefined
+   * else
+   *   undefined
+   */
+  export function undefinedCompare(
+    left: ASLGraph.JsonPath,
+    right: ASLGraph.Output,
+    operator: ASL.ValueComparisonOperators
+  ) {
+    if (operator === "==" || operator === "===") {
+      if (ASLGraph.isJsonPath(right)) {
+        return ASL.and(
+          ASL.isNotPresent(left.jsonPath),
+          ASL.isNotPresent(right.jsonPath)
+        );
+      } else if (ASLGraph.isLiteralValue(right) && right.value === undefined) {
+        return ASL.isNotPresent(left.jsonPath);
       }
     }
     return undefined;

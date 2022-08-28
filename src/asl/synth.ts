@@ -2792,8 +2792,8 @@ export class ASL {
                 // not initialized, but the array is empty
                 {
                   ...ASL.and(
-                    ASL.not(ASL.isPresent(`${arrayPath}[0]`)),
-                    ASL.not(ASL.isPresent(resultVariable))
+                    ASL.isNotPresent(`${arrayPath}[0]`),
+                    ASL.isNotPresent(resultVariable)
                   ),
                   Next: "returnEmpty",
                 },
@@ -4108,7 +4108,7 @@ export namespace ASL {
           Or: conds,
         }
       : conds.length === 0
-      ? ASL.trueCondition()
+      ? ASL.falseCondition()
       : conds[0]!;
   }
 
@@ -4121,6 +4121,13 @@ export namespace ASL {
   export function isPresent(Variable: string): Condition {
     return {
       IsPresent: true,
+      Variable,
+    };
+  }
+
+  export function isNotPresent(Variable: string): Condition {
+    return {
+      IsPresent: false,
       Variable,
     };
   }
