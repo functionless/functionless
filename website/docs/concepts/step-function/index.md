@@ -3,9 +3,21 @@
 AWS's Step Function service offers a powerful primitive for building long-running and short-running state machine workflows in the cloud without managing complex infrastructure.
 
 ```ts
-new StepFunction(scope, "F", async (payload) => {
+new StepFunction(scope, "F", async () => {
+  return "hello, world";
+});
+```
+
+The Step Function can make calls to other resource like a Lambda [Function](../function/), handle a `payload`, introduce wait time, add conditional logic, throw errors, and more.
+
+```ts
+const serviceCall = new Function(scope, "serviceCall", async (input: string) => {
+  console.log(input);
+});
+new StepFunction(scope, "F", async (payload: { property?: string }) => {
   if (payload.property) {
-    await serviceCall(payload);
+    SFN.waitFor(10);
+    await serviceCall(payload.property);
   } else {
     throw new Error("missing property");
   }
@@ -56,9 +68,13 @@ These State Machines have many use-cases, such as long-running workflows involvi
 Functionless automatically generates the ASL (and any IAM Policies) directly from your TypeScript code, enabling you to leverage the operational benefits of Step Functions using ordinary control-flow such as `if-else`, `for`, `while`, etc.
 
 ```ts
-new StepFunction(scope, "F", async (payload) => {
+const serviceCall = new Function(scope, "serviceCall", async (input: string) => {
+  console.log(input);
+});
+new StepFunction(scope, "F", async (payload: { property?: string }) => {
   if (payload.property) {
-    await serviceCall(payload);
+    SFN.waitFor(10);
+    await serviceCall(payload.property);
   } else {
     throw new Error("missing property");
   }

@@ -25,8 +25,8 @@ new StepFunction(scope, "StepFunction", () => {
 The function accepts two arguments, `input` and `context`. `input` (first position) must be an object (key-value pairs). It must be an object because the input is used as the initial state of the state machine. For more on context, see [Context Argument](#context-argument).
 
 ```ts
-new StepFunction(scope, "StepFunction", (input: { key: string }) => {
-  return "hello world";
+new StepFunction(scope, "StepFunction", (input: { key: string }, context) => {
+  return `${input.key} ${context.Execution.Name}`;
 });
 ```
 
@@ -87,9 +87,9 @@ import { $AWS, Table } from "functionless";
 
 const table = Table.fromTable<Item, "pk">(new aws_dynamodb.Table(..));
 
-new StepFunction(stack, "Func", (name: string) => {
+new StepFunction(stack, "Func", async (name: string) => {
   // call DynamoDB's DeleteItem API.
-  $AWS.DynamoDB.DeleteItem({
+  await $AWS.DynamoDB.DeleteItem({
     Table: table,
     Key: {
       name: {
