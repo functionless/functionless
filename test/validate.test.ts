@@ -49,6 +49,8 @@ const skipErrorCodes: ErrorCode[] = [
   ErrorCodes.Classes_are_not_supported,
   // Deprecated - No longer used
   ErrorCodes.StepFunction_invalid_filter_syntax,
+  // will not support integration specific validation, for now.
+  ErrorCodes.Unsupported_AWS_SDK_in_Resource,
 ];
 
 const file: string | undefined = fs

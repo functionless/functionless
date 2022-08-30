@@ -1519,6 +1519,37 @@ test("return AWS.SDK.CloudWatch.describeAlarms dynamic parameters", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("return AWS.SDK.ApiGatewayManagementApi.postToConnection is not supported", () => {
+  const { stack } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction<
+        { prefix: string | undefined },
+        AWS.CloudWatch.MetricAlarms | undefined
+      >(stack, "fn", async (input) => {
+        await $AWS.SDK.ApiGatewayManagementApi.postToConnection(
+          {
+            ConnectionId: "blah",
+            Data: "some data",
+          },
+          {
+            iam: {
+              resources: ["*"],
+            },
+          }
+        );
+
+        if (alarms.MetricAlarms === undefined) {
+          return;
+        }
+
+        return alarms.MetricAlarms;
+      })
+  ).toThrow(
+    "Step Functions does not support an API Integration with ApiGatewayManagementApi and method postToConnection."
+  );
+});
+
 test("for-loop over a list literal", () => {
   const { stack, computeScore } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ id: string }, void>(

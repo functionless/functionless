@@ -85,9 +85,9 @@ const project = new CustomTypescriptProject({
     "fs-extra",
     "minimatch",
     "@functionless/nodejs-closure-serializer",
-    "@functionless/ast-reflection@^0.1.2",
+    "@functionless/ast-reflection@^0.2.1",
     "@swc/cli",
-    "@swc/core@1.2.218",
+    "@swc/core@1.2.245",
     "@swc/register",
   ],
   devDeps: [
@@ -154,6 +154,7 @@ const project = new CustomTypescriptProject({
       declarationMap: true,
       noUncheckedIndexedAccess: true,
       lib: ["dom", "ES2019"],
+      skipLibCheck: true,
     },
   },
   tsconfigDev: {
@@ -162,6 +163,7 @@ const project = new CustomTypescriptProject({
         "@fnls": ["lib/index"],
       },
       baseUrl: ".",
+      skipLibCheck: true,
     },
   },
   gitignore: [".DS_Store", ".dccache", ".swc"],

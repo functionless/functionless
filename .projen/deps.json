@@ -223,7 +223,7 @@
     },
     {
       "name": "@functionless/ast-reflection",
-      "version": "^0.1.2",
+      "version": "^0.2.1",
       "type": "runtime"
     },
     {
@@ -236,7 +236,7 @@
     },
     {
       "name": "@swc/core",
-      "version": "1.2.218",
+      "version": "1.2.245",
       "type": "runtime"
     },
     {

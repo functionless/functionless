@@ -1264,6 +1264,19 @@ export namespace ErrorCodes {
     type: ErrorType.WARN,
     title: "StepFunctions mismatched index type.",
   };
+
+  /**
+   * The AWS SDK being used in the current resource is unsupported by that resource.
+   *
+   * Workaround:
+   *
+   * Most of the ASK APIs will work within
+   */
+  export const Unsupported_AWS_SDK_in_Resource: ErrorCode = {
+    code: 10036,
+    type: ErrorType.ERROR,
+    title: "Unsupported AWS SDK in Resource.",
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.
