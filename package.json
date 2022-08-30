@@ -85,10 +85,10 @@
     "@aws-cdk/aws-appsync-alpha": "*"
   },
   "dependencies": {
-    "@functionless/ast-reflection": "^0.2.0",
+    "@functionless/ast-reflection": "^0.2.1",
     "@functionless/nodejs-closure-serializer": "^0.1.2",
     "@swc/cli": "^0.1.57",
-    "@swc/core": "^1.2.244",
+    "@swc/core": "1.2.245",
     "@swc/register": "^0.1.10",
     "@types/aws-lambda": "^8.10.102",
     "fs-extra": "^10.1.0",
