@@ -154,6 +154,7 @@ const project = new CustomTypescriptProject({
       declarationMap: true,
       noUncheckedIndexedAccess: true,
       lib: ["dom", "ES2019"],
+      skipLibCheck: true,
     },
   },
   tsconfigDev: {
@@ -162,6 +163,7 @@ const project = new CustomTypescriptProject({
         "@fnls": ["lib/index"],
       },
       baseUrl: ".",
+      skipLibCheck: true,
     },
   },
   gitignore: [".DS_Store", ".dccache", ".swc"],

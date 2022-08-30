@@ -892,7 +892,7 @@ export function makeFunctionlessChecker(
       return isConstant(node.expression);
     } else if (
       ts.isBinaryExpression(node) &&
-      isArithmeticToken(node.operatorToken.kind)
+      isBinaryArithmeticToken(node.operatorToken.kind)
     ) {
       return isConstant(node.left) && isConstant(node.right);
     } else if (
@@ -931,7 +931,7 @@ export function makeFunctionlessChecker(
   }
 }
 
-const ArithmeticOperators = [
+const BinaryArithmeticOperators = [
   ts.SyntaxKind.PlusToken, // +
   ts.SyntaxKind.MinusToken, // -
   ts.SyntaxKind.AsteriskToken, // *
@@ -942,20 +942,33 @@ const ArithmeticOperators = [
   ts.SyntaxKind.AsteriskEqualsToken, // *=
   ts.SyntaxKind.SlashEqualsToken, // /=
   ts.SyntaxKind.PercentEqualsToken, // %=
+] as const;
+
+const UnaryArithmeticOperators = [
   ts.SyntaxKind.AsteriskAsteriskToken, // **
   ts.SyntaxKind.MinusMinusToken, // --
   ts.SyntaxKind.PlusPlusToken, // ++
 ] as const;
 
-export type ArithmeticToken = typeof ArithmeticOperators[number];
+export type BinaryArithmeticToken = typeof BinaryArithmeticOperators[number];
+export type UnaryArithmeticToken = typeof UnaryArithmeticOperators[number];
 
 /**
- * Check if a {@link token} is an {@link ArithmeticToken}: `+`, `-`, `*` or `/`.
+ * Check if a {@link token} is an {@link BinaryArithmeticToken}: `+`, `-`, `*` or `/`.
  */
-export function isArithmeticToken(
+export function isBinaryArithmeticToken(
   token: ts.SyntaxKind
-): token is ArithmeticToken {
-  return ArithmeticOperators.includes(token as ArithmeticToken);
+): token is BinaryArithmeticToken {
+  return BinaryArithmeticOperators.includes(token as BinaryArithmeticToken);
+}
+
+/**
+ * Check if a {@link token} is an {@link UnaryArithmeticToken}: `++`, `--`, or `**`.
+ */
+export function isUnaryArithmeticToken(
+  token: ts.SyntaxKind
+): token is UnaryArithmeticToken {
+  return UnaryArithmeticOperators.includes(token as UnaryArithmeticToken);
 }
 
 /**

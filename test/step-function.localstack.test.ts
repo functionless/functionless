@@ -1934,7 +1934,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "Boolean()",
+    "Boolean coerce",
     (parent) =>
       new StepFunction(parent, "sfn", (input) => {
         return {
@@ -1966,7 +1966,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "Number()",
+    "Number coerce",
     (parent) =>
       new StepFunction(parent, "sfn", (input) => {
         return {
@@ -1981,7 +1981,20 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           zeroNull: Number(null),
           nanObject: Number({}),
           nanString: Number("{}"),
+          nanTrueString: Number("true"),
           nanVar: Number(input.nan),
+          oneStringUnaryPlus: +"1",
+          oneBooleanUnaryPlus: +true,
+          oneNumberUnaryPlus: +1,
+          oneVarUnaryPlus: +input.one,
+          zeroStringUnaryPlus: +"",
+          zeroBooleanUnaryPlus: +false,
+          zeroNumberUnaryPlus: +0,
+          zeroVarUnaryPlus: +input.zero,
+          zeroNullUnaryPlus: +null,
+          nanObjectUnaryPlus: +{},
+          nanStringUnaryPlus: +"{}",
+          nanVarUnaryPlus: +input.nan,
           empty: Number(),
         };
       }),
@@ -2001,13 +2014,26 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       nanObject: null as unknown as number,
       nanString: null as unknown as number,
       nanVar: null as unknown as number,
+      nanTrueString: null as unknown as number,
+      oneStringUnaryPlus: 1,
+      oneBooleanUnaryPlus: 1,
+      oneNumberUnaryPlus: 1,
+      oneVarUnaryPlus: 1,
+      zeroStringUnaryPlus: 0,
+      zeroBooleanUnaryPlus: 0,
+      zeroNumberUnaryPlus: 0,
+      zeroVarUnaryPlus: 0,
+      zeroNullUnaryPlus: 0,
+      nanObjectUnaryPlus: null as unknown as number,
+      nanStringUnaryPlus: null as unknown as number,
+      nanVarUnaryPlus: null as unknown as number,
       empty: 0,
     },
     { one: "1", zero: "0", nan: "{}" }
   );
 
   test(
-    "String()",
+    "String coerce",
     (parent) =>
       new StepFunction(parent, "sfn", (input) => {
         return {
@@ -2015,8 +2041,9 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           stringBoolean: String(true),
           stringNumber: String(1),
           stringVar: String(input.val),
+          stringStringVar: String(input.str),
           stringEmpty: String(""),
-          stringObject: String({}),
+          stringObject: String({ a: "a" }),
           stringNull: String(null),
           empty: String(),
         };
@@ -2026,12 +2053,13 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       stringBoolean: "true",
       stringNumber: "1",
       stringVar: "1",
+      stringStringVar: "blah",
       stringEmpty: "",
-      stringObject: "{}",
+      stringObject: "[object Object]",
       stringNull: "null",
       empty: "",
     },
-    { val: 1 }
+    { val: 1, str: "blah" }
   );
 });
 

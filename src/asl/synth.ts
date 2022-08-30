@@ -1894,12 +1894,77 @@ export class ASL {
               return { value: !!argOutput.value, containsJsonPath: false };
             }
           });
+        } else if (ref === String) {
+          const [arg] = expr.args;
+          if (!arg) {
+            return {
+              // String()
+              value: "",
+              containsJsonPath: false,
+            };
+          }
+          return this.evalExprToJsonPathOrLiteral(arg.expr, (argOutput) => {
+            // String(var) or String({ key: var })
+            if (ASLGraph.isJsonPath(argOutput) || argOutput.containsJsonPath) {
+              const temp = this.newHeapVariable();
+              const jsonPathStates = this.normalizeOutputToJsonPath(argOutput);
+              const { jsonPath } = ASLGraph.isJsonPath(jsonPathStates)
+                ? jsonPathStates
+                : jsonPathStates.output;
+
+              return {
+                ...ASLGraph.joinSubStates(arg, jsonPathStates, {
+                  // if this was a literal, we know it was an object, not a string
+                  startState: ASLGraph.isLiteralValue(argOutput)
+                    ? "format"
+                    : "checkString",
+                  states: {
+                    // String("") => ""
+                    checkString: {
+                      Type: "Choice",
+                      Choices: [{ ...ASL.isString(jsonPath), Next: "assign" }],
+                      Default: "format",
+                    },
+                    format: {
+                      Type: "Pass",
+                      Parameters: {
+                        "str.$": `States.JsonToString(${jsonPath})`,
+                      },
+                      ResultPath: temp,
+                      Next: ASLGraph.DeferNext,
+                    },
+                    // since this state can only output a single json path value,
+                    // assign the input json path to the expected output path
+                    assign: {
+                      Type: "Pass",
+                      InputPath: jsonPath,
+                      ResultPath: `${temp}.str`,
+                      Next: ASLGraph.DeferNext,
+                    },
+                  },
+                })!,
+                output: {
+                  jsonPath: `${temp}.str`,
+                },
+              };
+            } else {
+              // String(1)
+              return {
+                value: String(argOutput.value),
+                containsJsonPath: false,
+              };
+            }
+          });
+        } else if (ref === Number) {
+          const [arg] = expr.args;
+          return this.evalToNumber(arg?.expr);
         }
       }
       throw new Error(
-        `call must be a service call or list .slice, .map, .forEach or .filter: ${toStateName(
-          expr
-        )}`
+        `call must be an integration call, list(.slice, .map, .forEach, .filter, or ` +
+          `.join), Number(), Boolean, String(), JSON.parse, JSON.stringify, or Promise.all, found: ${toStateName(
+            expr
+          )}`
       );
     } else if (isVariableReference(expr)) {
       if (isIdentifier(expr)) {
@@ -2074,12 +2139,13 @@ export class ASL {
             );
           });
         }
+      } else if (expr.op === "+") {
+        return this.evalToNumber(expr.expr);
       } else if (
         expr.op === "-" ||
         expr.op === "++" ||
         expr.op === "--" ||
-        expr.op === "~" ||
-        expr.op === "+"
+        expr.op === "~"
       ) {
         throw new SynthError(
           ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
@@ -2471,6 +2537,139 @@ export class ASL {
   }
 
   /**
+   * Evaluates any expression to a number. When the number cannot be converted, returns `null`.
+   *
+   * https://262.ecma-international.org/5.1/#sec-9.3
+   */
+  public evalToNumber(expr?: Expr): ASLGraph.NodeResults {
+    if (!expr) {
+      return {
+        value: 0,
+        containsJsonPath: false,
+      };
+    }
+    return this.evalExpr(expr, (output) => {
+      if (ASLGraph.isConditionOutput(output)) {
+        const temp = this.newHeapVariable();
+        return this.conditionState(
+          expr,
+          output.condition,
+          {
+            Type: "Pass" as const,
+            Result: 1,
+            Next: ASLGraph.DeferNext,
+            ResultPath: temp,
+            output: { jsonPath: temp },
+          },
+          {
+            Type: "Pass" as const,
+            Result: 0,
+            Next: ASLGraph.DeferNext,
+            ResultPath: temp,
+            output: { jsonPath: temp },
+          },
+          temp
+        );
+      } else if (ASLGraph.isJsonPath(output)) {
+        const temp = this.newHeapVariable();
+        return {
+          startState: "check",
+          states: {
+            // string to json only supports strings!
+            check: {
+              Type: "Choice",
+              Choices: [
+                // Number(undefined) => NaN
+                { ...ASL.isNotPresent(output.jsonPath), Next: "null" },
+                // Number("") => 0
+                {
+                  ...ASL.and(
+                    ASL.isString(output.jsonPath),
+                    ASL.stringEquals(output.jsonPath, "")
+                  ),
+                  Next: "zero",
+                },
+                // Number(null) => 0
+                { ...ASL.isNull(output.jsonPath), Next: "zero" },
+                // Number("1") => 1
+                { ...ASL.isString(output.jsonPath), Next: "format" },
+                // Number(1) => 1
+                { ...ASL.isNumeric(output.jsonPath), Next: "assign" },
+                // Number(true) => 1
+                {
+                  ...ASL.and(
+                    ASL.isBoolean(output.jsonPath),
+                    ASL.booleanEquals(output.jsonPath, true)
+                  ),
+                  Next: "one",
+                },
+                // Number(false) => 0
+                {
+                  ...ASL.and(
+                    ASL.isBoolean(output.jsonPath),
+                    ASL.booleanEquals(output.jsonPath, false)
+                  ),
+                  Next: "zero",
+                },
+              ],
+              // Number(null/{}/[]) => NaN
+              Default: "null",
+            },
+            format: {
+              Type: "Pass",
+              Parameters: {
+                // what happens if this isn't a string?
+                "num.$": `States.StringToJson(${output.jsonPath})`,
+              },
+              ResultPath: temp,
+              Next: "checkStringOutput",
+            },
+            // Number("true") => NaN
+            checkStringOutput: {
+              Type: "Choice",
+              Choices: [
+                { ...ASL.isNumeric(`${temp}.num`), Next: ASLGraph.DeferNext },
+              ],
+              Default: "null",
+            },
+            assign: this.assignValue(undefined, output, `${temp}.num`),
+            one: this.assignValue(
+              undefined,
+              { value: 1, containsJsonPath: false },
+              `${temp}.num`
+            ),
+            zero: this.assignValue(
+              undefined,
+              { value: 0, containsJsonPath: false },
+              `${temp}.num`
+            ),
+            // Treat NaN as Null as we do not support special symbols.
+            null: this.assignValue(
+              undefined,
+              { jsonPath: this.context.null },
+              `${temp}.num`
+            ),
+          },
+          output: {
+            jsonPath: `${temp}.num`,
+          },
+        };
+      } else {
+        return {
+          value:
+            typeof output.value === "number"
+              ? output.value
+              : Number.isNaN(output.value)
+              ? // Treat NaN as Null as we do not support special symbols.
+                null
+              : Number(output.value),
+          containsJsonPath: false,
+        };
+      }
+    });
+  }
+
+  /**
    * Helper that generates an {@link ASLGraph.OutputState} which returns null.
    */
   public stateWithVoidOutput(
@@ -2540,12 +2739,16 @@ export class ASL {
         true: ASLGraph.joinSubStates(
           ASLGraph.isStateOrSubState(trueState) ? trueState.node : undefined,
           trueState,
-          this.assignValue(undefined, trueOutput, tempHeap)
+          ASLGraph.isJsonPath(trueOutput) && trueOutput.jsonPath === tempHeap
+            ? { Type: "Pass", Next: ASLGraph.DeferNext }
+            : this.assignValue(undefined, trueOutput, tempHeap)
         )!,
         false: ASLGraph.joinSubStates(
           ASLGraph.isStateOrSubState(falseState) ? falseState.node : undefined,
           falseState,
-          this.assignValue(undefined, falseOutput, tempHeap)
+          ASLGraph.isJsonPath(falseOutput) && falseOutput.jsonPath === tempHeap
+            ? { Type: "Pass", Next: ASLGraph.DeferNext }
+            : this.assignValue(undefined, falseOutput, tempHeap)
         )!,
       },
       output: {

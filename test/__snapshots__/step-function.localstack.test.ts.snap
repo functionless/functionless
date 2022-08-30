@@ -39,6 +39,1162 @@ Object {
 }
 `;
 
+exports[`Number coerce 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "11__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu": Object {
+      "InputPath": "$.heap10.num",
+      "Next": "null 1",
+      "ResultPath": "$.heap11",
+      "Type": "Pass",
+    },
+    "13__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu": Object {
+      "InputPath": "$.heap12.num",
+      "Next": "input.nan 1",
+      "ResultPath": "$.heap13",
+      "Type": "Pass",
+    },
+    "15__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu": Object {
+      "InputPath": "$.heap14.num",
+      "Next": "1__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "ResultPath": "$.heap15",
+      "Type": "Pass",
+    },
+    "1__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num": Object {
+      "End": true,
+      "Parameters": Object {
+        "empty": 0,
+        "nanObject": null,
+        "nanObjectUnaryPlus": null,
+        "nanString": null,
+        "nanStringUnaryPlus": null,
+        "nanTrueString": null,
+        "nanVar.$": "$.heap7",
+        "nanVarUnaryPlus.$": "$.heap15",
+        "oneBoolean": 1,
+        "oneBooleanUnaryPlus": 1,
+        "oneNumber": 1,
+        "oneNumberUnaryPlus": 1,
+        "oneString": 1,
+        "oneStringUnaryPlus": 1,
+        "oneVar.$": "$.heap1",
+        "oneVarUnaryPlus.$": "$.heap9",
+        "zeroBoolean": 0,
+        "zeroBooleanUnaryPlus": 0,
+        "zeroNull.$": "$.heap5",
+        "zeroNullUnaryPlus.$": "$.heap13",
+        "zeroNumber": 0,
+        "zeroNumberUnaryPlus": 0,
+        "zeroString": 0,
+        "zeroStringUnaryPlus": 0,
+        "zeroVar.$": "$.heap3",
+        "zeroVarUnaryPlus.$": "$.heap11",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num 1": Object {
+      "InputPath": "$.heap0.num",
+      "Next": "input.zero",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "3__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num": Object {
+      "InputPath": "$.heap2.num",
+      "Next": "null",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "5__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num": Object {
+      "InputPath": "$.heap4.num",
+      "Next": "input.nan",
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "7__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num": Object {
+      "InputPath": "$.heap6.num",
+      "Next": "input.one",
+      "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "9__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num": Object {
+      "InputPath": "$.heap8.num",
+      "Next": "input.zero 1",
+      "ResultPath": "$.heap9",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Number",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "assign__input.nan": Object {
+      "InputPath": "$.input.nan",
+      "Next": "7__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "ResultPath": "$.heap6.num",
+      "Type": "Pass",
+    },
+    "assign__input.nan 1": Object {
+      "InputPath": "$.input.nan",
+      "Next": "15__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+      "ResultPath": "$.heap14.num",
+      "Type": "Pass",
+    },
+    "assign__input.one": Object {
+      "InputPath": "$.input.one",
+      "Next": "9__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "ResultPath": "$.heap8.num",
+      "Type": "Pass",
+    },
+    "assign__input.zero": Object {
+      "InputPath": "$.input.zero",
+      "Next": "3__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "ResultPath": "$.heap2.num",
+      "Type": "Pass",
+    },
+    "assign__input.zero 1": Object {
+      "InputPath": "$.input.zero",
+      "Next": "11__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+      "ResultPath": "$.heap10.num",
+      "Type": "Pass",
+    },
+    "assign__null": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "5__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "ResultPath": "$.heap4.num",
+      "Type": "Pass",
+    },
+    "assign__null 1": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "13__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+      "ResultPath": "$.heap12.num",
+      "Type": "Pass",
+    },
+    "assign__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber": Object {
+      "InputPath": "$.input.one",
+      "Next": "1__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num 1",
+      "ResultPath": "$.heap0.num",
+      "Type": "Pass",
+    },
+    "checkStringOutput__input.nan": Object {
+      "Choices": Array [
+        Object {
+          "IsNumeric": true,
+          "Next": "7__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+          "Variable": "$.heap6.num",
+        },
+      ],
+      "Default": "null__input.nan",
+      "Type": "Choice",
+    },
+    "checkStringOutput__input.nan 1": Object {
+      "Choices": Array [
+        Object {
+          "IsNumeric": true,
+          "Next": "15__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+          "Variable": "$.heap14.num",
+        },
+      ],
+      "Default": "null__input.nan 1",
+      "Type": "Choice",
+    },
+    "checkStringOutput__input.one": Object {
+      "Choices": Array [
+        Object {
+          "IsNumeric": true,
+          "Next": "9__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+          "Variable": "$.heap8.num",
+        },
+      ],
+      "Default": "null__input.one",
+      "Type": "Choice",
+    },
+    "checkStringOutput__input.zero": Object {
+      "Choices": Array [
+        Object {
+          "IsNumeric": true,
+          "Next": "3__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+          "Variable": "$.heap2.num",
+        },
+      ],
+      "Default": "null__input.zero",
+      "Type": "Choice",
+    },
+    "checkStringOutput__input.zero 1": Object {
+      "Choices": Array [
+        Object {
+          "IsNumeric": true,
+          "Next": "11__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+          "Variable": "$.heap10.num",
+        },
+      ],
+      "Default": "null__input.zero 1",
+      "Type": "Choice",
+    },
+    "checkStringOutput__null": Object {
+      "Choices": Array [
+        Object {
+          "IsNumeric": true,
+          "Next": "5__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+          "Variable": "$.heap4.num",
+        },
+      ],
+      "Default": "null__null",
+      "Type": "Choice",
+    },
+    "checkStringOutput__null 1": Object {
+      "Choices": Array [
+        Object {
+          "IsNumeric": true,
+          "Next": "13__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+          "Variable": "$.heap12.num",
+        },
+      ],
+      "Default": "null__null 1",
+      "Type": "Choice",
+    },
+    "checkStringOutput__return {oneString: Number(\\"1\\"), oneBoolean: Number(true)": Object {
+      "Choices": Array [
+        Object {
+          "IsNumeric": true,
+          "Next": "1__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num 1",
+          "Variable": "$.heap0.num",
+        },
+      ],
+      "Default": "null__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: ",
+      "Type": "Choice",
+    },
+    "format__input.nan": Object {
+      "Next": "checkStringOutput__input.nan",
+      "Parameters": Object {
+        "num.$": "States.StringToJson($.input.nan)",
+      },
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
+    "format__input.nan 1": Object {
+      "Next": "checkStringOutput__input.nan 1",
+      "Parameters": Object {
+        "num.$": "States.StringToJson($.input.nan)",
+      },
+      "ResultPath": "$.heap14",
+      "Type": "Pass",
+    },
+    "format__input.one": Object {
+      "Next": "checkStringOutput__input.one",
+      "Parameters": Object {
+        "num.$": "States.StringToJson($.input.one)",
+      },
+      "ResultPath": "$.heap8",
+      "Type": "Pass",
+    },
+    "format__input.zero": Object {
+      "Next": "checkStringOutput__input.zero",
+      "Parameters": Object {
+        "num.$": "States.StringToJson($.input.zero)",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "format__input.zero 1": Object {
+      "Next": "checkStringOutput__input.zero 1",
+      "Parameters": Object {
+        "num.$": "States.StringToJson($.input.zero)",
+      },
+      "ResultPath": "$.heap10",
+      "Type": "Pass",
+    },
+    "format__null": Object {
+      "Next": "checkStringOutput__null",
+      "Parameters": Object {
+        "num.$": "States.StringToJson($.fnl_context.null)",
+      },
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "format__null 1": Object {
+      "Next": "checkStringOutput__null 1",
+      "Parameters": Object {
+        "num.$": "States.StringToJson($.fnl_context.null)",
+      },
+      "ResultPath": "$.heap12",
+      "Type": "Pass",
+    },
+    "format__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber": Object {
+      "Next": "checkStringOutput__return {oneString: Number(\\"1\\"), oneBoolean: Number(true)",
+      "Parameters": Object {
+        "num.$": "States.StringToJson($.input.one)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "input.nan": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": false,
+          "Next": "null__input.nan",
+          "Variable": "$.input.nan",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.input.nan",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.input.nan",
+                },
+                Object {
+                  "StringEquals": "",
+                  "Variable": "$.input.nan",
+                },
+              ],
+            },
+          ],
+          "Next": "zero__input.nan",
+        },
+        Object {
+          "IsNull": true,
+          "Next": "zero__input.nan",
+          "Variable": "$.input.nan",
+        },
+        Object {
+          "IsString": true,
+          "Next": "format__input.nan",
+          "Variable": "$.input.nan",
+        },
+        Object {
+          "IsNumeric": true,
+          "Next": "assign__input.nan",
+          "Variable": "$.input.nan",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.nan",
+            },
+            Object {
+              "BooleanEquals": true,
+              "Variable": "$.input.nan",
+            },
+          ],
+          "Next": "one__input.nan",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.nan",
+            },
+            Object {
+              "BooleanEquals": false,
+              "Variable": "$.input.nan",
+            },
+          ],
+          "Next": "zero__input.nan",
+        },
+      ],
+      "Default": "null__input.nan",
+      "Type": "Choice",
+    },
+    "input.nan 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": false,
+          "Next": "null__input.nan 1",
+          "Variable": "$.input.nan",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.input.nan",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.input.nan",
+                },
+                Object {
+                  "StringEquals": "",
+                  "Variable": "$.input.nan",
+                },
+              ],
+            },
+          ],
+          "Next": "zero__input.nan 1",
+        },
+        Object {
+          "IsNull": true,
+          "Next": "zero__input.nan 1",
+          "Variable": "$.input.nan",
+        },
+        Object {
+          "IsString": true,
+          "Next": "format__input.nan 1",
+          "Variable": "$.input.nan",
+        },
+        Object {
+          "IsNumeric": true,
+          "Next": "assign__input.nan 1",
+          "Variable": "$.input.nan",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.nan",
+            },
+            Object {
+              "BooleanEquals": true,
+              "Variable": "$.input.nan",
+            },
+          ],
+          "Next": "one__input.nan 1",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.nan",
+            },
+            Object {
+              "BooleanEquals": false,
+              "Variable": "$.input.nan",
+            },
+          ],
+          "Next": "zero__input.nan 1",
+        },
+      ],
+      "Default": "null__input.nan 1",
+      "Type": "Choice",
+    },
+    "input.one": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": false,
+          "Next": "null__input.one",
+          "Variable": "$.input.one",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.input.one",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.input.one",
+                },
+                Object {
+                  "StringEquals": "",
+                  "Variable": "$.input.one",
+                },
+              ],
+            },
+          ],
+          "Next": "zero__input.one",
+        },
+        Object {
+          "IsNull": true,
+          "Next": "zero__input.one",
+          "Variable": "$.input.one",
+        },
+        Object {
+          "IsString": true,
+          "Next": "format__input.one",
+          "Variable": "$.input.one",
+        },
+        Object {
+          "IsNumeric": true,
+          "Next": "assign__input.one",
+          "Variable": "$.input.one",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.one",
+            },
+            Object {
+              "BooleanEquals": true,
+              "Variable": "$.input.one",
+            },
+          ],
+          "Next": "one__input.one",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.one",
+            },
+            Object {
+              "BooleanEquals": false,
+              "Variable": "$.input.one",
+            },
+          ],
+          "Next": "zero__input.one",
+        },
+      ],
+      "Default": "null__input.one",
+      "Type": "Choice",
+    },
+    "input.zero": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": false,
+          "Next": "null__input.zero",
+          "Variable": "$.input.zero",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.input.zero",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.input.zero",
+                },
+                Object {
+                  "StringEquals": "",
+                  "Variable": "$.input.zero",
+                },
+              ],
+            },
+          ],
+          "Next": "zero__input.zero",
+        },
+        Object {
+          "IsNull": true,
+          "Next": "zero__input.zero",
+          "Variable": "$.input.zero",
+        },
+        Object {
+          "IsString": true,
+          "Next": "format__input.zero",
+          "Variable": "$.input.zero",
+        },
+        Object {
+          "IsNumeric": true,
+          "Next": "assign__input.zero",
+          "Variable": "$.input.zero",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.zero",
+            },
+            Object {
+              "BooleanEquals": true,
+              "Variable": "$.input.zero",
+            },
+          ],
+          "Next": "one__input.zero",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.zero",
+            },
+            Object {
+              "BooleanEquals": false,
+              "Variable": "$.input.zero",
+            },
+          ],
+          "Next": "zero__input.zero",
+        },
+      ],
+      "Default": "null__input.zero",
+      "Type": "Choice",
+    },
+    "input.zero 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": false,
+          "Next": "null__input.zero 1",
+          "Variable": "$.input.zero",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.input.zero",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.input.zero",
+                },
+                Object {
+                  "StringEquals": "",
+                  "Variable": "$.input.zero",
+                },
+              ],
+            },
+          ],
+          "Next": "zero__input.zero 1",
+        },
+        Object {
+          "IsNull": true,
+          "Next": "zero__input.zero 1",
+          "Variable": "$.input.zero",
+        },
+        Object {
+          "IsString": true,
+          "Next": "format__input.zero 1",
+          "Variable": "$.input.zero",
+        },
+        Object {
+          "IsNumeric": true,
+          "Next": "assign__input.zero 1",
+          "Variable": "$.input.zero",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.zero",
+            },
+            Object {
+              "BooleanEquals": true,
+              "Variable": "$.input.zero",
+            },
+          ],
+          "Next": "one__input.zero 1",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.zero",
+            },
+            Object {
+              "BooleanEquals": false,
+              "Variable": "$.input.zero",
+            },
+          ],
+          "Next": "zero__input.zero 1",
+        },
+      ],
+      "Default": "null__input.zero 1",
+      "Type": "Choice",
+    },
+    "null": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": false,
+          "Next": "null__null",
+          "Variable": "$.fnl_context.null",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.fnl_context.null",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.null",
+                },
+                Object {
+                  "StringEquals": "",
+                  "Variable": "$.fnl_context.null",
+                },
+              ],
+            },
+          ],
+          "Next": "zero__null",
+        },
+        Object {
+          "IsNull": true,
+          "Next": "zero__null",
+          "Variable": "$.fnl_context.null",
+        },
+        Object {
+          "IsString": true,
+          "Next": "format__null",
+          "Variable": "$.fnl_context.null",
+        },
+        Object {
+          "IsNumeric": true,
+          "Next": "assign__null",
+          "Variable": "$.fnl_context.null",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.fnl_context.null",
+            },
+            Object {
+              "BooleanEquals": true,
+              "Variable": "$.fnl_context.null",
+            },
+          ],
+          "Next": "one__null",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.fnl_context.null",
+            },
+            Object {
+              "BooleanEquals": false,
+              "Variable": "$.fnl_context.null",
+            },
+          ],
+          "Next": "zero__null",
+        },
+      ],
+      "Default": "null__null",
+      "Type": "Choice",
+    },
+    "null 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": false,
+          "Next": "null__null 1",
+          "Variable": "$.fnl_context.null",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.fnl_context.null",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.fnl_context.null",
+                },
+                Object {
+                  "StringEquals": "",
+                  "Variable": "$.fnl_context.null",
+                },
+              ],
+            },
+          ],
+          "Next": "zero__null 1",
+        },
+        Object {
+          "IsNull": true,
+          "Next": "zero__null 1",
+          "Variable": "$.fnl_context.null",
+        },
+        Object {
+          "IsString": true,
+          "Next": "format__null 1",
+          "Variable": "$.fnl_context.null",
+        },
+        Object {
+          "IsNumeric": true,
+          "Next": "assign__null 1",
+          "Variable": "$.fnl_context.null",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.fnl_context.null",
+            },
+            Object {
+              "BooleanEquals": true,
+              "Variable": "$.fnl_context.null",
+            },
+          ],
+          "Next": "one__null 1",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.fnl_context.null",
+            },
+            Object {
+              "BooleanEquals": false,
+              "Variable": "$.fnl_context.null",
+            },
+          ],
+          "Next": "zero__null 1",
+        },
+      ],
+      "Default": "null__null 1",
+      "Type": "Choice",
+    },
+    "null__input.nan": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "7__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "ResultPath": "$.heap6.num",
+      "Type": "Pass",
+    },
+    "null__input.nan 1": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "15__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+      "ResultPath": "$.heap14.num",
+      "Type": "Pass",
+    },
+    "null__input.one": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "9__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "ResultPath": "$.heap8.num",
+      "Type": "Pass",
+    },
+    "null__input.zero": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "3__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "ResultPath": "$.heap2.num",
+      "Type": "Pass",
+    },
+    "null__input.zero 1": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "11__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+      "ResultPath": "$.heap10.num",
+      "Type": "Pass",
+    },
+    "null__null": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "5__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "ResultPath": "$.heap4.num",
+      "Type": "Pass",
+    },
+    "null__null 1": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "13__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+      "ResultPath": "$.heap12.num",
+      "Type": "Pass",
+    },
+    "null__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: ": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "1__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num 1",
+      "ResultPath": "$.heap0.num",
+      "Type": "Pass",
+    },
+    "one__input.nan": Object {
+      "Next": "7__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "Result": 1,
+      "ResultPath": "$.heap6.num",
+      "Type": "Pass",
+    },
+    "one__input.nan 1": Object {
+      "Next": "15__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+      "Result": 1,
+      "ResultPath": "$.heap14.num",
+      "Type": "Pass",
+    },
+    "one__input.one": Object {
+      "Next": "9__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "Result": 1,
+      "ResultPath": "$.heap8.num",
+      "Type": "Pass",
+    },
+    "one__input.zero": Object {
+      "Next": "3__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "Result": 1,
+      "ResultPath": "$.heap2.num",
+      "Type": "Pass",
+    },
+    "one__input.zero 1": Object {
+      "Next": "11__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+      "Result": 1,
+      "ResultPath": "$.heap10.num",
+      "Type": "Pass",
+    },
+    "one__null": Object {
+      "Next": "5__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "Result": 1,
+      "ResultPath": "$.heap4.num",
+      "Type": "Pass",
+    },
+    "one__null 1": Object {
+      "Next": "13__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+      "Result": 1,
+      "ResultPath": "$.heap12.num",
+      "Type": "Pass",
+    },
+    "one__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: N": Object {
+      "Next": "1__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num 1",
+      "Result": 1,
+      "ResultPath": "$.heap0.num",
+      "Type": "Pass",
+    },
+    "return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Number": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": false,
+          "Next": "null__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: ",
+          "Variable": "$.input.one",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.input.one",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.input.one",
+                },
+                Object {
+                  "StringEquals": "",
+                  "Variable": "$.input.one",
+                },
+              ],
+            },
+          ],
+          "Next": "zero__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: ",
+        },
+        Object {
+          "IsNull": true,
+          "Next": "zero__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: ",
+          "Variable": "$.input.one",
+        },
+        Object {
+          "IsString": true,
+          "Next": "format__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber",
+          "Variable": "$.input.one",
+        },
+        Object {
+          "IsNumeric": true,
+          "Next": "assign__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber",
+          "Variable": "$.input.one",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.one",
+            },
+            Object {
+              "BooleanEquals": true,
+              "Variable": "$.input.one",
+            },
+          ],
+          "Next": "one__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: N",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.one",
+            },
+            Object {
+              "BooleanEquals": false,
+              "Variable": "$.input.one",
+            },
+          ],
+          "Next": "zero__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: ",
+        },
+      ],
+      "Default": "null__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: ",
+      "Type": "Choice",
+    },
+    "zero__input.nan": Object {
+      "Next": "7__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "Result": 0,
+      "ResultPath": "$.heap6.num",
+      "Type": "Pass",
+    },
+    "zero__input.nan 1": Object {
+      "Next": "15__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+      "Result": 0,
+      "ResultPath": "$.heap14.num",
+      "Type": "Pass",
+    },
+    "zero__input.one": Object {
+      "Next": "9__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "Result": 0,
+      "ResultPath": "$.heap8.num",
+      "Type": "Pass",
+    },
+    "zero__input.zero": Object {
+      "Next": "3__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "Result": 0,
+      "ResultPath": "$.heap2.num",
+      "Type": "Pass",
+    },
+    "zero__input.zero 1": Object {
+      "Next": "11__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+      "Result": 0,
+      "ResultPath": "$.heap10.num",
+      "Type": "Pass",
+    },
+    "zero__null": Object {
+      "Next": "5__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num",
+      "Result": 0,
+      "ResultPath": "$.heap4.num",
+      "Type": "Pass",
+    },
+    "zero__null 1": Object {
+      "Next": "13__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Nu",
+      "Result": 0,
+      "ResultPath": "$.heap12.num",
+      "Type": "Pass",
+    },
+    "zero__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: ": Object {
+      "Next": "1__return {oneString: Number(\\"1\\"), oneBoolean: Number(true), oneNumber: Num 1",
+      "Result": 0,
+      "ResultPath": "$.heap0.num",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`String coerce 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu": Object {
+      "End": true,
+      "Parameters": Object {
+        "empty": "",
+        "stringBoolean": "true",
+        "stringEmpty": "",
+        "stringNull.$": "$.heap5",
+        "stringNumber": "1",
+        "stringObject": "[object Object]",
+        "stringString": "1",
+        "stringStringVar.$": "$.heap3",
+        "stringVar.$": "$.heap1",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu 1": Object {
+      "InputPath": "$.heap0.str",
+      "Next": "input.str",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "3__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu": Object {
+      "InputPath": "$.heap2.str",
+      "Next": "null",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "5__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu": Object {
+      "InputPath": "$.heap4.str",
+      "Next": "1__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNumbe",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "assign__input.str": Object {
+      "InputPath": "$.input.str",
+      "Next": "3__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
+      "ResultPath": "$.heap2.str",
+      "Type": "Pass",
+    },
+    "assign__null": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "5__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
+      "ResultPath": "$.heap4.str",
+      "Type": "Pass",
+    },
+    "assign__return {stringString: String(\\"1\\"), stringBoolean: String(true), str": Object {
+      "InputPath": "$.input.val",
+      "Next": "1__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu 1",
+      "ResultPath": "$.heap0.str",
+      "Type": "Pass",
+    },
+    "format__input.str": Object {
+      "Next": "3__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
+      "Parameters": Object {
+        "str.$": "States.JsonToString($.input.str)",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "format__null": Object {
+      "Next": "5__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
+      "Parameters": Object {
+        "str.$": "States.JsonToString($.fnl_context.null)",
+      },
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "format__return {stringString: String(\\"1\\"), stringBoolean: String(true), str": Object {
+      "Next": "1__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu 1",
+      "Parameters": Object {
+        "str.$": "States.JsonToString($.input.val)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "input.str": Object {
+      "Choices": Array [
+        Object {
+          "IsString": true,
+          "Next": "assign__input.str",
+          "Variable": "$.input.str",
+        },
+      ],
+      "Default": "format__input.str",
+      "Type": "Choice",
+    },
+    "null": Object {
+      "Choices": Array [
+        Object {
+          "IsString": true,
+          "Next": "assign__null",
+          "Variable": "$.fnl_context.null",
+        },
+      ],
+      "Default": "format__null",
+      "Type": "Choice",
+    },
+    "return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNumbe": Object {
+      "Choices": Array [
+        Object {
+          "IsString": true,
+          "Next": "assign__return {stringString: String(\\"1\\"), stringBoolean: String(true), str",
+          "Variable": "$.input.val",
+        },
+      ],
+      "Default": "format__return {stringString: String(\\"1\\"), stringBoolean: String(true), str",
+      "Type": "Choice",
+    },
+  },
+}
+`;
+
 exports[`access 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -12441,244 +13597,6 @@ Object {
       "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
       "Type": "Task",
-    },
-  },
-}
-`;
-
-exports[`boolean 1`] = `
-Object {
-  "StartAt": "Initialize Functionless Context",
-  "States": Object {
-    "1__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber": Object {
-      "End": true,
-      "Parameters": Object {
-        "empty": false,
-        "falseBoolean": false,
-        "falseNumber": false,
-        "falseString": false,
-        "falsyVar.$": "$.heap3",
-        "trueBoolean": true,
-        "trueNumber": true,
-        "trueObject": true,
-        "trueString": true,
-        "truthyVar.$": "$.heap1",
-      },
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "1__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber 1": Object {
-      "InputPath": "$.heap0",
-      "Next": "Boolean(input.nv)",
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "3__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber": Object {
-      "InputPath": "$.heap2",
-      "Next": "1__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber",
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "Boolean(input.nv)": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "And": Array [
-                Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.nv",
-                },
-                Object {
-                  "IsNull": false,
-                  "Variable": "$.input.nv",
-                },
-              ],
-            },
-            Object {
-              "Or": Array [
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.input.nv",
-                    },
-                    Object {
-                      "Not": Object {
-                        "And": Array [
-                          Object {
-                            "IsString": true,
-                            "Variable": "$.input.nv",
-                          },
-                          Object {
-                            "StringEquals": "",
-                            "Variable": "$.input.nv",
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsNumeric": true,
-                      "Variable": "$.input.nv",
-                    },
-                    Object {
-                      "Not": Object {
-                        "And": Array [
-                          Object {
-                            "IsNumeric": true,
-                            "Variable": "$.input.nv",
-                          },
-                          Object {
-                            "NumericEquals": 0,
-                            "Variable": "$.input.nv",
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.input.nv",
-                    },
-                    Object {
-                      "BooleanEquals": true,
-                      "Variable": "$.input.nv",
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-          "Next": "true__Boolean(input.nv)",
-        },
-      ],
-      "Default": "false__Boolean(input.nv)",
-      "Type": "Choice",
-    },
-    "Initialize Functionless Context": Object {
-      "Next": "return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber: B",
-      "Parameters": Object {
-        "fnl_context": Object {
-          "null": null,
-        },
-        "input.$": "$$.Execution.Input",
-      },
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "false__Boolean(input.nv)": Object {
-      "Next": "3__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber",
-      "Result": false,
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
-    "false__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNu": Object {
-      "Next": "1__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber 1",
-      "Result": false,
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber: B": Object {
-      "Choices": Array [
-        Object {
-          "And": Array [
-            Object {
-              "And": Array [
-                Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.value",
-                },
-                Object {
-                  "IsNull": false,
-                  "Variable": "$.input.value",
-                },
-              ],
-            },
-            Object {
-              "Or": Array [
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.input.value",
-                    },
-                    Object {
-                      "Not": Object {
-                        "And": Array [
-                          Object {
-                            "IsString": true,
-                            "Variable": "$.input.value",
-                          },
-                          Object {
-                            "StringEquals": "",
-                            "Variable": "$.input.value",
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsNumeric": true,
-                      "Variable": "$.input.value",
-                    },
-                    Object {
-                      "Not": Object {
-                        "And": Array [
-                          Object {
-                            "IsNumeric": true,
-                            "Variable": "$.input.value",
-                          },
-                          Object {
-                            "NumericEquals": 0,
-                            "Variable": "$.input.value",
-                          },
-                        ],
-                      },
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.input.value",
-                    },
-                    Object {
-                      "BooleanEquals": true,
-                      "Variable": "$.input.value",
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-          "Next": "true__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNum",
-        },
-      ],
-      "Default": "false__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNu",
-      "Type": "Choice",
-    },
-    "true__Boolean(input.nv)": Object {
-      "Next": "3__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber",
-      "Result": true,
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
-    "true__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNum": Object {
-      "Next": "1__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber 1",
-      "Result": true,
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
     },
   },
 }
