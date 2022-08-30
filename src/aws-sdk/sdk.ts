@@ -58,6 +58,46 @@ class ServiceProxy {
   }
 }
 
+/**
+ * https://docs.aws.amazon.com/step-functions/latest/dg/supported-services-awssdk.html
+ */
+const SFN_SERVICE_BLOCK_LIST: {
+  [key in keyof TSDK]?: true | (keyof TSDK[key])[];
+} = {
+  // note: when lambda is supported by $AWS.SDK
+  // block list this API: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/ApiGatewayManagementApi.html#postToConnection-property
+  ApiGatewayManagementApi: true,
+  Discovery: ["describeExportConfigurations"],
+  CodeDeploy: [
+    "batchGetDeploymentInstances",
+    "getDeploymentInstance",
+    "listDeploymentInstances",
+    "skipWaitTimeForInstanceTermination",
+  ],
+  ComprehendMedical: ["detectEntities"],
+  DirectConnect: [
+    "allocateConnectionOnInterconnect",
+    "describeConnectionLoa",
+    "describeConnectionsOnInterconnect",
+    "describeInterconnectLoa",
+  ],
+  EFS: ["createTags"],
+  ElasticTranscoder: ["testRole"],
+  EMR: ["describeJobFlows"],
+  Iot: [
+    "attachPrincipalPolicy",
+    "listPrincipalPolicies",
+    "detachPrincipalPolicy",
+    "listPolicyPrincipals",
+  ],
+  Lambda: ["invokeAsync"],
+  MediaPackage: ["rotateChannelCredentials"],
+  RDSDataService: ["executeSql"],
+  S3: ["selectObjectContent"],
+  Shield: ["deleteSubscription"],
+  STS: ["assumeRole", "assumeRoleWithSAML", "assumeRoleWithWebIdentity"],
+};
+
 function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
   return makeIntegration<
     `$AWS.SDK.${typeof serviceName}`,
@@ -96,6 +136,17 @@ function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
             ErrorCodes.Invalid_Input,
             "SDK integrations require a object literal or a reference to an object."
           );
+        }
+
+        // https://github.com/functionless/functionless/issues/443
+        const blockListEntry = SFN_SERVICE_BLOCK_LIST[serviceName];
+        if (
+          !!blockListEntry &&
+          (blockListEntry === true ||
+            // @ts-ignore
+            blockListEntry.includes(methodName))
+        ) {
+          throw new SynthError(ErrorCodes.Unsupported_AWS_SDK_in_Resource);
         }
 
         return context.stateWithHeapOutput(
