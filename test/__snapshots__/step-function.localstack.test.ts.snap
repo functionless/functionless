@@ -39,6 +39,244 @@ Object {
 }
 `;
 
+exports[`Boolean coerce 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber": Object {
+      "End": true,
+      "Parameters": Object {
+        "empty": false,
+        "falseBoolean": false,
+        "falseNumber": false,
+        "falseString": false,
+        "falsyVar.$": "$.heap3",
+        "trueBoolean": true,
+        "trueNumber": true,
+        "trueObject": true,
+        "trueString": true,
+        "truthyVar.$": "$.heap1",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber 1": Object {
+      "InputPath": "$.heap0",
+      "Next": "Boolean(input.nv)",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "3__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber": Object {
+      "InputPath": "$.heap2",
+      "Next": "1__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "Boolean(input.nv)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.nv",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.input.nv",
+                },
+              ],
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.nv",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.input.nv",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.input.nv",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.input.nv",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.input.nv",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.input.nv",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.input.nv",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.input.nv",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__Boolean(input.nv)",
+        },
+      ],
+      "Default": "false__Boolean(input.nv)",
+      "Type": "Choice",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber: B",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "false__Boolean(input.nv)": Object {
+      "Next": "3__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber",
+      "Result": false,
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "false__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNu": Object {
+      "Next": "1__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber 1",
+      "Result": false,
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber: B": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.value",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.input.value",
+                },
+              ],
+            },
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.value",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.input.value",
+                          },
+                          Object {
+                            "StringEquals": "",
+                            "Variable": "$.input.value",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.input.value",
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.input.value",
+                          },
+                          Object {
+                            "NumericEquals": 0,
+                            "Variable": "$.input.value",
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsBoolean": true,
+                      "Variable": "$.input.value",
+                    },
+                    Object {
+                      "BooleanEquals": true,
+                      "Variable": "$.input.value",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "true__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNum",
+        },
+      ],
+      "Default": "false__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNu",
+      "Type": "Choice",
+    },
+    "true__Boolean(input.nv)": Object {
+      "Next": "3__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber",
+      "Result": true,
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "true__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNum": Object {
+      "Next": "1__return {trueString: Boolean(\\"1\\"), trueBoolean: Boolean(true), trueNumber 1",
+      "Result": true,
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`Number coerce 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -11550,7 +11788,405 @@ Object {
     "falsyAndAssign &&= \\"b\\"": Object {
       "Choices": Array [
         Object {
-          "Next": "true__falsyAndAssign &&= \\"b\\"",
+          "And": Array [
+            Object {
+              "Not": Object {
+                "And": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsPresent": true,
+                        "Variable": "$.falsyAndAssign",
+                      },
+                      Object {
+                        "IsNull": false,
+                        "Variable": "$.falsyAndAssign",
+                      },
+                    ],
+                  },
+                  Object {
+                    "Or": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                                Object {
+                                  "StringEquals": "",
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                                Object {
+                                  "NumericEquals": 0,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                          Object {
+                            "BooleanEquals": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsPresent": true,
+                          "Variable": "$.truthyOrAssign",
+                        },
+                        Object {
+                          "IsNull": false,
+                          "Variable": "$.truthyOrAssign",
+                        },
+                      ],
+                    },
+                    Object {
+                      "Or": Array [
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.truthyOrAssign",
+                            },
+                            Object {
+                              "Not": Object {
+                                "And": Array [
+                                  Object {
+                                    "IsString": true,
+                                    "Variable": "$.truthyOrAssign",
+                                  },
+                                  Object {
+                                    "StringEquals": "",
+                                    "Variable": "$.truthyOrAssign",
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.truthyOrAssign",
+                            },
+                            Object {
+                              "Not": Object {
+                                "And": Array [
+                                  Object {
+                                    "IsNumeric": true,
+                                    "Variable": "$.truthyOrAssign",
+                                  },
+                                  Object {
+                                    "NumericEquals": 0,
+                                    "Variable": "$.truthyOrAssign",
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.truthyOrAssign",
+                            },
+                            Object {
+                              "BooleanEquals": true,
+                              "Variable": "$.truthyOrAssign",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsPresent": true,
+                          "Variable": "$.falsyOrAssign",
+                        },
+                        Object {
+                          "IsNull": false,
+                          "Variable": "$.falsyOrAssign",
+                        },
+                      ],
+                    },
+                    Object {
+                      "Or": Array [
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.falsyOrAssign",
+                            },
+                            Object {
+                              "Not": Object {
+                                "And": Array [
+                                  Object {
+                                    "IsString": true,
+                                    "Variable": "$.falsyOrAssign",
+                                  },
+                                  Object {
+                                    "StringEquals": "",
+                                    "Variable": "$.falsyOrAssign",
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.falsyOrAssign",
+                            },
+                            Object {
+                              "Not": Object {
+                                "And": Array [
+                                  Object {
+                                    "IsNumeric": true,
+                                    "Variable": "$.falsyOrAssign",
+                                  },
+                                  Object {
+                                    "NumericEquals": 0,
+                                    "Variable": "$.falsyOrAssign",
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.falsyOrAssign",
+                            },
+                            Object {
+                              "BooleanEquals": true,
+                              "Variable": "$.falsyOrAssign",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "y = \\"\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "Not": Object {
+                "And": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsPresent": true,
+                        "Variable": "$.falsyAndAssign",
+                      },
+                      Object {
+                        "IsNull": false,
+                        "Variable": "$.falsyAndAssign",
+                      },
+                    ],
+                  },
+                  Object {
+                    "Or": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                                Object {
+                                  "StringEquals": "",
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                                Object {
+                                  "NumericEquals": 0,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                          Object {
+                            "BooleanEquals": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsPresent": true,
+                      "Variable": "$.truthyOrAssign",
+                    },
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.truthyOrAssign",
+                    },
+                  ],
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.truthyOrAssign",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.truthyOrAssign",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.truthyOrAssign",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.truthyOrAssign",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.truthyOrAssign",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.truthyOrAssign",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.truthyOrAssign",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.truthyOrAssign",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "false__falsyOrAssign ||= \\"b\\"",
+        },
+        Object {
+          "Next": "false__truthyOrAssign ||= \\"b\\"",
           "Not": Object {
             "And": Array [
               Object {
@@ -11721,7 +12357,7 @@ Object {
               ],
             },
           ],
-          "Next": "true__falsyOrAssign ||= \\"b\\"",
+          "Next": "y = \\"\\"",
         },
       ],
       "Default": "false__falsyOrAssign ||= \\"b\\"",
@@ -12813,6 +13449,965 @@ Object {
         Object {
           "And": Array [
             Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.notNullishCoalAssign",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.notNullishCoalAssign",
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsPresent": true,
+                      "Variable": "$.nullishCoalAssign",
+                    },
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.nullishCoalAssign",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsPresent": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "IsNull": false,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                            ],
+                          },
+                          Object {
+                            "Or": Array [
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsString": true,
+                                    "Variable": "$.truthyAndAssign",
+                                  },
+                                  Object {
+                                    "Not": Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsString": true,
+                                          "Variable": "$.truthyAndAssign",
+                                        },
+                                        Object {
+                                          "StringEquals": "",
+                                          "Variable": "$.truthyAndAssign",
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsNumeric": true,
+                                    "Variable": "$.truthyAndAssign",
+                                  },
+                                  Object {
+                                    "Not": Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsNumeric": true,
+                                          "Variable": "$.truthyAndAssign",
+                                        },
+                                        Object {
+                                          "NumericEquals": 0,
+                                          "Variable": "$.truthyAndAssign",
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsBoolean": true,
+                                    "Variable": "$.truthyAndAssign",
+                                  },
+                                  Object {
+                                    "BooleanEquals": true,
+                                    "Variable": "$.truthyAndAssign",
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsPresent": true,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                  Object {
+                                    "IsNull": false,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                ],
+                              },
+                              Object {
+                                "Or": Array [
+                                  Object {
+                                    "And": Array [
+                                      Object {
+                                        "IsString": true,
+                                        "Variable": "$.falsyAndAssign",
+                                      },
+                                      Object {
+                                        "Not": Object {
+                                          "And": Array [
+                                            Object {
+                                              "IsString": true,
+                                              "Variable": "$.falsyAndAssign",
+                                            },
+                                            Object {
+                                              "StringEquals": "",
+                                              "Variable": "$.falsyAndAssign",
+                                            },
+                                          ],
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  Object {
+                                    "And": Array [
+                                      Object {
+                                        "IsNumeric": true,
+                                        "Variable": "$.falsyAndAssign",
+                                      },
+                                      Object {
+                                        "Not": Object {
+                                          "And": Array [
+                                            Object {
+                                              "IsNumeric": true,
+                                              "Variable": "$.falsyAndAssign",
+                                            },
+                                            Object {
+                                              "NumericEquals": 0,
+                                              "Variable": "$.falsyAndAssign",
+                                            },
+                                          ],
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  Object {
+                                    "And": Array [
+                                      Object {
+                                        "IsBoolean": true,
+                                        "Variable": "$.falsyAndAssign",
+                                      },
+                                      Object {
+                                        "BooleanEquals": true,
+                                        "Variable": "$.falsyAndAssign",
+                                      },
+                                    ],
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsPresent": true,
+                                      "Variable": "$.truthyOrAssign",
+                                    },
+                                    Object {
+                                      "IsNull": false,
+                                      "Variable": "$.truthyOrAssign",
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "Or": Array [
+                                    Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsString": true,
+                                          "Variable": "$.truthyOrAssign",
+                                        },
+                                        Object {
+                                          "Not": Object {
+                                            "And": Array [
+                                              Object {
+                                                "IsString": true,
+                                                "Variable": "$.truthyOrAssign",
+                                              },
+                                              Object {
+                                                "StringEquals": "",
+                                                "Variable": "$.truthyOrAssign",
+                                              },
+                                            ],
+                                          },
+                                        },
+                                      ],
+                                    },
+                                    Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsNumeric": true,
+                                          "Variable": "$.truthyOrAssign",
+                                        },
+                                        Object {
+                                          "Not": Object {
+                                            "And": Array [
+                                              Object {
+                                                "IsNumeric": true,
+                                                "Variable": "$.truthyOrAssign",
+                                              },
+                                              Object {
+                                                "NumericEquals": 0,
+                                                "Variable": "$.truthyOrAssign",
+                                              },
+                                            ],
+                                          },
+                                        },
+                                      ],
+                                    },
+                                    Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsBoolean": true,
+                                          "Variable": "$.truthyOrAssign",
+                                        },
+                                        Object {
+                                          "BooleanEquals": true,
+                                          "Variable": "$.truthyOrAssign",
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsPresent": true,
+                                      "Variable": "$.falsyOrAssign",
+                                    },
+                                    Object {
+                                      "IsNull": false,
+                                      "Variable": "$.falsyOrAssign",
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "Or": Array [
+                                    Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsString": true,
+                                          "Variable": "$.falsyOrAssign",
+                                        },
+                                        Object {
+                                          "Not": Object {
+                                            "And": Array [
+                                              Object {
+                                                "IsString": true,
+                                                "Variable": "$.falsyOrAssign",
+                                              },
+                                              Object {
+                                                "StringEquals": "",
+                                                "Variable": "$.falsyOrAssign",
+                                              },
+                                            ],
+                                          },
+                                        },
+                                      ],
+                                    },
+                                    Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsNumeric": true,
+                                          "Variable": "$.falsyOrAssign",
+                                        },
+                                        Object {
+                                          "Not": Object {
+                                            "And": Array [
+                                              Object {
+                                                "IsNumeric": true,
+                                                "Variable": "$.falsyOrAssign",
+                                              },
+                                              Object {
+                                                "NumericEquals": 0,
+                                                "Variable": "$.falsyOrAssign",
+                                              },
+                                            ],
+                                          },
+                                        },
+                                      ],
+                                    },
+                                    Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsBoolean": true,
+                                          "Variable": "$.falsyOrAssign",
+                                        },
+                                        Object {
+                                          "BooleanEquals": true,
+                                          "Variable": "$.falsyOrAssign",
+                                        },
+                                      ],
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "y = \\"\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.notNullishCoalAssign",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.notNullishCoalAssign",
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsPresent": true,
+                      "Variable": "$.nullishCoalAssign",
+                    },
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.nullishCoalAssign",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsPresent": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "IsNull": false,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                            ],
+                          },
+                          Object {
+                            "Or": Array [
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsString": true,
+                                    "Variable": "$.truthyAndAssign",
+                                  },
+                                  Object {
+                                    "Not": Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsString": true,
+                                          "Variable": "$.truthyAndAssign",
+                                        },
+                                        Object {
+                                          "StringEquals": "",
+                                          "Variable": "$.truthyAndAssign",
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsNumeric": true,
+                                    "Variable": "$.truthyAndAssign",
+                                  },
+                                  Object {
+                                    "Not": Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsNumeric": true,
+                                          "Variable": "$.truthyAndAssign",
+                                        },
+                                        Object {
+                                          "NumericEquals": 0,
+                                          "Variable": "$.truthyAndAssign",
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsBoolean": true,
+                                    "Variable": "$.truthyAndAssign",
+                                  },
+                                  Object {
+                                    "BooleanEquals": true,
+                                    "Variable": "$.truthyAndAssign",
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsPresent": true,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                  Object {
+                                    "IsNull": false,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                ],
+                              },
+                              Object {
+                                "Or": Array [
+                                  Object {
+                                    "And": Array [
+                                      Object {
+                                        "IsString": true,
+                                        "Variable": "$.falsyAndAssign",
+                                      },
+                                      Object {
+                                        "Not": Object {
+                                          "And": Array [
+                                            Object {
+                                              "IsString": true,
+                                              "Variable": "$.falsyAndAssign",
+                                            },
+                                            Object {
+                                              "StringEquals": "",
+                                              "Variable": "$.falsyAndAssign",
+                                            },
+                                          ],
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  Object {
+                                    "And": Array [
+                                      Object {
+                                        "IsNumeric": true,
+                                        "Variable": "$.falsyAndAssign",
+                                      },
+                                      Object {
+                                        "Not": Object {
+                                          "And": Array [
+                                            Object {
+                                              "IsNumeric": true,
+                                              "Variable": "$.falsyAndAssign",
+                                            },
+                                            Object {
+                                              "NumericEquals": 0,
+                                              "Variable": "$.falsyAndAssign",
+                                            },
+                                          ],
+                                        },
+                                      },
+                                    ],
+                                  },
+                                  Object {
+                                    "And": Array [
+                                      Object {
+                                        "IsBoolean": true,
+                                        "Variable": "$.falsyAndAssign",
+                                      },
+                                      Object {
+                                        "BooleanEquals": true,
+                                        "Variable": "$.falsyAndAssign",
+                                      },
+                                    ],
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsPresent": true,
+                                  "Variable": "$.truthyOrAssign",
+                                },
+                                Object {
+                                  "IsNull": false,
+                                  "Variable": "$.truthyOrAssign",
+                                },
+                              ],
+                            },
+                            Object {
+                              "Or": Array [
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.truthyOrAssign",
+                                    },
+                                    Object {
+                                      "Not": Object {
+                                        "And": Array [
+                                          Object {
+                                            "IsString": true,
+                                            "Variable": "$.truthyOrAssign",
+                                          },
+                                          Object {
+                                            "StringEquals": "",
+                                            "Variable": "$.truthyOrAssign",
+                                          },
+                                        ],
+                                      },
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.truthyOrAssign",
+                                    },
+                                    Object {
+                                      "Not": Object {
+                                        "And": Array [
+                                          Object {
+                                            "IsNumeric": true,
+                                            "Variable": "$.truthyOrAssign",
+                                          },
+                                          Object {
+                                            "NumericEquals": 0,
+                                            "Variable": "$.truthyOrAssign",
+                                          },
+                                        ],
+                                      },
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsBoolean": true,
+                                      "Variable": "$.truthyOrAssign",
+                                    },
+                                    Object {
+                                      "BooleanEquals": true,
+                                      "Variable": "$.truthyOrAssign",
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "false__falsyOrAssign ||= \\"b\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.notNullishCoalAssign",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.notNullishCoalAssign",
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsPresent": true,
+                      "Variable": "$.nullishCoalAssign",
+                    },
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.nullishCoalAssign",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsPresent": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "IsNull": false,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                            ],
+                          },
+                          Object {
+                            "Or": Array [
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsString": true,
+                                    "Variable": "$.truthyAndAssign",
+                                  },
+                                  Object {
+                                    "Not": Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsString": true,
+                                          "Variable": "$.truthyAndAssign",
+                                        },
+                                        Object {
+                                          "StringEquals": "",
+                                          "Variable": "$.truthyAndAssign",
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsNumeric": true,
+                                    "Variable": "$.truthyAndAssign",
+                                  },
+                                  Object {
+                                    "Not": Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsNumeric": true,
+                                          "Variable": "$.truthyAndAssign",
+                                        },
+                                        Object {
+                                          "NumericEquals": 0,
+                                          "Variable": "$.truthyAndAssign",
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsBoolean": true,
+                                    "Variable": "$.truthyAndAssign",
+                                  },
+                                  Object {
+                                    "BooleanEquals": true,
+                                    "Variable": "$.truthyAndAssign",
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsPresent": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                              Object {
+                                "IsNull": false,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                            ],
+                          },
+                          Object {
+                            "Or": Array [
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsString": true,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                  Object {
+                                    "Not": Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsString": true,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                        Object {
+                                          "StringEquals": "",
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsNumeric": true,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                  Object {
+                                    "Not": Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsNumeric": true,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                        Object {
+                                          "NumericEquals": 0,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsBoolean": true,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                  Object {
+                                    "BooleanEquals": true,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "false__truthyOrAssign ||= \\"b\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.notNullishCoalAssign",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.notNullishCoalAssign",
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsPresent": true,
+                      "Variable": "$.nullishCoalAssign",
+                    },
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.nullishCoalAssign",
+                    },
+                  ],
+                },
+                Object {
+                  "Not": Object {
+                    "And": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsPresent": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "IsNull": false,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                        ],
+                      },
+                      Object {
+                        "Or": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                    Object {
+                                      "StringEquals": "",
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                    Object {
+                                      "NumericEquals": 0,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsBoolean": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "BooleanEquals": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
+          "Next": "false__falsyAndAssign &&= \\"b\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.notNullishCoalAssign",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.notNullishCoalAssign",
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.nullishCoalAssign",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.nullishCoalAssign",
+                },
+              ],
+            },
+          ],
+          "Next": "false__truthyAndAssign &&= \\"b\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
               "IsPresent": true,
               "Variable": "$.notNullishCoalAssign",
             },
@@ -12821,7 +14416,7 @@ Object {
               "Variable": "$.notNullishCoalAssign",
             },
           ],
-          "Next": "true__notNullishCoalAssign ??= \\"b\\"",
+          "Next": "false__nullishCoalAssign ??= \\"b\\"",
         },
       ],
       "Default": "false__notNullishCoalAssign ??= \\"b\\"",
@@ -12857,6 +14452,872 @@ Object {
         Object {
           "And": Array [
             Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.nullishCoalAssign",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.nullishCoalAssign",
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "Not": Object {
+                    "And": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsPresent": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "IsNull": false,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                        ],
+                      },
+                      Object {
+                        "Or": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                    Object {
+                                      "StringEquals": "",
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                    Object {
+                                      "NumericEquals": 0,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsBoolean": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "BooleanEquals": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsPresent": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                              Object {
+                                "IsNull": false,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                            ],
+                          },
+                          Object {
+                            "Or": Array [
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsString": true,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                  Object {
+                                    "Not": Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsString": true,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                        Object {
+                                          "StringEquals": "",
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsNumeric": true,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                  Object {
+                                    "Not": Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsNumeric": true,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                        Object {
+                                          "NumericEquals": 0,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsBoolean": true,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                  Object {
+                                    "BooleanEquals": true,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "And": Array [
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsPresent": true,
+                                  "Variable": "$.truthyOrAssign",
+                                },
+                                Object {
+                                  "IsNull": false,
+                                  "Variable": "$.truthyOrAssign",
+                                },
+                              ],
+                            },
+                            Object {
+                              "Or": Array [
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.truthyOrAssign",
+                                    },
+                                    Object {
+                                      "Not": Object {
+                                        "And": Array [
+                                          Object {
+                                            "IsString": true,
+                                            "Variable": "$.truthyOrAssign",
+                                          },
+                                          Object {
+                                            "StringEquals": "",
+                                            "Variable": "$.truthyOrAssign",
+                                          },
+                                        ],
+                                      },
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.truthyOrAssign",
+                                    },
+                                    Object {
+                                      "Not": Object {
+                                        "And": Array [
+                                          Object {
+                                            "IsNumeric": true,
+                                            "Variable": "$.truthyOrAssign",
+                                          },
+                                          Object {
+                                            "NumericEquals": 0,
+                                            "Variable": "$.truthyOrAssign",
+                                          },
+                                        ],
+                                      },
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsBoolean": true,
+                                      "Variable": "$.truthyOrAssign",
+                                    },
+                                    Object {
+                                      "BooleanEquals": true,
+                                      "Variable": "$.truthyOrAssign",
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsPresent": true,
+                                  "Variable": "$.falsyOrAssign",
+                                },
+                                Object {
+                                  "IsNull": false,
+                                  "Variable": "$.falsyOrAssign",
+                                },
+                              ],
+                            },
+                            Object {
+                              "Or": Array [
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.falsyOrAssign",
+                                    },
+                                    Object {
+                                      "Not": Object {
+                                        "And": Array [
+                                          Object {
+                                            "IsString": true,
+                                            "Variable": "$.falsyOrAssign",
+                                          },
+                                          Object {
+                                            "StringEquals": "",
+                                            "Variable": "$.falsyOrAssign",
+                                          },
+                                        ],
+                                      },
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.falsyOrAssign",
+                                    },
+                                    Object {
+                                      "Not": Object {
+                                        "And": Array [
+                                          Object {
+                                            "IsNumeric": true,
+                                            "Variable": "$.falsyOrAssign",
+                                          },
+                                          Object {
+                                            "NumericEquals": 0,
+                                            "Variable": "$.falsyOrAssign",
+                                          },
+                                        ],
+                                      },
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsBoolean": true,
+                                      "Variable": "$.falsyOrAssign",
+                                    },
+                                    Object {
+                                      "BooleanEquals": true,
+                                      "Variable": "$.falsyOrAssign",
+                                    },
+                                  ],
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "y = \\"\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.nullishCoalAssign",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.nullishCoalAssign",
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "Not": Object {
+                    "And": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsPresent": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "IsNull": false,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                        ],
+                      },
+                      Object {
+                        "Or": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                    Object {
+                                      "StringEquals": "",
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                    Object {
+                                      "NumericEquals": 0,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsBoolean": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "BooleanEquals": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "Not": Object {
+                        "And": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsPresent": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                              Object {
+                                "IsNull": false,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                            ],
+                          },
+                          Object {
+                            "Or": Array [
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsString": true,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                  Object {
+                                    "Not": Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsString": true,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                        Object {
+                                          "StringEquals": "",
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsNumeric": true,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                  Object {
+                                    "Not": Object {
+                                      "And": Array [
+                                        Object {
+                                          "IsNumeric": true,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                        Object {
+                                          "NumericEquals": 0,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                      ],
+                                    },
+                                  },
+                                ],
+                              },
+                              Object {
+                                "And": Array [
+                                  Object {
+                                    "IsBoolean": true,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                  Object {
+                                    "BooleanEquals": true,
+                                    "Variable": "$.falsyAndAssign",
+                                  },
+                                ],
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsPresent": true,
+                              "Variable": "$.truthyOrAssign",
+                            },
+                            Object {
+                              "IsNull": false,
+                              "Variable": "$.truthyOrAssign",
+                            },
+                          ],
+                        },
+                        Object {
+                          "Or": Array [
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.truthyOrAssign",
+                                },
+                                Object {
+                                  "Not": Object {
+                                    "And": Array [
+                                      Object {
+                                        "IsString": true,
+                                        "Variable": "$.truthyOrAssign",
+                                      },
+                                      Object {
+                                        "StringEquals": "",
+                                        "Variable": "$.truthyOrAssign",
+                                      },
+                                    ],
+                                  },
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.truthyOrAssign",
+                                },
+                                Object {
+                                  "Not": Object {
+                                    "And": Array [
+                                      Object {
+                                        "IsNumeric": true,
+                                        "Variable": "$.truthyOrAssign",
+                                      },
+                                      Object {
+                                        "NumericEquals": 0,
+                                        "Variable": "$.truthyOrAssign",
+                                      },
+                                    ],
+                                  },
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.truthyOrAssign",
+                                },
+                                Object {
+                                  "BooleanEquals": true,
+                                  "Variable": "$.truthyOrAssign",
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "false__falsyOrAssign ||= \\"b\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.nullishCoalAssign",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.nullishCoalAssign",
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "Not": Object {
+                    "And": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsPresent": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "IsNull": false,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                        ],
+                      },
+                      Object {
+                        "Or": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                    Object {
+                                      "StringEquals": "",
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                    Object {
+                                      "NumericEquals": 0,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsBoolean": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                              Object {
+                                "BooleanEquals": true,
+                                "Variable": "$.truthyAndAssign",
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+                Object {
+                  "Not": Object {
+                    "And": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsPresent": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                          Object {
+                            "IsNull": false,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                        ],
+                      },
+                      Object {
+                        "Or": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                    Object {
+                                      "StringEquals": "",
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                    Object {
+                                      "NumericEquals": 0,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsBoolean": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                              Object {
+                                "BooleanEquals": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+              ],
+            },
+          ],
+          "Next": "false__truthyOrAssign ||= \\"b\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.nullishCoalAssign",
+                },
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.nullishCoalAssign",
+                },
+              ],
+            },
+            Object {
+              "Not": Object {
+                "And": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsPresent": true,
+                        "Variable": "$.truthyAndAssign",
+                      },
+                      Object {
+                        "IsNull": false,
+                        "Variable": "$.truthyAndAssign",
+                      },
+                    ],
+                  },
+                  Object {
+                    "Or": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "StringEquals": "",
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "NumericEquals": 0,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "BooleanEquals": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
+          "Next": "false__falsyAndAssign &&= \\"b\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
               "IsPresent": true,
               "Variable": "$.nullishCoalAssign",
             },
@@ -12865,7 +15326,7 @@ Object {
               "Variable": "$.nullishCoalAssign",
             },
           ],
-          "Next": "true__nullishCoalAssign ??= \\"b\\"",
+          "Next": "false__truthyAndAssign &&= \\"b\\"",
         },
       ],
       "Default": "false__nullishCoalAssign ??= \\"b\\"",
@@ -12881,18 +15342,6 @@ Object {
       "InputPath": "$.input.a",
       "Next": "c",
       "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "true__falsyAndAssign &&= \\"b\\"": Object {
-      "InputPath": "$.falsyAndAssign",
-      "Next": "truthyOrAssign ||= \\"b\\"",
-      "ResultPath": "$.falsyAndAssign",
-      "Type": "Pass",
-    },
-    "true__falsyOrAssign ||= \\"b\\"": Object {
-      "InputPath": "$.falsyOrAssign",
-      "Next": "y = \\"\\"",
-      "ResultPath": "$.falsyOrAssign",
       "Type": "Pass",
     },
     "true__input.a && input.b": Object {
@@ -12985,34 +15434,10 @@ Object {
       "ResultPath": "$.heap52",
       "Type": "Pass",
     },
-    "true__notNullishCoalAssign ??= \\"b\\"": Object {
-      "InputPath": "$.notNullishCoalAssign",
-      "Next": "nullishCoalAssign ??= \\"b\\"",
-      "ResultPath": "$.notNullishCoalAssign",
-      "Type": "Pass",
-    },
     "true__null ?? input.v": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "12__return {andVar: c, and: input.a && input.b, or: input.a || input.b, inv",
       "ResultPath": "$.heap34",
-      "Type": "Pass",
-    },
-    "true__nullishCoalAssign ??= \\"b\\"": Object {
-      "InputPath": "$.nullishCoalAssign",
-      "Next": "truthyAndAssign &&= \\"b\\"",
-      "ResultPath": "$.nullishCoalAssign",
-      "Type": "Pass",
-    },
-    "true__truthyAndAssign &&= \\"b\\"": Object {
-      "InputPath": "$.truthyAndAssign",
-      "Next": "falsyAndAssign &&= \\"b\\"",
-      "ResultPath": "$.truthyAndAssign",
-      "Type": "Pass",
-    },
-    "true__truthyOrAssign ||= \\"b\\"": Object {
-      "InputPath": "$.truthyOrAssign",
-      "Next": "falsyOrAssign ||= \\"b\\"",
-      "ResultPath": "$.truthyOrAssign",
       "Type": "Pass",
     },
     "true__y = 1y && y = 2y , false": Object {
@@ -13030,7 +15455,730 @@ Object {
     "truthyAndAssign &&= \\"b\\"": Object {
       "Choices": Array [
         Object {
-          "Next": "true__truthyAndAssign &&= \\"b\\"",
+          "And": Array [
+            Object {
+              "Not": Object {
+                "And": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsPresent": true,
+                        "Variable": "$.truthyAndAssign",
+                      },
+                      Object {
+                        "IsNull": false,
+                        "Variable": "$.truthyAndAssign",
+                      },
+                    ],
+                  },
+                  Object {
+                    "Or": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "StringEquals": "",
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "NumericEquals": 0,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "BooleanEquals": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "Not": Object {
+                    "And": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsPresent": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                          Object {
+                            "IsNull": false,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                        ],
+                      },
+                      Object {
+                        "Or": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                    Object {
+                                      "StringEquals": "",
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                    Object {
+                                      "NumericEquals": 0,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsBoolean": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                              Object {
+                                "BooleanEquals": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsPresent": true,
+                              "Variable": "$.truthyOrAssign",
+                            },
+                            Object {
+                              "IsNull": false,
+                              "Variable": "$.truthyOrAssign",
+                            },
+                          ],
+                        },
+                        Object {
+                          "Or": Array [
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.truthyOrAssign",
+                                },
+                                Object {
+                                  "Not": Object {
+                                    "And": Array [
+                                      Object {
+                                        "IsString": true,
+                                        "Variable": "$.truthyOrAssign",
+                                      },
+                                      Object {
+                                        "StringEquals": "",
+                                        "Variable": "$.truthyOrAssign",
+                                      },
+                                    ],
+                                  },
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.truthyOrAssign",
+                                },
+                                Object {
+                                  "Not": Object {
+                                    "And": Array [
+                                      Object {
+                                        "IsNumeric": true,
+                                        "Variable": "$.truthyOrAssign",
+                                      },
+                                      Object {
+                                        "NumericEquals": 0,
+                                        "Variable": "$.truthyOrAssign",
+                                      },
+                                    ],
+                                  },
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.truthyOrAssign",
+                                },
+                                Object {
+                                  "BooleanEquals": true,
+                                  "Variable": "$.truthyOrAssign",
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsPresent": true,
+                              "Variable": "$.falsyOrAssign",
+                            },
+                            Object {
+                              "IsNull": false,
+                              "Variable": "$.falsyOrAssign",
+                            },
+                          ],
+                        },
+                        Object {
+                          "Or": Array [
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.falsyOrAssign",
+                                },
+                                Object {
+                                  "Not": Object {
+                                    "And": Array [
+                                      Object {
+                                        "IsString": true,
+                                        "Variable": "$.falsyOrAssign",
+                                      },
+                                      Object {
+                                        "StringEquals": "",
+                                        "Variable": "$.falsyOrAssign",
+                                      },
+                                    ],
+                                  },
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.falsyOrAssign",
+                                },
+                                Object {
+                                  "Not": Object {
+                                    "And": Array [
+                                      Object {
+                                        "IsNumeric": true,
+                                        "Variable": "$.falsyOrAssign",
+                                      },
+                                      Object {
+                                        "NumericEquals": 0,
+                                        "Variable": "$.falsyOrAssign",
+                                      },
+                                    ],
+                                  },
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.falsyOrAssign",
+                                },
+                                Object {
+                                  "BooleanEquals": true,
+                                  "Variable": "$.falsyOrAssign",
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "y = \\"\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "Not": Object {
+                "And": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsPresent": true,
+                        "Variable": "$.truthyAndAssign",
+                      },
+                      Object {
+                        "IsNull": false,
+                        "Variable": "$.truthyAndAssign",
+                      },
+                    ],
+                  },
+                  Object {
+                    "Or": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "StringEquals": "",
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "NumericEquals": 0,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "BooleanEquals": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "Not": Object {
+                    "And": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsPresent": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                          Object {
+                            "IsNull": false,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                        ],
+                      },
+                      Object {
+                        "Or": Array [
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                    Object {
+                                      "StringEquals": "",
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                              Object {
+                                "Not": Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                    Object {
+                                      "NumericEquals": 0,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
+                            ],
+                          },
+                          Object {
+                            "And": Array [
+                              Object {
+                                "IsBoolean": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                              Object {
+                                "BooleanEquals": true,
+                                "Variable": "$.falsyAndAssign",
+                              },
+                            ],
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsPresent": true,
+                          "Variable": "$.truthyOrAssign",
+                        },
+                        Object {
+                          "IsNull": false,
+                          "Variable": "$.truthyOrAssign",
+                        },
+                      ],
+                    },
+                    Object {
+                      "Or": Array [
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.truthyOrAssign",
+                            },
+                            Object {
+                              "Not": Object {
+                                "And": Array [
+                                  Object {
+                                    "IsString": true,
+                                    "Variable": "$.truthyOrAssign",
+                                  },
+                                  Object {
+                                    "StringEquals": "",
+                                    "Variable": "$.truthyOrAssign",
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.truthyOrAssign",
+                            },
+                            Object {
+                              "Not": Object {
+                                "And": Array [
+                                  Object {
+                                    "IsNumeric": true,
+                                    "Variable": "$.truthyOrAssign",
+                                  },
+                                  Object {
+                                    "NumericEquals": 0,
+                                    "Variable": "$.truthyOrAssign",
+                                  },
+                                ],
+                              },
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.truthyOrAssign",
+                            },
+                            Object {
+                              "BooleanEquals": true,
+                              "Variable": "$.truthyOrAssign",
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "false__falsyOrAssign ||= \\"b\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "Not": Object {
+                "And": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsPresent": true,
+                        "Variable": "$.truthyAndAssign",
+                      },
+                      Object {
+                        "IsNull": false,
+                        "Variable": "$.truthyAndAssign",
+                      },
+                    ],
+                  },
+                  Object {
+                    "Or": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "StringEquals": "",
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "NumericEquals": 0,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                          Object {
+                            "BooleanEquals": true,
+                            "Variable": "$.truthyAndAssign",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+            Object {
+              "Not": Object {
+                "And": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsPresent": true,
+                        "Variable": "$.falsyAndAssign",
+                      },
+                      Object {
+                        "IsNull": false,
+                        "Variable": "$.falsyAndAssign",
+                      },
+                    ],
+                  },
+                  Object {
+                    "Or": Array [
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                                Object {
+                                  "StringEquals": "",
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                          Object {
+                            "Not": Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                                Object {
+                                  "NumericEquals": 0,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                              ],
+                            },
+                          },
+                        ],
+                      },
+                      Object {
+                        "And": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                          Object {
+                            "BooleanEquals": true,
+                            "Variable": "$.falsyAndAssign",
+                          },
+                        ],
+                      },
+                    ],
+                  },
+                ],
+              },
+            },
+          ],
+          "Next": "false__truthyOrAssign ||= \\"b\\"",
+        },
+        Object {
+          "Next": "false__falsyAndAssign &&= \\"b\\"",
           "Not": Object {
             "And": Array [
               Object {
@@ -13131,6 +16279,163 @@ Object {
             Object {
               "And": Array [
                 Object {
+                  "And": Array [
+                    Object {
+                      "IsPresent": true,
+                      "Variable": "$.truthyOrAssign",
+                    },
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.truthyOrAssign",
+                    },
+                  ],
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.truthyOrAssign",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.truthyOrAssign",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.truthyOrAssign",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.truthyOrAssign",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.truthyOrAssign",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.truthyOrAssign",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.truthyOrAssign",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.truthyOrAssign",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsPresent": true,
+                      "Variable": "$.falsyOrAssign",
+                    },
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.falsyOrAssign",
+                    },
+                  ],
+                },
+                Object {
+                  "Or": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.falsyOrAssign",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.falsyOrAssign",
+                              },
+                              Object {
+                                "StringEquals": "",
+                                "Variable": "$.falsyOrAssign",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.falsyOrAssign",
+                        },
+                        Object {
+                          "Not": Object {
+                            "And": Array [
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.falsyOrAssign",
+                              },
+                              Object {
+                                "NumericEquals": 0,
+                                "Variable": "$.falsyOrAssign",
+                              },
+                            ],
+                          },
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.falsyOrAssign",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.falsyOrAssign",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+          "Next": "y = \\"\\"",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "And": Array [
+                Object {
                   "IsPresent": true,
                   "Variable": "$.truthyOrAssign",
                 },
@@ -13201,7 +16506,7 @@ Object {
               ],
             },
           ],
-          "Next": "true__truthyOrAssign ||= \\"b\\"",
+          "Next": "false__falsyOrAssign ||= \\"b\\"",
         },
       ],
       "Default": "false__truthyOrAssign ||= \\"b\\"",
