@@ -59,13 +59,22 @@ class ServiceProxy {
 }
 
 /**
+ * Step Functions AWS Service Integrations support integrations with many services, however, it has a list of
+ * services or methods that are not supported.
+ *
  * https://docs.aws.amazon.com/step-functions/latest/dg/supported-services-awssdk.html
  */
 const SFN_SERVICE_BLOCK_LIST: {
   [key in keyof TSDK]?: true | (keyof TSDK[key])[];
 } = {
-  // note: when lambda is supported by $AWS.SDK
-  // block list this API: https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/ApiGatewayManagementApi.html#postToConnection-property
+  /**
+   * Api Gateway Management API is just a wrapper around the Invoke API.
+   * Use the API Gateway invoke integration instead.
+   * https://github.com/functionless/functionless/issues/443
+   *
+   * note: when lambda is supported by $AWS.SDK block list this API:
+   *       https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/ApiGatewayManagementApi.html#postToConnection-property
+   */
   ApiGatewayManagementApi: true,
   Discovery: ["describeExportConfigurations"],
   CodeDeploy: [
@@ -138,7 +147,6 @@ function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
           );
         }
 
-        // https://github.com/functionless/functionless/issues/443
         const blockListEntry = SFN_SERVICE_BLOCK_LIST[serviceName];
         if (
           !!blockListEntry &&
@@ -146,7 +154,10 @@ function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
             // @ts-ignore
             blockListEntry.includes(methodName))
         ) {
-          throw new SynthError(ErrorCodes.Unsupported_AWS_SDK_in_Resource);
+          throw new SynthError(
+            ErrorCodes.Unsupported_AWS_SDK_in_Resource,
+            `Step Functions does not support an API Integration with ${serviceName} and method ${methodName}.`
+          );
         }
 
         return context.stateWithHeapOutput(

@@ -421,35 +421,6 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "$AWS.SDK.ApiGatewayManagementApi.postToConnection",
-    (parent) => {
-      return {
-        sfn: new StepFunction<{}, string | undefined>(
-          parent,
-          "fn",
-          async () => {
-            await $AWS.SDK.ApiGatewayManagementApi.postToConnection(
-              {
-                ConnectionId: "",
-                Data: "some data",
-              },
-              {
-                iam: {
-                  resources: ["*"],
-                },
-              }
-            );
-
-            return "woop";
-          }
-        ),
-        outputs: { tableArn: table.tableArn },
-      };
-    },
-    ({ tableArn }) => tableArn
-  );
-
-  test(
     "conditionals",
     (parent) => {
       const func = new Function<undefined, boolean>(
