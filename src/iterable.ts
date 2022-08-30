@@ -26,6 +26,12 @@ export type BatchProcessor<Element, Event, Raw> = (
 /**
  * The {@link IIterable} interface provides utility functions for working with streams of data.
  *
+ * @typeParam Item the type of items in this Iterable.
+ * @typeParam RawEvent the type of the Event payload received in the Lambda Invocation.
+ * @typeParam ParsedEvent the parsed Event payload containing pre-processed Records of type ParsedRecord.
+ * @typeParam ParsedRecord the type of the Record in the ParsedEvent
+ * @typeParam Response the type of the Response payload expected by the Event Source that invoked the Lambda Function.
+ * @typeParam EventSourceConfig the properties for configuring the Event Source attached to the Lambda Function.
  * @see {@link Queue}
  */
 export interface IIterable<
@@ -101,6 +107,7 @@ export interface IIterable<
    * ```
    *
    * @param predicate The filter method calls the predicate function one time for each element in {@link Iterable} and returns a new {@link Iterable} containing only those elements where the {@link predicate} returns `true`.
+   * {@label with_narrowing}
    */
   filter<U extends Item>(
     predicate: (
@@ -130,6 +137,8 @@ export interface IIterable<
    * ```
    *
    * @param predicate The filter method calls the predicate function one time for each element in {@link Iterable} and returns a new {@link Iterable} containing only those elements where the {@link predicate} returns `true`.
+   *
+   * {@label without_narrowing}
    */
   filter(
     predicate: Processor<Item, boolean, ParsedRecord, ParsedEvent, RawEvent>
@@ -150,7 +159,7 @@ export interface IIterable<
    * Calling `forEach` will create a new Lambda {@link Function} and attach the corresponding
    * Event Source, for example a SQS {@link Queue} Polling Event Source.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -168,7 +177,7 @@ export interface IIterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
    * ```ts
@@ -180,7 +189,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -192,7 +201,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -219,7 +228,7 @@ export interface IIterable<
    * Calling `forEach` will create a new Lambda {@link Function} and attach the corresponding
    * Event Source, for example a SQS {@link Queue} Polling Event Source.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -237,7 +246,7 @@ export interface IIterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
    * ```ts
@@ -249,7 +258,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -261,7 +270,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -290,7 +299,7 @@ export interface IIterable<
    * Calling `forEach` will create a new Lambda {@link Function} and attach the corresponding
    * Event Source, for example a SQS {@link Queue} Polling Event Source.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -308,7 +317,7 @@ export interface IIterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
    * ```ts
@@ -320,7 +329,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -332,7 +341,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -363,7 +372,7 @@ export interface IIterable<
    * Calling `forEach` will create a new Lambda {@link Function} and attach the corresponding
    * Event Source, for example a SQS {@link Queue} Polling Event Source.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -381,7 +390,7 @@ export interface IIterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    *
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
@@ -394,7 +403,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -406,7 +415,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -439,7 +448,7 @@ export interface IIterable<
    * batch of events received from the Event Source, for example all of the messages polled
    * from a SQS {@link Queue}.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -457,7 +466,7 @@ export interface IIterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
    * ```ts
@@ -469,7 +478,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -481,7 +490,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -508,7 +517,7 @@ export interface IIterable<
    * batch of events received from the Event Source, for example all of the messages polled
    * from a SQS {@link Queue}.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -526,7 +535,7 @@ export interface IIterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
    * ```ts
@@ -538,7 +547,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -550,7 +559,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -579,7 +588,7 @@ export interface IIterable<
    * batch of events received from the Event Source, for example all of the messages polled
    * from a SQS {@link Queue}.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -597,7 +606,7 @@ export interface IIterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
    * ```ts
@@ -609,7 +618,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -621,7 +630,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -652,7 +661,7 @@ export interface IIterable<
    * batch of events received from the Event Source, for example all of the messages polled
    * from a SQS {@link Queue}.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -670,7 +679,7 @@ export interface IIterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
    * ```ts
@@ -682,7 +691,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -694,7 +703,7 @@ export interface IIterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -723,6 +732,14 @@ export function isIterable(a: any): a is Iterable {
   return a?.kind === "Iterable";
 }
 
+/**
+ * @typeParam Item the type of items in this Iterable.
+ * @typeParam RawEvent the type of the Event payload received in the Lambda Invocation.
+ * @typeParam ParsedEvent the parsed Event payload containing pre-processed Records of type ParsedRecord.
+ * @typeParam ParsedRecord the type of the Record in the ParsedEvent
+ * @typeParam Response the type of the Response payload expected by the Event Source that invoked the Lambda Function.
+ * @typeParam EventSourceConfig the properties for configuring the Event Source attached to the Lambda Function.
+ */
 export class Iterable<
   Item = any,
   RawEvent extends EventBatch = any,
@@ -740,6 +757,9 @@ export class Iterable<
       EventSourceConfig
     >
 {
+  /**
+   * @hidden
+   */
   readonly kind = "Iterable";
 
   constructor(
@@ -899,7 +919,7 @@ export class Iterable<
    * Calling `forEach` will create a new Lambda {@link Function} and attach the corresponding
    * Event Source, for example a SQS {@link Queue} Polling Event Source.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -917,7 +937,7 @@ export class Iterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
    * ```ts
@@ -929,7 +949,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -941,7 +961,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -968,7 +988,7 @@ export class Iterable<
    * Calling `forEach` will create a new Lambda {@link Function} and attach the corresponding
    * Event Source, for example a SQS {@link Queue} Polling Event Source.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -986,7 +1006,7 @@ export class Iterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
    * ```ts
@@ -998,7 +1018,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -1010,7 +1030,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -1039,7 +1059,7 @@ export class Iterable<
    * Calling `forEach` will create a new Lambda {@link Function} and attach the corresponding
    * Event Source, for example a SQS {@link Queue} Polling Event Source.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -1057,7 +1077,7 @@ export class Iterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
    * ```ts
@@ -1069,7 +1089,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -1081,7 +1101,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -1112,7 +1132,7 @@ export class Iterable<
    * Calling `forEach` will create a new Lambda {@link Function} and attach the corresponding
    * Event Source, for example a SQS {@link Queue} Polling Event Source.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -1130,7 +1150,7 @@ export class Iterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    *
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
@@ -1143,7 +1163,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -1155,7 +1175,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -1237,7 +1257,7 @@ export class Iterable<
    * batch of events received from the Event Source, for example all of the messages polled
    * from a SQS {@link Queue}.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -1255,7 +1275,7 @@ export class Iterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
    * ```ts
@@ -1267,7 +1287,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -1279,7 +1299,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -1306,7 +1326,7 @@ export class Iterable<
    * batch of events received from the Event Source, for example all of the messages polled
    * from a SQS {@link Queue}.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -1324,7 +1344,7 @@ export class Iterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
    * ```ts
@@ -1336,7 +1356,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -1348,7 +1368,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -1377,7 +1397,7 @@ export class Iterable<
    * batch of events received from the Event Source, for example all of the messages polled
    * from a SQS {@link Queue}.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -1395,7 +1415,7 @@ export class Iterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
    * ```ts
@@ -1407,7 +1427,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -1419,7 +1439,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -1450,7 +1470,7 @@ export class Iterable<
    * batch of events received from the Event Source, for example all of the messages polled
    * from a SQS {@link Queue}.
    *
-   * ## Example Usage for a SQS {@link Queue}
+   * #### Example Usage for a SQS {@link Queue}
    *
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
@@ -1468,7 +1488,7 @@ export class Iterable<
    * });
    * ```
    *
-   * ## Lambda Function Configuration
+   * #### Lambda Function Configuration
    * The {@link Function}'s `props`, for example `memorySize` or `timeout` can be configured with
    * the `props` argument:
    * ```ts
@@ -1480,7 +1500,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Event Source Configuration
+   * #### Event Source Configuration
    *
    * The EventSource's `props`, for example `batchSize`, can also be configured with the `props`
    * argument:
@@ -1492,7 +1512,7 @@ export class Iterable<
    * }, handler);
    * ```
    *
-   * ## Override `scope` and `id`
+   * #### Override `scope` and `id`
    *
    * The `scope` of the Function defaults to the Resource underlying this {@link Iterable} and
    * and the `id` defaults to `"onEvent"`. To override `scope` and `id`, you can use one of the
@@ -1559,6 +1579,9 @@ export class Iterable<
     });
   }
 
+  /**
+   * @hidden
+   */
   private getCallChain(): Processor[] {
     if (isIterable(this.prev)) {
       return [...this.prev.getCallChain(), this.callbackfn];
@@ -1567,6 +1590,9 @@ export class Iterable<
     }
   }
 
+  /**
+   * @hidden
+   */
   private getSource(): EventSource<
     any,
     any,

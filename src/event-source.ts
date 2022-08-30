@@ -204,8 +204,16 @@ export abstract class EventSource<
   EventSourceConfig = any
 > implements IEventSource<RawEvent, ParsedEvent, Response, EventSourceConfig>
 {
+  /**
+   * The Resource that is the source of Events for this EventSource.
+   *
+   * For example, a SQS Queue, SNS Topic or Kinesis Stream.
+   */
   readonly resource: Resource;
 
+  /**
+   * @hidden
+   */
   readonly props: ResourceProps;
 
   constructor(scope: Construct, id: string, props: ResourceProps);
@@ -445,6 +453,7 @@ export abstract class EventSource<
    *
    * @param args an array of args
    * @returns the [scope, id, props, handler] tuple with defaults filled in as necessary
+   * @hidden
    */
   public parseArgs<F>(
     args: any[]

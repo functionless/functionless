@@ -24,7 +24,7 @@ export interface Message<M> extends AWS.SQS.Message {
 
 /**
  * A parsed form of the {@link lambda.SQSEvent} where each of the {@link lambda.SQSRecord}s
- * have been parsed into a {@link SQSRecord<T>}.
+ * have been parsed into a {@link SQSRecord}.
  */
 export interface SQSEvent<Message> {
   Records: SQSRecord<Message>[];
@@ -69,56 +69,7 @@ export interface ReceiveMessageResult<M> extends AWS.SQS.ReceiveMessageResult {
   MessageList?: Message<M>[];
 }
 
-abstract class BaseQueue<Message>
-  extends EventSource<
-    aws_sqs.IQueue,
-    QueueProps<Message>,
-    lambda.SQSEvent,
-    SQSEvent<Message>,
-    lambda.SQSBatchResponse,
-    aws_lambda_event_sources.SqsEventSourceProps
-  >
-  implements
-    Integration<
-      "Queue",
-      // queue is not directly invokable, only via event bridge pipe.
-      () => any,
-      EventBusTargetIntegration<
-        Message,
-        Omit<aws_events_targets.SqsQueueProps, "message"> | undefined
-      >
-    >
-{
-  public static readonly FunctionlessType = "Queue";
-  readonly functionlessKind = "Queue";
-  readonly kind = "Queue";
-  // @ts-ignore - value does not exist, is only available at compile time
-  readonly __functionBrand: () => Promise<void>;
-
-  /**
-   * The ARN of this queue
-   * @attribute
-   */
-  public get queueArn() {
-    return this.resource.queueArn;
-  }
-
-  /**
-   * The Name of this queue
-   * @attribute
-   */
-  public get queueName() {
-    return this.resource.queueName;
-  }
-
-  /**
-   * The URL of this queue
-   * @attribute
-   */
-  public get queueUrl() {
-    return this.resource.queueUrl;
-  }
-
+interface BaseQueue<Message> {
   /**
    * Delivers a message to the specified queue.
    *
@@ -162,7 +113,9 @@ abstract class BaseQueue<Message>
    * });
    * ```
    */
-  public readonly sendMessage;
+  sendMessage(
+    input: SendMessageRequest<Message>
+  ): Promise<AWS.SQS.SendMessageResult>;
 
   /**
    * Delivers up to ten messages to the specified queue. This is a batch version of
@@ -249,7 +202,9 @@ abstract class BaseQueue<Message>
    * &amp;AttributeName.2=second
    * ```
    */
-  public readonly sendMessageBatch;
+  sendMessageBatch(
+    input: SendMessageBatchRequest<Message>
+  ): Promise<AWS.SQS.SendMessageBatchResult>;
 
   /**
    * Retrieves one or more messages (up to 10), from the specified queue.
@@ -306,7 +261,9 @@ abstract class BaseQueue<Message>
    * In the future, new attributes might be added. If you write code that calls this action, we recommend
    * that you structure your code so that it can handle new attributes gracefully.
    */
-  public readonly receiveMessage;
+  receiveMessage(
+    input: ReceiveMessageRequest
+  ): Promise<ReceiveMessageResult<Message>>;
 
   /**
    * Deletes the messages in this queue.
@@ -322,7 +279,73 @@ abstract class BaseQueue<Message>
    * next minute. Messages sent to the queue after you call PurgeQueue might be deleted while the queue
    * is being purged.
    */
-  public readonly purge;
+  purge(): Promise<{}>;
+}
+
+abstract class BaseQueue<Message>
+  extends EventSource<
+    aws_sqs.IQueue,
+    QueueProps<Message>,
+    lambda.SQSEvent,
+    SQSEvent<Message>,
+    lambda.SQSBatchResponse,
+    aws_lambda_event_sources.SqsEventSourceProps
+  >
+  implements
+    Integration<
+      "Queue",
+      // queue is not directly invokable, only via event bridge pipe.
+      () => any,
+      EventBusTargetIntegration<
+        Message,
+        Omit<aws_events_targets.SqsQueueProps, "message"> | undefined
+      >
+    >
+{
+  /**
+   * @hidden
+   */
+  public static readonly FunctionlessType = "Queue";
+
+  /**
+   * @hidden
+   */
+  readonly functionlessKind = "Queue";
+
+  /**
+   * @hidden
+   */
+  readonly kind = "Queue";
+
+  /**
+   * @hidden
+   */
+  // @ts-ignore - value does not exist, is only available at compile time
+  readonly __functionBrand: () => Promise<void>;
+
+  /**
+   * The ARN of this queue
+   * @attribute
+   */
+  public get queueArn() {
+    return this.resource.queueArn;
+  }
+
+  /**
+   * The Name of this queue
+   * @attribute
+   */
+  public get queueName() {
+    return this.resource.queueName;
+  }
+
+  /**
+   * The URL of this queue
+   * @attribute
+   */
+  public get queueUrl() {
+    return this.resource.queueUrl;
+  }
 
   constructor(scope: Construct, id: string, props: QueueProps<Message>);
   constructor(resource: aws_sqs.IQueue, props: QueueProps<Message>);
@@ -476,7 +499,7 @@ abstract class BaseQueue<Message>
    * Returns an {@link Iterable} instance that can be used to process messages
    * in this {@link Queue}.
    *
-   * ## Example Usage
+   * #### Example Usage
    * ```ts
    * const myTable = new Table<Message, "id">(scope, "table", { .. });
    * const queue = new Queue(scope, "queue");
@@ -513,6 +536,9 @@ abstract class BaseQueue<Message>
     >(this, (event) => event);
   }
 
+  /**
+   * @hidden
+   */
   protected createResource(
     scope: Construct,
     id: string,
@@ -529,12 +555,18 @@ abstract class BaseQueue<Message>
     });
   }
 
+  /**
+   * @hidden
+   */
   protected createEventSource(
     config: aws_lambda_event_sources.SqsEventSourceProps
   ): aws_lambda.IEventSource {
     return new aws_lambda_event_sources.SqsEventSource(this.resource, config);
   }
 
+  /**
+   * @hidden
+   */
   protected createParser(): (event: lambda.SQSEvent) => SQSEvent<Message> {
     const serializer = this.props.serializer?.create();
     return (event) => ({
@@ -548,6 +580,9 @@ abstract class BaseQueue<Message>
     });
   }
 
+  /**
+   * @hidden
+   */
   public createResponseHandler(): (
     failed: lambda.SQSRecord[]
   ) => lambda.SQSBatchResponse {
@@ -558,12 +593,17 @@ abstract class BaseQueue<Message>
     });
   }
 
+  /**
+   * @hidden
+   */
   public createGetPayload(): (event: SQSRecord<Message>) => any {
     return (event) => event.message;
   }
 
   /**
    * Support `bus.when(...).pipe(queue)`
+   *
+   * @hidden
    */
   public readonly eventBus = makeEventBusIntegration<
     Message,
@@ -628,7 +668,7 @@ export interface IQueue<T = any> extends BaseQueue<T> {}
 /**
  * A SQS Queue. Each of the messages stored in the Queue are of type {@link T}.
  *
- * ## Example Usage
+ * #### Example Usage
  * ```ts
  * // create a DynamoDB Table
  * const myTable = new Table<Message, "id">(this, "table", { .. });
