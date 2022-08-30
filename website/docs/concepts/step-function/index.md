@@ -17,6 +17,7 @@ const serviceCall = new Function(scope, "serviceCall", async (input: string) => 
 new StepFunction(scope, "F", async (payload: { property?: string }) => {
   if (payload.property) {
     SFN.waitFor(10);
+    // the lambda function `serviceCall` is invoked like an ordinary function from the state machine.
     await serviceCall(payload.property);
   } else {
     throw new Error("missing property");
