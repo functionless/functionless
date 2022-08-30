@@ -87,7 +87,7 @@ const project = new CustomTypescriptProject({
     "@functionless/nodejs-closure-serializer",
     "@functionless/ast-reflection@^0.1.2",
     "@swc/cli",
-    "@swc/core@1.2.218",
+    "@swc/core@^1.2.244",
     "@swc/register",
   ],
   devDeps: [
