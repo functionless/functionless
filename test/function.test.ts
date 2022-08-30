@@ -441,3 +441,24 @@ test("$AWS.DynamoDB.* with non-ReferenceExpr Table property", () => {
     }
   );
 });
+
+test("$AWS.DynamoDB.* with ShorthandPropAssign", () => {
+  const Table = table;
+  new Function(
+    stack,
+    "$AWS.DynamoDB.* with non-ReferenceExpr Table property",
+    async () => {
+      await $AWS.DynamoDB.PutItem({
+        Table,
+        Item: {
+          id: {
+            S: "key",
+          },
+          name: {
+            S: "name",
+          },
+        },
+      });
+    }
+  );
+});
