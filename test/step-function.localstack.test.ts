@@ -1934,7 +1934,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "boolean",
+    "Boolean()",
     (parent) =>
       new StepFunction(parent, "sfn", (input) => {
         return {
@@ -1966,35 +1966,72 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "boolean",
+    "Number()",
     (parent) =>
       new StepFunction(parent, "sfn", (input) => {
         return {
-          trueString: Boolean("1"),
-          trueBoolean: Boolean(true),
-          trueNumber: Boolean(1),
-          trueObject: Boolean({}),
-          truthyVar: Boolean(input.value),
-          falseString: Boolean(""),
-          falseBoolean: Boolean(false),
-          falseNumber: Boolean(0),
-          falsyVar: Boolean(input.nv),
-          empty: Boolean(),
+          oneString: Number("1"),
+          oneBoolean: Number(true),
+          oneNumber: Number(1),
+          oneVar: Number(input.one),
+          zeroString: Number(""),
+          zeroBoolean: Number(false),
+          zeroNumber: Number(0),
+          zeroVar: Number(input.zero),
+          zeroNull: Number(null),
+          nanObject: Number({}),
+          nanString: Number("{}"),
+          nanVar: Number(input.nan),
+          empty: Number(),
         };
       }),
     {
-      trueString: true,
-      trueBoolean: true,
-      trueNumber: true,
-      trueObject: true,
-      falseString: false,
-      falseBoolean: false,
-      falseNumber: false,
-      empty: false,
-      truthyVar: true,
-      falsyVar: false,
+      oneString: 1,
+      oneBoolean: 1,
+      oneNumber: 1,
+      oneVar: 1,
+      zeroString: 0,
+      zeroBoolean: 0,
+      zeroNumber: 0,
+      zeroVar: 0,
+      zeroNull: 0,
+      /**
+       * Functionless ASL uses null for NaN.
+       */
+      nanObject: null as unknown as number,
+      nanString: null as unknown as number,
+      nanVar: null as unknown as number,
+      empty: 0,
     },
-    { value: "hello", nv: "" }
+    { one: "1", zero: "0", nan: "{}" }
+  );
+
+  test(
+    "String()",
+    (parent) =>
+      new StepFunction(parent, "sfn", (input) => {
+        return {
+          stringString: String("1"),
+          stringBoolean: String(true),
+          stringNumber: String(1),
+          stringVar: String(input.val),
+          stringEmpty: String(""),
+          stringObject: String({}),
+          stringNull: String(null),
+          empty: String(),
+        };
+      }),
+    {
+      stringString: "1",
+      stringBoolean: "true",
+      stringNumber: "1",
+      stringVar: "1",
+      stringEmpty: "",
+      stringObject: "{}",
+      stringNull: "null",
+      empty: "",
+    },
+    { val: 1 }
   );
 });
 
