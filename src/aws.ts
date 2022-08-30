@@ -39,6 +39,7 @@ import {
   IntegrationCall,
   IntegrationInput,
   makeIntegration,
+  tryFindIntegration,
 } from "./integration";
 import { AnyTable, isTable, ITable } from "./table";
 import type { AnyAsyncFunction } from "./util";
@@ -687,16 +688,8 @@ function getTableArgument(op: string, args: Argument[] | Expr[]) {
     );
   }
 
-  const tableRef = tableProp.expr;
+  const table = tryFindIntegration(tableProp.expr);
 
-  if (!isReferenceExpr(tableRef)) {
-    throw new SynthError(
-      ErrorCodes.Expected_an_object_literal,
-      `First argument into ${op} should be an input with a property 'Table' that is a Table.`
-    );
-  }
-
-  const table = tableRef.ref();
   if (!isTable(table)) {
     throw Error(`'Table' argument should be a Table object.`);
   }

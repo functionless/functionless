@@ -1,4 +1,4 @@
-import { App, aws_lambda, Stack } from "aws-cdk-lib";
+import { App, aws_dynamodb, aws_lambda, Stack } from "aws-cdk-lib";
 import "jest";
 import {
   Function,
@@ -8,6 +8,8 @@ import {
   AsyncResponseSuccess,
   AsyncResponseFailure,
   asyncSynth,
+  $AWS,
+  Table,
 } from "../src";
 import { reflect } from "../src/reflect";
 import { appsyncTestCase } from "./util";
@@ -20,6 +22,7 @@ interface Item {
 let app: App;
 let stack: Stack;
 let lambda: aws_lambda.Function;
+let table: Table<any, any, any>;
 
 beforeEach(() => {
   app = new App({ autoSynth: false });
@@ -31,6 +34,12 @@ beforeEach(() => {
     ),
     handler: "index.handler",
     runtime: aws_lambda.Runtime.NODEJS_14_X,
+  });
+  table = new Table(stack, "T", {
+    partitionKey: {
+      name: "id",
+      type: aws_dynamodb.AttributeType.STRING,
+    },
   });
 });
 
@@ -410,3 +419,46 @@ test("synth succeeds with async synth", async () => {
   await asyncSynth(app);
   // synth is slow
 }, 500000);
+
+// see https://github.com/functionless/functionless/issues/458
+test("$AWS.DynamoDB.* with non-ReferenceExpr Table property", () => {
+  const obj = { table };
+  new Function(
+    stack,
+    "$AWS.DynamoDB.* with non-ReferenceExpr Table property",
+    async () => {
+      await $AWS.DynamoDB.PutItem({
+        Table: obj.table,
+        Item: {
+          id: {
+            S: "key",
+          },
+          name: {
+            S: "name",
+          },
+        },
+      });
+    }
+  );
+});
+
+test("$AWS.DynamoDB.* with ShorthandPropAssign", () => {
+  const Table = table;
+  new Function(
+    stack,
+    "$AWS.DynamoDB.* with non-ReferenceExpr Table property",
+    async () => {
+      await $AWS.DynamoDB.PutItem({
+        Table,
+        Item: {
+          id: {
+            S: "key",
+          },
+          name: {
+            S: "name",
+          },
+        },
+      });
+    }
+  );
+});
