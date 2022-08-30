@@ -11,6 +11,7 @@ import {
   CfnResource,
   DockerImage,
   IResolvable,
+  Lazy,
   Reference,
   Resource,
   SecretValue,
@@ -33,6 +34,7 @@ import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph } from "./asl";
 import { BindFunctionName, RegisterFunctionName } from "./compile";
 import { IntegrationInvocation } from "./declaration";
+// @ts-ignore
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
@@ -654,25 +656,50 @@ export class Function<
       onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
         onFailure
       ),
+      environment: {
+        functionless_infer: Lazy.string({
+          produce: () => {
+            // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
+            findAllIntegrations().forEach(({ integration, args }) => {
+              new IntegrationImpl(integration).native.bind(this, args);
+            });
+
+            return "DONE";
+          },
+        }),
+      },
     });
 
     super(_resource);
 
-    const integrations = findDeepIntegrations(ast).map(
-      (i) =>
-        <IntegrationInvocation>{
-          args: i.args,
-          integration: i.expr.ref(),
-        }
+    // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
+    const nativeIntegrationsPrewarm = findAllIntegrations().flatMap(
+      ({ integration }) => {
+        const { preWarm } = new IntegrationImpl(integration).native;
+        return preWarm ? [preWarm] : [];
+      }
     );
 
-    // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
-    const nativeIntegrationsPrewarm = integrations.flatMap(
-      ({ integration, args }) => {
-        const integ = new IntegrationImpl(integration).native;
-        integ.bind(this, args);
-        return integ.preWarm ? [integ.preWarm] : [];
-      }
+    // Start serializing process, add the callback to the promises so we can later ensure completion
+    Function.promises.push(
+      (async () => {
+        try {
+          await callbackLambdaCode.generate(nativeIntegrationsPrewarm);
+        } catch (e) {
+          if (e instanceof SynthError) {
+            throw new SynthError(
+              e.code,
+              `While serializing ${_resource.node.path}:\n\n${e.message}`
+            );
+          } else if (e instanceof Error) {
+            throw Error(
+              `While serializing ${_resource.node.path}:\n\n${e.message}`
+            );
+          } else {
+            throw e;
+          }
+        }
+      })()
     );
 
     /**
@@ -699,25 +726,15 @@ export class Function<
             ],
     });
 
-    // Start serializing process, add the callback to the promises so we can later ensure completion
-    Function.promises.push(
-      (async () => {
-        try {
-          await callbackLambdaCode.generate(nativeIntegrationsPrewarm);
-        } catch (e) {
-          if (e instanceof SynthError) {
-            throw new SynthError(
-              e.code,
-              `While serializing ${_resource.node.path}:\n\n${e.message}`
-            );
-          } else if (e instanceof Error) {
-            throw Error(
-              `While serializing ${_resource.node.path}:\n\n${e.message}`
-            );
+    function findAllIntegrations() {
+      return findDeepIntegrations(ast).map(
+        (i) =>
+          <IntegrationInvocation>{
+            args: i.args,
+            integration: i.expr.ref(),
           }
-        }
-      })()
-    );
+      );
+    }
   }
 }
 
@@ -803,6 +820,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
       integrationPrewarms,
       this.props
     );
+
     const bundled = await bundle(serialized);
 
     const asset = aws_lambda.Code.fromAsset("", {

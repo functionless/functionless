@@ -13,12 +13,7 @@
     "loose": false,
     "externalHelpers": false,
     "experimental": {
-      "plugins": [
-        [
-          "@functionless/ast-reflection",
-          {}
-        ]
-      ]
+      "plugins": [["@functionless/ast-reflection", {}]]
     }
   },
   "minify": false,

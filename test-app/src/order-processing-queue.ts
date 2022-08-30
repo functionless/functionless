@@ -44,15 +44,6 @@ events
   .map((envelope) => envelope.detail)
   .pipe(orderQueue);
 
-// kick off a Step Function to reliably process each order
-orderQueue.messages().forEach(async (order) => {
-  await processOrder({
-    // idempotency on the orderId
-    name: order.orderId,
-    input: order,
-  });
-});
-
 const chargeCard = new Function(
   stack,
   "PlaceOrder",
@@ -69,15 +60,6 @@ const dispatchOrder = new Function(
   }
 );
 
-// process all failed Order Events and re-send them for re-processing
-failedOrderQueue.messages().forEach(async (message) => {
-  await orderQueue.sendMessage({
-    Message: message,
-    // naive back-off policy for demonstration purposes only
-    DelaySeconds: 60,
-  });
-});
-
 // use a Standard Step Function to orchestrate order fulfillment
 const processOrder = new StepFunction(
   stack,
@@ -87,3 +69,21 @@ const processOrder = new StepFunction(
     await dispatchOrder(order);
   }
 );
+
+// kick off a Step Function to reliably process each order
+orderQueue.messages().forEach(async (order) => {
+  await processOrder({
+    // idempotency on the orderId
+    name: order.orderId,
+    input: order,
+  });
+});
+
+// process all failed Order Events and re-send them for re-processing
+failedOrderQueue.messages().forEach(async (message) => {
+  await orderQueue.sendMessage({
+    Message: message,
+    // naive back-off policy for demonstration purposes only
+    DelaySeconds: 60,
+  });
+});

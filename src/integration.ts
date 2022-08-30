@@ -18,8 +18,9 @@ import {
   isVariableDecl,
 } from "./guards";
 import { FunctionlessNode } from "./node";
-import { AnyFunction, evalToConstant } from "./util";
-import { visitEachChild } from "./visit";
+import { reflect } from "./reflect";
+import { AnyFunction, evalToConstant, isAnyFunction } from "./util";
+import { forEachChild } from "./visit";
 import { VTL } from "./vtl";
 
 export const isIntegration = <I extends Integration<string, AnyFunction>>(
@@ -298,7 +299,8 @@ export function findDeepIntegrations(
   ast: FunctionlessNode
 ): CallExpr<ReferenceExpr>[] {
   const nodes: CallExpr<ReferenceExpr>[] = [];
-  visitEachChild(ast, function visit(node: FunctionlessNode): FunctionlessNode {
+  const seen = new Set();
+  forEachChild(ast, function visit(node: FunctionlessNode): void {
     if (isCallExpr(node)) {
       const integrations = tryFindIntegrations(node.expr);
       if (integrations) {
@@ -314,9 +316,26 @@ export function findDeepIntegrations(
           )
         );
       }
+    } else if (isReferenceExpr(node)) {
+      (function visitValue(value: any): void {
+        if (seen.has(value)) {
+          return;
+        }
+        seen.add(value);
+        if (isAnyFunction(value)) {
+          const ast = reflect(value);
+          if (ast) {
+            visit(ast);
+          }
+        } else if (Array.isArray(value)) {
+          value.forEach(visitValue);
+        } else if (value && typeof value === "object") {
+          Object.values(value).forEach(visitValue);
+        }
+      })(node.ref());
     }
 
-    return visitEachChild(node, visit);
+    forEachChild(node, visit);
   });
 
   return nodes;

@@ -31,6 +31,10 @@ export type AnyClass = new (...args: any[]) => any;
 export type AnyFunction = (...args: any[]) => any;
 export type AnyAsyncFunction = (...args: any[]) => Promise<any>;
 
+export function isAnyFunction(a: any): a is AnyFunction {
+  return typeof a === "function";
+}
+
 /**
  * Create a memoized function.
  *
