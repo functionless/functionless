@@ -741,6 +741,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     "binary and unary comparison",
     (parent) => {
       return new StepFunction(parent, "sfn2", async (input) => {
+        const obj = { nv: null } as { und?: string; nv: null; v: string };
         return {
           constantStringEquals: "a" === "a", // true
           constantToVarStringEquals: input.v === "val", // true
@@ -817,6 +818,78 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           varNotPresentFalse: !input.x,
           // varInVar: input.v in input.obj, // false - unsupported
           // varInConstant: input.v in { a: "val" }, // false - unsupported
+          // undefined and null literals
+          varEqualEqualsUndefined: input.v === undefined, // false
+          varEqualsUndefined: input.v == undefined, // false
+          varNotEqualEqualsUndefined: input.v !== undefined, // true
+          varNotEqualsUndefined: input.v != undefined, // true
+          nullEqualEqualsUndefined: input.nv === undefined, // false
+          nullEqualsUndefined: input.nv == undefined, // false - incorrect - https://github.com/functionless/functionless/issues/445
+          nullNotEqualEqualsUndefined: input.nv === undefined, // false
+          nullNotEqualsUndefined: input.nv == undefined, // false - incorrect -https://github.com/functionless/functionless/issues/445
+          undefinedVarEqualEqualsUndefined: input.und === undefined, // true
+          undefinedVarEqualsUndefined: input.und == undefined, // true
+          undefinedVarNotEqualEqualsUndefined: input.und !== undefined, // false
+          undefinedVarNotEqualsUndefined: input.und != undefined, // false
+          varEqualEqualsUndefinedVar: input.v === undefined, // false
+          varEqualsUndefinedVar: input.v == undefined, // false
+          // null
+          undefinedVarEqualEqualsNull: input.und === null, // false
+          undefinedVarEqualsNull: input.und == null, // false - incorrect -https://github.com/functionless/functionless/issues/445
+          undefinedVarNotEqualEqualsNull: input.und !== null, // true
+          undefinedVarNotEqualsNull: input.und != null, // true - incorrect -https://github.com/functionless/functionless/issues/445
+          // string
+          undefinedVarEqualEqualsString: input.und === "hello", // false
+          undefinedVarEqualsString: input.und == "hello", // false
+          undefinedVarNotEqualEqualsString: input.und !== "hello", // true
+          undefinedVarNotEqualsString: input.und != "hello", // true
+          nullVarEqualEqualsString: input.nv === "hello", // false
+          nullVarEqualsString: input.nv == "hello", // false
+          nullVarNotEqualEqualsString: input.nv !== "hello", // true
+          nullVarNotEqualsString: input.nv != "hello", // true
+          // number
+          undefinedVarEqualEqualsNumber: input.undN === 1, // false
+          undefinedVarEqualsNumber: input.undN == 1, // false
+          undefinedVarNotEqualEqualsNumber: input.undN !== 1, // true
+          undefinedVarNotEqualsNumber: input.undN != 1, // true
+          nullVarEqualEqualsNumber: input.nv === 1, // false
+          nullVarEqualsNumber: input.nv == 1, // false
+          nullVarNotEqualEqualsNumber: input.nv !== 1, // true
+          nullVarNotEqualsNumber: input.nv != 1, // true
+          // undefined variables
+          varNotEqualEqualsUndefinedVar: input.v !== obj.und, // true
+          varNotEqualsUndefinedVar: input.v != obj.und, // true
+          nullEqualEqualsUndefinedVar: input.nv === obj.und, // false
+          nullEqualsUndefinedVar: input.nv == obj.und, // false - incorrect - https://github.com/functionless/functionless/issues/445
+          nullNotEqualEqualsUndefinedVar: input.nv === obj.und, // false
+          nullNotEqualsUndefinedVar: input.nv == obj.und, // false - incorrect -https://github.com/functionless/functionless/issues/445
+          undefinedVarEqualEqualsUndefinedVar: input.und === obj.und, // true
+          undefinedVarEqualsUndefinedVar: input.und == obj.und, // true
+          undefinedVarNotEqualEqualsUndefinedVar: input.und !== obj.und, // false
+          undefinedVarNotEqualsUndefinedVar: input.und != obj.und, // false
+          // null variable
+          undefinedVarEqualEqualsNullVar: input.und === obj.nv, // false
+          undefinedVarEqualsNullVar: input.und == obj.nv, // false - incorrect -https://github.com/functionless/functionless/issues/445
+          undefinedVarNotEqualEqualsNullVar: input.und !== obj.nv, // true
+          undefinedVarNotEqualsNullVar: input.und != obj.nv, // true - incorrect -https://github.com/functionless/functionless/issues/445
+          // string var
+          undefinedVarEqualEqualsStringVar: input.und === input.v, // false
+          undefinedVarEqualsStringVar: input.und == input.v, // false
+          undefinedVarNotEqualEqualsStringVar: input.und !== input.v, // true
+          undefinedVarNotEqualsStringVar: input.und != input.v, // true
+          nullVarEqualEqualsStringVar: input.nv === input.v, // false
+          nullVarEqualsStringVar: input.nv == input.v, // false
+          nullVarNotEqualEqualsStringVar: input.nv !== input.v, // true
+          nullVarNotEqualsStringVar: input.nv != input.v, // true
+          // number var
+          undefinedVarEqualEqualsNumberVar: input.undN === input.n, // false
+          undefinedVarEqualsNumberVar: input.undN == input.n, // false
+          undefinedVarNotEqualEqualsNumberVar: input.undN !== input.n, // true
+          undefinedVarNotEqualsNumberVar: input.undN != input.n, // true
+          nullVarEqualEqualsNumberVar: input.nv === input.n, // false
+          nullVarEqualsNumberVar: input.nv == input.n, // false
+          nullVarNotEqualEqualsNumberVar: input.nv !== input.n, // true
+          nullVarNotEqualsNumberVar: input.nv != input.n, // true
         };
       });
     },
@@ -896,8 +969,88 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       varNotNullFalse: false,
       // @ts-ignore
       varNotPresentFalse: true,
+      // undefined and null literals
+      varEqualEqualsUndefined: false,
+      varEqualsUndefined: false,
+      varNotEqualEqualsUndefined: true,
+      varNotEqualsUndefined: true,
+      nullEqualEqualsUndefined: false,
+      nullEqualsUndefined: false,
+      nullNotEqualEqualsUndefined: false,
+      nullNotEqualsUndefined: false,
+      undefinedVarEqualEqualsUndefined: true,
+      undefinedVarEqualsUndefined: true,
+      undefinedVarNotEqualEqualsUndefined: false,
+      undefinedVarNotEqualsUndefined: false,
+      varEqualEqualsUndefinedVar: false,
+      varEqualsUndefinedVar: false,
+      // null
+      undefinedVarEqualEqualsNull: false,
+      undefinedVarEqualsNull: false,
+      undefinedVarNotEqualEqualsNull: true,
+      undefinedVarNotEqualsNull: true,
+      // string
+      undefinedVarEqualEqualsString: false,
+      undefinedVarEqualsString: false,
+      undefinedVarNotEqualEqualsString: true,
+      undefinedVarNotEqualsString: true,
+      nullVarEqualEqualsString: false,
+      nullVarEqualsString: false,
+      nullVarNotEqualEqualsString: true,
+      nullVarNotEqualsString: true,
+      // number
+      undefinedVarEqualEqualsNumber: false,
+      undefinedVarEqualsNumber: false,
+      undefinedVarNotEqualEqualsNumber: true,
+      undefinedVarNotEqualsNumber: true,
+      nullVarEqualEqualsNumber: false,
+      nullVarEqualsNumber: false,
+      nullVarNotEqualEqualsNumber: true,
+      nullVarNotEqualsNumber: true,
+      // undefined variables
+      varNotEqualEqualsUndefinedVar: true,
+      varNotEqualsUndefinedVar: true,
+      nullEqualEqualsUndefinedVar: false,
+      nullEqualsUndefinedVar: false,
+      nullNotEqualEqualsUndefinedVar: false,
+      nullNotEqualsUndefinedVar: false,
+      undefinedVarEqualEqualsUndefinedVar: true,
+      undefinedVarEqualsUndefinedVar: true,
+      undefinedVarNotEqualEqualsUndefinedVar: false,
+      undefinedVarNotEqualsUndefinedVar: false,
+      // null variable
+      undefinedVarEqualEqualsNullVar: false,
+      undefinedVarEqualsNullVar: false,
+      undefinedVarNotEqualEqualsNullVar: true,
+      undefinedVarNotEqualsNullVar: true,
+      // string var
+      undefinedVarEqualEqualsStringVar: false,
+      undefinedVarEqualsStringVar: false,
+      undefinedVarNotEqualEqualsStringVar: true,
+      undefinedVarNotEqualsStringVar: true,
+      nullVarEqualEqualsStringVar: false,
+      nullVarEqualsStringVar: false,
+      nullVarNotEqualEqualsStringVar: true,
+      nullVarNotEqualsStringVar: true,
+      // number var
+      undefinedVarEqualEqualsNumberVar: false,
+      undefinedVarEqualsNumberVar: false,
+      undefinedVarNotEqualEqualsNumberVar: true,
+      undefinedVarNotEqualsNumberVar: true,
+      nullVarEqualEqualsNumberVar: false,
+      nullVarEqualsNumberVar: false,
+      nullVarNotEqualEqualsNumberVar: true,
+      nullVarNotEqualsNumberVar: true,
     },
-    { a: true, n: 1, v: "val", nv: null, obj: { a: "x" } }
+    { a: true, n: 1, v: "val", nv: null, obj: { a: "x" } } as {
+      a: boolean;
+      n: number;
+      v: string;
+      nv: null;
+      obj: { a: string };
+      und?: string;
+      undN?: number;
+    }
   );
 
   // localstack sends and empty object to lambda instead of boolean/numbers
@@ -1762,7 +1915,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
                       await $SFN.map([7], (f) => {
                         return `${a}${b}${c}${d}${e}${f}`;
                       })
-                    )[0];
+                    )[0]!;
                     res = `${r}-${a}${b}${c}${d}${e}${f}`;
                   }
                   res = `${res}-${a}${b}${c}${d}${e}${f}`;

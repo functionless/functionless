@@ -376,6 +376,10 @@ Object {
               "Variable": "$.item",
             },
             Object {
+              "IsPresent": true,
+              "Variable": "$.index",
+            },
+            Object {
               "Or": Array [
                 Object {
                   "And": Array [
@@ -386,18 +390,6 @@ Object {
                     Object {
                       "StringGreaterThanPath": "$.index",
                       "Variable": "$.item",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.item",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$$.Execution.Id",
                     },
                   ],
                 },
@@ -649,6 +641,10 @@ Object {
               "Variable": "$.item",
             },
             Object {
+              "IsPresent": true,
+              "Variable": "$.arr[0]",
+            },
+            Object {
               "Or": Array [
                 Object {
                   "And": Array [
@@ -659,18 +655,6 @@ Object {
                     Object {
                       "StringGreaterThanPath": "$.arr[0]",
                       "Variable": "$.item",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.item",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$$.Execution.Id",
                     },
                   ],
                 },
@@ -922,6 +906,10 @@ Object {
               "Variable": "$.item",
             },
             Object {
+              "IsPresent": true,
+              "Variable": "$.first",
+            },
+            Object {
               "Or": Array [
                 Object {
                   "And": Array [
@@ -932,18 +920,6 @@ Object {
                     Object {
                       "StringGreaterThanPath": "$.first",
                       "Variable": "$.item",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.item",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$$.Execution.Id",
                     },
                   ],
                 },
@@ -1165,7 +1141,7 @@ Object {
               "Variable": "$.item",
             },
             Object {
-              "IsNull": false,
+              "IsNull": true,
               "Variable": "$$.Execution.Id",
             },
           ],
@@ -1374,65 +1350,85 @@ Object {
     "return value === a": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "true__return value === a",
+          "Or": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.value",
+              "And": Array [
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.value",
+                },
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.a",
+                },
+              ],
             },
             Object {
-              "Or": Array [
+              "And": Array [
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.value",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.a",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.value",
                 },
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.value",
-                    },
-                    Object {
-                      "StringEqualsPath": "$.a",
-                      "Variable": "$.value",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.a",
                 },
                 Object {
-                  "And": Array [
+                  "Or": Array [
                     Object {
-                      "IsBoolean": true,
-                      "Variable": "$.value",
+                      "And": Array [
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.value",
+                        },
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.a",
+                        },
+                      ],
                     },
                     Object {
-                      "BooleanEqualsPath": "$.a",
-                      "Variable": "$.value",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.value",
+                        },
+                        Object {
+                          "StringEqualsPath": "$.a",
+                          "Variable": "$.value",
+                        },
+                      ],
                     },
-                  ],
-                },
-                Object {
-                  "And": Array [
                     Object {
-                      "IsNumeric": true,
-                      "Variable": "$.value",
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.value",
+                        },
+                        Object {
+                          "BooleanEqualsPath": "$.a",
+                          "Variable": "$.value",
+                        },
+                      ],
                     },
                     Object {
-                      "NumericEqualsPath": "$.a",
-                      "Variable": "$.value",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.value",
+                        },
+                        Object {
+                          "NumericEqualsPath": "$.a",
+                          "Variable": "$.value",
+                        },
+                      ],
                     },
                   ],
                 },
               ],
             },
           ],
-          "Next": "true__return value === a",
         },
       ],
       "Default": "false__return value === a",
@@ -2903,16 +2899,12 @@ Object {
         Object {
           "And": Array [
             Object {
-              "Not": Object {
-                "IsPresent": true,
-                "Variable": "$.heap4[0]",
-              },
+              "IsPresent": false,
+              "Variable": "$.heap4[0]",
             },
             Object {
-              "Not": Object {
-                "IsPresent": true,
-                "Variable": "$.heap5",
-              },
+              "IsPresent": false,
+              "Variable": "$.heap5",
             },
           ],
           "Next": "returnEmpty__1__return await $SFN.map(input.value, function ({ value: b, ar",
@@ -3229,16 +3221,12 @@ Object {
         Object {
           "And": Array [
             Object {
-              "Not": Object {
-                "IsPresent": true,
-                "Variable": "$.heap4[0]",
-              },
+              "IsPresent": false,
+              "Variable": "$.heap4[0]",
             },
             Object {
-              "Not": Object {
-                "IsPresent": true,
-                "Variable": "$.heap5",
-              },
+              "IsPresent": false,
+              "Variable": "$.heap5",
             },
           ],
           "Next": "returnEmpty__1__return input.value.map(function ({ value: b, arr: [ c ] }))",
@@ -3398,16 +3386,12 @@ Object {
         Object {
           "And": Array [
             Object {
-              "Not": Object {
-                "IsPresent": true,
-                "Variable": "$.heap5[0]",
-              },
+              "IsPresent": false,
+              "Variable": "$.heap5[0]",
             },
             Object {
-              "Not": Object {
-                "IsPresent": true,
-                "Variable": "$.heap6",
-              },
+              "IsPresent": false,
+              "Variable": "$.heap6",
             },
           ],
           "Next": "returnEmpty__1__return [1, 2, 3].map(function ()).join() 1",
@@ -4587,58 +4571,78 @@ Object {
         Object {
           "And": Array [
             Object {
-              "And": Array [
+              "Or": Array [
                 Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.a",
+                  "And": Array [
+                    Object {
+                      "IsPresent": false,
+                      "Variable": "$.input.a",
+                    },
+                    Object {
+                      "IsPresent": false,
+                      "Variable": "$.input.b",
+                    },
+                  ],
                 },
                 Object {
-                  "Or": Array [
+                  "And": Array [
                     Object {
-                      "And": Array [
-                        Object {
-                          "IsNull": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "IsNull": true,
-                          "Variable": "$.input.b",
-                        },
-                      ],
+                      "IsPresent": true,
+                      "Variable": "$.input.a",
                     },
                     Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "StringEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
-                        },
-                      ],
+                      "IsPresent": true,
+                      "Variable": "$.input.b",
                     },
                     Object {
-                      "And": Array [
+                      "Or": Array [
                         Object {
-                          "IsBoolean": true,
-                          "Variable": "$.input.a",
+                          "And": Array [
+                            Object {
+                              "IsNull": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "IsNull": true,
+                              "Variable": "$.input.b",
+                            },
+                          ],
                         },
                         Object {
-                          "BooleanEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "StringEqualsPath": "$.input.b",
+                              "Variable": "$.input.a",
+                            },
+                          ],
                         },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
                         Object {
-                          "IsNumeric": true,
-                          "Variable": "$.input.a",
+                          "And": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "BooleanEqualsPath": "$.input.b",
+                              "Variable": "$.input.a",
+                            },
+                          ],
                         },
                         Object {
-                          "NumericEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "NumericEqualsPath": "$.input.b",
+                              "Variable": "$.input.a",
+                            },
+                          ],
                         },
                       ],
                     },
@@ -4676,80 +4680,29 @@ Object {
     "input.a === input.b ?? input.s === \\"hello\\"": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "true__input.a === input.b ?? input.s === \\"hello\\"",
+          "Or": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.input.a",
-            },
-            Object {
-              "Or": Array [
+              "And": Array [
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.input.a",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.input.b",
-                    },
-                  ],
+                  "IsPresent": false,
+                  "Variable": "$.input.a",
                 },
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.input.a",
-                    },
-                    Object {
-                      "StringEqualsPath": "$.input.b",
-                      "Variable": "$.input.a",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.input.a",
-                    },
-                    Object {
-                      "BooleanEqualsPath": "$.input.b",
-                      "Variable": "$.input.a",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsNumeric": true,
-                      "Variable": "$.input.a",
-                    },
-                    Object {
-                      "NumericEqualsPath": "$.input.b",
-                      "Variable": "$.input.a",
-                    },
-                  ],
+                  "IsPresent": false,
+                  "Variable": "$.input.b",
                 },
               ],
             },
-          ],
-          "Next": "true__input.a === input.b ?? input.s === \\"hello\\"",
-        },
-      ],
-      "Default": "false__input.a === input.b ?? input.s === \\"hello\\"",
-      "Type": "Choice",
-    },
-    "input.a === input.b || input.s === \\"hello\\"": Object {
-      "Choices": Array [
-        Object {
-          "Next": "true__input.a === input.b || input.s === \\"hello\\"",
-          "Or": Array [
             Object {
               "And": Array [
                 Object {
                   "IsPresent": true,
                   "Variable": "$.input.a",
+                },
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.b",
                 },
                 Object {
                   "Or": Array [
@@ -4798,6 +4751,97 @@ Object {
                         Object {
                           "NumericEqualsPath": "$.input.b",
                           "Variable": "$.input.a",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      "Default": "false__input.a === input.b ?? input.s === \\"hello\\"",
+      "Type": "Choice",
+    },
+    "input.a === input.b || input.s === \\"hello\\"": Object {
+      "Choices": Array [
+        Object {
+          "Next": "true__input.a === input.b || input.s === \\"hello\\"",
+          "Or": Array [
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsPresent": false,
+                      "Variable": "$.input.a",
+                    },
+                    Object {
+                      "IsPresent": false,
+                      "Variable": "$.input.b",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsPresent": true,
+                      "Variable": "$.input.a",
+                    },
+                    Object {
+                      "IsPresent": true,
+                      "Variable": "$.input.b",
+                    },
+                    Object {
+                      "Or": Array [
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNull": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "IsNull": true,
+                              "Variable": "$.input.b",
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "StringEqualsPath": "$.input.b",
+                              "Variable": "$.input.a",
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "BooleanEqualsPath": "$.input.b",
+                              "Variable": "$.input.a",
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "NumericEqualsPath": "$.input.b",
+                              "Variable": "$.input.a",
+                            },
+                          ],
                         },
                       ],
                     },
@@ -5764,17 +5808,25 @@ Object {
     "if(person.Item === undefined)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "return",
+          "Or": Array [
             Object {
-              "IsPresent": true,
+              "IsPresent": false,
               "Variable": "$.person.Item",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.person.Item",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
             },
           ],
-          "Next": "return",
         },
       ],
       "Default": "score = await computeScore({id: person.Item.id.S, name: person.Item.name.S}",
@@ -9923,17 +9975,25 @@ Object {
     "if(input.id === undefined)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "return \\"null\\"",
+          "Or": Array [
             Object {
-              "IsPresent": true,
+              "IsPresent": false,
               "Variable": "$.input.id",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.id",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
             },
           ],
-          "Next": "return \\"null\\"",
         },
         Object {
           "And": Array [
@@ -10508,17 +10568,25 @@ Object {
     "if(input.id === undefined)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "return \\"null\\"",
+          "Or": Array [
             Object {
-              "IsPresent": true,
+              "IsPresent": false,
               "Variable": "$.input.id",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.id",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
             },
           ],
-          "Next": "return \\"null\\"",
         },
         Object {
           "And": Array [
@@ -11696,65 +11764,85 @@ Object {
     "cond = await task()": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "cond = await task() 1",
+          "Or": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.cond",
+              "And": Array [
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.cond",
+                },
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.fnl_context.null",
+                },
+              ],
             },
             Object {
-              "Or": Array [
+              "And": Array [
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.cond",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.fnl_context.null",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.cond",
                 },
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.cond",
-                    },
-                    Object {
-                      "StringEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.fnl_context.null",
                 },
                 Object {
-                  "And": Array [
+                  "Or": Array [
                     Object {
-                      "IsBoolean": true,
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.fnl_context.null",
+                        },
+                      ],
                     },
                     Object {
-                      "BooleanEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "StringEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
-                  ],
-                },
-                Object {
-                  "And": Array [
                     Object {
-                      "IsNumeric": true,
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "BooleanEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
                     Object {
-                      "NumericEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "NumericEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
                   ],
                 },
               ],
             },
           ],
-          "Next": "cond = await task() 1",
         },
       ],
       "Default": "return null",
@@ -12916,17 +13004,25 @@ Object {
     "if(MetricAlarms === undefined)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "return",
+          "Or": Array [
             Object {
-              "IsPresent": true,
+              "IsPresent": false,
               "Variable": "$.MetricAlarms",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.MetricAlarms",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
             },
           ],
-          "Next": "return",
         },
       ],
       "Default": "await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(functi",
@@ -14191,17 +14287,25 @@ Object {
     "if(person.Item === undefined)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "return",
+          "Or": Array [
             Object {
-              "IsPresent": true,
+              "IsPresent": false,
               "Variable": "$.person.Item",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.person.Item",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
             },
           ],
-          "Next": "return",
         },
       ],
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
@@ -14294,17 +14398,25 @@ Object {
     "if(person.Item === undefined)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "return",
+          "Or": Array [
             Object {
-              "IsPresent": true,
+              "IsPresent": false,
               "Variable": "$.person.Item",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.person.Item",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
             },
           ],
-          "Next": "return",
         },
       ],
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
@@ -14461,17 +14573,25 @@ Object {
     "if(alarms.MetricAlarms === undefined)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "return",
+          "Or": Array [
             Object {
-              "IsPresent": true,
+              "IsPresent": false,
               "Variable": "$.alarms.MetricAlarms",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.alarms.MetricAlarms",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
             },
           ],
-          "Next": "return",
         },
       ],
       "Default": "return alarms.MetricAlarms",
@@ -14557,17 +14677,25 @@ Object {
     "if(alarms.MetricAlarms === undefined)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "return",
+          "Or": Array [
             Object {
-              "IsPresent": true,
+              "IsPresent": false,
               "Variable": "$.alarms.MetricAlarms",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.alarms.MetricAlarms",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
             },
           ],
-          "Next": "return",
         },
       ],
       "Default": "return alarms.MetricAlarms",
@@ -19496,65 +19624,85 @@ Object {
     "while (cond === null)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "cond = await task()",
+          "Or": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.cond",
+              "And": Array [
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.cond",
+                },
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.fnl_context.null",
+                },
+              ],
             },
             Object {
-              "Or": Array [
+              "And": Array [
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.cond",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.fnl_context.null",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.cond",
                 },
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.cond",
-                    },
-                    Object {
-                      "StringEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.fnl_context.null",
                 },
                 Object {
-                  "And": Array [
+                  "Or": Array [
                     Object {
-                      "IsBoolean": true,
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.fnl_context.null",
+                        },
+                      ],
                     },
                     Object {
-                      "BooleanEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "StringEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
-                  ],
-                },
-                Object {
-                  "And": Array [
                     Object {
-                      "IsNumeric": true,
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "BooleanEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
                     Object {
-                      "NumericEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "NumericEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
                   ],
                 },
               ],
             },
           ],
-          "Next": "cond = await task()",
         },
       ],
       "Default": "return null",
@@ -19600,65 +19748,85 @@ Object {
     "while (cond === null)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "cond = await task()",
+          "Or": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.cond",
+              "And": Array [
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.cond",
+                },
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.fnl_context.null",
+                },
+              ],
             },
             Object {
-              "Or": Array [
+              "And": Array [
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.cond",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.fnl_context.null",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.cond",
                 },
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.cond",
-                    },
-                    Object {
-                      "StringEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.fnl_context.null",
                 },
                 Object {
-                  "And": Array [
+                  "Or": Array [
                     Object {
-                      "IsBoolean": true,
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.fnl_context.null",
+                        },
+                      ],
                     },
                     Object {
-                      "BooleanEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "StringEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
-                  ],
-                },
-                Object {
-                  "And": Array [
                     Object {
-                      "IsNumeric": true,
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "BooleanEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
                     Object {
-                      "NumericEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "NumericEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
                   ],
                 },
               ],
             },
           ],
-          "Next": "cond = await task()",
         },
       ],
       "Default": "return null",

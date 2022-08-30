@@ -1465,11 +1465,6 @@ class BaseStandardStepFunction<
           .promise();
       },
     },
-    unhandledContext: (kind, contextKind) => {
-      throw new Error(
-        `${kind} is only available in the ${ASL.ContextName} and ${VTL.ContextName} context, but was used in ${contextKind}.`
-      );
-    },
   });
 }
 
@@ -1643,3 +1638,6 @@ function getArgs(call: CallExpr) {
   }
   return executionArn;
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;
