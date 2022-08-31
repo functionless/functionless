@@ -4561,7 +4561,6 @@ function toStateName(node?: FunctionlessNode): string {
     isPropDecl(node) ||
     isSetAccessorDecl(node) ||
     isSuperKeyword(node) ||
-    isSuperKeyword(node) ||
     isSwitchStmt(node) ||
     isWithStmt(node) ||
     isYieldExpr(node)

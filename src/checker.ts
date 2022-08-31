@@ -1,5 +1,4 @@
-import * as ts from "typescript";
-import * as tsserver from "typescript/lib/tsserverlibrary";
+import ts from "typescript";
 import { ApiMethod, ApiMethodKind, isApiMethodKind } from "./api";
 import { AppsyncField, AppsyncResolver } from "./appsync";
 import { EventBus, Rule } from "./event-bridge";
@@ -88,9 +87,7 @@ export type NewAppsyncFieldInterface = ts.NewExpression & {
 
 export type FunctionlessChecker = ReturnType<typeof makeFunctionlessChecker>;
 
-export function makeFunctionlessChecker(
-  checker: ts.TypeChecker | tsserver.TypeChecker
-) {
+export function makeFunctionlessChecker(checker: ts.TypeChecker) {
   return {
     ...checker,
     getApiMethodKind,

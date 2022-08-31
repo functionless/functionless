@@ -1,3 +1,4 @@
+import ts from "typescript";
 import {
   EventBusMapInterface,
   EventBusWhenInterface,
