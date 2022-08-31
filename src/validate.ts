@@ -1,4 +1,4 @@
-import { SyntaxKind } from "typescript";
+import ts from "typescript";
 import {
   EventBusMapInterface,
   EventBusWhenInterface,
@@ -157,7 +157,7 @@ export function validate(
             ts.isPostfixUnaryExpression(node)) &&
             (isUnaryArithmeticToken(node.operator) ||
               // we can support unary `+` because it does not change the value, but unary `-` does.
-              node.operator === SyntaxKind.MinusToken))) &&
+              node.operator === ts.SyntaxKind.MinusToken))) &&
         !checker.isConstant(node)
       ) {
         return [
