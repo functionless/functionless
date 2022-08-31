@@ -1896,65 +1896,7 @@ export class ASL {
           });
         } else if (ref === String) {
           const [arg] = expr.args;
-          if (!arg) {
-            return {
-              // String()
-              value: "",
-              containsJsonPath: false,
-            };
-          }
-          return this.evalExprToJsonPathOrLiteral(arg.expr, (argOutput) => {
-            // String(var) or String({ key: var })
-            if (ASLGraph.isJsonPath(argOutput) || argOutput.containsJsonPath) {
-              const temp = this.newHeapVariable();
-              const jsonPathStates = this.normalizeOutputToJsonPath(argOutput);
-              const { jsonPath } = ASLGraph.isJsonPath(jsonPathStates)
-                ? jsonPathStates
-                : jsonPathStates.output;
-
-              return {
-                ...ASLGraph.joinSubStates(arg, jsonPathStates, {
-                  // if this was a literal, we know it was an object, not a string
-                  startState: ASLGraph.isLiteralValue(argOutput)
-                    ? "format"
-                    : "checkString",
-                  states: {
-                    // String("") => ""
-                    checkString: {
-                      Type: "Choice",
-                      Choices: [{ ...ASL.isString(jsonPath), Next: "assign" }],
-                      Default: "format",
-                    },
-                    format: {
-                      Type: "Pass",
-                      Parameters: {
-                        "str.$": `States.JsonToString(${jsonPath})`,
-                      },
-                      ResultPath: temp,
-                      Next: ASLGraph.DeferNext,
-                    },
-                    // since this state can only output a single json path value,
-                    // assign the input json path to the expected output path
-                    assign: {
-                      Type: "Pass",
-                      InputPath: jsonPath,
-                      ResultPath: `${temp}.str`,
-                      Next: ASLGraph.DeferNext,
-                    },
-                  },
-                })!,
-                output: {
-                  jsonPath: `${temp}.str`,
-                },
-              };
-            } else {
-              // String(1)
-              return {
-                value: String(argOutput.value),
-                containsJsonPath: false,
-              };
-            }
-          });
+          return this.evalToString(arg?.expr);
         } else if (ref === Number) {
           const [arg] = expr.args;
           return this.evalToNumber(arg?.expr);
@@ -2085,9 +2027,10 @@ export class ASL {
             );
           }
           const value = evalExpr(item);
-          const assign = ASLGraph.isLiteralValue(value)
-            ? undefined
-            : this.assignValue(undefined, value);
+          const assign =
+            ASLGraph.isLiteralValue(value) && typeof value.value !== "object"
+              ? undefined
+              : this.assignValue(undefined, value);
           if (assign) {
             addState(assign);
             return assign.output;
@@ -2537,6 +2480,91 @@ export class ASL {
   }
 
   /**
+   * Evaluates any expression to a string.
+   *
+   * https://262.ecma-international.org/5.1/#sec-9.8
+   */
+  public evalToString(expr?: Expr): ASLGraph.NodeResults {
+    if (!expr) {
+      return {
+        // String()
+        value: "",
+        containsJsonPath: false,
+      };
+    }
+    return this.evalExprToJsonPathOrLiteral(expr, (output, { addState }) => {
+      // String(var)
+      if (ASLGraph.isJsonPath(output)) {
+        const jsonPathStates = this.normalizeOutputToJsonPath(output);
+        const jsonPath = ASLGraph.isJsonPath(jsonPathStates)
+          ? jsonPathStates
+          : jsonPathStates.output;
+
+        /**
+         * If any states are needed to compute the json path value, add them
+         */
+        if (ASLGraph.isStateOrSubState(jsonPathStates)) {
+          addState(jsonPathStates);
+        }
+
+        return this.jsonPathValueToString(jsonPath);
+      } else {
+        // String(1)
+        return {
+          value: String(output.value),
+          containsJsonPath: false,
+        };
+      }
+    });
+  }
+
+  /**
+   * Evaluates any jsonPath value to a string.
+   *
+   * https://262.ecma-international.org/5.1/#sec-9.8
+   *
+   * Caveat: Unlike the ECMA spec, objects and arrays will be stringified with JsonToString.
+   * 1. To avoid the complexity of a recursive array join for arrays.
+   * 2. It is impossible to tell an empty object from a
+   */
+  public jsonPathValueToString(
+    jsonPath: ASLGraph.JsonPath
+  ): ASLGraph.OutputSubState {
+    const temp = this.newHeapVariable();
+
+    return {
+      startState: "checkString",
+      states: {
+        // String("") => ""
+        checkString: {
+          Type: "Choice",
+          Choices: [{ ...ASL.isString(jsonPath.jsonPath), Next: "assign" }],
+          Default: "format",
+        },
+        format: {
+          Type: "Pass",
+          Parameters: {
+            "str.$": `States.JsonToString(${jsonPath.jsonPath})`,
+          },
+          ResultPath: temp,
+          Next: ASLGraph.DeferNext,
+        },
+        // since this state can only output a single json path value,
+        // assign the input json path to the expected output path
+        assign: {
+          Type: "Pass",
+          InputPath: jsonPath.jsonPath,
+          ResultPath: `${temp}.str`,
+          Next: ASLGraph.DeferNext,
+        },
+      },
+      output: {
+        jsonPath: `${temp}.str`,
+      },
+    };
+  }
+
+  /**
    * Evaluates any expression to a number. When the number cannot be converted, returns `null`.
    *
    * https://262.ecma-international.org/5.1/#sec-9.3
@@ -2924,7 +2952,7 @@ export class ASL {
   ): ASLGraph.NodeResults {
     return this.evalContext(
       expr,
-      ({ evalExpr, evalExprToJsonPathOrLiteral }) => {
+      ({ evalExpr, evalExprToJsonPathOrLiteral, addState }) => {
         const separatorArg = expr.args[0]?.expr;
         const valueOutput = evalExpr(expr.expr.expr);
         const separatorOutput = separatorArg
@@ -2970,17 +2998,45 @@ export class ASL {
           };
         }
 
+        const normalized = this.normalizeOutputToJsonPath(valueOutput);
+        if (ASLGraph.isStateOrSubState(normalized)) {
+          addState(normalized);
+        }
+        const { jsonPath: valueJsonPath } = ASLGraph.isJsonPath(normalized)
+          ? normalized
+          : normalized.output;
+
         const arrayPath = this.newHeapVariable();
         const resultVariable = this.newHeapVariable();
+
+        const formatState = this.jsonPathValueToString({
+          jsonPath: "$.item",
+        });
 
         return {
           startState: "initArray",
           states: {
-            // put the constant or variable array in a new temp json path
-            initArray: ASLGraph.updateDeferredNextStates(
-              { Next: "hasNext" },
-              this.assignValue(expr.expr.expr, valueOutput, arrayPath)
-            ),
+            // format each of the values using toString logic
+            // https://262.ecma-international.org/5.1/#sec-9.8
+            initArray: {
+              Type: "Map",
+              ItemsPath: valueJsonPath,
+              Parameters: {
+                "item.$": "$$.Map.Item.Value",
+              },
+              Iterator: this.aslGraphToStates({
+                startState: "format",
+                states: {
+                  format: ASLGraph.updateDeferredNextStates(
+                    { Next: "assign" },
+                    formatState
+                  ),
+                  assign: this.assignValue(undefined, formatState.output, "$"),
+                },
+              }),
+              ResultPath: arrayPath,
+              Next: "hasNext",
+            },
             hasNext: {
               Type: "Choice",
               Choices: [

@@ -1309,15 +1309,34 @@ exports[`String coerce 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "1__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]": Object {
+      "Choices": Array [
+        Object {
+          "IsString": true,
+          "Next": "assign__1__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]",
+          "Variable": "$.heap17.arr",
+        },
+      ],
+      "Default": "format__1__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]",
+      "Type": "Choice",
+    },
+    "1__[[input.val]]": Object {
+      "InputPath": "$.heap9.arr",
+      "Next": "[[input.val]] 1",
+      "ResultPath": "$.heap10",
+      "Type": "Pass",
+    },
     "1__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu": Object {
       "End": true,
       "Parameters": Object {
         "empty": "",
+        "stringArray.$": "$.heap19",
         "stringBoolean": "true",
         "stringEmpty": "",
-        "stringNull.$": "$.heap5",
+        "stringNull.$": "$.heap6",
         "stringNumber": "1",
         "stringObject": "[object Object]",
+        "stringObjectWithRef": "[object Object]",
         "stringString": "1",
         "stringStringVar.$": "$.heap3",
         "stringVar.$": "$.heap1",
@@ -1331,16 +1350,60 @@ Object {
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
+    "2__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]": Object {
+      "InputPath": "$.heap11.arr",
+      "Next": "3__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]",
+      "ResultPath": "$.heap12",
+      "Type": "Pass",
+    },
+    "3__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]": Object {
+      "Next": "4__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]",
+      "Result": Array [],
+      "ResultPath": "$.heap13",
+      "Type": "Pass",
+    },
     "3__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu": Object {
       "InputPath": "$.heap2.str",
-      "Next": "null",
+      "Next": "4__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
-    "5__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu": Object {
-      "InputPath": "$.heap4.str",
+    "4__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]": Object {
+      "Next": "5__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]",
+      "Result": Object {},
+      "ResultPath": "$.heap14",
+      "Type": "Pass",
+    },
+    "4__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu": Object {
+      "InputPath": "$.input.val",
+      "Next": "null",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "5__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]": Object {
+      "InputPath": "$.input.val",
+      "Next": "6__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]",
+      "ResultPath": "$.heap15",
+      "Type": "Pass",
+    },
+    "6__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]": Object {
+      "Next": "[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}] 1",
+      "Parameters": Object {
+        "a.$": "$.heap15",
+      },
+      "ResultPath": "$.heap16",
+      "Type": "Pass",
+    },
+    "6__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu": Object {
+      "InputPath": "$.heap5.str",
+      "Next": "[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]",
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
+    "8__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu": Object {
+      "InputPath": "$.heap18.str",
       "Next": "1__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
-      "ResultPath": "$.heap5",
+      "ResultPath": "$.heap19",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -1354,6 +1417,50 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]": Object {
+      "Next": "[[input.val]]",
+      "Result": Array [
+        "b",
+      ],
+      "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}] 1": Object {
+      "Next": "1__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]",
+      "Parameters": Object {
+        "arr.$": "States.Array('a', $.heap7, $.heap12, $.heap13, $.heap14, $.heap16)",
+      },
+      "ResultPath": "$.heap17",
+      "Type": "Pass",
+    },
+    "[[input.val]]": Object {
+      "InputPath": "$.input.val",
+      "Next": "[input.val]",
+      "ResultPath": "$.heap8",
+      "Type": "Pass",
+    },
+    "[[input.val]] 1": Object {
+      "Next": "2__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]",
+      "Parameters": Object {
+        "arr.$": "States.Array($.heap10)",
+      },
+      "ResultPath": "$.heap11",
+      "Type": "Pass",
+    },
+    "[input.val]": Object {
+      "Next": "1__[[input.val]]",
+      "Parameters": Object {
+        "arr.$": "States.Array($.heap8)",
+      },
+      "ResultPath": "$.heap9",
+      "Type": "Pass",
+    },
+    "assign__1__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]": Object {
+      "InputPath": "$.heap17.arr",
+      "Next": "8__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
+      "ResultPath": "$.heap18.str",
+      "Type": "Pass",
+    },
     "assign__input.str": Object {
       "InputPath": "$.input.str",
       "Next": "3__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
@@ -1362,14 +1469,22 @@ Object {
     },
     "assign__null": Object {
       "InputPath": "$.fnl_context.null",
-      "Next": "5__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
-      "ResultPath": "$.heap4.str",
+      "Next": "6__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
+      "ResultPath": "$.heap5.str",
       "Type": "Pass",
     },
     "assign__return {stringString: String(\\"1\\"), stringBoolean: String(true), str": Object {
       "InputPath": "$.input.val",
       "Next": "1__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu 1",
       "ResultPath": "$.heap0.str",
+      "Type": "Pass",
+    },
+    "format__1__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]": Object {
+      "Next": "8__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
+      "Parameters": Object {
+        "str.$": "States.JsonToString($.heap17.arr)",
+      },
+      "ResultPath": "$.heap18",
       "Type": "Pass",
     },
     "format__input.str": Object {
@@ -1381,11 +1496,11 @@ Object {
       "Type": "Pass",
     },
     "format__null": Object {
-      "Next": "5__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
+      "Next": "6__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
       "Parameters": Object {
         "str.$": "States.JsonToString($.fnl_context.null)",
       },
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap5",
       "Type": "Pass",
     },
     "format__return {stringString: String(\\"1\\"), stringBoolean: String(true), str": Object {
@@ -18185,10 +18300,49 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] })).join()": Object {
-      "InputPath": "$.heap6",
+      "ItemsPath": "$.heap6",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 1",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default",
+            "Type": "Choice",
+          },
+          "assign__Default": Object {
+            "End": true,
+            "InputPath": "$.heap12.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 1": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default",
+            "ResultPath": "$.heap12.str",
+            "Type": "Pass",
+          },
+          "format__Default": Object {
+            "Next": "assign__Default",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap12",
+            "Type": "Pass",
+          },
+        },
+      },
       "Next": "hasNext__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] }))",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
       "ResultPath": "$.heap10",
-      "Type": "Pass",
+      "Type": "Map",
     },
     "1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] })).join() 1": Object {
       "Next": "check__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] })).j",
@@ -18208,43 +18362,43 @@ Object {
     "1__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV": Object {
       "End": true,
       "Parameters": Object {
-        "forV.$": "$.heap39",
-        "map.$": "$.heap38",
-        "prop.$": "$.heap27",
-        "tr.$": "$.heap40",
-        "var.$": "$.heap37",
+        "forV.$": "$.heap40",
+        "map.$": "$.heap39",
+        "prop.$": "$.heap28",
+        "tr.$": "$.heap41",
+        "var.$": "$.heap38",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV 1": Object {
-      "InputPath": "$.heap26.string",
+      "InputPath": "$.heap27.string",
       "Next": "zwvxsuttserRra[0]",
-      "ResultPath": "$.heap27",
+      "ResultPath": "$.heap28",
       "Type": "Pass",
     },
     "3__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV": Object {
-      "InputPath": "$.heap36.string",
+      "InputPath": "$.heap37.string",
       "Next": "4__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV",
-      "ResultPath": "$.heap37",
+      "ResultPath": "$.heap38",
       "Type": "Pass",
     },
     "4__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV": Object {
       "InputPath": "$.map",
       "Next": "5__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV",
-      "ResultPath": "$.heap38",
+      "ResultPath": "$.heap39",
       "Type": "Pass",
     },
     "5__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV": Object {
       "InputPath": "$.forV",
       "Next": "6__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV",
-      "ResultPath": "$.heap39",
+      "ResultPath": "$.heap40",
       "Type": "Pass",
     },
     "6__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV": Object {
       "InputPath": "$.tr",
       "Next": "1__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV",
-      "ResultPath": "$.heap40",
+      "ResultPath": "$.heap41",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -18280,9 +18434,9 @@ Object {
     "abcdefarrRest[0]rm": Object {
       "Next": "1__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}{}{}{}{}{}{}',$.heap17,$.heap18,$.heap19,$.heap20,$.heap21,$.heap22,$.heap23,$.heap24,$.heap25)",
+        "string.$": "States.Format('{}{}{}{}{}{}{}{}{}',$.heap18,$.heap19,$.heap20,$.heap21,$.heap22,$.heap23,$.heap24,$.heap25,$.heap26)",
       },
-      "ResultPath": "$.heap26",
+      "ResultPath": "$.heap27",
       "Type": "Pass",
     },
     "append__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] })).": Object {
@@ -18302,13 +18456,13 @@ Object {
     "arrRest[0]": Object {
       "InputPath": "$.arrRest[0]",
       "Next": "r 1",
-      "ResultPath": "$.heap23",
+      "ResultPath": "$.heap24",
       "Type": "Pass",
     },
     "b": Object {
       "InputPath": "$.b",
       "Next": "c 1",
-      "ResultPath": "$.heap18",
+      "ResultPath": "$.heap19",
       "Type": "Pass",
     },
     "c": Object {
@@ -18320,7 +18474,7 @@ Object {
     "c 1": Object {
       "InputPath": "$.c",
       "Next": "d",
-      "ResultPath": "$.heap19",
+      "ResultPath": "$.heap20",
       "Type": "Pass",
     },
     "c = \\"what\\"": Object {
@@ -18366,7 +18520,7 @@ Object {
     "d": Object {
       "InputPath": "$.d",
       "Next": "e 1",
-      "ResultPath": "$.heap20",
+      "ResultPath": "$.heap21",
       "Type": "Pass",
     },
     "default__c = \\"what\\"": Object {
@@ -18408,7 +18562,7 @@ Object {
     "e 1": Object {
       "InputPath": "$.e",
       "Next": "f 1",
-      "ResultPath": "$.heap21",
+      "ResultPath": "$.heap22",
       "Type": "Pass",
     },
     "end__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] })).joi": Object {
@@ -18428,7 +18582,7 @@ Object {
     "f 1": Object {
       "InputPath": "$.f",
       "Next": "arrRest[0]",
-      "ResultPath": "$.heap22",
+      "ResultPath": "$.heap23",
       "Type": "Pass",
     },
     "f = \\"sir\\"": Object {
@@ -18452,7 +18606,7 @@ Object {
           ],
         },
       ],
-      "ResultPath": "$.heap16",
+      "ResultPath": "$.heap17",
       "Type": "Pass",
     },
     "forV = \\"\\"": Object {
@@ -18464,11 +18618,11 @@ Object {
     "forV = forVhl": Object {
       "InputPath": "$.forV",
       "Next": "h",
-      "ResultPath": "$.heap12",
+      "ResultPath": "$.heap13",
       "Type": "Pass",
     },
     "forV = forVhl 1": Object {
-      "InputPath": "$.heap15.string",
+      "InputPath": "$.heap16.string",
       "Next": "tail__for({ h, j: [ l ] } of [{h: \\"a\\", j: [\\"b\\"]}])",
       "ResultPath": "$.forV",
       "Type": "Pass",
@@ -18476,15 +18630,15 @@ Object {
     "forVhl": Object {
       "Next": "forV = forVhl 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}',$.heap12,$.heap13,$.heap14)",
+        "string.$": "States.Format('{}{}{}',$.heap13,$.heap14,$.heap15)",
       },
-      "ResultPath": "$.heap15",
+      "ResultPath": "$.heap16",
       "Type": "Pass",
     },
     "h": Object {
       "InputPath": "$.h",
       "Next": "l 1",
-      "ResultPath": "$.heap13",
+      "ResultPath": "$.heap14",
       "Type": "Pass",
     },
     "handleResult__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ": Object {
@@ -18540,7 +18694,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "{ h, j: [ l ] }",
-          "Variable": "$.heap16[0]",
+          "Variable": "$.heap17[0]",
         },
       ],
       "Default": "try",
@@ -18553,7 +18707,7 @@ Object {
       "Type": "Pass",
     },
     "l": Object {
-      "InputPath": "$.heap16[0]['j'][0]",
+      "InputPath": "$.heap17[0]['j'][0]",
       "Next": "forV = forVhl",
       "ResultPath": "$.l",
       "Type": "Pass",
@@ -18561,7 +18715,7 @@ Object {
     "l 1": Object {
       "InputPath": "$.l",
       "Next": "forVhl",
-      "ResultPath": "$.heap14",
+      "ResultPath": "$.heap15",
       "Type": "Pass",
     },
     "m": Object {
@@ -18573,7 +18727,7 @@ Object {
     "m 1": Object {
       "InputPath": "$.m",
       "Next": "abcdefarrRest[0]rm",
-      "ResultPath": "$.heap25",
+      "ResultPath": "$.heap26",
       "Type": "Pass",
     },
     "m = c": Object {
@@ -18615,7 +18769,7 @@ Object {
     "r 1": Object {
       "InputPath": "$.r",
       "Next": "m 1",
-      "ResultPath": "$.heap24",
+      "ResultPath": "$.heap25",
       "Type": "Pass",
     },
     "return aacc": Object {
@@ -18627,7 +18781,7 @@ Object {
     "return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV: f": Object {
       "InputPath": "$.a",
       "Next": "b",
-      "ResultPath": "$.heap17",
+      "ResultPath": "$.heap18",
       "Type": "Pass",
     },
     "returnEmpty__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ]": Object {
@@ -18639,7 +18793,7 @@ Object {
     "s": Object {
       "InputPath": "$.s",
       "Next": "u 1",
-      "ResultPath": "$.heap32",
+      "ResultPath": "$.heap33",
       "Type": "Pass",
     },
     "set__end__1__map = [{aa: \\"a\\", bb: [\\"b\\"]}].map(function ({ aa, bb: [ cc ] })": Object {
@@ -18657,7 +18811,7 @@ Object {
     "t 1": Object {
       "InputPath": "$.t",
       "Next": "tserRra[0]",
-      "ResultPath": "$.heap34",
+      "ResultPath": "$.heap35",
       "Type": "Pass",
     },
     "t = \\"sir\\"": Object {
@@ -18678,9 +18832,9 @@ Object {
       "Type": "Pass",
     },
     "tail__for({ h, j: [ l ] } of [{h: \\"a\\", j: [\\"b\\"]}])": Object {
-      "InputPath": "$.heap16[1:]",
+      "InputPath": "$.heap17[1:]",
       "Next": "hasNext__for({ h, j: [ l ] } of [{h: \\"a\\", j: [\\"b\\"]}])",
-      "ResultPath": "$.heap16",
+      "ResultPath": "$.heap17",
       "Type": "Pass",
     },
     "tr = message": Object {
@@ -18706,7 +18860,7 @@ Object {
     "tserRra[0]": Object {
       "InputPath": "$.tserRra[0]",
       "Next": "zwvxsuttserRra[0] 1",
-      "ResultPath": "$.heap35",
+      "ResultPath": "$.heap36",
       "Type": "Pass",
     },
     "u": Object {
@@ -18718,7 +18872,7 @@ Object {
     "u 1": Object {
       "InputPath": "$.u",
       "Next": "t 1",
-      "ResultPath": "$.heap33",
+      "ResultPath": "$.heap34",
       "Type": "Pass",
     },
     "v": Object {
@@ -18730,7 +18884,7 @@ Object {
     "v 1": Object {
       "InputPath": "$.v",
       "Next": "x 1",
-      "ResultPath": "$.heap30",
+      "ResultPath": "$.heap31",
       "Type": "Pass",
     },
     "value": Object {
@@ -18772,7 +18926,7 @@ Object {
     "w": Object {
       "InputPath": "$.w",
       "Next": "v 1",
-      "ResultPath": "$.heap29",
+      "ResultPath": "$.heap30",
       "Type": "Pass",
     },
     "x": Object {
@@ -18784,7 +18938,7 @@ Object {
     "x 1": Object {
       "InputPath": "$.x",
       "Next": "s",
-      "ResultPath": "$.heap31",
+      "ResultPath": "$.heap32",
       "Type": "Pass",
     },
     "x = \\"what\\"": Object {
@@ -18801,15 +18955,15 @@ Object {
     "zwvxsuttserRra[0]": Object {
       "InputPath": "$.z",
       "Next": "w",
-      "ResultPath": "$.heap28",
+      "ResultPath": "$.heap29",
       "Type": "Pass",
     },
     "zwvxsuttserRra[0] 1": Object {
       "Next": "3__return {prop: abcdefarrRest[0]rm, var: zwvxsuttserRra[0], map: map, forV",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}{}{}{}{}{}',$.heap28,$.heap29,$.heap30,$.heap31,$.heap32,$.heap33,$.heap34,$.heap35)",
+        "string.$": "States.Format('{}{}{}{}{}{}{}{}',$.heap29,$.heap30,$.heap31,$.heap32,$.heap33,$.heap34,$.heap35,$.heap36)",
       },
-      "ResultPath": "$.heap36",
+      "ResultPath": "$.heap37",
       "Type": "Pass",
     },
     "{ [\\"value\\"]: w, [\\"a\\"\\"b\\"]: v }": Object {
@@ -18831,7 +18985,7 @@ Object {
       "Type": "Pass",
     },
     "{ h, j: [ l ] }": Object {
-      "InputPath": "$.heap16[0]['h']",
+      "InputPath": "$.heap17[0]['h']",
       "Next": "l",
       "ResultPath": "$.h",
       "Type": "Pass",
@@ -20752,7 +20906,7 @@ Object {
     },
     "1__return b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")": Object {
       "End": true,
-      "InputPath": "$.heap31.string",
+      "InputPath": "$.heap34.string",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -20812,17 +20966,17 @@ Object {
     "append__c.join(\\"\\")": Object {
       "Next": "tail__c.join(\\"\\")",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}', $.heap26.string, $.heap25[0])",
+        "string.$": "States.Format('{}{}', $.heap27.string, $.heap26[0])",
       },
-      "ResultPath": "$.heap26",
+      "ResultPath": "$.heap27",
       "Type": "Pass",
     },
     "append__d.join(\\"\\")": Object {
       "Next": "tail__d.join(\\"\\")",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}', $.heap29.string, $.heap28[0])",
+        "string.$": "States.Format('{}{}', $.heap31.string, $.heap30[0])",
       },
-      "ResultPath": "$.heap29",
+      "ResultPath": "$.heap31",
       "Type": "Pass",
     },
     "append__return b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")": Object {
@@ -20850,15 +21004,15 @@ Object {
     "b.join(\\"\\")": Object {
       "InputPath": "$.heap23.string",
       "Next": "c.join(\\"\\")",
-      "ResultPath": "$.heap24",
+      "ResultPath": "$.heap25",
       "Type": "Pass",
     },
     "b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")": Object {
       "Next": "1__return b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}',$.heap24,$.heap27,$.heap30)",
+        "string.$": "States.Format('{}{}{}',$.heap25,$.heap29,$.heap33)",
       },
-      "ResultPath": "$.heap31",
+      "ResultPath": "$.heap34",
       "Type": "Pass",
     },
     "c": Object {
@@ -20876,15 +21030,54 @@ Object {
       "Type": "Pass",
     },
     "c.join(\\"\\")": Object {
-      "InputPath": "$.c",
+      "ItemsPath": "$.c",
+      "Iterator": Object {
+        "StartAt": "Default 1",
+        "States": Object {
+          "Default 1": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 1 2",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default 1",
+            "Type": "Choice",
+          },
+          "assign__Default 1 1": Object {
+            "End": true,
+            "InputPath": "$.heap28.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 1 2": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default 1 1",
+            "ResultPath": "$.heap28.str",
+            "Type": "Pass",
+          },
+          "format__Default 1": Object {
+            "Next": "assign__Default 1 1",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap28",
+            "Type": "Pass",
+          },
+        },
+      },
       "Next": "hasNext__c.join(\\"\\")",
-      "ResultPath": "$.heap25",
-      "Type": "Pass",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap26",
+      "Type": "Map",
     },
     "c.join(\\"\\") 1": Object {
-      "InputPath": "$.heap26.string",
+      "InputPath": "$.heap27.string",
       "Next": "d.join(\\"\\")",
-      "ResultPath": "$.heap27",
+      "ResultPath": "$.heap29",
       "Type": "Pass",
     },
     "check__1__b = [\\"b\\"].map(function (v))": Object {
@@ -20935,15 +21128,54 @@ Object {
       "Type": "Pass",
     },
     "d.join(\\"\\")": Object {
-      "InputPath": "$.d",
+      "ItemsPath": "$.d",
+      "Iterator": Object {
+        "StartAt": "Default 2",
+        "States": Object {
+          "Default 2": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 2 1",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default 2",
+            "Type": "Choice",
+          },
+          "assign__Default 2": Object {
+            "End": true,
+            "InputPath": "$.heap32.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 2 1": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default 2",
+            "ResultPath": "$.heap32.str",
+            "Type": "Pass",
+          },
+          "format__Default 2": Object {
+            "Next": "assign__Default 2",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap32",
+            "Type": "Pass",
+          },
+        },
+      },
       "Next": "hasNext__d.join(\\"\\")",
-      "ResultPath": "$.heap28",
-      "Type": "Pass",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap30",
+      "Type": "Map",
     },
     "d.join(\\"\\") 1": Object {
-      "InputPath": "$.heap29.string",
+      "InputPath": "$.heap31.string",
       "Next": "b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")",
-      "ResultPath": "$.heap30",
+      "ResultPath": "$.heap33",
       "Type": "Pass",
     },
     "end__1__b = [\\"b\\"].map(function (v))": Object {
@@ -21032,12 +21264,12 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.heap25[0]",
+              "Variable": "$.heap26[0]",
             },
             Object {
               "Not": Object {
                 "IsPresent": true,
-                "Variable": "$.heap26",
+                "Variable": "$.heap27",
               },
             },
           ],
@@ -21047,11 +21279,11 @@ Object {
           "And": Array [
             Object {
               "IsPresent": false,
-              "Variable": "$.heap25[0]",
+              "Variable": "$.heap26[0]",
             },
             Object {
               "IsPresent": false,
-              "Variable": "$.heap26",
+              "Variable": "$.heap27",
             },
           ],
           "Next": "returnEmpty__c.join(\\"\\")",
@@ -21059,7 +21291,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "append__c.join(\\"\\")",
-          "Variable": "$.heap25[0]",
+          "Variable": "$.heap26[0]",
         },
       ],
       "Default": "c.join(\\"\\") 1",
@@ -21071,12 +21303,12 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.heap28[0]",
+              "Variable": "$.heap30[0]",
             },
             Object {
               "Not": Object {
                 "IsPresent": true,
-                "Variable": "$.heap29",
+                "Variable": "$.heap31",
               },
             },
           ],
@@ -21086,11 +21318,11 @@ Object {
           "And": Array [
             Object {
               "IsPresent": false,
-              "Variable": "$.heap28[0]",
+              "Variable": "$.heap30[0]",
             },
             Object {
               "IsPresent": false,
-              "Variable": "$.heap29",
+              "Variable": "$.heap31",
             },
           ],
           "Next": "returnEmpty__d.join(\\"\\")",
@@ -21098,7 +21330,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "append__d.join(\\"\\")",
-          "Variable": "$.heap28[0]",
+          "Variable": "$.heap30[0]",
         },
       ],
       "Default": "d.join(\\"\\") 1",
@@ -21294,15 +21526,15 @@ Object {
       "Type": "Choice",
     },
     "initValue__c.join(\\"\\")": Object {
-      "InputPath": "$.heap25[0]",
+      "InputPath": "$.heap26[0]",
       "Next": "tail__c.join(\\"\\")",
-      "ResultPath": "$.heap26.string",
+      "ResultPath": "$.heap27.string",
       "Type": "Pass",
     },
     "initValue__d.join(\\"\\")": Object {
-      "InputPath": "$.heap28[0]",
+      "InputPath": "$.heap30[0]",
       "Next": "tail__d.join(\\"\\")",
-      "ResultPath": "$.heap29.string",
+      "ResultPath": "$.heap31.string",
       "Type": "Pass",
     },
     "initValue__return b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")": Object {
@@ -21330,10 +21562,49 @@ Object {
       "Type": "Pass",
     },
     "return b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")": Object {
-      "InputPath": "$.b",
+      "ItemsPath": "$.b",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 1",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default",
+            "Type": "Choice",
+          },
+          "assign__Default": Object {
+            "End": true,
+            "InputPath": "$.heap24.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 1": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default",
+            "ResultPath": "$.heap24.str",
+            "Type": "Pass",
+          },
+          "format__Default": Object {
+            "Next": "assign__Default",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap24",
+            "Type": "Pass",
+          },
+        },
+      },
       "Next": "hasNext__return b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
       "ResultPath": "$.heap22",
-      "Type": "Pass",
+      "Type": "Map",
     },
     "return vai": Object {
       "InputPath": "$.v",
@@ -21356,13 +21627,13 @@ Object {
     "returnEmpty__c.join(\\"\\")": Object {
       "Next": "c.join(\\"\\") 1",
       "Result": "",
-      "ResultPath": "$.heap26.string",
+      "ResultPath": "$.heap27.string",
       "Type": "Pass",
     },
     "returnEmpty__d.join(\\"\\")": Object {
       "Next": "d.join(\\"\\") 1",
       "Result": "",
-      "ResultPath": "$.heap29.string",
+      "ResultPath": "$.heap31.string",
       "Type": "Pass",
     },
     "returnEmpty__return b.join(\\"\\")c.join(\\"\\")d.join(\\"\\")": Object {
@@ -21390,15 +21661,15 @@ Object {
       "Type": "Pass",
     },
     "tail__c.join(\\"\\")": Object {
-      "InputPath": "$.heap25[1:]",
+      "InputPath": "$.heap26[1:]",
       "Next": "hasNext__c.join(\\"\\")",
-      "ResultPath": "$.heap25",
+      "ResultPath": "$.heap26",
       "Type": "Pass",
     },
     "tail__d.join(\\"\\")": Object {
-      "InputPath": "$.heap28[1:]",
+      "InputPath": "$.heap30[1:]",
       "Next": "hasNext__d.join(\\"\\")",
-      "ResultPath": "$.heap28",
+      "ResultPath": "$.heap30",
       "Type": "Pass",
     },
     "tail__for(i of [1, 2, 3])": Object {
@@ -21864,34 +22135,156 @@ exports[`join 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
+    "1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")": Object {
+      "ItemsPath": "$.heap22.arr",
+      "Iterator": Object {
+        "StartAt": "Default 4",
+        "States": Object {
+          "Default 4": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 4 1",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default 4",
+            "Type": "Choice",
+          },
+          "assign__Default 4": Object {
+            "End": true,
+            "InputPath": "$.heap25.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 4 1": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default 4",
+            "ResultPath": "$.heap25.str",
+            "Type": "Pass",
+          },
+          "format__Default 4": Object {
+            "Next": "assign__Default 4",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap25",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "hasNext__1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap23",
+      "Type": "Map",
+    },
+    "1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\") 1": Object {
+      "Next": "2__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")",
+      "Result": Array [
+        "b",
+      ],
+      "ResultPath": "$.heap18",
+      "Type": "Pass",
+    },
+    "1__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)": Object {
+      "ItemsPath": "$.heap8",
+      "Iterator": Object {
+        "StartAt": "Default 2",
+        "States": Object {
+          "Default 2": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 2 1",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default 2",
+            "Type": "Choice",
+          },
+          "assign__Default 2": Object {
+            "End": true,
+            "InputPath": "$.heap11.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 2 1": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default 2",
+            "ResultPath": "$.heap11.str",
+            "Type": "Pass",
+          },
+          "format__Default 2": Object {
+            "Next": "assign__Default 2",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap11",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "hasNext__1__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap9",
+      "Type": "Map",
+    },
     "1__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.j": Object {
       "InputPath": "$.heap1.string",
       "Next": "input.arr.join(input.sep)",
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "1__return resultArr.join(\\"#\\")": Object {
       "End": true,
-      "InputPath": "$.heap14.string",
+      "InputPath": "$.heap29.string",
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "2__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")": Object {
+      "InputPath": "$.input.obj",
+      "Next": "3__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")",
+      "ResultPath": "$.heap19",
+      "Type": "Pass",
+    },
+    "3__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")": Object {
+      "InputPath": "$.input.arr",
+      "Next": "4__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")",
+      "ResultPath": "$.heap20",
+      "Type": "Pass",
+    },
     "3__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.j": Object {
-      "InputPath": "$.heap4.string",
+      "InputPath": "$.heap5.string",
       "Next": "[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
-      "ResultPath": "$.heap5",
+      "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "4__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null]",
+      "ResultPath": "$.heap21",
       "Type": "Pass",
     },
     "5__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.j": Object {
-      "InputPath": "$.heap7.string",
+      "InputPath": "$.heap10.string",
       "Next": "input.arr.join()",
-      "ResultPath": "$.heap8",
+      "ResultPath": "$.heap12",
       "Type": "Pass",
     },
     "7__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.j": Object {
-      "InputPath": "$.heap10.string",
+      "InputPath": "$.heap14.string",
+      "Next": "[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")",
+      "ResultPath": "$.heap16",
+      "Type": "Pass",
+    },
+    "9__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.j": Object {
+      "InputPath": "$.heap24.string",
       "Next": "[[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.join(input.sep),",
-      "ResultPath": "$.heap11",
+      "ResultPath": "$.heap26",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -21905,46 +22298,70 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null]": Object {
+      "Next": "1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")",
+      "Parameters": Object {
+        "arr.$": "States.Array('a', $.heap17, $.heap18, $.heap19, $.heap20, $.heap21)",
+      },
+      "ResultPath": "$.heap22",
+      "Type": "Pass",
+    },
+    "[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")": Object {
+      "Next": "1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\") 1",
+      "Result": Object {
+        "a": "a",
+      },
+      "ResultPath": "$.heap17",
+      "Type": "Pass",
+    },
     "[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)": Object {
-      "Next": "hasNext__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
+      "Next": "1__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
       "Result": Array [
         "d",
         "e",
         "f",
       ],
-      "ResultPath": "$.heap6",
+      "ResultPath": "$.heap8",
       "Type": "Pass",
     },
     "[[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.join(input.sep),": Object {
       "Next": "resultArr",
       "Parameters": Object {
-        "arr.$": "States.Array('a/b/c', $.heap2, $.heap5, $.heap8, '', $.heap11)",
+        "arr.$": "States.Array('a/b/c', $.heap3, $.heap7, $.heap12, '', $.heap16, $.heap26)",
       },
-      "ResultPath": "$.heap12",
+      "ResultPath": "$.heap27",
       "Type": "Pass",
     },
-    "append__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)": Object {
-      "Next": "tail__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
+    "append__1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")": Object {
+      "Next": "tail__1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}', $.heap7.string, $.input.sep, $.heap6[0])",
+        "string.$": "States.Format('{}={}', $.heap24.string, $.heap23[0])",
       },
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap24",
+      "Type": "Pass",
+    },
+    "append__1__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)": Object {
+      "Next": "tail__1__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}{}', $.heap10.string, $.input.sep, $.heap9[0])",
+      },
+      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "append__input.arr.join()": Object {
       "Next": "tail__input.arr.join()",
       "Parameters": Object {
-        "string.$": "States.Format('{},{}', $.heap10.string, $.heap9[0])",
+        "string.$": "States.Format('{},{}', $.heap14.string, $.heap13[0])",
       },
-      "ResultPath": "$.heap10",
+      "ResultPath": "$.heap14",
       "Type": "Pass",
     },
     "append__input.arr.join(input.sep)": Object {
       "Next": "tail__input.arr.join(input.sep)",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}', $.heap4.string, $.input.sep, $.heap3[0])",
+        "string.$": "States.Format('{}{}{}', $.heap5.string, $.input.sep, $.heap4[0])",
       },
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap5",
       "Type": "Pass",
     },
     "append__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.": Object {
@@ -21958,51 +22375,51 @@ Object {
     "append__return resultArr.join(\\"#\\")": Object {
       "Next": "tail__return resultArr.join(\\"#\\")",
       "Parameters": Object {
-        "string.$": "States.Format('{}#{}', $.heap14.string, $.heap13[0])",
+        "string.$": "States.Format('{}#{}', $.heap29.string, $.heap28[0])",
       },
-      "ResultPath": "$.heap14",
+      "ResultPath": "$.heap29",
       "Type": "Pass",
     },
-    "hasNext__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)": Object {
+    "hasNext__1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")": Object {
       "Choices": Array [
         Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.heap6[0]",
+              "Variable": "$.heap23[0]",
             },
             Object {
               "Not": Object {
                 "IsPresent": true,
-                "Variable": "$.heap7",
+                "Variable": "$.heap24",
               },
             },
           ],
-          "Next": "initValue__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
+          "Next": "initValue__1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")",
         },
         Object {
           "And": Array [
             Object {
               "IsPresent": false,
-              "Variable": "$.heap6[0]",
+              "Variable": "$.heap23[0]",
             },
             Object {
               "IsPresent": false,
-              "Variable": "$.heap7",
+              "Variable": "$.heap24",
             },
           ],
-          "Next": "returnEmpty__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
+          "Next": "returnEmpty__1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\"",
         },
         Object {
           "IsPresent": true,
-          "Next": "append__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
-          "Variable": "$.heap6[0]",
+          "Next": "append__1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")",
+          "Variable": "$.heap23[0]",
         },
       ],
-      "Default": "5__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.j",
+      "Default": "9__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.j",
       "Type": "Choice",
     },
-    "hasNext__input.arr.join()": Object {
+    "hasNext__1__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -22017,7 +22434,7 @@ Object {
               },
             },
           ],
-          "Next": "initValue__input.arr.join()",
+          "Next": "initValue__1__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
         },
         Object {
           "And": Array [
@@ -22030,12 +22447,51 @@ Object {
               "Variable": "$.heap10",
             },
           ],
+          "Next": "returnEmpty__1__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "append__1__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
+          "Variable": "$.heap9[0]",
+        },
+      ],
+      "Default": "5__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.j",
+      "Type": "Choice",
+    },
+    "hasNext__input.arr.join()": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.heap13[0]",
+            },
+            Object {
+              "Not": Object {
+                "IsPresent": true,
+                "Variable": "$.heap14",
+              },
+            },
+          ],
+          "Next": "initValue__input.arr.join()",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": false,
+              "Variable": "$.heap13[0]",
+            },
+            Object {
+              "IsPresent": false,
+              "Variable": "$.heap14",
+            },
+          ],
           "Next": "returnEmpty__input.arr.join()",
         },
         Object {
           "IsPresent": true,
           "Next": "append__input.arr.join()",
-          "Variable": "$.heap9[0]",
+          "Variable": "$.heap13[0]",
         },
       ],
       "Default": "7__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.j",
@@ -22047,12 +22503,12 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.heap3[0]",
+              "Variable": "$.heap4[0]",
             },
             Object {
               "Not": Object {
                 "IsPresent": true,
-                "Variable": "$.heap4",
+                "Variable": "$.heap5",
               },
             },
           ],
@@ -22062,11 +22518,11 @@ Object {
           "And": Array [
             Object {
               "IsPresent": false,
-              "Variable": "$.heap3[0]",
+              "Variable": "$.heap4[0]",
             },
             Object {
               "IsPresent": false,
-              "Variable": "$.heap4",
+              "Variable": "$.heap5",
             },
           ],
           "Next": "returnEmpty__input.arr.join(input.sep)",
@@ -22074,7 +22530,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "append__input.arr.join(input.sep)",
-          "Variable": "$.heap3[0]",
+          "Variable": "$.heap4[0]",
         },
       ],
       "Default": "3__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.j",
@@ -22125,12 +22581,12 @@ Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.heap13[0]",
+              "Variable": "$.heap28[0]",
             },
             Object {
               "Not": Object {
                 "IsPresent": true,
-                "Variable": "$.heap14",
+                "Variable": "$.heap29",
               },
             },
           ],
@@ -22140,11 +22596,11 @@ Object {
           "And": Array [
             Object {
               "IsPresent": false,
-              "Variable": "$.heap13[0]",
+              "Variable": "$.heap28[0]",
             },
             Object {
               "IsPresent": false,
-              "Variable": "$.heap14",
+              "Variable": "$.heap29",
             },
           ],
           "Next": "returnEmpty__return resultArr.join(\\"#\\")",
@@ -22152,28 +22608,34 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "append__return resultArr.join(\\"#\\")",
-          "Variable": "$.heap13[0]",
+          "Variable": "$.heap28[0]",
         },
       ],
       "Default": "1__return resultArr.join(\\"#\\")",
       "Type": "Choice",
     },
-    "initValue__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)": Object {
-      "InputPath": "$.heap6[0]",
-      "Next": "tail__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
-      "ResultPath": "$.heap7.string",
+    "initValue__1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")": Object {
+      "InputPath": "$.heap23[0]",
+      "Next": "tail__1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")",
+      "ResultPath": "$.heap24.string",
       "Type": "Pass",
     },
-    "initValue__input.arr.join()": Object {
+    "initValue__1__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)": Object {
       "InputPath": "$.heap9[0]",
-      "Next": "tail__input.arr.join()",
+      "Next": "tail__1__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
       "ResultPath": "$.heap10.string",
       "Type": "Pass",
     },
+    "initValue__input.arr.join()": Object {
+      "InputPath": "$.heap13[0]",
+      "Next": "tail__input.arr.join()",
+      "ResultPath": "$.heap14.string",
+      "Type": "Pass",
+    },
     "initValue__input.arr.join(input.sep)": Object {
-      "InputPath": "$.heap3[0]",
+      "InputPath": "$.heap4[0]",
       "Next": "tail__input.arr.join(input.sep)",
-      "ResultPath": "$.heap4.string",
+      "ResultPath": "$.heap5.string",
       "Type": "Pass",
     },
     "initValue__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), inp": Object {
@@ -22183,57 +22645,219 @@ Object {
       "Type": "Pass",
     },
     "initValue__return resultArr.join(\\"#\\")": Object {
-      "InputPath": "$.heap13[0]",
+      "InputPath": "$.heap28[0]",
       "Next": "tail__return resultArr.join(\\"#\\")",
-      "ResultPath": "$.heap14.string",
+      "ResultPath": "$.heap29.string",
       "Type": "Pass",
     },
     "input.arr.join()": Object {
-      "InputPath": "$.input.arr",
+      "ItemsPath": "$.input.arr",
+      "Iterator": Object {
+        "StartAt": "Default 3",
+        "States": Object {
+          "Default 3": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 3 1",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default 3",
+            "Type": "Choice",
+          },
+          "assign__Default 3": Object {
+            "End": true,
+            "InputPath": "$.heap15.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 3 1": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default 3",
+            "ResultPath": "$.heap15.str",
+            "Type": "Pass",
+          },
+          "format__Default 3": Object {
+            "Next": "assign__Default 3",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap15",
+            "Type": "Pass",
+          },
+        },
+      },
       "Next": "hasNext__input.arr.join()",
-      "ResultPath": "$.heap9",
-      "Type": "Pass",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap13",
+      "Type": "Map",
     },
     "input.arr.join(input.sep)": Object {
-      "InputPath": "$.input.arr",
+      "ItemsPath": "$.input.arr",
+      "Iterator": Object {
+        "StartAt": "Default 1",
+        "States": Object {
+          "Default 1": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 1 2",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default 1",
+            "Type": "Choice",
+          },
+          "assign__Default 1 1": Object {
+            "End": true,
+            "InputPath": "$.heap6.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 1 2": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default 1 1",
+            "ResultPath": "$.heap6.str",
+            "Type": "Pass",
+          },
+          "format__Default 1": Object {
+            "Next": "assign__Default 1 1",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap6",
+            "Type": "Pass",
+          },
+        },
+      },
       "Next": "hasNext__input.arr.join(input.sep)",
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap4",
+      "Type": "Map",
     },
     "resultArr": Object {
-      "InputPath": "$.heap12.arr",
+      "InputPath": "$.heap27.arr",
       "Next": "return resultArr.join(\\"#\\")",
       "ResultPath": "$.resultArr",
       "Type": "Pass",
     },
     "resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.join": Object {
-      "InputPath": "$.input.arr",
+      "ItemsPath": "$.input.arr",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 1",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default",
+            "Type": "Choice",
+          },
+          "assign__Default": Object {
+            "End": true,
+            "InputPath": "$.heap2.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 1": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default",
+            "ResultPath": "$.heap2.str",
+            "Type": "Pass",
+          },
+          "format__Default": Object {
+            "Next": "assign__Default",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap2",
+            "Type": "Pass",
+          },
+        },
+      },
       "Next": "hasNext__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
       "ResultPath": "$.heap0",
-      "Type": "Pass",
+      "Type": "Map",
     },
     "return resultArr.join(\\"#\\")": Object {
-      "InputPath": "$.resultArr",
+      "ItemsPath": "$.resultArr",
+      "Iterator": Object {
+        "StartAt": "Default 5",
+        "States": Object {
+          "Default 5": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 5 1",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default 5",
+            "Type": "Choice",
+          },
+          "assign__Default 5": Object {
+            "End": true,
+            "InputPath": "$.heap30.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 5 1": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default 5",
+            "ResultPath": "$.heap30.str",
+            "Type": "Pass",
+          },
+          "format__Default 5": Object {
+            "Next": "assign__Default 5",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap30",
+            "Type": "Pass",
+          },
+        },
+      },
       "Next": "hasNext__return resultArr.join(\\"#\\")",
-      "ResultPath": "$.heap13",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap28",
+      "Type": "Map",
+    },
+    "returnEmpty__1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\"": Object {
+      "Next": "9__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.j",
+      "Result": "",
+      "ResultPath": "$.heap24.string",
       "Type": "Pass",
     },
-    "returnEmpty__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)": Object {
+    "returnEmpty__1__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)": Object {
       "Next": "5__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.j",
       "Result": "",
-      "ResultPath": "$.heap7.string",
+      "ResultPath": "$.heap10.string",
       "Type": "Pass",
     },
     "returnEmpty__input.arr.join()": Object {
       "Next": "7__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.j",
       "Result": "",
-      "ResultPath": "$.heap10.string",
+      "ResultPath": "$.heap14.string",
       "Type": "Pass",
     },
     "returnEmpty__input.arr.join(input.sep)": Object {
       "Next": "3__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.j",
       "Result": "",
-      "ResultPath": "$.heap4.string",
+      "ResultPath": "$.heap5.string",
       "Type": "Pass",
     },
     "returnEmpty__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), i": Object {
@@ -22245,25 +22869,31 @@ Object {
     "returnEmpty__return resultArr.join(\\"#\\")": Object {
       "Next": "1__return resultArr.join(\\"#\\")",
       "Result": "",
-      "ResultPath": "$.heap14.string",
+      "ResultPath": "$.heap29.string",
       "Type": "Pass",
     },
-    "tail__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)": Object {
-      "InputPath": "$.heap6[1:]",
-      "Next": "hasNext__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
-      "ResultPath": "$.heap6",
+    "tail__1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")": Object {
+      "InputPath": "$.heap23[1:]",
+      "Next": "hasNext__1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")",
+      "ResultPath": "$.heap23",
       "Type": "Pass",
     },
-    "tail__input.arr.join()": Object {
+    "tail__1__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)": Object {
       "InputPath": "$.heap9[1:]",
-      "Next": "hasNext__input.arr.join()",
+      "Next": "hasNext__1__[\\"d\\", \\"e\\", \\"f\\"].join(input.sep)",
       "ResultPath": "$.heap9",
       "Type": "Pass",
     },
+    "tail__input.arr.join()": Object {
+      "InputPath": "$.heap13[1:]",
+      "Next": "hasNext__input.arr.join()",
+      "ResultPath": "$.heap13",
+      "Type": "Pass",
+    },
     "tail__input.arr.join(input.sep)": Object {
-      "InputPath": "$.heap3[1:]",
+      "InputPath": "$.heap4[1:]",
       "Next": "hasNext__input.arr.join(input.sep)",
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap4",
       "Type": "Pass",
     },
     "tail__resultArr = [[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.ar": Object {
@@ -22273,9 +22903,9 @@ Object {
       "Type": "Pass",
     },
     "tail__return resultArr.join(\\"#\\")": Object {
-      "InputPath": "$.heap13[1:]",
+      "InputPath": "$.heap28[1:]",
       "Next": "hasNext__return resultArr.join(\\"#\\")",
-      "ResultPath": "$.heap13",
+      "ResultPath": "$.heap28",
       "Type": "Pass",
     },
   },

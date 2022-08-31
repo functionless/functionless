@@ -262,3 +262,28 @@ Due to limitations in AWS Step Functions, all of the arguments to `Error` and `S
 // illegal: input.prop is not a constant value
 throw new Error(input.prop);
 ```
+
+## Caveats
+
+We strive to match the [ECMA Spec](https://262.ecma-international.org/5.1) when converting Typescript to Amazon States Language. Generally we choose to fail at synthesis time with a friendly error. Below are caveats where we thought the feature was important, but could not match the spec.
+
+### NaN
+
+ECMA says that [`Number()` (and `+n`)](https://262.ecma-international.org/5.1/#sec-9.3) should return `NaN` when the input cannot be converted to a number. Functionless does not support `NaN`, instead we return `null`.
+
+This will work in most cases except:
+
+```ts
+Number("blah") === Number("blah"); // ECMA: false, Functionless: true
+Number("blah") === null; // ECMA: false, Functionless: true
+```
+
+### ToString object and array
+
+ECMA says that `String()` ([`toString`](https://262.ecma-international.org/5.1/#sec-9.8)) should return the result of `toPrimitive()` which for most non-class Objects will be `[object Object]` and for Arrays is to run `Array.join(",")`.
+
+Functionless has chosen to run JSON.stringify on Objects and Arrays because:
+
+1. We don't have access to runtime `toPrimitive` functions for classes
+2. Recursive `Array.join()` would be expensive.
+3. It is not possible currently to determine if a value is an Array or an Object when empty.

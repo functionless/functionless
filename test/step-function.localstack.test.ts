@@ -1630,13 +1630,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           ["d", "e", "f"].join(input.sep),
           [].join(""),
           input.arr.join(),
+          ["a", { a: "a" }, ["b"], input.obj, input.arr, null].join("="),
         ];
 
         return resultArr.join("#");
       });
     },
-    "a/b/c#1-2-3#1|2|3#d|e|f##1,2,3",
-    { arr: [1, 2, 3], sep: "|" }
+    // Caveat: Unlike ECMA, we run JSON.stringify on object and arrays
+    'a/b/c#1-2-3#1|2|3#d|e|f##1,2,3#a={"a":"a"}=["b"]={"b":"b"}=[1,2,3]=null',
+    { arr: [1, 2, 3], sep: "|", obj: { b: "b" } }
   );
 
   test(
@@ -2044,8 +2046,18 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           stringStringVar: String(input.str),
           stringEmpty: String(""),
           stringObject: String({ a: "a" }),
+          stringObjectWithRef: String({ a: input.val }),
           stringNull: String(null),
           empty: String(),
+          // stringUndefined: String(undefined), - not supported
+          stringArray: String([
+            "a",
+            ["b"],
+            [[input.val]],
+            [],
+            {},
+            { a: input.val },
+          ]),
         };
       }),
     {
@@ -2056,8 +2068,14 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       stringStringVar: "blah",
       stringEmpty: "",
       stringObject: "[object Object]",
+      stringObjectWithRef: "[object Object]",
       stringNull: "null",
       empty: "",
+      // stringUndefined: "undefined",
+      // Caveat: in ECMA, this test would output: a,b,1,,[object Object],[object Object]
+      // we are stringifying instead of ToString for object and arrays because SFN does not
+      // allow use to easily determine an Array from an Object and recursive to string would be expensive.
+      stringArray: '["a",["b"],[[1]],[],{},{"a":1}]',
     },
     { val: 1, str: "blah" }
   );
