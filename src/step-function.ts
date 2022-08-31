@@ -466,6 +466,79 @@ export namespace $SFN {
       });
     },
   });
+
+  export const partition = makeStepFunctionIntegration<
+    "partition",
+    <T>(arr: T[]) => T[][]
+  >("partition", {
+    asl(call, context) {
+      return { jsonPath: "$" };
+    },
+  });
+
+  /**
+   * Use the States.ArrayRange intrinsic function to create a new array containing a specific range of elements.
+   * The new array can contain up to 1000 elements.
+   *
+   * @param start - first element in the new array
+   * @param end - final element of the new array (inclusive)
+   * @param
+   */
+  export const range = makeStepFunctionIntegration<
+    "partition",
+    (start: number, end: number, step: Exclude<number, 0>) => number[]
+  >("partition", {
+    asl(call, context) {
+      return { jsonPath: "$" };
+    },
+  });
+
+  /**
+   * The States.ArrayUnique intrinsic function removes duplicate values from an array and returns an array containing only unique elements.
+   * This function takes an array, which can be unsorted, as its sole argument.
+   *
+   * @param arr - array of values to return unique values of.
+   */
+  export const unique = makeStepFunctionIntegration<
+    "partition",
+    <T>(arr: T[]) => T[]
+  >("partition", {
+    asl(call, context) {
+      return { jsonPath: "$" };
+    },
+  });
+
+  /**
+   * Use the `base64Encode` intrinsic function to encode data based on MIME Base64 encoding scheme.
+   * You can use this function to pass data to other AWS services without using an AWS Lambda function.
+   *
+   * @param data - String to encode as base64. Up to 10000 characters.
+   */
+  export const base64Encode = makeStepFunctionIntegration<
+    "partition",
+    (data: string) => string
+  >("partition", {
+    asl(call, context) {
+      return { jsonPath: "$" };
+    },
+  });
+
+  /**
+   * Use the base64Decode intrinsic function to decode data based on MIME Base64 decoding scheme.
+   * You can use this function to pass data to other AWS services without using a Lambda function.
+   *
+   * This function takes a data string of up to 10,000 characters to encode as its only argument.
+   *
+   * @param base64 - Base64 string to decode.
+   */
+  export const base64Decode = makeStepFunctionIntegration<
+    "partition",
+    (base64: string) => string
+  >("partition", {
+    asl(call, context) {
+      return { jsonPath: "$" };
+    },
+  });
 }
 
 /**
