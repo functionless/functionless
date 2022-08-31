@@ -7,11 +7,11 @@ sidebar_position: 0
 Functionless requires a few prerequisite setup steps to ensure your environment
 is ready to build and deploy the code you write as infrastructure to AWS.
 
-## Getting Help
+## Need Help?
 
-Setting up an AWS Account to use with Functionless can be overwhelming if you
-don't have significant experience with AWS. If you get stuck, [please don't
-hesitate to reach out in discord.][getting-help]
+Setting up an AWS Account to use with Functionless can be daunting if you don't
+have familiarity with AWS. If you get stuck, [please don't hesitate to reach out
+in discord.][getting-help]
 
 ## Install AWS CLI
 
