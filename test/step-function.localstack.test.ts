@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { Duration, aws_dynamodb } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -12,7 +13,7 @@ import {
   FunctionProps,
 } from "../src";
 import { makeIntegration } from "../src/integration";
-import { localstackTestSuite } from "./localstack";
+import { DEPLOY_AWS, localstackTestSuite } from "./localstack";
 import { testStepFunction } from "./runtime-util";
 import { normalizeCDKJson } from "./util";
 
@@ -20,9 +21,11 @@ import { normalizeCDKJson } from "./util";
 // without this configuration, the functions will try to hit AWS proper
 const localstackClientConfig: FunctionProps = {
   timeout: Duration.seconds(20),
-  clientConfigRetriever: () => ({
-    endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
-  }),
+  clientConfigRetriever: DEPLOY_AWS
+    ? undefined
+    : () => ({
+        endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
+      }),
 };
 
 interface TestExpressStepFunctionBase {
@@ -383,6 +386,41 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       });
     },
     [1, 2]
+  );
+
+  var shasum = crypto.createHash("sha1");
+  shasum.update("hide me");
+
+  test(
+    "intrinsics",
+    (parent) => {
+      return new StepFunction(parent, "sfn", async () => {
+        const odd = $SFN
+          .range(1, 11, 2)
+          .map((n) => `n${n}`)
+          .join("");
+
+        return {
+          partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4),
+          range: $SFN.range(4, 30, 5),
+          unique: $SFN.unique(["a", 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, "a", "b"]),
+          base64: $SFN.base64Decode($SFN.base64Encode("test")),
+          hash: $SFN.hash("hide me", "SHA-1"),
+          odd,
+        };
+      });
+    },
+    {
+      partition: [
+        [1, 2, 3, 4],
+        [5, 6],
+      ],
+      range: [4, 9, 14, 19, 24, 29],
+      unique: ["a", 1, 2, "b", 3, 4, 5],
+      base64: "test",
+      hash: shasum.digest("hex"),
+      odd: "n1n3n5n7n9n11",
+    }
   );
 
   test(

@@ -3,21 +3,28 @@ import { App, CfnOutput, Stack } from "aws-cdk-lib";
 import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
 import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { CloudFormation } from "aws-sdk";
+import AWS, { CloudFormation } from "aws-sdk";
 import { Construct } from "constructs";
 import { asyncSynth } from "../src/async-synth";
 import { Function } from "../src/function";
 
-export const clientConfig = {
-  endpoint: "http://localhost:4566",
-  credentials: {
-    accessKeyId: "test",
-    secretAccessKey: "test",
-  },
-  region: "us-east-1",
-  sslEnabled: false,
-  s3ForcePathStyle: true,
-};
+export const DEPLOY_AWS = !!process.env.TEST_DEPLOY_AWS;
+
+export const clientConfig = DEPLOY_AWS
+  ? {
+      region: "us-east-1",
+      credentials: new AWS.SharedIniFileCredentials(),
+    }
+  : {
+      endpoint: "http://localhost:4566",
+      credentials: {
+        accessKeyId: "test",
+        secretAccessKey: "test",
+      },
+      region: "us-east-1",
+      sslEnabled: false,
+      s3ForcePathStyle: true,
+    };
 
 const CF = new CloudFormation(clientConfig);
 
@@ -30,16 +37,18 @@ export const deployStack = async (app: App, stack: Stack) => {
     httpOptions: clientConfig as any,
   });
 
-  // @ts-ignore
-  sdkProvider.sdkOptions = {
+  if (clientConfig) {
     // @ts-ignore
-    ...sdkProvider.sdkOptions,
-    endpoint: clientConfig.endpoint,
-    s3ForcePathStyle: clientConfig.s3ForcePathStyle,
-    accessKeyId: clientConfig.credentials.accessKeyId,
-    secretAccessKey: clientConfig.credentials.secretAccessKey,
-    credentials: clientConfig.credentials,
-  };
+    sdkProvider.sdkOptions = {
+      // @ts-ignore
+      ...sdkProvider.sdkOptions,
+      endpoint: clientConfig.endpoint,
+      s3ForcePathStyle: clientConfig.s3ForcePathStyle,
+      accessKeyId: clientConfig.credentials.accessKeyId,
+      secretAccessKey: clientConfig.credentials.secretAccessKey,
+      credentials: clientConfig.credentials,
+    };
+  }
 
   const cfn = new CloudFormationDeployments({
     sdkProvider,
@@ -111,10 +120,12 @@ export const localstackTestSuite = (
 
   const app = new App();
   const stack = new Stack(app, stackName, {
-    env: {
-      account: "000000000000",
-      region: "us-east-1",
-    },
+    env: DEPLOY_AWS
+      ? undefined
+      : {
+          account: "000000000000",
+          region: "us-east-1",
+        },
   });
 
   let stackOutputs: CloudFormation.Outputs | undefined;

@@ -461,6 +461,8 @@ export namespace $AWS {
           );
         }
 
+        functionRef.resource.grantInvoke(context.role);
+
         return context.evalExprToJsonPathOrLiteral(payload.expr, (output) => {
           return context.stateWithHeapOutput({
             Type: "Task",

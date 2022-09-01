@@ -468,11 +468,49 @@ export namespace $SFN {
   });
 
   export const partition = makeStepFunctionIntegration<
-    "partition",
-    <T>(arr: T[]) => T[][]
-  >("partition", {
+    "SFN.Partition",
+    <T>(arr: T[], size: number) => T[][]
+  >("SFN.Partition", {
     asl(call, context) {
-      return { jsonPath: "$" };
+      const [arr, size] = call.args;
+
+      if (!arr || !size) {
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "Expected Partition array and size arguments to be provided."
+        );
+      }
+
+      return context.evalContext(
+        call,
+        ({ evalExprToJsonPath, evalExprToJsonPathOrLiteral }) => {
+          const arrayOut = evalExprToJsonPath(arr.expr);
+          const sizeOut = evalExprToJsonPathOrLiteral(size.expr);
+          if (
+            ASLGraph.isLiteralValue(sizeOut) &&
+            typeof sizeOut.value !== "number"
+          ) {
+            throw new SynthError(
+              ErrorCodes.Invalid_Input,
+              "Expected Partition size argument to be a number or reference."
+            );
+          }
+          const temp = context.newHeapVariable();
+          return {
+            Type: "Pass",
+            Parameters: {
+              "out.$": `States.ArrayPartition(${arrayOut.jsonPath}, ${
+                ASLGraph.isJsonPath(sizeOut) ? sizeOut.jsonPath : sizeOut.value
+              })`,
+            },
+            ResultPath: temp,
+            Next: ASLGraph.DeferNext,
+            output: {
+              jsonPath: `${temp}.out`,
+            },
+          };
+        }
+      );
     },
   });
 
@@ -485,11 +523,74 @@ export namespace $SFN {
    * @param
    */
   export const range = makeStepFunctionIntegration<
-    "partition",
-    (start: number, end: number, step: Exclude<number, 0>) => number[]
-  >("partition", {
+    "SFN.Range",
+    (start: number, end: number, step?: Exclude<number, 0>) => number[]
+  >("SFN.Range", {
     asl(call, context) {
-      return { jsonPath: "$" };
+      const [start, end, step] = call.args;
+
+      if (!start || !end) {
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "Expected Partition array and size arguments to be provided."
+        );
+      }
+
+      return context.evalContext(call, ({ evalExprToJsonPathOrLiteral }) => {
+        const startOut = evalExprToJsonPathOrLiteral(start.expr);
+        const endOut = evalExprToJsonPathOrLiteral(end.expr);
+        const stepOut = step
+          ? evalExprToJsonPathOrLiteral(step.expr)
+          : undefined;
+
+        if (
+          ASLGraph.isLiteralValue(startOut) &&
+          typeof startOut.value !== "number"
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Expected Range start argument to be a number or reference."
+          );
+        } else if (
+          ASLGraph.isLiteralValue(endOut) &&
+          typeof endOut.value !== "number"
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Expected Range end argument to be a number or reference."
+          );
+        } else if (
+          ASLGraph.isLiteralValue(stepOut) &&
+          typeof stepOut.value !== "number"
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Expected Range step argument to be a number, reference, or undefined."
+          );
+        }
+        const temp = context.newHeapVariable();
+        return {
+          Type: "Pass",
+          Parameters: {
+            "out.$": `States.ArrayRange(${
+              ASLGraph.isJsonPath(startOut) ? startOut.jsonPath : startOut.value
+            }, ${
+              ASLGraph.isJsonPath(endOut) ? endOut.jsonPath : endOut.value
+            }, ${
+              !stepOut
+                ? 1
+                : ASLGraph.isJsonPath(stepOut)
+                ? stepOut.jsonPath
+                : stepOut.value
+            })`,
+          },
+          ResultPath: temp,
+          Next: ASLGraph.DeferNext,
+          output: {
+            jsonPath: `${temp}.out`,
+          },
+        };
+      });
     },
   });
 
@@ -500,11 +601,34 @@ export namespace $SFN {
    * @param arr - array of values to return unique values of.
    */
   export const unique = makeStepFunctionIntegration<
-    "partition",
+    "SFN.Unique",
     <T>(arr: T[]) => T[]
-  >("partition", {
+  >("SFN.Unique", {
     asl(call, context) {
-      return { jsonPath: "$" };
+      const [arr] = call.args;
+
+      if (!arr) {
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "Expected Unique array arguments to be provided."
+        );
+      }
+
+      return context.evalContext(call, ({ evalExprToJsonPath }) => {
+        const arrayOut = evalExprToJsonPath(arr.expr);
+        const temp = context.newHeapVariable();
+        return {
+          Type: "Pass",
+          Parameters: {
+            "out.$": `States.ArrayUnique(${arrayOut.jsonPath})`,
+          },
+          ResultPath: temp,
+          Next: ASLGraph.DeferNext,
+          output: {
+            jsonPath: `${temp}.out`,
+          },
+        };
+      });
     },
   });
 
@@ -515,11 +639,48 @@ export namespace $SFN {
    * @param data - String to encode as base64. Up to 10000 characters.
    */
   export const base64Encode = makeStepFunctionIntegration<
-    "partition",
+    "SFN.Base64Encode",
     (data: string) => string
-  >("partition", {
+  >("SFN.Base64Encode", {
     asl(call, context) {
-      return { jsonPath: "$" };
+      const [data] = call.args;
+
+      if (!data) {
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "Expected Base64 data argument to be provided."
+        );
+      }
+
+      return context.evalContext(call, ({ evalExprToJsonPathOrLiteral }) => {
+        const dataOut = evalExprToJsonPathOrLiteral(data.expr);
+
+        if (
+          ASLGraph.isLiteralValue(dataOut) &&
+          typeof dataOut.value !== "string"
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Expected base64Encode data argument to be a string or reference."
+          );
+        }
+        const temp = context.newHeapVariable();
+        return {
+          Type: "Pass",
+          Parameters: {
+            "out.$": `States.Base64Encode(${
+              ASLGraph.isJsonPath(dataOut)
+                ? dataOut.jsonPath
+                : `'${dataOut.value}'`
+            })`,
+          },
+          ResultPath: temp,
+          Next: ASLGraph.DeferNext,
+          output: {
+            jsonPath: `${temp}.out`,
+          },
+        };
+      });
     },
   });
 
@@ -532,11 +693,48 @@ export namespace $SFN {
    * @param base64 - Base64 string to decode.
    */
   export const base64Decode = makeStepFunctionIntegration<
-    "partition",
+    "SFN.Base64Decode",
     (base64: string) => string
-  >("partition", {
+  >("SFN.Base64Decode", {
     asl(call, context) {
-      return { jsonPath: "$" };
+      const [data] = call.args;
+
+      if (!data) {
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "Expected Base64 data argument to be provided."
+        );
+      }
+
+      return context.evalContext(call, ({ evalExprToJsonPathOrLiteral }) => {
+        const dataOut = evalExprToJsonPathOrLiteral(data.expr);
+
+        if (
+          ASLGraph.isLiteralValue(dataOut) &&
+          typeof dataOut.value !== "string"
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Expected base64Decode data argument to be a string or reference."
+          );
+        }
+        const temp = context.newHeapVariable();
+        return {
+          Type: "Pass",
+          Parameters: {
+            "out.$": `States.Base64Decode(${
+              ASLGraph.isJsonPath(dataOut)
+                ? dataOut.jsonPath
+                : `'${dataOut.value}'`
+            })`,
+          },
+          ResultPath: temp,
+          Next: ASLGraph.DeferNext,
+          output: {
+            jsonPath: `${temp}.out`,
+          },
+        };
+      });
     },
   });
 
@@ -555,11 +753,52 @@ export namespace $SFN {
    * @param algorithm - algorithm to use.
    */
   export const hash = makeStepFunctionIntegration<
-    "partition",
+    "SFN.Hash",
     (data: any, algorithm: HashAlgorithm) => string
-  >("partition", {
+  >("SFN.Hash", {
     asl(call, context) {
-      return { jsonPath: "$" };
+      const [data, algorithm] = call.args;
+
+      if (!data || !algorithm) {
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "Expected Hash data and algorithm arguments to be provided."
+        );
+      }
+
+      return context.evalContext(
+        call,
+        ({ evalExprToJsonPath, evalExprToJsonPathOrLiteral }) => {
+          const dataOut = evalExprToJsonPath(data.expr);
+          const algorithmOut = evalExprToJsonPathOrLiteral(algorithm.expr);
+
+          if (
+            ASLGraph.isLiteralValue(algorithmOut) &&
+            typeof algorithmOut.value !== "string"
+          ) {
+            throw new SynthError(
+              ErrorCodes.Invalid_Input,
+              "Expected Hash algorithm argument to be a string or reference."
+            );
+          }
+          const temp = context.newHeapVariable();
+          return {
+            Type: "Pass",
+            Parameters: {
+              "out.$": `States.Hash(${dataOut.jsonPath}, ${
+                ASLGraph.isJsonPath(algorithmOut)
+                  ? algorithmOut.jsonPath
+                  : `'${algorithmOut.value}'`
+              })`,
+            },
+            ResultPath: temp,
+            Next: ASLGraph.DeferNext,
+            output: {
+              jsonPath: `${temp}.out`,
+            },
+          };
+        }
+      );
     },
   });
 
@@ -572,11 +811,81 @@ export namespace $SFN {
    * @param seed
    */
   export const random = makeStepFunctionIntegration<
-    "partition",
+    "SFN.Random",
     (start: number, end: number, seed?: number) => number
-  >("partition", {
+  >("SFN.Random", {
     asl(call, context) {
-      return { jsonPath: "$" };
+      const [start, end, seed] = call.args;
+
+      if (!start || !end) {
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "Expected Random start and end arguments to be provided."
+        );
+      }
+
+      return context.evalContext(call, ({ evalExprToJsonPathOrLiteral }) => {
+        const startOut = evalExprToJsonPathOrLiteral(start.expr);
+        const endOut = evalExprToJsonPathOrLiteral(end.expr);
+        const seedOut = seed
+          ? evalExprToJsonPathOrLiteral(seed.expr)
+          : undefined;
+
+        if (
+          ASLGraph.isLiteralValue(startOut) &&
+          typeof startOut.value !== "number"
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Expected Random argument to be a number or reference."
+          );
+        } else if (
+          ASLGraph.isLiteralValue(endOut) &&
+          typeof endOut.value !== "number"
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Expected Random argument to be a number or reference."
+          );
+        } else if (
+          seedOut &&
+          ASLGraph.isLiteralValue(seedOut) &&
+          typeof seedOut.value !== "number"
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Expected Random seed to be a number, reference, or undefined."
+          );
+        }
+        const temp = context.newHeapVariable();
+        return {
+          Type: "Pass",
+          Parameters: {
+            "out.$": `States.MathRandom(${
+              ASLGraph.isJsonPath(startOut)
+                ? startOut.jsonPath
+                : `'${startOut.value}'`
+            }, ${
+              ASLGraph.isJsonPath(endOut)
+                ? endOut.jsonPath
+                : `'${endOut.value}'`
+            }${
+              seedOut
+                ? `,${
+                    ASLGraph.isJsonPath(seedOut)
+                      ? seedOut.jsonPath
+                      : `'${seedOut.value}'`
+                  }`
+                : ""
+            })`,
+          },
+          ResultPath: temp,
+          Next: ASLGraph.DeferNext,
+          output: {
+            jsonPath: `${temp}.out`,
+          },
+        };
+      });
     },
   });
 }
