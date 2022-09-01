@@ -23619,80 +23619,108 @@ exports[`intrinsics 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "$SFN.base64Decode($SFN.base64Encode(\\"test\\"))": Object {
-      "Next": "1__$SFN.base64Decode($SFN.base64Encode(\\"test\\"))",
+    "$SFN.base64Encode(\\"test\\")": Object {
+      "Next": "1__$SFN.base64Encode(\\"test\\")",
       "Parameters": Object {
         "out.$": "States.Base64Encode('test')",
       },
-      "ResultPath": "$.heap15",
+      "ResultPath": "$.heap20",
+      "Type": "Pass",
+    },
+    "$SFN.base64Encode(input.baseTest)": Object {
+      "Next": "1__$SFN.base64Encode(input.baseTest)",
+      "Parameters": Object {
+        "out.$": "States.Base64Encode($.input.baseTest)",
+      },
+      "ResultPath": "$.heap23",
       "Type": "Pass",
     },
     "$SFN.hash(\\"hide me\\", \\"SHA-1\\")": Object {
       "Next": "1__$SFN.hash(\\"hide me\\", \\"SHA-1\\")",
       "Result": "hide me",
+      "ResultPath": "$.heap26",
+      "Type": "Pass",
+    },
+    "$SFN.range(input.range.start, input.range.end, input.range.step).map(functi": Object {
+      "Next": "1__$SFN.range(input.range.start, input.range.end, input.range.step).map(fun 1",
+      "Parameters": Object {
+        "out.$": "States.ArrayRange($.input.range.start, $.input.range.end, $.input.range.step)",
+      },
+      "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "10__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "Next": "11__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": Object {
+        "out.$": "States.ArrayUnique($.input.arr)",
+      },
       "ResultPath": "$.heap18",
       "Type": "Pass",
     },
-    "$SFN.range(4, 30, 5)": Object {
-      "Next": "3__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.ra",
-      "Parameters": Object {
-        "out.$": "States.ArrayRange(4, 30, 5)",
-      },
-      "ResultPath": "$.heap10",
-      "Type": "Pass",
-    },
-    "$SFN.unique([\\"a\\", 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, \\"a\\", \\"b\\"])": Object {
-      "Next": "1__$SFN.unique([\\"a\\", 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, \\"a\\", \\"b\\"])",
-      "Result": Array [
-        "a",
-        5,
-        4,
-        3,
-        2,
-        1,
-        1,
-        2,
-        3,
-        4,
-        5,
-        "a",
-        "b",
-      ],
-      "ResultPath": "$.heap12",
-      "Type": "Pass",
-    },
-    "10__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.r": Object {
-      "InputPath": "$.odd",
-      "Next": "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.ra",
-      "ResultPath": "$.heap21",
-      "Type": "Pass",
-    },
-    "1__$SFN.base64Decode($SFN.base64Encode(\\"test\\"))": Object {
-      "Next": "7__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.ra",
-      "Parameters": Object {
-        "out.$": "States.Base64Decode($.heap15.out)",
-      },
-      "ResultPath": "$.heap16",
-      "Type": "Pass",
-    },
-    "1__$SFN.hash(\\"hide me\\", \\"SHA-1\\")": Object {
-      "Next": "9__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.ra",
-      "Parameters": Object {
-        "out.$": "States.Hash($.heap18, 'SHA-1')",
-      },
+    "11__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.heap18.out",
+      "Next": "$SFN.base64Encode(\\"test\\")",
       "ResultPath": "$.heap19",
       "Type": "Pass",
     },
-    "1__$SFN.unique([\\"a\\", 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, \\"a\\", \\"b\\"])": Object {
-      "Next": "5__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.ra",
-      "Parameters": Object {
-        "out.$": "States.ArrayUnique($.heap12)",
-      },
-      "ResultPath": "$.heap13",
+    "13__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.heap21.out",
+      "Next": "$SFN.base64Encode(input.baseTest)",
+      "ResultPath": "$.heap22",
       "Type": "Pass",
     },
-    "1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")": Object {
-      "ItemsPath": "$.heap1",
+    "15__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.heap24.out",
+      "Next": "$SFN.hash(\\"hide me\\", \\"SHA-1\\")",
+      "ResultPath": "$.heap25",
+      "Type": "Pass",
+    },
+    "17__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.heap27.out",
+      "Next": "18__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap28",
+      "Type": "Pass",
+    },
+    "18__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "Next": "19__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": Object {
+        "out.$": "States.Hash($.input.hashTest, $.input.hashAlgo)",
+      },
+      "ResultPath": "$.heap29",
+      "Type": "Pass",
+    },
+    "19__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.heap29.out",
+      "Next": "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ",
+      "ResultPath": "$.heap30",
+      "Type": "Pass",
+    },
+    "1__$SFN.base64Encode(\\"test\\")": Object {
+      "Next": "13__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": Object {
+        "out.$": "States.Base64Decode($.heap20.out)",
+      },
+      "ResultPath": "$.heap21",
+      "Type": "Pass",
+    },
+    "1__$SFN.base64Encode(input.baseTest)": Object {
+      "Next": "15__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": Object {
+        "out.$": "States.Base64Decode($.heap23.out)",
+      },
+      "ResultPath": "$.heap24",
+      "Type": "Pass",
+    },
+    "1__$SFN.hash(\\"hide me\\", \\"SHA-1\\")": Object {
+      "Next": "17__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": Object {
+        "out.$": "States.Hash($.heap26, 'SHA-1')",
+      },
+      "ResultPath": "$.heap27",
+      "Type": "Pass",
+    },
+    "1__$SFN.range(input.range.start, input.range.end, input.range.step).map(fun": Object {
+      "ItemsPath": "$.heap8",
       "Iterator": Object {
         "StartAt": "Default",
         "States": Object {
@@ -23709,192 +23737,241 @@ Object {
           },
           "assign__Default": Object {
             "End": true,
-            "InputPath": "$.heap6.str",
+            "InputPath": "$.heap13.str",
             "ResultPath": "$",
             "Type": "Pass",
           },
           "assign__Default 1": Object {
             "InputPath": "$.item",
             "Next": "assign__Default",
-            "ResultPath": "$.heap6.str",
+            "ResultPath": "$.heap13.str",
             "Type": "Pass",
           },
           "format__Default": Object {
             "Next": "assign__Default",
             "Parameters": Object {
-              "str.$": "States.JsonToString($.item)",
+              "string.$": "States.JsonToString($.item)",
             },
-            "ResultPath": "$.heap6",
+            "ResultPath": "$.heap13",
             "Type": "Pass",
           },
         },
       },
-      "Next": "hasNext__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")",
+      "Next": "hasNext__1__$SFN.range(input.range.start, input.range.end, input.range.step",
       "Parameters": Object {
         "item.$": "$$.Map.Item.Value",
       },
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap11",
       "Type": "Map",
     },
-    "1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\") 1": Object {
-      "Next": "check__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\") 1",
+    "1__$SFN.range(input.range.start, input.range.end, input.range.step).map(fun 1": Object {
+      "Next": "check__1__$SFN.range(input.range.start, input.range.end, input.range.step).",
       "Parameters": Object {
-        "arr.$": "$.heap0.out",
+        "arr.$": "$.heap7.out",
         "arrStr": "[null",
-      },
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "1__return nn": Object {
-      "InputPath": "$.heap3.string",
-      "Next": "handleResult__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\") 1",
-      "ResultPath": "$.heap1.arr[0]",
-      "Type": "Pass",
-    },
-    "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.ra": Object {
-      "End": true,
-      "Parameters": Object {
-        "base64.$": "$.heap17",
-        "hash.$": "$.heap20",
-        "odd.$": "$.heap21",
-        "partition.$": "$.heap9",
-        "range.$": "$.heap11",
-        "unique.$": "$.heap14",
-      },
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.ra 1": Object {
-      "InputPath": "$.heap8.out",
-      "Next": "$SFN.range(4, 30, 5)",
-      "ResultPath": "$.heap9",
-      "Type": "Pass",
-    },
-    "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.ra 2": Object {
-      "Next": "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.ra 1",
-      "Parameters": Object {
-        "out.$": "States.ArrayPartition($.heap7, 4)",
       },
       "ResultPath": "$.heap8",
       "Type": "Pass",
     },
-    "3__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.ra": Object {
-      "InputPath": "$.heap10.out",
-      "Next": "$SFN.unique([\\"a\\", 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, \\"a\\", \\"b\\"])",
-      "ResultPath": "$.heap11",
-      "Type": "Pass",
-    },
-    "5__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.ra": Object {
-      "InputPath": "$.heap13.out",
-      "Next": "$SFN.base64Decode($SFN.base64Encode(\\"test\\"))",
-      "ResultPath": "$.heap14",
-      "Type": "Pass",
-    },
-    "7__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.ra": Object {
-      "InputPath": "$.heap16.out",
-      "Next": "$SFN.hash(\\"hide me\\", \\"SHA-1\\")",
-      "ResultPath": "$.heap17",
-      "Type": "Pass",
-    },
-    "9__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.ra": Object {
-      "InputPath": "$.heap19.out",
-      "Next": "10__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.r",
-      "ResultPath": "$.heap20",
-      "Type": "Pass",
-    },
-    "Initialize Functionless Context": Object {
-      "Next": "odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")",
+    "1__[\\"a\\", 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, \\"a\\", \\"b\\"]": Object {
+      "Next": "9__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ",
       "Parameters": Object {
-        "fnl_context": Object {
-          "null": null,
-        },
+        "out.$": "States.ArrayUnique($.heap15)",
+      },
+      "ResultPath": "$.heap16",
+      "Type": "Pass",
+    },
+    "1__return nn": Object {
+      "InputPath": "$.heap10.string",
+      "Next": "handleResult__1__$SFN.range(input.range.start, input.range.end, input.range",
+      "ResultPath": "$.heap8.arr[0]",
+      "Type": "Pass",
+    },
+    "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ": Object {
+      "End": true,
+      "Parameters": Object {
+        "base64.$": "$.heap22",
+        "base64Ref.$": "$.heap25",
+        "hash.$": "$.heap28",
+        "hashRef.$": "$.heap30",
+        "partition.$": "$.heap2",
+        "partitionRef.$": "$.heap4",
+        "range.$": "$.heap6",
+        "rangeRef.$": "$.heap14",
+        "unique.$": "$.heap17",
+        "uniqueRef.$": "$.heap19",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "append__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")": Object {
-      "Next": "tail__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")",
+    "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:  1": Object {
+      "InputPath": "$.heap1.out",
+      "Next": "2__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:  2": Object {
+      "Next": "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:  1",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}', $.heap5.string, $.heap4[0])",
+        "out.$": "States.ArrayPartition($.heap0, 4)",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "2__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ": Object {
+      "Next": "3__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ",
+      "Parameters": Object {
+        "out.$": "States.ArrayPartition($.input.arr, $.input.part)",
+      },
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "3__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ": Object {
+      "InputPath": "$.heap3.out",
+      "Next": "4__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "4__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ": Object {
+      "Next": "5__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ",
+      "Parameters": Object {
+        "out.$": "States.ArrayRange(4, 30, 5)",
       },
       "ResultPath": "$.heap5",
       "Type": "Pass",
     },
-    "check__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\") 1": Object {
+    "5__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ": Object {
+      "InputPath": "$.heap5.out",
+      "Next": "$SFN.range(input.range.start, input.range.end, input.range.step).map(functi",
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
+    "7__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ": Object {
+      "InputPath": "$.heap12.string",
+      "Next": "[\\"a\\", 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, \\"a\\", \\"b\\"]",
+      "ResultPath": "$.heap14",
+      "Type": "Pass",
+    },
+    "9__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ": Object {
+      "InputPath": "$.heap16.out",
+      "Next": "10__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap17",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: $SF",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "[\\"a\\", 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, \\"a\\", \\"b\\"]": Object {
+      "Next": "1__[\\"a\\", 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, \\"a\\", \\"b\\"]",
+      "Result": Array [
+        "a",
+        5,
+        4,
+        3,
+        2,
+        1,
+        1,
+        2,
+        3,
+        4,
+        5,
+        "a",
+        "b",
+      ],
+      "ResultPath": "$.heap15",
+      "Type": "Pass",
+    },
+    "append__1__$SFN.range(input.range.start, input.range.end, input.range.step)": Object {
+      "Next": "tail__1__$SFN.range(input.range.start, input.range.end, input.range.step).m 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{}{}', $.heap12.string, $.heap11[0])",
+      },
+      "ResultPath": "$.heap12",
+      "Type": "Pass",
+    },
+    "check__1__$SFN.range(input.range.start, input.range.end, input.range.step).": Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
           "Next": "n",
-          "Variable": "$.heap1.arr[0]",
+          "Variable": "$.heap8.arr[0]",
         },
       ],
-      "Default": "end__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\") 1",
+      "Default": "end__1__$SFN.range(input.range.start, input.range.end, input.range.step).ma",
       "Type": "Choice",
     },
-    "end__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\") 1": Object {
-      "Next": "set__end__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\") 1",
+    "end__1__$SFN.range(input.range.start, input.range.end, input.range.step).ma": Object {
+      "Next": "set__end__1__$SFN.range(input.range.start, input.range.end, input.range.ste",
       "Parameters": Object {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap8.arrStr))",
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap8",
       "Type": "Pass",
     },
-    "handleResult__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\") 1": Object {
-      "Next": "check__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\") 1",
+    "handleResult__1__$SFN.range(input.range.start, input.range.end, input.range": Object {
+      "Next": "check__1__$SFN.range(input.range.start, input.range.end, input.range.step).",
       "Parameters": Object {
-        "arr.$": "$.heap1.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+        "arr.$": "$.heap8.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap8.arrStr, States.JsonToString($.heap8.arr[0]))",
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap8",
       "Type": "Pass",
     },
-    "hasNext__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")": Object {
+    "hasNext__1__$SFN.range(input.range.start, input.range.end, input.range.step": Object {
       "Choices": Array [
         Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.heap4[0]",
+              "Variable": "$.heap11[0]",
             },
             Object {
               "Not": Object {
                 "IsPresent": true,
-                "Variable": "$.heap5",
+                "Variable": "$.heap12",
               },
             },
           ],
-          "Next": "initValue__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")",
+          "Next": "initValue__1__$SFN.range(input.range.start, input.range.end, input.range.st",
         },
         Object {
           "And": Array [
             Object {
               "IsPresent": false,
-              "Variable": "$.heap4[0]",
+              "Variable": "$.heap11[0]",
             },
             Object {
               "IsPresent": false,
-              "Variable": "$.heap5",
+              "Variable": "$.heap12",
             },
           ],
-          "Next": "returnEmpty__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")",
+          "Next": "returnEmpty__1__$SFN.range(input.range.start, input.range.end, input.range.",
         },
         Object {
           "IsPresent": true,
-          "Next": "append__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")",
-          "Variable": "$.heap4[0]",
+          "Next": "append__1__$SFN.range(input.range.start, input.range.end, input.range.step)",
+          "Variable": "$.heap11[0]",
         },
       ],
-      "Default": "odd",
+      "Default": "7__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ",
       "Type": "Choice",
     },
-    "initValue__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")": Object {
-      "InputPath": "$.heap4[0]",
-      "Next": "tail__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")",
-      "ResultPath": "$.heap5.string",
+    "initValue__1__$SFN.range(input.range.start, input.range.end, input.range.st": Object {
+      "InputPath": "$.heap11[0]",
+      "Next": "tail__1__$SFN.range(input.range.start, input.range.end, input.range.step).m 1",
+      "ResultPath": "$.heap12.string",
       "Type": "Pass",
     },
     "n": Object {
-      "InputPath": "$.heap1.arr[0]",
+      "InputPath": "$.heap8.arr[0]",
       "Next": "return nn",
       "ResultPath": "$.n",
       "Type": "Pass",
@@ -23902,33 +23979,19 @@ Object {
     "nn": Object {
       "Next": "1__return nn",
       "Parameters": Object {
-        "string.$": "States.Format('n{}',$.heap2)",
+        "string.$": "States.Format('n{}',$.heap9)",
       },
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "odd": Object {
-      "InputPath": "$.heap5.string",
-      "Next": "return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.range",
-      "ResultPath": "$.odd",
-      "Type": "Pass",
-    },
-    "odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")": Object {
-      "Next": "1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\") 1",
-      "Parameters": Object {
-        "out.$": "States.ArrayRange(1, 11, 2)",
-      },
-      "ResultPath": "$.heap0",
+      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "return nn": Object {
       "InputPath": "$.n",
       "Next": "nn",
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap9",
       "Type": "Pass",
     },
-    "return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.range": Object {
-      "Next": "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), range: $SFN.ra 2",
+    "return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: $SF": Object {
+      "Next": "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:  2",
       "Result": Array [
         1,
         2,
@@ -23937,25 +24000,25 @@ Object {
         5,
         6,
       ],
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
-    "returnEmpty__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")": Object {
-      "Next": "odd",
+    "returnEmpty__1__$SFN.range(input.range.start, input.range.end, input.range.": Object {
+      "Next": "7__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ",
       "Result": "",
-      "ResultPath": "$.heap5.string",
+      "ResultPath": "$.heap12.string",
       "Type": "Pass",
     },
-    "set__end__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\") 1": Object {
-      "InputPath": "$.heap1.result[1:]",
-      "Next": "1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")",
-      "ResultPath": "$.heap1",
+    "set__end__1__$SFN.range(input.range.start, input.range.end, input.range.ste": Object {
+      "InputPath": "$.heap8.result[1:]",
+      "Next": "1__$SFN.range(input.range.start, input.range.end, input.range.step).map(fun",
+      "ResultPath": "$.heap8",
       "Type": "Pass",
     },
-    "tail__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")": Object {
-      "InputPath": "$.heap4[1:]",
-      "Next": "hasNext__1__odd = $SFN.range(1, 11, 2).map(function (n)).join(\\"\\")",
-      "ResultPath": "$.heap4",
+    "tail__1__$SFN.range(input.range.start, input.range.end, input.range.step).m 1": Object {
+      "InputPath": "$.heap11[1:]",
+      "Next": "hasNext__1__$SFN.range(input.range.start, input.range.end, input.range.step",
+      "ResultPath": "$.heap11",
       "Type": "Pass",
     },
   },

@@ -38,9 +38,9 @@ export const deployStack = async (app: App, stack: Stack) => {
   });
 
   if (clientConfig) {
-    // @ts-ignore
+    // @ts-ignore - assigning to private members
     sdkProvider.sdkOptions = {
-      // @ts-ignore
+      // @ts-ignore - using private members
       ...sdkProvider.sdkOptions,
       endpoint: clientConfig.endpoint,
       s3ForcePathStyle: clientConfig.s3ForcePathStyle,
@@ -116,7 +116,11 @@ export const localstackTestSuite = (
 
   const tests: ResourceTest[] = [];
   // will be set in the before all
-  let testContexts: ({ error?: Error } | { output?: any; extra?: any })[];
+  let testContexts: (
+    | { error?: Error }
+    | { output?: any; extra?: any }
+    | { skip: true }
+  )[];
 
   const app = new App();
   const stack = new Stack(app, stackName, {
@@ -162,16 +166,25 @@ export const localstackTestSuite = (
           };
         }
       }
-      return {};
+      return { skip: true };
     });
 
     await Promise.all(Function.promises);
 
-    await deployStack(app, stack);
+    // don't deploy if they all error
+    if (
+      !testContexts.every(
+        (t) => ("error" in t && t.error) || ("skip" in t && t.skip)
+      )
+    ) {
+      await deployStack(app, stack);
 
-    stackOutputs = (
-      await CF.describeStacks({ StackName: stack.stackName }).promise()
-    ).Stacks?.[0]?.Outputs;
+      stackOutputs = (
+        await CF.describeStacks({ StackName: stack.stackName }).promise()
+      ).Stacks?.[0]?.Outputs;
+    } else {
+      stackOutputs = [];
+    }
   });
 
   // @ts-ignore

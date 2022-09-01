@@ -1025,14 +1025,11 @@ export class ASL {
         tryFlow.hasTask && stmt.catchClause?.variableDecl
           ? ASLGraph.joinSubStates(
               stmt.catchClause.variableDecl,
-              {
-                Type: "Pass",
-                Next: ASLGraph.DeferNext,
-                Parameters: {
-                  "0_ParsedError.$": `States.StringToJson($.${errorVariableName}.Cause)`,
-                },
-                ResultPath: `$.${errorVariableName}`,
-              },
+              ASLGraph.assignJsonPathOrIntrinsic(
+                `States.StringToJson($.${errorVariableName}.Cause)`,
+                `$.${errorVariableName}`,
+                "0_ParsedError"
+              ),
               {
                 Type: "Pass",
                 InputPath: `$.${errorVariableName}.0_ParsedError`,
@@ -1744,25 +1741,18 @@ export class ASL {
             Next: ASLGraph.DeferNext,
           }));
 
-        const tempHeap = this.newHeapVariable();
+        rewriteStates.map(addState);
 
-        return {
-          ...ASLGraph.joinSubStates(expr, ...rewriteStates, {
-            Type: "Pass",
-            Parameters: {
-              "string.$": `States.Format('${elementOutputs
-                .map((output) =>
-                  ASLGraph.isJsonPath(output) ? "{}" : output.value
-                )
-                .join("")}',${jsonPaths.map(([, jp]) => jp)})`,
-            },
-            ResultPath: tempHeap,
-            Next: ASLGraph.DeferNext,
-          })!,
-          output: {
-            jsonPath: `${tempHeap}.string`,
-          },
-        };
+        return this.assignJsonPathOrIntrinsic(
+          `States.Format('${elementOutputs
+            .map((output) =>
+              ASLGraph.isJsonPath(output) ? "{}" : output.value
+            )
+            .join("")}',${jsonPaths.map(([, jp]) => jp)})`,
+          "string",
+          undefined,
+          expr
+        );
       });
     } else if (isCallExpr(expr)) {
       const integration = tryFindIntegration(expr.expr);
@@ -1839,14 +1829,12 @@ export class ASL {
         }
         throw new SynthError(ErrorCodes.Unsupported_Use_of_Promises);
       } else if (isJsonStringify(expr) || isJsonParse(expr)) {
-        const heap = this.newHeapVariable();
-
         const objParamExpr = expr.args[0]?.expr;
         if (!objParamExpr || isUndefinedLiteralExpr(objParamExpr)) {
           if (expr.expr.name.name === "stringify") {
             // return an undefined variable
             return {
-              jsonPath: heap,
+              jsonPath: this.newHeapVariable(),
             };
           } else {
             throw new SynthError(
@@ -1859,21 +1847,11 @@ export class ASL {
         return this.evalExprToJsonPath(objParamExpr, (output) => {
           const objectPath = output.jsonPath;
 
-          return {
-            Type: "Pass",
-            Parameters: {
-              // intrinsic functions cannot be used in InputPath and some other json path locations.
-              // We compute the value and place it on the heap.
-              "string.$": isJsonStringify(expr)
-                ? `States.JsonToString(${objectPath})`
-                : `States.StringToJson(${objectPath})`,
-            },
-            ResultPath: heap,
-            Next: ASLGraph.DeferNext,
-            output: {
-              jsonPath: `${heap}.string`,
-            },
-          };
+          return this.assignJsonPathOrIntrinsic(
+            isJsonStringify(expr)
+              ? `States.JsonToString(${objectPath})`
+              : `States.StringToJson(${objectPath})`
+          );
         });
       } else if (isReferenceExpr(expr.expr)) {
         const ref = expr.expr.ref();
@@ -2037,29 +2015,22 @@ export class ASL {
           }
           return value as ASLGraph.LiteralValue;
         });
-        const heapLocation = this.newHeapVariable();
 
-        return {
-          Type: "Pass",
-          Parameters: {
-            "arr.$": `States.Array(${items
-              // if the item is a conditional statement, normalize to a boolean reference
-              .map((item) =>
-                ASLGraph.isJsonPath(item)
-                  ? item.jsonPath
-                  : typeof item.value === "string"
-                  ? `'${item.value}'`
-                  : item.value
-              )
-              .join(", ")})`,
-          },
-          ResultPath: heapLocation,
-          Next: ASLGraph.DeferNext,
-          node: expr,
-          output: {
-            jsonPath: `${heapLocation}.arr`,
-          },
-        };
+        return this.assignJsonPathOrIntrinsic(
+          `States.Array(${items
+            // if the item is a conditional statement, normalize to a boolean reference
+            .map((item) =>
+              ASLGraph.isJsonPath(item)
+                ? item.jsonPath
+                : typeof item.value === "string"
+                ? `'${item.value}'`
+                : item.value
+            )
+            .join(", ")})`,
+          undefined,
+          undefined,
+          expr
+        );
       });
     } else if (isLiteralExpr(expr)) {
       return {
@@ -2541,14 +2512,11 @@ export class ASL {
           Choices: [{ ...ASL.isString(jsonPath.jsonPath), Next: "assign" }],
           Default: "format",
         },
-        format: {
-          Type: "Pass",
-          Parameters: {
-            "str.$": `States.JsonToString(${jsonPath.jsonPath})`,
-          },
-          ResultPath: temp,
-          Next: ASLGraph.DeferNext,
-        },
+        format: ASLGraph.assignJsonPathOrIntrinsic(
+          `States.JsonToString(${jsonPath.jsonPath})`,
+          temp,
+          "string"
+        ),
         // since this state can only output a single json path value,
         // assign the input json path to the expected output path
         assign: {
@@ -2643,15 +2611,12 @@ export class ASL {
               // Number(null/{}/[]) => NaN
               Default: "null",
             },
-            format: {
-              Type: "Pass",
-              Parameters: {
-                // what happens if this isn't a string?
-                "num.$": `States.StringToJson(${output.jsonPath})`,
-              },
-              ResultPath: temp,
-              Next: "checkStringOutput",
-            },
+            format: ASLGraph.assignJsonPathOrIntrinsic(
+              `States.StringToJson(${output.jsonPath})`,
+              temp,
+              "num",
+              "checkStringOutput"
+            ),
             // Number("true") => NaN
             checkStringOutput: {
               Type: "Choice",
@@ -2713,9 +2678,6 @@ export class ASL {
 
   /**
    * Helper that generates an {@link ASLGraph.OutputState} which returns a value to a temporary location.
-   *
-   * Updates (immutably) a {@link ASLGraph.NodeState} to contain a new heap location result path.
-   * The new heap location is returned an a {@link ASLGraph.JsonPath} output.
    */
   public stateWithHeapOutput(
     state: Exclude<ASLGraph.NodeState, Choice | Fail | Succeed | Wait>,
@@ -2730,6 +2692,46 @@ export class ASL {
         jsonPath: tempHeap,
       },
     };
+  }
+
+  /**
+   * Helper that generates a {@link Pass} state to assign a single jsonPath or intrinsic to
+   * an output location.
+   *
+   * ```ts
+   * assignJsonPathOrIntrinsic("out", "States.Array(1,2,3)");
+   * ```
+   *
+   * =>
+   *
+   * ```ts
+   * {
+   *    "Type": "Pass",
+   *    "Parameters": {
+   *       "out.$": "State.Array(1,2,3)"
+   *    },
+   *    "Next": ASLGraph.DeferNext,
+   *    "ResultPath": "$.someTempLocation",
+   *    "output": { "jsonPath": "$.someTempLocation.out" }
+   * }
+   * ```
+   *
+   * @param jsonPathOrIntrinsic - json path (ex: $.var) or instrinsic function (ex: States.Array) to place into the output.
+   */
+  public assignJsonPathOrIntrinsic(
+    jsonPathOrIntrinsic: string,
+    propertyName: string = "out",
+    next: string = ASLGraph.DeferNext,
+    node?: FunctionlessNode
+  ): ASLGraph.NodeState & Pass & { output: ASLGraph.JsonPath } {
+    const tempHeap = this.newHeapVariable();
+    return ASLGraph.assignJsonPathOrIntrinsic(
+      jsonPathOrIntrinsic,
+      tempHeap,
+      propertyName,
+      next,
+      node
+    );
   }
 
   /**
@@ -3071,17 +3073,14 @@ export class ASL {
               Next: "tail",
             },
             // append the current string to the separator and the head of the array
-            append: {
-              Type: "Pass",
-              Parameters: {
-                "string.$": ASLGraph.isJsonPath(separator)
-                  ? `States.Format('{}{}{}', ${resultVariable}.string, ${separator.jsonPath}, ${arrayPath}[0])`
-                  : `States.Format('{}${separator.value}{}', ${resultVariable}.string, ${arrayPath}[0])`,
-              },
-              ResultPath: resultVariable,
-              // update the temp array
-              Next: "tail",
-            },
+            append: ASLGraph.assignJsonPathOrIntrinsic(
+              ASLGraph.isJsonPath(separator)
+                ? `States.Format('{}{}{}', ${resultVariable}.string, ${separator.jsonPath}, ${arrayPath}[0])`
+                : `States.Format('{}${separator.value}{}', ${resultVariable}.string, ${arrayPath}[0])`,
+              resultVariable,
+              "string",
+              "tail"
+            ),
             // update the temp array and then check to see if there is more to do
             tail: {
               Type: "Pass",
@@ -3336,16 +3335,12 @@ export class ASL {
         return {
           startState: "format",
           states: {
-            format: {
-              Type: "Pass",
-              // filterResult = { result: JSON.parse(filterResult.arrStr + "]") }
-              Parameters: {
-                // cannot use intrinsic functions in InputPath or Result
-                "result.$": `States.StringToJson(States.Format('{}]', ${workingJsonPath}.arrStr))`,
-              },
-              ResultPath: workingJsonPath,
-              Next: "set",
-            },
+            format: ASLGraph.assignJsonPathOrIntrinsic(
+              `States.StringToJson(States.Format('{}]', ${workingJsonPath}.arrStr))`,
+              workingJsonPath,
+              "result",
+              "set"
+            ),
             // filterResult = filterResult.result
             set: {
               Type: "Pass",
@@ -3412,16 +3407,12 @@ export class ASL {
           return {
             startState: "format",
             states: {
-              format: {
-                Type: "Pass",
-                // filterResult = { result: JSON.parse(filterResult.arrStr + "]") }
-                Parameters: {
-                  // cannot use intrinsic functions in InputPath or Result
-                  "result.$": `States.StringToJson(States.Format('{}]', ${workingSpaceJsonPath}.arrStr))`,
-                },
-                ResultPath: workingSpaceJsonPath,
-                Next: "set",
-              },
+              format: ASLGraph.assignJsonPathOrIntrinsic(
+                `States.StringToJson(States.Format('{}]', ${workingSpaceJsonPath}.arrStr))`,
+                workingSpaceJsonPath,
+                "result",
+                "set"
+              ),
               // filterResult = filterResult.result
               set: {
                 Type: "Pass",

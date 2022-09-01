@@ -11,6 +11,7 @@ import {
   $SFN,
   Table,
   FunctionProps,
+  HashAlgorithm,
 } from "../src";
 import { makeIntegration } from "../src/integration";
 import { DEPLOY_AWS, localstackTestSuite } from "./localstack";
@@ -388,25 +389,29 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     [1, 2]
   );
 
-  var shasum = crypto.createHash("sha1");
+  const shasum = crypto.createHash("sha1");
   shasum.update("hide me");
+  const sha256sum = crypto.createHash("sha256");
+  sha256sum.update("hashMe");
 
   test(
     "intrinsics",
     (parent) => {
-      return new StepFunction(parent, "sfn", async () => {
-        const odd = $SFN
-          .range(1, 11, 2)
-          .map((n) => `n${n}`)
-          .join("");
-
+      return new StepFunction(parent, "sfn", async (input) => {
         return {
           partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4),
+          partitionRef: $SFN.partition(input.arr, input.part),
           range: $SFN.range(4, 30, 5),
+          rangeRef: $SFN
+            .range(input.range.start, input.range.end, input.range.step)
+            .map((n) => `n${n}`)
+            .join(""),
           unique: $SFN.unique(["a", 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, "a", "b"]),
+          uniqueRef: $SFN.unique(input.arr),
           base64: $SFN.base64Decode($SFN.base64Encode("test")),
+          base64Ref: $SFN.base64Decode($SFN.base64Encode(input.baseTest)),
           hash: $SFN.hash("hide me", "SHA-1"),
-          odd,
+          hashRef: $SFN.hash(input.hashTest, input.hashAlgo),
         };
       });
     },
@@ -415,11 +420,23 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         [1, 2, 3, 4],
         [5, 6],
       ],
+      partitionRef: [[1, 2], [3, 1], [2, 3], [4]],
       range: [4, 9, 14, 19, 24, 29],
+      rangeRef: "n1n3n5n7n9n11",
       unique: ["a", 1, 2, "b", 3, 4, 5],
+      uniqueRef: [1, 2, 3, 4],
       base64: "test",
+      base64Ref: "encodeMe",
       hash: shasum.digest("hex"),
-      odd: "n1n3n5n7n9n11",
+      hashRef: sha256sum.digest("hex"),
+    },
+    {
+      range: { start: 1, end: 11, step: 2 },
+      arr: [1, 2, 3, 1, 2, 3, 4],
+      part: 2,
+      baseTest: "encodeMe",
+      hashTest: "hashMe",
+      hashAlgo: "SHA-256" as HashAlgorithm,
     }
   );
 

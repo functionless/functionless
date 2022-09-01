@@ -111,7 +111,15 @@ export namespace ASLGraph {
    *
    * If this is an Object, the object may contain nested JsonPaths as denoted by `containsJsonPath`.
    */
-  export interface LiteralValue {
+  export interface LiteralValue<
+    Value extends
+      | string
+      | number
+      | null
+      | boolean
+      | Record<string, any>
+      | any[] = string | number | null | boolean | Record<string, any> | any[]
+  > {
     /**
      * Whether there is json path in the constant.
      *
@@ -119,7 +127,7 @@ export namespace ASLGraph {
      * when false use Result in a Pass State instead of Parameters
      */
     containsJsonPath: boolean;
-    value: string | number | null | boolean | Record<string, any> | any[];
+    value: Value;
   }
 
   /**
@@ -140,6 +148,18 @@ export namespace ASLGraph {
 
   export function isLiteralValue(state: any): state is ASLGraph.LiteralValue {
     return "value" in state;
+  }
+
+  export function isLiteralNumber(
+    state: any
+  ): state is ASLGraph.LiteralValue<number> {
+    return isLiteralValue(state) && typeof state.value === "number";
+  }
+
+  export function isLiteralString(
+    state: any
+  ): state is ASLGraph.LiteralValue<string> {
+    return isLiteralValue(state) && typeof state.value === "string";
   }
 
   export function isJsonPath(state: any): state is ASLGraph.JsonPath {
@@ -870,6 +890,51 @@ export namespace ASLGraph {
         : {
             Parameters: value.value,
           }),
+    };
+  }
+
+  /**
+   * Helper that generates a {@link Pass} state to assign a single jsonPath or intrinsic to
+   * an output location.
+   *
+   * ```ts
+   * assignJsonPathOrIntrinsic("out", "$.var", "States.Array(1,2,3)");
+   * ```
+   *
+   * =>
+   *
+   * ```ts
+   * {
+   *    "Type": "Pass",
+   *    "Parameters": {
+   *       "out.$": "State.Array(1,2,3)"
+   *    },
+   *    "Next": ASLGraph.DeferNext,
+   *    "ResultPath": "$.var",
+   *    "output": { "jsonPath": "$.var.out" }
+   * }
+   * ```
+   *
+   * @param jsonPathOrIntrinsic - json path (ex: $.var) or instrinsic function (ex: States.Array) to place into the output.
+   */
+  export function assignJsonPathOrIntrinsic(
+    jsonPathOrIntrinsic: string,
+    resultPath: string,
+    propertyName: string = "out",
+    next: string = ASLGraph.DeferNext,
+    node?: FunctionlessNode
+  ): ASLGraph.NodeState & Pass & { output: ASLGraph.JsonPath } {
+    return {
+      node,
+      Type: "Pass",
+      Parameters: {
+        [`${propertyName}.$`]: jsonPathOrIntrinsic,
+      },
+      ResultPath: resultPath,
+      output: {
+        jsonPath: `${resultPath}.${propertyName}`,
+      },
+      Next: next,
     };
   }
 
