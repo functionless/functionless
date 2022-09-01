@@ -539,6 +539,46 @@ export namespace $SFN {
       return { jsonPath: "$" };
     },
   });
+
+  export type HashAlgorithm =
+    | "MD5"
+    | "SHA-1"
+    | "SHA-256"
+    | "SHA-384"
+    | "SHA-512";
+
+  /**
+   * Use the `hash` intrinsic function to calculate the hash value of a given input.
+   * You can use this function to pass data to other AWS services without using a Lambda function.
+   *
+   * @param data - data to hash.
+   * @param algorithm - algorithm to use.
+   */
+  export const hash = makeStepFunctionIntegration<
+    "partition",
+    (data: any, algorithm: HashAlgorithm) => string
+  >("partition", {
+    asl(call, context) {
+      return { jsonPath: "$" };
+    },
+  });
+
+  /**
+   * Use the States.MathRandom intrinsic function to return a random number between the specified start and end number.
+   * For example, you can use this function to distribute a specific task between two or more resources.
+   *
+   * @param start - starting number, must be an integer.
+   * @param end - ending number, must be an integer.
+   * @param seed
+   */
+  export const random = makeStepFunctionIntegration<
+    "partition",
+    (start: number, end: number, seed?: number) => number
+  >("partition", {
+    asl(call, context) {
+      return { jsonPath: "$" };
+    },
+  });
 }
 
 /**
