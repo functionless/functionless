@@ -4,8 +4,6 @@ import type {
   EventBridge as AWSEventBridge,
   Lambda as AWSLambda,
 } from "aws-sdk";
-// eslint-disable-next-line import/no-extraneous-dependencies
-import * as AWS from "aws-sdk";
 import { JsonFormat } from "typesafe-dynamodb";
 import { TypeSafeDynamoDBv2 } from "typesafe-dynamodb/lib/client-v2";
 import {
@@ -485,8 +483,8 @@ export namespace $AWS {
     export const putEvents = makeIntegration<
       "$AWS.EventBridge.putEvent",
       (
-        request: AWS.EventBridge.Types.PutEventsRequest
-      ) => Promise<AWS.EventBridge.Types.PutEventsResponse>
+        request: AWSEventBridge.Types.PutEventsRequest
+      ) => Promise<AWSEventBridge.Types.PutEventsResponse>
     >({
       kind: "$AWS.EventBridge.putEvent",
       native: {

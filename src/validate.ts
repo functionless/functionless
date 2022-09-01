@@ -1,3 +1,4 @@
+import ts from "typescript";
 import {
   EventBusMapInterface,
   EventBusWhenInterface,
@@ -5,7 +6,8 @@ import {
   findParent,
   FunctionInterface,
   FunctionlessChecker,
-  isArithmeticToken,
+  isBinaryArithmeticToken,
+  isUnaryArithmeticToken,
   NewAppsyncFieldInterface,
   NewAppsyncResolverInterface,
   NewStepFunctionInterface,
@@ -150,10 +152,12 @@ export function validate(
         }
       } else if (
         ((ts.isBinaryExpression(node) &&
-          isArithmeticToken(node.operatorToken.kind)) ||
+          isBinaryArithmeticToken(node.operatorToken.kind)) ||
           ((ts.isPrefixUnaryExpression(node) ||
             ts.isPostfixUnaryExpression(node)) &&
-            isArithmeticToken(node.operator))) &&
+            (isUnaryArithmeticToken(node.operator) ||
+              // we can support unary `+` because it does not change the value, but unary `-` does.
+              node.operator === ts.SyntaxKind.MinusToken))) &&
         !checker.isConstant(node)
       ) {
         return [

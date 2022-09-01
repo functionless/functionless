@@ -1668,13 +1668,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           ["d", "e", "f"].join(input.sep),
           [].join(""),
           input.arr.join(),
+          ["a", { a: "a" }, ["b"], input.obj, input.arr, null].join("="),
         ];
 
         return resultArr.join("#");
       });
     },
-    "a/b/c#1-2-3#1|2|3#d|e|f##1,2,3",
-    { arr: [1, 2, 3], sep: "|" }
+    // Caveat: Unlike ECMA, we run JSON.stringify on object and arrays
+    'a/b/c#1-2-3#1|2|3#d|e|f##1,2,3#a={"a":"a"}=["b"]={"b":"b"}=[1,2,3]=null',
+    { arr: [1, 2, 3], sep: "|", obj: { b: "b" } }
   );
 
   test(
@@ -1972,7 +1974,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "boolean",
+    "Boolean coerce",
     (parent) =>
       new StepFunction(parent, "sfn", (input) => {
         return {
@@ -2001,6 +2003,119 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       falsyVar: false,
     },
     { value: "hello", nv: "" }
+  );
+
+  test(
+    "Number coerce",
+    (parent) =>
+      new StepFunction(parent, "sfn", (input) => {
+        return {
+          oneString: Number("1"),
+          oneBoolean: Number(true),
+          oneNumber: Number(1),
+          oneVar: Number(input.one),
+          zeroString: Number(""),
+          zeroBoolean: Number(false),
+          zeroNumber: Number(0),
+          zeroVar: Number(input.zero),
+          zeroNull: Number(null),
+          nanObject: Number({}),
+          nanString: Number("{}"),
+          nanTrueString: Number("true"),
+          nanVar: Number(input.nan),
+          oneStringUnaryPlus: +"1",
+          oneBooleanUnaryPlus: +true,
+          oneNumberUnaryPlus: +1,
+          oneVarUnaryPlus: +input.one,
+          zeroStringUnaryPlus: +"",
+          zeroBooleanUnaryPlus: +false,
+          zeroNumberUnaryPlus: +0,
+          zeroVarUnaryPlus: +input.zero,
+          zeroNullUnaryPlus: +null,
+          nanObjectUnaryPlus: +{},
+          nanStringUnaryPlus: +"{}",
+          nanVarUnaryPlus: +input.nan,
+          empty: Number(),
+        };
+      }),
+    {
+      oneString: 1,
+      oneBoolean: 1,
+      oneNumber: 1,
+      oneVar: 1,
+      zeroString: 0,
+      zeroBoolean: 0,
+      zeroNumber: 0,
+      zeroVar: 0,
+      zeroNull: 0,
+      /**
+       * Functionless ASL uses null for NaN.
+       */
+      nanObject: null as unknown as number,
+      nanString: null as unknown as number,
+      nanVar: null as unknown as number,
+      nanTrueString: null as unknown as number,
+      oneStringUnaryPlus: 1,
+      oneBooleanUnaryPlus: 1,
+      oneNumberUnaryPlus: 1,
+      oneVarUnaryPlus: 1,
+      zeroStringUnaryPlus: 0,
+      zeroBooleanUnaryPlus: 0,
+      zeroNumberUnaryPlus: 0,
+      zeroVarUnaryPlus: 0,
+      zeroNullUnaryPlus: 0,
+      nanObjectUnaryPlus: null as unknown as number,
+      nanStringUnaryPlus: null as unknown as number,
+      nanVarUnaryPlus: null as unknown as number,
+      empty: 0,
+    },
+    { one: "1", zero: "0", nan: "{}" }
+  );
+
+  test(
+    "String coerce",
+    (parent) =>
+      new StepFunction(parent, "sfn", (input) => {
+        return {
+          stringString: String("1"),
+          stringBoolean: String(true),
+          stringNumber: String(1),
+          stringVar: String(input.val),
+          stringStringVar: String(input.str),
+          stringEmpty: String(""),
+          stringObject: String({ a: "a" }),
+          stringObjectWithRef: String({ a: input.val }),
+          stringNull: String(null),
+          empty: String(),
+          // stringUndefined: String(undefined), - not supported
+          stringArray: String([
+            "a",
+            ["b"],
+            [[input.val]],
+            [],
+            {},
+            { a: input.val },
+          ]),
+        };
+      }),
+    {
+      stringString: "1",
+      stringBoolean: "true",
+      stringNumber: "1",
+      stringVar: "1",
+      stringStringVar: "blah",
+      stringEmpty: "",
+      stringObject: "[object Object]",
+      stringObjectWithRef: "[object Object]",
+      stringNull: "null",
+      empty: "",
+      // stringUndefined: "undefined",
+      // Caveat: in ECMA, this test would output: a,b,1,,[object Object],[object Object]
+      // we are stringifying instead of ToString for object and arrays because SFN does not
+      // allow use to easily determine an Array from an Object and recursive to string would be expensive.
+      stringArray: '["a",["b"],[[1]],[],{},{"a":1}]',
+    },
+    { val: 1, str: "blah" }
   );
 });
 
