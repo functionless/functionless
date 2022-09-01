@@ -1822,7 +1822,10 @@ export class ASL {
         return this.filterToStateOutput(expr);
       } else if (isJoin(expr)) {
         return this.joinToStateOutput(expr);
-      } else if (isPromiseAll(expr)) {
+      }
+      // else if (isIncludes(expr)) {
+      // }
+      else if (isPromiseAll(expr)) {
         const values = expr.args[0]?.expr;
         if (values) {
           return this.eval(values);
@@ -2891,60 +2894,8 @@ export class ASL {
   private sliceToStateOutput(
     expr: CallExpr & { expr: PropAccessExpr }
   ): ASLGraph.NodeResults {
-    const startArg = expr.args[0]?.expr;
-    const endArg = expr.args[1]?.expr;
-    const value = this.eval(expr.expr.expr);
-    const valueOutput = ASLGraph.getAslStateOutput(value);
-    if (startArg === undefined && endArg === undefined) {
-      // .slice()
-      return value;
-    } else if (startArg !== undefined) {
-      const startConst = evalToConstant(startArg)?.constant;
-      if (startConst === undefined || typeof startConst !== "number") {
-        throw new Error(
-          "the 'start' argument of slice must be a literal number"
-        );
-      }
-      const endConst = endArg ? evalToConstant(endArg) : undefined;
-      if (
-        endConst?.constant !== undefined &&
-        typeof endConst.constant !== "number"
-      ) {
-        throw new Error("the 'end' argument of slice must be a literal number");
-      }
-
-      if (ASLGraph.isJsonPath(valueOutput)) {
-        if (!endConst || typeof endConst.constant === "undefined") {
-          return ASLGraph.updateAslStateOutput(value, {
-            jsonPath: `${valueOutput.jsonPath}[${startConst}:]`,
-          });
-        } else {
-          return ASLGraph.updateAslStateOutput(value, {
-            jsonPath: `${valueOutput.jsonPath}[${startConst}:${endConst.constant}]`,
-          });
-        }
-      } else if (
-        ASLGraph.isLiteralValue(valueOutput) &&
-        Array.isArray(valueOutput.value)
-      ) {
-        return ASLGraph.updateAslStateOutput(value, {
-          ...valueOutput,
-          value: valueOutput.value.slice(startConst, endConst?.constant),
-        });
-      }
-      throw new SynthError(
-        ErrorCodes.Unexpected_Error,
-        "Expected slice to be performed on a variable or array constant"
-      );
-    } else if (endArg !== undefined) {
-      throw new Error(
-        `impossible expression, slice called with end defined without startArg`
-      );
-    } else {
-      throw new Error(
-        `impossible expression, slice called with unknown arguments`
-      );
-    }
+    const [startArg, endArg] = expr.args;
+    return this.subArray(expr, expr.expr.expr, startArg?.expr, endArg?.expr);
   }
 
   /**
@@ -3355,6 +3306,175 @@ export class ASL {
               ResultPath: workingJsonPath,
               Next: ASLGraph.DeferNext,
             },
+          },
+        };
+      }
+    );
+  }
+
+  // private includesToASLGraph(
+  //   expr: CallExpr & {
+  //     expr: PropAccessExpr;
+  //   }
+  // ) {
+  //   const [valueArg, startIndex] = expr.args;
+
+  //   if (!valueArg) {
+  //     throw new SynthError(
+  //       ErrorCodes.Invalid_Input,
+  //       "Expected includes() searchElement argument to exist."
+  //     );
+  //   }
+
+  //   this.evalContext(expr, ({ evalExprToJsonPathOrLiteral }) => {
+  //     const valueOutput = evalExprToJsonPathOrLiteral(valueArg?.expr);
+  //     return this.assignJsonPathOrIntrinsic(`States.ArrayContains()`);
+  //   });
+  // }
+
+  /**
+   * Provides a method to sub-array given any combination of reference or literal.
+   * Step functions/ASL does not allow sub-arraying with dynamic keys, but allows
+   * Static slices (jsonPath) and
+   */
+  private subArray(
+    node: FunctionlessNode,
+    array: Expr,
+    start?: Expr,
+    end?: Expr
+  ): ASLGraph.NodeResults {
+    return this.evalContext(
+      node,
+      ({ evalExprToJsonPathOrLiteral, addState }) => {
+        const arrayOut = evalExprToJsonPathOrLiteral(array);
+        const startOut = start ? evalExprToJsonPathOrLiteral(start) : undefined;
+        const endOut = end ? evalExprToJsonPathOrLiteral(end) : undefined;
+
+        if (
+          ASLGraph.isLiteralValue(arrayOut) &&
+          !ASLGraph.isLiteralArray(arrayOut)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Expected subArray array to be an array literal or a reference"
+          );
+        } else if (
+          startOut &&
+          ASLGraph.isLiteralValue(startOut) &&
+          !ASLGraph.isLiteralNumber(startOut)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Expected subArray start to be an number or a reference"
+          );
+        } else if (
+          endOut &&
+          ASLGraph.isLiteralValue(endOut) &&
+          !ASLGraph.isLiteralNumber(endOut)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Expected subArray end to be an number or a reference"
+          );
+        }
+
+        // the unlikely case all of them are literals (most arrays will be jsonPaths because of States.Array)
+        if (
+          (!startOut || ASLGraph.isLiteralValue(startOut)) &&
+          (!endOut || ASLGraph.isLiteralValue(endOut))
+        ) {
+          if (ASLGraph.isLiteralArray(arrayOut)) {
+            return {
+              value: arrayOut.value.slice(startOut?.value, endOut?.value),
+              containsJsonPath: false,
+            };
+          } else {
+            return {
+              jsonPath:
+                startOut && endOut
+                  ? `${arrayOut.jsonPath}[${startOut.value}:${endOut.value}]`
+                  : startOut
+                  ? `${arrayOut.jsonPath}[${startOut.value}:]`
+                  : endOut
+                  ? `${arrayOut.jsonPath}[:${endOut.value}]`
+                  : arrayOut.jsonPath,
+            };
+          }
+        }
+
+        /**
+         * Now we need the array to be a runtime reference, normalize it.
+         */
+        const normArray = ASLGraph.isLiteralValue(arrayOut)
+          ? this.normalizeOutputToJsonPath(arrayOut)
+          : arrayOut;
+        if (ASLGraph.isStateOrSubState(normArray)) {
+          addState(normArray);
+        }
+        const normArrayOut = ASLGraph.isJsonPath(normArray)
+          ? normArray
+          : normArray.output;
+
+        const workingSpace = this.newHeapVariable();
+        return {
+          startState: "init",
+          states: {
+            init: {
+              Type: "Pass",
+              Parameters: {
+                // ArrayRange is inclusive, need to subtract one from end
+                "indices.$": `States.ArrayRange(${
+                  startOut
+                    ? ASLGraph.isJsonPath(startOut)
+                      ? startOut.jsonPath
+                      : startOut.value
+                    : 0
+                }, States.MathAdd(${
+                  endOut
+                    ? ASLGraph.isJsonPath(endOut)
+                      ? endOut.jsonPath
+                      : endOut.value
+                    : `States.ArrayLength(${normArrayOut.jsonPath})`
+                }, -1), 1)`,
+                str: "[null",
+              },
+              ResultPath: workingSpace,
+              Next: "checkRange",
+            },
+            checkRange: {
+              Type: "Choice",
+              Choices: [
+                {
+                  // any indices left?
+                  ...ASL.isPresent(`${workingSpace}.indices[0]`),
+                  Next: "assignAndTail",
+                },
+              ],
+              Default: "final",
+            },
+            assignAndTail: {
+              Type: "Pass",
+              Parameters: {
+                // tail
+                "indices.$": `${workingSpace}.indices[1:]`,
+                // append
+                "str.$": `States.Format('{},{}', ${workingSpace}.str, States.JsonToString(States.ArrayGetItem(${normArrayOut.jsonPath}, ${workingSpace}.indices[0])))`,
+              },
+              ResultPath: workingSpace,
+              Next: "checkRange",
+            },
+            final: {
+              Type: "Pass",
+              Parameters: {
+                "arr.$": `States.StringToJson(States.Format('{}]',${workingSpace}.str))`,
+              },
+              ResultPath: workingSpace,
+              Next: ASLGraph.DeferNext,
+            },
+          },
+          output: {
+            // remove the null we injected in and return
+            jsonPath: `${workingSpace}.arr[1:]`,
           },
         };
       }
@@ -4389,6 +4509,18 @@ function isFilter(expr: CallExpr): expr is CallExpr & {
     expr.expr.name.name === "filter"
   );
 }
+
+// function isIncludes(expr: CallExpr): expr is CallExpr & {
+//   expr: PropAccessExpr & {
+//     name: "includes";
+//   };
+// } {
+//   return (
+//     isPropAccessExpr(expr.expr) &&
+//     isIdentifier(expr.expr.name) &&
+//     expr.expr.name.name === "includes"
+//   );
+// }
 
 function isJsonParse(call: CallExpr): call is CallExpr & {
   expr: PropAccessExpr & {
