@@ -162,6 +162,23 @@ export namespace ASLGraph {
     return isLiteralValue(state) && typeof state.value === "string";
   }
 
+  export function isLiteralArray(
+    state: any
+  ): state is ASLGraph.LiteralValue<any[]> {
+    return isLiteralValue(state) && Array.isArray(state.value);
+  }
+
+  export function isLiteralObject(
+    state: any
+  ): state is ASLGraph.LiteralValue<Record<string, any>> {
+    return (
+      isLiteralValue(state) &&
+      typeof state.value === "object" &&
+      !Array.isArray(state.value) &&
+      state.value !== null
+    );
+  }
+
   export function isJsonPath(state: any): state is ASLGraph.JsonPath {
     return "jsonPath" in state;
   }

@@ -23649,6 +23649,14 @@ Object {
       "ResultPath": "$.heap7",
       "Type": "Pass",
     },
+    "$SFN.unique(input.arr)": Object {
+      "Next": "1__$SFN.unique(input.arr)",
+      "Parameters": Object {
+        "out.$": "States.ArrayUnique($.input.arr)",
+      },
+      "ResultPath": "$.heap33",
+      "Type": "Pass",
+    },
     "10__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
       "Next": "11__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "Parameters": Object {
@@ -23691,7 +23699,7 @@ Object {
     },
     "19__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
       "InputPath": "$.heap29.out",
-      "Next": "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ",
+      "Next": "input.arr",
       "ResultPath": "$.heap30",
       "Type": "Pass",
     },
@@ -23773,6 +23781,22 @@ Object {
       "ResultPath": "$.heap8",
       "Type": "Pass",
     },
+    "1__$SFN.unique(input.arr)": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "array__1__$SFN.unique(input.arr)",
+          "Variable": "$.heap33.out[0]",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__1__$SFN.unique(input.arr)",
+          "Variable": "$.heap33.out['length']",
+        },
+      ],
+      "Default": "stringify__1__$SFN.unique(input.arr)",
+      "Type": "Choice",
+    },
     "1__[\\"a\\", 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, \\"a\\", \\"b\\"]": Object {
       "Next": "9__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ",
       "Parameters": Object {
@@ -23792,13 +23816,18 @@ Object {
       "Parameters": Object {
         "base64.$": "$.heap22",
         "base64Ref.$": "$.heap25",
+        "emptyLength.$": "$.heap39",
         "hash.$": "$.heap28",
         "hashRef.$": "$.heap30",
+        "length": 4,
+        "lengthObj.$": "$.heap37",
+        "lengthRef.$": "$.heap32",
         "partition.$": "$.heap2",
         "partitionRef.$": "$.heap4",
         "range.$": "$.heap6",
         "rangeRef.$": "$.heap14",
         "unique.$": "$.heap17",
+        "uniqueLength.$": "$.heap35",
         "uniqueRef.$": "$.heap19",
       },
       "ResultPath": "$",
@@ -23816,6 +23845,30 @@ Object {
         "out.$": "States.ArrayPartition($.heap0, 4)",
       },
       "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "21__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.heap31.val",
+      "Next": "$SFN.unique(input.arr)",
+      "ResultPath": "$.heap32",
+      "Type": "Pass",
+    },
+    "23__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.heap34.val",
+      "Next": "input.lengthObj",
+      "ResultPath": "$.heap35",
+      "Type": "Pass",
+    },
+    "25__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.heap36.val",
+      "Next": "input.emptyArr",
+      "ResultPath": "$.heap37",
+      "Type": "Pass",
+    },
+    "27__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.heap38.val",
+      "Next": "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ",
+      "ResultPath": "$.heap39",
       "Type": "Pass",
     },
     "2__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ": Object {
@@ -23897,6 +23950,114 @@ Object {
       "ResultPath": "$.heap12",
       "Type": "Pass",
     },
+    "array__1__$SFN.unique(input.arr)": Object {
+      "Next": "23__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": Object {
+        "val.$": "States.ArrayLength($.heap33.out)",
+      },
+      "ResultPath": "$.heap34",
+      "Type": "Pass",
+    },
+    "array__input.arr": Object {
+      "Next": "21__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": Object {
+        "val.$": "States.ArrayLength($.input.arr)",
+      },
+      "ResultPath": "$.heap31",
+      "Type": "Pass",
+    },
+    "array__input.emptyArr": Object {
+      "Next": "27__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": Object {
+        "val.$": "States.ArrayLength($.input.emptyArr)",
+      },
+      "ResultPath": "$.heap38",
+      "Type": "Pass",
+    },
+    "array__input.lengthObj": Object {
+      "Next": "25__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": Object {
+        "val.$": "States.ArrayLength($.input.lengthObj)",
+      },
+      "ResultPath": "$.heap36",
+      "Type": "Pass",
+    },
+    "checkString__1__$SFN.unique(input.arr)": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.heap34.val.str",
+            },
+            Object {
+              "StringEquals": "[]",
+              "Variable": "$.heap34.val.str",
+            },
+          ],
+          "Next": "array__1__$SFN.unique(input.arr)",
+        },
+      ],
+      "Default": "object__1__$SFN.unique(input.arr)",
+      "Type": "Choice",
+    },
+    "checkString__input.arr": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.heap31.val.str",
+            },
+            Object {
+              "StringEquals": "[]",
+              "Variable": "$.heap31.val.str",
+            },
+          ],
+          "Next": "array__input.arr",
+        },
+      ],
+      "Default": "object__input.arr",
+      "Type": "Choice",
+    },
+    "checkString__input.emptyArr": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.heap38.val.str",
+            },
+            Object {
+              "StringEquals": "[]",
+              "Variable": "$.heap38.val.str",
+            },
+          ],
+          "Next": "array__input.emptyArr",
+        },
+      ],
+      "Default": "object__input.emptyArr",
+      "Type": "Choice",
+    },
+    "checkString__input.lengthObj": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.heap36.val.str",
+            },
+            Object {
+              "StringEquals": "[]",
+              "Variable": "$.heap36.val.str",
+            },
+          ],
+          "Next": "array__input.lengthObj",
+        },
+      ],
+      "Default": "object__input.lengthObj",
+      "Type": "Choice",
+    },
     "check__1__$SFN.range(input.range.start, input.range.end, input.range.step).": Object {
       "Choices": Array [
         Object {
@@ -23970,6 +24131,54 @@ Object {
       "ResultPath": "$.heap12.string",
       "Type": "Pass",
     },
+    "input.arr": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "array__input.arr",
+          "Variable": "$.input.arr[0]",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__input.arr",
+          "Variable": "$.input.arr['length']",
+        },
+      ],
+      "Default": "stringify__input.arr",
+      "Type": "Choice",
+    },
+    "input.emptyArr": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "array__input.emptyArr",
+          "Variable": "$.input.emptyArr[0]",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__input.emptyArr",
+          "Variable": "$.input.emptyArr['length']",
+        },
+      ],
+      "Default": "stringify__input.emptyArr",
+      "Type": "Choice",
+    },
+    "input.lengthObj": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "array__input.lengthObj",
+          "Variable": "$.input.lengthObj[0]",
+        },
+        Object {
+          "IsPresent": true,
+          "Next": "object__input.lengthObj",
+          "Variable": "$.input.lengthObj['length']",
+        },
+      ],
+      "Default": "stringify__input.lengthObj",
+      "Type": "Choice",
+    },
     "n": Object {
       "InputPath": "$.heap8.arr[0]",
       "Next": "return nn",
@@ -23982,6 +24191,30 @@ Object {
         "string.$": "States.Format('n{}',$.heap9)",
       },
       "ResultPath": "$.heap10",
+      "Type": "Pass",
+    },
+    "object__1__$SFN.unique(input.arr)": Object {
+      "InputPath": "$.heap33.out.length",
+      "Next": "23__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap34.val",
+      "Type": "Pass",
+    },
+    "object__input.arr": Object {
+      "InputPath": "$.input.arr.length",
+      "Next": "21__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap31.val",
+      "Type": "Pass",
+    },
+    "object__input.emptyArr": Object {
+      "InputPath": "$.input.emptyArr.length",
+      "Next": "27__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap38.val",
+      "Type": "Pass",
+    },
+    "object__input.lengthObj": Object {
+      "InputPath": "$.input.lengthObj.length",
+      "Next": "25__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap36.val",
       "Type": "Pass",
     },
     "return nn": Object {
@@ -24013,6 +24246,38 @@ Object {
       "InputPath": "$.heap8.result[1:]",
       "Next": "1__$SFN.range(input.range.start, input.range.end, input.range.step).map(fun",
       "ResultPath": "$.heap8",
+      "Type": "Pass",
+    },
+    "stringify__1__$SFN.unique(input.arr)": Object {
+      "Next": "checkString__1__$SFN.unique(input.arr)",
+      "Parameters": Object {
+        "str.$": "States.JsonToString($.heap33.out)",
+      },
+      "ResultPath": "$.heap34.val",
+      "Type": "Pass",
+    },
+    "stringify__input.arr": Object {
+      "Next": "checkString__input.arr",
+      "Parameters": Object {
+        "str.$": "States.JsonToString($.input.arr)",
+      },
+      "ResultPath": "$.heap31.val",
+      "Type": "Pass",
+    },
+    "stringify__input.emptyArr": Object {
+      "Next": "checkString__input.emptyArr",
+      "Parameters": Object {
+        "str.$": "States.JsonToString($.input.emptyArr)",
+      },
+      "ResultPath": "$.heap38.val",
+      "Type": "Pass",
+    },
+    "stringify__input.lengthObj": Object {
+      "Next": "checkString__input.lengthObj",
+      "Parameters": Object {
+        "str.$": "States.JsonToString($.input.lengthObj)",
+      },
+      "ResultPath": "$.heap36.val",
       "Type": "Pass",
     },
     "tail__1__$SFN.range(input.range.start, input.range.end, input.range.step).m 1": Object {

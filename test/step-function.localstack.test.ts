@@ -412,6 +412,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           base64Ref: $SFN.base64Decode($SFN.base64Encode(input.baseTest)),
           hash: $SFN.hash("hide me", "SHA-1"),
           hashRef: $SFN.hash(input.hashTest, input.hashAlgo),
+          includes: [1, 2, 3, 4].includes(2),
+          includesRes: input.arr.includes(input.part),
+          // get: [1, 2, 3, 4][0]!,
+          // getRef: input.arr[input.part]!,
+          length: [1, 2, 3, 4].length,
+          lengthRef: input.arr.length,
+          uniqueLength: $SFN.unique(input.arr).length,
+          lengthObj: input.lengthObj.length,
+          emptyLength: input.emptyArr.length,
         };
       });
     },
@@ -429,6 +438,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       base64Ref: "encodeMe",
       hash: shasum.digest("hex"),
       hashRef: sha256sum.digest("hex"),
+      includes: true,
+      includesRes: true,
+      // get: 1,
+      // getRef: 3,
+      length: 4,
+      lengthRef: 7,
+      uniqueLength: 4,
+      lengthObj: "a",
+      emptyLength: 0,
     },
     {
       range: { start: 1, end: 11, step: 2 },
@@ -437,6 +455,8 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       baseTest: "encodeMe",
       hashTest: "hashMe",
       hashAlgo: "SHA-256" as HashAlgorithm,
+      lengthObj: { length: "a" },
+      emptyArr: [],
     }
   );
 

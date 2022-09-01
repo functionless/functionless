@@ -1908,6 +1908,12 @@ export class ASL {
       } else if (isPropAccessExpr(expr)) {
         if (isIdentifier(expr.name)) {
           return this.evalExpr(expr.expr, (output) => {
+            if (expr.name.name === "length") {
+              const lengthAccess = this.accessLengthProperty(output);
+              if (lengthAccess) {
+                return lengthAccess;
+              }
+            }
             return ASLGraph.accessConstant(output, expr.name.name, false);
           });
         } else {
@@ -3751,19 +3757,133 @@ export class ASL {
       }
     }
 
-    return this.evalExpr(access.element, (elementOutput) => {
-      // use explicit `eval` because we update the resulting state object output before returning
-      const expr = this.eval(access.expr);
-      const exprOutput = ASLGraph.getAslStateOutput(expr);
+    return this.evalContext(access.element, ({ evalExpr }) => {
+      const elementOutput = evalExpr(access.element);
+      const exprOutput = evalExpr(access.expr);
 
-      const updatedOutput = ASLGraph.accessConstant(
-        exprOutput,
-        this.getElementAccessConstant(elementOutput),
-        true
-      );
+      const accessConstant = this.getElementAccessConstant(elementOutput);
 
-      return ASLGraph.updateAslStateOutput(expr, updatedOutput);
+      if (accessConstant === "length") {
+        const lengthAccess = this.accessLengthProperty(exprOutput);
+        if (lengthAccess) {
+          return lengthAccess;
+        }
+      }
+
+      return ASLGraph.accessConstant(exprOutput, accessConstant, true);
     });
+  }
+
+  /**
+   * Attempts to access the length property on an array or a reference that maybe an array,
+   * returns undefined when it cannot do so.
+   */
+  private accessLengthProperty(output: ASLGraph.Output) {
+    if (ASLGraph.isLiteralArray(output)) {
+      return { value: output.value.length, containsJsonPath: false };
+    } else if (ASLGraph.isJsonPath(output)) {
+      const temp = this.newHeapVariable();
+      return this.disambiguateArrayObject(
+        output,
+        this.arrayLength(output, temp, "val"),
+        this.assignValue(
+          undefined,
+          { jsonPath: `${output.jsonPath}.length` },
+          `${temp}.val`
+        ),
+        `${temp}.val`,
+        true,
+        "length"
+      );
+    }
+    return undefined;
+  }
+
+  private arrayLength(
+    arrayJsonPath: ASLGraph.JsonPath,
+    resultPath: string,
+    propertyName: string
+  ) {
+    return ASLGraph.assignJsonPathOrIntrinsic(
+      `States.ArrayLength(${arrayJsonPath.jsonPath})`,
+      resultPath,
+      propertyName
+    );
+  }
+
+  /**
+   * Provides states that attempt to disambiguate an array and object at runtime.
+   *
+   * is array of length 1 => arr
+   * has prop hint => obj
+   * stringify
+   *    is [] => arr
+   * => obj
+   *
+   * @param propertyHint - a property that is expected to exist if the value is an object.
+   * @param arrayOrObjectReference - a json path that may be an array or object
+   * @param whenArray - the state(s) to execute when we think the value is an array
+   * @param whenObject - the state(s) to execute when we think the value is an object
+   * @param resultPath - the json path both `whenObject` and `whenArray` output to.
+   * @param canAssignResultPath - when true, the machine may assign a temporary value to the result path
+   *                              Do not set to `true` this if the result path may need to be used by the array/object states
+   *                              or the result path is not assigned over later.
+   */
+  private disambiguateArrayObject(
+    arrayOrObjectReference: ASLGraph.JsonPath,
+    whenArray: ASLGraph.SubState | ASLGraph.NodeState,
+    whenObject: ASLGraph.SubState | ASLGraph.NodeState,
+    resultPath: string,
+    canAssignResultPath: boolean,
+    propertyHint?: string
+  ): ASLGraph.OutputSubState {
+    const strTemp = canAssignResultPath ? resultPath : this.newHeapVariable();
+    return {
+      startState: "check",
+      states: {
+        check: {
+          Type: "Choice",
+          Choices: [
+            {
+              ...ASL.and(
+                // definitely an array of length at least 1
+                ASL.isPresent(`${arrayOrObjectReference.jsonPath}[0]`)
+              ),
+              Next: "array",
+            },
+            ...(propertyHint
+              ? [
+                  {
+                    ...ASL.isPresent(
+                      `${arrayOrObjectReference.jsonPath}['${propertyHint}']`
+                    ),
+                    Next: "object",
+                  },
+                ]
+              : []),
+          ],
+          Default: "stringify",
+        },
+        array: whenArray,
+        object: whenObject,
+        stringify: ASLGraph.assignJsonPathOrIntrinsic(
+          `States.JsonToString(${arrayOrObjectReference.jsonPath})`,
+          strTemp,
+          "str",
+          "checkString"
+        ),
+        checkString: {
+          Type: "Choice",
+          Choices: [
+            { ...ASL.stringEquals(`${strTemp}.str`, "[]"), Next: "array" },
+          ],
+          Default: "object",
+        },
+      },
+      output: {
+        jsonPath: resultPath,
+      },
+    };
   }
 
   /**
