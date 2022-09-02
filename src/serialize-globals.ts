@@ -1,5 +1,6 @@
 // sourced from the lib.*.d.ts files
 import module from "module";
+import ts from "typescript";
 import globals from "./serialize-globals.json";
 import { callExpr, idExpr, propAccessExpr, stringExpr } from "./serialize-util";
 

@@ -85,9 +85,9 @@ const project = new CustomTypescriptProject({
     "fs-extra",
     "minimatch",
     "@functionless/nodejs-closure-serializer",
-    "@functionless/ast-reflection@^0.1.2",
+    "@functionless/ast-reflection@^0.2.2",
     "@swc/cli",
-    "@swc/core@1.2.218",
+    "@swc/core@1.2.245",
     "@swc/register",
   ],
   devDeps: [
@@ -101,6 +101,7 @@ const project = new CustomTypescriptProject({
     "graphql-request",
     "ts-node",
     "ts-patch",
+    "flatted",
     /**
      * For CDK Local Stack tests
      */
@@ -146,16 +147,17 @@ const project = new CustomTypescriptProject({
   ],
   eslintOptions: {
     dirs: ["src", "test"],
-    ignorePatterns: ["jest.config.ts"],
+    ignorePatterns: ["jest.config.ts", "scripts/**"],
     lintProjenRc: false,
   },
   tsconfig: {
     compilerOptions: {
       // @ts-ignore
       declarationMap: true,
-      noUncheckedIndexedAccess: true,
       lib: ["dom", "ES2022"],
+      noUncheckedIndexedAccess: true,
       resolveJsonModule: true,
+      skipLibCheck: true,
     },
   },
   tsconfigDev: {
@@ -164,6 +166,7 @@ const project = new CustomTypescriptProject({
         "@fnls": ["lib/index"],
       },
       baseUrl: ".",
+      skipLibCheck: true,
     },
   },
   gitignore: [".DS_Store", ".dccache", ".swc"],
@@ -225,6 +228,8 @@ packageJson.addOverride("lint-staged", {
 project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
 );
+project.compileTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
+project.compileTask.prependExec("ts-node ./scripts/sdk-gen.ts");
 
 project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth --quiet"
@@ -232,6 +237,7 @@ project.testTask.prependExec(
 project.testTask.prependExec("./scripts/localstack");
 project.testTask.exec("localstack stop");
 
+project.testTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
 project.testTask.env("DEFAULT_REGION", "ap-northeast-1");
 project.testTask.env("AWS_ACCOUNT_ID", "000000000000");
 project.testTask.env("AWS_ACCESS_KEY_ID", "test");

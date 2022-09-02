@@ -20,6 +20,7 @@ import {
   UpdateItemOutput,
 } from "typesafe-dynamodb/lib/update-item";
 import { ASLGraph } from "./asl";
+import { SDK as _SDK } from "./aws-sdk";
 import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, Expr } from "./expression";
 import { Function, isFunction, NativeIntegration } from "./function";
@@ -36,6 +37,7 @@ import {
   IntegrationCall,
   IntegrationInput,
   makeIntegration,
+  tryFindIntegration,
 } from "./integration";
 import { AnyTable, isTable, ITable } from "./table";
 import type { AnyAsyncFunction } from "./util";
@@ -479,8 +481,8 @@ export namespace $AWS {
     export const putEvents = makeIntegration<
       "$AWS.EventBridge.putEvent",
       (
-        request: AWS.EventBridge.Types.PutEventsRequest
-      ) => Promise<AWS.EventBridge.Types.PutEventsResponse>
+        request: AWSEventBridge.Types.PutEventsRequest
+      ) => Promise<AWSEventBridge.Types.PutEventsResponse>
     >({
       kind: "$AWS.EventBridge.putEvent",
       native: {
@@ -504,6 +506,8 @@ export namespace $AWS {
       },
     });
   }
+
+  export const SDK = _SDK;
 }
 
 export type OperationName =
@@ -682,16 +686,8 @@ function getTableArgument(op: string, args: Argument[] | Expr[]) {
     );
   }
 
-  const tableRef = tableProp.expr;
+  const table = tryFindIntegration(tableProp.expr);
 
-  if (!isReferenceExpr(tableRef)) {
-    throw new SynthError(
-      ErrorCodes.Expected_an_object_literal,
-      `First argument into ${op} should be an input with a property 'Table' that is a Table.`
-    );
-  }
-
-  const table = tableRef.ref();
   if (!isTable(table)) {
     throw Error(`'Table' argument should be a Table object.`);
   }

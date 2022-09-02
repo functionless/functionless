@@ -33,19 +33,23 @@ export const PrewarmClients: Record<
     key: "Lambda",
     init: (key, props) =>
       // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").Lambda)(props?.clientConfigRetriever?.(key)),
+      new (require("aws-sdk/clients/lambda"))(
+        props?.clientConfigRetriever?.(key)
+      ),
   },
   EventBridge: {
     key: "EventBridge",
     init: (key, props) =>
       // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").EventBridge)(props?.clientConfigRetriever?.(key)),
+      new (require("aws-sdk/clients/eventbridge"))(
+        props?.clientConfigRetriever?.(key)
+      ),
   },
   StepFunctions: {
     key: "StepFunctions",
     init: (key, props) =>
       // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").StepFunctions)(
+      new (require("aws-sdk/clients/stepfunctions"))(
         props?.clientConfigRetriever?.(key)
       ),
   },
@@ -53,13 +57,15 @@ export const PrewarmClients: Record<
     key: "DynamoDB",
     init: (key, props) =>
       // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").DynamoDB)(props?.clientConfigRetriever?.(key)),
+      new (require("aws-sdk/clients/dynamodb"))(
+        props?.clientConfigRetriever?.(key)
+      ),
   },
   SecretsManager: {
     key: "SecretsManager",
     init: (key, props) =>
       // eslint-disable-next-line @typescript-eslint/no-require-imports, import/no-extraneous-dependencies
-      new (require("aws-sdk").SecretsManager)(
+      new (require("aws-sdk/clients/secretsmanager"))(
         props?.clientConfigRetriever?.(key)
       ),
   },

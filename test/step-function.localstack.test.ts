@@ -1,4 +1,4 @@
-import { Duration } from "aws-cdk-lib";
+import { Duration, aws_dynamodb } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
@@ -122,6 +122,21 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       });
     },
     "hello world"
+  );
+
+  test(
+    "step function props are passed through to the resource",
+    (parent) => {
+      return new StepFunction(
+        parent,
+        "sfn2",
+        { stateMachineName: "magicMachine" },
+        async (_, context) => {
+          return context.StateMachine.Name;
+        }
+      );
+    },
+    "magicMachine"
   );
 
   test(
@@ -368,6 +383,41 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       });
     },
     [1, 2]
+  );
+
+  test(
+    "$AWS.SDK.DynamoDB.describeTable",
+    (parent) => {
+      const table = new Table<{ id: string }, "id">(parent, "myTable", {
+        partitionKey: {
+          name: "id",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+
+      return {
+        sfn: new StepFunction<{}, string | undefined>(
+          parent,
+          "fn",
+          async () => {
+            const tableInfo = await $AWS.SDK.DynamoDB.describeTable(
+              {
+                TableName: table.tableName,
+              },
+              {
+                iam: {
+                  resources: [table.tableArn],
+                },
+              }
+            );
+
+            return tableInfo.Table?.TableArn;
+          }
+        ),
+        outputs: { tableArn: table.tableArn },
+      };
+    },
+    ({ tableArn }) => tableArn
   );
 
   test(
@@ -691,6 +741,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     "binary and unary comparison",
     (parent) => {
       return new StepFunction(parent, "sfn2", async (input) => {
+        const obj = { nv: null } as { und?: string; nv: null; v: string };
         return {
           constantStringEquals: "a" === "a", // true
           constantToVarStringEquals: input.v === "val", // true
@@ -767,6 +818,78 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           varNotPresentFalse: !input.x,
           // varInVar: input.v in input.obj, // false - unsupported
           // varInConstant: input.v in { a: "val" }, // false - unsupported
+          // undefined and null literals
+          varEqualEqualsUndefined: input.v === undefined, // false
+          varEqualsUndefined: input.v == undefined, // false
+          varNotEqualEqualsUndefined: input.v !== undefined, // true
+          varNotEqualsUndefined: input.v != undefined, // true
+          nullEqualEqualsUndefined: input.nv === undefined, // false
+          nullEqualsUndefined: input.nv == undefined, // false - incorrect - https://github.com/functionless/functionless/issues/445
+          nullNotEqualEqualsUndefined: input.nv === undefined, // false
+          nullNotEqualsUndefined: input.nv == undefined, // false - incorrect -https://github.com/functionless/functionless/issues/445
+          undefinedVarEqualEqualsUndefined: input.und === undefined, // true
+          undefinedVarEqualsUndefined: input.und == undefined, // true
+          undefinedVarNotEqualEqualsUndefined: input.und !== undefined, // false
+          undefinedVarNotEqualsUndefined: input.und != undefined, // false
+          varEqualEqualsUndefinedVar: input.v === undefined, // false
+          varEqualsUndefinedVar: input.v == undefined, // false
+          // null
+          undefinedVarEqualEqualsNull: input.und === null, // false
+          undefinedVarEqualsNull: input.und == null, // false - incorrect -https://github.com/functionless/functionless/issues/445
+          undefinedVarNotEqualEqualsNull: input.und !== null, // true
+          undefinedVarNotEqualsNull: input.und != null, // true - incorrect -https://github.com/functionless/functionless/issues/445
+          // string
+          undefinedVarEqualEqualsString: input.und === "hello", // false
+          undefinedVarEqualsString: input.und == "hello", // false
+          undefinedVarNotEqualEqualsString: input.und !== "hello", // true
+          undefinedVarNotEqualsString: input.und != "hello", // true
+          nullVarEqualEqualsString: input.nv === "hello", // false
+          nullVarEqualsString: input.nv == "hello", // false
+          nullVarNotEqualEqualsString: input.nv !== "hello", // true
+          nullVarNotEqualsString: input.nv != "hello", // true
+          // number
+          undefinedVarEqualEqualsNumber: input.undN === 1, // false
+          undefinedVarEqualsNumber: input.undN == 1, // false
+          undefinedVarNotEqualEqualsNumber: input.undN !== 1, // true
+          undefinedVarNotEqualsNumber: input.undN != 1, // true
+          nullVarEqualEqualsNumber: input.nv === 1, // false
+          nullVarEqualsNumber: input.nv == 1, // false
+          nullVarNotEqualEqualsNumber: input.nv !== 1, // true
+          nullVarNotEqualsNumber: input.nv != 1, // true
+          // undefined variables
+          varNotEqualEqualsUndefinedVar: input.v !== obj.und, // true
+          varNotEqualsUndefinedVar: input.v != obj.und, // true
+          nullEqualEqualsUndefinedVar: input.nv === obj.und, // false
+          nullEqualsUndefinedVar: input.nv == obj.und, // false - incorrect - https://github.com/functionless/functionless/issues/445
+          nullNotEqualEqualsUndefinedVar: input.nv === obj.und, // false
+          nullNotEqualsUndefinedVar: input.nv == obj.und, // false - incorrect -https://github.com/functionless/functionless/issues/445
+          undefinedVarEqualEqualsUndefinedVar: input.und === obj.und, // true
+          undefinedVarEqualsUndefinedVar: input.und == obj.und, // true
+          undefinedVarNotEqualEqualsUndefinedVar: input.und !== obj.und, // false
+          undefinedVarNotEqualsUndefinedVar: input.und != obj.und, // false
+          // null variable
+          undefinedVarEqualEqualsNullVar: input.und === obj.nv, // false
+          undefinedVarEqualsNullVar: input.und == obj.nv, // false - incorrect -https://github.com/functionless/functionless/issues/445
+          undefinedVarNotEqualEqualsNullVar: input.und !== obj.nv, // true
+          undefinedVarNotEqualsNullVar: input.und != obj.nv, // true - incorrect -https://github.com/functionless/functionless/issues/445
+          // string var
+          undefinedVarEqualEqualsStringVar: input.und === input.v, // false
+          undefinedVarEqualsStringVar: input.und == input.v, // false
+          undefinedVarNotEqualEqualsStringVar: input.und !== input.v, // true
+          undefinedVarNotEqualsStringVar: input.und != input.v, // true
+          nullVarEqualEqualsStringVar: input.nv === input.v, // false
+          nullVarEqualsStringVar: input.nv == input.v, // false
+          nullVarNotEqualEqualsStringVar: input.nv !== input.v, // true
+          nullVarNotEqualsStringVar: input.nv != input.v, // true
+          // number var
+          undefinedVarEqualEqualsNumberVar: input.undN === input.n, // false
+          undefinedVarEqualsNumberVar: input.undN == input.n, // false
+          undefinedVarNotEqualEqualsNumberVar: input.undN !== input.n, // true
+          undefinedVarNotEqualsNumberVar: input.undN != input.n, // true
+          nullVarEqualEqualsNumberVar: input.nv === input.n, // false
+          nullVarEqualsNumberVar: input.nv == input.n, // false
+          nullVarNotEqualEqualsNumberVar: input.nv !== input.n, // true
+          nullVarNotEqualsNumberVar: input.nv != input.n, // true
         };
       });
     },
@@ -846,8 +969,88 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       varNotNullFalse: false,
       // @ts-ignore
       varNotPresentFalse: true,
+      // undefined and null literals
+      varEqualEqualsUndefined: false,
+      varEqualsUndefined: false,
+      varNotEqualEqualsUndefined: true,
+      varNotEqualsUndefined: true,
+      nullEqualEqualsUndefined: false,
+      nullEqualsUndefined: false,
+      nullNotEqualEqualsUndefined: false,
+      nullNotEqualsUndefined: false,
+      undefinedVarEqualEqualsUndefined: true,
+      undefinedVarEqualsUndefined: true,
+      undefinedVarNotEqualEqualsUndefined: false,
+      undefinedVarNotEqualsUndefined: false,
+      varEqualEqualsUndefinedVar: false,
+      varEqualsUndefinedVar: false,
+      // null
+      undefinedVarEqualEqualsNull: false,
+      undefinedVarEqualsNull: false,
+      undefinedVarNotEqualEqualsNull: true,
+      undefinedVarNotEqualsNull: true,
+      // string
+      undefinedVarEqualEqualsString: false,
+      undefinedVarEqualsString: false,
+      undefinedVarNotEqualEqualsString: true,
+      undefinedVarNotEqualsString: true,
+      nullVarEqualEqualsString: false,
+      nullVarEqualsString: false,
+      nullVarNotEqualEqualsString: true,
+      nullVarNotEqualsString: true,
+      // number
+      undefinedVarEqualEqualsNumber: false,
+      undefinedVarEqualsNumber: false,
+      undefinedVarNotEqualEqualsNumber: true,
+      undefinedVarNotEqualsNumber: true,
+      nullVarEqualEqualsNumber: false,
+      nullVarEqualsNumber: false,
+      nullVarNotEqualEqualsNumber: true,
+      nullVarNotEqualsNumber: true,
+      // undefined variables
+      varNotEqualEqualsUndefinedVar: true,
+      varNotEqualsUndefinedVar: true,
+      nullEqualEqualsUndefinedVar: false,
+      nullEqualsUndefinedVar: false,
+      nullNotEqualEqualsUndefinedVar: false,
+      nullNotEqualsUndefinedVar: false,
+      undefinedVarEqualEqualsUndefinedVar: true,
+      undefinedVarEqualsUndefinedVar: true,
+      undefinedVarNotEqualEqualsUndefinedVar: false,
+      undefinedVarNotEqualsUndefinedVar: false,
+      // null variable
+      undefinedVarEqualEqualsNullVar: false,
+      undefinedVarEqualsNullVar: false,
+      undefinedVarNotEqualEqualsNullVar: true,
+      undefinedVarNotEqualsNullVar: true,
+      // string var
+      undefinedVarEqualEqualsStringVar: false,
+      undefinedVarEqualsStringVar: false,
+      undefinedVarNotEqualEqualsStringVar: true,
+      undefinedVarNotEqualsStringVar: true,
+      nullVarEqualEqualsStringVar: false,
+      nullVarEqualsStringVar: false,
+      nullVarNotEqualEqualsStringVar: true,
+      nullVarNotEqualsStringVar: true,
+      // number var
+      undefinedVarEqualEqualsNumberVar: false,
+      undefinedVarEqualsNumberVar: false,
+      undefinedVarNotEqualEqualsNumberVar: true,
+      undefinedVarNotEqualsNumberVar: true,
+      nullVarEqualEqualsNumberVar: false,
+      nullVarEqualsNumberVar: false,
+      nullVarNotEqualEqualsNumberVar: true,
+      nullVarNotEqualsNumberVar: true,
     },
-    { a: true, n: 1, v: "val", nv: null, obj: { a: "x" } }
+    { a: true, n: 1, v: "val", nv: null, obj: { a: "x" } } as {
+      a: boolean;
+      n: number;
+      v: string;
+      nv: null;
+      obj: { a: string };
+      und?: string;
+      undN?: number;
+    }
   );
 
   // localstack sends and empty object to lambda instead of boolean/numbers
@@ -1427,13 +1630,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           ["d", "e", "f"].join(input.sep),
           [].join(""),
           input.arr.join(),
+          ["a", { a: "a" }, ["b"], input.obj, input.arr, null].join("="),
         ];
 
         return resultArr.join("#");
       });
     },
-    "a/b/c#1-2-3#1|2|3#d|e|f##1,2,3",
-    { arr: [1, 2, 3], sep: "|" }
+    // Caveat: Unlike ECMA, we run JSON.stringify on object and arrays
+    'a/b/c#1-2-3#1|2|3#d|e|f##1,2,3#a={"a":"a"}=["b"]={"b":"b"}=[1,2,3]=null',
+    { arr: [1, 2, 3], sep: "|", obj: { b: "b" } }
   );
 
   test(
@@ -1712,7 +1917,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
                       await $SFN.map([7], (f) => {
                         return `${a}${b}${c}${d}${e}${f}`;
                       })
-                    )[0];
+                    )[0]!;
                     res = `${r}-${a}${b}${c}${d}${e}${f}`;
                   }
                   res = `${res}-${a}${b}${c}${d}${e}${f}`;
@@ -1731,7 +1936,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "boolean",
+    "Boolean coerce",
     (parent) =>
       new StepFunction(parent, "sfn", (input) => {
         return {
@@ -1760,6 +1965,119 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       falsyVar: false,
     },
     { value: "hello", nv: "" }
+  );
+
+  test(
+    "Number coerce",
+    (parent) =>
+      new StepFunction(parent, "sfn", (input) => {
+        return {
+          oneString: Number("1"),
+          oneBoolean: Number(true),
+          oneNumber: Number(1),
+          oneVar: Number(input.one),
+          zeroString: Number(""),
+          zeroBoolean: Number(false),
+          zeroNumber: Number(0),
+          zeroVar: Number(input.zero),
+          zeroNull: Number(null),
+          nanObject: Number({}),
+          nanString: Number("{}"),
+          nanTrueString: Number("true"),
+          nanVar: Number(input.nan),
+          oneStringUnaryPlus: +"1",
+          oneBooleanUnaryPlus: +true,
+          oneNumberUnaryPlus: +1,
+          oneVarUnaryPlus: +input.one,
+          zeroStringUnaryPlus: +"",
+          zeroBooleanUnaryPlus: +false,
+          zeroNumberUnaryPlus: +0,
+          zeroVarUnaryPlus: +input.zero,
+          zeroNullUnaryPlus: +null,
+          nanObjectUnaryPlus: +{},
+          nanStringUnaryPlus: +"{}",
+          nanVarUnaryPlus: +input.nan,
+          empty: Number(),
+        };
+      }),
+    {
+      oneString: 1,
+      oneBoolean: 1,
+      oneNumber: 1,
+      oneVar: 1,
+      zeroString: 0,
+      zeroBoolean: 0,
+      zeroNumber: 0,
+      zeroVar: 0,
+      zeroNull: 0,
+      /**
+       * Functionless ASL uses null for NaN.
+       */
+      nanObject: null as unknown as number,
+      nanString: null as unknown as number,
+      nanVar: null as unknown as number,
+      nanTrueString: null as unknown as number,
+      oneStringUnaryPlus: 1,
+      oneBooleanUnaryPlus: 1,
+      oneNumberUnaryPlus: 1,
+      oneVarUnaryPlus: 1,
+      zeroStringUnaryPlus: 0,
+      zeroBooleanUnaryPlus: 0,
+      zeroNumberUnaryPlus: 0,
+      zeroVarUnaryPlus: 0,
+      zeroNullUnaryPlus: 0,
+      nanObjectUnaryPlus: null as unknown as number,
+      nanStringUnaryPlus: null as unknown as number,
+      nanVarUnaryPlus: null as unknown as number,
+      empty: 0,
+    },
+    { one: "1", zero: "0", nan: "{}" }
+  );
+
+  test(
+    "String coerce",
+    (parent) =>
+      new StepFunction(parent, "sfn", (input) => {
+        return {
+          stringString: String("1"),
+          stringBoolean: String(true),
+          stringNumber: String(1),
+          stringVar: String(input.val),
+          stringStringVar: String(input.str),
+          stringEmpty: String(""),
+          stringObject: String({ a: "a" }),
+          stringObjectWithRef: String({ a: input.val }),
+          stringNull: String(null),
+          empty: String(),
+          // stringUndefined: String(undefined), - not supported
+          stringArray: String([
+            "a",
+            ["b"],
+            [[input.val]],
+            [],
+            {},
+            { a: input.val },
+          ]),
+        };
+      }),
+    {
+      stringString: "1",
+      stringBoolean: "true",
+      stringNumber: "1",
+      stringVar: "1",
+      stringStringVar: "blah",
+      stringEmpty: "",
+      stringObject: "[object Object]",
+      stringObjectWithRef: "[object Object]",
+      stringNull: "null",
+      empty: "",
+      // stringUndefined: "undefined",
+      // Caveat: in ECMA, this test would output: a,b,1,,[object Object],[object Object]
+      // we are stringifying instead of ToString for object and arrays because SFN does not
+      // allow use to easily determine an Array from an Object and recursive to string would be expensive.
+      stringArray: '["a",["b"],[[1]],[],{},{"a":1}]',
+    },
+    { val: 1, str: "blah" }
   );
 });
 

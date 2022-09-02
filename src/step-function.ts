@@ -1466,11 +1466,6 @@ class BaseStandardStepFunction<
           .promise();
       },
     },
-    unhandledContext: (kind, contextKind) => {
-      throw new Error(
-        `${kind} is only available in the ${ASL.ContextName} and ${VTL.ContextName} context, but was used in ${contextKind}.`
-      );
-    },
   });
 }
 
@@ -1580,9 +1575,9 @@ function getStepFunctionArgs<
     | [func: StepFunctionClosure<Payload, Out>]
 ) {
   const props =
-    isFunctionLike(args[0]) || isErr(args[0])
+    isFunctionLike(args[0]) || isErr(args[0]) || typeof args[0] === "function"
       ? {}
-      : (args[1] as StepFunctionProps);
+      : args[0];
   const func = validateFunctionLike(
     args.length > 1 ? args[1] : args[0],
     "StepFunction"
@@ -1644,3 +1639,6 @@ function getArgs(call: CallExpr) {
   }
   return executionArn;
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

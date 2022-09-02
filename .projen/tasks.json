@@ -84,7 +84,13 @@
     "compile": {
       "name": "compile",
       "description": "Only compile",
+      "env": {
+        "NODE_OPTIONS": "--max-old-space-size=4096"
+      },
       "steps": [
+        {
+          "exec": "ts-node ./scripts/sdk-gen.ts"
+        },
         {
           "exec": "yarn link && cd ./test-app && yarn link functionless"
         },
@@ -183,6 +189,7 @@
       "name": "test",
       "description": "Run tests",
       "env": {
+        "NODE_OPTIONS": "--max-old-space-size=4096",
         "DEFAULT_REGION": "ap-northeast-1",
         "AWS_ACCOUNT_ID": "000000000000",
         "AWS_ACCESS_KEY_ID": "test",
@@ -259,19 +266,19 @@
           "exec": "yarn upgrade npm-check-updates"
         },
         {
-          "exec": "npm-check-updates --dep dev --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript,@functionless/ast-reflection,@swc/core'"
+          "exec": "npm-check-updates --dep dev --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript,@swc/core'"
         },
         {
-          "exec": "npm-check-updates --dep optional --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript,@functionless/ast-reflection,@swc/core'"
+          "exec": "npm-check-updates --dep optional --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript,@swc/core'"
         },
         {
-          "exec": "npm-check-updates --dep peer --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript,@functionless/ast-reflection,@swc/core'"
+          "exec": "npm-check-updates --dep peer --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript,@swc/core'"
         },
         {
-          "exec": "npm-check-updates --dep prod --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript,@functionless/ast-reflection,@swc/core'"
+          "exec": "npm-check-updates --dep prod --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript,@swc/core'"
         },
         {
-          "exec": "npm-check-updates --dep bundle --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript,@functionless/ast-reflection,@swc/core'"
+          "exec": "npm-check-updates --dep bundle --upgrade --target=minor --reject='@aws-cdk/aws-appsync-alpha,@aws-cdk/cloud-assembly-schema,@aws-cdk/cloudformation-diff,@aws-cdk/cx-api,aws-cdk-lib,aws-cdk,cdk-assets,constructs,typesafe-dynamodb,typescript,@swc/core'"
         },
         {
           "exec": "yarn install --check-files"

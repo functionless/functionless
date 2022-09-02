@@ -376,6 +376,10 @@ Object {
               "Variable": "$.item",
             },
             Object {
+              "IsPresent": true,
+              "Variable": "$.index",
+            },
+            Object {
               "Or": Array [
                 Object {
                   "And": Array [
@@ -386,18 +390,6 @@ Object {
                     Object {
                       "StringGreaterThanPath": "$.index",
                       "Variable": "$.item",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.item",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$$.Execution.Id",
                     },
                   ],
                 },
@@ -649,6 +641,10 @@ Object {
               "Variable": "$.item",
             },
             Object {
+              "IsPresent": true,
+              "Variable": "$.arr[0]",
+            },
+            Object {
               "Or": Array [
                 Object {
                   "And": Array [
@@ -659,18 +655,6 @@ Object {
                     Object {
                       "StringGreaterThanPath": "$.arr[0]",
                       "Variable": "$.item",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.item",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$$.Execution.Id",
                     },
                   ],
                 },
@@ -922,6 +906,10 @@ Object {
               "Variable": "$.item",
             },
             Object {
+              "IsPresent": true,
+              "Variable": "$.first",
+            },
+            Object {
               "Or": Array [
                 Object {
                   "And": Array [
@@ -932,18 +920,6 @@ Object {
                     Object {
                       "StringGreaterThanPath": "$.first",
                       "Variable": "$.item",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.item",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$$.Execution.Id",
                     },
                   ],
                 },
@@ -1165,7 +1141,7 @@ Object {
               "Variable": "$.item",
             },
             Object {
-              "IsNull": false,
+              "IsNull": true,
               "Variable": "$$.Execution.Id",
             },
           ],
@@ -1374,65 +1350,85 @@ Object {
     "return value === a": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "true__return value === a",
+          "Or": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.value",
+              "And": Array [
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.value",
+                },
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.a",
+                },
+              ],
             },
             Object {
-              "Or": Array [
+              "And": Array [
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.value",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.a",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.value",
                 },
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.value",
-                    },
-                    Object {
-                      "StringEqualsPath": "$.a",
-                      "Variable": "$.value",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.a",
                 },
                 Object {
-                  "And": Array [
+                  "Or": Array [
                     Object {
-                      "IsBoolean": true,
-                      "Variable": "$.value",
+                      "And": Array [
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.value",
+                        },
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.a",
+                        },
+                      ],
                     },
                     Object {
-                      "BooleanEqualsPath": "$.a",
-                      "Variable": "$.value",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.value",
+                        },
+                        Object {
+                          "StringEqualsPath": "$.a",
+                          "Variable": "$.value",
+                        },
+                      ],
                     },
-                  ],
-                },
-                Object {
-                  "And": Array [
                     Object {
-                      "IsNumeric": true,
-                      "Variable": "$.value",
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.value",
+                        },
+                        Object {
+                          "BooleanEqualsPath": "$.a",
+                          "Variable": "$.value",
+                        },
+                      ],
                     },
                     Object {
-                      "NumericEqualsPath": "$.a",
-                      "Variable": "$.value",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.value",
+                        },
+                        Object {
+                          "NumericEqualsPath": "$.a",
+                          "Variable": "$.value",
+                        },
+                      ],
                     },
                   ],
                 },
               ],
             },
           ],
-          "Next": "true__return value === a",
         },
       ],
       "Default": "false__return value === a",
@@ -1841,6 +1837,286 @@ Object {
       "Result": true,
       "ResultPath": "$.heap0",
       "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`add iamConditions AWS.SDK.CloudWatch.describeAlarms 1`] = `
+Object {
+  "Mappings": Object {
+    "ServiceprincipalMap": Object {
+      "af-south-1": Object {
+        "states": "states.af-south-1.amazonaws.com",
+      },
+      "ap-east-1": Object {
+        "states": "states.ap-east-1.amazonaws.com",
+      },
+      "ap-northeast-1": Object {
+        "states": "states.ap-northeast-1.amazonaws.com",
+      },
+      "ap-northeast-2": Object {
+        "states": "states.ap-northeast-2.amazonaws.com",
+      },
+      "ap-northeast-3": Object {
+        "states": "states.ap-northeast-3.amazonaws.com",
+      },
+      "ap-south-1": Object {
+        "states": "states.ap-south-1.amazonaws.com",
+      },
+      "ap-southeast-1": Object {
+        "states": "states.ap-southeast-1.amazonaws.com",
+      },
+      "ap-southeast-2": Object {
+        "states": "states.ap-southeast-2.amazonaws.com",
+      },
+      "ap-southeast-3": Object {
+        "states": "states.ap-southeast-3.amazonaws.com",
+      },
+      "ca-central-1": Object {
+        "states": "states.ca-central-1.amazonaws.com",
+      },
+      "cn-north-1": Object {
+        "states": "states.cn-north-1.amazonaws.com",
+      },
+      "cn-northwest-1": Object {
+        "states": "states.cn-northwest-1.amazonaws.com",
+      },
+      "eu-central-1": Object {
+        "states": "states.eu-central-1.amazonaws.com",
+      },
+      "eu-north-1": Object {
+        "states": "states.eu-north-1.amazonaws.com",
+      },
+      "eu-south-1": Object {
+        "states": "states.eu-south-1.amazonaws.com",
+      },
+      "eu-south-2": Object {
+        "states": "states.eu-south-2.amazonaws.com",
+      },
+      "eu-west-1": Object {
+        "states": "states.eu-west-1.amazonaws.com",
+      },
+      "eu-west-2": Object {
+        "states": "states.eu-west-2.amazonaws.com",
+      },
+      "eu-west-3": Object {
+        "states": "states.eu-west-3.amazonaws.com",
+      },
+      "me-south-1": Object {
+        "states": "states.me-south-1.amazonaws.com",
+      },
+      "sa-east-1": Object {
+        "states": "states.sa-east-1.amazonaws.com",
+      },
+      "us-east-1": Object {
+        "states": "states.us-east-1.amazonaws.com",
+      },
+      "us-east-2": Object {
+        "states": "states.us-east-2.amazonaws.com",
+      },
+      "us-gov-east-1": Object {
+        "states": "states.us-gov-east-1.amazonaws.com",
+      },
+      "us-gov-west-1": Object {
+        "states": "states.us-gov-west-1.amazonaws.com",
+      },
+      "us-iso-east-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-iso-west-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-isob-east-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-west-1": Object {
+        "states": "states.us-west-1.amazonaws.com",
+      },
+      "us-west-2": Object {
+        "states": "states.us-west-2.amazonaws.com",
+      },
+    },
+  },
+  "Parameters": Object {
+    "BootstrapVersion": Object {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": Object {
+    "FC4345940": Object {
+      "DependsOn": Array [
+        "FServiceRole3AC82EE1",
+      ],
+      "Properties": Object {
+        "Code": Object {
+          "ZipFile": "exports.handler = function() { return null; }",
+        },
+        "FunctionName": "testFunction",
+        "Handler": "index.handler",
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "FServiceRole3AC82EE1",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs14.x",
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "FServiceRole3AC82EE1": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": Array [
+          Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TableCD117FA1": Object {
+      "DeletionPolicy": "Retain",
+      "Properties": Object {
+        "AttributeDefinitions": Array [
+          Object {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+        ],
+        "KeySchema": Array [
+          Object {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+        ],
+        "ProvisionedThroughput": Object {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5,
+        },
+        "TableName": "testTable",
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "fn5FF616E3": Object {
+      "DependsOn": Array [
+        "fnRoleDefaultPolicy4FB655BE",
+        "fnRole50A611CF",
+      ],
+      "Properties": Object {
+        "DefinitionString": "{\\"StartAt\\":\\"Initialize Functionless Context\\",\\"States\\":{\\"Initialize Functionless Context\\":{\\"Type\\":\\"Pass\\",\\"Parameters\\":{\\"fnl_context\\":{\\"null\\":null}},\\"ResultPath\\":\\"$\\",\\"Next\\":\\"{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso\\"},\\"{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso\\":{\\"Type\\":\\"Task\\",\\"Resource\\":\\"arn:aws:states:::aws-sdk:cloudwatch:describeAlarms\\",\\"Next\\":\\"MetricAlarms\\",\\"Parameters\\":{},\\"ResultPath\\":\\"$.heap0\\"},\\"MetricAlarms\\":{\\"Type\\":\\"Pass\\",\\"Next\\":\\"return MetricAlarms\\",\\"ResultPath\\":\\"$.MetricAlarms\\",\\"InputPath\\":\\"$.heap0['MetricAlarms']\\"},\\"return MetricAlarms\\":{\\"Type\\":\\"Pass\\",\\"End\\":true,\\"ResultPath\\":\\"$\\",\\"InputPath\\":\\"$.MetricAlarms\\"}}}",
+        "RoleArn": Object {
+          "Fn::GetAtt": Array [
+            "fnRole50A611CF",
+            "Arn",
+          ],
+        },
+        "StateMachineType": "EXPRESS",
+      },
+      "Type": "AWS::StepFunctions::StateMachine",
+    },
+    "fnRole50A611CF": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": Object {
+                  "Fn::FindInMap": Array [
+                    "ServiceprincipalMap",
+                    Object {
+                      "Ref": "AWS::Region",
+                    },
+                    "states",
+                  ],
+                },
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "fnRoleDefaultPolicy4FB655BE": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "cloudwatch:DescribeAlarms",
+              "Condition": Object {
+                "StringEquals": Object {
+                  "aws:ResourceTag/env": Array [
+                    "test",
+                  ],
+                },
+              },
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "fnRoleDefaultPolicy4FB655BE",
+        "Roles": Array [
+          Object {
+            "Ref": "fnRole50A611CF",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+  "Rules": Object {
+    "CheckBootstrapVersion": Object {
+      "Assertions": Array [
+        Object {
+          "Assert": Object {
+            "Fn::Not": Array [
+              Object {
+                "Fn::Contains": Array [
+                  Array [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  Object {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
     },
   },
 }
@@ -2579,10 +2855,49 @@ Object {
       "Type": "Pass",
     },
     "1__return await $SFN.map(input.value, function ({ value: b, arr: [ c ] })). 1": Object {
-      "InputPath": "$.heap3",
+      "ItemsPath": "$.heap3",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 1",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default",
+            "Type": "Choice",
+          },
+          "assign__Default": Object {
+            "End": true,
+            "InputPath": "$.heap6.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 1": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default",
+            "ResultPath": "$.heap6.str",
+            "Type": "Pass",
+          },
+          "format__Default": Object {
+            "Next": "assign__Default",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap6",
+            "Type": "Pass",
+          },
+        },
+      },
       "Next": "hasNext__1__return await $SFN.map(input.value, function ({ value: b, arr: [",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
       "ResultPath": "$.heap4",
-      "Type": "Pass",
+      "Type": "Map",
     },
     "Initialize Functionless Context": Object {
       "Next": "return await $SFN.map(input.value, function ({ value: b, arr: [ c ] })).joi",
@@ -2623,16 +2938,12 @@ Object {
         Object {
           "And": Array [
             Object {
-              "Not": Object {
-                "IsPresent": true,
-                "Variable": "$.heap4[0]",
-              },
+              "IsPresent": false,
+              "Variable": "$.heap4[0]",
             },
             Object {
-              "Not": Object {
-                "IsPresent": true,
-                "Variable": "$.heap5",
-              },
+              "IsPresent": false,
+              "Variable": "$.heap5",
             },
           ],
           "Next": "returnEmpty__1__return await $SFN.map(input.value, function ({ value: b, ar",
@@ -2857,10 +3168,49 @@ Object {
       "Type": "Pass",
     },
     "1__return input.value.map(function ({ value: b, arr: [ c ] })).join() 1": Object {
-      "InputPath": "$.heap0",
+      "ItemsPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 1",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default",
+            "Type": "Choice",
+          },
+          "assign__Default": Object {
+            "End": true,
+            "InputPath": "$.heap6.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 1": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default",
+            "ResultPath": "$.heap6.str",
+            "Type": "Pass",
+          },
+          "format__Default": Object {
+            "Next": "assign__Default",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap6",
+            "Type": "Pass",
+          },
+        },
+      },
       "Next": "hasNext__1__return input.value.map(function ({ value: b, arr: [ c ] })).joi",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
       "ResultPath": "$.heap4",
-      "Type": "Pass",
+      "Type": "Map",
     },
     "Initialize Functionless Context": Object {
       "Next": "return input.value.map(function ({ value: b, arr: [ c ] })).join()",
@@ -2949,16 +3299,12 @@ Object {
         Object {
           "And": Array [
             Object {
-              "Not": Object {
-                "IsPresent": true,
-                "Variable": "$.heap4[0]",
-              },
+              "IsPresent": false,
+              "Variable": "$.heap4[0]",
             },
             Object {
-              "Not": Object {
-                "IsPresent": true,
-                "Variable": "$.heap5",
-              },
+              "IsPresent": false,
+              "Variable": "$.heap5",
             },
           ],
           "Next": "returnEmpty__1__return input.value.map(function ({ value: b, arr: [ c ] }))",
@@ -3032,10 +3378,49 @@ Object {
       "Type": "Pass",
     },
     "1__return [1, 2, 3].map(function ()).join() 1": Object {
-      "InputPath": "$.heap1",
+      "ItemsPath": "$.heap1",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 1",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default",
+            "Type": "Choice",
+          },
+          "assign__Default": Object {
+            "End": true,
+            "InputPath": "$.heap7.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 1": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default",
+            "ResultPath": "$.heap7.str",
+            "Type": "Pass",
+          },
+          "format__Default": Object {
+            "Next": "assign__Default",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap7",
+            "Type": "Pass",
+          },
+        },
+      },
       "Next": "hasNext__1__return [1, 2, 3].map(function ()).join() 1",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
       "ResultPath": "$.heap5",
-      "Type": "Pass",
+      "Type": "Map",
     },
     "1__return [1, 2, 3].map(function ()).join() 2": Object {
       "Next": "check__1__return [1, 2, 3].map(function ()).join() 2",
@@ -3118,16 +3503,12 @@ Object {
         Object {
           "And": Array [
             Object {
-              "Not": Object {
-                "IsPresent": true,
-                "Variable": "$.heap5[0]",
-              },
+              "IsPresent": false,
+              "Variable": "$.heap5[0]",
             },
             Object {
-              "Not": Object {
-                "IsPresent": true,
-                "Variable": "$.heap6",
-              },
+              "IsPresent": false,
+              "Variable": "$.heap6",
             },
           ],
           "Next": "returnEmpty__1__return [1, 2, 3].map(function ()).join() 1",
@@ -4307,58 +4688,78 @@ Object {
         Object {
           "And": Array [
             Object {
-              "And": Array [
+              "Or": Array [
                 Object {
-                  "IsPresent": true,
-                  "Variable": "$.input.a",
+                  "And": Array [
+                    Object {
+                      "IsPresent": false,
+                      "Variable": "$.input.a",
+                    },
+                    Object {
+                      "IsPresent": false,
+                      "Variable": "$.input.b",
+                    },
+                  ],
                 },
                 Object {
-                  "Or": Array [
+                  "And": Array [
                     Object {
-                      "And": Array [
-                        Object {
-                          "IsNull": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "IsNull": true,
-                          "Variable": "$.input.b",
-                        },
-                      ],
+                      "IsPresent": true,
+                      "Variable": "$.input.a",
                     },
                     Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "StringEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
-                        },
-                      ],
+                      "IsPresent": true,
+                      "Variable": "$.input.b",
                     },
                     Object {
-                      "And": Array [
+                      "Or": Array [
                         Object {
-                          "IsBoolean": true,
-                          "Variable": "$.input.a",
+                          "And": Array [
+                            Object {
+                              "IsNull": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "IsNull": true,
+                              "Variable": "$.input.b",
+                            },
+                          ],
                         },
                         Object {
-                          "BooleanEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "StringEqualsPath": "$.input.b",
+                              "Variable": "$.input.a",
+                            },
+                          ],
                         },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
                         Object {
-                          "IsNumeric": true,
-                          "Variable": "$.input.a",
+                          "And": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "BooleanEqualsPath": "$.input.b",
+                              "Variable": "$.input.a",
+                            },
+                          ],
                         },
                         Object {
-                          "NumericEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "NumericEqualsPath": "$.input.b",
+                              "Variable": "$.input.a",
+                            },
+                          ],
                         },
                       ],
                     },
@@ -4396,80 +4797,29 @@ Object {
     "input.a === input.b ?? input.s === \\"hello\\"": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "true__input.a === input.b ?? input.s === \\"hello\\"",
+          "Or": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.input.a",
-            },
-            Object {
-              "Or": Array [
+              "And": Array [
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.input.a",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.input.b",
-                    },
-                  ],
+                  "IsPresent": false,
+                  "Variable": "$.input.a",
                 },
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.input.a",
-                    },
-                    Object {
-                      "StringEqualsPath": "$.input.b",
-                      "Variable": "$.input.a",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsBoolean": true,
-                      "Variable": "$.input.a",
-                    },
-                    Object {
-                      "BooleanEqualsPath": "$.input.b",
-                      "Variable": "$.input.a",
-                    },
-                  ],
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsNumeric": true,
-                      "Variable": "$.input.a",
-                    },
-                    Object {
-                      "NumericEqualsPath": "$.input.b",
-                      "Variable": "$.input.a",
-                    },
-                  ],
+                  "IsPresent": false,
+                  "Variable": "$.input.b",
                 },
               ],
             },
-          ],
-          "Next": "true__input.a === input.b ?? input.s === \\"hello\\"",
-        },
-      ],
-      "Default": "false__input.a === input.b ?? input.s === \\"hello\\"",
-      "Type": "Choice",
-    },
-    "input.a === input.b || input.s === \\"hello\\"": Object {
-      "Choices": Array [
-        Object {
-          "Next": "true__input.a === input.b || input.s === \\"hello\\"",
-          "Or": Array [
             Object {
               "And": Array [
                 Object {
                   "IsPresent": true,
                   "Variable": "$.input.a",
+                },
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.b",
                 },
                 Object {
                   "Or": Array [
@@ -4518,6 +4868,97 @@ Object {
                         Object {
                           "NumericEqualsPath": "$.input.b",
                           "Variable": "$.input.a",
+                        },
+                      ],
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      "Default": "false__input.a === input.b ?? input.s === \\"hello\\"",
+      "Type": "Choice",
+    },
+    "input.a === input.b || input.s === \\"hello\\"": Object {
+      "Choices": Array [
+        Object {
+          "Next": "true__input.a === input.b || input.s === \\"hello\\"",
+          "Or": Array [
+            Object {
+              "Or": Array [
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsPresent": false,
+                      "Variable": "$.input.a",
+                    },
+                    Object {
+                      "IsPresent": false,
+                      "Variable": "$.input.b",
+                    },
+                  ],
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "IsPresent": true,
+                      "Variable": "$.input.a",
+                    },
+                    Object {
+                      "IsPresent": true,
+                      "Variable": "$.input.b",
+                    },
+                    Object {
+                      "Or": Array [
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNull": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "IsNull": true,
+                              "Variable": "$.input.b",
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "StringEqualsPath": "$.input.b",
+                              "Variable": "$.input.a",
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "BooleanEqualsPath": "$.input.b",
+                              "Variable": "$.input.a",
+                            },
+                          ],
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.input.a",
+                            },
+                            Object {
+                              "NumericEqualsPath": "$.input.b",
+                              "Variable": "$.input.a",
+                            },
+                          ],
                         },
                       ],
                     },
@@ -5428,7 +5869,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
       "ResultPath": "$.heap1",
       "Type": "Task",
     },
@@ -5484,17 +5925,25 @@ Object {
     "if(person.Item === undefined)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "return",
+          "Or": Array [
             Object {
-              "IsPresent": true,
+              "IsPresent": false,
               "Variable": "$.person.Item",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.person.Item",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
             },
           ],
-          "Next": "return",
         },
       ],
       "Default": "score = await computeScore({id: person.Item.id.S, name: person.Item.name.S}",
@@ -5651,7 +6100,7 @@ Object {
       "Parameters": Object {
         "ExecutionArn": "hello",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:describeExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -5685,7 +6134,7 @@ Object {
       "Parameters": Object {
         "ExecutionArn.$": "$.input.id",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:describeExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -5718,7 +6167,7 @@ Object {
       "Parameters": Object {
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -5744,7 +6193,7 @@ Object {
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap1",
       "Type": "Task",
     },
@@ -5796,7 +6245,7 @@ Object {
         "Input.$": "$.input",
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -5832,7 +6281,7 @@ Object {
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -5867,7 +6316,7 @@ Object {
         "StateMachineArn": "__REPLACED_TOKEN",
         "TraceHeader": "1",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -5903,7 +6352,7 @@ Object {
         "StateMachineArn": "__REPLACED_TOKEN",
         "TraceHeader.$": "$.input.header",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -5929,7 +6378,7 @@ Object {
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap2",
       "Type": "Task",
     },
@@ -6243,7 +6692,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
       "ResultPath": "$.heap1",
       "Type": "Task",
     },
@@ -9011,6 +9460,279 @@ Object {
 }
 `;
 
+exports[`iam policy for AWS.SDK.CloudWatch.describeAlarms 1`] = `
+Object {
+  "Mappings": Object {
+    "ServiceprincipalMap": Object {
+      "af-south-1": Object {
+        "states": "states.af-south-1.amazonaws.com",
+      },
+      "ap-east-1": Object {
+        "states": "states.ap-east-1.amazonaws.com",
+      },
+      "ap-northeast-1": Object {
+        "states": "states.ap-northeast-1.amazonaws.com",
+      },
+      "ap-northeast-2": Object {
+        "states": "states.ap-northeast-2.amazonaws.com",
+      },
+      "ap-northeast-3": Object {
+        "states": "states.ap-northeast-3.amazonaws.com",
+      },
+      "ap-south-1": Object {
+        "states": "states.ap-south-1.amazonaws.com",
+      },
+      "ap-southeast-1": Object {
+        "states": "states.ap-southeast-1.amazonaws.com",
+      },
+      "ap-southeast-2": Object {
+        "states": "states.ap-southeast-2.amazonaws.com",
+      },
+      "ap-southeast-3": Object {
+        "states": "states.ap-southeast-3.amazonaws.com",
+      },
+      "ca-central-1": Object {
+        "states": "states.ca-central-1.amazonaws.com",
+      },
+      "cn-north-1": Object {
+        "states": "states.cn-north-1.amazonaws.com",
+      },
+      "cn-northwest-1": Object {
+        "states": "states.cn-northwest-1.amazonaws.com",
+      },
+      "eu-central-1": Object {
+        "states": "states.eu-central-1.amazonaws.com",
+      },
+      "eu-north-1": Object {
+        "states": "states.eu-north-1.amazonaws.com",
+      },
+      "eu-south-1": Object {
+        "states": "states.eu-south-1.amazonaws.com",
+      },
+      "eu-south-2": Object {
+        "states": "states.eu-south-2.amazonaws.com",
+      },
+      "eu-west-1": Object {
+        "states": "states.eu-west-1.amazonaws.com",
+      },
+      "eu-west-2": Object {
+        "states": "states.eu-west-2.amazonaws.com",
+      },
+      "eu-west-3": Object {
+        "states": "states.eu-west-3.amazonaws.com",
+      },
+      "me-south-1": Object {
+        "states": "states.me-south-1.amazonaws.com",
+      },
+      "sa-east-1": Object {
+        "states": "states.sa-east-1.amazonaws.com",
+      },
+      "us-east-1": Object {
+        "states": "states.us-east-1.amazonaws.com",
+      },
+      "us-east-2": Object {
+        "states": "states.us-east-2.amazonaws.com",
+      },
+      "us-gov-east-1": Object {
+        "states": "states.us-gov-east-1.amazonaws.com",
+      },
+      "us-gov-west-1": Object {
+        "states": "states.us-gov-west-1.amazonaws.com",
+      },
+      "us-iso-east-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-iso-west-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-isob-east-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-west-1": Object {
+        "states": "states.us-west-1.amazonaws.com",
+      },
+      "us-west-2": Object {
+        "states": "states.us-west-2.amazonaws.com",
+      },
+    },
+  },
+  "Parameters": Object {
+    "BootstrapVersion": Object {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": Object {
+    "FC4345940": Object {
+      "DependsOn": Array [
+        "FServiceRole3AC82EE1",
+      ],
+      "Properties": Object {
+        "Code": Object {
+          "ZipFile": "exports.handler = function() { return null; }",
+        },
+        "FunctionName": "testFunction",
+        "Handler": "index.handler",
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "FServiceRole3AC82EE1",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs14.x",
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "FServiceRole3AC82EE1": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": Array [
+          Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TableCD117FA1": Object {
+      "DeletionPolicy": "Retain",
+      "Properties": Object {
+        "AttributeDefinitions": Array [
+          Object {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+        ],
+        "KeySchema": Array [
+          Object {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+        ],
+        "ProvisionedThroughput": Object {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5,
+        },
+        "TableName": "testTable",
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "fn5FF616E3": Object {
+      "DependsOn": Array [
+        "fnRoleDefaultPolicy4FB655BE",
+        "fnRole50A611CF",
+      ],
+      "Properties": Object {
+        "DefinitionString": "{\\"StartAt\\":\\"Initialize Functionless Context\\",\\"States\\":{\\"Initialize Functionless Context\\":{\\"Type\\":\\"Pass\\",\\"Parameters\\":{\\"fnl_context\\":{\\"null\\":null}},\\"ResultPath\\":\\"$\\",\\"Next\\":\\"{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso\\"},\\"{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso\\":{\\"Type\\":\\"Task\\",\\"Resource\\":\\"arn:aws:states:::aws-sdk:cloudwatch:describeAlarms\\",\\"Next\\":\\"MetricAlarms\\",\\"Parameters\\":{},\\"ResultPath\\":\\"$.heap0\\"},\\"MetricAlarms\\":{\\"Type\\":\\"Pass\\",\\"Next\\":\\"return MetricAlarms\\",\\"ResultPath\\":\\"$.MetricAlarms\\",\\"InputPath\\":\\"$.heap0['MetricAlarms']\\"},\\"return MetricAlarms\\":{\\"Type\\":\\"Pass\\",\\"End\\":true,\\"ResultPath\\":\\"$\\",\\"InputPath\\":\\"$.MetricAlarms\\"}}}",
+        "RoleArn": Object {
+          "Fn::GetAtt": Array [
+            "fnRole50A611CF",
+            "Arn",
+          ],
+        },
+        "StateMachineType": "EXPRESS",
+      },
+      "Type": "AWS::StepFunctions::StateMachine",
+    },
+    "fnRole50A611CF": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": Object {
+                  "Fn::FindInMap": Array [
+                    "ServiceprincipalMap",
+                    Object {
+                      "Ref": "AWS::Region",
+                    },
+                    "states",
+                  ],
+                },
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "fnRoleDefaultPolicy4FB655BE": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "cloudwatch:DescribeAlarms",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "fnRoleDefaultPolicy4FB655BE",
+        "Roles": Array [
+          Object {
+            "Ref": "fnRole50A611CF",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+  "Rules": Object {
+    "CheckBootstrapVersion": Object {
+      "Assertions": Array [
+        Object {
+          "Assert": Object {
+            "Fn::Not": Array [
+              Object {
+                "Fn::Contains": Array [
+                  Array [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  Object {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
+    },
+  },
+}
+`;
+
 exports[`if (?? === typeof x) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -9370,17 +10092,25 @@ Object {
     "if(input.id === undefined)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "return \\"null\\"",
+          "Or": Array [
             Object {
-              "IsPresent": true,
+              "IsPresent": false,
               "Variable": "$.input.id",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.id",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
             },
           ],
-          "Next": "return \\"null\\"",
         },
         Object {
           "And": Array [
@@ -9955,17 +10685,25 @@ Object {
     "if(input.id === undefined)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "return \\"null\\"",
+          "Or": Array [
             Object {
-              "IsPresent": true,
+              "IsPresent": false,
               "Variable": "$.input.id",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.input.id",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
             },
           ],
-          "Next": "return \\"null\\"",
         },
         Object {
           "And": Array [
@@ -10672,7 +11410,7 @@ Object {
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -10708,7 +11446,7 @@ Object {
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startExecution",
       "ResultPath": "$.heap0",
       "Type": "Task",
     },
@@ -11143,65 +11881,85 @@ Object {
     "cond = await task()": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "cond = await task() 1",
+          "Or": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.cond",
+              "And": Array [
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.cond",
+                },
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.fnl_context.null",
+                },
+              ],
             },
             Object {
-              "Or": Array [
+              "And": Array [
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.cond",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.fnl_context.null",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.cond",
                 },
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.cond",
-                    },
-                    Object {
-                      "StringEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.fnl_context.null",
                 },
                 Object {
-                  "And": Array [
+                  "Or": Array [
                     Object {
-                      "IsBoolean": true,
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.fnl_context.null",
+                        },
+                      ],
                     },
                     Object {
-                      "BooleanEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "StringEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
-                  ],
-                },
-                Object {
-                  "And": Array [
                     Object {
-                      "IsNumeric": true,
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "BooleanEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
                     Object {
-                      "NumericEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "NumericEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
                   ],
                 },
               ],
             },
           ],
-          "Next": "cond = await task() 1",
         },
       ],
       "Default": "return null",
@@ -12282,6 +13040,146 @@ Object {
 }
 `;
 
+exports[`non-literal params AWS.SDK.CloudWatch.deleteAlarms 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(fun": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "AlarmNames.$": "$.heap2",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:cloudwatch:deleteAlarms",
+      "ResultPath": "$.heap3",
+      "Type": "Task",
+    },
+    "1__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(fun 1": Object {
+      "InputPath": "$.heap1",
+      "Next": "1__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(fun",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "MetricAlarms": Object {
+      "InputPath": "$.heap0['MetricAlarms']",
+      "Next": "if(MetricAlarms === undefined)",
+      "ResultPath": "$.MetricAlarms",
+      "Type": "Pass",
+    },
+    "a": Object {
+      "InputPath": "$.heap1.arr[0]",
+      "Next": "return a.AlarmName",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(functi": Object {
+      "Next": "check__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map",
+      "Parameters": Object {
+        "arr.$": "$.MetricAlarms",
+        "arrStr": "[null",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "check__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "a",
+          "Variable": "$.heap1.arr[0]",
+        },
+      ],
+      "Default": "end__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(f",
+      "Type": "Choice",
+    },
+    "end__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(f": Object {
+      "Next": "set__end__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "handleResult__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAla": Object {
+      "Next": "check__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map",
+      "Parameters": Object {
+        "arr.$": "$.heap1.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "if(MetricAlarms === undefined)": Object {
+      "Choices": Array [
+        Object {
+          "Next": "return",
+          "Or": Array [
+            Object {
+              "IsPresent": false,
+              "Variable": "$.MetricAlarms",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.MetricAlarms",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      "Default": "await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(functi",
+      "Type": "Choice",
+    },
+    "return": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return a.AlarmName": Object {
+      "InputPath": "$.a.AlarmName",
+      "Next": "handleResult__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAla",
+      "ResultPath": "$.heap1.arr[0]",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "set__end__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.": Object {
+      "InputPath": "$.heap1.result[1:]",
+      "Next": "1__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(fun 1",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso": Object {
+      "Next": "MetricAlarms",
+      "Parameters": Object {},
+      "Resource": "arn:aws:states:::aws-sdk:cloudwatch:describeAlarms",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
 exports[`null coalesce logic 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -12341,6 +13239,316 @@ Object {
       "Next": "1__return {null: input.a ?? input.b} 1",
       "ResultPath": "$.heap0",
       "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`overwrite aslServiceName AWS.SDK.CloudWatch.describeAlarms 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "MetricAlarms": Object {
+      "InputPath": "$.heap0['MetricAlarms']",
+      "Next": "return MetricAlarms",
+      "ResultPath": "$.MetricAlarms",
+      "Type": "Pass",
+    },
+    "return MetricAlarms": Object {
+      "End": true,
+      "InputPath": "$.MetricAlarms",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso": Object {
+      "Next": "MetricAlarms",
+      "Parameters": Object {},
+      "Resource": "arn:aws:states:::aws-sdk:cw:describeAlarms",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
+exports[`overwrite iamActions AWS.SDK.CloudWatch.describeAlarms 1`] = `
+Object {
+  "Mappings": Object {
+    "ServiceprincipalMap": Object {
+      "af-south-1": Object {
+        "states": "states.af-south-1.amazonaws.com",
+      },
+      "ap-east-1": Object {
+        "states": "states.ap-east-1.amazonaws.com",
+      },
+      "ap-northeast-1": Object {
+        "states": "states.ap-northeast-1.amazonaws.com",
+      },
+      "ap-northeast-2": Object {
+        "states": "states.ap-northeast-2.amazonaws.com",
+      },
+      "ap-northeast-3": Object {
+        "states": "states.ap-northeast-3.amazonaws.com",
+      },
+      "ap-south-1": Object {
+        "states": "states.ap-south-1.amazonaws.com",
+      },
+      "ap-southeast-1": Object {
+        "states": "states.ap-southeast-1.amazonaws.com",
+      },
+      "ap-southeast-2": Object {
+        "states": "states.ap-southeast-2.amazonaws.com",
+      },
+      "ap-southeast-3": Object {
+        "states": "states.ap-southeast-3.amazonaws.com",
+      },
+      "ca-central-1": Object {
+        "states": "states.ca-central-1.amazonaws.com",
+      },
+      "cn-north-1": Object {
+        "states": "states.cn-north-1.amazonaws.com",
+      },
+      "cn-northwest-1": Object {
+        "states": "states.cn-northwest-1.amazonaws.com",
+      },
+      "eu-central-1": Object {
+        "states": "states.eu-central-1.amazonaws.com",
+      },
+      "eu-north-1": Object {
+        "states": "states.eu-north-1.amazonaws.com",
+      },
+      "eu-south-1": Object {
+        "states": "states.eu-south-1.amazonaws.com",
+      },
+      "eu-south-2": Object {
+        "states": "states.eu-south-2.amazonaws.com",
+      },
+      "eu-west-1": Object {
+        "states": "states.eu-west-1.amazonaws.com",
+      },
+      "eu-west-2": Object {
+        "states": "states.eu-west-2.amazonaws.com",
+      },
+      "eu-west-3": Object {
+        "states": "states.eu-west-3.amazonaws.com",
+      },
+      "me-south-1": Object {
+        "states": "states.me-south-1.amazonaws.com",
+      },
+      "sa-east-1": Object {
+        "states": "states.sa-east-1.amazonaws.com",
+      },
+      "us-east-1": Object {
+        "states": "states.us-east-1.amazonaws.com",
+      },
+      "us-east-2": Object {
+        "states": "states.us-east-2.amazonaws.com",
+      },
+      "us-gov-east-1": Object {
+        "states": "states.us-gov-east-1.amazonaws.com",
+      },
+      "us-gov-west-1": Object {
+        "states": "states.us-gov-west-1.amazonaws.com",
+      },
+      "us-iso-east-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-iso-west-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-isob-east-1": Object {
+        "states": "states.amazonaws.com",
+      },
+      "us-west-1": Object {
+        "states": "states.us-west-1.amazonaws.com",
+      },
+      "us-west-2": Object {
+        "states": "states.us-west-2.amazonaws.com",
+      },
+    },
+  },
+  "Parameters": Object {
+    "BootstrapVersion": Object {
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]",
+      "Type": "AWS::SSM::Parameter::Value<String>",
+    },
+  },
+  "Resources": Object {
+    "FC4345940": Object {
+      "DependsOn": Array [
+        "FServiceRole3AC82EE1",
+      ],
+      "Properties": Object {
+        "Code": Object {
+          "ZipFile": "exports.handler = function() { return null; }",
+        },
+        "FunctionName": "testFunction",
+        "Handler": "index.handler",
+        "Role": Object {
+          "Fn::GetAtt": Array [
+            "FServiceRole3AC82EE1",
+            "Arn",
+          ],
+        },
+        "Runtime": "nodejs14.x",
+      },
+      "Type": "AWS::Lambda::Function",
+    },
+    "FServiceRole3AC82EE1": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": "lambda.amazonaws.com",
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "ManagedPolicyArns": Array [
+          Object {
+            "Fn::Join": Array [
+              "",
+              Array [
+                "arn:",
+                Object {
+                  "Ref": "AWS::Partition",
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole",
+              ],
+            ],
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "TableCD117FA1": Object {
+      "DeletionPolicy": "Retain",
+      "Properties": Object {
+        "AttributeDefinitions": Array [
+          Object {
+            "AttributeName": "id",
+            "AttributeType": "S",
+          },
+        ],
+        "KeySchema": Array [
+          Object {
+            "AttributeName": "id",
+            "KeyType": "HASH",
+          },
+        ],
+        "ProvisionedThroughput": Object {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5,
+        },
+        "TableName": "testTable",
+      },
+      "Type": "AWS::DynamoDB::Table",
+      "UpdateReplacePolicy": "Retain",
+    },
+    "fn5FF616E3": Object {
+      "DependsOn": Array [
+        "fnRoleDefaultPolicy4FB655BE",
+        "fnRole50A611CF",
+      ],
+      "Properties": Object {
+        "DefinitionString": "{\\"StartAt\\":\\"Initialize Functionless Context\\",\\"States\\":{\\"Initialize Functionless Context\\":{\\"Type\\":\\"Pass\\",\\"Parameters\\":{\\"fnl_context\\":{\\"null\\":null}},\\"ResultPath\\":\\"$\\",\\"Next\\":\\"{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso\\"},\\"{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso\\":{\\"Type\\":\\"Task\\",\\"Resource\\":\\"arn:aws:states:::aws-sdk:cloudwatch:describeAlarms\\",\\"Next\\":\\"MetricAlarms\\",\\"Parameters\\":{},\\"ResultPath\\":\\"$.heap0\\"},\\"MetricAlarms\\":{\\"Type\\":\\"Pass\\",\\"Next\\":\\"return MetricAlarms\\",\\"ResultPath\\":\\"$.MetricAlarms\\",\\"InputPath\\":\\"$.heap0['MetricAlarms']\\"},\\"return MetricAlarms\\":{\\"Type\\":\\"Pass\\",\\"End\\":true,\\"ResultPath\\":\\"$\\",\\"InputPath\\":\\"$.MetricAlarms\\"}}}",
+        "RoleArn": Object {
+          "Fn::GetAtt": Array [
+            "fnRole50A611CF",
+            "Arn",
+          ],
+        },
+        "StateMachineType": "EXPRESS",
+      },
+      "Type": "AWS::StepFunctions::StateMachine",
+    },
+    "fnRole50A611CF": Object {
+      "Properties": Object {
+        "AssumeRolePolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": Object {
+                "Service": Object {
+                  "Fn::FindInMap": Array [
+                    "ServiceprincipalMap",
+                    Object {
+                      "Ref": "AWS::Region",
+                    },
+                    "states",
+                  ],
+                },
+              },
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+      },
+      "Type": "AWS::IAM::Role",
+    },
+    "fnRoleDefaultPolicy4FB655BE": Object {
+      "Properties": Object {
+        "PolicyDocument": Object {
+          "Statement": Array [
+            Object {
+              "Action": "cloudwatch:Describe*",
+              "Effect": "Allow",
+              "Resource": "*",
+            },
+          ],
+          "Version": "2012-10-17",
+        },
+        "PolicyName": "fnRoleDefaultPolicy4FB655BE",
+        "Roles": Array [
+          Object {
+            "Ref": "fnRole50A611CF",
+          },
+        ],
+      },
+      "Type": "AWS::IAM::Policy",
+    },
+  },
+  "Rules": Object {
+    "CheckBootstrapVersion": Object {
+      "Assertions": Array [
+        Object {
+          "Assert": Object {
+            "Fn::Not": Array [
+              Object {
+                "Fn::Contains": Array [
+                  Array [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5",
+                  ],
+                  Object {
+                    "Ref": "BootstrapVersion",
+                  },
+                ],
+              },
+            ],
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI.",
+        },
+      ],
     },
   },
 }
@@ -13163,7 +14371,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
       "ResultPath": "$.heap1",
       "Type": "Task",
     },
@@ -13196,17 +14404,25 @@ Object {
     "if(person.Item === undefined)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "return",
+          "Or": Array [
             Object {
-              "IsPresent": true,
+              "IsPresent": false,
               "Variable": "$.person.Item",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.person.Item",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
             },
           ],
-          "Next": "return",
         },
       ],
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
@@ -13254,7 +14470,7 @@ Object {
         },
         "TableName": "__REPLACED_TOKEN",
       },
-      "Resource": "__REPLACED_ARN",
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
       "ResultPath": "$.heap2",
       "Type": "Task",
     },
@@ -13299,17 +14515,25 @@ Object {
     "if(person.Item === undefined)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "return",
+          "Or": Array [
             Object {
-              "IsPresent": true,
+              "IsPresent": false,
               "Variable": "$.person.Item",
             },
             Object {
-              "IsNull": false,
-              "Variable": "$$.Execution.Id",
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.person.Item",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
             },
           ],
-          "Next": "return",
         },
       ],
       "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
@@ -13429,6 +14653,186 @@ Object {
     "true__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.": Object {
       "InputPath": "$.input.id",
       "Next": "1__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id  2",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`return AWS.SDK.CloudWatch.describeAlarms 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "alarms = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {resources: [\\"*",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "alarms": Object {
+      "InputPath": "$.heap0",
+      "Next": "if(alarms.MetricAlarms === undefined)",
+      "ResultPath": "$.alarms",
+      "Type": "Pass",
+    },
+    "alarms = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {resources: [\\"*": Object {
+      "Next": "alarms",
+      "Parameters": Object {},
+      "Resource": "arn:aws:states:::aws-sdk:cloudwatch:describeAlarms",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "if(alarms.MetricAlarms === undefined)": Object {
+      "Choices": Array [
+        Object {
+          "Next": "return",
+          "Or": Array [
+            Object {
+              "IsPresent": false,
+              "Variable": "$.alarms.MetricAlarms",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.alarms.MetricAlarms",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      "Default": "return alarms.MetricAlarms",
+      "Type": "Choice",
+    },
+    "return": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return alarms.MetricAlarms": Object {
+      "End": true,
+      "InputPath": "$.alarms.MetricAlarms",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`return AWS.SDK.CloudWatch.describeAlarms dynamic parameters 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu": Object {
+      "Next": "alarms",
+      "Parameters": Object {
+        "AlarmNamePrefix.$": "$.heap1",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:cloudwatch:describeAlarms",
+      "ResultPath": "$.heap2",
+      "Type": "Task",
+    },
+    "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu 1": Object {
+      "InputPath": "$.heap0",
+      "Next": "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: input.p",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "alarms": Object {
+      "InputPath": "$.heap2",
+      "Next": "if(alarms.MetricAlarms === undefined)",
+      "ResultPath": "$.alarms",
+      "Type": "Pass",
+    },
+    "alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: input.p": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.input.prefix",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.input.prefix",
+            },
+          ],
+          "Next": "true__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: i",
+        },
+      ],
+      "Default": "false__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: ",
+      "Type": "Choice",
+    },
+    "false__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: ": Object {
+      "Next": "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu 1",
+      "Result": "default",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "if(alarms.MetricAlarms === undefined)": Object {
+      "Choices": Array [
+        Object {
+          "Next": "return",
+          "Or": Array [
+            Object {
+              "IsPresent": false,
+              "Variable": "$.alarms.MetricAlarms",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsPresent": true,
+                  "Variable": "$.alarms.MetricAlarms",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      "Default": "return alarms.MetricAlarms",
+      "Type": "Choice",
+    },
+    "return": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return alarms.MetricAlarms": Object {
+      "End": true,
+      "InputPath": "$.alarms.MetricAlarms",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "true__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: i": Object {
+      "InputPath": "$.input.prefix",
+      "Next": "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu 1",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -18337,65 +19741,85 @@ Object {
     "while (cond === null)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "cond = await task()",
+          "Or": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.cond",
+              "And": Array [
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.cond",
+                },
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.fnl_context.null",
+                },
+              ],
             },
             Object {
-              "Or": Array [
+              "And": Array [
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.cond",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.fnl_context.null",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.cond",
                 },
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.cond",
-                    },
-                    Object {
-                      "StringEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.fnl_context.null",
                 },
                 Object {
-                  "And": Array [
+                  "Or": Array [
                     Object {
-                      "IsBoolean": true,
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.fnl_context.null",
+                        },
+                      ],
                     },
                     Object {
-                      "BooleanEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "StringEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
-                  ],
-                },
-                Object {
-                  "And": Array [
                     Object {
-                      "IsNumeric": true,
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "BooleanEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
                     Object {
-                      "NumericEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "NumericEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
                   ],
                 },
               ],
             },
           ],
-          "Next": "cond = await task()",
         },
       ],
       "Default": "return null",
@@ -18441,65 +19865,85 @@ Object {
     "while (cond === null)": Object {
       "Choices": Array [
         Object {
-          "And": Array [
+          "Next": "cond = await task()",
+          "Or": Array [
             Object {
-              "IsPresent": true,
-              "Variable": "$.cond",
+              "And": Array [
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.cond",
+                },
+                Object {
+                  "IsPresent": false,
+                  "Variable": "$.fnl_context.null",
+                },
+              ],
             },
             Object {
-              "Or": Array [
+              "And": Array [
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.cond",
-                    },
-                    Object {
-                      "IsNull": true,
-                      "Variable": "$.fnl_context.null",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.cond",
                 },
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.cond",
-                    },
-                    Object {
-                      "StringEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
-                    },
-                  ],
+                  "IsPresent": true,
+                  "Variable": "$.fnl_context.null",
                 },
                 Object {
-                  "And": Array [
+                  "Or": Array [
                     Object {
-                      "IsBoolean": true,
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "IsNull": true,
+                          "Variable": "$.fnl_context.null",
+                        },
+                      ],
                     },
                     Object {
-                      "BooleanEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "StringEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
-                  ],
-                },
-                Object {
-                  "And": Array [
                     Object {
-                      "IsNumeric": true,
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "BooleanEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
                     Object {
-                      "NumericEqualsPath": "$.fnl_context.null",
-                      "Variable": "$.cond",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.cond",
+                        },
+                        Object {
+                          "NumericEqualsPath": "$.fnl_context.null",
+                          "Variable": "$.cond",
+                        },
+                      ],
                     },
                   ],
                 },
               ],
             },
           ],
-          "Next": "cond = await task()",
         },
       ],
       "Default": "return null",
