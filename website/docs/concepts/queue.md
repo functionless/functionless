@@ -5,12 +5,20 @@ sidebar_position: 5.5
 
 # Queue
 
-## Create a Queue
-
 With a `Queue` you can send, store, and receive messages between software components at any volume, without losing messages or requiring other services to be available.
+
+## Create a Queue
 
 ```ts
 const queue = new Queue<string>(this, "Queue");
+```
+
+## Create a FIFO Queue
+
+```ts
+const queue = new Queue<string>(this, "Queue", {
+  fifo: true,
+});
 ```
 
 ## Producer-Consumer Pattern
