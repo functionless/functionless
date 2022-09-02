@@ -281,6 +281,17 @@ export interface $SFN {
    */
   unique<T>(arr: T[]): T[];
   /**
+   * States.ArrayGetItem returns a specified index's value of an array.
+   *
+   * ```ts
+   * SFN.getItem([1,2,3,3,4,4,5,5], 0); // 1
+   * ```
+   *
+   * @param arr - array of values to access.
+   * @param index - array index to retrieve.
+   */
+  getItem<T>(arr: T[], index: number): T;
+  /**
    * Use the `base64Encode` intrinsic function to encode data based on MIME Base64 encoding scheme.
    * You can use this function to pass data to other AWS services without using an AWS Lambda function.
    *
@@ -539,6 +550,39 @@ export const $SFN = {
             `States.ArrayUnique(${arrayOut.jsonPath})`
           );
         });
+      },
+    }
+  ),
+  getItem: makeStepFunctionIntegration<"States.GetItem", $SFN["getItem"]>(
+    "States.GetItem",
+    {
+      asl(call, context) {
+        const [arr, index] = call.args;
+
+        if (!arr || !index) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Expected GetItem array and index arguments to be provided."
+          );
+        }
+
+        return context.evalContext(
+          call,
+          ({ evalExprToJsonPath, evalExprToJsonPathOrLiteral }) => {
+            const arrOut = evalExprToJsonPath(arr.expr);
+            const indexOut = evalExprToJsonPathOrLiteral(index.expr);
+
+            assertLiteralNumberOrJsonPath(indexOut, "States.GetItem", "index");
+
+            return context.assignJsonPathOrIntrinsic(
+              `States.ArrayGetItem(${arrOut.jsonPath}, ${
+                ASLGraph.isLiteralValue(indexOut)
+                  ? indexOut.value
+                  : indexOut.jsonPath
+              })`
+            );
+          }
+        );
       },
     }
   ),
