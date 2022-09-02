@@ -442,6 +442,23 @@ test("$AWS.DynamoDB.* with non-ReferenceExpr Table property", () => {
   );
 });
 
+// see https://github.com/functionless/functionless/issues/458
+test("$AWS.DynamoDB.* with PropAccessExpr reference to constructor parameter", () => {
+  class Foo {
+    constructor(props: { bookingsTable: typeof table }) {
+      new Function<any, any>(stack, "Foo", async (event) => {
+        await $AWS.DynamoDB.PutItem({
+          Table: props.bookingsTable,
+          Item: {
+            pk: { S: event.reservation.trip_id },
+          },
+        });
+      });
+    }
+  }
+  new Foo({ bookingsTable: table });
+});
+
 test("$AWS.DynamoDB.* with ShorthandPropAssign", () => {
   const Table = table;
   new Function(

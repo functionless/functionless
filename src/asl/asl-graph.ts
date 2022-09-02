@@ -51,7 +51,7 @@ export namespace ASLGraph {
   export interface SubState {
     startState: string;
     node?: FunctionlessNode;
-    states: { [stateName: string]: ASLGraph.NodeState | ASLGraph.SubState };
+    states: Record<string, ASLGraph.NodeState | ASLGraph.SubState>;
   }
 
   export const isStateOrSubState = anyOf(isState, ASLGraph.isSubState);
@@ -61,7 +61,7 @@ export namespace ASLGraph {
    *
    * The node is used to name the state.
    */
-  export type NodeState<S extends State = State> = S & {
+  export type NodeState = State & {
     node?: FunctionlessNode;
   };
 
@@ -832,7 +832,7 @@ export namespace ASLGraph {
    * {@link ASLGraph.ConditionOutput} must be first turned into a {@link ASLGraph.JsonPath}.
    */
   export function passWithInput(
-    pass: Omit<NodeState<Pass>, "Parameters" | "InputPath" | "Result"> &
+    pass: Omit<NodeState & Pass, "Parameters" | "InputPath" | "Result"> &
       CommonFields,
     value: Exclude<ASLGraph.Output, ASLGraph.ConditionOutput>
   ): Pass {

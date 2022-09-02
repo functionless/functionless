@@ -2855,10 +2855,49 @@ Object {
       "Type": "Pass",
     },
     "1__return await $SFN.map(input.value, function ({ value: b, arr: [ c ] })). 1": Object {
-      "InputPath": "$.heap3",
+      "ItemsPath": "$.heap3",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 1",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default",
+            "Type": "Choice",
+          },
+          "assign__Default": Object {
+            "End": true,
+            "InputPath": "$.heap6.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 1": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default",
+            "ResultPath": "$.heap6.str",
+            "Type": "Pass",
+          },
+          "format__Default": Object {
+            "Next": "assign__Default",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap6",
+            "Type": "Pass",
+          },
+        },
+      },
       "Next": "hasNext__1__return await $SFN.map(input.value, function ({ value: b, arr: [",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
       "ResultPath": "$.heap4",
-      "Type": "Pass",
+      "Type": "Map",
     },
     "Initialize Functionless Context": Object {
       "Next": "return await $SFN.map(input.value, function ({ value: b, arr: [ c ] })).joi",
@@ -3129,10 +3168,49 @@ Object {
       "Type": "Pass",
     },
     "1__return input.value.map(function ({ value: b, arr: [ c ] })).join() 1": Object {
-      "InputPath": "$.heap0",
+      "ItemsPath": "$.heap0",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 1",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default",
+            "Type": "Choice",
+          },
+          "assign__Default": Object {
+            "End": true,
+            "InputPath": "$.heap6.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 1": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default",
+            "ResultPath": "$.heap6.str",
+            "Type": "Pass",
+          },
+          "format__Default": Object {
+            "Next": "assign__Default",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap6",
+            "Type": "Pass",
+          },
+        },
+      },
       "Next": "hasNext__1__return input.value.map(function ({ value: b, arr: [ c ] })).joi",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
       "ResultPath": "$.heap4",
-      "Type": "Pass",
+      "Type": "Map",
     },
     "Initialize Functionless Context": Object {
       "Next": "return input.value.map(function ({ value: b, arr: [ c ] })).join()",
@@ -3300,10 +3378,49 @@ Object {
       "Type": "Pass",
     },
     "1__return [1, 2, 3].map(function ()).join() 1": Object {
-      "InputPath": "$.heap1",
+      "ItemsPath": "$.heap1",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "Choices": Array [
+              Object {
+                "IsString": true,
+                "Next": "assign__Default 1",
+                "Variable": "$.item",
+              },
+            ],
+            "Default": "format__Default",
+            "Type": "Choice",
+          },
+          "assign__Default": Object {
+            "End": true,
+            "InputPath": "$.heap7.str",
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+          "assign__Default 1": Object {
+            "InputPath": "$.item",
+            "Next": "assign__Default",
+            "ResultPath": "$.heap7.str",
+            "Type": "Pass",
+          },
+          "format__Default": Object {
+            "Next": "assign__Default",
+            "Parameters": Object {
+              "str.$": "States.JsonToString($.item)",
+            },
+            "ResultPath": "$.heap7",
+            "Type": "Pass",
+          },
+        },
+      },
       "Next": "hasNext__1__return [1, 2, 3].map(function ()).join() 1",
+      "Parameters": Object {
+        "item.$": "$$.Map.Item.Value",
+      },
       "ResultPath": "$.heap5",
-      "Type": "Pass",
+      "Type": "Map",
     },
     "1__return [1, 2, 3].map(function ()).join() 2": Object {
       "Next": "check__1__return [1, 2, 3].map(function ()).join() 2",
