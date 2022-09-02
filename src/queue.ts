@@ -8,7 +8,7 @@ import lambda from "aws-lambda";
 import { Construct } from "constructs";
 import { EventBusTargetIntegration } from "./event-bridge";
 import { makeEventBusIntegration } from "./event-bridge/event-bus";
-import { EventSource } from "./event-source";
+import { EventSource, IEventSource } from "./event-source";
 import { SQSClient } from "./function-prewarm";
 import { Integration, makeIntegration } from "./integration";
 import { Iterable } from "./iterable";
@@ -288,7 +288,7 @@ abstract class BaseQueue<Message>
     QueueProps<Message>,
     lambda.SQSEvent,
     SQSEvent<Message>,
-    lambda.SQSBatchResponse,
+    lambda.SQSBatchResponse | void,
     aws_lambda_event_sources.SqsEventSourceProps
   >
   implements
@@ -515,8 +515,6 @@ abstract class BaseQueue<Message>
    *   })
    * });
    * ```
-   *
-   * @returns
    */
   public messages(): Iterable<
     Message,
@@ -526,14 +524,32 @@ abstract class BaseQueue<Message>
     lambda.SQSBatchResponse,
     aws_lambda_event_sources.SqsEventSourceProps
   > {
+    const config: aws_lambda_event_sources.SqsEventSourceProps = {
+      reportBatchItemFailures: true,
+    };
     return new Iterable<
       Message,
       lambda.SQSEvent,
       SQSEvent<Message>,
       SQSRecord<Message>,
       lambda.SQSBatchResponse,
-      aws_lambda_event_sources.SqsEventSourceProps
-    >(this, (event) => event);
+      Omit<
+        aws_lambda_event_sources.SqsEventSourceProps,
+        "reportBatchItemFailures"
+      >
+    >(
+      this as IEventSource<
+        lambda.SQSEvent,
+        SQSEvent<Message>,
+        lambda.SQSBatchResponse,
+        Omit<
+          aws_lambda_event_sources.SqsEventSourceProps,
+          "reportBatchItemFailures"
+        >
+      >,
+      (event) => event,
+      config
+    );
   }
 
   /**

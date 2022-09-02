@@ -779,7 +779,11 @@ export class Iterable<
       ParsedRecord,
       ParsedEvent,
       RawEvent
-    >
+    >,
+    /**
+     * Properties that are required to be specified on the EventSourceConfig.
+     */
+    private readonly requiredEventSourceConfig: Partial<EventSourceConfig>
   ) {}
 
   /**
@@ -836,7 +840,7 @@ export class Iterable<
     Response,
     EventSourceConfig
   > {
-    return new Iterable(this, callbackfn);
+    return new Iterable(this, callbackfn, this.requiredEventSourceConfig);
   }
 
   /**
@@ -1209,43 +1213,52 @@ export class Iterable<
 
     const getPayload = source.createGetPayload();
 
-    return this.getSource().onEvent(scope, id, props, async (event, raw) => {
-      return handleResponse(
-        (
-          await Promise.all(
-            event.Records.map(async (record) => {
-              const payload = getPayload(record);
-              try {
-                let items: any[] = [payload];
-                for (const func of chain) {
-                  items = (
-                    await Promise.all(
-                      items.map((item) =>
-                        awaitIfPromise(func(item, record, event, raw))
+    return this.getSource().onEvent(
+      scope,
+      id,
+      {
+        ...props,
+        // overwrite all the required props assumed by the Iterable implementation
+        ...this.requiredEventSourceConfig,
+      },
+      async (event, raw) => {
+        return handleResponse(
+          (
+            await Promise.all(
+              event.Records.map(async (record) => {
+                const payload = getPayload(record);
+                try {
+                  let items: any[] = [payload];
+                  for (const func of chain) {
+                    items = (
+                      await Promise.all(
+                        items.map((item) =>
+                          awaitIfPromise(func(item, record, event, raw))
+                        )
                       )
-                    )
-                  ).flat(1);
-                }
+                    ).flat(1);
+                  }
 
-                await Promise.all(
-                  items.map(async (item) =>
-                    awaitIfPromise(processFunc(item, record, event, raw))
-                  )
-                );
-                return undefined;
-              } catch (err) {
-                // TODO: is it safe to always log user-errors? Should this be enabled/disabled?
-                console.error(err);
-                return record;
-              }
-            })
+                  await Promise.all(
+                    items.map(async (item) =>
+                      awaitIfPromise(processFunc(item, record, event, raw))
+                    )
+                  );
+                  return undefined;
+                } catch (err) {
+                  // TODO: is it safe to always log user-errors? Should this be enabled/disabled?
+                  console.error(err);
+                  return record;
+                }
+              })
+            )
+          ).filter(
+            (record): record is Exclude<typeof record, undefined> =>
+              record !== undefined
           )
-        ).filter(
-          (record): record is Exclude<typeof record, undefined> =>
-            record !== undefined
-        )
-      );
-    });
+        );
+      }
+    );
   }
 
   /**
