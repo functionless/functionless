@@ -75,6 +75,7 @@ export const IAM_SERVICE_PREFIX: Record<keyof SDK, string> = {
   ConnectCampaigns: "connect-campaigns",
   ConnectContactLens: "connect",
   ConnectParticipant: "connect",
+  ControlTower: "controltower",
   CostExplorer: "ce",
   CUR: "cur",
   CustomerProfiles: "profile",
