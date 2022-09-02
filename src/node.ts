@@ -16,7 +16,6 @@ import type { Err } from "./error";
 import type {
   Expr,
   ImportKeyword,
-  NoSubstitutionTemplateLiteralExpr,
   SuperKeyword,
   TemplateHead,
   TemplateMiddle,
@@ -57,7 +56,6 @@ export type FunctionlessNode =
   | Err
   | BindingPattern
   | ImportKeyword
-  | NoSubstitutionTemplateLiteralExpr
   | SuperKeyword
   | TemplateHead
   | TemplateMiddle
@@ -187,7 +185,7 @@ export abstract class BaseNode<
     if (this.parent === undefined) {
       return undefined;
     } else if (is(this.parent)) {
-      return this.parent;
+      return this.parent as unknown as N;
     } else {
       return this.parent.findParent(is);
     }
@@ -212,7 +210,7 @@ export abstract class BaseNode<
    */
   public findCatchClause(): CatchClause | undefined {
     if (isBlockStmt(this) && (this as unknown as BlockStmt).isFinallyBlock()) {
-      return this.parent!.findCatchClause();
+      return this.parent.findCatchClause();
     }
     const scope = this.parent;
     if (scope === undefined) {
