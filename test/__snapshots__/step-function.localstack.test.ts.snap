@@ -23654,7 +23654,7 @@ Object {
       "Parameters": Object {
         "out.$": "States.ArrayUnique($.input.arr)",
       },
-      "ResultPath": "$.heap33",
+      "ResultPath": "$.heap40",
       "Type": "Pass",
     },
     "10__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
@@ -23699,7 +23699,7 @@ Object {
     },
     "19__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
       "InputPath": "$.heap29.out",
-      "Next": "input.arr",
+      "Next": "[1, 2, 3, 4].includes(2)",
       "ResultPath": "$.heap30",
       "Type": "Pass",
     },
@@ -23786,12 +23786,12 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "array__1__$SFN.unique(input.arr)",
-          "Variable": "$.heap33.out[0]",
+          "Variable": "$.heap40.out[0]",
         },
         Object {
           "IsPresent": true,
           "Next": "object__1__$SFN.unique(input.arr)",
-          "Variable": "$.heap33.out['length']",
+          "Variable": "$.heap40.out['length']",
         },
       ],
       "Default": "stringify__1__$SFN.unique(input.arr)",
@@ -23805,6 +23805,14 @@ Object {
       "ResultPath": "$.heap16",
       "Type": "Pass",
     },
+    "1__[1, 2, 3, 4].includes(2)": Object {
+      "Next": "21__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": Object {
+        "out.$": "States.ArrayContains($.heap31, 2)",
+      },
+      "ResultPath": "$.heap32",
+      "Type": "Pass",
+    },
     "1__return nn": Object {
       "InputPath": "$.heap10.string",
       "Next": "handleResult__1__$SFN.range(input.range.start, input.range.end, input.range",
@@ -23816,21 +23824,24 @@ Object {
       "Parameters": Object {
         "base64.$": "$.heap22",
         "base64Ref.$": "$.heap25",
-        "emptyLength.$": "$.heap39",
+        "emptyLength.$": "$.heap46",
         "hash.$": "$.heap28",
         "hashRef.$": "$.heap30",
+        "includes.$": "$.heap33",
+        "includesRes.$": "$.heap35",
         "length": 4,
-        "lengthObj.$": "$.heap37",
-        "lengthRef.$": "$.heap32",
+        "lengthObj.$": "$.heap44",
+        "lengthRef.$": "$.heap39",
+        "notIncludesRes.$": "$.heap37",
         "partition.$": "$.heap2",
         "partitionRef.$": "$.heap4",
         "range.$": "$.heap6",
         "rangeRef.$": "$.heap14",
-        "slice.$": "$.heap40",
-        "sliceRef.$": "$.heap42",
-        "sliceRefStart.$": "$.heap44",
+        "slice.$": "$.heap47",
+        "sliceRef.$": "$.heap49",
+        "sliceRefStart.$": "$.heap51",
         "unique.$": "$.heap17",
-        "uniqueLength.$": "$.heap35",
+        "uniqueLength.$": "$.heap42",
         "uniqueRef.$": "$.heap19",
       },
       "ResultPath": "$",
@@ -23851,33 +23862,49 @@ Object {
       "Type": "Pass",
     },
     "21__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
-      "InputPath": "$.heap31.val",
-      "Next": "$SFN.unique(input.arr)",
-      "ResultPath": "$.heap32",
+      "InputPath": "$.heap32.out",
+      "Next": "22__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap33",
+      "Type": "Pass",
+    },
+    "22__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "Next": "23__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": Object {
+        "out.$": "States.ArrayContains($.input.arr, $.input.part)",
+      },
+      "ResultPath": "$.heap34",
       "Type": "Pass",
     },
     "23__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
-      "InputPath": "$.heap34.val",
-      "Next": "input.lengthObj",
+      "InputPath": "$.heap34.out",
+      "Next": "24__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "ResultPath": "$.heap35",
       "Type": "Pass",
     },
+    "24__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "Next": "25__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": Object {
+        "out.$": "States.ArrayContains($.input.arr, 'a')",
+      },
+      "ResultPath": "$.heap36",
+      "Type": "Pass",
+    },
     "25__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
-      "InputPath": "$.heap36.val",
-      "Next": "input.emptyArr",
+      "InputPath": "$.heap36.out",
+      "Next": "input.arr",
       "ResultPath": "$.heap37",
       "Type": "Pass",
     },
     "27__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
       "InputPath": "$.heap38.val",
-      "Next": "28__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Next": "$SFN.unique(input.arr)",
       "ResultPath": "$.heap39",
       "Type": "Pass",
     },
-    "28__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
-      "InputPath": "$.input.arr[1:3]",
-      "Next": "input.arr.slice(input.part, input.end)",
-      "ResultPath": "$.heap40",
+    "29__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.heap41.val",
+      "Next": "input.lengthObj",
+      "ResultPath": "$.heap42",
       "Type": "Pass",
     },
     "2__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ": Object {
@@ -23888,16 +23915,34 @@ Object {
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
-    "30__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
-      "InputPath": "$.heap41.arr[1:]",
-      "Next": "input.arr.slice(input.end)",
-      "ResultPath": "$.heap42",
+    "31__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.heap43.val",
+      "Next": "input.emptyArr",
+      "ResultPath": "$.heap44",
       "Type": "Pass",
     },
-    "32__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
-      "InputPath": "$.heap43.arr[1:]",
+    "33__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.heap45.val",
+      "Next": "34__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap46",
+      "Type": "Pass",
+    },
+    "34__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.input.arr[1:3]",
+      "Next": "input.arr.slice(input.part, input.end)",
+      "ResultPath": "$.heap47",
+      "Type": "Pass",
+    },
+    "36__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.heap48.arr[1:]",
+      "Next": "input.arr.slice(input.end)",
+      "ResultPath": "$.heap49",
+      "Type": "Pass",
+    },
+    "38__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
+      "InputPath": "$.heap50.arr[1:]",
       "Next": "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ",
-      "ResultPath": "$.heap44",
+      "ResultPath": "$.heap51",
       "Type": "Pass",
     },
     "3__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ": Object {
@@ -23963,6 +24008,17 @@ Object {
       "ResultPath": "$.heap15",
       "Type": "Pass",
     },
+    "[1, 2, 3, 4].includes(2)": Object {
+      "Next": "1__[1, 2, 3, 4].includes(2)",
+      "Result": Array [
+        1,
+        2,
+        3,
+        4,
+      ],
+      "ResultPath": "$.heap31",
+      "Type": "Pass",
+    },
     "append__1__$SFN.range(input.range.start, input.range.end, input.range.step)": Object {
       "Next": "tail__1__$SFN.range(input.range.start, input.range.end, input.range.step).m 1",
       "Parameters": Object {
@@ -23972,53 +24028,53 @@ Object {
       "Type": "Pass",
     },
     "array__1__$SFN.unique(input.arr)": Object {
-      "Next": "23__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Next": "29__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "Parameters": Object {
-        "val.$": "States.ArrayLength($.heap33.out)",
+        "val.$": "States.ArrayLength($.heap40.out)",
       },
-      "ResultPath": "$.heap34",
+      "ResultPath": "$.heap41",
       "Type": "Pass",
     },
     "array__input.arr": Object {
-      "Next": "21__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
-      "Parameters": Object {
-        "val.$": "States.ArrayLength($.input.arr)",
-      },
-      "ResultPath": "$.heap31",
-      "Type": "Pass",
-    },
-    "array__input.emptyArr": Object {
       "Next": "27__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "Parameters": Object {
-        "val.$": "States.ArrayLength($.input.emptyArr)",
+        "val.$": "States.ArrayLength($.input.arr)",
       },
       "ResultPath": "$.heap38",
       "Type": "Pass",
     },
+    "array__input.emptyArr": Object {
+      "Next": "33__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": Object {
+        "val.$": "States.ArrayLength($.input.emptyArr)",
+      },
+      "ResultPath": "$.heap45",
+      "Type": "Pass",
+    },
     "array__input.lengthObj": Object {
-      "Next": "25__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Next": "31__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "Parameters": Object {
         "val.$": "States.ArrayLength($.input.lengthObj)",
       },
-      "ResultPath": "$.heap36",
+      "ResultPath": "$.heap43",
       "Type": "Pass",
     },
     "assignAndTail__input.arr.slice(input.end)": Object {
       "Next": "checkRange__input.arr.slice(input.end)",
       "Parameters": Object {
-        "indices.$": "$.heap43.indices[1:]",
-        "str.$": "States.Format('{},{}', $.heap43.str, States.JsonToString(States.ArrayGetItem($.input.arr, $.heap43.indices[0])))",
+        "indices.$": "$.heap50.indices[1:]",
+        "str.$": "States.Format('{},{}', $.heap50.str, States.JsonToString(States.ArrayGetItem($.input.arr, $.heap50.indices[0])))",
       },
-      "ResultPath": "$.heap43",
+      "ResultPath": "$.heap50",
       "Type": "Pass",
     },
     "assignAndTail__input.arr.slice(input.part, input.end)": Object {
       "Next": "checkRange__input.arr.slice(input.part, input.end)",
       "Parameters": Object {
-        "indices.$": "$.heap41.indices[1:]",
-        "str.$": "States.Format('{},{}', $.heap41.str, States.JsonToString(States.ArrayGetItem($.input.arr, $.heap41.indices[0])))",
+        "indices.$": "$.heap48.indices[1:]",
+        "str.$": "States.Format('{},{}', $.heap48.str, States.JsonToString(States.ArrayGetItem($.input.arr, $.heap48.indices[0])))",
       },
-      "ResultPath": "$.heap41",
+      "ResultPath": "$.heap48",
       "Type": "Pass",
     },
     "checkRange__input.arr.slice(input.end)": Object {
@@ -24026,7 +24082,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "assignAndTail__input.arr.slice(input.end)",
-          "Variable": "$.heap43.indices[0]",
+          "Variable": "$.heap50.indices[0]",
         },
       ],
       "Default": "final__input.arr.slice(input.end)",
@@ -24037,7 +24093,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "assignAndTail__input.arr.slice(input.part, input.end)",
-          "Variable": "$.heap41.indices[0]",
+          "Variable": "$.heap48.indices[0]",
         },
       ],
       "Default": "final__input.arr.slice(input.part, input.end)",
@@ -24049,11 +24105,11 @@ Object {
           "And": Array [
             Object {
               "IsString": true,
-              "Variable": "$.heap34.val.str",
+              "Variable": "$.heap41.val.str",
             },
             Object {
               "StringEquals": "[]",
-              "Variable": "$.heap34.val.str",
+              "Variable": "$.heap41.val.str",
             },
           ],
           "Next": "array__1__$SFN.unique(input.arr)",
@@ -24068,11 +24124,11 @@ Object {
           "And": Array [
             Object {
               "IsString": true,
-              "Variable": "$.heap31.val.str",
+              "Variable": "$.heap38.val.str",
             },
             Object {
               "StringEquals": "[]",
-              "Variable": "$.heap31.val.str",
+              "Variable": "$.heap38.val.str",
             },
           ],
           "Next": "array__input.arr",
@@ -24087,11 +24143,11 @@ Object {
           "And": Array [
             Object {
               "IsString": true,
-              "Variable": "$.heap38.val.str",
+              "Variable": "$.heap45.val.str",
             },
             Object {
               "StringEquals": "[]",
-              "Variable": "$.heap38.val.str",
+              "Variable": "$.heap45.val.str",
             },
           ],
           "Next": "array__input.emptyArr",
@@ -24106,11 +24162,11 @@ Object {
           "And": Array [
             Object {
               "IsString": true,
-              "Variable": "$.heap36.val.str",
+              "Variable": "$.heap43.val.str",
             },
             Object {
               "StringEquals": "[]",
-              "Variable": "$.heap36.val.str",
+              "Variable": "$.heap43.val.str",
             },
           ],
           "Next": "array__input.lengthObj",
@@ -24139,19 +24195,19 @@ Object {
       "Type": "Pass",
     },
     "final__input.arr.slice(input.end)": Object {
-      "Next": "32__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Next": "38__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "Parameters": Object {
-        "arr.$": "States.StringToJson(States.Format('{}]',$.heap43.str))",
+        "arr.$": "States.StringToJson(States.Format('{}]',$.heap50.str))",
       },
-      "ResultPath": "$.heap43",
+      "ResultPath": "$.heap50",
       "Type": "Pass",
     },
     "final__input.arr.slice(input.part, input.end)": Object {
-      "Next": "30__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Next": "36__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "Parameters": Object {
-        "arr.$": "States.StringToJson(States.Format('{}]',$.heap41.str))",
+        "arr.$": "States.StringToJson(States.Format('{}]',$.heap48.str))",
       },
-      "ResultPath": "$.heap41",
+      "ResultPath": "$.heap48",
       "Type": "Pass",
     },
     "handleResult__1__$SFN.range(input.range.start, input.range.end, input.range": Object {
@@ -24230,7 +24286,7 @@ Object {
         "indices.$": "States.ArrayRange($.input.end, States.MathAdd(States.ArrayLength($.input.arr), -1), 1)",
         "str": "[null",
       },
-      "ResultPath": "$.heap43",
+      "ResultPath": "$.heap50",
       "Type": "Pass",
     },
     "input.arr.slice(input.part, input.end)": Object {
@@ -24239,7 +24295,7 @@ Object {
         "indices.$": "States.ArrayRange($.input.part, States.MathAdd($.input.end, -1), 1)",
         "str": "[null",
       },
-      "ResultPath": "$.heap41",
+      "ResultPath": "$.heap48",
       "Type": "Pass",
     },
     "input.emptyArr": Object {
@@ -24289,27 +24345,27 @@ Object {
       "Type": "Pass",
     },
     "object__1__$SFN.unique(input.arr)": Object {
-      "InputPath": "$.heap33.out.length",
-      "Next": "23__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
-      "ResultPath": "$.heap34.val",
+      "InputPath": "$.heap40.out.length",
+      "Next": "29__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap41.val",
       "Type": "Pass",
     },
     "object__input.arr": Object {
       "InputPath": "$.input.arr.length",
-      "Next": "21__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
-      "ResultPath": "$.heap31.val",
-      "Type": "Pass",
-    },
-    "object__input.emptyArr": Object {
-      "InputPath": "$.input.emptyArr.length",
       "Next": "27__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "ResultPath": "$.heap38.val",
       "Type": "Pass",
     },
+    "object__input.emptyArr": Object {
+      "InputPath": "$.input.emptyArr.length",
+      "Next": "33__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap45.val",
+      "Type": "Pass",
+    },
     "object__input.lengthObj": Object {
       "InputPath": "$.input.lengthObj.length",
-      "Next": "25__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
-      "ResultPath": "$.heap36.val",
+      "Next": "31__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap43.val",
       "Type": "Pass",
     },
     "return nn": Object {
@@ -24346,9 +24402,9 @@ Object {
     "stringify__1__$SFN.unique(input.arr)": Object {
       "Next": "checkString__1__$SFN.unique(input.arr)",
       "Parameters": Object {
-        "str.$": "States.JsonToString($.heap33.out)",
+        "str.$": "States.JsonToString($.heap40.out)",
       },
-      "ResultPath": "$.heap34.val",
+      "ResultPath": "$.heap41.val",
       "Type": "Pass",
     },
     "stringify__input.arr": Object {
@@ -24356,7 +24412,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.arr)",
       },
-      "ResultPath": "$.heap31.val",
+      "ResultPath": "$.heap38.val",
       "Type": "Pass",
     },
     "stringify__input.emptyArr": Object {
@@ -24364,7 +24420,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.emptyArr)",
       },
-      "ResultPath": "$.heap38.val",
+      "ResultPath": "$.heap45.val",
       "Type": "Pass",
     },
     "stringify__input.lengthObj": Object {
@@ -24372,7 +24428,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.lengthObj)",
       },
-      "ResultPath": "$.heap36.val",
+      "ResultPath": "$.heap43.val",
       "Type": "Pass",
     },
     "tail__1__$SFN.range(input.range.start, input.range.end, input.range.step).m 1": Object {

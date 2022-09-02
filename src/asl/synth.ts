@@ -179,7 +179,9 @@ export interface EvalExprContext {
  * @param context - some helper functions specific to the evaluation context.
  * @returns a state with output or output to be merged into the other states generated during evaluation.
  */
-type EvalContextHandler = (context: EvalContextContext) => ASLGraph.NodeResults;
+type EvalContextHandler<T extends ASLGraph.NodeResults> = (
+  context: EvalContextContext
+) => T;
 
 export interface EvalContextContext {
   /**
@@ -1540,11 +1542,11 @@ export class ASL {
    * @param handler - A handler callback which receives the contextual `evalExpr` function. The out of this handler will be
    *                  joined with any SubStates created from the `evalExpr` function.
    */
-  public evalContext(
+  public evalContext<T extends ASLGraph.NodeResults>(
     contextNode: FunctionlessNode,
-    handler: EvalContextHandler
-  ): ASLGraph.NodeResults {
-    const [handlerState, states] = this.evalContextBase(handler);
+    handler: EvalContextHandler<T>
+  ): T {
+    const [handlerState, states] = this.evalContextBase<T>(handler);
     const handlerStateOutput = ASLGraph.getAslStateOutput(handlerState);
 
     const joined = ASLGraph.joinSubStates(contextNode, ...states, handlerState);
@@ -1822,10 +1824,9 @@ export class ASL {
         return this.filterToStateOutput(expr);
       } else if (isJoin(expr)) {
         return this.joinToStateOutput(expr);
-      }
-      // else if (isIncludes(expr)) {
-      // }
-      else if (isPromiseAll(expr)) {
+      } else if (isIncludes(expr)) {
+        return this.includesToASLGraph(expr);
+      } else if (isPromiseAll(expr)) {
         const values = expr.args[0]?.expr;
         if (values) {
           return this.eval(values);
@@ -3312,25 +3313,73 @@ export class ASL {
     );
   }
 
-  // private includesToASLGraph(
-  //   expr: CallExpr & {
-  //     expr: PropAccessExpr;
-  //   }
-  // ) {
-  //   const [valueArg, startIndex] = expr.args;
+  private includesToASLGraph(
+    expr: CallExpr & {
+      expr: PropAccessExpr;
+    }
+  ) {
+    const [valueArg, startIndex] = expr.args;
 
-  //   if (!valueArg) {
-  //     throw new SynthError(
-  //       ErrorCodes.Invalid_Input,
-  //       "Expected includes() searchElement argument to exist."
-  //     );
-  //   }
+    if (!valueArg) {
+      throw new SynthError(
+        ErrorCodes.Invalid_Input,
+        "Expected includes() searchElement argument to exist."
+      );
+    }
 
-  //   this.evalContext(expr, ({ evalExprToJsonPathOrLiteral }) => {
-  //     const valueOutput = evalExprToJsonPathOrLiteral(valueArg?.expr);
-  //     return this.assignJsonPathOrIntrinsic(`States.ArrayContains()`);
-  //   });
-  // }
+    return this.evalContext(
+      expr,
+      ({ evalExprToJsonPath, evalExprToJsonPathOrLiteral, addState }) => {
+        // if there is a start index, compute the sub-array first
+        const subArray = startIndex
+          ? this.subArray(startIndex.expr, expr.expr.expr, startIndex.expr)
+          : // otherwise, evaluate the array to a jsonPath
+            evalExprToJsonPath(expr.expr.expr);
+        const subArrayOutput = ASLGraph.isOutputStateOrSubState(subArray)
+          ? subArray.output
+          : subArray;
+        // if there are states required to generate the sub-array, add them.
+        if (ASLGraph.isStateOrSubState(subArray)) {
+          addState(subArray);
+        }
+
+        // if the sub array is still a literal, turn into a jsonPath.
+        const normSubArray = ASLGraph.isLiteralValue(subArrayOutput)
+          ? this.normalizeOutputToJsonPath(subArrayOutput)
+          : subArrayOutput;
+        if (ASLGraph.isStateOrSubState(normSubArray)) {
+          addState(normSubArray);
+        }
+        const normSubArrayOut = ASLGraph.isJsonPath(normSubArray)
+          ? normSubArray
+          : normSubArray.output;
+
+        // evaluate the search value.
+        const valueOutput = evalExprToJsonPathOrLiteral(valueArg?.expr);
+        const normValue =
+          ASLGraph.isLiteralObject(valueOutput) ||
+          ASLGraph.isLiteralArray(valueOutput)
+            ? this.normalizeOutputToJsonPath(valueOutput)
+            : valueOutput;
+        if (ASLGraph.isStateOrSubState(normValue)) {
+          addState(normValue);
+        }
+        const normValueOutput = ASLGraph.isStateOrSubState(normValue)
+          ? normValue.output
+          : normValue;
+
+        return this.assignJsonPathOrIntrinsic(
+          `States.ArrayContains(${normSubArrayOut.jsonPath}, ${
+            ASLGraph.isLiteralString(normValueOutput)
+              ? `'${normValueOutput.value}'`
+              : ASLGraph.isLiteralValue(normValueOutput)
+              ? normValueOutput.value
+              : normValueOutput.jsonPath
+          })`
+        );
+      }
+    );
+  }
 
   /**
    * Provides a method to sub-array given any combination of reference or literal.
@@ -3342,7 +3391,10 @@ export class ASL {
     array: Expr,
     start?: Expr,
     end?: Expr
-  ): ASLGraph.NodeResults {
+  ):
+    | (ASLGraph.OutputSubState & { output: ASLGraph.JsonPath })
+    | ASLGraph.LiteralValue
+    | ASLGraph.JsonPath {
     return this.evalContext(
       node,
       ({ evalExprToJsonPathOrLiteral, addState }) => {
@@ -4510,17 +4562,17 @@ function isFilter(expr: CallExpr): expr is CallExpr & {
   );
 }
 
-// function isIncludes(expr: CallExpr): expr is CallExpr & {
-//   expr: PropAccessExpr & {
-//     name: "includes";
-//   };
-// } {
-//   return (
-//     isPropAccessExpr(expr.expr) &&
-//     isIdentifier(expr.expr.name) &&
-//     expr.expr.name.name === "includes"
-//   );
-// }
+function isIncludes(expr: CallExpr): expr is CallExpr & {
+  expr: PropAccessExpr & {
+    name: "includes";
+  };
+} {
+  return (
+    isPropAccessExpr(expr.expr) &&
+    isIdentifier(expr.expr.name) &&
+    expr.expr.name.name === "includes"
+  );
+}
 
 function isJsonParse(call: CallExpr): call is CallExpr & {
   expr: PropAccessExpr & {
