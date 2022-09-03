@@ -171,6 +171,16 @@ export interface EvalExprContext {
    * The state will be joined (@see ASLGraph.joinSubStates ) with the previous and next states in the order received.
    */
   addState: (state: ASLGraph.NodeState | ASLGraph.SubState) => void;
+  /**
+   * Returns a {@link ASLGraph.JsonPath} which points to the output value of the evaluated expression.
+   * Any states required are added to the graph in order.
+   *
+   * * If the output was a {@link ASLGraph.LiteralValue}, a new state will be added that turns the literal into a json path.
+   * * If the output was a {@link ASLGraph.JsonPath}, the output is returned.
+   * * If the output was a {@link ASLGraph.ConditionOutput}, a new {@link Choice} state will turn the conditional into a boolean
+   *   and return a {@link ASLGraph.JsonPath}.
+   */
+  normalizeOutputToJsonPath(): ASLGraph.JsonPath;
 }
 
 /**
@@ -225,6 +235,16 @@ export interface EvalContextContext {
     expr: Expr,
     allowUndefined?: boolean
   ) => ASLGraph.JsonPath | ASLGraph.LiteralValue;
+  /**
+   * Returns a {@link ASLGraph.JsonPath} which points to the value of the given output.
+   * Any states required are added to the graph in order.
+   *
+   * * If the output was a {@link ASLGraph.LiteralValue}, a new state will be added that turns the literal into a json path.
+   * * If the output was a {@link ASLGraph.JsonPath}, the output is returned.
+   * * If the output was a {@link ASLGraph.ConditionOutput}, a new {@link Choice} state will turn the conditional into a boolean
+   *   and return a {@link ASLGraph.JsonPath}.
+   */
+  normalizeOutputToJsonPath(output: ASLGraph.Output): ASLGraph.JsonPath;
 }
 
 /**
@@ -1336,18 +1356,9 @@ export class ASL {
       ? [nodeOrHandler, maybeHandler!]
       : [expr, nodeOrHandler];
 
-    return this.evalExpr(expr, node, (output, context) => {
-      const normalizedState = this.normalizeOutputToJsonPath(output);
-
-      if (ASLGraph.isStateOrSubState(normalizedState)) {
-        context.addState(normalizedState);
-      }
-
-      const newOutput = ASLGraph.isStateOrSubState(normalizedState)
-        ? normalizedState.output
-        : normalizedState;
-
-      return handler(newOutput, context);
+    return this.evalExpr(expr, node, (_, context) => {
+      const normalized = context.normalizeOutputToJsonPath();
+      return handler(normalized, context);
     });
   }
 
@@ -1475,6 +1486,13 @@ export class ASL {
       // allows the user to add arbitrary states to the sequence of states
       addState: (state) => {
         states.push(state);
+      },
+      normalizeOutputToJsonPath: () => {
+        const normalized = this.normalizeOutputToJsonPath(output);
+        if (ASLGraph.isStateOrSubState(normalized)) {
+          states.push(normalized);
+        }
+        return ASLGraph.isJsonPath(normalized) ? normalized : normalized.output;
       },
     });
 
@@ -1638,6 +1656,13 @@ export class ASL {
           states.push(normalizedStates);
         }
         return normalizedOutput;
+      },
+      normalizeOutputToJsonPath: (output) => {
+        const normalized = this.normalizeOutputToJsonPath(output);
+        if (ASLGraph.isStateOrSubState(normalized)) {
+          states.push(normalized);
+        }
+        return ASLGraph.isJsonPath(normalized) ? normalized : normalized.output;
       },
     };
     return [handler(context), states];
@@ -1918,7 +1943,11 @@ export class ASL {
                 return lengthAccess;
               }
             }
-            return ASLGraph.accessConstant(output, expr.name.name, false);
+            return ASLGraph.accessConstant(
+              output,
+              { value: expr.name.name, containsJsonPath: false },
+              false
+            );
           });
         } else {
           throw new SynthError(ErrorCodes.Classes_are_not_supported);
@@ -2128,23 +2157,88 @@ export class ASL {
           };
         });
       } else if (expr.op === "in") {
-        return this.evalContext(expr, ({ evalExpr }) => {
-          const left = evalExpr(expr.left);
-          const right = evalExpr(expr.right);
-          const elm = this.getElementAccessConstant(left);
-          return ASLGraph.isLiteralValue(right)
-            ? {
-                value:
-                  right.value &&
-                  typeof right.value === "object" &&
-                  elm in right.value,
-                containsJsonPath: false,
+        return this.evalContext(
+          expr,
+          ({ evalExprToJsonPathOrLiteral, normalizeOutputToJsonPath }) => {
+            const left = evalExprToJsonPathOrLiteral(expr.left);
+            const right = evalExprToJsonPathOrLiteral(expr.right);
+            if (ASLGraph.isLiteralValue(left)) {
+              if (
+                ASLGraph.isLiteralString(left) ||
+                ASLGraph.isLiteralNumber(left)
+              ) {
+                return ASLGraph.isLiteralValue(right)
+                  ? {
+                      value:
+                        right.value &&
+                        typeof right.value === "object" &&
+                        left.value in right.value,
+                      containsJsonPath: false,
+                    }
+                  : ASLGraph.isConditionOutput(right)
+                  ? // `in` is invalid with a boolean value
+                    { value: false, containsJsonPath: false }
+                  : { condition: ASLGraph.elementIn(left, right) };
               }
-            : ASLGraph.isConditionOutput(right)
-            ? // `in` is invalid with a boolean value
-              { value: false, containsJsonPath: false }
-            : { condition: ASLGraph.elementIn(elm, right) };
-        });
+              throw new SynthError(
+                ErrorCodes.StepFunctions_Invalid_collection_access,
+                "Collection element accessor must be a constant string or number"
+              );
+            } else {
+              const normArrayOutput = normalizeOutputToJsonPath(right);
+
+              const arrayLength = this.assignJsonPathOrIntrinsic(
+                `States.ArrayLength(${normArrayOutput.jsonPath})`
+              );
+
+              const _catch = this.throw(expr);
+
+              return this.disambiguateArrayObject(
+                normArrayOutput,
+                {
+                  startState: "length",
+                  states: {
+                    length: ASLGraph.updateDeferredNextStates(
+                      { Next: "check" },
+                      arrayLength
+                    ),
+                    check: this.conditionState(
+                      undefined,
+                      ASL.and(
+                        ASL.numericLessThanPath(
+                          left.jsonPath,
+                          arrayLength.output.jsonPath
+                        ),
+                        ASL.numericGreaterThanEquals(left.jsonPath, 0)
+                      ),
+                      undefined,
+                      undefined,
+                      arrayLength.output.jsonPath
+                    ),
+                  },
+                },
+                _catch
+                  ? {
+                      Type: "Pass",
+                      Parameters: {
+                        error: "Functionless.InvalidAccess",
+                        cause:
+                          "Reference element access is not valid for objects.",
+                      },
+                      ..._catch,
+                    }
+                  : {
+                      Type: "Fail",
+                      Error: "Functionless.InvalidAccess",
+                      Cause:
+                        "Reference element access is not valid for objects.",
+                    },
+                arrayLength.output.jsonPath,
+                true
+              );
+            }
+          }
+        );
       } else if (expr.op === ",") {
         return this.evalContext(expr, ({ evalExpr }) => {
           // eval left and discard the result
@@ -2473,30 +2567,21 @@ export class ASL {
         containsJsonPath: false,
       };
     }
-    return this.evalExprToJsonPathOrLiteral(expr, (output, { addState }) => {
-      // String(var)
-      if (ASLGraph.isJsonPath(output)) {
-        const jsonPathStates = this.normalizeOutputToJsonPath(output);
-        const jsonPath = ASLGraph.isJsonPath(jsonPathStates)
-          ? jsonPathStates
-          : jsonPathStates.output;
-
-        /**
-         * If any states are needed to compute the json path value, add them
-         */
-        if (ASLGraph.isStateOrSubState(jsonPathStates)) {
-          addState(jsonPathStates);
+    return this.evalExprToJsonPathOrLiteral(
+      expr,
+      (output, { normalizeOutputToJsonPath }) => {
+        // String(var)
+        if (ASLGraph.isJsonPath(output)) {
+          return this.jsonPathValueToString(normalizeOutputToJsonPath());
+        } else {
+          // String(1)
+          return {
+            value: String(output.value),
+            containsJsonPath: false,
+          };
         }
-
-        return this.jsonPathValueToString(jsonPath);
-      } else {
-        // String(1)
-        return {
-          value: String(output.value),
-          containsJsonPath: false,
-        };
       }
-    });
+    );
   }
 
   /**
@@ -2912,7 +2997,11 @@ export class ASL {
   ): ASLGraph.NodeResults {
     return this.evalContext(
       expr,
-      ({ evalExpr, evalExprToJsonPathOrLiteral, addState }) => {
+      ({
+        evalExpr,
+        evalExprToJsonPathOrLiteral,
+        normalizeOutputToJsonPath,
+      }) => {
         const separatorArg = expr.args[0]?.expr;
         const valueOutput = evalExpr(expr.expr.expr);
         const separatorOutput = separatorArg
@@ -2958,13 +3047,8 @@ export class ASL {
           };
         }
 
-        const normalized = this.normalizeOutputToJsonPath(valueOutput);
-        if (ASLGraph.isStateOrSubState(normalized)) {
-          addState(normalized);
-        }
-        const { jsonPath: valueJsonPath } = ASLGraph.isJsonPath(normalized)
-          ? normalized
-          : normalized.output;
+        const { jsonPath: valueJsonPath } =
+          normalizeOutputToJsonPath(valueOutput);
 
         const arrayPath = this.newHeapVariable();
         const resultVariable = this.newHeapVariable();
@@ -3329,7 +3413,12 @@ export class ASL {
 
     return this.evalContext(
       expr,
-      ({ evalExprToJsonPath, evalExprToJsonPathOrLiteral, addState }) => {
+      ({
+        evalExprToJsonPath,
+        evalExprToJsonPathOrLiteral,
+        addState,
+        normalizeOutputToJsonPath,
+      }) => {
         // if there is a start index, compute the sub-array first
         const subArray = startIndex
           ? this.subArray(startIndex.expr, expr.expr.expr, startIndex.expr)
@@ -3344,29 +3433,15 @@ export class ASL {
         }
 
         // if the sub array is still a literal, turn into a jsonPath.
-        const normSubArray = ASLGraph.isLiteralValue(subArrayOutput)
-          ? this.normalizeOutputToJsonPath(subArrayOutput)
-          : subArrayOutput;
-        if (ASLGraph.isStateOrSubState(normSubArray)) {
-          addState(normSubArray);
-        }
-        const normSubArrayOut = ASLGraph.isJsonPath(normSubArray)
-          ? normSubArray
-          : normSubArray.output;
+        const normSubArrayOut = normalizeOutputToJsonPath(subArrayOutput);
 
         // evaluate the search value.
         const valueOutput = evalExprToJsonPathOrLiteral(valueArg?.expr);
-        const normValue =
+        const normValueOutput =
           ASLGraph.isLiteralObject(valueOutput) ||
           ASLGraph.isLiteralArray(valueOutput)
-            ? this.normalizeOutputToJsonPath(valueOutput)
+            ? normalizeOutputToJsonPath(valueOutput)
             : valueOutput;
-        if (ASLGraph.isStateOrSubState(normValue)) {
-          addState(normValue);
-        }
-        const normValueOutput = ASLGraph.isStateOrSubState(normValue)
-          ? normValue.output
-          : normValue;
 
         return this.assignJsonPathOrIntrinsic(
           `States.ArrayContains(${normSubArrayOut.jsonPath}, ${
@@ -3397,7 +3472,7 @@ export class ASL {
     | ASLGraph.JsonPath {
     return this.evalContext(
       node,
-      ({ evalExprToJsonPathOrLiteral, addState }) => {
+      ({ evalExprToJsonPathOrLiteral, normalizeOutputToJsonPath }) => {
         const arrayOut = evalExprToJsonPathOrLiteral(array);
         const startOut = start ? evalExprToJsonPathOrLiteral(start) : undefined;
         const endOut = end ? evalExprToJsonPathOrLiteral(end) : undefined;
@@ -3457,15 +3532,7 @@ export class ASL {
         /**
          * Now we need the array to be a runtime reference, normalize it.
          */
-        const normArray = ASLGraph.isLiteralValue(arrayOut)
-          ? this.normalizeOutputToJsonPath(arrayOut)
-          : arrayOut;
-        if (ASLGraph.isStateOrSubState(normArray)) {
-          addState(normArray);
-        }
-        const normArrayOut = ASLGraph.isJsonPath(normArray)
-          ? normArray
-          : normArray.output;
+        const normArrayOut = normalizeOutputToJsonPath(arrayOut);
 
         const workingSpace = this.newHeapVariable();
         return {
@@ -3929,21 +3996,66 @@ export class ASL {
       }
     }
 
-    return this.evalContext(access.element, ({ evalExpr }) => {
-      const elementOutput = evalExpr(access.element);
-      const exprOutput = evalExpr(access.expr);
+    return this.evalContext(
+      access.element,
+      ({ evalExprToJsonPathOrLiteral, normalizeOutputToJsonPath }) => {
+        const elementOutput = evalExprToJsonPathOrLiteral(access.element);
+        const arrayOutput = evalExprToJsonPathOrLiteral(access.expr);
 
-      const accessConstant = this.getElementAccessConstant(elementOutput);
+        if (
+          ASLGraph.isLiteralString(elementOutput) &&
+          elementOutput.value === "length"
+        ) {
+          const lengthAccess = this.accessLengthProperty(arrayOutput);
+          if (lengthAccess) {
+            return lengthAccess;
+          }
+        }
 
-      if (accessConstant === "length") {
-        const lengthAccess = this.accessLengthProperty(exprOutput);
-        if (lengthAccess) {
-          return lengthAccess;
+        if (ASLGraph.isLiteralValue(elementOutput)) {
+          if (
+            ASLGraph.isLiteralString(elementOutput) ||
+            ASLGraph.isLiteralNumber(elementOutput)
+          ) {
+            return ASLGraph.accessConstant(arrayOutput, elementOutput, true);
+          }
+          throw new SynthError(
+            ErrorCodes.StepFunctions_Invalid_collection_access,
+            "Collection element accessor must be a constant string or number"
+          );
+        } else {
+          // if the array is a literal (unlikely), turn it into a json path to access it.
+          const normArrayOutput = normalizeOutputToJsonPath(arrayOutput);
+
+          const accessArray = this.assignJsonPathOrIntrinsic(
+            `States.ArrayGetItem(${normArrayOutput.jsonPath},${elementOutput.jsonPath})`
+          );
+
+          const _catch = this.throw(access);
+
+          return this.disambiguateArrayObject(
+            normArrayOutput,
+            accessArray,
+            _catch
+              ? {
+                  Type: "Pass",
+                  Parameters: {
+                    error: "Functionless.InvalidAccess",
+                    cause: "Reference element access is not valid for objects.",
+                  },
+                  ..._catch,
+                }
+              : {
+                  Type: "Fail",
+                  Error: "Functionless.InvalidAccess",
+                  Cause: "Reference element access is not valid for objects.",
+                },
+            accessArray.output.jsonPath,
+            true
+          );
         }
       }
-
-      return ASLGraph.accessConstant(exprOutput, accessConstant, true);
-    });
+    );
   }
 
   /**
@@ -4770,6 +4882,33 @@ export namespace ASL {
           Variable,
         },
       ],
+    };
+  }
+
+  export function numericLessThan(Variable: string, number: number): Condition {
+    return {
+      NumericLessThan: number,
+      Variable,
+    };
+  }
+
+  export function numericLessThanPath(
+    Variable: string,
+    path: string
+  ): Condition {
+    return {
+      NumericLessThanPath: path,
+      Variable,
+    };
+  }
+
+  export function numericGreaterThanEquals(
+    Variable: string,
+    number: number
+  ): Condition {
+    return {
+      NumericGreaterThanEquals: number,
+      Variable,
     };
   }
 

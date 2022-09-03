@@ -12,6 +12,7 @@ import {
   Table,
   FunctionProps,
   HashAlgorithm,
+  StepFunctionError,
 } from "../src";
 import { makeIntegration } from "../src/integration";
 import { DEPLOY_AWS, localstackTestSuite } from "./localstack";
@@ -398,6 +399,18 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     "intrinsics",
     (parent) => {
       return new StepFunction(parent, "sfn", async (input) => {
+        let objAccess;
+        try {
+          objAccess = input.range[input.key];
+        } catch (err) {
+          objAccess = (<StepFunctionError>err).cause;
+        }
+        let objIn;
+        try {
+          objIn = input.key in input.range;
+        } catch (err) {
+          objIn = (<StepFunctionError>err).cause;
+        }
         return {
           partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4),
           partitionRef: $SFN.partition(input.arr, input.part),
@@ -416,11 +429,13 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           includesRes: input.arr.includes(input.part),
           notIncludesRes: input.arr.includes("a" as unknown as number),
           get: [1, 2, 3, 4][0]!,
-          // we don't support. if an object is dynamically accessed, we would need to fail at runtime as dynamic access for objects is not supported.
-          // Avoiding this for now.
-          // getRef: input.arr[input.part]!,
+          getRef: input.arr[input.part]!,
           getFunc: $SFN.getItem(input.arr, 0),
           getFuncRef: $SFN.getItem(input.arr, input.part),
+          objAccess,
+          inRef: input.part in input.arr,
+          inRefFalse: input.large in input.arr,
+          objIn,
           length: [1, 2, 3, 4].length,
           lengthRef: input.arr.length,
           uniqueLength: $SFN.unique(input.arr).length,
@@ -450,9 +465,13 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       includesRes: true,
       notIncludesRes: false,
       get: 1,
-      // getRef: 3,
+      getRef: 3,
       getFunc: 1,
       getFuncRef: 3,
+      objAccess: "Reference element access is not valid for objects.",
+      inRef: true,
+      inRefFalse: false,
+      objIn: "Reference element access is not valid for objects.",
       length: 4,
       lengthRef: 7,
       uniqueLength: 4,
@@ -467,11 +486,13 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       arr: [1, 2, 3, 1, 2, 3, 4],
       part: 2,
       end: 4,
+      large: 100,
       baseTest: "encodeMe",
       hashTest: "hashMe",
       hashAlgo: "SHA-256" as HashAlgorithm,
       lengthObj: { length: "a" },
       emptyArr: [],
+      key: "start" as const,
     }
   );
 

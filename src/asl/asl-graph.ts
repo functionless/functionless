@@ -1305,7 +1305,7 @@ export namespace ASLGraph {
   }
 
   export function elementIn(
-    element: string | number,
+    element: ASLGraph.LiteralValue<string> | ASLGraph.LiteralValue<number>,
     targetJsonPath: ASLGraph.JsonPath
   ): Condition {
     const accessed = ASLGraph.accessConstant(targetJsonPath, element, true);
@@ -1325,29 +1325,29 @@ export namespace ASLGraph {
    */
   export function accessConstant(
     value: ASLGraph.Output,
-    field: string | number,
+    field: ASLGraph.LiteralValue<string> | ASLGraph.LiteralValue<number>,
     element: boolean
   ): ASLGraph.JsonPath | ASLGraph.LiteralValue {
     if (ASLGraph.isJsonPath(value)) {
-      return typeof field === "number"
-        ? { jsonPath: `${value.jsonPath}[${field}]` }
+      return ASLGraph.isLiteralNumber(field)
+        ? { jsonPath: `${value.jsonPath}[${field.value}]` }
         : element
-        ? { jsonPath: `${value.jsonPath}['${field}']` }
-        : { jsonPath: `${value.jsonPath}.${field}` };
+        ? { jsonPath: `${value.jsonPath}['${field.value}']` }
+        : { jsonPath: `${value.jsonPath}.${field.value}` };
     }
 
     if (ASLGraph.isLiteralValue(value) && value.value) {
       const accessedValue = (() => {
         if (Array.isArray(value.value)) {
-          if (typeof field === "number") {
-            return value.value[field];
+          if (ASLGraph.isLiteralNumber(field)) {
+            return value.value[field.value];
           }
           throw new SynthError(
             ErrorCodes.StepFunctions_Invalid_collection_access,
             "Accessor to an array must be a constant number"
           );
-        } else if (typeof value.value === "object") {
-          return value.value[field];
+        } else if (ASLGraph.isLiteralObject(value)) {
+          return value.value[field.value];
         }
         throw new SynthError(
           ErrorCodes.StepFunctions_Invalid_collection_access,
