@@ -84,7 +84,7 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
         uses: "aws-actions/configure-aws-credentials@v1",
         with: {
           "role-to-assume":
-            "arn:aws:iam::593491530938:role/my-stack-dev-githubactionroleA106E4DC-USDQH3Z4KR9L",
+            "arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4",
           "aws-region": "us-east-1",
           "role-duration-seconds": 30 * 60,
         },

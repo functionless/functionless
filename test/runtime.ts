@@ -213,7 +213,7 @@ export const runtimeTestSuite = (
   });
 
   afterAll(async () => {
-    if (RuntimeTestExecutionContext.destroyStack) {
+    if (stackArtifact && RuntimeTestExecutionContext.destroyStack) {
       await cfnClient?.destroyStack({
         stack: stackArtifact!,
       });
