@@ -274,7 +274,7 @@ project.buildWorkflow.workflow.jobs.build = {
     // @ts-ignore
     ...project.buildWorkflow.workflow.jobs.build.permissions,
     "id-token": "write",
-    contents: "read|write",
+    contents: "write",
   },
 };
 
