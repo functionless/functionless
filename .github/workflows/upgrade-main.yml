@@ -20,6 +20,12 @@ jobs:
           ref: main
       - name: Install dependencies
         run: yarn install --check-files --frozen-lockfile
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::593491530938:role/my-stack-dev-githubactionroleA106E4DC-USDQH3Z4KR9L
+          aws-region: us-east-1
+          role-duration-seconds: 1800
       - name: Upgrade dependencies
         run: npx projen upgrade
       - id: create_patch

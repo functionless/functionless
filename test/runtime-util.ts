@@ -1,6 +1,6 @@
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Lambda, StepFunctions } from "aws-sdk";
-import { clientConfig } from "./localstack";
+import { clientConfig } from "./runtime";
 
 export const localLambda = new Lambda(clientConfig);
 export const localSFN = new StepFunctions({

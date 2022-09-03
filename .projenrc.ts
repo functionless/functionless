@@ -2,6 +2,8 @@ import { readFileSync, writeFileSync, chmodSync } from "fs";
 import { join } from "path";
 import { typescript, TextFile, JsonFile, Project } from "projen";
 import { GithubCredentials } from "projen/lib/github";
+import { JobStep } from "projen/lib/github/workflows-model";
+import { RenderWorkflowSetupOptions } from "projen/lib/javascript";
 
 /**
  * Adds githooks into the .git/hooks folder during projen synth.
@@ -68,6 +70,26 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
     };
 
     writeFileSync(rootPackageJson, `${JSON.stringify(updated, null, 2)}\n`);
+  }
+
+  public renderWorkflowSetup(
+    options?: RenderWorkflowSetupOptions | undefined
+  ): JobStep[] {
+    return [
+      ...super.renderWorkflowSetup(options),
+      // https://github.com/aws-actions/configure-aws-credentials#sample-iam-role-cloudformation-template
+      // the aws-org stacks create an OIDC provider for github.
+      {
+        name: "Configure AWS Credentials",
+        uses: "aws-actions/configure-aws-credentials@v1",
+        with: {
+          "role-to-assume":
+            "arn:aws:iam::593491530938:role/my-stack-dev-githubactionroleA106E4DC-USDQH3Z4KR9L",
+          "aws-region": "us-east-1",
+          "role-duration-seconds": 30 * 60,
+        },
+      },
+    ];
   }
 }
 
@@ -168,7 +190,6 @@ const project = new CustomTypescriptProject({
   },
   gitignore: [".DS_Store", ".dccache", ".swc"],
   releaseToNpm: true,
-
   depsUpgradeOptions: {
     workflowOptions: {
       projenCredentials: GithubCredentials.fromApp(),
@@ -227,10 +248,12 @@ project.testTask.prependExec("./scripts/localstack");
 project.testTask.exec("localstack stop");
 
 project.testTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
-project.testTask.env("DEFAULT_REGION", "ap-northeast-1");
-project.testTask.env("AWS_ACCOUNT_ID", "000000000000");
-project.testTask.env("AWS_ACCESS_KEY_ID", "test");
-project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
+// project.testTask.env("DEFAULT_REGION", "ap-northeast-1");
+// project.testTask.env("AWS_ACCOUNT_ID", "000000000000");
+// project.testTask.env("AWS_ACCESS_KEY_ID", "test");
+// project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
+project.testTask.env("TEST_DEPLOY_TARGET", "AWS");
+project.testTask.env("TEST_DESTROY_STACKS", "1");
 
 const testFast = project.addTask("test:fast");
 testFast.exec(`jest --testPathIgnorePatterns localstack --coverage false`);
@@ -281,5 +304,7 @@ project.eslint!.addOverride({
 
 project.prettier!.addIgnorePattern("coverage");
 project.prettier!.addIgnorePattern("lib");
+
+project.buildWorkflow?.addPostBuildSteps;
 
 project.synth();

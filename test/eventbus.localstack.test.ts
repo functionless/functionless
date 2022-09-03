@@ -2,13 +2,13 @@ import { aws_dynamodb, CfnOutput } from "aws-cdk-lib";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { EventBridge, DynamoDB } from "aws-sdk";
 import { $AWS, EventBus, Event, StepFunction, Table } from "../src";
-import { clientConfig, localstackTestSuite } from "./localstack";
+import { clientConfig, runtimeTestSuite } from "./runtime";
 import { retry } from "./runtime-util";
 
 const EB = new EventBridge(clientConfig);
 const DB = new DynamoDB(clientConfig);
 
-localstackTestSuite("eventBusStack", (testResource) => {
+runtimeTestSuite("eventBusStack", (testResource) => {
   testResource(
     "Create bus",
     (parent) => {

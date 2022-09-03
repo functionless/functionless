@@ -24,7 +24,7 @@ import {
   StepFunction,
   Table,
 } from "../src";
-import { localstackTestSuite } from "./localstack";
+import { runtimeTestSuite } from "./runtime";
 import { testFunction } from "./runtime-util";
 
 // inject the localstack client config into the lambda clients
@@ -60,7 +60,7 @@ interface TestFunctionResource extends TestFunctionBase {
   only: TestFunctionBase;
 }
 
-localstackTestSuite("functionStack", (testResource, _stack, _app) => {
+runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
   const _testFunc: (
     f: typeof testResource | typeof testResource.only
   ) => TestFunctionBase = (f) => (name, func, expected, payload) => {

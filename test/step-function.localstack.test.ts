@@ -12,7 +12,7 @@ import {
   FunctionProps,
 } from "../src";
 import { makeIntegration } from "../src/integration";
-import { localstackTestSuite } from "./localstack";
+import { RuntimeTestExecutionContext, runtimeTestSuite } from "./runtime";
 import { testStepFunction } from "./runtime-util";
 import { normalizeCDKJson } from "./util";
 
@@ -20,9 +20,12 @@ import { normalizeCDKJson } from "./util";
 // without this configuration, the functions will try to hit AWS proper
 const localstackClientConfig: FunctionProps = {
   timeout: Duration.seconds(20),
-  clientConfigRetriever: () => ({
-    endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
-  }),
+  clientConfigRetriever:
+    RuntimeTestExecutionContext.deployTarget === "AWS"
+      ? undefined
+      : () => ({
+          endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
+        }),
 };
 
 interface TestExpressStepFunctionBase {
@@ -55,7 +58,7 @@ interface TestExpressStepFunctionResource extends TestExpressStepFunctionBase {
   only: TestExpressStepFunctionBase;
 }
 
-localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
+runtimeTestSuite("sfnStack", (testResource, _stack, _app) => {
   const _testSfn: (
     f: typeof testResource | typeof testResource.only
   ) => TestExpressStepFunctionBase = (f) => (name, sfn, expected, payload) => {

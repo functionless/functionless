@@ -3,56 +3,72 @@ import { App, CfnOutput, Stack } from "aws-cdk-lib";
 import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
 import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { CloudFormation } from "aws-sdk";
+import AWS, { CloudFormation } from "aws-sdk";
 import { Construct } from "constructs";
 import { asyncSynth } from "../src/async-synth";
 import { Function } from "../src/function";
 
-export const clientConfig = {
-  endpoint: "http://localhost:4566",
-  credentials: {
-    accessKeyId: "test",
-    secretAccessKey: "test",
-  },
-  region: "us-east-1",
-  sslEnabled: false,
-  s3ForcePathStyle: true,
+const isGithub = !!process.env.CI;
+
+// https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
+export const RuntimeTestExecutionContext = {
+  stackSuffix: process.env.GITHUB_REF
+    ? `-${process.env.GITHUB_REF?.replace(/\//g, "-")}`
+    : undefined,
+  // default: false unless CI is set
+  destroyStack: isGithub || !!process.env.TEST_DESTROY_STACKS,
+  // AWS | LOCALSTACK ; default: LOCALSTACK
+  deployTarget: (process.env.TEST_DEPLOY_TARGET ?? "LOCALSTACK") as
+    | "AWS"
+    | "LOCALSTACK",
 };
+
+export const clientConfig =
+  RuntimeTestExecutionContext.deployTarget === "AWS"
+    ? {
+        region: "us-east-1",
+        credentialProvider: new AWS.CredentialProviderChain(
+          AWS.CredentialProviderChain.defaultProviders
+        ),
+      }
+    : {
+        endpoint: "http://localhost:4566",
+        credentials: {
+          accessKeyId: "test",
+          secretAccessKey: "test",
+        },
+        region: "us-east-1",
+        sslEnabled: false,
+        s3ForcePathStyle: true,
+      };
 
 const CF = new CloudFormation(clientConfig);
 
-// Inspiration for the current approach: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
-// Writeup on performance improvements: https://github.com/functionless/functionless/pull/184#issuecomment-1144767427
-export const deployStack = async (app: App, stack: Stack) => {
-  const cloudAssembly = await asyncSynth(app);
-
+async function getCfnClient() {
   const sdkProvider = await SdkProvider.withAwsCliCompatibleDefaults({
     httpOptions: clientConfig as any,
   });
 
-  // @ts-ignore
-  sdkProvider.sdkOptions = {
-    // @ts-ignore
-    ...sdkProvider.sdkOptions,
-    endpoint: clientConfig.endpoint,
-    s3ForcePathStyle: clientConfig.s3ForcePathStyle,
-    accessKeyId: clientConfig.credentials.accessKeyId,
-    secretAccessKey: clientConfig.credentials.secretAccessKey,
-    credentials: clientConfig.credentials,
-  };
+  if (clientConfig) {
+    const credentials = clientConfig.credentialProvider
+      ? await clientConfig.credentialProvider.resolvePromise()
+      : clientConfig.credentials;
+    // @ts-ignore - assigning to private members
+    sdkProvider.sdkOptions = {
+      // @ts-ignore - using private members
+      ...sdkProvider.sdkOptions,
+      endpoint: clientConfig.endpoint,
+      s3ForcePathStyle: clientConfig.s3ForcePathStyle,
+      accessKeyId: credentials.accessKeyId,
+      secretAccessKey: credentials.secretAccessKey,
+      credentials: credentials,
+    };
+  }
 
-  const cfn = new CloudFormationDeployments({
+  return new CloudFormationDeployments({
     sdkProvider,
   });
-
-  const stackArtifact = cloudAssembly.getStackArtifact(
-    stack.artifactId
-  ) as unknown as cxapi.CloudFormationStackArtifact;
-  await cfn.deployStack({
-    stack: stackArtifact,
-    force: true,
-  });
-};
+}
 
 interface ResourceReference<
   Outputs extends Record<string, string>,
@@ -99,7 +115,7 @@ interface TestResource {
   ) => void;
 }
 
-export const localstackTestSuite = (
+export const runtimeTestSuite = (
   stackName: string,
   fn: (testResource: TestResource, stack: Stack, app: App) => void
 ) => {
@@ -107,19 +123,33 @@ export const localstackTestSuite = (
 
   const tests: ResourceTest[] = [];
   // will be set in the before all
-  let testContexts: ({ error?: Error } | { output?: any; extra?: any })[];
+  let testContexts: (
+    | { error?: Error }
+    | { output?: any; extra?: any }
+    | { skip: true }
+  )[];
 
   const app = new App();
-  const stack = new Stack(app, stackName, {
-    env: {
-      account: "000000000000",
-      region: "us-east-1",
-    },
-  });
+  const stack = new Stack(
+    app,
+    `${stackName}${RuntimeTestExecutionContext.stackSuffix}`,
+    {
+      env:
+        RuntimeTestExecutionContext.deployTarget === "AWS"
+          ? undefined
+          : {
+              account: "000000000000",
+              region: "us-east-1",
+            },
+    }
+  );
 
   let stackOutputs: CloudFormation.Outputs | undefined;
+  let stackArtifact: cxapi.CloudFormationStackArtifact | undefined;
+  let cfnClient: CloudFormationDeployments | undefined;
 
   beforeAll(async () => {
+    cfnClient = await getCfnClient();
     const anyOnly = tests.some((t) => t.only);
     testContexts = tests.map(({ resources, skip, only }, i) => {
       // create the construct on skip to reduce output changes when moving between skip and not skip
@@ -151,16 +181,43 @@ export const localstackTestSuite = (
           };
         }
       }
-      return {};
+      return { skip: true };
     });
 
     await Promise.all(Function.promises);
 
-    await deployStack(app, stack);
+    // don't deploy if they all error
+    if (
+      !testContexts.every(
+        (t) => ("error" in t && t.error) || ("skip" in t && t.skip)
+      )
+    ) {
+      const cloudAssembly = await asyncSynth(app);
+      stackArtifact = cloudAssembly.getStackArtifact(
+        stack.artifactId
+      ) as unknown as cxapi.CloudFormationStackArtifact;
 
-    stackOutputs = (
-      await CF.describeStacks({ StackName: stack.stackName }).promise()
-    ).Stacks?.[0]?.Outputs;
+      // Inspiration for the current approach: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
+      // Writeup on performance improvements: https://github.com/functionless/functionless/pull/184#issuecomment-1144767427
+      await cfnClient?.deployStack({
+        stack: stackArtifact,
+        force: true,
+      });
+
+      stackOutputs = (
+        await CF.describeStacks({ StackName: stack.stackName }).promise()
+      ).Stacks?.[0]?.Outputs;
+    } else {
+      stackOutputs = [];
+    }
+  });
+
+  afterAll(async () => {
+    if (RuntimeTestExecutionContext.destroyStack) {
+      await cfnClient?.destroyStack({
+        stack: stackArtifact!,
+      });
+    }
   });
 
   // @ts-ignore

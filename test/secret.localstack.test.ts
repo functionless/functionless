@@ -7,7 +7,7 @@ import {
   JsonSecret,
   TextSecret,
 } from "../src";
-import { localstackTestSuite } from "./localstack";
+import { runtimeTestSuite } from "./runtime";
 import { localLambda } from "./runtime-util";
 
 // inject the localstack client config into the lambda clients
@@ -24,7 +24,7 @@ interface UserPass {
   password: string;
 }
 
-localstackTestSuite("secretsManagerStack", (test) => {
+runtimeTestSuite("secretsManagerStack", (test) => {
   test(
     "JsonSecret should be able to get and put secret values",
     (scope) => {

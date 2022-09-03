@@ -93,6 +93,13 @@ test-app$ yarn install
 test-app$ yarn watch
 ```
 
+### Test Options
+
+| Env                 | Description                                                                                                           |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| TEST_DEPLOY_TARGET  | Deploy to `AWS` (with default credential chain) or `LOCALSTACK`, Default: `LOCALSTACK`                                |
+| TEST_DESTROY_STACKS | When truthy, will destroy any stacks created when the runtime test suite completes, Default: False (unless `CI=true`) |
+
 ### Website
 
 The doc site contains marketing, documentation, and blogs on `Functionless.org`. It is built using [Docusaurus v2](https://docusaurus.io/).
