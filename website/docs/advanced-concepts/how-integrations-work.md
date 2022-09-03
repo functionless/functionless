@@ -59,7 +59,7 @@ The API GW interface is not mature or stable.
 
 ### `asl`
 
-The `asl` property defines how to generate Amazon States Language (ASL) for integrating a service into an AWS Step Function. It is a function that accepts a [`CallExpr`](../api/classes/CallExpr.md) and an [`ASL`](../api/classes/ASL.md) context representing the Integration and the current Amazon States Language (ASL) Context. This callback then grants any IAM Policies it requires and returns an ASL Task State that fulfils the request.
+The `asl` property defines how to generate Amazon States Language (ASL) for integrating a service into an AWS Step Function. It is a function that accepts a [`CallExpr`](../api/classes/CallExpr.md) and an [`ASL`](../api/classes/ASL-1.md) context representing the Integration and the current Amazon States Language (ASL) Context. This callback then grants any IAM Policies it requires and returns an ASL Task State that fulfils the request.
 
 See the [Step Function](../concepts/step-function/index.md) for more information on Step Functions.
 
