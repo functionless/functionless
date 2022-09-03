@@ -260,6 +260,24 @@ testFast.exec(`jest --testPathIgnorePatterns localstack --coverage false`);
 
 project.addPackageIgnore("/test-app");
 
+// // @ts-
+// project.buildWorkflow.workflow = {
+//   "id-token": "write",
+//   contents: "read",
+// };
+
+// @ts-ignore
+project.buildWorkflow.workflow.jobs.build = {
+  // @ts-ignore
+  ...project.buildWorkflow.workflow.jobs.build,
+  permissions: {
+    // @ts-ignore
+    ...project.buildWorkflow.workflow.jobs.build.permissions,
+    "id-token": "write",
+    contents: "read|write",
+  },
+};
+
 project.eslint!.addRules({
   quotes: "off",
   "comma-dangle": "off",
