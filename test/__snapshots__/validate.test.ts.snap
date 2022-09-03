@@ -937,13 +937,7 @@ https://functionless.org/docs/error-codes#step-functions-does-not-support-undefi
 
 https://functionless.org/docs/error-codes#stepfunctions-invalid-collection-access
 
-[7m437[0m   return arr[input.n];
-[7m   [0m [91m             ~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m442[0m:[93m14[0m - [91merror[0m[90m Functionless(10025): [0mStepFunctions Invalid collection access
-
-https://functionless.org/docs/error-codes#stepfunctions-invalid-collection-access
-
-[7m442[0m   return obj[input.key];
+[7m437[0m   return obj[input.key];
 [7m   [0m [91m             ~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m510[0m:[93m11[0m - [91merror[0m[90m Functionless(10026): [0mStepFunction property names must be constant
 

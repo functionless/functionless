@@ -273,12 +273,14 @@ export function validate(
           ];
         }
       } else if (ts.isElementAccessExpression(node)) {
+        const exprSymb = checker.getTypeAtLocation(node.expression).symbol;
         if (
           !(
             checker.isConstant(node.argumentExpression) ||
             (ts.isIdentifier(node.argumentExpression) &&
               checker.isForInVariable(node.argumentExpression))
-          )
+          ) &&
+          !(exprSymb && checker.isArraySymbol(exprSymb))
         ) {
           return [
             newError(
