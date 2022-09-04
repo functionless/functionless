@@ -239,6 +239,9 @@ project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
 );
 project.compileTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
+project.compileTask.env("TEST_DEPLOY_TARGET", "AWS");
+project.compileTask.env("TEST_DESTROY_STACKS", "1");
+
 project.compileTask.prependExec("ts-node ./scripts/sdk-gen.ts");
 
 project.testTask.prependExec(

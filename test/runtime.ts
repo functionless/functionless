@@ -32,6 +32,8 @@ export const RuntimeTestExecutionContext = {
     | "LOCALSTACK",
 };
 
+console.log("runtime test context", RuntimeTestExecutionContext);
+
 const clientConfig =
   RuntimeTestExecutionContext.deployTarget === "AWS"
     ? {
