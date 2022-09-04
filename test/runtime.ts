@@ -185,20 +185,19 @@ export const runtimeTestSuite = (
     | { skip: true }
   )[];
 
+  const fullStackName = `${stackName}${
+    RuntimeTestExecutionContext.stackSuffix ?? ""
+  }`;
   const app = new App();
-  const stack = new Stack(
-    app,
-    `${stackName}${RuntimeTestExecutionContext.stackSuffix ?? ""}`,
-    {
-      env:
-        RuntimeTestExecutionContext.deployTarget === "AWS"
-          ? undefined
-          : {
-              account: "000000000000",
-              region: "us-east-1",
-            },
-    }
-  );
+  const stack = new Stack(app, fullStackName, {
+    env:
+      RuntimeTestExecutionContext.deployTarget === "AWS"
+        ? undefined
+        : {
+            account: "000000000000",
+            region: "us-east-1",
+          },
+  });
 
   let stackOutputs: CloudFormation.Outputs | undefined;
   let stackArtifact: cxapi.CloudFormationStackArtifact | undefined;
@@ -216,25 +215,10 @@ export const runtimeTestSuite = (
       assumedBy: new ArnPrincipal(
         "arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4"
       ),
-      inlinePolicies: {
-        describeStack: new PolicyDocument({
-          statements: [
-            new PolicyStatement({
-              actions: ["cloudformation:DescribeStacks"],
-              resources: [
-                stack.formatArn({
-                  resource: "stack",
-                  service: "cloudformation",
-                }),
-              ],
-            }),
-          ],
-        }),
-      },
     });
-    new CfnOutput(stack, `testRoleArn`, {
+    new CfnOutput(stack, `testRoleArn-`, {
       value: testRole.roleArn,
-      exportName: "TestRoleArn",
+      exportName: `TestRoleArn-${fullStackName}`,
     });
     testContexts = tests.map(({ resources, skip, only }, i) => {
       // create the construct on skip to reduce output changes when moving between skip and not skip
@@ -296,7 +280,7 @@ export const runtimeTestSuite = (
       ).Stacks?.[0]?.Outputs;
 
       const testRoleArn = stackOutputs?.find(
-        (o) => o.ExportName === "stackOutputs"
+        (o) => o.ExportName === `TestRoleArn-${stack.stackName}`
       )?.OutputValue;
       const testRole = testRoleArn
         ? await sts
