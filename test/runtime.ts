@@ -75,6 +75,7 @@ async function getCdkDeployerClientConfig() {
   return cdkDeployRole.Credentials
     ? {
         ...clientConfig,
+        credentialProvider: undefined,
         credentials: {
           accessKeyId: cdkDeployRole.Credentials?.AccessKeyId,
           expireTime: cdkDeployRole.Credentials?.Expiration,
@@ -310,6 +311,7 @@ export const runtimeTestSuite = (
       const testClientConfig = testRole?.Credentials
         ? {
             ...clientConfig,
+            credentialProvider: undefined,
             credentials: {
               accessKeyId: testRole?.Credentials.AccessKeyId,
               secretAccessKey: testRole?.Credentials.SecretAccessKey,
