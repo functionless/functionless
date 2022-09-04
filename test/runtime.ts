@@ -57,6 +57,7 @@ const sts = new STS(clientConfig);
 async function getCdkDeployerClientConfig(
   caller: STS.GetCallerIdentityResponse
 ) {
+  const roleArn = `arn:aws:iam::${caller.Account}:role/cdk-hnb659fds-deploy-role-${caller.Account}-${clientConfig.region}`;
   const cdkDeployRole = await sts
     .assumeRole({
       // simple bootstrap stacks have a computable arn, the hash is hard coded in CDK.
@@ -66,18 +67,22 @@ async function getCdkDeployerClientConfig(
     })
     .promise();
 
-  return cdkDeployRole.Credentials
-    ? {
-        ...clientConfig,
-        credentialProvider: undefined,
-        credentials: {
-          accessKeyId: cdkDeployRole.Credentials?.AccessKeyId,
-          expireTime: cdkDeployRole.Credentials?.Expiration,
-          secretAccessKey: cdkDeployRole.Credentials?.SecretAccessKey,
-          sessionToken: cdkDeployRole.Credentials?.SessionToken,
-        },
-      }
-    : clientConfig;
+  if (!cdkDeployRole.Credentials) {
+    throw new Error(
+      `Could not retrieve credentials for: ${cdkDeployRole.AssumedRoleUser?.Arn} form ${roleArn}`
+    );
+  }
+
+  return {
+    ...clientConfig,
+    credentialProvider: undefined,
+    credentials: {
+      accessKeyId: cdkDeployRole.Credentials.AccessKeyId,
+      expireTime: cdkDeployRole.Credentials.Expiration,
+      secretAccessKey: cdkDeployRole.Credentials.SecretAccessKey,
+      sessionToken: cdkDeployRole.Credentials.SessionToken,
+    },
+  };
 }
 
 async function getCfnClient(clientConfig: ServiceConfigurationOptions) {
