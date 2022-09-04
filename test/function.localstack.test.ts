@@ -66,10 +66,11 @@ runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
   ) => TestFunctionBase = (f) => (name, func, expected, payload) => {
     f(
       name,
-      (parent) => {
+      (parent, role) => {
         const res = func(parent);
         const [funcRes, outputs] =
           res instanceof Function ? [res, {}] : [res.func, res.outputs];
+        funcRes.resource.grantInvoke(role);
         return {
           outputs: {
             function: funcRes.resource.functionName,
@@ -77,13 +78,13 @@ runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
           },
         };
       },
-      async (context) => {
+      async (context, clients) => {
         const exp =
           // @ts-ignore
           typeof expected === "function" ? expected(context) : expected;
         // @ts-ignore
         const pay = typeof payload === "function" ? payload(context) : payload;
-        await testFunction(context.function, pay, exp);
+        await testFunction(clients.lambda, context.function, pay, exp);
       }
     );
   };

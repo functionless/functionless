@@ -260,12 +260,8 @@ testFast.exec(`jest --testPathIgnorePatterns localstack --coverage false`);
 
 project.addPackageIgnore("/test-app");
 
-// // @ts-
-// project.buildWorkflow.workflow = {
-//   "id-token": "write",
-//   contents: "read",
-// };
-
+// id-token is required for aws-actions/configure-aws-credentials@v1 with OIDC
+// https://github.com/aws-actions/configure-aws-credentials/issues/271#issuecomment-1012450577
 // @ts-ignore
 project.buildWorkflow.workflow.jobs.build = {
   // @ts-ignore

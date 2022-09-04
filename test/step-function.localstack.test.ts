@@ -64,10 +64,12 @@ runtimeTestSuite("sfnStack", (testResource, _stack, _app) => {
   ) => TestExpressStepFunctionBase = (f) => (name, sfn, expected, payload) => {
     f(
       name,
-      (parent) => {
+      (parent, role) => {
         const res = sfn(parent);
         const [funcRes, outputs] =
           res instanceof StepFunction ? [res, {}] : [res.sfn, res.outputs];
+        funcRes.resource.grantStartExecution(role);
+        funcRes.resource.grantRead(role);
         return {
           outputs: {
             function: funcRes.resource.stateMachineArn,
@@ -78,7 +80,7 @@ runtimeTestSuite("sfnStack", (testResource, _stack, _app) => {
           },
         };
       },
-      async (context, extra) => {
+      async (context, clients, extra) => {
         const pay =
           typeof payload === "function"
             ? (<globalThis.Function>payload)(context)
@@ -87,7 +89,11 @@ runtimeTestSuite("sfnStack", (testResource, _stack, _app) => {
         expect(
           normalizeCDKJson(JSON.parse(extra?.definition!))
         ).toMatchSnapshot();
-        const result = await testStepFunction(context.function, pay);
+        const result = await testStepFunction(
+          clients.stepFunctions,
+          context.function,
+          pay
+        );
 
         const exp =
           typeof expected === "function"

@@ -1,9 +1,23 @@
 import * as cxapi from "@aws-cdk/cx-api";
 import { App, CfnOutput, Stack } from "aws-cdk-lib";
+import {
+  ArnPrincipal,
+  PolicyDocument,
+  PolicyStatement,
+  Role,
+} from "aws-cdk-lib/aws-iam";
 import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
 import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import AWS, { CloudFormation } from "aws-sdk";
+import AWS, {
+  CloudFormation,
+  DynamoDB,
+  EventBridge,
+  Lambda,
+  StepFunctions,
+  STS,
+} from "aws-sdk";
+import { ServiceConfigurationOptions } from "aws-sdk/lib/service";
 import { Construct } from "constructs";
 import { asyncSynth } from "../src/async-synth";
 import { Function } from "../src/function";
@@ -23,7 +37,7 @@ export const RuntimeTestExecutionContext = {
     | "LOCALSTACK",
 };
 
-export const clientConfig =
+const clientConfig =
   RuntimeTestExecutionContext.deployTarget === "AWS"
     ? {
         region: "us-east-1",
@@ -42,6 +56,8 @@ export const clientConfig =
         s3ForcePathStyle: true,
       };
 
+// the env (OIDC) role can describe stack and assume roles
+const sts = new STS(clientConfig);
 const CF = new CloudFormation(clientConfig);
 
 async function getCfnClient() {
@@ -84,13 +100,27 @@ interface ResourceReference<
   extra?: Extra;
 }
 
+interface RuntimeTestClients {
+  stepFunctions: StepFunctions;
+  lambda: Lambda;
+  dynamoDB: DynamoDB;
+  eventBridge: EventBridge;
+}
+
 interface ResourceTest<
   Outputs extends Record<string, string> = Record<string, string>,
   Extra extends Record<string, string> = Record<string, string>
 > {
   name: string;
-  resources: (parent: Construct) => ResourceReference<Outputs> | void;
-  test: (context: Outputs, extra?: Extra) => Promise<void>;
+  resources: (
+    parent: Construct,
+    testRole: Role
+  ) => ResourceReference<Outputs> | void;
+  test: (
+    context: Outputs,
+    clients: RuntimeTestClients,
+    extra?: Extra
+  ) => Promise<void>;
   skip: boolean;
   only: boolean;
 }
@@ -147,16 +177,43 @@ export const runtimeTestSuite = (
   let stackOutputs: CloudFormation.Outputs | undefined;
   let stackArtifact: cxapi.CloudFormationStackArtifact | undefined;
   let cfnClient: CloudFormationDeployments | undefined;
+  let clients: RuntimeTestClients | undefined;
 
   beforeAll(async () => {
     cfnClient = await getCfnClient();
     const anyOnly = tests.some((t) => t.only);
+    // a role which will be used by the test AWS clients to call any aws resources.
+    // tests should grant this role permission to interact with any resources they need.
+    const testRole = new Role(stack, "testRole", {
+      assumedBy: new ArnPrincipal(
+        "arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4"
+      ),
+      inlinePolicies: {
+        describeStack: new PolicyDocument({
+          statements: [
+            new PolicyStatement({
+              actions: ["cloudformation:DescribeStacks"],
+              resources: [
+                stack.formatArn({
+                  resource: "stack",
+                  service: "cloudformation",
+                }),
+              ],
+            }),
+          ],
+        }),
+      },
+    });
+    new CfnOutput(stack, `testRoleArn`, {
+      value: testRole.roleArn,
+      exportName: "TestRoleArn",
+    });
     testContexts = tests.map(({ resources, skip, only }, i) => {
       // create the construct on skip to reduce output changes when moving between skip and not skip
       const construct = new Construct(stack, `parent${i}`);
       if (!skip && (!anyOnly || only)) {
         try {
-          const output = resources(construct);
+          const output = resources(construct, testRole);
           // Place each output in a cfn output, encoded with the unique address of the construct
           if (typeof output === "object") {
             return {
@@ -207,6 +264,38 @@ export const runtimeTestSuite = (
       stackOutputs = (
         await CF.describeStacks({ StackName: stack.stackName }).promise()
       ).Stacks?.[0]?.Outputs;
+
+      const testRoleArn = stackOutputs?.find(
+        (o) => o.ExportName === "stackOutputs"
+      )?.OutputValue;
+      const testRole = testRoleArn
+        ? await sts
+            .assumeRole({
+              RoleArn: testRoleArn,
+              RoleSessionName: "testSession",
+              DurationSeconds: 30 * 60,
+            })
+            .promise()
+        : undefined;
+      // update client config with the assumed role
+      const testClientConfig = testRole?.Credentials
+        ? {
+            ...clientConfig,
+            credentials: {
+              accessKeyId: testRole?.Credentials.AccessKeyId,
+              secretAccessKey: testRole?.Credentials.SecretAccessKey,
+              sessionToken: testRole?.Credentials.SessionToken,
+              expireTime: testRole?.Credentials.Expiration,
+            },
+          }
+        : clientConfig;
+
+      clients = {
+        stepFunctions: new StepFunctions(testClientConfig),
+        lambda: new Lambda(testClientConfig),
+        dynamoDB: new DynamoDB(testClientConfig),
+        eventBridge: new EventBridge(testClientConfig),
+      };
     } else {
       stackOutputs = [];
     }
@@ -257,7 +346,7 @@ export const runtimeTestSuite = (
               ];
             })
           );
-          return testFunc(resolvedContext, context.extra);
+          return testFunc(resolvedContext, clients!, context.extra);
         }
       });
     } else {
