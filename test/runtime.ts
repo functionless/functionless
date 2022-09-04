@@ -17,6 +17,7 @@ import AWS, {
   StepFunctions,
   STS,
 } from "aws-sdk";
+import { ServiceConfigurationOptions } from "aws-sdk/lib/service";
 import { Construct } from "constructs";
 import { asyncSynth } from "../src/async-synth";
 import { Function } from "../src/function";
@@ -58,7 +59,28 @@ const clientConfig =
 // the env (OIDC) role can describe stack and assume roles
 const sts = new STS(clientConfig);
 
-async function getCfnClient() {
+async function getCdkDeployerClientConfig() {
+  const caller = await sts.getCallerIdentity().promise();
+  const cdkDeployRole = await sts
+    .assumeRole({
+      RoleArn: `arn:aws:iam::${caller.Account}:role/cdk-hnb659fds-deploy-role-${caller.Account}-${clientConfig.region}`,
+      RoleSessionName: "CdkDeploy",
+    })
+    .promise();
+  return cdkDeployRole.Credentials
+    ? {
+        ...clientConfig,
+        credentials: {
+          accessKeyId: cdkDeployRole.Credentials?.AccessKeyId,
+          expireTime: cdkDeployRole.Credentials?.Expiration,
+          secretAccessKey: cdkDeployRole.Credentials?.SecretAccessKey,
+          sessionToken: cdkDeployRole.Credentials?.SessionToken,
+        },
+      }
+    : clientConfig;
+}
+
+async function getCfnClient(clientConfig: ServiceConfigurationOptions) {
   const sdkProvider = await SdkProvider.withAwsCliCompatibleDefaults({
     httpOptions: clientConfig as any,
   });
@@ -73,8 +95,8 @@ async function getCfnClient() {
       ...sdkProvider.sdkOptions,
       endpoint: clientConfig.endpoint,
       s3ForcePathStyle: clientConfig.s3ForcePathStyle,
-      accessKeyId: credentials.accessKeyId,
-      secretAccessKey: credentials.secretAccessKey,
+      accessKeyId: credentials!.accessKeyId,
+      secretAccessKey: credentials!.secretAccessKey,
       credentials: credentials,
     };
   }
@@ -178,7 +200,8 @@ export const runtimeTestSuite = (
   let clients: RuntimeTestClients | undefined;
 
   beforeAll(async () => {
-    cfnClient = await getCfnClient();
+    const cdkClientConfig = await getCdkDeployerClientConfig();
+    cfnClient = await getCfnClient(cdkClientConfig);
     const anyOnly = tests.some((t) => t.only);
     // a role which will be used by the test AWS clients to call any aws resources.
     // tests should grant this role permission to interact with any resources they need.
@@ -259,27 +282,7 @@ export const runtimeTestSuite = (
         force: true,
       });
 
-      const caller = await sts.getCallerIdentity().promise();
-      const cdkDeployRole = await sts
-        .assumeRole({
-          RoleArn: `arn:aws:iam::${caller.Account}:role/cdk-hnb659fds-deploy-role-${caller.Account}-${clientConfig.region}`,
-          RoleSessionName: "CdkDeploy",
-        })
-        .promise();
-
-      const CF = new CloudFormation(
-        cdkDeployRole.Credentials
-          ? {
-              ...clientConfig,
-              credentials: {
-                accessKeyId: cdkDeployRole.Credentials?.AccessKeyId,
-                expireTime: cdkDeployRole.Credentials?.Expiration,
-                secretAccessKey: cdkDeployRole.Credentials?.SecretAccessKey,
-                sessionToken: cdkDeployRole.Credentials?.SessionToken,
-              },
-            }
-          : clientConfig
-      );
+      const CF = new CloudFormation(cdkClientConfig);
 
       stackOutputs = (
         await CF.describeStacks({ StackName: stack.stackName }).promise()
