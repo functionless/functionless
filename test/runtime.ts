@@ -61,12 +61,17 @@ const sts = new STS(clientConfig);
 
 async function getCdkDeployerClientConfig() {
   const caller = await sts.getCallerIdentity().promise();
+  console.log(
+    "cdk deployer arn",
+    `arn:aws:iam::${caller.Account}:role/cdk-hnb659fds-deploy-role-${caller.Account}-${clientConfig.region}`
+  );
   const cdkDeployRole = await sts
     .assumeRole({
       RoleArn: `arn:aws:iam::${caller.Account}:role/cdk-hnb659fds-deploy-role-${caller.Account}-${clientConfig.region}`,
       RoleSessionName: "CdkDeploy",
     })
     .promise();
+
   return cdkDeployRole.Credentials
     ? {
         ...clientConfig,
@@ -201,6 +206,7 @@ export const runtimeTestSuite = (
 
   beforeAll(async () => {
     const cdkClientConfig = await getCdkDeployerClientConfig();
+    console.log(cdkClientConfig);
     cfnClient = await getCfnClient(cdkClientConfig);
     const anyOnly = tests.some((t) => t.only);
     // a role which will be used by the test AWS clients to call any aws resources.
