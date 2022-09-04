@@ -1,11 +1,6 @@
 import * as cxapi from "@aws-cdk/cx-api";
 import { App, CfnOutput, Stack } from "aws-cdk-lib";
-import {
-  ArnPrincipal,
-  PolicyDocument,
-  PolicyStatement,
-  Role,
-} from "aws-cdk-lib/aws-iam";
+import { ArnPrincipal, Role } from "aws-cdk-lib/aws-iam";
 import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
 import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
 // eslint-disable-next-line import/no-extraneous-dependencies
@@ -59,14 +54,13 @@ const clientConfig =
 // the env (OIDC) role can describe stack and assume roles
 const sts = new STS(clientConfig);
 
-async function getCdkDeployerClientConfig() {
-  const caller = await sts.getCallerIdentity().promise();
-  console.log(
-    "cdk deployer arn",
-    `arn:aws:iam::${caller.Account}:role/cdk-hnb659fds-deploy-role-${caller.Account}-${clientConfig.region}`
-  );
+async function getCdkDeployerClientConfig(
+  caller: STS.GetCallerIdentityResponse
+) {
   const cdkDeployRole = await sts
     .assumeRole({
+      // simple bootstrap stacks have a computable arn, the hash is hard coded in CDK.
+      // https://github.com/aws/aws-cdk/blob/main/packages/aws-cdk/lib/api/bootstrap/bootstrap-template.yaml#L34
       RoleArn: `arn:aws:iam::${caller.Account}:role/cdk-hnb659fds-deploy-role-${caller.Account}-${clientConfig.region}`,
       RoleSessionName: "CdkDeploy",
     })
@@ -205,16 +199,18 @@ export const runtimeTestSuite = (
   let clients: RuntimeTestClients | undefined;
 
   beforeAll(async () => {
-    const cdkClientConfig = await getCdkDeployerClientConfig();
-    console.log(cdkClientConfig);
+    // resolve account and arn of current credentials
+    const caller = await sts.getCallerIdentity().promise();
+    if (!caller || !caller.Arn) {
+      throw Error("Cannot retrieve the current caller.");
+    }
+    const cdkClientConfig = await getCdkDeployerClientConfig(caller);
     cfnClient = await getCfnClient(cdkClientConfig);
     const anyOnly = tests.some((t) => t.only);
     // a role which will be used by the test AWS clients to call any aws resources.
     // tests should grant this role permission to interact with any resources they need.
     const testRole = new Role(stack, "testRole", {
-      assumedBy: new ArnPrincipal(
-        "arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4"
-      ),
+      assumedBy: new ArnPrincipal(caller.Arn),
     });
     new CfnOutput(stack, `testRoleArn-`, {
       value: testRole.roleArn,
