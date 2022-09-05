@@ -85,7 +85,9 @@
       "name": "compile",
       "description": "Only compile",
       "env": {
-        "NODE_OPTIONS": "--max-old-space-size=4096"
+        "NODE_OPTIONS": "--max-old-space-size=4096",
+        "TEST_DEPLOY_TARGET": "AWS",
+        "TEST_DESTROY_STACKS": "1"
       },
       "steps": [
         {
@@ -195,9 +197,6 @@
       },
       "steps": [
         {
-          "exec": "./scripts/localstack"
-        },
-        {
           "exec": "cd ./test-app && yarn && yarn build && yarn synth --quiet"
         },
         {
@@ -205,9 +204,6 @@
         },
         {
           "spawn": "eslint"
-        },
-        {
-          "exec": "localstack stop"
         }
       ]
     },
