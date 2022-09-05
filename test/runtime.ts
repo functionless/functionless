@@ -64,7 +64,7 @@ async function getCdkDeployerClientConfig(
     .assumeRole({
       // simple bootstrap stacks have a computable arn, the hash is hard coded in CDK.
       // https://github.com/aws/aws-cdk/blob/main/packages/aws-cdk/lib/api/bootstrap/bootstrap-template.yaml#L34
-      RoleArn: `arn:aws:iam::${caller.Account}:role/cdk-hnb659fds-deploy-role-${caller.Account}-${clientConfig.region}`,
+      RoleArn: roleArn,
       RoleSessionName: "CdkDeploy",
     })
     .promise();
@@ -87,26 +87,30 @@ async function getCdkDeployerClientConfig(
   };
 }
 
-async function getCfnClient(clientConfig: ServiceConfigurationOptions) {
-  const sdkProvider = await SdkProvider.withAwsCliCompatibleDefaults({
-    httpOptions: clientConfig as any,
-  });
+async function getCfnClient() {
+  //clientConfig: ServiceConfigurationOptions
+  const sdkProvider = await SdkProvider
+    .withAwsCliCompatibleDefaults
+    //   {
+    //   httpOptions: clientConfig as any,
+    // }
+    ();
 
-  if (clientConfig) {
-    const credentials = clientConfig.credentialProvider
-      ? await clientConfig.credentialProvider.resolvePromise()
-      : clientConfig.credentials;
-    // @ts-ignore - assigning to private members
-    sdkProvider.sdkOptions = {
-      // @ts-ignore - using private members
-      ...sdkProvider.sdkOptions,
-      endpoint: clientConfig.endpoint,
-      s3ForcePathStyle: clientConfig.s3ForcePathStyle,
-      accessKeyId: credentials!.accessKeyId,
-      secretAccessKey: credentials!.secretAccessKey,
-      credentials: credentials,
-    };
-  }
+  // if (clientConfig) {
+  //   const credentials = clientConfig.credentialProvider
+  //     ? await clientConfig.credentialProvider.resolvePromise()
+  //     : clientConfig.credentials;
+  //   // @ts-ignore - assigning to private members
+  //   sdkProvider.sdkOptions = {
+  //     // @ts-ignore - using private members
+  //     ...sdkProvider.sdkOptions,
+  //     endpoint: clientConfig.endpoint,
+  //     s3ForcePathStyle: clientConfig.s3ForcePathStyle,
+  //     accessKeyId: credentials!.accessKeyId,
+  //     secretAccessKey: credentials!.secretAccessKey,
+  //     credentials: credentials,
+  //   };
+  // }
 
   return new CloudFormationDeployments({
     sdkProvider,
@@ -275,7 +279,8 @@ export function runtimeTestSuite<
       throw Error("Cannot retrieve the current caller.");
     }
     const cdkClientConfig = await getCdkDeployerClientConfig(caller);
-    cfnClient = await getCfnClient(cdkClientConfig);
+    cfnClient = await getCfnClient();
+    // cdkClientConfig
     const anyOnly = tests.some((t) => t.only);
     // a role which will be used by the test AWS clients to call any aws resources.
     // tests should grant this role permission to interact with any resources they need.
