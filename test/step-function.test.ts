@@ -12,6 +12,7 @@ import {
   EventBus,
   ExpressStepFunction,
   Queue,
+  Serializer,
   StepFunction,
   StepFunctionError,
   SyncExecutionResult,
@@ -4305,6 +4306,76 @@ test("sendMessage when whole message is JSON Path", () => {
       await queue.sendMessage({
         Message: input,
       });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("sendMessage JSON array", () => {
+  interface Message {
+    orderId: string;
+  }
+
+  const queue = new Queue<Message[]>(stack, "Queue");
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: Message): Promise<void> => {
+      await queue.sendMessage({
+        Message: [input],
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("sendMessage TextSerializer", () => {
+  const queue = new Queue(stack, "Queue", {
+    serializer: Serializer.text(),
+  });
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: { message: string }): Promise<void> => {
+      await queue.sendMessage({
+        Message: input.message,
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("sendMessage TextSerializer literal string", () => {
+  const queue = new Queue(stack, "Queue", {
+    serializer: Serializer.text(),
+  });
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (): Promise<void> => {
+      await queue.sendMessage({
+        Message: "hello world",
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("purge SQS Queue", () => {
+  const queue = new Queue(stack, "Queue");
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (): Promise<void> => {
+      await queue.purge();
     }
   ).definition;
 

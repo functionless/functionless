@@ -13592,6 +13592,38 @@ Object {
 }
 `;
 
+exports[`purge SQS Queue 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "await queue.purge()",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "await queue.purge()": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:purgeQueue",
+      "Type": "Task",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`put an event bus event 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -15623,6 +15655,136 @@ Object {
       "Type": "Pass",
     },
     "return": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`sendMessage JSON array 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__await queue.sendMessage({Message: [input]})": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "MessageBody.$": "States.JsonToString($.heap2)",
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessage",
+      "ResultPath": "$.heap3",
+      "Type": "Task",
+    },
+    "1__await queue.sendMessage({Message: [input]}) 1": Object {
+      "InputPath": "$.heap1.arr",
+      "Next": "1__await queue.sendMessage({Message: [input]})",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "await queue.sendMessage({Message: [input]})",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "[input]": Object {
+      "Next": "1__await queue.sendMessage({Message: [input]}) 1",
+      "Parameters": Object {
+        "arr.$": "States.Array($.heap0)",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "await queue.sendMessage({Message: [input]})": Object {
+      "InputPath": "$.input",
+      "Next": "[input]",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`sendMessage TextSerializer 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__await queue.sendMessage({Message: input.message})": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "MessageBody.$": "$.heap0",
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessage",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "await queue.sendMessage({Message: input.message})",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "await queue.sendMessage({Message: input.message})": Object {
+      "InputPath": "$.input.message",
+      "Next": "1__await queue.sendMessage({Message: input.message})",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`sendMessage TextSerializer literal string 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "await queue.sendMessage({Message: \\"hello world\\"})",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "await queue.sendMessage({Message: \\"hello world\\"})": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "MessageBody": "hello world",
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessage",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "return null": Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",

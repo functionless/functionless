@@ -456,11 +456,10 @@ abstract class BaseQueue<Message>
               }
             } else if ("Message.$" in messageOutput.value) {
               const message = messageOutput.value["Message.$"];
+              isJsonPath = true;
               if (this.serializer.dataType === DataType.Json) {
-                isJsonPath = true;
                 MessageBody = `States.JsonToString(${message})`;
               } else {
-                isJsonPath = false;
                 MessageBody = message as string;
               }
             } else {
@@ -502,7 +501,7 @@ abstract class BaseQueue<Message>
         bind: (func) => this.resource.grantSendMessages(func.resource),
         preWarm: (context) => context.getOrInit(SQSClient),
         call: async ([input], context) => {
-          const sqs = context.getOrInit(SQSClient);
+          const sqs = context.getOrInit<AWS.SQS>(SQSClient);
 
           const updatedQueueUrl =
             lambdaQueueUrlRetriever?.(queueUrl) ?? queueUrl;
@@ -560,7 +559,6 @@ abstract class BaseQueue<Message>
 
     this.purge = makeIntegration<"AWS.SQS.PurgeQueue", () => Promise<{}>>({
       kind: "AWS.SQS.PurgeQueue",
-      // asl: (call, context) => {},
       native: {
         bind: (func) => this.resource.grantPurge(func.resource),
         preWarm: (context) => context.getOrInit(SQSClient),
@@ -575,6 +573,17 @@ abstract class BaseQueue<Message>
             })
             .promise();
         },
+      },
+      asl: (_, context) => {
+        this.resource.grantPurge(context.role);
+        return context.stateWithVoidOutput({
+          Type: "Task",
+          Resource: "arn:aws:states:::aws-sdk:sqs:purgeQueue",
+          Parameters: {
+            QueueUrl: this.queueUrl,
+          },
+          Next: ASLGraph.DeferNext,
+        });
       },
     });
   }
