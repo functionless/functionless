@@ -150,7 +150,7 @@ new StepFunction(
       level: aws_stepfunctions.LogLevel.ALL,
     },
   },
-  async (input: { maxMessages?: number }) => {
+  async (input: { maxMessages: number | null }) => {
     return processedOrderQueue.receiveMessage({
       MaxNumberOfMessages: input.maxMessages ?? 10,
     });

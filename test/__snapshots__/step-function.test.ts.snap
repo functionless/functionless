@@ -13750,7 +13750,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "await queue.receiveMessage({})",
+      "Next": "await queue.receiveMessage()",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -13759,13 +13759,44 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "await queue.receiveMessage({})": Object {
+    "await queue.receiveMessage()": Object {
+      "Next": "parseIfMessages__await queue.receiveMessage()",
+      "Parameters": Object {
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:receiveMessage",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "parseIfMessages__await queue.receiveMessage()": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "parse__await queue.receiveMessage()",
+          "Variable": "$.heap0.Messages",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "parse__await queue.receiveMessage()": Object {
       "ItemsPath": "$.heap0.Messages",
       "Iterator": Object {
         "StartAt": "JsonParse",
         "States": Object {
           "JsonParse": Object {
+            "Next": "UnwrapMessage",
+            "Parameters": Object {
+              "parsed.$": "States.StringToJson($.message.Body)",
+            },
+            "ResultPath": "$.message.Message",
+            "Type": "Pass",
+          },
+          "UnwrapMessage": Object {
             "End": true,
+            "InputPath": "$.message.Message.parsed",
+            "OutputPath": "$.message",
+            "ResultPath": "$.message.Message",
             "Type": "Pass",
           },
         },
@@ -15884,6 +15915,9 @@ Object {
     "2__await queue.sendMessage({MessageBody: {orderId: input.orderId}})": Object {
       "Next": "return null",
       "Parameters": Object {
+        "MessageBody": Object {
+          "orderId.$": "$.heap0",
+        },
         "MessageBody.$": "States.JsonToString($.heap1)",
         "QueueUrl": "__REPLACED_TOKEN",
       },
@@ -15993,16 +16027,22 @@ Object {
       "Type": "Pass",
     },
     "2__await queue.sendMessageBatch({Entries: input.messages.map(function (mess": Object {
-      "ItemsPath": "$.heap6",
+      "ItemsPath": "$.heap6.Entries",
       "Iterator": Object {
         "StartAt": "serialize Message",
         "States": Object {
           "serialize Message": Object {
-            "End": true,
-            "OutputPath": "$.entry",
+            "Next": "unwrap Message",
             "Parameters": Object {
-              "MessageBody.$": "States.JsonToString($.entry.MessageBody)",
+              "value.$": "States.JsonToString($.entry.MessageBody)",
             },
+            "ResultPath": "$.entry.MessageBody",
+            "Type": "Pass",
+          },
+          "unwrap Message": Object {
+            "End": true,
+            "InputPath": "$.entry.MessageBody.value",
+            "OutputPath": "$.entry",
             "ResultPath": "$.entry.MessageBody",
             "Type": "Pass",
           },
