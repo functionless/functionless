@@ -247,8 +247,8 @@ project.compileTask.prependExec("ts-node ./scripts/sdk-gen.ts");
 project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth --quiet"
 );
-project.testTask.prependExec("./scripts/localstack");
-project.testTask.exec("localstack stop");
+// project.testTask.prependExec("./scripts/localstack");
+// project.testTask.exec("localstack stop");
 
 project.testTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
 // project.testTask.env("DEFAULT_REGION", "ap-northeast-1");
