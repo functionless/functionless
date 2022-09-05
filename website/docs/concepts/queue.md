@@ -31,7 +31,7 @@ const queue = new Queue<string>(this, "Queue");
 // produce messages
 new Function(this, "Producer", async () => {
   await queue.sendMessage({
-    Message: "hello",
+    MessageBody: "hello",
   });
 });
 
@@ -51,7 +51,7 @@ The Producer of the system is responsible for sending messages to the `Queue` wh
 new Function(this, "Producer", async (input: { message: string }) => {
   // send messages to SQS
   await queue.sendMessage({
-    Message: input.message,
+    MessageBody: input.message,
   });
 });
 ```
@@ -61,7 +61,7 @@ new Function(this, "Producer", async (input: { message: string }) => {
 ```ts
 new StepFunction(this, "Producer", async (input: { message: string }) => {
   await queue.sendMessage({
-    Message: input.message,
+    MessageBody: input.message,
   });
 });
 ```
@@ -74,7 +74,7 @@ new ExpressStepFunction(
   "Producer",
   async (input: { message: string }) => {
     await queue.sendMessage({
-      Message: input.message,
+      MessageBody: input.message,
     });
   }
 );
@@ -92,7 +92,7 @@ new AppsyncResolver(
   },
   async ($context: AppsyncContext<{ message: string }>) => {
     await queue.sendMessage({
-      Message: $context.arguments.message,
+      MessageBody: $context.arguments.message,
     });
   }
 );
