@@ -12,7 +12,7 @@ import AWS, {
   StepFunctions,
   STS,
 } from "aws-sdk";
-import { ServiceConfigurationOptions } from "aws-sdk/lib/service";
+// import { ServiceConfigurationOptions } from "aws-sdk/lib/service";
 import { Construct } from "constructs";
 import { asyncSynth } from "../src/async-synth";
 import { Function } from "../src/function";

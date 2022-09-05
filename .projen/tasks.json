@@ -86,8 +86,7 @@
       "description": "Only compile",
       "env": {
         "NODE_OPTIONS": "--max-old-space-size=4096",
-        "TEST_DEPLOY_TARGET": "AWS",
-        "TEST_DESTROY_STACKS": "1"
+        "TEST_DEPLOY_TARGET": "AWS"
       },
       "steps": [
         {
@@ -192,8 +191,7 @@
       "description": "Run tests",
       "env": {
         "NODE_OPTIONS": "--max-old-space-size=4096",
-        "TEST_DEPLOY_TARGET": "AWS",
-        "TEST_DESTROY_STACKS": "1"
+        "TEST_DEPLOY_TARGET": "AWS"
       },
       "steps": [
         {

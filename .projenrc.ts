@@ -240,7 +240,7 @@ project.compileTask.prependExec(
 );
 project.compileTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
 project.compileTask.env("TEST_DEPLOY_TARGET", "AWS");
-project.compileTask.env("TEST_DESTROY_STACKS", "1");
+// project.compileTask.env("TEST_DESTROY_STACKS", "1");
 
 project.compileTask.prependExec("ts-node ./scripts/sdk-gen.ts");
 
@@ -256,7 +256,7 @@ project.testTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
 // project.testTask.env("AWS_ACCESS_KEY_ID", "test");
 // project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
 project.testTask.env("TEST_DEPLOY_TARGET", "AWS");
-project.testTask.env("TEST_DESTROY_STACKS", "1");
+// project.testTask.env("TEST_DESTROY_STACKS", "1");
 
 const testFast = project.addTask("test:fast");
 testFast.exec(`jest --testPathIgnorePatterns localstack --coverage false`);
