@@ -58,7 +58,10 @@ interface TestExpressStepFunctionResource extends TestExpressStepFunctionBase {
   only: TestExpressStepFunctionBase;
 }
 
-runtimeTestSuite("sfnStack", (testResource, _stack, _app) => {
+runtimeTestSuite<
+  { function: string },
+  { payload: any | ((context: { function: string }) => any) }
+>("sfnStack", (testResource, _stack, _app, beforeAllTests) => {
   const _testSfn: (
     f: typeof testResource | typeof testResource.only
   ) => TestExpressStepFunctionBase = (f) => (name, sfn, expected, payload) => {
@@ -81,18 +84,13 @@ runtimeTestSuite("sfnStack", (testResource, _stack, _app) => {
         };
       },
       async (context, clients, extra) => {
-        const pay =
-          typeof payload === "function"
-            ? (<globalThis.Function>payload)(context)
-            : payload;
-
         expect(
           normalizeCDKJson(JSON.parse(extra?.definition!))
         ).toMatchSnapshot();
         const result = await testStepFunction(
           clients.stepFunctions,
-          context.function,
-          pay
+          // the execution is started in the `beforeAllTests`, poll on the execution id here.
+          extra?.execution!
         );
 
         const exp =
@@ -107,7 +105,8 @@ runtimeTestSuite("sfnStack", (testResource, _stack, _app) => {
         expect(result.output ? JSON.parse(result.output) : undefined).toEqual(
           exp
         );
-      }
+      },
+      { payload }
     );
   };
 
@@ -117,11 +116,41 @@ runtimeTestSuite("sfnStack", (testResource, _stack, _app) => {
     testResource.skip(
       name,
       () => {},
-      async () => {}
+      async () => {},
+      { payload: undefined }
     );
 
   // eslint-disable-next-line no-only-tests/no-only-tests
   test.only = _testSfn(testResource.only);
+
+  beforeAllTests(async (testOutputs, clients) => {
+    return Promise.all(
+      testOutputs.map(async (t) => {
+        const pay =
+          typeof t.test.extras?.payload === "function"
+            ? (<globalThis.Function>t.test.extras?.payload)(t.deployOutputs)
+            : t.test.extras?.payload;
+
+        const execution = await clients.stepFunctions
+          .startExecution({
+            stateMachineArn: t.deployOutputs.outputs.function,
+            input: JSON.stringify(pay),
+          })
+          .promise();
+
+        return {
+          ...t,
+          deployOutputs: {
+            ...t.deployOutputs,
+            extra: {
+              ...t.deployOutputs.extra,
+              execution: execution.executionArn,
+            },
+          },
+        };
+      })
+    );
+  });
 
   test(
     "simple",

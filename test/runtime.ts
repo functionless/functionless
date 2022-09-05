@@ -136,7 +136,8 @@ interface RuntimeTestClients {
 
 interface ResourceTest<
   Outputs extends Record<string, string> = Record<string, string>,
-  Extra extends Record<string, string> = Record<string, string>
+  Extra extends Record<string, string> = Record<string, string>,
+  TestExtra extends Record<string, any> = Record<string, any>
 > {
   name: string;
   resources: (
@@ -150,41 +151,86 @@ interface ResourceTest<
   ) => Promise<void>;
   skip: boolean;
   only: boolean;
+  extras?: TestExtra;
 }
 
-interface TestResource {
-  <Outputs extends Record<string, string> = Record<string, string>>(
+interface ResolvedTestResource<
+  Outputs extends Record<string, string> = Record<string, string>,
+  Extra extends Record<string, string> = Record<string, string>,
+  TestExtra extends Record<string, any> = Record<string, any>
+> {
+  test: ResourceTest<Outputs, Extra, TestExtra>;
+  deployOutputs: DeployResult<Outputs>;
+}
+
+interface ResolvedSuccessfulTestResource<
+  Outputs extends Record<string, string> = Record<string, string>,
+  Extra extends Record<string, string> = Record<string, string>,
+  TestExtra extends Record<string, any> = Record<string, any>
+> {
+  test: ResourceTest<Outputs, Extra, TestExtra>;
+  deployOutputs: ResourceReference<Outputs, Extra>;
+}
+
+interface TestResource<
+  BaseOutputs extends Record<string, string> = Record<string, string>,
+  TestExtras extends Record<string, any> = Record<string, any>
+> {
+  <Outputs extends BaseOutputs>(
     name: string,
     resources: ResourceTest<Outputs>["resources"],
-    test: ResourceTest<Outputs>["test"]
+    test: ResourceTest<Outputs>["test"],
+    extras?: TestExtras
   ): void;
 
-  skip: <Outputs extends Record<string, string> = Record<string, string>>(
+  skip: <Outputs extends BaseOutputs>(
     name: string,
     resources: ResourceTest<Outputs>["resources"],
-    test: ResourceTest<Outputs>["test"]
+    test: ResourceTest<Outputs>["test"],
+    extras?: TestExtras
   ) => void;
 
-  only: <Outputs extends Record<string, string> = Record<string, string>>(
+  only: <Outputs extends BaseOutputs>(
     name: string,
     resources: ResourceTest<Outputs>["resources"],
-    test: ResourceTest<Outputs>["test"]
+    test: ResourceTest<Outputs>["test"],
+    extras?: TestExtras
   ) => void;
 }
 
-export const runtimeTestSuite = (
+type DeployResult<
+  Outputs extends Record<string, string> = Record<string, string>,
+  Extra extends Record<string, string> = Record<string, string>
+> = { error?: Error } | ResourceReference<Outputs, Extra> | { skip: true };
+
+export function runtimeTestSuite<
+  BaseOutput extends Record<string, string> = Record<string, string>,
+  TestExtras extends Record<string, any> = Record<string, any>
+>(
   stackName: string,
-  fn: (testResource: TestResource, stack: Stack, app: App) => void
-) => {
+  fn: (
+    testResource: TestResource<BaseOutput, TestExtras>,
+    stack: Stack,
+    app: App,
+    beforeAllTests: (
+      cb: (
+        testOutputs: ResolvedSuccessfulTestResource<
+          BaseOutput,
+          any,
+          TestExtras
+        >[],
+        clients: RuntimeTestClients
+      ) => Promise<
+        ResolvedSuccessfulTestResource<BaseOutput, any, TestExtras>[] | void
+      >
+    ) => void
+  ) => void
+): void {
   jest.setTimeout(500000);
 
-  const tests: ResourceTest[] = [];
+  const tests: ResourceTest<BaseOutput, any, TestExtras>[] = [];
   // will be set in the before all
-  let testContexts: (
-    | { error?: Error }
-    | { output?: any; extra?: any }
-    | { skip: true }
-  )[];
+  let testContexts: DeployResult<BaseOutput>[];
 
   const fullStackName = `${stackName}${
     RuntimeTestExecutionContext.stackSuffix ?? ""
@@ -204,6 +250,23 @@ export const runtimeTestSuite = (
   let stackArtifact: cxapi.CloudFormationStackArtifact | undefined;
   let cfnClient: CloudFormationDeployments | undefined;
   let clients: RuntimeTestClients | undefined;
+  let testResolvedContexts:
+    | ResolvedTestResource<BaseOutput, any, TestExtras>[]
+    | undefined;
+  // an optional callback the caller can send which is called after deploy and before
+  // all test methods are invoked.
+  let beforeAllTests:
+    | ((
+        testOutputs: ResolvedSuccessfulTestResource<
+          BaseOutput,
+          any,
+          TestExtras
+        >[],
+        clients: RuntimeTestClients
+      ) => Promise<
+        ResolvedSuccessfulTestResource<BaseOutput, any, TestExtras>[] | void
+      >)
+    | undefined = undefined;
 
   beforeAll(async () => {
     // resolve account and arn of current credentials
@@ -223,6 +286,7 @@ export const runtimeTestSuite = (
       value: testRole.roleArn,
       exportName: `TestRoleArn-${fullStackName}`,
     });
+    // register CDK resources of each test and return any outputs to use in the test or beforeAll
     testContexts = tests.map(({ resources, skip, only }, i) => {
       // create the construct on skip to reduce output changes when moving between skip and not skip
       const construct = new Construct(stack, `parent${i}`);
@@ -232,7 +296,7 @@ export const runtimeTestSuite = (
           // Place each output in a cfn output, encoded with the unique address of the construct
           if (typeof output === "object") {
             return {
-              output: Object.fromEntries(
+              outputs: Object.fromEntries(
                 Object.entries(output.outputs).map(([key, value]) => {
                   new CfnOutput(construct, `${key}_out`, {
                     exportName: construct.node.addr + key,
@@ -243,14 +307,14 @@ export const runtimeTestSuite = (
                 })
               ),
               extra: output.extra,
-            };
+            } as ResourceReference<any, any>;
           }
         } catch (e) {
           /** if the node fails to add, remove it from the stack before continuing */
           stack.node.tryRemoveChild(construct.node.id);
           return {
             error: e,
-          };
+          } as DeployResult;
         }
       }
       return { skip: true };
@@ -314,8 +378,66 @@ export const runtimeTestSuite = (
         dynamoDB: new DynamoDB(testClientConfig),
         eventBridge: new EventBridge(testClientConfig),
       };
+
+      // map real stack outputs to their keys in the outputs map.
+      // store this object for future use.
+      testResolvedContexts = testContexts.map((s, i) => {
+        if ("outputs" in s) {
+          const resolvedContext = Object.fromEntries(
+            Object.entries(s.outputs).map(([key, value]) => {
+              return [
+                key,
+                stackOutputs?.find((o) => o.ExportName === value)?.OutputValue!,
+              ];
+            })
+          );
+          return {
+            test: tests[i]!,
+            deployOutputs: {
+              outputs: resolvedContext as BaseOutput,
+              extra: s.extra,
+            },
+          };
+        }
+        return {
+          test: tests[i]!,
+          deployOutputs: s,
+        };
+      });
+
+      if (beforeAllTests) {
+        const successDeployments = testResolvedContexts.filter(
+          (
+            s
+          ): s is ResolvedTestResource<BaseOutput, any, TestExtras> & {
+            deployOutputs: ResourceReference<BaseOutput>;
+          } => "outputs" in s.deployOutputs
+        );
+        // call the optional beforeAll callback and optionally update the resolved contexts
+        const updates = await beforeAllTests?.(successDeployments, clients);
+        if (updates) {
+          if (successDeployments.length !== updates.length) {
+            throw Error(
+              "beforeAllTests should return undefined or an array of test contexts of the same size as the input."
+            );
+          }
+          // replace the successful entries with the updates ones
+          testResolvedContexts = testResolvedContexts.map((s) => {
+            if ("outputs" in s.deployOutputs) {
+              return updates.shift()!;
+            } else {
+              return s;
+            }
+          });
+        }
+      }
     } else {
       stackOutputs = [];
+      // if the deploy failed, populate with the un-resolved contexts, should only contain failed and skips
+      testResolvedContexts = testContexts.map((s, i) => ({
+        test: tests[i]!,
+        deployOutputs: s,
+      }));
     }
   });
 
@@ -328,47 +450,59 @@ export const runtimeTestSuite = (
   });
 
   // @ts-ignore
-  const testResource: TestResource = (name, resources, test) => {
+  const testResource: TestResource<BaseOutput, TestExtras> = (
+    name,
+    resources,
+    test,
+    extras
+  ) => {
     tests.push({
       name,
       resources,
       test: test as any,
       skip: false,
       only: false,
+      extras: extras,
     });
   };
-  testResource.skip = (name, resources, test) => {
-    tests.push({ name, resources, test: test as any, skip: true, only: false });
+  testResource.skip = (name, resources, test, extras) => {
+    tests.push({
+      name,
+      resources,
+      test: test as any,
+      skip: true,
+      only: false,
+      extras,
+    });
   };
-  testResource.only = (name, resources, test) => {
-    tests.push({ name, resources, test: test as any, skip: false, only: true });
+  testResource.only = (name, resources, test, extras) => {
+    tests.push({
+      name,
+      resources,
+      test: test as any,
+      skip: false,
+      only: true,
+      extras,
+    });
   };
 
   // register tests
-  fn(testResource, stack, app);
+  fn(testResource, stack, app, (cb) => (beforeAllTests = cb));
 
-  tests.forEach(({ name, test: testFunc, skip, only }, i) => {
+  tests?.forEach(({ name, test: testFunc, skip, only }, i) => {
     if (!skip) {
       // eslint-disable-next-line no-only-tests/no-only-tests
       const t = only ? test.only : test;
       t(name, async () => {
-        const context = testContexts[i]!;
-        if ("error" in context) {
-          throw context.error;
-        } else if ("output" in context) {
-          const resolvedContext = Object.fromEntries(
-            Object.entries(context.output).map(([key, value]) => {
-              return [
-                key,
-                stackOutputs?.find((o) => o.ExportName === value)?.OutputValue!,
-              ];
-            })
-          );
-          return testFunc(resolvedContext, clients!, context.extra);
+        const { deployOutputs } = testResolvedContexts?.[i]!;
+        if ("error" in deployOutputs) {
+          throw deployOutputs.error;
+        } else if ("outputs" in deployOutputs) {
+          return testFunc(deployOutputs.outputs, clients!, deployOutputs.extra);
         }
       });
     } else {
       test.skip(name, () => {});
     }
   });
-};
+}

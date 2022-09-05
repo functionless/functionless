@@ -1523,28 +1523,23 @@ test("return AWS.SDK.ApiGatewayManagementApi.postToConnection is not supported",
   const { stack } = initStepFunctionApp();
   expect(
     () =>
-      new ExpressStepFunction<
-        { prefix: string | undefined },
-        AWS.CloudWatch.MetricAlarms | undefined
-      >(stack, "fn", async (input) => {
-        await $AWS.SDK.ApiGatewayManagementApi.postToConnection(
-          {
-            ConnectionId: "blah",
-            Data: "some data",
-          },
-          {
-            iam: {
-              resources: ["*"],
+      new ExpressStepFunction<{ prefix: string | undefined }, void>(
+        stack,
+        "fn",
+        async () => {
+          await $AWS.SDK.ApiGatewayManagementApi.postToConnection(
+            {
+              ConnectionId: "blah",
+              Data: "some data",
             },
-          }
-        );
-
-        if (alarms.MetricAlarms === undefined) {
-          return;
+            {
+              iam: {
+                resources: ["*"],
+              },
+            }
+          );
         }
-
-        return alarms.MetricAlarms;
-      })
+      )
   ).toThrow(
     "Step Functions does not support an API Integration with ApiGatewayManagementApi and method postToConnection."
   );

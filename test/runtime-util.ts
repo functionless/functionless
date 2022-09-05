@@ -52,21 +52,13 @@ export const testExprStepFunction = async (
 
 export const testStepFunction = async (
   sfn: StepFunctions,
-  stateMachineArn: string,
-  payload: any
+  executionArn: string
 ) => {
-  const execResult = await sfn
-    .startExecution({
-      stateMachineArn,
-      input: JSON.stringify(payload),
-    })
-    .promise();
-
   return retry(
     () =>
       sfn
         .describeExecution({
-          executionArn: execResult.executionArn,
+          executionArn: executionArn,
         })
         .promise(),
     (exec) => exec.status !== "RUNNING",
