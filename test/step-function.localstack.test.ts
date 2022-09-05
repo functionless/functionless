@@ -2098,7 +2098,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           "fn",
           async (input: { orderId: string }): Promise<void> => {
             await queue.sendMessage({
-              Message: {
+              MessageBody: {
                 orderId: input.orderId,
               },
             });

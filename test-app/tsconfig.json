@@ -9,7 +9,7 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "declarationMap": true,
-    "lib": ["dom"],
+    "lib": ["dom", "ES2019.Array"],
     "module": "CommonJS",
     "noEmitOnError": false,
     "noFallthroughCasesInSwitch": true,

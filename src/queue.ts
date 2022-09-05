@@ -12,7 +12,6 @@ import { EventBusTargetIntegration } from "./event-bridge";
 import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { EventSource, IEventSource } from "./event-source";
 import { SQSClient } from "./function-prewarm";
-import { isObjectLiteralExpr } from "./guards";
 import { Integration, makeIntegration } from "./integration";
 import { Iterable } from "./iterable";
 // @ts-ignore tsdoc
@@ -49,7 +48,7 @@ export interface SendMessageRequest<M>
   /**
    * The {@link M} to be sent to the {@link Queue}.
    */
-  Message: M;
+  MessageBody: M;
 }
 
 export interface SendMessageBatchRequest<M>
@@ -59,17 +58,18 @@ export interface SendMessageBatchRequest<M>
 
 export interface SendMessageBatchRequestEntry<M>
   extends Omit<AWS.SQS.SendMessageBatchRequestEntry, "MessageBody"> {
-  Message: M;
+  MessageBody: M;
 }
 
 export interface ReceiveMessageRequest
   extends Omit<AWS.SQS.ReceiveMessageRequest, "QueueUrl"> {}
 
-export interface ReceiveMessageResult<M> extends AWS.SQS.ReceiveMessageResult {
+export interface ReceiveMessageResult<M>
+  extends Omit<AWS.SQS.ReceiveMessageResult, "Messages"> {
   /**
    * The {@link M} to be sent to the {@link Queue}.
    */
-  MessageList?: Message<M>[];
+  Messages?: Message<M>[];
 }
 
 interface BaseQueue<Message> {
@@ -265,7 +265,7 @@ interface BaseQueue<Message> {
    * that you structure your code so that it can handle new attributes gracefully.
    */
   receiveMessage(
-    input: ReceiveMessageRequest
+    input?: ReceiveMessageRequest
   ): Promise<ReceiveMessageResult<Message>>;
 
   /**
@@ -392,10 +392,10 @@ abstract class BaseQueue<Message>
         call: async ([input], context) => {
           const sqs = context.getOrInit(SQSClient);
 
-          const messageBody = serialize(input.Message);
+          const messageBody = serialize(input.MessageBody);
 
           // @ts-ignore
-          delete input.Message;
+          delete input.MessageBody;
 
           const updatedQueueUrl =
             lambdaQueueUrlRetriever?.(queueUrl) ?? queueUrl;
@@ -411,82 +411,109 @@ abstract class BaseQueue<Message>
           return response;
         },
       },
-      asl: (call, callContext) => {
+      asl: (call, context) => {
         const input = call.args[0]?.expr;
 
-        if (!isObjectLiteralExpr(input)) {
+        if (input === undefined) {
           throw new SynthError(
-            ErrorCodes.Expected_an_object_literal,
-            `First argument 'input' into Queue.sendMessage must be an object literal.`
+            ErrorCodes.Invalid_Input,
+            `the first argument 'input' is required by sendMessage`
           );
         }
 
-        return callContext.evalExpr(input, (messageOutput, evalContext) => {
-          if (
-            ASLGraph.isLiteralValue(messageOutput) &&
-            messageOutput.value &&
-            typeof messageOutput.value === "object" &&
-            !Array.isArray(messageOutput.value)
-          ) {
-            let isJsonPath: boolean;
-            let MessageBody: string;
-            if ("Message" in messageOutput.value) {
-              const message = messageOutput.value.Message;
+        this.resource.grantSendMessages(context.role);
+
+        return context.evalExprToJsonPathOrLiteral(
+          input,
+          (input, { addState }) => {
+            if (ASLGraph.isJsonPath(input)) {
+              addState({
+                Type: "Pass",
+                ResultPath: `${input.jsonPath}.QueueUrl`,
+                Result: this.resource.queueUrl,
+                Next: ASLGraph.DeferNext,
+              });
               if (this.serializer.dataType === DataType.Json) {
-                isJsonPath = true;
-                const messageHeapVar = callContext.newHeapVariable();
-                MessageBody = `States.JsonToString(${messageHeapVar})`;
-                evalContext.addState({
+                // request.MessageBody.value = JSON.stringify(request.MessageBody)
+                addState({
                   Type: "Pass",
-                  Parameters: message,
-                  ResultPath: messageHeapVar,
+                  ResultPath: `${input.jsonPath}.MessageBody`,
+                  Parameters: {
+                    "value.$":
+                      "States.JsonToString(${input.jsonPath}.MessageBody)",
+                  },
                   Next: ASLGraph.DeferNext,
                 });
-              } else {
-                // TextSerializer
-                if (typeof message === "string") {
-                  isJsonPath = false;
-                  MessageBody = message;
+                // it's unfortunate that we have to do this
+                // request.MessageBody = request.MessageBody.value
+                addState({
+                  Type: "Pass",
+                  InputPath: `${input.jsonPath}.MessageBody.value`,
+                  OutputPath: `${input.jsonPath}.MessageBody`,
+                  Next: ASLGraph.DeferNext,
+                });
+              }
+              return context.stateWithHeapOutput({
+                Type: "Task",
+                Resource: "arn:aws:states:::aws-sdk:sqs:sendMessage",
+                Parameters: {
+                  "MessageBody.$": input.jsonPath,
+                  QueueUrl: this.queueUrl,
+                },
+                Next: ASLGraph.DeferNext,
+              });
+            } else if (
+              input.value !== null &&
+              typeof input.value === "object"
+            ) {
+              if (this.serializer.dataType === DataType.Json) {
+                // when the data type is Json, we need to serialize the MessageBody to JSON
+                let messageBodyJsonPath: string;
+                if ("MessageBody" in input.value) {
+                  messageBodyJsonPath = context.newHeapVariable();
+                  addState({
+                    Type: "Pass",
+                    Parameters: input.value.MessageBody,
+                    ResultPath: messageBodyJsonPath,
+                    Next: ASLGraph.DeferNext,
+                  });
+                } else if ("MessageBody.$" in input.value) {
+                  messageBodyJsonPath = input.value["MessageBody.$"];
                 } else {
                   throw new SynthError(
                     ErrorCodes.Invalid_Input,
-                    `the 'Message' must be a string for a Queue using the TextSerializer`
+                    `the property 'MessageBody' is required in SendMessageRequest`
                   );
                 }
-              }
-            } else if ("Message.$" in messageOutput.value) {
-              const message = messageOutput.value["Message.$"];
-              isJsonPath = true;
-              if (this.serializer.dataType === DataType.Json) {
-                MessageBody = `States.JsonToString(${message})`;
+                return context.stateWithHeapOutput({
+                  Type: "Task",
+                  Resource: "arn:aws:states:::aws-sdk:sqs:sendMessage",
+                  Parameters: {
+                    ...input.value,
+                    "MessageBody.$": `States.JsonToString(${messageBodyJsonPath})`,
+                    QueueUrl: this.queueUrl,
+                  },
+                  Next: ASLGraph.DeferNext,
+                });
               } else {
-                MessageBody = message as string;
+                return context.stateWithHeapOutput({
+                  Type: "Task",
+                  Resource: "arn:aws:states:::aws-sdk:sqs:sendMessage",
+                  Parameters: {
+                    ...input.value,
+                    QueueUrl: this.queueUrl,
+                  },
+                  Next: ASLGraph.DeferNext,
+                });
               }
             } else {
               throw new SynthError(
-                ErrorCodes.Invalid_Input,
-                `the 'Message' property is missing from the SendMessageRequest`
+                ErrorCodes.Unexpected_Error,
+                `unexpected data type '${this.serializer.dataType}' is not supported by SQS by Step Functions`
               );
             }
-
-            this.resource.grantSendMessages(callContext.role);
-
-            return callContext.stateWithHeapOutput({
-              Type: "Task",
-              Resource: "arn:aws:states:::aws-sdk:sqs:sendMessage",
-              Parameters: {
-                [`MessageBody${isJsonPath ? ".$" : ""}`]: MessageBody,
-                QueueUrl: this.queueUrl,
-              },
-              Next: ASLGraph.DeferNext,
-            });
-          } else {
-            throw new SynthError(
-              ErrorCodes.Expected_an_object_literal,
-              `First argument 'input' into Queue.sendMessage must be an object literal.`
-            );
           }
-        });
+        );
       },
     });
 
@@ -501,7 +528,7 @@ abstract class BaseQueue<Message>
         bind: (func) => this.resource.grantSendMessages(func.resource),
         preWarm: (context) => context.getOrInit(SQSClient),
         call: async ([input], context) => {
-          const sqs = context.getOrInit<AWS.SQS>(SQSClient);
+          const sqs: AWS.SQS = context.getOrInit<AWS.SQS>(SQSClient);
 
           const updatedQueueUrl =
             lambdaQueueUrlRetriever?.(queueUrl) ?? queueUrl;
@@ -509,16 +536,114 @@ abstract class BaseQueue<Message>
           const response = await sqs
             .sendMessageBatch({
               ...input,
-              Entries: input.Entries.map(({ Message, ...entry }) => ({
-                ...entry,
-                MessageBody: serialize(Message),
-              })),
+              Entries: input.Entries.map(
+                ({ MessageBody: Message, ...entry }) => ({
+                  ...entry,
+                  MessageBody: serialize(Message),
+                })
+              ),
               QueueUrl: updatedQueueUrl,
             })
             .promise();
 
           return response;
         },
+      },
+      asl: (call, context) => {
+        const entries = call.args[0]?.expr;
+        if (entries === undefined) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            `the first argument 'input' is required by sendMessageBatch`
+          );
+        }
+
+        this.resource.grantSendMessages(context.role);
+
+        if (this.serializer.dataType === DataType.String) {
+          // when the data type is a String, no extra processing is required
+          // so we evaluate the entries to a JsonPath or Literal and pass it straight through
+          return context.evalExprToJsonPathOrLiteral(entries, (entries) => {
+            if (
+              ASLGraph.isJsonPath(entries) ||
+              (entries.value !== null && typeof entries.value === "object")
+            ) {
+              return context.stateWithHeapOutput({
+                Type: "Task",
+                Resource: "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
+                Parameters: {
+                  QueueUrl: this.queueUrl,
+                  ...(ASLGraph.isJsonPath(entries)
+                    ? {
+                        "Entries.$": `${entries.jsonPath}.Entries`,
+                      }
+                    : (entries.value as object)),
+                },
+                Next: ASLGraph.DeferNext,
+              });
+            } else {
+              throw new SynthError(
+                ErrorCodes.Invalid_Input,
+                `invalid 'Entries' property in SendMessageBatchRequest`
+              );
+            }
+          });
+        } else if (this.serializer.dataType === DataType.Json) {
+          // when the data type is Json, map over each of the entries and serialize them to JSON
+          return context.evalExprToJsonPath(
+            entries,
+            (entries, { addState }) => {
+              const heapVar = context.newHeapVariable();
+              addState({
+                Type: "Map",
+                ItemsPath: `${entries.jsonPath}.Entries`,
+                Parameters: {
+                  "entry.$": "$$.Map.Item.Value",
+                },
+                ResultPath: heapVar,
+                Next: ASLGraph.DeferNext,
+                Iterator: {
+                  StartAt: "serialize Message",
+                  States: {
+                    "serialize Message": {
+                      Type: "Pass",
+                      Parameters: {
+                        "value.$":
+                          this.serializer.dataType === DataType.Json
+                            ? `States.JsonToString($.entry.MessageBody)`
+                            : "$.entry.MessageBody",
+                      },
+                      ResultPath: "$.entry.MessageBody",
+                      Next: "unwrap Message",
+                    },
+                    "unwrap Message": {
+                      Type: "Pass",
+                      InputPath: "$.entry.MessageBody.value",
+                      ResultPath: "$.entry.MessageBody",
+                      OutputPath: "$.entry",
+                      End: true,
+                    },
+                  },
+                },
+              });
+
+              return context.stateWithHeapOutput({
+                Type: "Task",
+                Resource: "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
+                Parameters: {
+                  QueueUrl: this.queueUrl,
+                  "Entries.$": heapVar,
+                },
+                Next: ASLGraph.DeferNext,
+              });
+            }
+          );
+        } else {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            `unknown DataType '${this.serializer.dataType}' is not supported by SQS by Step Functions`
+          );
+        }
       },
     });
 
@@ -532,7 +657,7 @@ abstract class BaseQueue<Message>
         bind: (func) => this.resource.grantConsumeMessages(func.resource),
         preWarm: (context) => context.getOrInit(SQSClient),
         call: async ([input], context) => {
-          const sqs = context.getOrInit(SQSClient);
+          const sqs: AWS.SQS = context.getOrInit(SQSClient);
 
           const updatedQueueUrl =
             lambdaQueueUrlRetriever?.(queueUrl) ?? queueUrl;
@@ -545,7 +670,7 @@ abstract class BaseQueue<Message>
             .promise();
 
           return {
-            MessageList: response.Messages?.map((message) => ({
+            Messages: response.Messages?.map((message) => ({
               ...message,
               Message:
                 codec && message.Body
@@ -554,6 +679,121 @@ abstract class BaseQueue<Message>
             })),
           };
         },
+      },
+      asl: (call, context) => {
+        const queueUrl = this.queueUrl;
+        const serializer = this.serializer;
+        const input = call.args[0]?.expr;
+
+        this.resource.grantConsumeMessages(context.role);
+        const messagesHeap = context.newHeapVariable();
+
+        if (input === undefined) {
+          return context.evalContext(call, ({ addState }) => {
+            addState(receiveAndParse(undefined));
+            return {
+              jsonPath: messagesHeap,
+            };
+          });
+        } else {
+          return context.evalExprToJsonPathOrLiteral(
+            input,
+            (input, { addState }) => {
+              if (
+                ASLGraph.isJsonPath(input) ||
+                input.value === null ||
+                typeof input.value !== "object"
+              ) {
+                // Because of limitations in `Parameters` - need support for `Parameters.$`
+                throw new SynthError(
+                  ErrorCodes.Invalid_Input,
+                  `the 'input' to receiveMessage must be an object literal`
+                );
+              }
+              addState(receiveAndParse(input.value));
+              return {
+                jsonPath: messagesHeap,
+              };
+            }
+          );
+        }
+
+        function receiveAndParse(
+          request: object | undefined
+        ): ASLGraph.SubState {
+          if (
+            serializer.dataType !== DataType.Json &&
+            serializer.dataType !== DataType.String
+          ) {
+            throw new SynthError(
+              ErrorCodes.Unexpected_Error,
+              `unknown DataType '${serializer.dataType}' is not supported by SQS by Step Functions`
+            );
+          }
+
+          return {
+            startState: "receive",
+            states: {
+              receive: {
+                Type: "Task",
+                Resource: "arn:aws:states:::aws-sdk:sqs:receiveMessage",
+                ResultPath: messagesHeap,
+                Parameters: {
+                  ...(request ? request : {}),
+                  QueueUrl: queueUrl,
+                },
+                Next:
+                  serializer.dataType === DataType.Json
+                    ? "parseIfMessages"
+                    : ASLGraph.DeferNext,
+              },
+              ...(serializer.dataType === DataType.Json
+                ? {
+                    parseIfMessages: {
+                      Type: "Choice",
+                      Choices: [
+                        {
+                          IsPresent: true,
+                          Variable: `${messagesHeap}.Messages`,
+                          Next: "parse",
+                        },
+                      ],
+                      Default: ASLGraph.DeferNext,
+                    },
+                    parse: {
+                      Type: "Map",
+                      Next: ASLGraph.DeferNext,
+                      ResultPath: `${messagesHeap}.Messages`,
+                      ItemsPath: `${messagesHeap}.Messages`,
+                      Parameters: {
+                        "message.$": "$$.Map.Item.Value",
+                      },
+                      Iterator: {
+                        StartAt: "JsonParse",
+                        States: {
+                          JsonParse: {
+                            Type: "Pass",
+                            Parameters: {
+                              "parsed.$": `States.StringToJson($.message.Body)`,
+                            },
+                            ResultPath: "$.message.Message",
+                            Next: "UnwrapMessage",
+                          },
+                          UnwrapMessage: {
+                            Type: "Pass",
+                            InputPath: "$.message.Message.parsed",
+                            ResultPath: "$.message.Message",
+                            OutputPath: "$.message",
+                            End: true,
+                          },
+                        },
+                      },
+                    },
+                  }
+                : {}),
+            },
+          };
+        }
       },
     });
 

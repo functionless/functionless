@@ -1,4 +1,4 @@
-import { App, Stack } from "aws-cdk-lib";
+import { App, aws_logs, aws_stepfunctions, Stack } from "aws-cdk-lib";
 import { Queue, Function, EventBus, Event, StepFunction } from "functionless";
 
 const app = new App();
@@ -73,7 +73,7 @@ const processOrder = new StepFunction(
     await chargeCard(order);
     await dispatchOrder(order);
     await processedOrderQueue.sendMessage({
-      Message: order,
+      MessageBody: order,
     });
   }
 );
@@ -90,12 +90,69 @@ orderQueue.messages().forEach(async (order) => {
 // process all failed Order Events and re-send them for re-processing
 failedOrderQueue.messages().forEach(async (message) => {
   await orderQueue.sendMessage({
-    Message: message,
+    MessageBody: message,
     // naive back-off policy for demonstration purposes only
     DelaySeconds: 60,
   });
 });
 
-processedOrderQueue.messages().forEach((order) => {
-  console.log("processed order", order);
-});
+// processedOrderQueue.messages().forEach((order) => {
+//   console.log("processed order", order);
+// });
+
+new StepFunction(
+  stack,
+  "SendMessageBatch",
+  async (input: { messages: OrderPlacedEvent[] }) => {
+    await orderQueue.sendMessageBatch({
+      Entries: input.messages.map((message, idx) => ({
+        Id: `${idx}`,
+        MessageBody: message,
+      })),
+    });
+  }
+);
+
+// TODO: implement retry logic once new intrinsics arrive
+// @see https://github.com/functionless/functionless/pull/468
+// new ExpressStepFunction(
+//   stack,
+//   "SendMessageBatch",
+//   async (input: { messages: OrderPlacedEvent[] }) => {
+//     let response = await orderQueue.sendMessageBatch({
+//       Entries: input.messages.map((message, idx) => ({
+//         Id: `${idx}`,
+//         MessageBody: message,
+//       })),
+//     });
+//     let attempt = 0;
+//     while (attempt < 10 && response.Failed.length > 0) {
+//       attempt += 1;
+//       response = await orderQueue.sendMessageBatch({
+//         Entries: response.Failed.map((failed) => ({
+//           Id: failed.Id,
+//           MessageBody: input.messages[Number(failed.Id)],
+//         })),
+//       });
+//     }
+//     if (response.Failed.length > 0) {
+//       throw new Error(`failed to send messages after 10 attempts`);
+//     }
+//   }
+// );
+
+new StepFunction(
+  stack,
+  "ReceiveMessage",
+  {
+    logs: {
+      destination: new aws_logs.LogGroup(stack, "ReceiveMessageLogs"),
+      level: aws_stepfunctions.LogLevel.ALL,
+    },
+  },
+  async (input: { maxMessages?: number }) => {
+    return processedOrderQueue.receiveMessage({
+      MaxNumberOfMessages: input.maxMessages ?? 10,
+    });
+  }
+);

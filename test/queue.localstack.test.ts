@@ -477,7 +477,7 @@ localstackTestSuite("queueStack", (test) => {
         localstackClientConfig,
         async (id: string) => {
           await queue.sendMessage({
-            Message: {
+            MessageBody: {
               id,
               data: "data",
             },
@@ -497,7 +497,7 @@ localstackTestSuite("queueStack", (test) => {
               {
                 Id: "1",
 
-                Message: {
+                MessageBody: {
                   id: "id-1",
                   data: "data-1",
                 },
@@ -506,7 +506,7 @@ localstackTestSuite("queueStack", (test) => {
               },
               {
                 Id: "2",
-                Message: {
+                MessageBody: {
                   id: "id-2",
                   data: "data-2",
                 },
@@ -595,7 +595,7 @@ localstackTestSuite("queueStack", (test) => {
         localstackClientConfig,
         async (id: string) => {
           return queue.sendMessage({
-            Message: {
+            MessageBody: {
               id,
               data: "data",
             },

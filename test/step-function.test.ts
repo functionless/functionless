@@ -1526,8 +1526,8 @@ test("return AWS.SDK.ApiGatewayManagementApi.postToConnection is not supported",
     () =>
       new ExpressStepFunction<
         { prefix: string | undefined },
-        AWS.CloudWatch.MetricAlarms | undefined
-      >(stack, "fn", async (input) => {
+        AWS.CloudWatch.MetricAlarms | void
+      >(stack, "fn", async () => {
         await $AWS.SDK.ApiGatewayManagementApi.postToConnection(
           {
             ConnectionId: "blah",
@@ -1539,12 +1539,6 @@ test("return AWS.SDK.ApiGatewayManagementApi.postToConnection is not supported",
             },
           }
         );
-
-        if (alarms.MetricAlarms === undefined) {
-          return;
-        }
-
-        return alarms.MetricAlarms;
       })
   ).toThrow(
     "Step Functions does not support an API Integration with ApiGatewayManagementApi and method postToConnection."
@@ -4282,7 +4276,7 @@ test("sendMessage object literal with JSON Path to SQS Queue", () => {
     "fn",
     async (input: { orderId: string }): Promise<void> => {
       await queue.sendMessage({
-        Message: {
+        MessageBody: {
           orderId: input.orderId,
         },
       });
@@ -4304,7 +4298,7 @@ test("sendMessage when whole message is JSON Path", () => {
     "fn",
     async (input: Message): Promise<void> => {
       await queue.sendMessage({
-        Message: input,
+        MessageBody: input,
       });
     }
   ).definition;
@@ -4324,7 +4318,7 @@ test("sendMessage JSON array", () => {
     "fn",
     async (input: Message): Promise<void> => {
       await queue.sendMessage({
-        Message: [input],
+        MessageBody: [input],
       });
     }
   ).definition;
@@ -4342,7 +4336,7 @@ test("sendMessage TextSerializer", () => {
     "fn",
     async (input: { message: string }): Promise<void> => {
       await queue.sendMessage({
-        Message: input.message,
+        MessageBody: input.message,
       });
     }
   ).definition;
@@ -4360,7 +4354,7 @@ test("sendMessage TextSerializer literal string", () => {
     "fn",
     async (): Promise<void> => {
       await queue.sendMessage({
-        Message: "hello world",
+        MessageBody: "hello world",
       });
     }
   ).definition;
@@ -4378,6 +4372,80 @@ test("purge SQS Queue", () => {
       await queue.purge();
     }
   ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("sendMessageBatch with JSON serialization", () => {
+  interface Message {
+    orderId: string;
+  }
+
+  const queue = new Queue<Message>(stack, "Queue");
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: { messages: Message[] }): Promise<void> => {
+      await queue.sendMessageBatch({
+        Entries: input.messages.map((message, i) => ({
+          Id: `${i}`,
+          MessageBody: message,
+        })),
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("sendMessageBatch with Text serialization", () => {
+  const queue = new Queue(stack, "Queue", {
+    serializer: Serializer.text(),
+  });
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: { messages: string[] }): Promise<void> => {
+      await queue.sendMessageBatch({
+        Entries: input.messages.map((message, i) => ({
+          Id: `${i}`,
+          MessageBody: message,
+        })),
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("receiveMessage with JSON serialization", () => {
+  interface Message {
+    orderId: string;
+  }
+
+  const queue = new Queue<Message>(stack, "Queue");
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (): Promise<void> => {
+      await queue.receiveMessage();
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("receiveMessage with Text serialization", () => {
+  const queue = new Queue(stack, "Queue", {
+    serializer: Serializer.text(),
+  });
+
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return queue.receiveMessage();
+  }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });

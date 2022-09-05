@@ -13745,6 +13745,81 @@ Object {
 }
 `;
 
+exports[`receiveMessage with JSON serialization 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "Initialize Functionless Context": Object {
+      "Next": "await queue.receiveMessage({})",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "await queue.receiveMessage({})": Object {
+      "ItemsPath": "$.heap0.Messages",
+      "Iterator": Object {
+        "StartAt": "JsonParse",
+        "States": Object {
+          "JsonParse": Object {
+            "End": true,
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "return null",
+      "Parameters": Object {
+        "message.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap0.Messages",
+      "Type": "Map",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`receiveMessage with Text serialization 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return queue.receiveMessage()": Object {
+      "End": true,
+      "InputPath": "$.heap0",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "return queue.receiveMessage()",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return queue.receiveMessage()": Object {
+      "Next": "1__return queue.receiveMessage()",
+      "Parameters": Object {
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:receiveMessage",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
 exports[`result = $SFN.forEach(list, (item) => task(item)) 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -15668,7 +15743,7 @@ exports[`sendMessage JSON array 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__await queue.sendMessage({Message: [input]})": Object {
+    "1__await queue.sendMessage({MessageBody: [input]})": Object {
       "Next": "return null",
       "Parameters": Object {
         "MessageBody.$": "States.JsonToString($.heap2)",
@@ -15678,14 +15753,14 @@ Object {
       "ResultPath": "$.heap3",
       "Type": "Task",
     },
-    "1__await queue.sendMessage({Message: [input]}) 1": Object {
+    "1__await queue.sendMessage({MessageBody: [input]}) 1": Object {
       "InputPath": "$.heap1.arr",
-      "Next": "1__await queue.sendMessage({Message: [input]})",
+      "Next": "1__await queue.sendMessage({MessageBody: [input]})",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "await queue.sendMessage({Message: [input]})",
+      "Next": "await queue.sendMessage({MessageBody: [input]})",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -15696,14 +15771,14 @@ Object {
       "Type": "Pass",
     },
     "[input]": Object {
-      "Next": "1__await queue.sendMessage({Message: [input]}) 1",
+      "Next": "1__await queue.sendMessage({MessageBody: [input]}) 1",
       "Parameters": Object {
         "arr.$": "States.Array($.heap0)",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "await queue.sendMessage({Message: [input]})": Object {
+    "await queue.sendMessage({MessageBody: [input]})": Object {
       "InputPath": "$.input",
       "Next": "[input]",
       "ResultPath": "$.heap0",
@@ -15723,7 +15798,7 @@ exports[`sendMessage TextSerializer 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__await queue.sendMessage({Message: input.message})": Object {
+    "1__await queue.sendMessage({MessageBody: input.message})": Object {
       "Next": "return null",
       "Parameters": Object {
         "MessageBody.$": "$.heap0",
@@ -15734,7 +15809,7 @@ Object {
       "Type": "Task",
     },
     "Initialize Functionless Context": Object {
-      "Next": "await queue.sendMessage({Message: input.message})",
+      "Next": "await queue.sendMessage({MessageBody: input.message})",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -15744,9 +15819,9 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "await queue.sendMessage({Message: input.message})": Object {
+    "await queue.sendMessage({MessageBody: input.message})": Object {
       "InputPath": "$.input.message",
-      "Next": "1__await queue.sendMessage({Message: input.message})",
+      "Next": "1__await queue.sendMessage({MessageBody: input.message})",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -15765,7 +15840,7 @@ Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
     "Initialize Functionless Context": Object {
-      "Next": "await queue.sendMessage({Message: \\"hello world\\"})",
+      "Next": "await queue.sendMessage({MessageBody: \\"hello world\\"})",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -15774,7 +15849,7 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "await queue.sendMessage({Message: \\"hello world\\"})": Object {
+    "await queue.sendMessage({MessageBody: \\"hello world\\"})": Object {
       "Next": "return null",
       "Parameters": Object {
         "MessageBody": "hello world",
@@ -15798,15 +15873,15 @@ exports[`sendMessage object literal with JSON Path to SQS Queue 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__await queue.sendMessage({Message: {orderId: input.orderId}})": Object {
-      "Next": "2__await queue.sendMessage({Message: {orderId: input.orderId}})",
+    "1__await queue.sendMessage({MessageBody: {orderId: input.orderId}})": Object {
+      "Next": "2__await queue.sendMessage({MessageBody: {orderId: input.orderId}})",
       "Parameters": Object {
         "orderId.$": "$.heap0",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "2__await queue.sendMessage({Message: {orderId: input.orderId}})": Object {
+    "2__await queue.sendMessage({MessageBody: {orderId: input.orderId}})": Object {
       "Next": "return null",
       "Parameters": Object {
         "MessageBody.$": "States.JsonToString($.heap1)",
@@ -15817,7 +15892,7 @@ Object {
       "Type": "Task",
     },
     "Initialize Functionless Context": Object {
-      "Next": "await queue.sendMessage({Message: {orderId: input.orderId}})",
+      "Next": "await queue.sendMessage({MessageBody: {orderId: input.orderId}})",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -15827,9 +15902,9 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "await queue.sendMessage({Message: {orderId: input.orderId}})": Object {
+    "await queue.sendMessage({MessageBody: {orderId: input.orderId}})": Object {
       "InputPath": "$.input.orderId",
-      "Next": "1__await queue.sendMessage({Message: {orderId: input.orderId}})",
+      "Next": "1__await queue.sendMessage({MessageBody: {orderId: input.orderId}})",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -15847,7 +15922,7 @@ exports[`sendMessage when whole message is JSON Path 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__await queue.sendMessage({Message: input})": Object {
+    "1__await queue.sendMessage({MessageBody: input})": Object {
       "Next": "return null",
       "Parameters": Object {
         "MessageBody.$": "States.JsonToString($.heap0)",
@@ -15858,7 +15933,7 @@ Object {
       "Type": "Task",
     },
     "Initialize Functionless Context": Object {
-      "Next": "await queue.sendMessage({Message: input})",
+      "Next": "await queue.sendMessage({MessageBody: input})",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -15868,9 +15943,9 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "await queue.sendMessage({Message: input})": Object {
+    "await queue.sendMessage({MessageBody: input})": Object {
       "InputPath": "$.input",
-      "Next": "1__await queue.sendMessage({Message: input})",
+      "Next": "1__await queue.sendMessage({MessageBody: input})",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -15878,6 +15953,329 @@ Object {
       "End": true,
       "InputPath": "$.fnl_context.null",
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`sendMessageBatch with JSON serialization 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess": Object {
+      "Next": "2__await queue.sendMessageBatch({Entries: input.messages.map(function (mess",
+      "Parameters": Object {
+        "Entries.$": "$.heap5",
+      },
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
+    "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess 1": Object {
+      "InputPath": "$.heap0",
+      "Next": "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess",
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "1__return {Id: i, MessageBody: message}": Object {
+      "Next": "handleResult__await queue.sendMessageBatch({Entries: input.messages.map(fun",
+      "Parameters": Object {
+        "Id.$": "$.heap3",
+        "MessageBody.$": "$.heap4",
+      },
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
+    "1__return {Id: i, MessageBody: message} 1": Object {
+      "InputPath": "$.heap2.string",
+      "Next": "2__return {Id: i, MessageBody: message}",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "2__await queue.sendMessageBatch({Entries: input.messages.map(function (mess": Object {
+      "ItemsPath": "$.heap6",
+      "Iterator": Object {
+        "StartAt": "serialize Message",
+        "States": Object {
+          "serialize Message": Object {
+            "End": true,
+            "OutputPath": "$.entry",
+            "Parameters": Object {
+              "MessageBody.$": "States.JsonToString($.entry.MessageBody)",
+            },
+            "ResultPath": "$.entry.MessageBody",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "3__await queue.sendMessageBatch({Entries: input.messages.map(function (mess",
+      "Parameters": Object {
+        "entry.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap7",
+      "Type": "Map",
+    },
+    "2__return {Id: i, MessageBody: message}": Object {
+      "InputPath": "$.message",
+      "Next": "1__return {Id: i, MessageBody: message}",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "3__await queue.sendMessageBatch({Entries: input.messages.map(function (mess": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "Entries.$": "$.heap7",
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
+      "ResultPath": "$.heap8",
+      "Type": "Task",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "await queue.sendMessageBatch({Entries: input.messages.map(function (message",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "await queue.sendMessageBatch({Entries: input.messages.map(function (message": Object {
+      "ItemsPath": "$.input.messages",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "check__await queue.sendMessageBatch({Entries: input.messages.map(function (",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap0",
+      "ResultSelector": Object {
+        "arr.$": "$",
+        "arrStr": "[null",
+      },
+      "Type": "Map",
+    },
+    "check__await queue.sendMessageBatch({Entries: input.messages.map(function (": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "function (message,i)",
+          "Variable": "$.heap0.arr[0]",
+        },
+      ],
+      "Default": "end__await queue.sendMessageBatch({Entries: input.messages.map(function (me",
+      "Type": "Choice",
+    },
+    "end__await queue.sendMessageBatch({Entries: input.messages.map(function (me": Object {
+      "Next": "set__end__await queue.sendMessageBatch({Entries: input.messages.map(functio",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "function (message,i)": Object {
+      "InputPath": "$.heap0.arr[0].item",
+      "Next": "i",
+      "ResultPath": "$.message",
+      "Type": "Pass",
+    },
+    "handleResult__await queue.sendMessageBatch({Entries: input.messages.map(fun": Object {
+      "Next": "check__await queue.sendMessageBatch({Entries: input.messages.map(function (",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "i": Object {
+      "InputPath": "$.heap0.arr[0].index",
+      "Next": "return {Id: i, MessageBody: message}",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "i 1": Object {
+      "Next": "1__return {Id: i, MessageBody: message} 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{}',$.heap1)",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return {Id: i, MessageBody: message}": Object {
+      "InputPath": "$.i",
+      "Next": "i 1",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "set__end__await queue.sendMessageBatch({Entries: input.messages.map(functio": Object {
+      "InputPath": "$.heap0.result[1:]",
+      "Next": "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess 1",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`sendMessageBatch with Text serialization 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "Entries.$": "$.heap5",
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
+      "ResultPath": "$.heap6",
+      "Type": "Task",
+    },
+    "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess 1": Object {
+      "InputPath": "$.heap0",
+      "Next": "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess",
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "1__return {Id: i, MessageBody: message}": Object {
+      "Next": "handleResult__await queue.sendMessageBatch({Entries: input.messages.map(fun",
+      "Parameters": Object {
+        "Id.$": "$.heap3",
+        "MessageBody.$": "$.heap4",
+      },
+      "ResultPath": "$.heap0.arr[0]",
+      "Type": "Pass",
+    },
+    "1__return {Id: i, MessageBody: message} 1": Object {
+      "InputPath": "$.heap2.string",
+      "Next": "2__return {Id: i, MessageBody: message}",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "2__return {Id: i, MessageBody: message}": Object {
+      "InputPath": "$.message",
+      "Next": "1__return {Id: i, MessageBody: message}",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "await queue.sendMessageBatch({Entries: input.messages.map(function (message",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "await queue.sendMessageBatch({Entries: input.messages.map(function (message": Object {
+      "ItemsPath": "$.input.messages",
+      "Iterator": Object {
+        "StartAt": "Default",
+        "States": Object {
+          "Default": Object {
+            "End": true,
+            "ResultPath": "$",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "check__await queue.sendMessageBatch({Entries: input.messages.map(function (",
+      "Parameters": Object {
+        "index.$": "$$.Map.Item.Index",
+        "item.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap0",
+      "ResultSelector": Object {
+        "arr.$": "$",
+        "arrStr": "[null",
+      },
+      "Type": "Map",
+    },
+    "check__await queue.sendMessageBatch({Entries: input.messages.map(function (": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "function (message,i)",
+          "Variable": "$.heap0.arr[0]",
+        },
+      ],
+      "Default": "end__await queue.sendMessageBatch({Entries: input.messages.map(function (me",
+      "Type": "Choice",
+    },
+    "end__await queue.sendMessageBatch({Entries: input.messages.map(function (me": Object {
+      "Next": "set__end__await queue.sendMessageBatch({Entries: input.messages.map(functio",
+      "Parameters": Object {
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "function (message,i)": Object {
+      "InputPath": "$.heap0.arr[0].item",
+      "Next": "i",
+      "ResultPath": "$.message",
+      "Type": "Pass",
+    },
+    "handleResult__await queue.sendMessageBatch({Entries: input.messages.map(fun": Object {
+      "Next": "check__await queue.sendMessageBatch({Entries: input.messages.map(function (",
+      "Parameters": Object {
+        "arr.$": "$.heap0.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "i": Object {
+      "InputPath": "$.heap0.arr[0].index",
+      "Next": "return {Id: i, MessageBody: message}",
+      "ResultPath": "$.i",
+      "Type": "Pass",
+    },
+    "i 1": Object {
+      "Next": "1__return {Id: i, MessageBody: message} 1",
+      "Parameters": Object {
+        "string.$": "States.Format('{}',$.heap1)",
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return {Id: i, MessageBody: message}": Object {
+      "InputPath": "$.i",
+      "Next": "i 1",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "set__end__await queue.sendMessageBatch({Entries: input.messages.map(functio": Object {
+      "InputPath": "$.heap0.result[1:]",
+      "Next": "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess 1",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
   },
