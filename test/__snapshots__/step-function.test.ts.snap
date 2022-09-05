@@ -15632,6 +15632,96 @@ Object {
 }
 `;
 
+exports[`sendMessage object literal with JSON Path to SQS Queue 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__await queue.sendMessage({Message: {orderId: input.orderId}})": Object {
+      "Next": "2__await queue.sendMessage({Message: {orderId: input.orderId}})",
+      "Parameters": Object {
+        "orderId.$": "$.heap0",
+      },
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "2__await queue.sendMessage({Message: {orderId: input.orderId}})": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "MessageBody.$": "States.JsonToString($.heap1)",
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessage",
+      "ResultPath": "$.heap2",
+      "Type": "Task",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "await queue.sendMessage({Message: {orderId: input.orderId}})",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "await queue.sendMessage({Message: {orderId: input.orderId}})": Object {
+      "InputPath": "$.input.orderId",
+      "Next": "1__await queue.sendMessage({Message: {orderId: input.orderId}})",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`sendMessage when whole message is JSON Path 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__await queue.sendMessage({Message: input})": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "MessageBody.$": "States.JsonToString($.heap0)",
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessage",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "await queue.sendMessage({Message: input})",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "await queue.sendMessage({Message: input})": Object {
+      "InputPath": "$.input",
+      "Next": "1__await queue.sendMessage({Message: input})",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return null": Object {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`set obj 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",

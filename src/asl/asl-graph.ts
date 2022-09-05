@@ -1,5 +1,7 @@
 import { assertNever } from "../assert";
 import { SynthError, ErrorCodes } from "../error-code";
+// @ts-ignore tsdoc
+import type { Expr } from "../expression";
 import { FunctionlessNode } from "../node";
 import { anyOf, invertBinaryOperator } from "../util";
 import {
@@ -35,7 +37,7 @@ export namespace ASLGraph {
    * When task.Next is ASLGraph.DeferNext, Functionless will replace the Next with the appropriate value.
    * It may also add End or ResultPath based on the scenario.
    */
-  export const DeferNext: string = "__DeferNext";
+  export const DeferNext = "__DeferNext";
 
   export function isSubState(
     state: ASLGraph.NodeState | ASLGraph.SubState | ASLGraph.NodeResults

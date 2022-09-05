@@ -6,14 +6,17 @@ import {
 } from "aws-cdk-lib";
 import lambda from "aws-lambda";
 import { Construct } from "constructs";
+import { ASLGraph } from "./asl";
+import { ErrorCodes, SynthError } from "./error-code";
 import { EventBusTargetIntegration } from "./event-bridge";
 import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { EventSource, IEventSource } from "./event-source";
 import { SQSClient } from "./function-prewarm";
+import { isObjectLiteralExpr } from "./guards";
 import { Integration, makeIntegration } from "./integration";
 import { Iterable } from "./iterable";
 // @ts-ignore tsdoc
-import { Serializer, JsonSerializer } from "./serializer";
+import { Serializer, JsonSerializer, DataType } from "./serializer";
 
 export interface Message<M> extends AWS.SQS.Message {
   /**
@@ -347,6 +350,8 @@ abstract class BaseQueue<Message>
     return this.resource.queueUrl;
   }
 
+  readonly serializer: Serializer<Message>;
+
   constructor(scope: Construct, id: string, props: QueueProps<Message>);
   constructor(resource: aws_sqs.IQueue, props: QueueProps<Message>);
   constructor(
@@ -358,7 +363,8 @@ abstract class BaseQueue<Message>
     super(...args);
 
     const queueUrl = this.queueUrl;
-    const codec = (this.props.serializer ?? Serializer.json())?.create();
+    this.serializer = this.props.serializer ?? Serializer.json();
+    const codec = this.serializer.create();
     const lambdaQueueUrlRetriever = this.props.lambda?.queueUrlRetriever;
 
     function serialize(message: Message): string {
@@ -404,6 +410,84 @@ abstract class BaseQueue<Message>
 
           return response;
         },
+      },
+      asl: (call, callContext) => {
+        const input = call.args[0]?.expr;
+
+        if (!isObjectLiteralExpr(input)) {
+          throw new SynthError(
+            ErrorCodes.Expected_an_object_literal,
+            `First argument 'input' into Queue.sendMessage must be an object literal.`
+          );
+        }
+
+        return callContext.evalExpr(input, (messageOutput, evalContext) => {
+          if (
+            ASLGraph.isLiteralValue(messageOutput) &&
+            messageOutput.value &&
+            typeof messageOutput.value === "object" &&
+            !Array.isArray(messageOutput.value)
+          ) {
+            let isJsonPath: boolean;
+            let MessageBody: string;
+            if ("Message" in messageOutput.value) {
+              const message = messageOutput.value.Message;
+              if (this.serializer.dataType === DataType.Json) {
+                isJsonPath = true;
+                const messageHeapVar = callContext.newHeapVariable();
+                MessageBody = `States.JsonToString(${messageHeapVar})`;
+                evalContext.addState({
+                  Type: "Pass",
+                  Parameters: message,
+                  ResultPath: messageHeapVar,
+                  Next: ASLGraph.DeferNext,
+                });
+              } else {
+                // TextSerializer
+                if (typeof message === "string") {
+                  isJsonPath = false;
+                  MessageBody = message;
+                } else {
+                  throw new SynthError(
+                    ErrorCodes.Invalid_Input,
+                    `the 'Message' must be a string for a Queue using the TextSerializer`
+                  );
+                }
+              }
+            } else if ("Message.$" in messageOutput.value) {
+              const message = messageOutput.value["Message.$"];
+              if (this.serializer.dataType === DataType.Json) {
+                isJsonPath = true;
+                MessageBody = `States.JsonToString(${message})`;
+              } else {
+                isJsonPath = false;
+                MessageBody = message as string;
+              }
+            } else {
+              throw new SynthError(
+                ErrorCodes.Invalid_Input,
+                `the 'Message' property is missing from the SendMessageRequest`
+              );
+            }
+
+            this.resource.grantSendMessages(callContext.role);
+
+            return callContext.stateWithHeapOutput({
+              Type: "Task",
+              Resource: "arn:aws:states:::aws-sdk:sqs:sendMessage",
+              Parameters: {
+                [`MessageBody${isJsonPath ? ".$" : ""}`]: MessageBody,
+                QueueUrl: this.queueUrl,
+              },
+              Next: ASLGraph.DeferNext,
+            });
+          } else {
+            throw new SynthError(
+              ErrorCodes.Expected_an_object_literal,
+              `First argument 'input' into Queue.sendMessage must be an object literal.`
+            );
+          }
+        });
       },
     });
 
@@ -584,12 +668,12 @@ abstract class BaseQueue<Message>
    * @hidden
    */
   protected createParser(): (event: lambda.SQSEvent) => SQSEvent<Message> {
-    const serializer = this.props.serializer?.create();
+    const code = this.serializer?.create();
     return (event) => ({
       Records: event.Records.map((record) => ({
         ...record,
-        message: serializer
-          ? serializer.read(record.body)
+        message: code
+          ? code.read(record.body)
           : // this is unsafe - how can we ensure that, when no serializer is provided, then the message is always the raw string?
             (record.body as unknown as Message),
       })),

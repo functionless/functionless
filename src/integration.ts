@@ -426,7 +426,7 @@ export function tryResolveReferences(
     return tryResolveReferences(node.parent, node.initializer).flatMap(
       (value) => {
         if (isIdentifier(node.name)) {
-          return [value[node.name.name]];
+          return [value?.[node.name.name]];
         } else {
           throw new Error("should be impossible");
         }

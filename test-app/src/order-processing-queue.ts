@@ -26,12 +26,17 @@ const failedOrderQueue = new Queue<OrderPlacedEvent>(
 );
 
 // create a queue for processing Order Events
-const orderQueue = new Queue<OrderPlacedEvent>(stack, "queue", {
+const orderQueue = new Queue<OrderPlacedEvent>(stack, "orders", {
   deadLetterQueue: {
     queue: failedOrderQueue,
     maxReceiveCount: 10,
   },
 });
+
+const processedOrderQueue = new Queue<OrderPlacedEvent>(
+  stack,
+  "processedOrders"
+);
 
 // filter OrderEvents from the Event Bus and route them to the orderQueue
 events
@@ -67,6 +72,9 @@ const processOrder = new StepFunction(
   async (order: OrderPlacedEvent) => {
     await chargeCard(order);
     await dispatchOrder(order);
+    await processedOrderQueue.sendMessage({
+      Message: order,
+    });
   }
 );
 
@@ -86,4 +94,8 @@ failedOrderQueue.messages().forEach(async (message) => {
     // naive back-off policy for demonstration purposes only
     DelaySeconds: 60,
   });
+});
+
+processedOrderQueue.messages().forEach((order) => {
+  console.log("processed order", order);
 });

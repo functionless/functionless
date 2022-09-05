@@ -3,7 +3,47 @@ import { Construct, IConstruct } from "constructs";
 import { Function, FunctionProps } from "./function";
 // @ts-ignore tsdoc
 import type { Iterable } from "./iterable";
+// @ts-ignore tsdoc
+import type { Queue } from "./queue";
 
+/**
+ * An {@link IEventSource} is a Resource that emits Events that a Lambda Function
+ * can be subscribed to. When subscribed, the Lambda Function will be invoked
+ * whenever new Events arrive in the Event Source.
+ *
+ * For example, an SQS `Queue` is an `IEventSource` containing Messages.
+ *
+ * ```ts
+ * // create a DynamoDB Table
+ * const myTable = new Table<Message, "id">(this, "table", { .. });
+ *
+ * const queue = new Queue(this, "queue");
+ *
+ * // create a Function to process each of the messages in the queues
+ * queue.messages().forEach(async (message) => {
+ *   // put each message from the Queue into a Table
+ *   await $AWS.DynamoDB.PutItem({
+ *     Table: myTable,
+ *     Item: {
+ *       id: { S: message.id },
+ *       message: { S: JSON.stringify(message) }
+ *     }
+ *   })
+ * });
+ *
+ * // for testing purpose, create an ExpressStepFunction to send messages to the queue
+ * new ExpressStepFunction(this, "func", async () => {
+ *   await queue.sendMessage({
+ *     id: "message id",
+ *     data: "message data"
+ *   })
+ * });
+ * ```
+ *
+ * @see https://docs.aws.amazon.com/lambda/latest/dg/invocation-eventsourcemapping.html
+ * @see {@link EventSource}
+ * @see {@link Queue}
+ */
 export interface IEventSource<
   RawEvent = any,
   ParsedEvent = any,
@@ -384,7 +424,8 @@ export abstract class EventSource<
     const parse = this.createParser();
 
     const func = new Function(scope, id, props, (event: any) => {
-      return handler(parse(event), event);
+      const parsedEvent = parse(event);
+      return handler(parsedEvent, event);
     });
 
     func.resource.addEventSource(this.createEventSource(props));

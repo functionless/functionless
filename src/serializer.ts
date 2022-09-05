@@ -23,10 +23,16 @@ export interface WriteCodec<T> {
  */
 export interface Codec<T> extends ReadCodec<T>, WriteCodec<T> {}
 
+export enum DataType {
+  String = "String",
+  Json = "Json",
+}
+
 /**
  * A {@link Serializer} creates a {@link Codec} for serializing a data type, {@link T}.
  */
 export interface Serializer<T> {
+  dataType: DataType;
   /**
    * Create a {@link Codec} for serializing data objects of type, {@link T}.
    */
@@ -34,7 +40,7 @@ export interface Serializer<T> {
 }
 
 export namespace Serializer {
-  export function text(): JsonSerializer<string> {
+  export function text(): TextSerializer {
     return new TextSerializer();
   }
   export function json<T>(props?: JsonSerializerProps<T>): JsonSerializer<T> {
@@ -43,6 +49,8 @@ export namespace Serializer {
 }
 
 export class TextSerializer implements Serializer<string> {
+  readonly dataType = DataType.String;
+
   public create(): Codec<string> {
     return {
       read: (value) => value,
@@ -71,6 +79,8 @@ export interface JsonSerializerProps<T> {
  * NodeJS's intrinsic {@link JSON.parse} and {@link JSON.stringify} functions.
  */
 export class JsonSerializer<T> implements Serializer<T> {
+  readonly dataType = DataType.Json;
+
   constructor(readonly props?: JsonSerializerProps<T>) {}
 
   public create(): Codec<T> {

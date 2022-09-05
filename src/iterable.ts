@@ -1213,7 +1213,7 @@ export class Iterable<
 
     const getPayload = source.createGetPayload();
 
-    return this.getSource().onEvent(
+    return source.onEvent(
       scope,
       id,
       {
@@ -1232,16 +1232,14 @@ export class Iterable<
                   for (const func of chain) {
                     items = (
                       await Promise.all(
-                        items.map((item) =>
-                          awaitIfPromise(func(item, record, event, raw))
-                        )
+                        items.map((item) => func(item, record, event, raw))
                       )
                     ).flat(1);
                   }
 
                   await Promise.all(
                     items.map(async (item) =>
-                      awaitIfPromise(processFunc(item, record, event, raw))
+                      processFunc(item, record, event, raw)
                     )
                   );
                   return undefined;
@@ -1560,7 +1558,7 @@ export class Iterable<
 
     const getPayload = source.createGetPayload();
 
-    return this.getSource().onEvent(scope, id, props, async (event, raw) => {
+    return source.onEvent(scope, id, props, async (event, raw) => {
       try {
         const batch = (
           await Promise.all(
@@ -1571,9 +1569,7 @@ export class Iterable<
               for (const func of chain) {
                 items = (
                   await Promise.all(
-                    items.map((item) =>
-                      awaitIfPromise(func(item, record, event, raw))
-                    )
+                    items.map((item) => func(item, record, event, raw))
                   )
                 ).flat(1);
               }
@@ -1581,7 +1577,7 @@ export class Iterable<
             })
           )
         ).flat(1);
-        await awaitIfPromise(processFunc(batch));
+        await processFunc(batch);
         return handleResponse([]);
       } catch (err) {
         console.error(err);
@@ -1619,13 +1615,5 @@ export class Iterable<
     } else {
       return this.prev as any;
     }
-  }
-}
-
-function awaitIfPromise<T>(value: T | Promise<T>): Promise<T> {
-  if (value instanceof Promise) {
-    return value;
-  } else {
-    return Promise.resolve(value);
   }
 }

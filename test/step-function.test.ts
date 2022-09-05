@@ -7,19 +7,19 @@ import * as functionless from "../src";
 import {
   $AWS,
   $SFN,
-  EventBus,
-  Event,
-  ExpressStepFunction,
-  StepFunction,
-  SyncExecutionResult,
   ErrorCodes,
-  SynthError,
+  Event,
+  EventBus,
+  ExpressStepFunction,
+  Queue,
+  StepFunction,
   StepFunctionError,
+  SyncExecutionResult,
+  SynthError,
 } from "../src";
 import { StateMachine, States, Task } from "../src/asl";
 import { Function } from "../src/function";
 import { initStepFunctionApp, normalizeCDKJson, Person } from "./util";
-
 /**
  * Removes randomized values (CDK token strings) form the definitions.
  */
@@ -4267,4 +4267,46 @@ test("throw SynthError when rest parameter is used", () => {
       });
     });
   }).toThrow("Step Functions does not yet support rest parameters");
+});
+
+test("sendMessage object literal with JSON Path to SQS Queue", () => {
+  interface Message {
+    orderId: string;
+  }
+
+  const queue = new Queue<Message>(stack, "Queue");
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: { orderId: string }): Promise<void> => {
+      await queue.sendMessage({
+        Message: {
+          orderId: input.orderId,
+        },
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("sendMessage when whole message is JSON Path", () => {
+  interface Message {
+    orderId: string;
+  }
+
+  const queue = new Queue<Message>(stack, "Queue");
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: Message): Promise<void> => {
+      await queue.sendMessage({
+        Message: input,
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });

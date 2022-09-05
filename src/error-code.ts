@@ -1277,6 +1277,17 @@ export namespace ErrorCodes {
     type: ErrorType.ERROR,
     title: "Unsupported AWS SDK in Resource.",
   };
+
+  /**
+   * An Integration was called within a Lambda Function but it does not support the
+   * `native` interface.
+   */
+  export const Integration_does_not_support_native_interface: ErrorCode = {
+    code: 10037,
+    type: ErrorType.ERROR,
+    title:
+      "Integration used in Lambda Function does not support native interface",
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.
