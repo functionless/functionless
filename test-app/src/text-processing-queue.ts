@@ -1,5 +1,12 @@
 import { App, aws_logs, aws_stepfunctions, Stack } from "aws-cdk-lib";
-import { Queue, Function, EventBus, Event, StepFunction } from "functionless";
+import {
+  Queue,
+  Function,
+  EventBus,
+  Event,
+  StepFunction,
+  Serializer,
+} from "functionless";
 
 const app = new App();
 const stack = new Stack(app, "queue");
@@ -20,23 +27,22 @@ interface OrderCancelledEvent {
 const events = new EventBus<CartEventEnvelope>(stack, "Events");
 
 // create a queue to store failed Order Events
-const failedOrderQueue = new Queue<OrderPlacedEvent>(
-  stack,
-  "dead letter queue"
-);
+const failedOrderQueue = new Queue(stack, "dead letter queue", {
+  serializer: Serializer.text(),
+});
 
 // create a queue for processing Order Events
-const orderQueue = new Queue<OrderPlacedEvent>(stack, "orders", {
+const orderQueue = new Queue(stack, "orders", {
+  serializer: Serializer.text(),
   deadLetterQueue: {
     queue: failedOrderQueue,
     maxReceiveCount: 10,
   },
 });
 
-const processedOrderQueue = new Queue<OrderPlacedEvent>(
-  stack,
-  "processedOrders"
-);
+const processedOrderQueue = new Queue(stack, "processedOrders", {
+  serializer: Serializer.text(),
+});
 
 // filter OrderEvents from the Event Bus and route them to the orderQueue
 events
@@ -46,21 +52,21 @@ events
     (event): event is CartEventEnvelope<OrderPlacedEvent> =>
       event["detail-type"] === "OrderPlacedEvent"
   )
-  .map((envelope) => envelope.detail)
+  .map((envelope) => envelope.detail.orderId)
   .pipe(orderQueue);
 
 const chargeCard = new Function(
   stack,
   "PlaceOrder",
-  async (order: OrderPlacedEvent) => {
-    console.log("Card Charged! (not)", order);
+  async (orderId: string) => {
+    console.log("Card Charged! (not)", orderId);
   }
 );
 
 const dispatchOrder = new Function(
   stack,
   "DispatchOrder",
-  async (order: OrderPlacedEvent) => {
+  async (order: string) => {
     console.log("Order Dispatched! (not)", order);
   }
 );
@@ -69,21 +75,23 @@ const dispatchOrder = new Function(
 const processOrder = new StepFunction(
   stack,
   "ProcessOrder",
-  async (order: OrderPlacedEvent) => {
-    await chargeCard(order);
-    await dispatchOrder(order);
+  async (input: { orderId: string }) => {
+    await chargeCard(input.orderId);
+    await dispatchOrder(input.orderId);
     await processedOrderQueue.sendMessage({
-      MessageBody: order,
+      MessageBody: input.orderId,
     });
   }
 );
 
 // kick off a Step Function to reliably process each order
-orderQueue.messages().forEach(async (order) => {
+orderQueue.messages().forEach(async (orderId) => {
   await processOrder({
     // idempotency on the orderId
-    name: order.orderId,
-    input: order,
+    name: orderId,
+    input: {
+      orderId,
+    },
   });
 });
 
@@ -103,7 +111,7 @@ failedOrderQueue.messages().forEach(async (message) => {
 new StepFunction(
   stack,
   "SendMessageBatch",
-  async (input: { messages: OrderPlacedEvent[] }) => {
+  async (input: { messages: string[] }) => {
     await orderQueue.sendMessageBatch({
       Entries: input.messages.map((message, idx) => ({
         Id: `${idx}`,
@@ -113,15 +121,11 @@ new StepFunction(
   }
 );
 
-new StepFunction(
-  stack,
-  "SendMessage",
-  async (input: { message: OrderPlacedEvent }) => {
-    await orderQueue.sendMessage({
-      MessageBody: input.message,
-    });
-  }
-);
+new StepFunction(stack, "SendMessage", async (input: { message: string }) => {
+  await orderQueue.sendMessage({
+    MessageBody: input.message,
+  });
+});
 
 // TODO: implement retry logic once new intrinsics arrive
 // @see https://github.com/functionless/functionless/pull/468

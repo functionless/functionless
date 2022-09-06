@@ -660,14 +660,7 @@ export class Function<
           produce: () => {
             // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
             findAllIntegrations().forEach(({ integration, args }) => {
-              const native = new IntegrationImpl(integration).native;
-              if (native === undefined) {
-                throw new SynthError(
-                  ErrorCodes.Integration_does_not_support_native_interface
-                );
-              } else {
-                native.bind(this, args);
-              }
+              new IntegrationImpl(integration).native.bind(this, args);
             });
 
             return "DONE";
@@ -683,11 +676,7 @@ export class Function<
     const nativeIntegrationsPrewarm = findAllIntegrations().flatMap(
       ({ integration }) => {
         const native = new IntegrationImpl(integration).native;
-        if (native === undefined) {
-          throw new SynthError(
-            ErrorCodes.Integration_does_not_support_native_interface
-          );
-        } else if (native.preWarm) {
+        if (native.preWarm) {
           return [native.preWarm];
         } else {
           return [];

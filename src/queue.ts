@@ -448,7 +448,7 @@ abstract class BaseQueue<Message>
                 addState({
                   Type: "Pass",
                   InputPath: `${input.jsonPath}.MessageBody.value`,
-                  OutputPath: `${input.jsonPath}.MessageBody`,
+                  ResultPath: `${input.jsonPath}.MessageBody`,
                   Next: ASLGraph.DeferNext,
                 });
               }
@@ -476,8 +476,10 @@ abstract class BaseQueue<Message>
                     ResultPath: messageBodyJsonPath,
                     Next: ASLGraph.DeferNext,
                   });
+                  delete input.value.MessageBody;
                 } else if ("MessageBody.$" in input.value) {
                   messageBodyJsonPath = input.value["MessageBody.$"];
+                  delete input.value["MessageBody.$"];
                 } else {
                   throw new SynthError(
                     ErrorCodes.Invalid_Input,
@@ -589,54 +591,57 @@ abstract class BaseQueue<Message>
           });
         } else if (this.serializer.dataType === DataType.Json) {
           // when the data type is Json, map over each of the entries and serialize them to JSON
-          return context.evalExprToJsonPath(
-            entries,
-            (entries, { addState }) => {
-              const heapVar = context.newHeapVariable();
-              addState({
-                Type: "Map",
-                ItemsPath: `${entries.jsonPath}.Entries`,
-                Parameters: {
-                  "entry.$": "$$.Map.Item.Value",
-                },
-                ResultPath: heapVar,
-                Next: ASLGraph.DeferNext,
-                Iterator: {
-                  StartAt: "serialize Message",
-                  States: {
-                    "serialize Message": {
-                      Type: "Pass",
-                      Parameters: {
-                        "value.$":
-                          this.serializer.dataType === DataType.Json
-                            ? `States.JsonToString($.entry.MessageBody)`
-                            : "$.entry.MessageBody",
+          return context.evalExprToJsonPath(entries, (entries) => {
+            const heapVar = context.newHeapVariable();
+
+            return {
+              output: {
+                jsonPath: heapVar,
+              },
+              startState: "serialize messages",
+              states: {
+                "serialize messages": {
+                  Type: "Map",
+                  ItemsPath: `${entries.jsonPath}.Entries`,
+                  Parameters: {
+                    "entry.$": "$$.Map.Item.Value",
+                  },
+                  ResultPath: heapVar,
+                  Next: "send message batch",
+                  Iterator: {
+                    StartAt: "serialize Message",
+                    States: {
+                      "serialize Message": {
+                        Type: "Pass",
+                        Parameters: {
+                          "value.$": `States.JsonToString($.entry.MessageBody)`,
+                        },
+                        ResultPath: "$.entry.MessageBody",
+                        Next: "unwrap Message",
                       },
-                      ResultPath: "$.entry.MessageBody",
-                      Next: "unwrap Message",
-                    },
-                    "unwrap Message": {
-                      Type: "Pass",
-                      InputPath: "$.entry.MessageBody.value",
-                      ResultPath: "$.entry.MessageBody",
-                      OutputPath: "$.entry",
-                      End: true,
+                      "unwrap Message": {
+                        Type: "Pass",
+                        InputPath: "$.entry.MessageBody.value",
+                        ResultPath: "$.entry.MessageBody",
+                        OutputPath: "$.entry",
+                        End: true,
+                      },
                     },
                   },
                 },
-              });
-
-              return context.stateWithHeapOutput({
-                Type: "Task",
-                Resource: "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
-                Parameters: {
-                  QueueUrl: this.queueUrl,
-                  "Entries.$": heapVar,
+                "send message batch": {
+                  Type: "Task",
+                  Resource: "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
+                  Parameters: {
+                    QueueUrl: this.queueUrl,
+                    "Entries.$": heapVar,
+                  },
+                  ResultPath: heapVar,
+                  Next: ASLGraph.DeferNext,
                 },
-                Next: ASLGraph.DeferNext,
-              });
-            }
-          );
+              },
+            };
+          });
         } else {
           throw new SynthError(
             ErrorCodes.Unexpected_Error,
