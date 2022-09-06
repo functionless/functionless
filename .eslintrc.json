@@ -37,6 +37,7 @@
   },
   "ignorePatterns": [
     "scripts/**",
+    "register.js",
     "!.projenrc.ts",
     "!projenrc/**/*.ts"
   ],
