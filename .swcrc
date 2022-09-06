@@ -1,0 +1,29 @@
+{
+  "jsc": {
+    "parser": {
+      "syntax": "typescript",
+      "dynamicImport": false,
+      "decorators": false,
+      "hidden": {
+        "jest": true
+      }
+    },
+    "transform": null,
+    "target": "es2021",
+    "loose": false,
+    "externalHelpers": false,
+    "experimental": {
+      "plugins": [
+        [
+          "@functionless/ast-reflection",
+          {}
+        ]
+      ]
+    }
+  },
+  "minify": true,
+  "sourceMaps": "inline",
+  "module": {
+    "type": "commonjs"
+  }
+}
