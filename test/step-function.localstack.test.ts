@@ -10,11 +10,10 @@ import {
   $SFN,
   Table,
   FunctionProps,
-  Queue,
 } from "../src";
 import { makeIntegration } from "../src/integration";
 import { localstackTestSuite } from "./localstack";
-import { localSQS, testStepFunction } from "./runtime-util";
+import { testStepFunction } from "./runtime-util";
 import { normalizeCDKJson } from "./util";
 
 // inject the localstack client config into the lambda clients

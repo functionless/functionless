@@ -15915,9 +15915,6 @@ Object {
     "2__await queue.sendMessage({MessageBody: {orderId: input.orderId}})": Object {
       "Next": "return null",
       "Parameters": Object {
-        "MessageBody": Object {
-          "orderId.$": "$.heap0",
-        },
         "MessageBody.$": "States.JsonToString($.heap1)",
         "QueueUrl": "__REPLACED_TOKEN",
       },
@@ -16048,7 +16045,7 @@ Object {
           },
         },
       },
-      "Next": "3__await queue.sendMessageBatch({Entries: input.messages.map(function (mess",
+      "Next": "send message batch__2__await queue.sendMessageBatch({Entries: input.message",
       "Parameters": Object {
         "entry.$": "$$.Map.Item.Value",
       },
@@ -16060,16 +16057,6 @@ Object {
       "Next": "1__return {Id: i, MessageBody: message}",
       "ResultPath": "$.heap4",
       "Type": "Pass",
-    },
-    "3__await queue.sendMessageBatch({Entries: input.messages.map(function (mess": Object {
-      "Next": "return null",
-      "Parameters": Object {
-        "Entries.$": "$.heap7",
-        "QueueUrl": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
-      "ResultPath": "$.heap8",
-      "Type": "Task",
     },
     "Initialize Functionless Context": Object {
       "Next": "await queue.sendMessageBatch({Entries: input.messages.map(function (message",
@@ -16165,6 +16152,16 @@ Object {
       "Next": "i 1",
       "ResultPath": "$.heap1",
       "Type": "Pass",
+    },
+    "send message batch__2__await queue.sendMessageBatch({Entries: input.message": Object {
+      "Next": "return null",
+      "Parameters": Object {
+        "Entries.$": "$.heap7",
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
+      "ResultPath": "$.heap7",
+      "Type": "Task",
     },
     "set__end__await queue.sendMessageBatch({Entries: input.messages.map(functio": Object {
       "InputPath": "$.heap0.result[1:]",
