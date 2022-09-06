@@ -16,7 +16,6 @@
     ".projen/deps.json",
     ".projen/files.json",
     ".projen/tasks.json",
-    ".swcrc",
     "LICENSE",
     "tsconfig.dev.json",
     "tsconfig.json"
