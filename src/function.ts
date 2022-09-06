@@ -679,7 +679,7 @@ export class Function<
 
     super(_resource);
 
-    // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
+    // retrieve all found native integrations. Will fail if the integration does not support native integration.
     // TODO: move this logic into the synthesis phase, see https://github.com/functionless/functionless/issues/476
     const nativeIntegrationsPrewarm = findAllIntegrations().flatMap(
       ({ integration }) => {
@@ -726,8 +726,6 @@ export class Function<
      * 2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
      * 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
      * https://github.com/functionless/functionless/issues/128
-     * NOTE: This operation should happen immediately before the `generate` promise is started.
-     *       Any operation between adding the validation and starting `generate` will always trigger the poison pill
      */
     _resource.node.addValidation({
       validate: () =>
