@@ -1,6 +1,5 @@
 import { assertNever } from "../assert";
 import { SynthError, ErrorCodes } from "../error-code";
-// @ts-ignore tsdoc
 import type { Expr } from "../expression";
 import { FunctionlessNode } from "../node";
 import { anyOf, invertBinaryOperator } from "../util";

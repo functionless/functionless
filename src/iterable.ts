@@ -1,7 +1,6 @@
 import type { Construct } from "constructs";
 import type { EventBatch, EventSource, IEventSource } from "./event-source";
 import type { Function, FunctionProps } from "./function";
-// @ts-ignore - tsdoc
 import type { Queue } from "./queue";
 
 export type Processor<

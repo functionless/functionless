@@ -14,7 +14,6 @@ import { EventSource, IEventSource } from "./event-source";
 import { SQSClient } from "./function-prewarm";
 import { Integration, makeIntegration } from "./integration";
 import { Iterable } from "./iterable";
-// @ts-ignore tsdoc
 import { Serializer, JsonSerializer, DataType } from "./serializer";
 
 export interface Message<M> extends AWS.SQS.Message {

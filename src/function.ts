@@ -34,7 +34,6 @@ import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph } from "./asl";
 import { BindFunctionName, RegisterFunctionName } from "./compile";
 import { IntegrationInvocation } from "./declaration";
-// @ts-ignore
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
