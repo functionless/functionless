@@ -2080,58 +2080,6 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     },
     { val: 1, str: "blah" }
   );
-
-  // UnknownEndpoint: Inaccessible host: `localhost'. This service may not be available in the `us-east-1' region
-  // see https://github.com/localstack/localstack/issues/6816
-  test.skip(
-    "sendMessage object literal with JSON Path to SQS Queue",
-    (scope) => {
-      interface Message {
-        orderId: string;
-      }
-
-      const queue = new Queue<Message>(scope, "Queue");
-
-      return {
-        sfn: new StepFunction(
-          scope,
-          "fn",
-          async (input: { orderId: string }): Promise<void> => {
-            await queue.sendMessage({
-              MessageBody: {
-                orderId: input.orderId,
-              },
-            });
-          }
-        ),
-        outputs: {
-          queueUrl: queue.queueUrl,
-        },
-      };
-    },
-    async (context) => {
-      let start = new Date().getTime();
-      while (true) {
-        if (new Date().getTime() - start > 10000) {
-          throw new Error(`did not receive message in 10s`);
-        }
-        const response = await localSQS
-          .receiveMessage({
-            QueueUrl: context.queueUrl,
-            MaxNumberOfMessages: 1,
-          })
-          .promise();
-
-        const message = response.Messages?.[0];
-        if (message) {
-          expect(message.Body).toEqual(JSON.stringify({ orderId: "orderId" }));
-        }
-      }
-    },
-    {
-      orderId: "orderId",
-    }
-  );
 });
 
 /**
