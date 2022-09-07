@@ -791,7 +791,10 @@ export class TaggedTemplateExpr extends BaseExpr<NodeKind.TaggedTemplateExpr> {
  * // TemplateHead is "".
  * ```
  */
-export class TemplateHead extends BaseNode<NodeKind.TemplateHead> {
+export class TemplateHead extends BaseNode<
+  NodeKind.TemplateHead,
+  TemplateExpr
+> {
   readonly nodeKind = "Node";
 
   constructor(
@@ -815,7 +818,7 @@ export class TemplateHead extends BaseNode<NodeKind.TemplateHead> {
  */
 export class TemplateSpan<
   Literal extends TemplateMiddle | TemplateTail = TemplateMiddle | TemplateTail
-> extends BaseNode<NodeKind.TemplateSpan> {
+> extends BaseNode<NodeKind.TemplateSpan, TemplateExpr> {
   readonly nodeKind = "Node";
 
   constructor(
@@ -835,7 +838,10 @@ export class TemplateSpan<
   }
 }
 
-export class TemplateMiddle extends BaseNode<NodeKind.TemplateMiddle> {
+export class TemplateMiddle extends BaseNode<
+  NodeKind.TemplateMiddle,
+  TemplateSpan
+> {
   readonly nodeKind = "Node";
 
   constructor(
@@ -850,7 +856,10 @@ export class TemplateMiddle extends BaseNode<NodeKind.TemplateMiddle> {
   }
 }
 
-export class TemplateTail extends BaseNode<NodeKind.TemplateTail> {
+export class TemplateTail extends BaseNode<
+  NodeKind.TemplateTail,
+  TemplateSpan
+> {
   readonly nodeKind = "Node";
 
   constructor(

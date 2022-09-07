@@ -143,7 +143,7 @@ const project = new CustomTypescriptProject({
     "constructs@^10.0.0",
     "esbuild",
     "typesafe-dynamodb@^0.1.5",
-    "typescript@^4.7.2",
+    "typescript@^4.8.2",
   ],
   eslintOptions: {
     dirs: ["src", "test"],

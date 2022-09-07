@@ -13,9 +13,7 @@ import {
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import {
-  // @ts-expect-error - AppsyncResolver is imported for tsdoc
   AppsyncResolver,
-  // @ts-expect-error - AppsyncField is imported for tsdoc
   AppsyncField,
   AppSyncVtlIntegration,
 } from "./appsync";
