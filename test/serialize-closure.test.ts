@@ -51,7 +51,7 @@ async function expectClosure<F extends AnyFunction>(
   options?: SerializeClosureProps
 ): Promise<F> {
   const closure = serializeClosure(f, options);
-  // expect(closure).toMatchSnapshot();
+  expect(closure).toMatchSnapshot();
   const jsFile = path.join(tmpDir, `${v4()}.js`);
   await fs.promises.writeFile(jsFile, closure);
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -484,4 +484,20 @@ test.skip("instantiating the AWS SDK v3 without esbuild", async () => {
   );
 
   expect(closure()).toEqual("DynamoDB");
+});
+
+test("serialize a bound function", async () => {
+  const func = function foo(this: { prop: string }) {
+    return this.prop;
+  };
+
+  const bound = func.bind({
+    prop: "hello",
+  });
+
+  const closure = await expectClosure(() => {
+    return bound();
+  });
+
+  expect(closure()).toEqual("hello");
 });

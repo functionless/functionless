@@ -99,7 +99,7 @@ import {
   isYieldExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
-import { reflect } from "./reflect";
+import { reflect, unbind } from "./reflect";
 import { Globals } from "./serialize-globals";
 import {
   exprStmt,
@@ -515,18 +515,27 @@ export function serializeClosure(
         );
       }
 
-      // if this is not compiled by functionless, we can only serialize it if it is exported by a module
-      const mod = requireCache.get(value);
+      const exportedValue = requireCache.get(value);
 
-      if (mod && options?.useESBuild !== false) {
-        return serializeModule(value, mod);
+      // if this is a reference to an exported value from a module
+      // and we're using esbuild, then emit a require
+      if (exportedValue && options?.useESBuild !== false) {
+        return serializeModule(value, exportedValue);
+      }
+
+      // if this is a bound closure, try and reconstruct it from its components
+      if (value.name.startsWith("bound ")) {
+        const boundFunction = serializeBoundFunction(value);
+        if (boundFunction) {
+          return boundFunction;
+        }
       }
 
       const ast = reflect(value);
 
       if (ast === undefined) {
-        if (mod) {
-          return serializeModule(value, mod);
+        if (exportedValue) {
+          return serializeModule(value, exportedValue);
         } else {
           return serializeUnknownFunction(value);
         }
@@ -574,14 +583,32 @@ export function serializeClosure(
     return func;
   }
 
+  function serializeBoundFunction(func: AnyFunction) {
+    const components = unbind(func);
+    if (components) {
+      const boundThis = serialize(components.boundThis);
+      const boundArgs = serialize(components.boundArgs);
+      const targetFuntion = serialize(components.targetFunction);
+
+      return singleton(func, () =>
+        emitVarDecl(
+          "const",
+          uniqueName(),
+          callExpr(propAccessExpr(targetFuntion, "bind"), [
+            boundThis,
+            boundArgs,
+          ])
+        )
+      );
+    }
+    return undefined;
+  }
+
   function serializeUnknownFunction(value: AnyFunction) {
     if (value.name === "bound requireModuleOrMock") {
       // heuristic to catch Jest's hacked-up require
       return idExpr("require");
-    } else if (value.name.startsWith("bound ")) {
-      // TODO
     } else if (value.name === "Object") {
-      //
       return serialize(Object);
     } else if (
       value.toString() === `function ${value.name}() { [native code] }`

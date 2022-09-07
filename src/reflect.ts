@@ -52,7 +52,7 @@ export function reflect<F extends AnyFunction | AnyAsyncFunction>(
     return undefined;
   } else if (func.name.startsWith("bound ")) {
     // native bound function
-    const targetFunc = (<any>func)[ReflectionSymbols.TargetFunction];
+    const targetFunc = unbind(func)?.targetFunction;
     if (targetFunc) {
       return reflect(targetFunc);
     } else {
@@ -72,6 +72,46 @@ export function reflect<F extends AnyFunction | AnyAsyncFunction>(
       );
     }
     return reflectCache.get(astCallback) as FunctionLike<F> | Err | undefined;
+  }
+  return undefined;
+}
+
+export interface BoundFunctionComponents<F extends AnyFunction = AnyFunction> {
+  /**
+   * The target function
+   */
+  targetFunction: F;
+  /**
+   * The `this` argument bound to the function.
+   */
+  boundThis: any;
+  /**
+   * The arguments bound to the function.
+   */
+  boundArgs: any[];
+}
+
+/**
+ * Unbind a bound function into its components.
+ * @param boundFunction the bound function
+ * @returns the targetFunction, boundThis and boundArgs if this is a bound function compiled with Functionless, otherwise undefined.
+ */
+export function unbind<F extends AnyFunction>(
+  boundFunction: F
+): BoundFunctionComponents<F> | undefined {
+  if (boundFunction.name.startsWith("bound ")) {
+    const targetFunction = (<any>boundFunction)[
+      ReflectionSymbols.TargetFunction
+    ];
+    const boundThis = (<any>boundFunction)[ReflectionSymbols.BoundThis];
+    const boundArgs = (<any>boundFunction)[ReflectionSymbols.BoundArgs];
+    if (targetFunction) {
+      return {
+        targetFunction,
+        boundThis,
+        boundArgs,
+      };
+    }
   }
   return undefined;
 }

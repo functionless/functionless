@@ -32084,3 +32084,26 @@ v0 = () => { const client = new v1.DynamoDB(); return client.config.endpoint; };
 exports.handler = v0;
 "
 `;
+
+exports[`serialize a bound function 1`] = `
+"// <stdin>
+var v0;
+var v2 = {};
+v2.prop = \\"hello\\";
+var v3 = [];
+v3.push();
+var v4;
+v4 = function foo() {
+  return this.prop;
+};
+var v5 = {};
+v5.constructor = v4;
+v4.prototype = v5;
+var v6 = v4.bind(v2, v3);
+var v1 = v6;
+v0 = () => {
+  return v1();
+};
+exports.handler = v0;
+"
+`;
