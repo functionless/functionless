@@ -13,6 +13,8 @@ import { parseSExpr } from "./s-expression";
 import { AnyAsyncFunction, AnyFunction } from "./util";
 import { forEachChild } from "./visit";
 
+const Global: any = global;
+
 /**
  * A macro (compile-time) function that converts an ArrowFunction or FunctionExpression to a {@link FunctionDecl}.
  *
@@ -116,15 +118,63 @@ export function unbind<F extends AnyFunction>(
   return undefined;
 }
 
-const Global: any = global;
+/**
+ * The components of a {@link Proxy}.
+ */
+export interface ProxyComponents<T extends object = object> {
+  /**
+   * The target object that the {@link Proxy} is intercepting.
+   */
+  target: T;
+  /**
+   * The {@link ProxyHandler} interceptor handler functions.
+   */
+  handler: ProxyHandler<T>;
+}
+
+/**
+ * Reverses a {@link Proxy} instance into the args that were used to created it.
+ *
+ * ```ts
+ * const proxy = new Proxy({ hello: "world" }, { get: () => {} });
+ *
+ * const components = reverseProxy(proxy);
+ * components.target  // { hello: "world" }
+ * components.handler // { get: () => {} }
+ * ```
+ *
+ * @param proxy the proxy instance
+ * @returns the {@link ProxyComponents} if this proxy can be reversed, or `undefined`.
+ */
+export function reverseProxy<T extends object>(
+  proxy: T
+): ProxyComponents<T> | undefined {
+  const reversed = getProxyMap().get(proxy);
+  if (reversed) {
+    return {
+      target: reversed[0],
+      handler: reversed[1],
+    };
+  }
+  return undefined;
+}
+
+/**
+ * @returns the global WeakMap containing all intercepted Proxies.
+ */
+function getProxyMap() {
+  return (Global[Global.Symbol.for("functionless:Proxies")] =
+    Global[Global.Symbol.for("functionless:Proxies")] ?? new Global.WeakMap());
+}
 
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;
 
 export const ReflectionSymbolNames = {
   AST: "functionless:AST",
-  BoundThis: "functionless:BoundThis",
   BoundArgs: "functionless:BoundArgs",
+  BoundThis: "functionless:BoundThis",
+  Proxies: "functionless:Proxies",
   Reflect: "functionless:Reflect",
   TargetFunction: "functionless:TargetFunction",
 } as const;
@@ -133,6 +183,7 @@ export const ReflectionSymbols = {
   AST: Symbol.for(ReflectionSymbolNames.AST),
   BoundArgs: Symbol.for(ReflectionSymbolNames.BoundArgs),
   BoundThis: Symbol.for(ReflectionSymbolNames.BoundThis),
+  Proxies: Symbol.for(ReflectionSymbolNames.Proxies),
   Reflect: Symbol.for(ReflectionSymbolNames.Reflect),
   TargetFunction: Symbol.for(ReflectionSymbolNames.TargetFunction),
 } as const;

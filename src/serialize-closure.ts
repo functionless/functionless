@@ -1,5 +1,6 @@
 import fs from "fs";
 import path from "path";
+import util from "util";
 import esbuild from "esbuild";
 import ts from "typescript";
 
@@ -99,7 +100,7 @@ import {
   isYieldExpr,
 } from "./guards";
 import { FunctionlessNode } from "./node";
-import { reflect, unbind } from "./reflect";
+import { reflect, reverseProxy, unbind } from "./reflect";
 import { Globals } from "./serialize-globals";
 import {
   exprStmt,
@@ -117,6 +118,7 @@ import {
   getOwnPropertyDescriptorExpr,
   callExpr,
   setPropertyStmt,
+  newExpr,
 } from "./serialize-util";
 import { AnyClass, AnyFunction } from "./util";
 
@@ -439,6 +441,20 @@ export function serializeClosure(
       );
 
       return arr;
+    } else if (util.types.isProxy(value)) {
+      const components = reverseProxy(value);
+      if (components) {
+        const target = serialize(components.target);
+        const handler = serialize(components.handler);
+        return emitVarDecl(
+          "const",
+          uniqueName(),
+          newExpr(idExpr("Proxy"), [target, handler])
+        );
+      }
+      throw new Error(
+        `cannot reverse Proxy - make sure you are compiling with Functionless`
+      );
     } else if (typeof value === "object") {
       if (Globals.has(value)) {
         return emitVarDecl("const", uniqueName(), Globals.get(value)!());

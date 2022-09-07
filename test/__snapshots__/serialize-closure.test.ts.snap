@@ -32107,3 +32107,23 @@ v0 = () => {
 exports.handler = v0;
 "
 `;
+
+exports[`serialize a proxy 1`] = `
+"// <stdin>
+var v0;
+var v2 = {};
+v2.value = \\"hello\\";
+var v3 = {};
+var v4;
+v4 = (self, name) => {
+  return \`\${self[name]} world\`;
+};
+v3.get = v4;
+var v5 = new Proxy(v2, v3);
+var v1 = v5;
+v0 = () => {
+  return v1.value;
+};
+exports.handler = v0;
+"
+`;

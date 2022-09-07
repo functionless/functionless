@@ -501,3 +501,22 @@ test("serialize a bound function", async () => {
 
   expect(closure()).toEqual("hello");
 });
+
+test("serialize a proxy", async () => {
+  const proxy = new Proxy(
+    {
+      value: "hello",
+    },
+    {
+      get: (self, name) => {
+        return `${self[name as keyof typeof self]} world`;
+      },
+    }
+  );
+
+  const closure = await expectClosure(() => {
+    return proxy.value;
+  });
+
+  expect(closure()).toEqual("hello world");
+});

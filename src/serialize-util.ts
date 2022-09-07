@@ -58,6 +58,10 @@ export function callExpr(expr: ts.Expression, args: ts.Expression[]) {
   return ts.factory.createCallExpression(expr, undefined, args);
 }
 
+export function newExpr(expr: ts.Expression, args: ts.Expression[]) {
+  return ts.factory.createNewExpression(expr, undefined, args);
+}
+
 export function exprStmt(expr: ts.Expression): ts.Statement {
   return ts.factory.createExpressionStatement(expr);
 }
