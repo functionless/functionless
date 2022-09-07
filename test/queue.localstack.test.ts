@@ -43,7 +43,7 @@ const localstackQueueConfig: QueueProps<any> = {
 };
 
 localstackTestSuite("queueStack", (test) => {
-  test.skip(
+  test(
     "onEvent(props, handler)",
     (scope) => {
       interface Message {
@@ -89,7 +89,7 @@ localstackTestSuite("queueStack", (test) => {
     assertForEach
   );
 
-  test.skip(
+  test(
     "onEvent(id, props, handler)",
     (scope) => {
       const table = new Table(scope, "Table", {
@@ -132,7 +132,7 @@ localstackTestSuite("queueStack", (test) => {
     assertForEach
   );
 
-  test.skip(
+  test(
     "onEvent with JsonSerializer",
     (scope) => {
       const table = new Table(scope, "Table", {
@@ -183,7 +183,7 @@ localstackTestSuite("queueStack", (test) => {
     assertForEach
   );
 
-  test.skip(
+  test(
     "forEach with JsonSerializer",
     (scope) => {
       const table = new Table<Message, "id">(scope, "Table", {
@@ -226,7 +226,7 @@ localstackTestSuite("queueStack", (test) => {
     assertForEach
   );
 
-  test.skip(
+  test(
     "forEach event bus target",
     (scope) => {
       interface Message {
@@ -280,7 +280,7 @@ localstackTestSuite("queueStack", (test) => {
     assertForEach
   );
 
-  test.skip(
+  test(
     "forEach event bus target fifo",
     (scope) => {
       interface Message {
@@ -352,7 +352,7 @@ localstackTestSuite("queueStack", (test) => {
     assertForEach
   );
 
-  test.skip(
+  test(
     "map, filter, flatMap, forEach with JsonSerializer",
     (scope) => {
       const table = new Table<Message, "id">(scope, "Table", {
@@ -403,7 +403,7 @@ localstackTestSuite("queueStack", (test) => {
     assertForEach
   );
 
-  test.skip(
+  test(
     "map, filter, flatMap, forEachBatch with JsonSerializer",
     (scope) => {
       const table = new Table<Message, "id">(scope, "Table", {
@@ -458,7 +458,7 @@ localstackTestSuite("queueStack", (test) => {
     assertForEach
   );
 
-  test.skip(
+  test(
     "send and receive messages",
     (scope) => {
       interface Message {
@@ -578,7 +578,7 @@ localstackTestSuite("queueStack", (test) => {
    *
    * also serves to alert us if the localstack behavior changes.
    */
-  test.skip(
+  test(
     "send and receive messages fail with incorrect localstack queueurl",
     (scope) => {
       interface Message {
