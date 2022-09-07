@@ -217,7 +217,7 @@
       "name": "test:fast",
       "steps": [
         {
-          "exec": "jest --testPathIgnorePatterns localstack --coverage false"
+          "exec": "jest --runInBand --testPathIgnorePatterns localstack --coverage false"
         }
       ]
     },

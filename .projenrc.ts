@@ -233,7 +233,9 @@ project.testTask.env("AWS_ACCESS_KEY_ID", "test");
 project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
 
 const testFast = project.addTask("test:fast");
-testFast.exec(`jest --testPathIgnorePatterns localstack --coverage false`);
+testFast.exec(
+  `jest --runInBand --testPathIgnorePatterns localstack --coverage false`
+);
 
 project.addPackageIgnore("/test-app");
 
