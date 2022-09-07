@@ -70,13 +70,13 @@ npm install -g aws-cdk
 ```
 
 The following command is used to bootstrap an AWS Account with CDK.
-The value for `AWS_ACCOUNT_ID` can be obtained from the output of `aws sts get-caller-identity` as shown above.
+The value for `AWS_ACCOUNT_ID` can be obtained from the output of `aws sts get-caller-identity`, as shown above.
 
 ```
 cdk bootstrap aws://<AWS_ACCOUNT_ID>/us-east-1
 ```
 
-If bootstrapping is successful you should see the following output.
+If bootstrapping is successful, you should see the following output:
 
 ```
  ⏳  Bootstrapping environment aws://<redacted>/us-east-1...
