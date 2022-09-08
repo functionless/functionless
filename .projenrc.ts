@@ -120,7 +120,6 @@ const project = new CustomTypescriptProject({
     "@swc/jest",
   ],
   jestOptions: {
-    extraCliOptions: ["--runInBand"],
     jestConfig: {
       collectCoverage: false,
       coveragePathIgnorePatterns: ["/test/", "/node_modules/", "/lib"],

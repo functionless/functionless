@@ -203,7 +203,7 @@
           "exec": "cd ./test-app && yarn && yarn build && yarn synth --quiet"
         },
         {
-          "exec": "jest --passWithNoTests --all --runInBand --updateSnapshot"
+          "exec": "jest --passWithNoTests --all --updateSnapshot"
         },
         {
           "spawn": "eslint"
