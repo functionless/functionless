@@ -380,28 +380,40 @@ Object {
               "Variable": "$.index",
             },
             Object {
-              "Or": Array [
+              "And": Array [
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.item",
-                    },
-                    Object {
-                      "StringGreaterThanPath": "$.index",
-                      "Variable": "$.item",
-                    },
-                  ],
+                  "IsNull": false,
+                  "Variable": "$.item",
                 },
                 Object {
-                  "And": Array [
+                  "IsNull": false,
+                  "Variable": "$.index",
+                },
+                Object {
+                  "Or": Array [
                     Object {
-                      "IsNumeric": true,
-                      "Variable": "$.item",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.item",
+                        },
+                        Object {
+                          "StringGreaterThanPath": "$.index",
+                          "Variable": "$.item",
+                        },
+                      ],
                     },
                     Object {
-                      "NumericGreaterThanPath": "$.index",
-                      "Variable": "$.item",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.item",
+                        },
+                        Object {
+                          "NumericGreaterThanPath": "$.index",
+                          "Variable": "$.item",
+                        },
+                      ],
                     },
                   ],
                 },
@@ -645,28 +657,40 @@ Object {
               "Variable": "$.arr[0]",
             },
             Object {
-              "Or": Array [
+              "And": Array [
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.item",
-                    },
-                    Object {
-                      "StringGreaterThanPath": "$.arr[0]",
-                      "Variable": "$.item",
-                    },
-                  ],
+                  "IsNull": false,
+                  "Variable": "$.item",
                 },
                 Object {
-                  "And": Array [
+                  "IsNull": false,
+                  "Variable": "$.arr[0]",
+                },
+                Object {
+                  "Or": Array [
                     Object {
-                      "IsNumeric": true,
-                      "Variable": "$.item",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.item",
+                        },
+                        Object {
+                          "StringGreaterThanPath": "$.arr[0]",
+                          "Variable": "$.item",
+                        },
+                      ],
                     },
                     Object {
-                      "NumericGreaterThanPath": "$.arr[0]",
-                      "Variable": "$.item",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.item",
+                        },
+                        Object {
+                          "NumericGreaterThanPath": "$.arr[0]",
+                          "Variable": "$.item",
+                        },
+                      ],
                     },
                   ],
                 },
@@ -910,28 +934,40 @@ Object {
               "Variable": "$.first",
             },
             Object {
-              "Or": Array [
+              "And": Array [
                 Object {
-                  "And": Array [
-                    Object {
-                      "IsString": true,
-                      "Variable": "$.item",
-                    },
-                    Object {
-                      "StringGreaterThanPath": "$.first",
-                      "Variable": "$.item",
-                    },
-                  ],
+                  "IsNull": false,
+                  "Variable": "$.item",
                 },
                 Object {
-                  "And": Array [
+                  "IsNull": false,
+                  "Variable": "$.first",
+                },
+                Object {
+                  "Or": Array [
                     Object {
-                      "IsNumeric": true,
-                      "Variable": "$.item",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.item",
+                        },
+                        Object {
+                          "StringGreaterThanPath": "$.first",
+                          "Variable": "$.item",
+                        },
+                      ],
                     },
                     Object {
-                      "NumericGreaterThanPath": "$.first",
-                      "Variable": "$.item",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.item",
+                        },
+                        Object {
+                          "NumericGreaterThanPath": "$.first",
+                          "Variable": "$.item",
+                        },
+                      ],
                     },
                   ],
                 },
@@ -1141,8 +1177,16 @@ Object {
               "Variable": "$.item",
             },
             Object {
-              "IsNull": true,
-              "Variable": "$$.Execution.Id",
+              "And": Array [
+                Object {
+                  "IsNull": false,
+                  "Variable": "$.item",
+                },
+                Object {
+                  "IsNull": true,
+                  "Variable": "$$.Execution.Id",
+                },
+              ],
             },
           ],
           "Next": "true__return item === {a: \\"a\\"}",
@@ -1391,36 +1435,52 @@ Object {
                     Object {
                       "And": Array [
                         Object {
-                          "IsString": true,
+                          "IsNull": false,
                           "Variable": "$.value",
                         },
                         Object {
-                          "StringEqualsPath": "$.a",
-                          "Variable": "$.value",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.value",
+                          "IsNull": false,
+                          "Variable": "$.a",
                         },
                         Object {
-                          "BooleanEqualsPath": "$.a",
-                          "Variable": "$.value",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.value",
-                        },
-                        Object {
-                          "NumericEqualsPath": "$.a",
-                          "Variable": "$.value",
+                          "Or": Array [
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.value",
+                                },
+                                Object {
+                                  "StringEqualsPath": "$.a",
+                                  "Variable": "$.value",
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.value",
+                                },
+                                Object {
+                                  "BooleanEqualsPath": "$.a",
+                                  "Variable": "$.value",
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.value",
+                                },
+                                Object {
+                                  "NumericEqualsPath": "$.a",
+                                  "Variable": "$.value",
+                                },
+                              ],
+                            },
+                          ],
                         },
                       ],
                     },
@@ -4728,36 +4788,52 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsString": true,
+                              "IsNull": false,
                               "Variable": "$.input.a",
                             },
                             Object {
-                              "StringEqualsPath": "$.input.b",
-                              "Variable": "$.input.a",
-                            },
-                          ],
-                        },
-                        Object {
-                          "And": Array [
-                            Object {
-                              "IsBoolean": true,
-                              "Variable": "$.input.a",
+                              "IsNull": false,
+                              "Variable": "$.input.b",
                             },
                             Object {
-                              "BooleanEqualsPath": "$.input.b",
-                              "Variable": "$.input.a",
-                            },
-                          ],
-                        },
-                        Object {
-                          "And": Array [
-                            Object {
-                              "IsNumeric": true,
-                              "Variable": "$.input.a",
-                            },
-                            Object {
-                              "NumericEqualsPath": "$.input.b",
-                              "Variable": "$.input.a",
+                              "Or": Array [
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.input.a",
+                                    },
+                                    Object {
+                                      "StringEqualsPath": "$.input.b",
+                                      "Variable": "$.input.a",
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsBoolean": true,
+                                      "Variable": "$.input.a",
+                                    },
+                                    Object {
+                                      "BooleanEqualsPath": "$.input.b",
+                                      "Variable": "$.input.a",
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.input.a",
+                                    },
+                                    Object {
+                                      "NumericEqualsPath": "$.input.b",
+                                      "Variable": "$.input.a",
+                                    },
+                                  ],
+                                },
+                              ],
                             },
                           ],
                         },
@@ -4776,12 +4852,20 @@ Object {
                 Object {
                   "And": Array [
                     Object {
-                      "IsString": true,
+                      "IsNull": false,
                       "Variable": "$.input.s",
                     },
                     Object {
-                      "StringEquals": "hello",
-                      "Variable": "$.input.s",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.s",
+                        },
+                        Object {
+                          "StringEquals": "hello",
+                          "Variable": "$.input.s",
+                        },
+                      ],
                     },
                   ],
                 },
@@ -4838,36 +4922,52 @@ Object {
                     Object {
                       "And": Array [
                         Object {
-                          "IsString": true,
+                          "IsNull": false,
                           "Variable": "$.input.a",
                         },
                         Object {
-                          "StringEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.input.a",
+                          "IsNull": false,
+                          "Variable": "$.input.b",
                         },
                         Object {
-                          "BooleanEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.input.a",
-                        },
-                        Object {
-                          "NumericEqualsPath": "$.input.b",
-                          "Variable": "$.input.a",
+                          "Or": Array [
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.input.a",
+                                },
+                                Object {
+                                  "StringEqualsPath": "$.input.b",
+                                  "Variable": "$.input.a",
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.input.a",
+                                },
+                                Object {
+                                  "BooleanEqualsPath": "$.input.b",
+                                  "Variable": "$.input.a",
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.input.a",
+                                },
+                                Object {
+                                  "NumericEqualsPath": "$.input.b",
+                                  "Variable": "$.input.a",
+                                },
+                              ],
+                            },
+                          ],
                         },
                       ],
                     },
@@ -4927,36 +5027,52 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsString": true,
+                              "IsNull": false,
                               "Variable": "$.input.a",
                             },
                             Object {
-                              "StringEqualsPath": "$.input.b",
-                              "Variable": "$.input.a",
-                            },
-                          ],
-                        },
-                        Object {
-                          "And": Array [
-                            Object {
-                              "IsBoolean": true,
-                              "Variable": "$.input.a",
+                              "IsNull": false,
+                              "Variable": "$.input.b",
                             },
                             Object {
-                              "BooleanEqualsPath": "$.input.b",
-                              "Variable": "$.input.a",
-                            },
-                          ],
-                        },
-                        Object {
-                          "And": Array [
-                            Object {
-                              "IsNumeric": true,
-                              "Variable": "$.input.a",
-                            },
-                            Object {
-                              "NumericEqualsPath": "$.input.b",
-                              "Variable": "$.input.a",
+                              "Or": Array [
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.input.a",
+                                    },
+                                    Object {
+                                      "StringEqualsPath": "$.input.b",
+                                      "Variable": "$.input.a",
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsBoolean": true,
+                                      "Variable": "$.input.a",
+                                    },
+                                    Object {
+                                      "BooleanEqualsPath": "$.input.b",
+                                      "Variable": "$.input.a",
+                                    },
+                                  ],
+                                },
+                                Object {
+                                  "And": Array [
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.input.a",
+                                    },
+                                    Object {
+                                      "NumericEqualsPath": "$.input.b",
+                                      "Variable": "$.input.a",
+                                    },
+                                  ],
+                                },
+                              ],
                             },
                           ],
                         },
@@ -4975,12 +5091,20 @@ Object {
                 Object {
                   "And": Array [
                     Object {
-                      "IsString": true,
+                      "IsNull": false,
                       "Variable": "$.input.s",
                     },
                     Object {
-                      "StringEquals": "hello",
-                      "Variable": "$.input.s",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.s",
+                        },
+                        Object {
+                          "StringEquals": "hello",
+                          "Variable": "$.input.s",
+                        },
+                      ],
                     },
                   ],
                 },
@@ -5782,12 +5906,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.item",
                 },
                 Object {
-                  "StringEquals": "hello",
-                  "Variable": "$.item",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "StringEquals": "hello",
+                      "Variable": "$.item",
+                    },
+                  ],
                 },
               ],
             },
@@ -5938,8 +6070,16 @@ Object {
                   "Variable": "$.person.Item",
                 },
                 Object {
-                  "IsNull": true,
-                  "Variable": "$$.Execution.Id",
+                  "And": Array [
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.person.Item",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
                 },
               ],
             },
@@ -6629,12 +6769,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsNumeric": true,
+                  "IsNull": false,
                   "Variable": "$.heap0",
                 },
                 Object {
-                  "NumericEquals": 1,
-                  "Variable": "$.heap0",
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.heap0",
+                    },
+                    Object {
+                      "NumericEquals": 1,
+                      "Variable": "$.heap0",
+                    },
+                  ],
                 },
               ],
             },
@@ -6724,12 +6872,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.id",
                 },
                 Object {
-                  "StringEquals": "hello",
-                  "Variable": "$.input.id",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.id",
+                    },
+                    Object {
+                      "StringEquals": "hello",
+                      "Variable": "$.input.id",
+                    },
+                  ],
                 },
               ],
             },
@@ -6776,12 +6932,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.id",
                 },
                 Object {
-                  "StringEquals": "hello",
-                  "Variable": "$.input.id",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.id",
+                    },
+                    Object {
+                      "StringEquals": "hello",
+                      "Variable": "$.input.id",
+                    },
+                  ],
                 },
               ],
             },
@@ -6834,12 +6998,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.id",
                 },
                 Object {
-                  "StringEquals": "hello",
-                  "Variable": "$.input.id",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.id",
+                    },
+                    Object {
+                      "StringEquals": "hello",
+                      "Variable": "$.input.id",
+                    },
+                  ],
                 },
               ],
             },
@@ -6905,12 +7077,20 @@ Object {
                 Object {
                   "And": Array [
                     Object {
-                      "IsString": true,
+                      "IsNull": false,
                       "Variable": "$.input.key",
                     },
                     Object {
-                      "StringEquals": "sam",
-                      "Variable": "$.input.key",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.key",
+                        },
+                        Object {
+                          "StringEquals": "sam",
+                          "Variable": "$.input.key",
+                        },
+                      ],
                     },
                   ],
                 },
@@ -6981,12 +7161,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.item",
                 },
                 Object {
-                  "StringEquals": "hello",
-                  "Variable": "$.item",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.item",
+                    },
+                    Object {
+                      "StringEquals": "hello",
+                      "Variable": "$.item",
+                    },
+                  ],
                 },
               ],
             },
@@ -7064,12 +7252,20 @@ Object {
                 Object {
                   "And": Array [
                     Object {
-                      "IsString": true,
+                      "IsNull": false,
                       "Variable": "$.input.key",
                     },
                     Object {
-                      "StringEquals": "sam",
-                      "Variable": "$.input.key",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.key",
+                        },
+                        Object {
+                          "StringEquals": "sam",
+                          "Variable": "$.input.key",
+                        },
+                      ],
                     },
                   ],
                 },
@@ -7117,12 +7313,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.val",
                 },
                 Object {
-                  "StringEquals": "a",
-                  "Variable": "$.input.val",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.val",
+                    },
+                    Object {
+                      "StringEquals": "a",
+                      "Variable": "$.input.val",
+                    },
+                  ],
                 },
               ],
             },
@@ -7138,12 +7342,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.val",
                 },
                 Object {
-                  "StringEquals": "b",
-                  "Variable": "$.input.val",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.val",
+                    },
+                    Object {
+                      "StringEquals": "b",
+                      "Variable": "$.input.val",
+                    },
+                  ],
                 },
               ],
             },
@@ -7159,12 +7371,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.val",
                 },
                 Object {
-                  "StringEquals": "c",
-                  "Variable": "$.input.val",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.val",
+                    },
+                    Object {
+                      "StringEquals": "c",
+                      "Variable": "$.input.val",
+                    },
+                  ],
                 },
               ],
             },
@@ -7229,12 +7449,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.val",
                 },
                 Object {
-                  "StringEquals": "a",
-                  "Variable": "$.input.val",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.val",
+                    },
+                    Object {
+                      "StringEquals": "a",
+                      "Variable": "$.input.val",
+                    },
+                  ],
                 },
               ],
             },
@@ -7250,12 +7478,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.val",
                 },
                 Object {
-                  "StringEquals": "b",
-                  "Variable": "$.input.val",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.val",
+                    },
+                    Object {
+                      "StringEquals": "b",
+                      "Variable": "$.input.val",
+                    },
+                  ],
                 },
               ],
             },
@@ -7844,12 +8080,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.i__1",
                 },
                 Object {
-                  "StringEquals": "1",
-                  "Variable": "$.i__1",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.i__1",
+                    },
+                    Object {
+                      "StringEquals": "1",
+                      "Variable": "$.i__1",
+                    },
+                  ],
                 },
               ],
             },
@@ -7871,12 +8115,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.0__i",
                 },
                 Object {
-                  "StringEquals": "1",
-                  "Variable": "$.0__i",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.0__i",
+                    },
+                    Object {
+                      "StringEquals": "1",
+                      "Variable": "$.0__i",
+                    },
+                  ],
                 },
               ],
             },
@@ -8093,12 +8345,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.i__1",
                 },
                 Object {
-                  "StringEquals": "1",
-                  "Variable": "$.i__1",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.i__1",
+                    },
+                    Object {
+                      "StringEquals": "1",
+                      "Variable": "$.i__1",
+                    },
+                  ],
                 },
               ],
             },
@@ -8120,12 +8380,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.0__i",
                 },
                 Object {
-                  "StringEquals": "1",
-                  "Variable": "$.0__i",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.0__i",
+                    },
+                    Object {
+                      "StringEquals": "1",
+                      "Variable": "$.0__i",
+                    },
+                  ],
                 },
               ],
             },
@@ -8354,12 +8622,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.i__1",
                 },
                 Object {
-                  "StringEquals": "1",
-                  "Variable": "$.i__1",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.i__1",
+                    },
+                    Object {
+                      "StringEquals": "1",
+                      "Variable": "$.i__1",
+                    },
+                  ],
                 },
               ],
             },
@@ -8381,12 +8657,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.0__i",
                 },
                 Object {
-                  "StringEquals": "1",
-                  "Variable": "$.0__i",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.0__i",
+                    },
+                    Object {
+                      "StringEquals": "1",
+                      "Variable": "$.0__i",
+                    },
+                  ],
                 },
               ],
             },
@@ -8476,12 +8760,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsNumeric": true,
+                  "IsNull": false,
                   "Variable": "$.i",
                 },
                 Object {
-                  "NumericLessThan": 3,
-                  "Variable": "$.i",
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.i",
+                    },
+                    Object {
+                      "NumericLessThan": 3,
+                      "Variable": "$.i",
+                    },
+                  ],
                 },
               ],
             },
@@ -8538,12 +8830,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsNumeric": true,
+                  "IsNull": false,
                   "Variable": "$.i",
                 },
                 Object {
-                  "NumericEquals": 0,
-                  "Variable": "$.i",
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.i",
+                    },
+                    Object {
+                      "NumericEquals": 0,
+                      "Variable": "$.i",
+                    },
+                  ],
                 },
               ],
             },
@@ -8559,12 +8859,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsNumeric": true,
+                  "IsNull": false,
                   "Variable": "$.i",
                 },
                 Object {
-                  "NumericEquals": 1,
-                  "Variable": "$.i",
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.i",
+                    },
+                    Object {
+                      "NumericEquals": 1,
+                      "Variable": "$.i",
+                    },
+                  ],
                 },
               ],
             },
@@ -8779,12 +9087,20 @@ Object {
                 Object {
                   "And": Array [
                     Object {
-                      "IsNumeric": true,
+                      "IsNull": false,
                       "Variable": "$.i",
                     },
                     Object {
-                      "NumericLessThan": 3,
-                      "Variable": "$.i",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.i",
+                        },
+                        Object {
+                          "NumericLessThan": 3,
+                          "Variable": "$.i",
+                        },
+                      ],
                     },
                   ],
                 },
@@ -8799,12 +9115,20 @@ Object {
                 Object {
                   "And": Array [
                     Object {
-                      "IsNumeric": true,
+                      "IsNull": false,
                       "Variable": "$.i",
                     },
                     Object {
-                      "NumericEquals": 0,
-                      "Variable": "$.i",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.i",
+                        },
+                        Object {
+                          "NumericEquals": 0,
+                          "Variable": "$.i",
+                        },
+                      ],
                     },
                   ],
                 },
@@ -8824,12 +9148,20 @@ Object {
                 Object {
                   "And": Array [
                     Object {
-                      "IsNumeric": true,
+                      "IsNull": false,
                       "Variable": "$.i",
                     },
                     Object {
-                      "NumericLessThan": 3,
-                      "Variable": "$.i",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.i",
+                        },
+                        Object {
+                          "NumericLessThan": 3,
+                          "Variable": "$.i",
+                        },
+                      ],
                     },
                   ],
                 },
@@ -8844,12 +9176,20 @@ Object {
                 Object {
                   "And": Array [
                     Object {
-                      "IsNumeric": true,
+                      "IsNull": false,
                       "Variable": "$.i",
                     },
                     Object {
-                      "NumericEquals": 1,
-                      "Variable": "$.i",
+                      "And": Array [
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.i",
+                        },
+                        Object {
+                          "NumericEquals": 1,
+                          "Variable": "$.i",
+                        },
+                      ],
                     },
                   ],
                 },
@@ -8867,12 +9207,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsNumeric": true,
+                  "IsNull": false,
                   "Variable": "$.i",
                 },
                 Object {
-                  "NumericLessThan": 3,
-                  "Variable": "$.i",
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.i",
+                    },
+                    Object {
+                      "NumericLessThan": 3,
+                      "Variable": "$.i",
+                    },
+                  ],
                 },
               ],
             },
@@ -9313,12 +9661,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.err.message",
                 },
                 Object {
-                  "StringEquals": "you dun' goofed",
-                  "Variable": "$.err.message",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.err.message",
+                    },
+                    Object {
+                      "StringEquals": "you dun' goofed",
+                      "Variable": "$.err.message",
+                    },
+                  ],
                 },
               ],
             },
@@ -9748,12 +10104,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.heap0",
                 },
                 Object {
-                  "StringEquals": "undefined",
-                  "Variable": "$.heap0",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap0",
+                    },
+                    Object {
+                      "StringEquals": "undefined",
+                      "Variable": "$.heap0",
+                    },
+                  ],
                 },
               ],
             },
@@ -9819,12 +10183,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.heap1",
                 },
                 Object {
-                  "StringEquals": "string",
-                  "Variable": "$.heap1",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap1",
+                    },
+                    Object {
+                      "StringEquals": "string",
+                      "Variable": "$.heap1",
+                    },
+                  ],
                 },
               ],
             },
@@ -9890,12 +10262,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.heap2",
                 },
                 Object {
-                  "StringEquals": "boolean",
-                  "Variable": "$.heap2",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "StringEquals": "boolean",
+                      "Variable": "$.heap2",
+                    },
+                  ],
                 },
               ],
             },
@@ -9961,12 +10341,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.heap3",
                 },
                 Object {
-                  "StringEquals": "number",
-                  "Variable": "$.heap3",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap3",
+                    },
+                    Object {
+                      "StringEquals": "number",
+                      "Variable": "$.heap3",
+                    },
+                  ],
                 },
               ],
             },
@@ -10032,12 +10420,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.heap4",
                 },
                 Object {
-                  "StringEquals": "bigint",
-                  "Variable": "$.heap4",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap4",
+                    },
+                    Object {
+                      "StringEquals": "bigint",
+                      "Variable": "$.heap4",
+                    },
+                  ],
                 },
               ],
             },
@@ -10105,8 +10501,16 @@ Object {
                   "Variable": "$.input.id",
                 },
                 Object {
-                  "IsNull": true,
-                  "Variable": "$$.Execution.Id",
+                  "And": Array [
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.input.id",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
                 },
               ],
             },
@@ -10341,12 +10745,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.heap0",
                 },
                 Object {
-                  "StringEquals": "undefined",
-                  "Variable": "$.heap0",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap0",
+                    },
+                    Object {
+                      "StringEquals": "undefined",
+                      "Variable": "$.heap0",
+                    },
+                  ],
                 },
               ],
             },
@@ -10412,12 +10824,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.heap1",
                 },
                 Object {
-                  "StringEquals": "string",
-                  "Variable": "$.heap1",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap1",
+                    },
+                    Object {
+                      "StringEquals": "string",
+                      "Variable": "$.heap1",
+                    },
+                  ],
                 },
               ],
             },
@@ -10483,12 +10903,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.heap2",
                 },
                 Object {
-                  "StringEquals": "boolean",
-                  "Variable": "$.heap2",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap2",
+                    },
+                    Object {
+                      "StringEquals": "boolean",
+                      "Variable": "$.heap2",
+                    },
+                  ],
                 },
               ],
             },
@@ -10554,12 +10982,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.heap3",
                 },
                 Object {
-                  "StringEquals": "number",
-                  "Variable": "$.heap3",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap3",
+                    },
+                    Object {
+                      "StringEquals": "number",
+                      "Variable": "$.heap3",
+                    },
+                  ],
                 },
               ],
             },
@@ -10625,12 +11061,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.heap4",
                 },
                 Object {
-                  "StringEquals": "bigint",
-                  "Variable": "$.heap4",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.heap4",
+                    },
+                    Object {
+                      "StringEquals": "bigint",
+                      "Variable": "$.heap4",
+                    },
+                  ],
                 },
               ],
             },
@@ -10698,8 +11142,16 @@ Object {
                   "Variable": "$.input.id",
                 },
                 Object {
-                  "IsNull": true,
-                  "Variable": "$$.Execution.Id",
+                  "And": Array [
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.input.id",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
                 },
               ],
             },
@@ -10986,12 +11438,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.val",
                 },
                 Object {
-                  "StringEquals": "a",
-                  "Variable": "$.input.val",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.val",
+                    },
+                    Object {
+                      "StringEquals": "a",
+                      "Variable": "$.input.val",
+                    },
+                  ],
                 },
               ],
             },
@@ -11047,12 +11507,20 @@ Object {
                   Object {
                     "And": Array [
                       Object {
-                        "IsString": true,
+                        "IsNull": false,
                         "Variable": "$.input.val",
                       },
                       Object {
-                        "StringEquals": "a",
-                        "Variable": "$.input.val",
+                        "And": Array [
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.input.val",
+                          },
+                          Object {
+                            "StringEquals": "a",
+                            "Variable": "$.input.val",
+                          },
+                        ],
                       },
                     ],
                   },
@@ -11068,12 +11536,20 @@ Object {
                 Object {
                   "And": Array [
                     Object {
-                      "IsString": true,
+                      "IsNull": false,
                       "Variable": "$.input.val",
                     },
                     Object {
-                      "StringEquals": "b",
-                      "Variable": "$.input.val",
+                      "And": Array [
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.val",
+                        },
+                        Object {
+                          "StringEquals": "b",
+                          "Variable": "$.input.val",
+                        },
+                      ],
                     },
                   ],
                 },
@@ -11093,12 +11569,20 @@ Object {
               Object {
                 "And": Array [
                   Object {
-                    "IsString": true,
+                    "IsNull": false,
                     "Variable": "$.input.val",
                   },
                   Object {
-                    "StringEquals": "a",
-                    "Variable": "$.input.val",
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.val",
+                      },
+                      Object {
+                        "StringEquals": "a",
+                        "Variable": "$.input.val",
+                      },
+                    ],
                   },
                 ],
               },
@@ -11271,12 +11755,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.id",
                 },
                 Object {
-                  "StringEquals": "hello",
-                  "Variable": "$.input.id",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.id",
+                    },
+                    Object {
+                      "StringEquals": "hello",
+                      "Variable": "$.input.id",
+                    },
+                  ],
                 },
               ],
             },
@@ -11329,12 +11821,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.id",
                 },
                 Object {
-                  "StringEquals": "hello",
-                  "Variable": "$.input.id",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.id",
+                    },
+                    Object {
+                      "StringEquals": "hello",
+                      "Variable": "$.input.id",
+                    },
+                  ],
                 },
               ],
             },
@@ -11350,12 +11850,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.id",
                 },
                 Object {
-                  "StringEquals": "world",
-                  "Variable": "$.input.id",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.id",
+                    },
+                    Object {
+                      "StringEquals": "world",
+                      "Variable": "$.input.id",
+                    },
+                  ],
                 },
               ],
             },
@@ -11922,36 +12430,52 @@ Object {
                     Object {
                       "And": Array [
                         Object {
-                          "IsString": true,
+                          "IsNull": false,
                           "Variable": "$.cond",
                         },
                         Object {
-                          "StringEqualsPath": "$.fnl_context.null",
-                          "Variable": "$.cond",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.cond",
+                          "IsNull": false,
+                          "Variable": "$.fnl_context.null",
                         },
                         Object {
-                          "BooleanEqualsPath": "$.fnl_context.null",
-                          "Variable": "$.cond",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.cond",
-                        },
-                        Object {
-                          "NumericEqualsPath": "$.fnl_context.null",
-                          "Variable": "$.cond",
+                          "Or": Array [
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.cond",
+                                },
+                                Object {
+                                  "StringEqualsPath": "$.fnl_context.null",
+                                  "Variable": "$.cond",
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.cond",
+                                },
+                                Object {
+                                  "BooleanEqualsPath": "$.fnl_context.null",
+                                  "Variable": "$.cond",
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.cond",
+                                },
+                                Object {
+                                  "NumericEqualsPath": "$.fnl_context.null",
+                                  "Variable": "$.cond",
+                                },
+                              ],
+                            },
+                          ],
                         },
                       ],
                     },
@@ -12252,12 +12776,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsNumeric": true,
+                  "IsNull": false,
                   "Variable": "$.i",
                 },
                 Object {
-                  "NumericEquals": 0,
-                  "Variable": "$.i",
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.i",
+                    },
+                    Object {
+                      "NumericEquals": 0,
+                      "Variable": "$.i",
+                    },
+                  ],
                 },
               ],
             },
@@ -12387,12 +12919,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsNumeric": true,
+                  "IsNull": false,
                   "Variable": "$.i",
                 },
                 Object {
-                  "NumericEquals": 0,
-                  "Variable": "$.i",
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.i",
+                    },
+                    Object {
+                      "NumericEquals": 0,
+                      "Variable": "$.i",
+                    },
+                  ],
                 },
               ],
             },
@@ -12703,12 +13243,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsNumeric": true,
+                  "IsNull": false,
                   "Variable": "$.i",
                 },
                 Object {
-                  "NumericEquals": 0,
-                  "Variable": "$.i",
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.i",
+                    },
+                    Object {
+                      "NumericEquals": 0,
+                      "Variable": "$.i",
+                    },
+                  ],
                 },
               ],
             },
@@ -12850,12 +13398,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsNumeric": true,
+                  "IsNull": false,
                   "Variable": "$.i",
                 },
                 Object {
-                  "NumericEquals": 0,
-                  "Variable": "$.i",
+                  "And": Array [
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.i",
+                    },
+                    Object {
+                      "NumericEquals": 0,
+                      "Variable": "$.i",
+                    },
+                  ],
                 },
               ],
             },
@@ -13134,8 +13690,16 @@ Object {
                   "Variable": "$.MetricAlarms",
                 },
                 Object {
-                  "IsNull": true,
-                  "Variable": "$$.Execution.Id",
+                  "And": Array [
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.MetricAlarms",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
                 },
               ],
             },
@@ -14417,8 +14981,16 @@ Object {
                   "Variable": "$.person.Item",
                 },
                 Object {
-                  "IsNull": true,
-                  "Variable": "$$.Execution.Id",
+                  "And": Array [
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.person.Item",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
                 },
               ],
             },
@@ -14528,8 +15100,16 @@ Object {
                   "Variable": "$.person.Item",
                 },
                 Object {
-                  "IsNull": true,
-                  "Variable": "$$.Execution.Id",
+                  "And": Array [
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.person.Item",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
                 },
               ],
             },
@@ -14703,8 +15283,16 @@ Object {
                   "Variable": "$.alarms.MetricAlarms",
                 },
                 Object {
-                  "IsNull": true,
-                  "Variable": "$$.Execution.Id",
+                  "And": Array [
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.alarms.MetricAlarms",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
                 },
               ],
             },
@@ -14807,8 +15395,16 @@ Object {
                   "Variable": "$.alarms.MetricAlarms",
                 },
                 Object {
-                  "IsNull": true,
-                  "Variable": "$$.Execution.Id",
+                  "And": Array [
+                    Object {
+                      "IsNull": false,
+                      "Variable": "$.alarms.MetricAlarms",
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
                 },
               ],
             },
@@ -15852,12 +16448,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.a__1",
                 },
                 Object {
-                  "StringEquals": "",
-                  "Variable": "$.a__1",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.a__1",
+                    },
+                    Object {
+                      "StringEquals": "",
+                      "Variable": "$.a__1",
+                    },
+                  ],
                 },
               ],
             },
@@ -16903,12 +17507,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.err.message",
                 },
                 Object {
-                  "StringEquals": "you dun' goofed",
-                  "Variable": "$.err.message",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.err.message",
+                    },
+                    Object {
+                      "StringEquals": "you dun' goofed",
+                      "Variable": "$.err.message",
+                    },
+                  ],
                 },
               ],
             },
@@ -17253,12 +17865,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.err.message",
                 },
                 Object {
-                  "StringEquals": "cause",
-                  "Variable": "$.err.message",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.err.message",
+                    },
+                    Object {
+                      "StringEquals": "cause",
+                      "Variable": "$.err.message",
+                    },
+                  ],
                 },
               ],
             },
@@ -17635,12 +18255,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.err.message",
                 },
                 Object {
-                  "StringEquals": "cause",
-                  "Variable": "$.err.message",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.err.message",
+                    },
+                    Object {
+                      "StringEquals": "cause",
+                      "Variable": "$.err.message",
+                    },
+                  ],
                 },
               ],
             },
@@ -17964,12 +18592,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.id",
                 },
                 Object {
-                  "StringEquals": "sam",
-                  "Variable": "$.input.id",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.id",
+                    },
+                    Object {
+                      "StringEquals": "sam",
+                      "Variable": "$.input.id",
+                    },
+                  ],
                 },
               ],
             },
@@ -18168,12 +18804,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.err.message",
                 },
                 Object {
-                  "StringEquals": "sam",
-                  "Variable": "$.err.message",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.err.message",
+                    },
+                    Object {
+                      "StringEquals": "sam",
+                      "Variable": "$.err.message",
+                    },
+                  ],
                 },
               ],
             },
@@ -18244,12 +18888,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.id",
                 },
                 Object {
-                  "StringEquals": "sam",
-                  "Variable": "$.input.id",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.id",
+                    },
+                    Object {
+                      "StringEquals": "sam",
+                      "Variable": "$.input.id",
+                    },
+                  ],
                 },
               ],
             },
@@ -18508,12 +19160,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.err.message",
                 },
                 Object {
-                  "StringEquals": "cause",
-                  "Variable": "$.err.message",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.err.message",
+                    },
+                    Object {
+                      "StringEquals": "cause",
+                      "Variable": "$.err.message",
+                    },
+                  ],
                 },
               ],
             },
@@ -18737,12 +19397,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.err.message",
                 },
                 Object {
-                  "StringEquals": "cause",
-                  "Variable": "$.err.message",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.err.message",
+                    },
+                    Object {
+                      "StringEquals": "cause",
+                      "Variable": "$.err.message",
+                    },
+                  ],
                 },
               ],
             },
@@ -18782,12 +19450,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.id",
                 },
                 Object {
-                  "StringEquals": "hello",
-                  "Variable": "$.input.id",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.id",
+                    },
+                    Object {
+                      "StringEquals": "hello",
+                      "Variable": "$.input.id",
+                    },
+                  ],
                 },
               ],
             },
@@ -18873,12 +19549,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.err.message",
                 },
                 Object {
-                  "StringEquals": "cause",
-                  "Variable": "$.err.message",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.err.message",
+                    },
+                    Object {
+                      "StringEquals": "cause",
+                      "Variable": "$.err.message",
+                    },
+                  ],
                 },
               ],
             },
@@ -18924,12 +19608,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.id",
                 },
                 Object {
-                  "StringEquals": "hello",
-                  "Variable": "$.input.id",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.id",
+                    },
+                    Object {
+                      "StringEquals": "hello",
+                      "Variable": "$.input.id",
+                    },
+                  ],
                 },
               ],
             },
@@ -19015,12 +19707,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.err.message",
                 },
                 Object {
-                  "StringEquals": "cause",
-                  "Variable": "$.err.message",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.err.message",
+                    },
+                    Object {
+                      "StringEquals": "cause",
+                      "Variable": "$.err.message",
+                    },
+                  ],
                 },
               ],
             },
@@ -19060,12 +19760,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.id",
                 },
                 Object {
-                  "StringEquals": "hello",
-                  "Variable": "$.input.id",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.id",
+                    },
+                    Object {
+                      "StringEquals": "hello",
+                      "Variable": "$.input.id",
+                    },
+                  ],
                 },
               ],
             },
@@ -19112,12 +19820,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.err.message",
                 },
                 Object {
-                  "StringEquals": "cause",
-                  "Variable": "$.err.message",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.err.message",
+                    },
+                    Object {
+                      "StringEquals": "cause",
+                      "Variable": "$.err.message",
+                    },
+                  ],
                 },
               ],
             },
@@ -19165,12 +19881,20 @@ Object {
             Object {
               "And": Array [
                 Object {
-                  "IsString": true,
+                  "IsNull": false,
                   "Variable": "$.input.id",
                 },
                 Object {
-                  "StringEquals": "hello",
-                  "Variable": "$.input.id",
+                  "And": Array [
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.input.id",
+                    },
+                    Object {
+                      "StringEquals": "hello",
+                      "Variable": "$.input.id",
+                    },
+                  ],
                 },
               ],
             },
@@ -19782,36 +20506,52 @@ Object {
                     Object {
                       "And": Array [
                         Object {
-                          "IsString": true,
+                          "IsNull": false,
                           "Variable": "$.cond",
                         },
                         Object {
-                          "StringEqualsPath": "$.fnl_context.null",
-                          "Variable": "$.cond",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.cond",
+                          "IsNull": false,
+                          "Variable": "$.fnl_context.null",
                         },
                         Object {
-                          "BooleanEqualsPath": "$.fnl_context.null",
-                          "Variable": "$.cond",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.cond",
-                        },
-                        Object {
-                          "NumericEqualsPath": "$.fnl_context.null",
-                          "Variable": "$.cond",
+                          "Or": Array [
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.cond",
+                                },
+                                Object {
+                                  "StringEqualsPath": "$.fnl_context.null",
+                                  "Variable": "$.cond",
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.cond",
+                                },
+                                Object {
+                                  "BooleanEqualsPath": "$.fnl_context.null",
+                                  "Variable": "$.cond",
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.cond",
+                                },
+                                Object {
+                                  "NumericEqualsPath": "$.fnl_context.null",
+                                  "Variable": "$.cond",
+                                },
+                              ],
+                            },
+                          ],
                         },
                       ],
                     },
@@ -19906,36 +20646,52 @@ Object {
                     Object {
                       "And": Array [
                         Object {
-                          "IsString": true,
+                          "IsNull": false,
                           "Variable": "$.cond",
                         },
                         Object {
-                          "StringEqualsPath": "$.fnl_context.null",
-                          "Variable": "$.cond",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsBoolean": true,
-                          "Variable": "$.cond",
+                          "IsNull": false,
+                          "Variable": "$.fnl_context.null",
                         },
                         Object {
-                          "BooleanEqualsPath": "$.fnl_context.null",
-                          "Variable": "$.cond",
-                        },
-                      ],
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsNumeric": true,
-                          "Variable": "$.cond",
-                        },
-                        Object {
-                          "NumericEqualsPath": "$.fnl_context.null",
-                          "Variable": "$.cond",
+                          "Or": Array [
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.cond",
+                                },
+                                Object {
+                                  "StringEqualsPath": "$.fnl_context.null",
+                                  "Variable": "$.cond",
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.cond",
+                                },
+                                Object {
+                                  "BooleanEqualsPath": "$.fnl_context.null",
+                                  "Variable": "$.cond",
+                                },
+                              ],
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.cond",
+                                },
+                                Object {
+                                  "NumericEqualsPath": "$.fnl_context.null",
+                                  "Variable": "$.cond",
+                                },
+                              ],
+                            },
+                          ],
                         },
                       ],
                     },

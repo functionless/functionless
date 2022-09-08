@@ -54,7 +54,11 @@ interface TestFunctionBase {
     expected: OO extends void
       ? null
       : OO | ((context: Outputs) => OO extends void ? null : O),
-    payload?: I | ((context: Outputs) => I)
+    payload?: I | ((context: Outputs) => I),
+    /**
+     * When true uses jest's {@link jest.Matchers.toMatchObject} logic instead of {@link jest.Matchers.toEqual}.
+     */
+    matchObject?: boolean
   ): void;
 }
 
@@ -66,31 +70,41 @@ interface TestFunctionResource extends TestFunctionBase {
 runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
   const _testFunc: (
     f: typeof testResource | typeof testResource.only
-  ) => TestFunctionBase = (f) => (name, func, expected, payload) => {
-    f(
-      name,
-      (parent, role) => {
-        const res = func(parent);
-        const [funcRes, outputs] =
-          res instanceof Function ? [res, {}] : [res.func, res.outputs];
-        funcRes.resource.grantInvoke(role);
-        return {
-          outputs: {
-            function: funcRes.resource.functionName,
-            ...outputs,
-          },
-        };
-      },
-      async (context, clients) => {
-        const exp =
-          // @ts-ignore
-          typeof expected === "function" ? expected(context) : expected;
-        // @ts-ignore
-        const pay = typeof payload === "function" ? payload(context) : payload;
-        await testFunction(clients.lambda, context.function, pay, exp);
-      }
-    );
-  };
+  ) => TestFunctionBase =
+    (f) => (name, func, expected, payload, matchObject) => {
+      f(
+        name,
+        (parent, role) => {
+          const res = func(parent);
+          const [funcRes, outputs] =
+            res instanceof Function ? [res, {}] : [res.func, res.outputs];
+          funcRes.resource.grantInvoke(role);
+          return {
+            outputs: {
+              function: funcRes.resource.functionName,
+              ...outputs,
+            },
+          };
+        },
+        async (context, clients) => {
+          const exp =
+            typeof expected === "function"
+              ? (<globalThis.Function>expected)(context)
+              : expected;
+          const pay =
+            typeof payload === "function"
+              ? (<globalThis.Function>payload)(context)
+              : payload;
+          await testFunction(
+            clients.lambda,
+            context.function,
+            pay,
+            exp,
+            matchObject ?? false
+          );
+        }
+      );
+    };
 
   const test = _testFunc(testResource) as TestFunctionResource;
 
@@ -263,7 +277,9 @@ runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
           throw Error("AHHHHHHHHH");
         }
       ),
-    { errorMessage: "AHHHHHHHHH", errorType: "Error" }
+    { errorMessage: "AHHHHHHHHH", errorType: "Error" },
+    undefined,
+    true
   );
 
   test(

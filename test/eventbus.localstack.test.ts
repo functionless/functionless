@@ -89,6 +89,7 @@ runtimeTestSuite("eventBusStack", (testResource) => {
               Detail: JSON.stringify({
                 id,
               }),
+              DetailType: "someType",
             },
           ],
         })

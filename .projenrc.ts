@@ -1,4 +1,4 @@
-import { readFileSync, writeFileSync, chmodSync } from "fs";
+import * as fs from "fs";
 import { join } from "path";
 import { typescript, TextFile, JsonFile, Project } from "projen";
 import { GithubCredentials } from "projen/lib/github";
@@ -18,7 +18,7 @@ class GitHooksPreCommitComponent extends TextFile {
   }
 
   public postSynthesize() {
-    chmodSync(this.path, "755");
+    fs.chmodSync(this.path, "755");
   }
 }
 
@@ -58,7 +58,7 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
     const rootPackageJson = join(outdir, "package.json");
 
     const packageJson = JSON.parse(
-      readFileSync(rootPackageJson).toString("utf8")
+      fs.readFileSync(rootPackageJson).toString("utf8")
     );
 
     const updated = {
@@ -69,7 +69,7 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
       },
     };
 
-    writeFileSync(rootPackageJson, `${JSON.stringify(updated, null, 2)}\n`);
+    fs.writeFileSync(rootPackageJson, `${JSON.stringify(updated, null, 2)}\n`);
   }
 
   public renderWorkflowSetup(
@@ -321,7 +321,5 @@ project.eslint!.addOverride({
 
 project.prettier!.addIgnorePattern("coverage");
 project.prettier!.addIgnorePattern("lib");
-
-project.buildWorkflow?.addPostBuildSteps;
 
 project.synth();
