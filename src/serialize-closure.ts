@@ -6,6 +6,7 @@ import ts from "typescript";
 
 import { assertNever } from "./assert";
 import {
+  BindingName,
   ClassDecl,
   FunctionLike,
   GetAccessorDecl,
@@ -121,6 +122,7 @@ import {
   newExpr,
 } from "./serialize-util";
 import { AnyClass, AnyFunction } from "./util";
+import { forEachChild } from "./visit";
 
 export interface SerializeClosureProps extends esbuild.BuildOptions {
   /**
@@ -211,12 +213,11 @@ export function serializeClosure(
   );
 
   let i = 0;
-  const uniqueName = (scope?: FunctionlessNode) => {
-    const names = scope?.getLexicalScope();
+  const uniqueName = (illegalNames?: Set<string>) => {
     let name;
     do {
       name = `v${i++}`;
-    } while (names?.has(name));
+    } while (illegalNames?.has(name));
     return name;
   };
 
@@ -364,7 +365,6 @@ export function serializeClosure(
   }
 
   function serializeValue(value: any): ts.Expression {
-    ts.SyntaxKind;
     if (value === undefined) {
       return undefinedExpr();
     } else if (value === null) {
@@ -434,11 +434,13 @@ export function serializeClosure(
         )
       );
 
-      // for each item in the array, serialize the value and push it into the array
-      // vArr.push(vItem1, vItem2)
-      emit(
-        exprStmt(callExpr(propAccessExpr(arr, "push"), value.map(serialize)))
-      );
+      if (value.length > 0) {
+        // for each item in the array, serialize the value and push it into the array
+        // vArr.push(vItem1, vItem2)
+        emit(
+          exprStmt(callExpr(propAccessExpr(arr, "push"), value.map(serialize)))
+        );
+      }
 
       return arr;
     } else if (util.types.isProxy(value)) {
@@ -592,11 +594,48 @@ export function serializeClosure(
     // declare an empty var for this function
     const func = singleton(value, () => emitVarDecl("var", uniqueName()));
 
-    emit(exprStmt(assignExpr(func, toTS(ast) as ts.Expression)));
+    emit(
+      exprStmt(
+        assignExpr(func, toTS(ast, getIllegalNames(ast)) as ts.Expression)
+      )
+    );
 
     defineProperties(value, func);
 
     return func;
+  }
+
+  function getIllegalNames(ast: FunctionlessNode): Set<string> {
+    const names = new Set<string>();
+    forEachChild(ast, function visit(node) {
+      if (isParameterDecl(node) || isVariableDecl(node)) {
+        getNames(node.name).forEach((name) => names.add(name));
+      } else if (
+        (isFunctionDecl(node) ||
+          isFunctionExpr(node) ||
+          isClassDecl(node) ||
+          isClassExpr(node)) &&
+        node.name
+      ) {
+        if (typeof node.name === "string") {
+          names.add(node.name);
+        } else {
+          names.add(node.name.name);
+        }
+      }
+      forEachChild(node, visit);
+    });
+    return names;
+  }
+
+  function getNames(name: BindingName): string[] {
+    if (isIdentifier(name)) {
+      return [name.name];
+    } else {
+      return name.bindings.flatMap((binding) =>
+        isBindingElem(binding) ? getNames(binding.name) : []
+      );
+    }
   }
 
   function serializeBoundFunction(func: AnyFunction) {
@@ -604,13 +643,13 @@ export function serializeClosure(
     if (components) {
       const boundThis = serialize(components.boundThis);
       const boundArgs = serialize(components.boundArgs);
-      const targetFuntion = serialize(components.targetFunction);
+      const targetFunction = serialize(components.targetFunction);
 
       return singleton(func, () =>
         emitVarDecl(
           "const",
           uniqueName(),
-          callExpr(propAccessExpr(targetFuntion, "bind"), [
+          callExpr(propAccessExpr(targetFunction, "bind"), [
             boundThis,
             boundArgs,
           ])
@@ -644,10 +683,17 @@ export function serializeClosure(
   ): ts.Expression {
     // emit the class to the closure
     const classDecl = singleton(classVal, () =>
-      emitVarDecl("var", uniqueName(classAST))
+      emitVarDecl("var", uniqueName())
     );
 
-    emit(exprStmt(assignExpr(classDecl, toTS(classAST) as ts.Expression)));
+    emit(
+      exprStmt(
+        assignExpr(
+          classDecl,
+          toTS(classAST, getIllegalNames(classAST)) as ts.Expression
+        )
+      )
+    );
 
     monkeyPatch(classDecl, classVal, classVal, ["prototype"]);
     monkeyPatch(
@@ -867,6 +913,10 @@ export function serializeClosure(
   function serializeMethodAsFunction(
     method: MethodDecl
   ): ts.FunctionExpression {
+    // find all names used as identifiers in the AST
+    // we must ensure that no free variables collide with these names
+    const illegalNames = getIllegalNames(method);
+
     return ts.factory.createFunctionExpression(
       method.isAsync
         ? [ts.factory.createModifier(ts.SyntaxKind.AsyncKeyword)]
@@ -874,19 +924,21 @@ export function serializeClosure(
       method.isAsterisk
         ? ts.factory.createToken(ts.SyntaxKind.AsteriskToken)
         : undefined,
-      toTS(method.name) as ts.Identifier,
+      toTS(method.name, illegalNames) as ts.Identifier,
       undefined,
-      method.parameters.map((param) => toTS(param) as ts.ParameterDeclaration),
+      method.parameters.map(
+        (param) => toTS(param, illegalNames) as ts.ParameterDeclaration
+      ),
       undefined,
-      toTS(method.body) as ts.Block
+      toTS(method.body, illegalNames) as ts.Block
     );
   }
 
   /**
    * Convert a {@link FunctionlessNode} into its TypeScript counter-part and set the Source Map Range.
    */
-  function toTS(node: FunctionlessNode): ts.Node {
-    const tsNode = _toTS(node);
+  function toTS(node: FunctionlessNode, illegalNames: Set<string>): ts.Node {
+    const tsNode = _toTS(node, illegalNames);
     ts.setSourceMapRange(tsNode, {
       pos: node.span[0],
       end: node.span[1],
@@ -898,7 +950,7 @@ export function serializeClosure(
   /**
    * Convert a {@link FunctionlessNode} into its TypeScript counter-part.
    */
-  function _toTS(node: FunctionlessNode): ts.Node {
+  function _toTS(node: FunctionlessNode, illegalNames: Set<string>): ts.Node {
     if (isReferenceExpr(node)) {
       // get the set of ReferenceExpr instances for thisId
       let thisId = referenceInstanceIDs.get(node.thisId);
@@ -911,7 +963,7 @@ export function serializeClosure(
       // a ts.Identifier that uniquely references the memory location of this variable in the serialized closure
       let varId: ts.Identifier | undefined = referenceIds.get(varKey);
       if (varId === undefined) {
-        const varName = uniqueName(node);
+        const varName = uniqueName(illegalNames);
         varId = ts.factory.createIdentifier(varName);
         referenceIds.set(varKey, varId);
 
@@ -927,10 +979,12 @@ export function serializeClosure(
           ? [ts.factory.createModifier(ts.SyntaxKind.AsyncKeyword)]
           : undefined,
         undefined,
-        node.parameters.map((param) => toTS(param) as ts.ParameterDeclaration),
+        node.parameters.map(
+          (param) => toTS(param, illegalNames) as ts.ParameterDeclaration
+        ),
         undefined,
         undefined,
-        toTS(node.body) as ts.Block
+        toTS(node.body, illegalNames) as ts.Block
       );
     } else if (isFunctionDecl(node)) {
       if (node.parent === undefined) {
@@ -946,10 +1000,10 @@ export function serializeClosure(
           node.name,
           undefined,
           node.parameters.map(
-            (param) => toTS(param) as ts.ParameterDeclaration
+            (param) => toTS(param, illegalNames) as ts.ParameterDeclaration
           ),
           undefined,
-          toTS(node.body) as ts.Block
+          toTS(node.body, illegalNames) as ts.Block
         );
       } else {
         // if it's not the root, then maintain the FunctionDeclaration SyntaxKind
@@ -964,10 +1018,10 @@ export function serializeClosure(
           node.name,
           undefined,
           node.parameters.map(
-            (param) => toTS(param) as ts.ParameterDeclaration
+            (param) => toTS(param, illegalNames) as ts.ParameterDeclaration
           ),
           undefined,
-          toTS(node.body) as ts.Block
+          toTS(node.body, illegalNames) as ts.Block
         );
       }
     } else if (isFunctionExpr(node)) {
@@ -980,9 +1034,11 @@ export function serializeClosure(
           : undefined,
         node.name,
         undefined,
-        node.parameters.map((param) => toTS(param) as ts.ParameterDeclaration),
+        node.parameters.map(
+          (param) => toTS(param, illegalNames) as ts.ParameterDeclaration
+        ),
         undefined,
-        toTS(node.body) as ts.Block
+        toTS(node.body, illegalNames) as ts.Block
       );
     } else if (isParameterDecl(node)) {
       return ts.factory.createParameterDeclaration(
@@ -991,14 +1047,16 @@ export function serializeClosure(
         node.isRest
           ? ts.factory.createToken(ts.SyntaxKind.DotDotDotToken)
           : undefined,
-        toTS(node.name) as ts.BindingName,
+        toTS(node.name, illegalNames) as ts.BindingName,
         undefined,
         undefined,
-        node.initializer ? (toTS(node.initializer) as ts.Expression) : undefined
+        node.initializer
+          ? (toTS(node.initializer, illegalNames) as ts.Expression)
+          : undefined
       );
     } else if (isBlockStmt(node)) {
       return ts.factory.createBlock(
-        node.statements.map((stmt) => toTS(stmt) as ts.Statement)
+        node.statements.map((stmt) => toTS(stmt, illegalNames) as ts.Statement)
       );
     } else if (isThisExpr(node)) {
       return ts.factory.createThis();
@@ -1010,34 +1068,34 @@ export function serializeClosure(
       return ts.factory.createPrivateIdentifier(node.name);
     } else if (isPropAccessExpr(node)) {
       return ts.factory.createPropertyAccessChain(
-        toTS(node.expr) as ts.Expression,
+        toTS(node.expr, illegalNames) as ts.Expression,
         node.isOptional
           ? ts.factory.createToken(ts.SyntaxKind.QuestionDotToken)
           : undefined,
-        toTS(node.name) as ts.MemberName
+        toTS(node.name, illegalNames) as ts.MemberName
       );
     } else if (isElementAccessExpr(node)) {
       return ts.factory.createElementAccessChain(
-        toTS(node.expr) as ts.Expression,
+        toTS(node.expr, illegalNames) as ts.Expression,
         node.isOptional
           ? ts.factory.createToken(ts.SyntaxKind.QuestionDotToken)
           : undefined,
-        toTS(node.element) as ts.Expression
+        toTS(node.element, illegalNames) as ts.Expression
       );
     } else if (isCallExpr(node)) {
       return ts.factory.createCallExpression(
-        toTS(node.expr) as ts.Expression,
+        toTS(node.expr, illegalNames) as ts.Expression,
         undefined,
-        node.args.map((arg) => toTS(arg) as ts.Expression)
+        node.args.map((arg) => toTS(arg, illegalNames) as ts.Expression)
       );
     } else if (isNewExpr(node)) {
       return ts.factory.createNewExpression(
-        toTS(node.expr) as ts.Expression,
+        toTS(node.expr, illegalNames) as ts.Expression,
         undefined,
-        node.args.map((arg) => toTS(arg) as ts.Expression)
+        node.args.map((arg) => toTS(arg, illegalNames) as ts.Expression)
       );
     } else if (isArgument(node)) {
-      return toTS(node.expr);
+      return toTS(node.expr, illegalNames);
     } else if (isUndefinedLiteralExpr(node)) {
       return ts.factory.createIdentifier("undefined");
     } else if (isNullLiteralExpr(node)) {
@@ -1052,39 +1110,45 @@ export function serializeClosure(
       return stringExpr(node.value);
     } else if (isArrayLiteralExpr(node)) {
       return ts.factory.createArrayLiteralExpression(
-        node.items.map((item) => toTS(item) as ts.Expression),
+        node.items.map((item) => toTS(item, illegalNames) as ts.Expression),
         undefined
       );
     } else if (isSpreadElementExpr(node)) {
-      return ts.factory.createSpreadElement(toTS(node.expr) as ts.Expression);
+      return ts.factory.createSpreadElement(
+        toTS(node.expr, illegalNames) as ts.Expression
+      );
     } else if (isObjectLiteralExpr(node)) {
       return ts.factory.createObjectLiteralExpression(
         node.properties.map(
-          (prop) => toTS(prop) as ts.ObjectLiteralElementLike
+          (prop) => toTS(prop, illegalNames) as ts.ObjectLiteralElementLike
         ),
         undefined
       );
     } else if (isPropAssignExpr(node)) {
       return ts.factory.createPropertyAssignment(
-        toTS(node.name) as ts.PropertyName,
-        toTS(node.expr) as ts.Expression
+        toTS(node.name, illegalNames) as ts.PropertyName,
+        toTS(node.expr, illegalNames) as ts.Expression
       );
     } else if (isSpreadAssignExpr(node)) {
-      return ts.factory.createSpreadElement(toTS(node.expr) as ts.Expression);
+      return ts.factory.createSpreadElement(
+        toTS(node.expr, illegalNames) as ts.Expression
+      );
     } else if (isComputedPropertyNameExpr(node)) {
       return ts.factory.createComputedPropertyName(
-        toTS(node.expr) as ts.Expression
+        toTS(node.expr, illegalNames) as ts.Expression
       );
     } else if (isOmittedExpr(node)) {
       return ts.factory.createOmittedExpression();
     } else if (isVariableStmt(node)) {
       return ts.factory.createVariableStatement(
         undefined,
-        toTS(node.declList) as ts.VariableDeclarationList
+        toTS(node.declList, illegalNames) as ts.VariableDeclarationList
       );
     } else if (isVariableDeclList(node)) {
       return ts.factory.createVariableDeclarationList(
-        node.decls.map((decl) => toTS(decl) as ts.VariableDeclaration),
+        node.decls.map(
+          (decl) => toTS(decl, illegalNames) as ts.VariableDeclaration
+        ),
         node.varKind === VariableDeclKind.Const
           ? ts.NodeFlags.Const
           : node.varKind === VariableDeclKind.Let
@@ -1093,10 +1157,12 @@ export function serializeClosure(
       );
     } else if (isVariableDecl(node)) {
       return ts.factory.createVariableDeclaration(
-        toTS(node.name) as ts.BindingName,
+        toTS(node.name, illegalNames) as ts.BindingName,
         undefined,
         undefined,
-        node.initializer ? (toTS(node.initializer) as ts.Expression) : undefined
+        node.initializer
+          ? (toTS(node.initializer, illegalNames) as ts.Expression)
+          : undefined
       );
     } else if (isBindingElem(node)) {
       return ts.factory.createBindingElement(
@@ -1104,18 +1170,24 @@ export function serializeClosure(
           ? ts.factory.createToken(ts.SyntaxKind.DotDotDotToken)
           : undefined,
         node.propertyName
-          ? (toTS(node.propertyName) as ts.PropertyName)
+          ? (toTS(node.propertyName, illegalNames) as ts.PropertyName)
           : undefined,
-        toTS(node.name) as ts.BindingName,
-        node.initializer ? (toTS(node.initializer) as ts.Expression) : undefined
+        toTS(node.name, illegalNames) as ts.BindingName,
+        node.initializer
+          ? (toTS(node.initializer, illegalNames) as ts.Expression)
+          : undefined
       );
     } else if (isObjectBinding(node)) {
       return ts.factory.createObjectBindingPattern(
-        node.bindings.map((binding) => toTS(binding) as ts.BindingElement)
+        node.bindings.map(
+          (binding) => toTS(binding, illegalNames) as ts.BindingElement
+        )
       );
     } else if (isArrayBinding(node)) {
       return ts.factory.createArrayBindingPattern(
-        node.bindings.map((binding) => toTS(binding) as ts.BindingElement)
+        node.bindings.map(
+          (binding) => toTS(binding, illegalNames) as ts.BindingElement
+        )
       );
     } else if (isClassDecl(node) || isClassExpr(node)) {
       return (
@@ -1131,26 +1203,30 @@ export function serializeClosure(
           ? [
               ts.factory.createHeritageClause(ts.SyntaxKind.ExtendsKeyword, [
                 ts.factory.createExpressionWithTypeArguments(
-                  toTS(node.heritage) as ts.Expression,
+                  toTS(node.heritage, illegalNames) as ts.Expression,
                   []
                 ),
               ]),
             ]
           : undefined,
-        node.members.map((member) => toTS(member) as ts.ClassElement)
+        node.members.map(
+          (member) => toTS(member, illegalNames) as ts.ClassElement
+        )
       );
     } else if (isClassStaticBlockDecl(node)) {
       return ts.factory.createClassStaticBlockDeclaration(
         undefined,
         undefined,
-        toTS(node.block) as ts.Block
+        toTS(node.block, illegalNames) as ts.Block
       );
     } else if (isConstructorDecl(node)) {
       return ts.factory.createConstructorDeclaration(
         undefined,
         undefined,
-        node.parameters.map((param) => toTS(param) as ts.ParameterDeclaration),
-        toTS(node.body) as ts.Block
+        node.parameters.map(
+          (param) => toTS(param, illegalNames) as ts.ParameterDeclaration
+        ),
+        toTS(node.body, illegalNames) as ts.Block
       );
     } else if (isPropDecl(node)) {
       return ts.factory.createPropertyDeclaration(
@@ -1158,10 +1234,12 @@ export function serializeClosure(
         node.isStatic
           ? [ts.factory.createModifier(ts.SyntaxKind.StaticKeyword)]
           : undefined,
-        toTS(node.name) as ts.PropertyName,
+        toTS(node.name, illegalNames) as ts.PropertyName,
         undefined,
         undefined,
-        node.initializer ? (toTS(node.initializer) as ts.Expression) : undefined
+        node.initializer
+          ? (toTS(node.initializer, illegalNames) as ts.Expression)
+          : undefined
       );
     } else if (isMethodDecl(node)) {
       return ts.factory.createMethodDeclaration(
@@ -1172,48 +1250,56 @@ export function serializeClosure(
         node.isAsterisk
           ? ts.factory.createToken(ts.SyntaxKind.AsteriskToken)
           : undefined,
-        toTS(node.name) as ts.PropertyName,
+        toTS(node.name, illegalNames) as ts.PropertyName,
         undefined,
         undefined,
-        node.parameters.map((param) => toTS(param) as ts.ParameterDeclaration),
+        node.parameters.map(
+          (param) => toTS(param, illegalNames) as ts.ParameterDeclaration
+        ),
         undefined,
-        toTS(node.body) as ts.Block
+        toTS(node.body, illegalNames) as ts.Block
       );
     } else if (isGetAccessorDecl(node)) {
       return ts.factory.createGetAccessorDeclaration(
         undefined,
         undefined,
-        toTS(node.name) as ts.PropertyName,
+        toTS(node.name, illegalNames) as ts.PropertyName,
         [],
         undefined,
-        toTS(node.body) as ts.Block
+        toTS(node.body, illegalNames) as ts.Block
       );
     } else if (isSetAccessorDecl(node)) {
       return ts.factory.createSetAccessorDeclaration(
         undefined,
         undefined,
-        toTS(node.name) as ts.PropertyName,
-        node.parameter ? [toTS(node.parameter) as ts.ParameterDeclaration] : [],
-        toTS(node.body) as ts.Block
+        toTS(node.name, illegalNames) as ts.PropertyName,
+        node.parameter
+          ? [toTS(node.parameter, illegalNames) as ts.ParameterDeclaration]
+          : [],
+        toTS(node.body, illegalNames) as ts.Block
       );
     } else if (isExprStmt(node)) {
       return ts.factory.createExpressionStatement(
-        toTS(node.expr) as ts.Expression
+        toTS(node.expr, illegalNames) as ts.Expression
       );
     } else if (isAwaitExpr(node)) {
-      return ts.factory.createAwaitExpression(toTS(node.expr) as ts.Expression);
+      return ts.factory.createAwaitExpression(
+        toTS(node.expr, illegalNames) as ts.Expression
+      );
     } else if (isYieldExpr(node)) {
       if (node.delegate) {
         return ts.factory.createYieldExpression(
           ts.factory.createToken(ts.SyntaxKind.AsteriskToken),
           node.expr
-            ? (toTS(node.expr) as ts.Expression)
+            ? (toTS(node.expr, illegalNames) as ts.Expression)
             : ts.factory.createIdentifier("undefined")
         );
       } else {
         return ts.factory.createYieldExpression(
           undefined,
-          node.expr ? (toTS(node.expr) as ts.Expression) : undefined
+          node.expr
+            ? (toTS(node.expr, illegalNames) as ts.Expression)
+            : undefined
         );
       }
     } else if (isUnaryExpr(node)) {
@@ -1231,11 +1317,11 @@ export function serializeClosure(
           : node.op === "~"
           ? ts.SyntaxKind.TildeToken
           : assertNever(node.op),
-        toTS(node.expr) as ts.Expression
+        toTS(node.expr, illegalNames) as ts.Expression
       );
     } else if (isPostfixUnaryExpr(node)) {
       return ts.factory.createPostfixUnaryExpression(
-        toTS(node.expr) as ts.Expression,
+        toTS(node.expr, illegalNames) as ts.Expression,
         node.op === "++"
           ? ts.SyntaxKind.PlusPlusToken
           : node.op === "--"
@@ -1244,50 +1330,56 @@ export function serializeClosure(
       );
     } else if (isBinaryExpr(node)) {
       return ts.factory.createBinaryExpression(
-        toTS(node.left) as ts.Expression,
+        toTS(node.left, illegalNames) as ts.Expression,
         toTSOperator(node.op),
-        toTS(node.right) as ts.Expression
+        toTS(node.right, illegalNames) as ts.Expression
       );
     } else if (isConditionExpr(node)) {
       return ts.factory.createConditionalExpression(
-        toTS(node.when) as ts.Expression,
+        toTS(node.when, illegalNames) as ts.Expression,
         undefined,
-        toTS(node.then) as ts.Expression,
+        toTS(node.then, illegalNames) as ts.Expression,
         undefined,
-        toTS(node._else) as ts.Expression
+        toTS(node._else, illegalNames) as ts.Expression
       );
     } else if (isIfStmt(node)) {
       return ts.factory.createIfStatement(
-        toTS(node.when) as ts.Expression,
-        toTS(node.then) as ts.Statement,
-        node._else ? (toTS(node._else) as ts.Statement) : undefined
+        toTS(node.when, illegalNames) as ts.Expression,
+        toTS(node.then, illegalNames) as ts.Statement,
+        node._else
+          ? (toTS(node._else, illegalNames) as ts.Statement)
+          : undefined
       );
     } else if (isSwitchStmt(node)) {
       return ts.factory.createSwitchStatement(
-        toTS(node.expr) as ts.Expression,
+        toTS(node.expr, illegalNames) as ts.Expression,
         ts.factory.createCaseBlock(
-          node.clauses.map((clause) => toTS(clause) as ts.CaseOrDefaultClause)
+          node.clauses.map(
+            (clause) => toTS(clause, illegalNames) as ts.CaseOrDefaultClause
+          )
         )
       );
     } else if (isCaseClause(node)) {
       return ts.factory.createCaseClause(
-        toTS(node.expr) as ts.Expression,
-        node.statements.map((stmt) => toTS(stmt) as ts.Statement)
+        toTS(node.expr, illegalNames) as ts.Expression,
+        node.statements.map((stmt) => toTS(stmt, illegalNames) as ts.Statement)
       );
     } else if (isDefaultClause(node)) {
       return ts.factory.createDefaultClause(
-        node.statements.map((stmt) => toTS(stmt) as ts.Statement)
+        node.statements.map((stmt) => toTS(stmt, illegalNames) as ts.Statement)
       );
     } else if (isForStmt(node)) {
       return ts.factory.createForStatement(
         node.initializer
-          ? (toTS(node.initializer) as ts.ForInitializer)
+          ? (toTS(node.initializer, illegalNames) as ts.ForInitializer)
           : undefined,
-        node.condition ? (toTS(node.condition) as ts.Expression) : undefined,
+        node.condition
+          ? (toTS(node.condition, illegalNames) as ts.Expression)
+          : undefined,
         node.incrementor
-          ? (toTS(node.incrementor) as ts.Expression)
+          ? (toTS(node.incrementor, illegalNames) as ts.Expression)
           : undefined,
-        toTS(node.body) as ts.Statement
+        toTS(node.body, illegalNames) as ts.Statement
       );
     } else if (isForOfStmt(node)) {
       return ts.factory.createForOfStatement(
@@ -1296,82 +1388,90 @@ export function serializeClosure(
           : undefined,
         isVariableDecl(node.initializer)
           ? ts.factory.createVariableDeclarationList([
-              toTS(node.initializer) as ts.VariableDeclaration,
+              toTS(node.initializer, illegalNames) as ts.VariableDeclaration,
             ])
-          : (toTS(node.initializer) as ts.ForInitializer),
-        toTS(node.expr) as ts.Expression,
-        toTS(node.body) as ts.Statement
+          : (toTS(node.initializer, illegalNames) as ts.ForInitializer),
+        toTS(node.expr, illegalNames) as ts.Expression,
+        toTS(node.body, illegalNames) as ts.Statement
       );
     } else if (isForInStmt(node)) {
       return ts.factory.createForInStatement(
         isVariableDecl(node.initializer)
           ? ts.factory.createVariableDeclarationList([
-              toTS(node.initializer) as ts.VariableDeclaration,
+              toTS(node.initializer, illegalNames) as ts.VariableDeclaration,
             ])
-          : (toTS(node.initializer) as ts.ForInitializer),
-        toTS(node.expr) as ts.Expression,
-        toTS(node.body) as ts.Statement
+          : (toTS(node.initializer, illegalNames) as ts.ForInitializer),
+        toTS(node.expr, illegalNames) as ts.Expression,
+        toTS(node.body, illegalNames) as ts.Statement
       );
     } else if (isWhileStmt(node)) {
       return ts.factory.createWhileStatement(
-        toTS(node.condition) as ts.Expression,
-        toTS(node.block) as ts.Statement
+        toTS(node.condition, illegalNames) as ts.Expression,
+        toTS(node.block, illegalNames) as ts.Statement
       );
     } else if (isDoStmt(node)) {
       return ts.factory.createDoStatement(
-        toTS(node.block) as ts.Statement,
-        toTS(node.condition) as ts.Expression
+        toTS(node.block, illegalNames) as ts.Statement,
+        toTS(node.condition, illegalNames) as ts.Expression
       );
     } else if (isBreakStmt(node)) {
       return ts.factory.createBreakStatement(
-        node.label ? (toTS(node.label) as ts.Identifier) : undefined
+        node.label
+          ? (toTS(node.label, illegalNames) as ts.Identifier)
+          : undefined
       );
     } else if (isContinueStmt(node)) {
       return ts.factory.createContinueStatement(
-        node.label ? (toTS(node.label) as ts.Identifier) : undefined
+        node.label
+          ? (toTS(node.label, illegalNames) as ts.Identifier)
+          : undefined
       );
     } else if (isLabelledStmt(node)) {
       return ts.factory.createLabeledStatement(
-        toTS(node.label) as ts.Identifier,
-        toTS(node.stmt) as ts.Statement
+        toTS(node.label, illegalNames) as ts.Identifier,
+        toTS(node.stmt, illegalNames) as ts.Statement
       );
     } else if (isTryStmt(node)) {
       return ts.factory.createTryStatement(
-        toTS(node.tryBlock) as ts.Block,
+        toTS(node.tryBlock, illegalNames) as ts.Block,
         node.catchClause
-          ? (toTS(node.catchClause) as ts.CatchClause)
+          ? (toTS(node.catchClause, illegalNames) as ts.CatchClause)
           : undefined,
-        node.finallyBlock ? (toTS(node.finallyBlock) as ts.Block) : undefined
+        node.finallyBlock
+          ? (toTS(node.finallyBlock, illegalNames) as ts.Block)
+          : undefined
       );
     } else if (isCatchClause(node)) {
       return ts.factory.createCatchClause(
         node.variableDecl
-          ? (toTS(node.variableDecl) as ts.VariableDeclaration)
+          ? (toTS(node.variableDecl, illegalNames) as ts.VariableDeclaration)
           : undefined,
-        toTS(node.block) as ts.Block
+        toTS(node.block, illegalNames) as ts.Block
       );
     } else if (isThrowStmt(node)) {
-      return ts.factory.createThrowStatement(toTS(node.expr) as ts.Expression);
+      return ts.factory.createThrowStatement(
+        toTS(node.expr, illegalNames) as ts.Expression
+      );
     } else if (isDeleteExpr(node)) {
       return ts.factory.createDeleteExpression(
-        toTS(node.expr) as ts.Expression
+        toTS(node.expr, illegalNames) as ts.Expression
       );
     } else if (isParenthesizedExpr(node)) {
       return ts.factory.createParenthesizedExpression(
-        toTS(node.expr) as ts.Expression
+        toTS(node.expr, illegalNames) as ts.Expression
       );
     } else if (isRegexExpr(node)) {
       return ts.factory.createRegularExpressionLiteral(node.regex.toString());
     } else if (isTemplateExpr(node)) {
       return ts.factory.createTemplateExpression(
-        toTS(node.head) as ts.TemplateHead,
-        node.spans.map((span) => toTS(span) as ts.TemplateSpan)
+        toTS(node.head, illegalNames) as ts.TemplateHead,
+        node.spans.map((span) => toTS(span, illegalNames) as ts.TemplateSpan)
       );
     } else if (isTaggedTemplateExpr(node)) {
       return ts.factory.createTaggedTemplateExpression(
-        toTS(node.tag) as ts.Expression,
+        toTS(node.tag, illegalNames) as ts.Expression,
         undefined,
-        toTS(node.template) as ts.TemplateLiteral
+        toTS(node.template, illegalNames) as ts.TemplateLiteral
       );
     } else if (isNoSubstitutionTemplateLiteral(node)) {
       return ts.factory.createNoSubstitutionTemplateLiteral(node.text);
@@ -1379,8 +1479,8 @@ export function serializeClosure(
       return ts.factory.createTemplateHead(node.text);
     } else if (isTemplateSpan(node)) {
       return ts.factory.createTemplateSpan(
-        toTS(node.expr) as ts.Expression,
-        toTS(node.literal) as ts.TemplateMiddle | ts.TemplateTail
+        toTS(node.expr, illegalNames) as ts.Expression,
+        toTS(node.literal, illegalNames) as ts.TemplateMiddle | ts.TemplateTail
       );
     } else if (isTemplateMiddle(node)) {
       return ts.factory.createTemplateMiddle(node.text);
@@ -1388,24 +1488,26 @@ export function serializeClosure(
       return ts.factory.createTemplateTail(node.text);
     } else if (isTypeOfExpr(node)) {
       return ts.factory.createTypeOfExpression(
-        toTS(node.expr) as ts.Expression
+        toTS(node.expr, illegalNames) as ts.Expression
       );
     } else if (isVoidExpr(node)) {
-      return ts.factory.createVoidExpression(toTS(node.expr) as ts.Expression);
+      return ts.factory.createVoidExpression(
+        toTS(node.expr, illegalNames) as ts.Expression
+      );
     } else if (isDebuggerStmt(node)) {
       return ts.factory.createDebuggerStatement();
     } else if (isEmptyStmt(node)) {
       return ts.factory.createEmptyStatement();
     } else if (isReturnStmt(node)) {
       return ts.factory.createReturnStatement(
-        node.expr ? (toTS(node.expr) as ts.Expression) : undefined
+        node.expr ? (toTS(node.expr, illegalNames) as ts.Expression) : undefined
       );
     } else if (isImportKeyword(node)) {
       return ts.factory.createToken(ts.SyntaxKind.ImportKeyword);
     } else if (isWithStmt(node)) {
       return ts.factory.createWithStatement(
-        toTS(node.expr) as ts.Expression,
-        toTS(node.stmt) as ts.Statement
+        toTS(node.expr, illegalNames) as ts.Expression,
+        toTS(node.stmt, illegalNames) as ts.Statement
       );
     } else if (isErr(node)) {
       throw node.error;

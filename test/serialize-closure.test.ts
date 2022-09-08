@@ -438,6 +438,156 @@ test("avoid name collision with a closure's lexical scope", async () => {
   expect(closure()).toEqual(1);
 });
 
+test("avoid collision with a locally scoped variable", async () => {
+  const one = 1;
+  const closure = await expectClosure(() => {
+    // capture the v0 free variable
+    let free = one;
+    // shadow the v0 free variable
+    const v1 = 2;
+    return v1 + free;
+  });
+
+  expect(closure()).toEqual(3);
+});
+
+test("avoid collision with a locally scoped object binding variable", async () => {
+  const one = 1;
+  const closure = await expectClosure(() => {
+    // capture the v0 free variable
+    let free = one;
+    // shadow the v0 free variable
+    const { v1 } = { v1: 2 };
+    return v1 + free;
+  });
+
+  expect(closure()).toEqual(3);
+});
+
+test("avoid collision with a locally scoped object binding variable with renamed property", async () => {
+  const one = 1;
+  const closure = await expectClosure(() => {
+    // capture the v0 free variable
+    let free = one;
+    // shadow the v0 free variable
+    const { v2: v1 } = { v2: 2 };
+    return v1 + free;
+  });
+
+  expect(closure()).toEqual(3);
+});
+
+test("avoid collision with a locally scoped array binding", async () => {
+  const one = 1;
+  const closure = await expectClosure(() => {
+    // capture the v0 free variable
+    let free = one;
+    // shadow the v0 free variable
+    const [v1] = [2];
+    return v1 + free;
+  });
+
+  expect(closure()).toEqual(3);
+});
+
+test("avoid collision with a locally scoped array binding with nested object binding", async () => {
+  const one = 1;
+  const closure = await expectClosure(() => {
+    // capture the v0 free variable
+    let free = one;
+    // shadow the v0 free variable
+    const [{ v1 }] = [{ v1: 2 }];
+    return v1 + free;
+  });
+
+  expect(closure()).toEqual(3);
+});
+
+test("avoid collision with a locally scoped function", async () => {
+  const one = 1;
+  const closure = await expectClosure(() => {
+    // capture the v0 free variable
+    let free = one;
+    // shadow the v0 free variable
+    function v1() {
+      return 2;
+    }
+    return v1() + free;
+  });
+
+  expect(closure()).toEqual(3);
+});
+
+test("avoid collision with a locally scoped class", async () => {
+  const one = 1;
+  const closure = await expectClosure(() => {
+    // capture the v0 free variable
+    let free = one;
+    // shadow the v0 free variable
+    class v1 {
+      foo = 2;
+    }
+    return new v1().foo + free;
+  });
+
+  expect(closure()).toEqual(3);
+});
+
+test("avoid collision with a parameter declaration", async () => {
+  const one = 1;
+  const closure = await expectClosure((v1: number) => {
+    // capture the v0 free variable
+    let free = one;
+    return v1 + free;
+  });
+
+  expect(closure(2)).toEqual(3);
+});
+
+test("avoid collision with a parameter object binding", async () => {
+  const one = 1;
+  const closure = await expectClosure(({ v1 }: { v1: number }) => {
+    // capture the v0 free variable
+    let free = one;
+    return v1 + free;
+  });
+
+  expect(closure({ v1: 2 })).toEqual(3);
+});
+
+test("avoid collision with a parameter object binding renamed", async () => {
+  const one = 1;
+  const closure = await expectClosure(({ v2: v1 }: { v2: number }) => {
+    // capture the v0 free variable
+    let free = one;
+    return v1 + free;
+  });
+
+  expect(closure({ v2: 2 })).toEqual(3);
+});
+
+test("avoid collision with a parameter array binding", async () => {
+  const one = 1;
+  const closure = await expectClosure(([v1]: [number]) => {
+    // capture the v0 free variable
+    let free = one;
+    return v1 + free;
+  });
+
+  expect(closure([2])).toEqual(3);
+});
+
+test("avoid collision with a parameter with object binding nested in array binding", async () => {
+  const one = 1;
+  const closure = await expectClosure(([{ v1 }]: [{ v1: number }]) => {
+    // capture the v0 free variable
+    let free = one;
+    return v1 + free;
+  });
+
+  expect(closure([{ v1: 2 }])).toEqual(3);
+});
+
 test("instantiating the AWS SDK", async () => {
   const closure = await expectClosure(() => {
     const client = new AWS.DynamoDB();

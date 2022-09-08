@@ -728,7 +728,7 @@ export class Function<
         try {
           await callbackLambdaCode.generate(
             nativeIntegrationsPrewarm,
-            // TODO: make default ASYNC until we are happy
+            // TODO: make the default ASYNC until we are happy
             props?.serializer ?? SerializerImpl.STABLE_DEBUGGER
           );
         } catch (e) {

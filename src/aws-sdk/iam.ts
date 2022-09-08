@@ -71,7 +71,6 @@ export const IAM_SERVICE_PREFIX: Record<keyof SDK, string> = {
   ComprehendMedical: "comprehendmedical",
   ComputeOptimizer: "compute-optimizer",
   ConfigService: "config",
-  ControlTower: "controltower",
   Connect: "connect",
   ConnectCampaigns: "connect-campaigns",
   ConnectContactLens: "connect",

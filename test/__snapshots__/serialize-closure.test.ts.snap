@@ -90,6 +90,161 @@ exports.handler = v0;
 "
 `;
 
+exports[`avoid collision with a locally scoped array binding 1`] = `
+"// <stdin>
+var v0;
+var v2 = 1;
+v0 = () => {
+  let free = v2;
+  const [v1] = [2];
+  return v1 + free;
+};
+exports.handler = v0;
+"
+`;
+
+exports[`avoid collision with a locally scoped array binding with nested object binding 1`] = `
+"// <stdin>
+var v0;
+var v2 = 1;
+v0 = () => {
+  let free = v2;
+  const [{ v1 }] = [{ v1: 2 }];
+  return v1 + free;
+};
+exports.handler = v0;
+"
+`;
+
+exports[`avoid collision with a locally scoped class 1`] = `
+"// <stdin>
+var v0;
+var v2 = 1;
+v0 = () => {
+  let free = v2;
+  class v1 {
+    foo = 2;
+  }
+  return new v1().foo + free;
+};
+exports.handler = v0;
+"
+`;
+
+exports[`avoid collision with a locally scoped function 1`] = `
+"// <stdin>
+var v0;
+var v2 = 1;
+v0 = () => {
+  let free = v2;
+  function v1() {
+    return 2;
+  }
+  return v1() + free;
+};
+exports.handler = v0;
+"
+`;
+
+exports[`avoid collision with a locally scoped object binding variable 1`] = `
+"// <stdin>
+var v0;
+var v2 = 1;
+v0 = () => {
+  let free = v2;
+  const { v1 } = { v1: 2 };
+  return v1 + free;
+};
+exports.handler = v0;
+"
+`;
+
+exports[`avoid collision with a locally scoped object binding variable with renamed property 1`] = `
+"// <stdin>
+var v0;
+var v2 = 1;
+v0 = () => {
+  let free = v2;
+  const { v2: v1 } = { v2: 2 };
+  return v1 + free;
+};
+exports.handler = v0;
+"
+`;
+
+exports[`avoid collision with a locally scoped variable 1`] = `
+"// <stdin>
+var v0;
+var v2 = 1;
+v0 = () => {
+  let free = v2;
+  const v1 = 2;
+  return v1 + free;
+};
+exports.handler = v0;
+"
+`;
+
+exports[`avoid collision with a parameter array binding 1`] = `
+"// <stdin>
+var v0;
+var v2 = 1;
+v0 = ([v1]) => {
+  let free = v2;
+  return v1 + free;
+};
+exports.handler = v0;
+"
+`;
+
+exports[`avoid collision with a parameter declaration 1`] = `
+"// <stdin>
+var v0;
+var v2 = 1;
+v0 = (v1) => {
+  let free = v2;
+  return v1 + free;
+};
+exports.handler = v0;
+"
+`;
+
+exports[`avoid collision with a parameter object binding 1`] = `
+"// <stdin>
+var v0;
+var v2 = 1;
+v0 = ({ v1 }) => {
+  let free = v2;
+  return v1 + free;
+};
+exports.handler = v0;
+"
+`;
+
+exports[`avoid collision with a parameter object binding renamed 1`] = `
+"// <stdin>
+var v0;
+var v2 = 1;
+v0 = ({ v2: v1 }) => {
+  let free = v2;
+  return v1 + free;
+};
+exports.handler = v0;
+"
+`;
+
+exports[`avoid collision with a parameter with object binding nested in array binding 1`] = `
+"// <stdin>
+var v0;
+var v2 = 1;
+v0 = ([{ v1 }]) => {
+  let free = v2;
+  return v1 + free;
+};
+exports.handler = v0;
+"
+`;
+
 exports[`avoid name collision with a closure's lexical scope 1`] = `
 "// <stdin>
 var v0;
@@ -56684,7 +56839,6 @@ var v0;
 var v2 = {};
 v2.prop = \\"hello\\";
 var v3 = [];
-v3.push();
 var v4;
 v4 = function foo() {
   return this.prop;
