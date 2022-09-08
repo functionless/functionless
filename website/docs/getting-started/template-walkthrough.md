@@ -108,47 +108,22 @@ new StepFunction(stack, "Workflow", async (event: { name: string }) => {
 There is a lot to unpack in these three lines.
 
 First off, we're able to call the `sayFunction` Construct we just defined as if it were a standard nodejs `function`.
-The types inferred from the closure in the `Function` definition above are preserved giving us type-checking when we call `sayFunction`.
+The types inferred from arrow function in the `Function` definition above are preserved, giving us type-checking when we call `sayFunction`.
 In Functionless, types are maintained across service boundaries, removing a whole class of user error.
 
-"But wait!", you might say. "Don't I have to set up IAM permissions for this Step Function to call that Lambda?"
+Secondly, Functionless introspects how your runtime code interacts with its infrastructure and uses this information to automatically configure least-privilege policies.
 
-Fear not.
-Functionless introspects how your runtime code interacts with its infrastructure and uses this information to automatically configure least-privilege policies.
+:::note
 
-To verify this, you can run `npm run synth` and look at the CloudFormation for the generated workflow policy:
+CDK happens to have equivalent functionality for inferring IAM permissions for Step Functions, but this behavior does not extend to other runtime usages such as Lambda.
 
-```yaml
-# ...
-WorkflowRoleDefaultPolicy3B788295:
-  Type: AWS::IAM::Policy
-  Properties:
-    PolicyDocument:
-      Statement:
-        - Action: lambda:InvokeFunction
-          Effect: Allow
-          Resource:
-            - Fn::GetAtt:
-                - SayFunction4D0973CB
-                - Arn
-            - Fn::Join:
-                - ""
-                - - Fn::GetAtt:
-                      - SayFunction4D0973CB
-                      - Arn
-                  - :*
-      Version: "2012-10-17"
-    PolicyName: WorkflowRoleDefaultPolicy3B788295
-    Roles:
-      - Ref: WorkflowRole98C7DC98
-  Metadata:
-    aws:cdk:path: MyStack/Workflow/Role/DefaultPolicy/Resource
-# ...
-```
+In Functionless, this ability extends to any runtime usage as we'll see later when we [modify the example](./change-the-code).
+
+:::
 
 Lastly, if you've ever created an AWS Step Function before, you might be wondering where all the Amazon States Language (ASL) went.
 
-Functionless automatically transpiles the code you supply in the `StepFunction` closure into ASL.
+Functionless automatically transpiles the code you supply in the `StepFunction` arrow function into ASL.
 This gives you the benefits of a world-class managed workflow service without requiring you to give up the productivity of TypeScript.
 
 :::caution
