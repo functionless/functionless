@@ -6,10 +6,14 @@ sidebar_position: 0
 
 Functionless requires a few pre-requisite setup steps to ensure your environment is ready to build and deploy the code you write as infrastructure to AWS.
 
-## Need Help?
+:::tip
+
+**Need Help?**
 
 Setting up an AWS Account to use with Functionless can be daunting if you don't have familiarity with AWS.
 If you get stuck, [please don't hesitate to reach out in discord.][getting-help]
+
+:::
 
 ## Install AWS CLI
 
@@ -21,13 +25,13 @@ This step is not required, but strongly recommended for ensuring your environmen
 
 Functionless requires programmatic access to an AWS account in order to deploy infrastructure.
 
-If you have already configured AWS credentials in your environment and have installed the CLI you can run the following command to verify your configuration.
+If you have already configured AWS credentials in your environment and have installed the CLI you can run the following command to verify your configuration:
 
 ```
 aws sts get-caller-identity
 ```
 
-A properly configured environment should return a response that resembles the one below.
+A properly configured environment should return a response that resembles the one below:
 
 ```
 {
@@ -37,7 +41,7 @@ A properly configured environment should return a response that resembles the on
 }
 ```
 
-If your environment is missing credentials you will see the following response.
+If your environment is missing credentials you will see the following response:
 
 ```
 Unable to locate credentials. You can configure credentials by running "aws configure".
@@ -45,7 +49,7 @@ Unable to locate credentials. You can configure credentials by running "aws conf
 
 The most straightforward way to setup credentials is to follow [Amazon's guide on configuring a user through the console.][configuring-a-user]
 
-Save the values for your Access Key ID and AWS Access Secret as you will need them when running `aws configure`.
+Save the values for your Access Key ID and AWS Access Secret as you will need them when running `aws configure`:
 
 ```
 aws configure
@@ -58,7 +62,7 @@ Default region name [None]: us-east-1
 Default output format [None]:
 ```
 
-After configuring AWS, you can verify your configuration by running `aws sts get-caller-identity` again and verifying the output matches the expected output from above.
+After configuring AWS, you can verify your configuration by running `aws sts get-caller-identity` again and checking the output matches the expected output from above.
 
 ## Bootstrap CDK
 
@@ -90,7 +94,7 @@ CDKToolkit: creating CloudFormation changeset...
 Bootstrapping is a deep topic and allows for more complicated multi-account topologies.
 [You can read more about bootstrapping][bootstrapping] in CDK's documentation.
 
-Now that your AWS Account is configured, you're ready to create your first Functionless project!
+Now that your AWS Account is configured, [you're ready to create your first Functionless project](./create-new-project)!
 
 [getting-help]: https://discord.com/invite/VRqHbjrbfC
 [install-aws-cli]: https://docs.aws.amazon.com/cli/latest/userguide/getting-started-install.html

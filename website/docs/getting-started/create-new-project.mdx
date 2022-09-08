@@ -2,6 +2,11 @@
 sidebar_position: 1
 ---
 
+import Zoom from "react-medium-image-zoom";
+import "react-medium-image-zoom/dist/styles.css";
+
+import synthSuccess from "./assets/synth-success.png";
+
 # Create New Project
 
 We recommend creating new Functionless projects using the `create-functionless` template.
@@ -31,10 +36,19 @@ After the script completes:
 
 You should see an output like the one below and the command should exit without error:
 
-![](./assets/synth-success.png)
+<div style={{ margin: "1.5em" }}>
+  <Zoom>
+    <img src={synthSuccess} />
+  </Zoom>
+</div>
+
+:::caution
 
 If you encounter an error, please let us know by [reaching out on discord][discord] or [creating an issue][create-issue].
-Otherwise, it's time to take a closer look at the layout of your new project.
+
+:::
+
+Next, let's [take a look at the output the template generated for us](./template-walkthrough).
 
 [discord]: https://discord.com/invite/VRqHbjrbfC
 [create-issue]: https://github.com/functionless/functionless/issues/new
