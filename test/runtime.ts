@@ -17,7 +17,7 @@ import { Construct } from "constructs";
 import { asyncSynth } from "../src/async-synth";
 import { Function } from "../src/function";
 
-const isGithub = !!process.env.CI;
+// const isGithub = !!process.env.CI;
 
 // https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
 export const RuntimeTestExecutionContext = {
@@ -25,7 +25,7 @@ export const RuntimeTestExecutionContext = {
     ? `-${process.env.GITHUB_REF?.replace(/\//g, "-")}`
     : undefined,
   // default: false unless CI is set
-  destroyStack: isGithub || !!process.env.TEST_DESTROY_STACKS,
+  destroyStack: !!process.env.TEST_DESTROY_STACKS,
   // AWS | LOCALSTACK ; default: LOCALSTACK
   deployTarget: (process.env.TEST_DEPLOY_TARGET ?? "LOCALSTACK") as
     | "AWS"
