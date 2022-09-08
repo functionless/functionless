@@ -1,4 +1,4 @@
-import { Duration, aws_dynamodb } from "aws-cdk-lib";
+import { Duration, aws_dynamodb, RemovalPolicy } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
@@ -431,6 +431,7 @@ runtimeTestSuite<
           name: "id",
           type: aws_dynamodb.AttributeType.STRING,
         },
+        removalPolicy: RemovalPolicy.DESTROY,
       });
 
       return {
@@ -1317,6 +1318,7 @@ runtimeTestSuite<
             name: "id",
             type: AttributeType.STRING,
           },
+          removalPolicy: RemovalPolicy.DESTROY,
         }
       );
       const update = $AWS.DynamoDB.UpdateItem;
@@ -1386,6 +1388,7 @@ runtimeTestSuite<
             name: "id",
             type: AttributeType.STRING,
           },
+          removalPolicy: RemovalPolicy.DESTROY,
         }
       );
       const update = $AWS.DynamoDB.UpdateItem;
@@ -1481,6 +1484,7 @@ runtimeTestSuite<
             name: "id",
             type: AttributeType.STRING,
           },
+          removalPolicy: RemovalPolicy.DESTROY,
         }
       );
       return new StepFunction<{ id: string }, string>(
@@ -1690,6 +1694,7 @@ runtimeTestSuite<
             name: "id",
             type: AttributeType.STRING,
           },
+          removalPolicy: RemovalPolicy.DESTROY,
         }
       );
       return new StepFunction(parent, "fn", async (input) => {

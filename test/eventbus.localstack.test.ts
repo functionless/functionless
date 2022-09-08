@@ -1,4 +1,4 @@
-import { aws_dynamodb, CfnOutput } from "aws-cdk-lib";
+import { aws_dynamodb, CfnOutput, RemovalPolicy } from "aws-cdk-lib";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { $AWS, EventBus, Event, StepFunction, Table } from "../src";
 import { runtimeTestSuite } from "./runtime";
@@ -49,6 +49,7 @@ runtimeTestSuite("eventBusStack", (testResource) => {
             name: "id",
             type: aws_dynamodb.AttributeType.STRING,
           },
+          removalPolicy: RemovalPolicy.DESTROY,
         })
       );
       const putMachine = new StepFunction<{ id: string }, void>(

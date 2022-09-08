@@ -753,6 +753,7 @@ runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
           name: "key",
           type: aws_dynamodb.AttributeType.STRING,
         },
+        removalPolicy: RemovalPolicy.DESTROY,
       });
       const get = $AWS.DynamoDB.GetItem;
       table.addGlobalSecondaryIndex({
