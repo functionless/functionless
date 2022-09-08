@@ -35,24 +35,30 @@ new StepFunction(stack, "Workflow", async (event: { name: string }) => {
 });
 ```
 
-We start by importing constructs from `aws-cdk-lib` and `functionless`:
+We start by importing Constructs from `aws-cdk-lib` and `functionless`:
 
 ```typescript
 import { App, Stack } from "aws-cdk-lib";
 import { Function, StepFunction } from "functionless";
 ```
 
-Functionless exposes AWS CDK compatible constructs from its top level API.
-In this example, we're using the `Function` and `StepFunction` constructs which map to the AWS Lambda and AWS Step Functions services.
+:::note
 
-Next, we initialize `app` which will be the root of our CDK construct tree:
+You can read more about Constructs in the [AWS CDK documentation][cdk-construct].
+
+:::
+
+Functionless exposes AWS CDK compatible Constructs from its top level API.
+In this example, we're using the `Function` and `StepFunction` Constructs which map to the AWS Lambda and AWS Step Functions services.
+
+Next, we initialize `app` which will be the root of our CDK Construct tree:
 
 ```typescript
 const app = new App();
 ```
 
-CDK models infrastructure as a tree of constructs with a single instance of `App` at the root.
-To add constructs to the tree, we pass the parent construct as the first argument when instantiating a child construct.
+CDK models infrastructure as a tree of Constructs with a single instance of `App` at the root.
+To add Constructs to the tree, we pass the parent as the first argument when instantiating a child.
 
 This is exactly what we do next with `Stack`:
 
@@ -60,10 +66,10 @@ This is exactly what we do next with `Stack`:
 const stack = new Stack(app, "MyStack");
 ```
 
-`stack` will be the parent of the rest of the constructs we create.
-In CDK most resources are attached to a `Stack` instance as they are the smallest deployable unit of infrastructure.
+`stack` will be the parent of the rest of the Constructs we create.
+In CDK, all Resources belong to a Stack - a Stack is a collection of Resources that are deployed and managed together.
 
-:::info
+:::note
 
 An `App` may contain many stacks, but that is outside the scope of this document.
 You can read more about [`App`][cdk-app] and [`Stack`][cdk-stack] in the CDK documentation.
@@ -87,10 +93,10 @@ const sayFunction = new Function(
 This might not be the most interesting code in the world, but it offers us our first glimpse at the magic of Functionless.
 
 If you've used CDK before, you're probably familiar with the seperation it imposes between infrastructure and application code.
-Functionless bridges this gap by letting you to write application code inline with the infrastructure it sits atop.
+Functionless bridges this gap by letting you write application code inline with the infrastructure it sits atop.
 
 This opens up a world of new possibilities for how code and infrastructure can interact.
-We can see this in action the `StepFunction` construct definition:
+We can see this in action with the `StepFunction` Construct definition:
 
 ```typescript
 new StepFunction(stack, "Workflow", async (event: { name: string }) => {
@@ -101,8 +107,8 @@ new StepFunction(stack, "Workflow", async (event: { name: string }) => {
 
 There is a lot to unpack in these three lines.
 
-First off, we're able to call the `sayFunction` construct we just defined as if it were a standard nodejs `function`.
-The types infered from the closure in the `Function` definition above are preserved giving us type-checking when we call `sayFunction`.
+First off, we're able to call the `sayFunction` Construct we just defined as if it were a standard nodejs `function`.
+The types inferred from the closure in the `Function` definition above are preserved giving us type-checking when we call `sayFunction`.
 In Functionless, types are maintained across service boundaries, removing a whole class of user error.
 
 "But wait!", you might say. "Don't I have to set up IAM permissions for this Step Function to call that Lambda?"
@@ -156,5 +162,6 @@ To address this **Functionless publishes a TypeScript language server plugin** w
 
 At this point, your new project is [ready for deployment](./deploy-project).
 
+[cdk-construct]: https://docs.aws.amazon.com/cdk/v2/guide/constructs.html
 [cdk-app]: https://docs.aws.amazon.com/cdk/v2/guide/apps.html
 [cdk-stack]: https://docs.aws.amazon.com/cdk/v2/guide/stacks.html
