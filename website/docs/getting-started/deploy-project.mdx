@@ -2,8 +2,7 @@
 sidebar_position: 3
 ---
 
-import Zoom from "react-medium-image-zoom";
-import "react-medium-image-zoom/dist/styles.css";
+import { Screenshot } from "../../src/components/screenshot";
 
 # Deploy Project
 
@@ -17,11 +16,7 @@ After the stack is synthesized and the assets are bundled, you should see a prom
 
 import iamReview from "./assets/iam-review.png";
 
-<div style={{ margin: "1.5em" }}>
-  <Zoom>
-    <img src={iamReview} />
-  </Zoom>
-</div>
+<Screenshot src={iamReview} />
 
 :::caution
 
@@ -42,10 +37,6 @@ After the deployment completes, you should see an output similar to the one belo
 
 import deploymentConfirmation from "./assets/deployment-confirmation.png";
 
-<div style={{ margin: "1.5em" }}>
-  <Zoom>
-    <img src={deploymentConfirmation} />
-  </Zoom>
-</div>
+<Screenshot src={deploymentConfirmation} />
 
 Before we wrap up, let's [clean up our stack](./clean-up).

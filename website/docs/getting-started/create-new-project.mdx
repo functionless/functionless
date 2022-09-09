@@ -2,10 +2,7 @@
 sidebar_position: 1
 ---
 
-import Zoom from "react-medium-image-zoom";
-import "react-medium-image-zoom/dist/styles.css";
-
-import synthSuccess from "./assets/synth-success.png";
+import { Screenshot } from "../../src/components/screenshot";
 
 # Create New Project
 
@@ -36,11 +33,9 @@ After the script completes:
 
 You should see an output like the one below and the command should exit without error:
 
-<div style={{ margin: "1.5em" }}>
-  <Zoom>
-    <img src={synthSuccess} />
-  </Zoom>
-</div>
+import synthSuccess from "./assets/synth-success.png";
+
+<Screenshot src={synthSuccess} />
 
 :::caution
 
