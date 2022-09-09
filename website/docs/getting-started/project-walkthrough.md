@@ -97,7 +97,7 @@ const sayFunction = new Function(
 This bit of code offers us our first glimpse at the magic of Functionless.
 If you've used CDK before, you're probably familiar with the strict seperation it imposes between infrastructure code and runtime code.
 
-:::tip
+:::info
 
 Functionless lets you write runtime code inline with the code that defines the infrastructure for your runtime code.
 
@@ -134,7 +134,7 @@ Additionally, the arguments and return type of `sayFunction` match what we defin
 type sayFunction = (event: { message: string }) => Promise<void>;
 ```
 
-:::tip
+:::info
 
 Functionless uses type-safety to ensure the shape of your data is consistent throughout your application.
 Changing your `Function` definition to accept a `number` instead of `string` for `message` would raise a TypeScript compiler error.
@@ -146,7 +146,7 @@ Functionless maintains types across service boundaries eliminating data shape co
 
 Fear not...
 
-:::tip
+:::info
 
 Functionless introspects how your runtime code interacts with its infrastructure and uses this information to automatically configure least-privilege policies.
 
@@ -154,7 +154,7 @@ Functionless introspects how your runtime code interacts with its infrastructure
 
 Finally, if you've ever created an AWS Step Function before, you might be wondering where all the ASL went.
 
-:::tip
+:::info
 
 Functionless automatically transpiles the code you supply in the `StepFunction` arrow function into ASL.
 This gives you the benefits of a world-class managed workflow service without requiring you to give up the productivity of TypeScript.
