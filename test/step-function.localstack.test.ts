@@ -429,14 +429,13 @@ runtimeTestSuite<
   test(
     "call $SFN retry",
     (parent) => {
-      const id = `key${Math.floor(Math.random() * 1000)}`;
       const table = new Table<{ a: string; n: number }, "a">(parent, "table", {
         partitionKey: {
           name: "a",
           type: AttributeType.STRING,
         },
       });
-      return new StepFunction(parent, "sfn2", async () => {
+      return new StepFunction(parent, "sfn2", async ({ id }) => {
         // retry and then succeed - 3
         const a = await $SFN.retry(async () => {
           const result = await $AWS.DynamoDB.UpdateItem({
@@ -554,7 +553,8 @@ runtimeTestSuite<
         return [a, b, c, d, e];
       });
     },
-    [3, 2, 3, 5, 6]
+    [3, 2, 3, 5, 6],
+    { id: `key${Math.floor(Math.random() * 1000)}` }
   );
 
   test(

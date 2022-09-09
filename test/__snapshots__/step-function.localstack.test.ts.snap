@@ -18693,36 +18693,36 @@ Object {
   "States": Object {
     "1__return [a, b, c, d, e]": Object {
       "End": true,
-      "InputPath": "$.heap13.arr",
+      "InputPath": "$.heap15.arr",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return [a, b, c, d, e] 1": Object {
       "InputPath": "$.b",
       "Next": "2__return [a, b, c, d, e]",
-      "ResultPath": "$.heap9",
+      "ResultPath": "$.heap11",
       "Type": "Pass",
     },
     "2__return [a, b, c, d, e]": Object {
       "InputPath": "$.c",
       "Next": "3__return [a, b, c, d, e]",
-      "ResultPath": "$.heap10",
+      "ResultPath": "$.heap12",
       "Type": "Pass",
     },
     "3__return [a, b, c, d, e]": Object {
       "InputPath": "$.d",
       "Next": "4__return [a, b, c, d, e]",
-      "ResultPath": "$.heap11",
+      "ResultPath": "$.heap13",
       "Type": "Pass",
     },
     "4__return [a, b, c, d, e]": Object {
       "InputPath": "$.e",
       "Next": "[a, b, c, d, e]",
-      "ResultPath": "$.heap12",
+      "ResultPath": "$.heap14",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "a = await $SFN.retry(function ())",
+      "Next": "id",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -18734,13 +18734,13 @@ Object {
     "[a, b, c, d, e]": Object {
       "Next": "1__return [a, b, c, d, e]",
       "Parameters": Object {
-        "arr.$": "States.Array($.heap8, $.heap9, $.heap10, $.heap11, $.heap12)",
+        "arr.$": "States.Array($.heap10, $.heap11, $.heap12, $.heap13, $.heap14)",
       },
-      "ResultPath": "$.heap13",
+      "ResultPath": "$.heap15",
       "Type": "Pass",
     },
     "a": Object {
-      "InputPath": "$.heap2[0]",
+      "InputPath": "$.heap3[0]",
       "Next": "b = 0",
       "ResultPath": "$.a",
       "Type": "Pass",
@@ -18750,16 +18750,40 @@ Object {
         Object {
           "StartAt": "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U",
           "States": Object {
+            "1__result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table": Object {
+              "Next": "result",
+              "Parameters": Object {
+                "ExpressionAttributeValues": Object {
+                  ":inc": Object {
+                    "N": "1",
+                  },
+                  ":init": Object {
+                    "N": "0",
+                  },
+                },
+                "Key": Object {
+                  "a": Object {
+                    "S.$": "$.heap0",
+                  },
+                },
+                "ReturnValues": "ALL_NEW",
+                "TableName": "__REPLACED_TOKEN",
+                "UpdateExpression": "SET n = if_not_exists(n, :init) + :inc",
+              },
+              "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+              "ResultPath": "$.heap1",
+              "Type": "Task",
+            },
             "1__return Number(result.Attributes.n.N)": Object {
               "End": true,
-              "InputPath": "$.heap1.num",
+              "InputPath": "$.heap2.num",
               "ResultPath": "$",
               "Type": "Pass",
             },
             "assign__return Number(result.Attributes.n.N)": Object {
               "InputPath": "$.result.Attributes.n.N",
               "Next": "1__return Number(result.Attributes.n.N)",
-              "ResultPath": "$.heap1.num",
+              "ResultPath": "$.heap2.num",
               "Type": "Pass",
             },
             "checkStringOutput__return Number(result.Attributes.n.N)": Object {
@@ -18767,7 +18791,7 @@ Object {
                 Object {
                   "IsNumeric": true,
                   "Next": "1__return Number(result.Attributes.n.N)",
-                  "Variable": "$.heap1.num",
+                  "Variable": "$.heap2.num",
                 },
               ],
               "Default": "null__return Number(result.Attributes.n.N)",
@@ -18778,7 +18802,7 @@ Object {
               "Parameters": Object {
                 "num.$": "States.StringToJson($.result.Attributes.n.N)",
               },
-              "ResultPath": "$.heap1",
+              "ResultPath": "$.heap2",
               "Type": "Pass",
             },
             "if(result.Attributes.n.N === \\"3\\")": Object {
@@ -18794,20 +18818,12 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsNull": false,
+                              "IsString": true,
                               "Variable": "$.result.Attributes.n.N",
                             },
                             Object {
-                              "And": Array [
-                                Object {
-                                  "IsString": true,
-                                  "Variable": "$.result.Attributes.n.N",
-                                },
-                                Object {
-                                  "StringEquals": "3",
-                                  "Variable": "$.result.Attributes.n.N",
-                                },
-                              ],
+                              "StringEquals": "3",
+                              "Variable": "$.result.Attributes.n.N",
                             },
                           ],
                         },
@@ -18831,20 +18847,12 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsNull": false,
+                              "IsString": true,
                               "Variable": "$.result.Attributes.n.N",
                             },
                             Object {
-                              "And": Array [
-                                Object {
-                                  "IsString": true,
-                                  "Variable": "$.result.Attributes.n.N",
-                                },
-                                Object {
-                                  "StringEquals": "3",
-                                  "Variable": "$.result.Attributes.n.N",
-                                },
-                              ],
+                              "StringEquals": "3",
+                              "Variable": "$.result.Attributes.n.N",
                             },
                           ],
                         },
@@ -18884,20 +18892,12 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsNull": false,
+                              "IsString": true,
                               "Variable": "$.result.Attributes.n.N",
                             },
                             Object {
-                              "And": Array [
-                                Object {
-                                  "IsString": true,
-                                  "Variable": "$.result.Attributes.n.N",
-                                },
-                                Object {
-                                  "StringEquals": "3",
-                                  "Variable": "$.result.Attributes.n.N",
-                                },
-                              ],
+                              "StringEquals": "3",
+                              "Variable": "$.result.Attributes.n.N",
                             },
                           ],
                         },
@@ -18921,20 +18921,12 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsNull": false,
+                              "IsString": true,
                               "Variable": "$.result.Attributes.n.N",
                             },
                             Object {
-                              "And": Array [
-                                Object {
-                                  "IsString": true,
-                                  "Variable": "$.result.Attributes.n.N",
-                                },
-                                Object {
-                                  "StringEquals": "3",
-                                  "Variable": "$.result.Attributes.n.N",
-                                },
-                              ],
+                              "StringEquals": "3",
+                              "Variable": "$.result.Attributes.n.N",
                             },
                           ],
                         },
@@ -18958,20 +18950,12 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsNull": false,
+                              "IsString": true,
                               "Variable": "$.result.Attributes.n.N",
                             },
                             Object {
-                              "And": Array [
-                                Object {
-                                  "IsString": true,
-                                  "Variable": "$.result.Attributes.n.N",
-                                },
-                                Object {
-                                  "StringEquals": "3",
-                                  "Variable": "$.result.Attributes.n.N",
-                                },
-                              ],
+                              "StringEquals": "3",
+                              "Variable": "$.result.Attributes.n.N",
                             },
                           ],
                         },
@@ -18995,20 +18979,12 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsNull": false,
+                              "IsString": true,
                               "Variable": "$.result.Attributes.n.N",
                             },
                             Object {
-                              "And": Array [
-                                Object {
-                                  "IsString": true,
-                                  "Variable": "$.result.Attributes.n.N",
-                                },
-                                Object {
-                                  "StringEquals": "3",
-                                  "Variable": "$.result.Attributes.n.N",
-                                },
-                              ],
+                              "StringEquals": "3",
+                              "Variable": "$.result.Attributes.n.N",
                             },
                           ],
                         },
@@ -19040,20 +19016,12 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsNull": false,
+                              "IsString": true,
                               "Variable": "$.result.Attributes.n.N",
                             },
                             Object {
-                              "And": Array [
-                                Object {
-                                  "IsString": true,
-                                  "Variable": "$.result.Attributes.n.N",
-                                },
-                                Object {
-                                  "StringEquals": "3",
-                                  "Variable": "$.result.Attributes.n.N",
-                                },
-                              ],
+                              "StringEquals": "3",
+                              "Variable": "$.result.Attributes.n.N",
                             },
                           ],
                         },
@@ -19083,20 +19051,12 @@ Object {
                     Object {
                       "And": Array [
                         Object {
-                          "IsNull": false,
+                          "IsString": true,
                           "Variable": "$.result.Attributes.n.N",
                         },
                         Object {
-                          "And": Array [
-                            Object {
-                              "IsString": true,
-                              "Variable": "$.result.Attributes.n.N",
-                            },
-                            Object {
-                              "StringEquals": "3",
-                              "Variable": "$.result.Attributes.n.N",
-                            },
-                          ],
+                          "StringEquals": "3",
+                          "Variable": "$.result.Attributes.n.N",
                         },
                       ],
                     },
@@ -19110,44 +19070,26 @@ Object {
             "null__return Number(result.Attributes.n.N)": Object {
               "InputPath": "$.fnl_context.null",
               "Next": "1__return Number(result.Attributes.n.N)",
-              "ResultPath": "$.heap1.num",
+              "ResultPath": "$.heap2.num",
               "Type": "Pass",
             },
             "one__return Number(result.Attributes.n.N)": Object {
               "Next": "1__return Number(result.Attributes.n.N)",
               "Result": 1,
-              "ResultPath": "$.heap1.num",
+              "ResultPath": "$.heap2.num",
               "Type": "Pass",
             },
             "result": Object {
-              "InputPath": "$.heap0",
+              "InputPath": "$.heap1",
               "Next": "if(result.Attributes.n.N === \\"3\\")",
               "ResultPath": "$.result",
               "Type": "Pass",
             },
             "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U": Object {
-              "Next": "result",
-              "Parameters": Object {
-                "ExpressionAttributeValues": Object {
-                  ":inc": Object {
-                    "N": "1",
-                  },
-                  ":init": Object {
-                    "N": "0",
-                  },
-                },
-                "Key": Object {
-                  "a": Object {
-                    "S": "key102",
-                  },
-                },
-                "ReturnValues": "ALL_NEW",
-                "TableName": "__REPLACED_TOKEN",
-                "UpdateExpression": "SET n = if_not_exists(n, :init) + :inc",
-              },
-              "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+              "InputPath": "$.id",
+              "Next": "1__result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table",
               "ResultPath": "$.heap0",
-              "Type": "Task",
+              "Type": "Pass",
             },
             "throw new StepFunctionError(\\"MyError\\", \\"Because\\")": Object {
               "Cause": "\\"Because\\"",
@@ -19157,7 +19099,7 @@ Object {
             "zero__return Number(result.Attributes.n.N)": Object {
               "Next": "1__return Number(result.Attributes.n.N)",
               "Result": 0,
-              "ResultPath": "$.heap1.num",
+              "ResultPath": "$.heap2.num",
               "Type": "Pass",
             },
           },
@@ -19166,8 +19108,9 @@ Object {
       "Next": "a",
       "Parameters": Object {
         "fnl_context.$": "$.fnl_context",
+        "id.$": "$.id",
       },
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap3",
       "Retry": Array [
         Object {
           "ErrorEquals": Array [
@@ -19184,7 +19127,7 @@ Object {
       "Type": "Pass",
     },
     "b = await $SFN.retry(function ())": Object {
-      "InputPath": "$.heap3[0]",
+      "InputPath": "$.heap4[0]",
       "Next": "c = 0",
       "ResultPath": "$.b",
       "Type": "Pass",
@@ -19196,7 +19139,7 @@ Object {
       "Type": "Pass",
     },
     "c = await $SFN.retry([{ErrorEquals: [\\"MyError\\"], BackoffRate: 1, IntervalSe": Object {
-      "InputPath": "$.heap4[0]",
+      "InputPath": "$.heap5[0]",
       "Next": "d = 0",
       "ResultPath": "$.c",
       "Type": "Pass",
@@ -19232,7 +19175,7 @@ Object {
       "Type": "Pass",
     },
     "d = await $SFN.retry([{ErrorEquals: [\\"MyError2\\"], BackoffRate: 1, IntervalS": Object {
-      "InputPath": "$.heap5[0]",
+      "InputPath": "$.heap6[0]",
       "Next": "e = 0",
       "ResultPath": "$.d",
       "Type": "Pass",
@@ -19244,15 +19187,21 @@ Object {
       "Type": "Pass",
     },
     "e = await $SFN.retry([{ErrorEquals: [\\"MyError2\\"], BackoffRate: 1, IntervalS": Object {
-      "InputPath": "$.heap7[0]",
+      "InputPath": "$.heap9[0]",
       "Next": "return [a, b, c, d, e]",
       "ResultPath": "$.e",
+      "Type": "Pass",
+    },
+    "id": Object {
+      "InputPath": "$$.Execution.Input['id']",
+      "Next": "a = await $SFN.retry(function ())",
+      "ResultPath": "$.id",
       "Type": "Pass",
     },
     "return [a, b, c, d, e]": Object {
       "InputPath": "$.a",
       "Next": "1__return [a, b, c, d, e] 1",
-      "ResultPath": "$.heap8",
+      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "try": Object {
@@ -19282,8 +19231,9 @@ Object {
         "a.$": "$.a",
         "b.$": "$.b",
         "fnl_context.$": "$.fnl_context",
+        "id.$": "$.id",
       },
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap4",
       "Retry": Array [
         Object {
           "ErrorEquals": Array [
@@ -19321,8 +19271,9 @@ Object {
         "b.$": "$.b",
         "c.$": "$.c",
         "fnl_context.$": "$.fnl_context",
+        "id.$": "$.id",
       },
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap5",
       "Retry": Array [
         Object {
           "BackoffRate": 1,
@@ -19364,8 +19315,9 @@ Object {
         "c.$": "$.c",
         "d.$": "$.d",
         "fnl_context.$": "$.fnl_context",
+        "id.$": "$.id",
       },
-      "ResultPath": "$.heap5",
+      "ResultPath": "$.heap6",
       "Retry": Array [
         Object {
           "BackoffRate": 1,
@@ -19383,6 +19335,30 @@ Object {
         Object {
           "StartAt": "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U 1",
           "States": Object {
+            "1__result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table 1": Object {
+              "Next": "result 1",
+              "Parameters": Object {
+                "ExpressionAttributeValues": Object {
+                  ":inc": Object {
+                    "N": "1",
+                  },
+                  ":init": Object {
+                    "N": "0",
+                  },
+                },
+                "Key": Object {
+                  "a": Object {
+                    "S.$": "$.heap7",
+                  },
+                },
+                "ReturnValues": "ALL_NEW",
+                "TableName": "__REPLACED_TOKEN",
+                "UpdateExpression": "SET n = if_not_exists(n, :init) + :inc",
+              },
+              "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+              "ResultPath": "$.heap8",
+              "Type": "Task",
+            },
             "if(result.Attributes.n.N === \\"6\\")": Object {
               "Choices": Array [
                 Object {
@@ -19394,20 +19370,12 @@ Object {
                     Object {
                       "And": Array [
                         Object {
-                          "IsNull": false,
+                          "IsString": true,
                           "Variable": "$.result__1.Attributes.n.N",
                         },
                         Object {
-                          "And": Array [
-                            Object {
-                              "IsString": true,
-                              "Variable": "$.result__1.Attributes.n.N",
-                            },
-                            Object {
-                              "StringEquals": "6",
-                              "Variable": "$.result__1.Attributes.n.N",
-                            },
-                          ],
+                          "StringEquals": "6",
+                          "Variable": "$.result__1.Attributes.n.N",
                         },
                       ],
                     },
@@ -19423,20 +19391,12 @@ Object {
                     Object {
                       "And": Array [
                         Object {
-                          "IsNull": false,
+                          "IsString": true,
                           "Variable": "$.result__1.Attributes.n.N",
                         },
                         Object {
-                          "And": Array [
-                            Object {
-                              "IsString": true,
-                              "Variable": "$.result__1.Attributes.n.N",
-                            },
-                            Object {
-                              "StringEquals": "5",
-                              "Variable": "$.result__1.Attributes.n.N",
-                            },
-                          ],
+                          "StringEquals": "5",
+                          "Variable": "$.result__1.Attributes.n.N",
                         },
                       ],
                     },
@@ -19448,34 +19408,16 @@ Object {
               "Type": "Choice",
             },
             "result 1": Object {
-              "InputPath": "$.heap6",
+              "InputPath": "$.heap8",
               "Next": "if(result.Attributes.n.N === \\"6\\")",
               "ResultPath": "$.result__1",
               "Type": "Pass",
             },
             "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U 1": Object {
-              "Next": "result 1",
-              "Parameters": Object {
-                "ExpressionAttributeValues": Object {
-                  ":inc": Object {
-                    "N": "1",
-                  },
-                  ":init": Object {
-                    "N": "0",
-                  },
-                },
-                "Key": Object {
-                  "a": Object {
-                    "S": "key102",
-                  },
-                },
-                "ReturnValues": "ALL_NEW",
-                "TableName": "__REPLACED_TOKEN",
-                "UpdateExpression": "SET n = if_not_exists(n, :init) + :inc",
-              },
-              "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
-              "ResultPath": "$.heap6",
-              "Type": "Task",
+              "InputPath": "$.id",
+              "Next": "1__result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table 1",
+              "ResultPath": "$.heap7",
+              "Type": "Pass",
             },
             "return 6": Object {
               "End": true,
@@ -19513,8 +19455,9 @@ Object {
         "d.$": "$.d",
         "e.$": "$.e",
         "fnl_context.$": "$.fnl_context",
+        "id.$": "$.id",
       },
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap9",
       "Retry": Array [
         Object {
           "BackoffRate": 1,
