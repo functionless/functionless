@@ -19062,7 +19062,7 @@ Object {
                 },
                 "Key": Object {
                   "a": Object {
-                    "S": "key102",
+                    "S": "key532",
                   },
                 },
                 "ReturnValues": "ALL_NEW",
@@ -19390,7 +19390,7 @@ Object {
                 },
                 "Key": Object {
                   "a": Object {
-                    "S": "key102",
+                    "S": "key532",
                   },
                 },
                 "ReturnValues": "ALL_NEW",
@@ -19523,16 +19523,16 @@ Object {
     "return await $SFN.retry(function ()).Payload.str": Object {
       "Branches": Array [
         Object {
-          "StartAt": "return await $AWS.Lambda.Invoke({Function: func, Payload: obj})",
+          "StartAt": "return $AWS.Lambda.Invoke({Function: func, Payload: obj})",
           "States": Object {
-            "1__return await $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
+            "1__return $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
               "End": true,
               "InputPath": "$.heap0",
               "ResultPath": "$",
               "Type": "Pass",
             },
-            "return await $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
-              "Next": "1__return await $AWS.Lambda.Invoke({Function: func, Payload: obj})",
+            "return $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
+              "Next": "1__return $AWS.Lambda.Invoke({Function: func, Payload: obj})",
               "Parameters": Object {
                 "FunctionName": "__REPLACED_TOKEN",
                 "Payload.$": "$.obj",
