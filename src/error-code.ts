@@ -1277,6 +1277,45 @@ export namespace ErrorCodes {
     type: ErrorType.ERROR,
     title: "Unsupported AWS SDK in Resource.",
   };
+
+  /**
+   * Step Function Retry Invalid Input.
+   *
+   * `$SFN.Retry` can either retry on all errors or be given a constant,
+   * array of literal objects ({@link Retry}) that determine which errors to retry on.
+   * The array must have 1 or more literal {@link Retry} objects.
+   *
+   * ```ts
+   * new StepFunction(stack, "sfn", async ()=> {
+   *    // Valid
+   *    await $SFN.retry(async () => func());
+   *    // Valid
+   *    await $SFN.retry([{ ErrorEquals: ["States.Timeout"] }], async () => func());
+   *    // Valid
+   *    await $SFN.retry([{ ErrorEquals: ["States.Timeout"], MaxAttempts: 5, IntervalSeconds: 2, BackoffRate: 0.5 }], async () => func());
+   *    // Valid
+   *    await $SFN.retry([{ ErrorEquals: ["States.Timeout"] }, { ErrorEquals: ["Lambda.TooManyRequestsException"] }], async () => func());
+   *
+   *    // Invalid - reference to retry objects
+   *    await $SFN.retry(myRetryObjects, async () => func());
+   *    // Invalid - reference to a retry object
+   *    await $SFN.retry([retryObject], async () => func());
+   *    // Invalid - reference to a error name
+   *    await $SFN.retry([{ ErrorEquals: [ myErrorType ] }], async () => func());
+   *    // Invalid - array is empty
+   *    await $SFN.retry([], async () => func());
+   * })
+   * ```
+   *
+   * The limitation is due to Step Function's lack of support for dynamic paths (json paths) for retry configuration.
+   *
+   * https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error
+   */
+  export const Step_Function_Retry_Invalid_Input: ErrorCode = {
+    code: 10037,
+    type: ErrorType.ERROR,
+    title: "Step Function Retry Invalid Input.",
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.
