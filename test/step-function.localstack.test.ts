@@ -989,6 +989,7 @@ runtimeTestSuite<
           varNotNullFalse: !input.n,
           // @ts-ignore
           varNotPresentFalse: !input.x,
+          objNotPresentFalse: !input.obj,
           // varInVar: input.v in input.obj, // false - unsupported
           // varInConstant: input.v in { a: "val" }, // false - unsupported
           // undefined and null literals
@@ -1140,8 +1141,8 @@ runtimeTestSuite<
       varNot: false,
       varNotPresentTrue: true,
       varNotNullFalse: false,
-      // @ts-ignore
       varNotPresentFalse: true,
+      objNotPresentFalse: false,
       // undefined and null literals
       varEqualEqualsUndefined: false,
       varEqualsUndefined: false,
@@ -1342,7 +1343,7 @@ runtimeTestSuite<
     "access",
     (parent) => {
       return new StepFunction(parent, "sfn2", async () => {
-        const obj = { 1: "a", x: "b" };
+        const obj = { 1: "a", x: "b" } as { 1: string; x: string; n?: string };
         const arr = [1];
         return {
           a: obj.x,
@@ -1351,6 +1352,8 @@ runtimeTestSuite<
           d: obj["1"],
           e: arr[0],
           // f: arr["0"], -- invalid SFN - localstack hangs on error
+          g: obj?.n ?? "c",
+          h: obj?.n ?? "d",
         };
       });
     },
@@ -1360,7 +1363,9 @@ runtimeTestSuite<
       // c: "a",
       d: "a",
       e: 1,
-      //  f: 1
+      //  f: 1,
+      g: "c",
+      h: "d",
     }
   );
 

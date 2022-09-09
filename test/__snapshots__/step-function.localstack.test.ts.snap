@@ -1552,33 +1552,47 @@ exports[`access 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]}": Object {
+    "1__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ": Object {
       "End": true,
       "Parameters": Object {
         "a.$": "$.heap0",
         "b.$": "$.heap1",
         "d.$": "$.heap2",
         "e.$": "$.heap3",
+        "g.$": "$.heap5",
+        "h.$": "$.heap7",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "1__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]} 1": Object {
+    "1__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h:  1": Object {
       "InputPath": "$.obj.x",
-      "Next": "2__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]}",
+      "Next": "2__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ",
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
-    "2__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]}": Object {
+    "2__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ": Object {
       "InputPath": "$.obj['1']",
-      "Next": "3__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]}",
+      "Next": "3__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
-    "3__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]}": Object {
+    "3__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ": Object {
       "InputPath": "$.arr[0]",
-      "Next": "1__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]}",
+      "Next": "obj.n ?? \\"c\\"",
       "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "5__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ": Object {
+      "InputPath": "$.heap4",
+      "Next": "obj[\\"n\\"] ?? \\"d\\"",
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "7__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ": Object {
+      "InputPath": "$.heap6",
+      "Next": "1__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ",
+      "ResultPath": "$.heap7",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -1592,11 +1606,23 @@ Object {
       "Type": "Pass",
     },
     "arr = [1]": Object {
-      "Next": "return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]}",
+      "Next": "return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: obj",
       "Result": Array [
         1,
       ],
       "ResultPath": "$.arr",
+      "Type": "Pass",
+    },
+    "false__obj.n ?? \\"c\\"": Object {
+      "Next": "5__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ",
+      "Result": "c",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "false__obj[\\"n\\"] ?? \\"d\\"": Object {
+      "Next": "7__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ",
+      "Result": "d",
+      "ResultPath": "$.heap6",
       "Type": "Pass",
     },
     "obj = {1: \\"a\\", x: \\"b\\"}": Object {
@@ -1608,10 +1634,60 @@ Object {
       "ResultPath": "$.obj",
       "Type": "Pass",
     },
-    "return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]}": Object {
+    "obj.n ?? \\"c\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.obj.n",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.obj.n",
+            },
+          ],
+          "Next": "true__obj.n ?? \\"c\\"",
+        },
+      ],
+      "Default": "false__obj.n ?? \\"c\\"",
+      "Type": "Choice",
+    },
+    "obj[\\"n\\"] ?? \\"d\\"": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsPresent": true,
+              "Variable": "$.obj['n']",
+            },
+            Object {
+              "IsNull": false,
+              "Variable": "$.obj['n']",
+            },
+          ],
+          "Next": "true__obj[\\"n\\"] ?? \\"d\\"",
+        },
+      ],
+      "Default": "false__obj[\\"n\\"] ?? \\"d\\"",
+      "Type": "Choice",
+    },
+    "return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: obj": Object {
       "InputPath": "$.obj.x",
-      "Next": "1__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0]} 1",
+      "Next": "1__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h:  1",
       "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "true__obj.n ?? \\"c\\"": Object {
+      "InputPath": "$.obj.n",
+      "Next": "5__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "true__obj[\\"n\\"] ?? \\"d\\"": Object {
+      "InputPath": "$.obj['n']",
+      "Next": "7__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ",
+      "ResultPath": "$.heap6",
       "Type": "Pass",
     },
   },

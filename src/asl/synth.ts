@@ -1664,7 +1664,7 @@ export class ASL {
       if (!allowUndefined && value === undefined) {
         throw new SynthError(
           ErrorCodes.Step_Functions_does_not_support_undefined,
-          "Undefined literal is not supported"
+          `Undefined literal is not supported: ${toStateName(expr.parent)}`
         );
       }
       // manufacturing null can be difficult, just use our magic constant
@@ -1929,14 +1929,24 @@ export class ASL {
         return { jsonPath: `$.${this.getIdentifierName(expr)}` };
       } else if (isPropAccessExpr(expr)) {
         if (isIdentifier(expr.name)) {
-          return this.evalExpr(expr.expr, (output) => {
+          return this.evalContext(expr.expr, ({ evalExpr }) => {
+            const output = evalExpr(
+              expr.expr,
+              allowUndefined && expr.isOptional
+            );
+            if (ASLGraph.isLiteralValue(output) && output.value === undefined) {
+              return {
+                value: undefined as any,
+                containsJsonPath: false,
+              };
+            }
             return ASLGraph.accessConstant(output, expr.name.name, false);
           });
         } else {
           throw new SynthError(ErrorCodes.Classes_are_not_supported);
         }
       } else if (isElementAccessExpr(expr)) {
-        return this.elementAccessExprToJsonPath(expr);
+        return this.elementAccessExprToJsonPath(expr, allowUndefined);
       }
       assertNever(expr);
     } else if (isObjectLiteralExpr(expr)) {
@@ -2208,7 +2218,8 @@ export class ASL {
           `Step Function does not support ${expr.op} operator`
         );
       } else if (expr.op === "&&" || expr.op === "||" || expr.op === "??") {
-        return this.evalExpr(expr.left, (leftOutput) => {
+        return this.evalContext(expr.left, ({ evalExpr }) => {
+          const leftOutput = evalExpr(expr.left, true);
           const right = this.eval(expr.right);
 
           if (ASLGraph.isLiteralValue(leftOutput)) {
@@ -3734,7 +3745,8 @@ export class ASL {
    * ```
    */
   private elementAccessExprToJsonPath(
-    access: ElementAccessExpr
+    access: ElementAccessExpr,
+    allowUndefined?: boolean
   ): ASLGraph.NodeResults {
     // special case when in a for-in loop
     if (isIdentifier(access.element)) {
@@ -3760,7 +3772,21 @@ export class ASL {
       }
     }
 
-    return this.evalExpr(access.element, (elementOutput) => {
+    return this.evalContext(access.element, ({ evalExpr }) => {
+      const elementOutput = evalExpr(
+        access.element,
+        allowUndefined && access.isOptional
+      );
+      // x?.[elm]
+      if (
+        ASLGraph.isLiteralValue(elementOutput) &&
+        elementOutput.value === undefined
+      ) {
+        return {
+          value: undefined as any,
+          containsJsonPath: false,
+        };
+      }
       // use explicit `eval` because we update the resulting state object output before returning
       const expr = this.eval(access.expr);
       const exprOutput = ASLGraph.getAslStateOutput(expr);
@@ -4344,7 +4370,9 @@ export namespace ASL {
       or(
         and(isString(v), not(stringEquals(v, ""))),
         and(isNumeric(v), not(numericEquals(v, 0))),
-        and(isBoolean(v), booleanEquals(v, true))
+        and(isBoolean(v), booleanEquals(v, true)),
+        // is object or array: is present, not null, and not a primitive
+        not(or(isBoolean(v), isNumeric(v), isString(v)))
       )
     );
   }

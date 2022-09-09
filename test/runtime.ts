@@ -16,6 +16,7 @@ import AWS, {
 import { Construct } from "constructs";
 import { asyncSynth } from "../src/async-synth";
 import { Function } from "../src/function";
+import { SelfDestructor } from "./self-destructor";
 
 // const isGithub = !!process.env.CI;
 
@@ -249,6 +250,8 @@ export function runtimeTestSuite<
             region: "us-east-1",
           },
   });
+
+  new SelfDestructor(stack, "selfDestruct");
 
   let stackOutputs: CloudFormation.Outputs | undefined;
   let stackArtifact: cxapi.CloudFormationStackArtifact | undefined;
