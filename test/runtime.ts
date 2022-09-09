@@ -5,7 +5,6 @@ import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
 import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import AWS, {
-  CloudFormation,
   DynamoDB,
   EventBridge,
   Lambda,
@@ -56,37 +55,6 @@ const clientConfig =
 
 // the env (OIDC) role can describe stack and assume roles
 const sts = new STS(clientConfig);
-
-async function getCdkDeployerClientConfig(
-  caller: STS.GetCallerIdentityResponse
-) {
-  const roleArn = `arn:aws:iam::${caller.Account}:role/cdk-hnb659fds-deploy-role-${caller.Account}-${clientConfig.region}`;
-  const cdkDeployRole = await sts
-    .assumeRole({
-      // simple bootstrap stacks have a computable arn, the hash is hard coded in CDK.
-      // https://github.com/aws/aws-cdk/blob/main/packages/aws-cdk/lib/api/bootstrap/bootstrap-template.yaml#L34
-      RoleArn: roleArn,
-      RoleSessionName: "CdkDeploy",
-    })
-    .promise();
-
-  if (!cdkDeployRole.Credentials) {
-    throw new Error(
-      `Could not retrieve credentials for: ${cdkDeployRole.AssumedRoleUser?.Arn} form ${roleArn}`
-    );
-  }
-
-  return {
-    ...clientConfig,
-    credentialProvider: undefined,
-    credentials: {
-      accessKeyId: cdkDeployRole.Credentials.AccessKeyId,
-      expireTime: cdkDeployRole.Credentials.Expiration,
-      secretAccessKey: cdkDeployRole.Credentials.SecretAccessKey,
-      sessionToken: cdkDeployRole.Credentials.SessionToken,
-    },
-  };
-}
 
 async function getCfnClient() {
   //clientConfig: ServiceConfigurationOptions
@@ -253,7 +221,6 @@ export function runtimeTestSuite<
 
   new SelfDestructor(stack, "selfDestruct");
 
-  let stackOutputs: CloudFormation.Outputs | undefined;
   let stackArtifact: cxapi.CloudFormationStackArtifact | undefined;
   let cfnClient: CloudFormationDeployments | undefined;
   let clients: RuntimeTestClients | undefined;
@@ -281,7 +248,6 @@ export function runtimeTestSuite<
     if (!caller || !caller.Arn) {
       throw Error("Cannot retrieve the current caller.");
     }
-    const cdkClientConfig = await getCdkDeployerClientConfig(caller);
     cfnClient = await getCfnClient();
     // cdkClientConfig
     const anyOnly = tests.some((t) => t.only);
@@ -290,7 +256,7 @@ export function runtimeTestSuite<
     const testRole = new Role(stack, "testRole", {
       assumedBy: new ArnPrincipal(caller.Arn),
     });
-    new CfnOutput(stack, `testRoleArn-`, {
+    const testArnOutput = new CfnOutput(stack, `testRoleArn-`, {
       value: testRole.roleArn,
       exportName: `TestRoleArn-${fullStackName}`,
     });
@@ -305,14 +271,15 @@ export function runtimeTestSuite<
           if (typeof output === "object") {
             return {
               outputs: Object.fromEntries(
-                Object.entries(output.outputs).map(([key, value]) => {
-                  new CfnOutput(construct, `${key}_out`, {
-                    exportName: construct.node.addr + key,
-                    value,
-                  });
-
-                  return [key, construct.node.addr + key];
-                })
+                Object.entries(output.outputs).map(([key, value]) => [
+                  key,
+                  stack.resolve(
+                    new CfnOutput(construct, key, {
+                      exportName: construct.node.addr + key,
+                      value,
+                    }).logicalId
+                  ),
+                ])
               ),
               extra: output.extra,
             } as ResourceReference<any, any>;
@@ -343,20 +310,14 @@ export function runtimeTestSuite<
 
       // Inspiration for the current approach: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
       // Writeup on performance improvements: https://github.com/functionless/functionless/pull/184#issuecomment-1144767427
-      await cfnClient?.deployStack({
+      const deployOut = await cfnClient?.deployStack({
         stack: stackArtifact,
         force: true,
       });
 
-      const CF = new CloudFormation(cdkClientConfig);
+      const testRoleArn =
+        deployOut.outputs[stack.resolve(testArnOutput.logicalId)];
 
-      stackOutputs = (
-        await CF.describeStacks({ StackName: stack.stackName }).promise()
-      ).Stacks?.[0]?.Outputs;
-
-      const testRoleArn = stackOutputs?.find(
-        (o) => o.ExportName === `TestRoleArn-${stack.stackName}`
-      )?.OutputValue;
       const testRole = testRoleArn
         ? await sts
             .assumeRole({
@@ -393,10 +354,7 @@ export function runtimeTestSuite<
         if ("outputs" in s) {
           const resolvedContext = Object.fromEntries(
             Object.entries(s.outputs).map(([key, value]) => {
-              return [
-                key,
-                stackOutputs?.find((o) => o.ExportName === value)?.OutputValue!,
-              ];
+              return [key, deployOut.outputs[value]];
             })
           );
           return {
@@ -440,7 +398,6 @@ export function runtimeTestSuite<
         }
       }
     } else {
-      stackOutputs = [];
       // if the deploy failed, populate with the un-resolved contexts, should only contain failed and skips
       testResolvedContexts = testContexts.map((s, i) => ({
         test: tests[i]!,

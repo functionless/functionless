@@ -146,6 +146,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.nv",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.nv",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.nv",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -251,6 +269,24 @@ Object {
                       "Variable": "$.input.value",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.value",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.value",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.value",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -1585,7 +1621,7 @@ Object {
     },
     "5__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ": Object {
       "InputPath": "$.heap4",
-      "Next": "obj[\\"n\\"] ?? \\"d\\"",
+      "Next": "obj.n ?? \\"d\\"",
       "ResultPath": "$.heap5",
       "Type": "Pass",
     },
@@ -1619,7 +1655,7 @@ Object {
       "ResultPath": "$.heap4",
       "Type": "Pass",
     },
-    "false__obj[\\"n\\"] ?? \\"d\\"": Object {
+    "false__obj.n ?? \\"d\\"": Object {
       "Next": "7__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ",
       "Result": "d",
       "ResultPath": "$.heap6",
@@ -1653,23 +1689,23 @@ Object {
       "Default": "false__obj.n ?? \\"c\\"",
       "Type": "Choice",
     },
-    "obj[\\"n\\"] ?? \\"d\\"": Object {
+    "obj.n ?? \\"d\\"": Object {
       "Choices": Array [
         Object {
           "And": Array [
             Object {
               "IsPresent": true,
-              "Variable": "$.obj['n']",
+              "Variable": "$.obj.n",
             },
             Object {
               "IsNull": false,
-              "Variable": "$.obj['n']",
+              "Variable": "$.obj.n",
             },
           ],
-          "Next": "true__obj[\\"n\\"] ?? \\"d\\"",
+          "Next": "true__obj.n ?? \\"d\\"",
         },
       ],
-      "Default": "false__obj[\\"n\\"] ?? \\"d\\"",
+      "Default": "false__obj.n ?? \\"d\\"",
       "Type": "Choice",
     },
     "return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: obj": Object {
@@ -1684,8 +1720,8 @@ Object {
       "ResultPath": "$.heap4",
       "Type": "Pass",
     },
-    "true__obj[\\"n\\"] ?? \\"d\\"": Object {
-      "InputPath": "$.obj['n']",
+    "true__obj.n ?? \\"d\\"": Object {
+      "InputPath": "$.obj.n",
       "Next": "7__return {a: obj.x, b: obj.x, d: obj[\\"1\\"], e: arr[0], g: obj.n ?? \\"c\\", h: ",
       "ResultPath": "$.heap6",
       "Type": "Pass",
@@ -2152,6 +2188,24 @@ Object {
                       },
                     ],
                   },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.a",
+                        },
+                      ],
+                    },
+                  },
                 ],
               },
             ],
@@ -2236,6 +2290,24 @@ Object {
                         "Variable": "$.input.n",
                       },
                     ],
+                  },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.n",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.n",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.n",
+                        },
+                      ],
+                    },
                   },
                 ],
               },
@@ -2322,6 +2394,24 @@ Object {
                       },
                     ],
                   },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.nv",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.nv",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.nv",
+                        },
+                      ],
+                    },
+                  },
                 ],
               },
             ],
@@ -2329,6 +2419,109 @@ Object {
         },
       ],
       "Default": "false__!input.nv",
+      "Type": "Choice",
+    },
+    "!input.obj": Object {
+      "Choices": Array [
+        Object {
+          "Next": "true__!input.obj",
+          "Not": Object {
+            "And": Array [
+              Object {
+                "And": Array [
+                  Object {
+                    "IsPresent": true,
+                    "Variable": "$.input.obj",
+                  },
+                  Object {
+                    "IsNull": false,
+                    "Variable": "$.input.obj",
+                  },
+                ],
+              },
+              Object {
+                "Or": Array [
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.obj",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.input.obj",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.input.obj",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.obj",
+                      },
+                      Object {
+                        "Not": Object {
+                          "And": Array [
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.input.obj",
+                            },
+                            Object {
+                              "NumericEquals": 0,
+                              "Variable": "$.input.obj",
+                            },
+                          ],
+                        },
+                      },
+                    ],
+                  },
+                  Object {
+                    "And": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.obj",
+                      },
+                      Object {
+                        "BooleanEquals": true,
+                        "Variable": "$.input.obj",
+                      },
+                    ],
+                  },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.obj",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.obj",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.obj",
+                        },
+                      ],
+                    },
+                  },
+                ],
+              },
+            ],
+          },
+        },
+      ],
+      "Default": "false__!input.obj",
       "Type": "Choice",
     },
     "!input.x": Object {
@@ -2406,6 +2599,24 @@ Object {
                         "Variable": "$.input.x",
                       },
                     ],
+                  },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.x",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.x",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.x",
+                        },
+                      ],
+                    },
                   },
                 ],
               },
@@ -2905,61 +3116,61 @@ Object {
     },
     "141__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap140",
-      "Next": "input.v === undefined",
+      "Next": "!input.obj",
       "ResultPath": "$.heap141",
       "Type": "Pass",
     },
     "143__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap142",
-      "Next": "input.v == undefined",
+      "Next": "input.v === undefined",
       "ResultPath": "$.heap143",
       "Type": "Pass",
     },
     "145__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap144",
-      "Next": "input.v !== undefined",
+      "Next": "input.v == undefined",
       "ResultPath": "$.heap145",
       "Type": "Pass",
     },
     "147__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap146",
-      "Next": "input.v != undefined",
+      "Next": "input.v !== undefined",
       "ResultPath": "$.heap147",
       "Type": "Pass",
     },
     "149__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap148",
-      "Next": "input.nv === undefined",
+      "Next": "input.v != undefined",
       "ResultPath": "$.heap149",
       "Type": "Pass",
     },
     "151__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap150",
-      "Next": "input.nv == undefined",
+      "Next": "input.nv === undefined",
       "ResultPath": "$.heap151",
       "Type": "Pass",
     },
     "153__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap152",
-      "Next": "input.nv === undefined 1",
+      "Next": "input.nv == undefined",
       "ResultPath": "$.heap153",
       "Type": "Pass",
     },
     "155__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap154",
-      "Next": "input.nv == undefined 1",
+      "Next": "input.nv === undefined 1",
       "ResultPath": "$.heap155",
       "Type": "Pass",
     },
     "157__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap156",
-      "Next": "input.und === undefined",
+      "Next": "input.nv == undefined 1",
       "ResultPath": "$.heap157",
       "Type": "Pass",
     },
     "159__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap158",
-      "Next": "input.und == undefined",
+      "Next": "input.und === undefined",
       "ResultPath": "$.heap159",
       "Type": "Pass",
     },
@@ -2971,61 +3182,61 @@ Object {
     },
     "161__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap160",
-      "Next": "input.und !== undefined",
+      "Next": "input.und == undefined",
       "ResultPath": "$.heap161",
       "Type": "Pass",
     },
     "163__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap162",
-      "Next": "input.und != undefined",
+      "Next": "input.und !== undefined",
       "ResultPath": "$.heap163",
       "Type": "Pass",
     },
     "165__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap164",
-      "Next": "input.v === undefined 1",
+      "Next": "input.und != undefined",
       "ResultPath": "$.heap165",
       "Type": "Pass",
     },
     "167__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap166",
-      "Next": "input.v == undefined 1",
+      "Next": "input.v === undefined 1",
       "ResultPath": "$.heap167",
       "Type": "Pass",
     },
     "169__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap168",
-      "Next": "input.und === null",
+      "Next": "input.v == undefined 1",
       "ResultPath": "$.heap169",
       "Type": "Pass",
     },
     "171__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap170",
-      "Next": "input.und == null",
+      "Next": "input.und === null",
       "ResultPath": "$.heap171",
       "Type": "Pass",
     },
     "173__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap172",
-      "Next": "input.und !== null",
+      "Next": "input.und == null",
       "ResultPath": "$.heap173",
       "Type": "Pass",
     },
     "175__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap174",
-      "Next": "input.und != null",
+      "Next": "input.und !== null",
       "ResultPath": "$.heap175",
       "Type": "Pass",
     },
     "177__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap176",
-      "Next": "input.und === \\"hello\\"",
+      "Next": "input.und != null",
       "ResultPath": "$.heap177",
       "Type": "Pass",
     },
     "179__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap178",
-      "Next": "input.und == \\"hello\\"",
+      "Next": "input.und === \\"hello\\"",
       "ResultPath": "$.heap179",
       "Type": "Pass",
     },
@@ -3037,61 +3248,61 @@ Object {
     },
     "181__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap180",
-      "Next": "input.und !== \\"hello\\"",
+      "Next": "input.und == \\"hello\\"",
       "ResultPath": "$.heap181",
       "Type": "Pass",
     },
     "183__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap182",
-      "Next": "input.und != \\"hello\\"",
+      "Next": "input.und !== \\"hello\\"",
       "ResultPath": "$.heap183",
       "Type": "Pass",
     },
     "185__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap184",
-      "Next": "input.nv === \\"hello\\"",
+      "Next": "input.und != \\"hello\\"",
       "ResultPath": "$.heap185",
       "Type": "Pass",
     },
     "187__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap186",
-      "Next": "input.nv == \\"hello\\"",
+      "Next": "input.nv === \\"hello\\"",
       "ResultPath": "$.heap187",
       "Type": "Pass",
     },
     "189__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap188",
-      "Next": "input.nv !== \\"hello\\"",
+      "Next": "input.nv == \\"hello\\"",
       "ResultPath": "$.heap189",
       "Type": "Pass",
     },
     "191__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap190",
-      "Next": "input.nv != \\"hello\\"",
+      "Next": "input.nv !== \\"hello\\"",
       "ResultPath": "$.heap191",
       "Type": "Pass",
     },
     "193__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap192",
-      "Next": "input.undN === 1",
+      "Next": "input.nv != \\"hello\\"",
       "ResultPath": "$.heap193",
       "Type": "Pass",
     },
     "195__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap194",
-      "Next": "input.undN == 1",
+      "Next": "input.undN === 1",
       "ResultPath": "$.heap195",
       "Type": "Pass",
     },
     "197__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap196",
-      "Next": "input.undN !== 1",
+      "Next": "input.undN == 1",
       "ResultPath": "$.heap197",
       "Type": "Pass",
     },
     "199__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap198",
-      "Next": "input.undN != 1",
+      "Next": "input.undN !== 1",
       "ResultPath": "$.heap199",
       "Type": "Pass",
     },
@@ -3140,71 +3351,72 @@ Object {
         "constantToVarStringLess.$": "$.heap19",
         "constantToVarStringLessEquals.$": "$.heap27",
         "constantToVarStringNotEquals.$": "$.heap11",
-        "nullEqualEqualsUndefined.$": "$.heap151",
-        "nullEqualEqualsUndefinedVar.$": "$.heap215",
-        "nullEqualsUndefined.$": "$.heap153",
-        "nullEqualsUndefinedVar.$": "$.heap217",
-        "nullNotEqualEqualsUndefined.$": "$.heap155",
-        "nullNotEqualEqualsUndefinedVar.$": "$.heap219",
-        "nullNotEqualsUndefined.$": "$.heap157",
-        "nullNotEqualsUndefinedVar.$": "$.heap221",
-        "nullVarEqualEqualsNumber.$": "$.heap203",
-        "nullVarEqualEqualsNumberVar.$": "$.heap263",
-        "nullVarEqualEqualsString.$": "$.heap187",
-        "nullVarEqualEqualsStringVar.$": "$.heap247",
-        "nullVarEqualsNumber.$": "$.heap205",
-        "nullVarEqualsNumberVar.$": "$.heap265",
-        "nullVarEqualsString.$": "$.heap189",
-        "nullVarEqualsStringVar.$": "$.heap249",
-        "nullVarNotEqualEqualsNumber.$": "$.heap207",
-        "nullVarNotEqualEqualsNumberVar.$": "$.heap267",
-        "nullVarNotEqualEqualsString.$": "$.heap191",
-        "nullVarNotEqualEqualsStringVar.$": "$.heap251",
-        "nullVarNotEqualsNumber.$": "$.heap209",
-        "nullVarNotEqualsNumberVar.$": "$.heap269",
-        "nullVarNotEqualsString.$": "$.heap193",
-        "nullVarNotEqualsStringVar.$": "$.heap253",
-        "undefinedVarEqualEqualsNull.$": "$.heap171",
-        "undefinedVarEqualEqualsNullVar.$": "$.heap231",
-        "undefinedVarEqualEqualsNumber.$": "$.heap195",
-        "undefinedVarEqualEqualsNumberVar.$": "$.heap255",
-        "undefinedVarEqualEqualsString.$": "$.heap179",
-        "undefinedVarEqualEqualsStringVar.$": "$.heap239",
-        "undefinedVarEqualEqualsUndefined.$": "$.heap159",
-        "undefinedVarEqualEqualsUndefinedVar.$": "$.heap223",
-        "undefinedVarEqualsNull.$": "$.heap173",
-        "undefinedVarEqualsNullVar.$": "$.heap233",
-        "undefinedVarEqualsNumber.$": "$.heap197",
-        "undefinedVarEqualsNumberVar.$": "$.heap257",
-        "undefinedVarEqualsString.$": "$.heap181",
-        "undefinedVarEqualsStringVar.$": "$.heap241",
-        "undefinedVarEqualsUndefined.$": "$.heap161",
-        "undefinedVarEqualsUndefinedVar.$": "$.heap225",
-        "undefinedVarNotEqualEqualsNull.$": "$.heap175",
-        "undefinedVarNotEqualEqualsNullVar.$": "$.heap235",
-        "undefinedVarNotEqualEqualsNumber.$": "$.heap199",
-        "undefinedVarNotEqualEqualsNumberVar.$": "$.heap259",
-        "undefinedVarNotEqualEqualsString.$": "$.heap183",
-        "undefinedVarNotEqualEqualsStringVar.$": "$.heap243",
-        "undefinedVarNotEqualEqualsUndefined.$": "$.heap163",
-        "undefinedVarNotEqualEqualsUndefinedVar.$": "$.heap227",
-        "undefinedVarNotEqualsNull.$": "$.heap177",
-        "undefinedVarNotEqualsNullVar.$": "$.heap237",
-        "undefinedVarNotEqualsNumber.$": "$.heap201",
-        "undefinedVarNotEqualsNumberVar.$": "$.heap261",
-        "undefinedVarNotEqualsString.$": "$.heap185",
-        "undefinedVarNotEqualsStringVar.$": "$.heap245",
-        "undefinedVarNotEqualsUndefined.$": "$.heap165",
-        "undefinedVarNotEqualsUndefinedVar.$": "$.heap229",
-        "varEqualEqualsUndefined.$": "$.heap143",
-        "varEqualEqualsUndefinedVar.$": "$.heap167",
-        "varEqualsUndefined.$": "$.heap145",
-        "varEqualsUndefinedVar.$": "$.heap169",
+        "nullEqualEqualsUndefined.$": "$.heap153",
+        "nullEqualEqualsUndefinedVar.$": "$.heap217",
+        "nullEqualsUndefined.$": "$.heap155",
+        "nullEqualsUndefinedVar.$": "$.heap219",
+        "nullNotEqualEqualsUndefined.$": "$.heap157",
+        "nullNotEqualEqualsUndefinedVar.$": "$.heap221",
+        "nullNotEqualsUndefined.$": "$.heap159",
+        "nullNotEqualsUndefinedVar.$": "$.heap223",
+        "nullVarEqualEqualsNumber.$": "$.heap205",
+        "nullVarEqualEqualsNumberVar.$": "$.heap265",
+        "nullVarEqualEqualsString.$": "$.heap189",
+        "nullVarEqualEqualsStringVar.$": "$.heap249",
+        "nullVarEqualsNumber.$": "$.heap207",
+        "nullVarEqualsNumberVar.$": "$.heap267",
+        "nullVarEqualsString.$": "$.heap191",
+        "nullVarEqualsStringVar.$": "$.heap251",
+        "nullVarNotEqualEqualsNumber.$": "$.heap209",
+        "nullVarNotEqualEqualsNumberVar.$": "$.heap269",
+        "nullVarNotEqualEqualsString.$": "$.heap193",
+        "nullVarNotEqualEqualsStringVar.$": "$.heap253",
+        "nullVarNotEqualsNumber.$": "$.heap211",
+        "nullVarNotEqualsNumberVar.$": "$.heap271",
+        "nullVarNotEqualsString.$": "$.heap195",
+        "nullVarNotEqualsStringVar.$": "$.heap255",
+        "objNotPresentFalse.$": "$.heap143",
+        "undefinedVarEqualEqualsNull.$": "$.heap173",
+        "undefinedVarEqualEqualsNullVar.$": "$.heap233",
+        "undefinedVarEqualEqualsNumber.$": "$.heap197",
+        "undefinedVarEqualEqualsNumberVar.$": "$.heap257",
+        "undefinedVarEqualEqualsString.$": "$.heap181",
+        "undefinedVarEqualEqualsStringVar.$": "$.heap241",
+        "undefinedVarEqualEqualsUndefined.$": "$.heap161",
+        "undefinedVarEqualEqualsUndefinedVar.$": "$.heap225",
+        "undefinedVarEqualsNull.$": "$.heap175",
+        "undefinedVarEqualsNullVar.$": "$.heap235",
+        "undefinedVarEqualsNumber.$": "$.heap199",
+        "undefinedVarEqualsNumberVar.$": "$.heap259",
+        "undefinedVarEqualsString.$": "$.heap183",
+        "undefinedVarEqualsStringVar.$": "$.heap243",
+        "undefinedVarEqualsUndefined.$": "$.heap163",
+        "undefinedVarEqualsUndefinedVar.$": "$.heap227",
+        "undefinedVarNotEqualEqualsNull.$": "$.heap177",
+        "undefinedVarNotEqualEqualsNullVar.$": "$.heap237",
+        "undefinedVarNotEqualEqualsNumber.$": "$.heap201",
+        "undefinedVarNotEqualEqualsNumberVar.$": "$.heap261",
+        "undefinedVarNotEqualEqualsString.$": "$.heap185",
+        "undefinedVarNotEqualEqualsStringVar.$": "$.heap245",
+        "undefinedVarNotEqualEqualsUndefined.$": "$.heap165",
+        "undefinedVarNotEqualEqualsUndefinedVar.$": "$.heap229",
+        "undefinedVarNotEqualsNull.$": "$.heap179",
+        "undefinedVarNotEqualsNullVar.$": "$.heap239",
+        "undefinedVarNotEqualsNumber.$": "$.heap203",
+        "undefinedVarNotEqualsNumberVar.$": "$.heap263",
+        "undefinedVarNotEqualsString.$": "$.heap187",
+        "undefinedVarNotEqualsStringVar.$": "$.heap247",
+        "undefinedVarNotEqualsUndefined.$": "$.heap167",
+        "undefinedVarNotEqualsUndefinedVar.$": "$.heap231",
+        "varEqualEqualsUndefined.$": "$.heap145",
+        "varEqualEqualsUndefinedVar.$": "$.heap169",
+        "varEqualsUndefined.$": "$.heap147",
+        "varEqualsUndefinedVar.$": "$.heap171",
         "varNot.$": "$.heap135",
-        "varNotEqualEqualsUndefined.$": "$.heap147",
-        "varNotEqualEqualsUndefinedVar.$": "$.heap211",
-        "varNotEqualsUndefined.$": "$.heap149",
-        "varNotEqualsUndefinedVar.$": "$.heap213",
+        "varNotEqualEqualsUndefined.$": "$.heap149",
+        "varNotEqualEqualsUndefinedVar.$": "$.heap213",
+        "varNotEqualsUndefined.$": "$.heap151",
+        "varNotEqualsUndefinedVar.$": "$.heap215",
         "varNotNullFalse.$": "$.heap139",
         "varNotPresentFalse.$": "$.heap141",
         "varNotPresentTrue.$": "$.heap137",
@@ -3252,61 +3464,61 @@ Object {
     },
     "201__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap200",
-      "Next": "input.nv === 1",
+      "Next": "input.undN != 1",
       "ResultPath": "$.heap201",
       "Type": "Pass",
     },
     "203__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap202",
-      "Next": "input.nv == 1",
+      "Next": "input.nv === 1",
       "ResultPath": "$.heap203",
       "Type": "Pass",
     },
     "205__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap204",
-      "Next": "input.nv !== 1",
+      "Next": "input.nv == 1",
       "ResultPath": "$.heap205",
       "Type": "Pass",
     },
     "207__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap206",
-      "Next": "input.nv != 1",
+      "Next": "input.nv !== 1",
       "ResultPath": "$.heap207",
       "Type": "Pass",
     },
     "209__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap208",
-      "Next": "input.v !== obj.und",
+      "Next": "input.nv != 1",
       "ResultPath": "$.heap209",
       "Type": "Pass",
     },
     "211__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap210",
-      "Next": "input.v != obj.und",
+      "Next": "input.v !== obj.und",
       "ResultPath": "$.heap211",
       "Type": "Pass",
     },
     "213__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap212",
-      "Next": "input.nv === obj.und",
+      "Next": "input.v != obj.und",
       "ResultPath": "$.heap213",
       "Type": "Pass",
     },
     "215__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap214",
-      "Next": "input.nv == obj.und",
+      "Next": "input.nv === obj.und",
       "ResultPath": "$.heap215",
       "Type": "Pass",
     },
     "217__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap216",
-      "Next": "input.nv === obj.und 1",
+      "Next": "input.nv == obj.und",
       "ResultPath": "$.heap217",
       "Type": "Pass",
     },
     "219__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap218",
-      "Next": "input.nv == obj.und 1",
+      "Next": "input.nv === obj.und 1",
       "ResultPath": "$.heap219",
       "Type": "Pass",
     },
@@ -3318,61 +3530,61 @@ Object {
     },
     "221__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap220",
-      "Next": "input.und === obj.und",
+      "Next": "input.nv == obj.und 1",
       "ResultPath": "$.heap221",
       "Type": "Pass",
     },
     "223__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap222",
-      "Next": "input.und == obj.und",
+      "Next": "input.und === obj.und",
       "ResultPath": "$.heap223",
       "Type": "Pass",
     },
     "225__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap224",
-      "Next": "input.und !== obj.und",
+      "Next": "input.und == obj.und",
       "ResultPath": "$.heap225",
       "Type": "Pass",
     },
     "227__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap226",
-      "Next": "input.und != obj.und",
+      "Next": "input.und !== obj.und",
       "ResultPath": "$.heap227",
       "Type": "Pass",
     },
     "229__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap228",
-      "Next": "input.und === obj.nv",
+      "Next": "input.und != obj.und",
       "ResultPath": "$.heap229",
       "Type": "Pass",
     },
     "231__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap230",
-      "Next": "input.und == obj.nv",
+      "Next": "input.und === obj.nv",
       "ResultPath": "$.heap231",
       "Type": "Pass",
     },
     "233__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap232",
-      "Next": "input.und !== obj.nv",
+      "Next": "input.und == obj.nv",
       "ResultPath": "$.heap233",
       "Type": "Pass",
     },
     "235__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap234",
-      "Next": "input.und != obj.nv",
+      "Next": "input.und !== obj.nv",
       "ResultPath": "$.heap235",
       "Type": "Pass",
     },
     "237__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap236",
-      "Next": "input.und === input.v",
+      "Next": "input.und != obj.nv",
       "ResultPath": "$.heap237",
       "Type": "Pass",
     },
     "239__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap238",
-      "Next": "input.und == input.v",
+      "Next": "input.und === input.v",
       "ResultPath": "$.heap239",
       "Type": "Pass",
     },
@@ -3384,61 +3596,61 @@ Object {
     },
     "241__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap240",
-      "Next": "input.und !== input.v",
+      "Next": "input.und == input.v",
       "ResultPath": "$.heap241",
       "Type": "Pass",
     },
     "243__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap242",
-      "Next": "input.und != input.v",
+      "Next": "input.und !== input.v",
       "ResultPath": "$.heap243",
       "Type": "Pass",
     },
     "245__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap244",
-      "Next": "input.nv === input.v",
+      "Next": "input.und != input.v",
       "ResultPath": "$.heap245",
       "Type": "Pass",
     },
     "247__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap246",
-      "Next": "input.nv == input.v",
+      "Next": "input.nv === input.v",
       "ResultPath": "$.heap247",
       "Type": "Pass",
     },
     "249__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap248",
-      "Next": "input.nv !== input.v",
+      "Next": "input.nv == input.v",
       "ResultPath": "$.heap249",
       "Type": "Pass",
     },
     "251__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap250",
-      "Next": "input.nv != input.v",
+      "Next": "input.nv !== input.v",
       "ResultPath": "$.heap251",
       "Type": "Pass",
     },
     "253__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap252",
-      "Next": "input.undN === input.n",
+      "Next": "input.nv != input.v",
       "ResultPath": "$.heap253",
       "Type": "Pass",
     },
     "255__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap254",
-      "Next": "input.undN == input.n",
+      "Next": "input.undN === input.n",
       "ResultPath": "$.heap255",
       "Type": "Pass",
     },
     "257__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap256",
-      "Next": "input.undN !== input.n",
+      "Next": "input.undN == input.n",
       "ResultPath": "$.heap257",
       "Type": "Pass",
     },
     "259__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap258",
-      "Next": "input.undN != input.n",
+      "Next": "input.undN !== input.n",
       "ResultPath": "$.heap259",
       "Type": "Pass",
     },
@@ -3450,32 +3662,38 @@ Object {
     },
     "261__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap260",
-      "Next": "input.nv === input.n",
+      "Next": "input.undN != input.n",
       "ResultPath": "$.heap261",
       "Type": "Pass",
     },
     "263__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap262",
-      "Next": "input.nv == input.n",
+      "Next": "input.nv === input.n",
       "ResultPath": "$.heap263",
       "Type": "Pass",
     },
     "265__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap264",
-      "Next": "input.nv !== input.n",
+      "Next": "input.nv == input.n",
       "ResultPath": "$.heap265",
       "Type": "Pass",
     },
     "267__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap266",
-      "Next": "input.nv != input.n",
+      "Next": "input.nv !== input.n",
       "ResultPath": "$.heap267",
       "Type": "Pass",
     },
     "269__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
       "InputPath": "$.heap268",
-      "Next": "1__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: in",
+      "Next": "input.nv != input.n",
       "ResultPath": "$.heap269",
+      "Type": "Pass",
+    },
+    "271__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ": Object {
+      "InputPath": "$.heap270",
+      "Next": "1__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: in",
+      "ResultPath": "$.heap271",
       "Type": "Pass",
     },
     "27__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: i": Object {
@@ -4043,6 +4261,12 @@ Object {
       "ResultPath": "$.heap136",
       "Type": "Pass",
     },
+    "false__!input.obj": Object {
+      "Next": "143__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap142",
+      "Type": "Pass",
+    },
     "false__!input.x": Object {
       "Next": "141__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
@@ -4308,45 +4532,45 @@ Object {
       "Type": "Pass",
     },
     "false__input.nv != \\"hello\\"": Object {
+      "Next": "195__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap194",
+      "Type": "Pass",
+    },
+    "false__input.nv != 1": Object {
+      "Next": "211__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap210",
+      "Type": "Pass",
+    },
+    "false__input.nv != input.n": Object {
+      "Next": "271__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap270",
+      "Type": "Pass",
+    },
+    "false__input.nv != input.v": Object {
+      "Next": "255__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap254",
+      "Type": "Pass",
+    },
+    "false__input.nv !== \\"hello\\"": Object {
       "Next": "193__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap192",
       "Type": "Pass",
     },
-    "false__input.nv != 1": Object {
+    "false__input.nv !== 1": Object {
       "Next": "209__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap208",
       "Type": "Pass",
     },
-    "false__input.nv != input.n": Object {
+    "false__input.nv !== input.n": Object {
       "Next": "269__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap268",
-      "Type": "Pass",
-    },
-    "false__input.nv != input.v": Object {
-      "Next": "253__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap252",
-      "Type": "Pass",
-    },
-    "false__input.nv !== \\"hello\\"": Object {
-      "Next": "191__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap190",
-      "Type": "Pass",
-    },
-    "false__input.nv !== 1": Object {
-      "Next": "207__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap206",
-      "Type": "Pass",
-    },
-    "false__input.nv !== input.n": Object {
-      "Next": "267__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap266",
       "Type": "Pass",
     },
     "false__input.nv !== input.nv": Object {
@@ -4356,9 +4580,9 @@ Object {
       "Type": "Pass",
     },
     "false__input.nv !== input.v": Object {
-      "Next": "251__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "253__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap250",
+      "ResultPath": "$.heap252",
       "Type": "Pass",
     },
     "false__input.nv !== null": Object {
@@ -4368,69 +4592,69 @@ Object {
       "Type": "Pass",
     },
     "false__input.nv == \\"hello\\"": Object {
+      "Next": "191__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap190",
+      "Type": "Pass",
+    },
+    "false__input.nv == 1": Object {
+      "Next": "207__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap206",
+      "Type": "Pass",
+    },
+    "false__input.nv == input.n": Object {
+      "Next": "267__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap266",
+      "Type": "Pass",
+    },
+    "false__input.nv == input.v": Object {
+      "Next": "251__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap250",
+      "Type": "Pass",
+    },
+    "false__input.nv == obj.und": Object {
+      "Next": "219__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap218",
+      "Type": "Pass",
+    },
+    "false__input.nv == obj.und 1": Object {
+      "Next": "223__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap222",
+      "Type": "Pass",
+    },
+    "false__input.nv == undefined": Object {
+      "Next": "155__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap154",
+      "Type": "Pass",
+    },
+    "false__input.nv == undefined 1": Object {
+      "Next": "159__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap158",
+      "Type": "Pass",
+    },
+    "false__input.nv === \\"hello\\"": Object {
       "Next": "189__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap188",
       "Type": "Pass",
     },
-    "false__input.nv == 1": Object {
+    "false__input.nv === 1": Object {
       "Next": "205__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap204",
       "Type": "Pass",
     },
-    "false__input.nv == input.n": Object {
+    "false__input.nv === input.n": Object {
       "Next": "265__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap264",
-      "Type": "Pass",
-    },
-    "false__input.nv == input.v": Object {
-      "Next": "249__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap248",
-      "Type": "Pass",
-    },
-    "false__input.nv == obj.und": Object {
-      "Next": "217__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap216",
-      "Type": "Pass",
-    },
-    "false__input.nv == obj.und 1": Object {
-      "Next": "221__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap220",
-      "Type": "Pass",
-    },
-    "false__input.nv == undefined": Object {
-      "Next": "153__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap152",
-      "Type": "Pass",
-    },
-    "false__input.nv == undefined 1": Object {
-      "Next": "157__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap156",
-      "Type": "Pass",
-    },
-    "false__input.nv === \\"hello\\"": Object {
-      "Next": "187__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap186",
-      "Type": "Pass",
-    },
-    "false__input.nv === 1": Object {
-      "Next": "203__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap202",
-      "Type": "Pass",
-    },
-    "false__input.nv === input.n": Object {
-      "Next": "263__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap262",
       "Type": "Pass",
     },
     "false__input.nv === input.nv": Object {
@@ -4440,9 +4664,9 @@ Object {
       "Type": "Pass",
     },
     "false__input.nv === input.v": Object {
-      "Next": "247__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "249__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap246",
+      "ResultPath": "$.heap248",
       "Type": "Pass",
     },
     "false__input.nv === null": Object {
@@ -4452,231 +4676,231 @@ Object {
       "Type": "Pass",
     },
     "false__input.nv === obj.und": Object {
-      "Next": "215__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "217__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap214",
+      "ResultPath": "$.heap216",
       "Type": "Pass",
     },
     "false__input.nv === obj.und 1": Object {
-      "Next": "219__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "221__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap218",
+      "ResultPath": "$.heap220",
       "Type": "Pass",
     },
     "false__input.nv === undefined": Object {
-      "Next": "151__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "153__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap150",
+      "ResultPath": "$.heap152",
       "Type": "Pass",
     },
     "false__input.nv === undefined 1": Object {
-      "Next": "155__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "157__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap154",
+      "ResultPath": "$.heap156",
       "Type": "Pass",
     },
     "false__input.und != \\"hello\\"": Object {
-      "Next": "185__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "187__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap184",
+      "ResultPath": "$.heap186",
       "Type": "Pass",
     },
     "false__input.und != input.v": Object {
-      "Next": "245__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "247__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap244",
+      "ResultPath": "$.heap246",
       "Type": "Pass",
     },
     "false__input.und != null": Object {
-      "Next": "177__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap176",
-      "Type": "Pass",
-    },
-    "false__input.und != obj.nv": Object {
-      "Next": "237__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap236",
-      "Type": "Pass",
-    },
-    "false__input.und != obj.und": Object {
-      "Next": "229__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap228",
-      "Type": "Pass",
-    },
-    "false__input.und != undefined": Object {
-      "Next": "165__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap164",
-      "Type": "Pass",
-    },
-    "false__input.und !== \\"hello\\"": Object {
-      "Next": "183__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap182",
-      "Type": "Pass",
-    },
-    "false__input.und !== input.v": Object {
-      "Next": "243__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap242",
-      "Type": "Pass",
-    },
-    "false__input.und !== null": Object {
-      "Next": "175__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap174",
-      "Type": "Pass",
-    },
-    "false__input.und !== obj.nv": Object {
-      "Next": "235__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap234",
-      "Type": "Pass",
-    },
-    "false__input.und !== obj.und": Object {
-      "Next": "227__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap226",
-      "Type": "Pass",
-    },
-    "false__input.und !== undefined": Object {
-      "Next": "163__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap162",
-      "Type": "Pass",
-    },
-    "false__input.und == \\"hello\\"": Object {
-      "Next": "181__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap180",
-      "Type": "Pass",
-    },
-    "false__input.und == input.v": Object {
-      "Next": "241__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap240",
-      "Type": "Pass",
-    },
-    "false__input.und == null": Object {
-      "Next": "173__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap172",
-      "Type": "Pass",
-    },
-    "false__input.und == obj.nv": Object {
-      "Next": "233__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap232",
-      "Type": "Pass",
-    },
-    "false__input.und == obj.und": Object {
-      "Next": "225__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap224",
-      "Type": "Pass",
-    },
-    "false__input.und == undefined": Object {
-      "Next": "161__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap160",
-      "Type": "Pass",
-    },
-    "false__input.und === \\"hello\\"": Object {
       "Next": "179__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap178",
       "Type": "Pass",
     },
-    "false__input.und === input.v": Object {
+    "false__input.und != obj.nv": Object {
       "Next": "239__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap238",
       "Type": "Pass",
     },
-    "false__input.und === null": Object {
-      "Next": "171__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap170",
-      "Type": "Pass",
-    },
-    "false__input.und === obj.nv": Object {
+    "false__input.und != obj.und": Object {
       "Next": "231__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap230",
       "Type": "Pass",
     },
-    "false__input.und === obj.und": Object {
-      "Next": "223__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+    "false__input.und != undefined": Object {
+      "Next": "167__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap222",
+      "ResultPath": "$.heap166",
+      "Type": "Pass",
+    },
+    "false__input.und !== \\"hello\\"": Object {
+      "Next": "185__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap184",
+      "Type": "Pass",
+    },
+    "false__input.und !== input.v": Object {
+      "Next": "245__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap244",
+      "Type": "Pass",
+    },
+    "false__input.und !== null": Object {
+      "Next": "177__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap176",
+      "Type": "Pass",
+    },
+    "false__input.und !== obj.nv": Object {
+      "Next": "237__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap236",
+      "Type": "Pass",
+    },
+    "false__input.und !== obj.und": Object {
+      "Next": "229__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap228",
+      "Type": "Pass",
+    },
+    "false__input.und !== undefined": Object {
+      "Next": "165__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap164",
+      "Type": "Pass",
+    },
+    "false__input.und == \\"hello\\"": Object {
+      "Next": "183__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap182",
+      "Type": "Pass",
+    },
+    "false__input.und == input.v": Object {
+      "Next": "243__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap242",
+      "Type": "Pass",
+    },
+    "false__input.und == null": Object {
+      "Next": "175__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap174",
+      "Type": "Pass",
+    },
+    "false__input.und == obj.nv": Object {
+      "Next": "235__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap234",
+      "Type": "Pass",
+    },
+    "false__input.und == obj.und": Object {
+      "Next": "227__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap226",
+      "Type": "Pass",
+    },
+    "false__input.und == undefined": Object {
+      "Next": "163__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap162",
+      "Type": "Pass",
+    },
+    "false__input.und === \\"hello\\"": Object {
+      "Next": "181__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap180",
+      "Type": "Pass",
+    },
+    "false__input.und === input.v": Object {
+      "Next": "241__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap240",
+      "Type": "Pass",
+    },
+    "false__input.und === null": Object {
+      "Next": "173__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap172",
+      "Type": "Pass",
+    },
+    "false__input.und === obj.nv": Object {
+      "Next": "233__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap232",
+      "Type": "Pass",
+    },
+    "false__input.und === obj.und": Object {
+      "Next": "225__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap224",
       "Type": "Pass",
     },
     "false__input.und === undefined": Object {
-      "Next": "159__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "161__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap158",
+      "ResultPath": "$.heap160",
       "Type": "Pass",
     },
     "false__input.undN != 1": Object {
+      "Next": "203__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap202",
+      "Type": "Pass",
+    },
+    "false__input.undN != input.n": Object {
+      "Next": "263__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": false,
+      "ResultPath": "$.heap262",
+      "Type": "Pass",
+    },
+    "false__input.undN !== 1": Object {
       "Next": "201__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap200",
       "Type": "Pass",
     },
-    "false__input.undN != input.n": Object {
+    "false__input.undN !== input.n": Object {
       "Next": "261__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap260",
       "Type": "Pass",
     },
-    "false__input.undN !== 1": Object {
+    "false__input.undN == 1": Object {
       "Next": "199__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap198",
       "Type": "Pass",
     },
-    "false__input.undN !== input.n": Object {
+    "false__input.undN == input.n": Object {
       "Next": "259__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap258",
       "Type": "Pass",
     },
-    "false__input.undN == 1": Object {
+    "false__input.undN === 1": Object {
       "Next": "197__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap196",
       "Type": "Pass",
     },
-    "false__input.undN == input.n": Object {
+    "false__input.undN === input.n": Object {
       "Next": "257__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
       "ResultPath": "$.heap256",
       "Type": "Pass",
     },
-    "false__input.undN === 1": Object {
-      "Next": "195__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap194",
-      "Type": "Pass",
-    },
-    "false__input.undN === input.n": Object {
-      "Next": "255__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": false,
-      "ResultPath": "$.heap254",
-      "Type": "Pass",
-    },
     "false__input.v != obj.und": Object {
-      "Next": "213__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "215__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap212",
+      "ResultPath": "$.heap214",
       "Type": "Pass",
     },
     "false__input.v != undefined": Object {
-      "Next": "149__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "151__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap148",
+      "ResultPath": "$.heap150",
       "Type": "Pass",
     },
     "false__input.v !== \\"val\\"": Object {
@@ -4698,15 +4922,15 @@ Object {
       "Type": "Pass",
     },
     "false__input.v !== obj.und": Object {
-      "Next": "211__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "213__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap210",
+      "ResultPath": "$.heap212",
       "Type": "Pass",
     },
     "false__input.v !== undefined": Object {
-      "Next": "147__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "149__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap146",
+      "ResultPath": "$.heap148",
       "Type": "Pass",
     },
     "false__input.v < \\"val2\\"": Object {
@@ -4734,15 +4958,15 @@ Object {
       "Type": "Pass",
     },
     "false__input.v == undefined": Object {
-      "Next": "145__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "147__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap144",
+      "ResultPath": "$.heap146",
       "Type": "Pass",
     },
     "false__input.v == undefined 1": Object {
-      "Next": "169__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "171__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap168",
+      "ResultPath": "$.heap170",
       "Type": "Pass",
     },
     "false__input.v === \\"val\\"": Object {
@@ -4764,15 +4988,15 @@ Object {
       "Type": "Pass",
     },
     "false__input.v === undefined": Object {
-      "Next": "143__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "145__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap142",
+      "ResultPath": "$.heap144",
       "Type": "Pass",
     },
     "false__input.v === undefined 1": Object {
-      "Next": "167__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "169__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": false,
-      "ResultPath": "$.heap166",
+      "ResultPath": "$.heap168",
       "Type": "Pass",
     },
     "false__input.v > \\"val2\\"": Object {
@@ -11926,6 +12150,12 @@ Object {
       "ResultPath": "$.heap136",
       "Type": "Pass",
     },
+    "true__!input.obj": Object {
+      "Next": "143__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap142",
+      "Type": "Pass",
+    },
     "true__!input.x": Object {
       "Next": "141__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
@@ -12191,45 +12421,45 @@ Object {
       "Type": "Pass",
     },
     "true__input.nv != \\"hello\\"": Object {
+      "Next": "195__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap194",
+      "Type": "Pass",
+    },
+    "true__input.nv != 1": Object {
+      "Next": "211__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap210",
+      "Type": "Pass",
+    },
+    "true__input.nv != input.n": Object {
+      "Next": "271__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap270",
+      "Type": "Pass",
+    },
+    "true__input.nv != input.v": Object {
+      "Next": "255__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap254",
+      "Type": "Pass",
+    },
+    "true__input.nv !== \\"hello\\"": Object {
       "Next": "193__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap192",
       "Type": "Pass",
     },
-    "true__input.nv != 1": Object {
+    "true__input.nv !== 1": Object {
       "Next": "209__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap208",
       "Type": "Pass",
     },
-    "true__input.nv != input.n": Object {
+    "true__input.nv !== input.n": Object {
       "Next": "269__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap268",
-      "Type": "Pass",
-    },
-    "true__input.nv != input.v": Object {
-      "Next": "253__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap252",
-      "Type": "Pass",
-    },
-    "true__input.nv !== \\"hello\\"": Object {
-      "Next": "191__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap190",
-      "Type": "Pass",
-    },
-    "true__input.nv !== 1": Object {
-      "Next": "207__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap206",
-      "Type": "Pass",
-    },
-    "true__input.nv !== input.n": Object {
-      "Next": "267__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap266",
       "Type": "Pass",
     },
     "true__input.nv !== input.nv": Object {
@@ -12239,9 +12469,9 @@ Object {
       "Type": "Pass",
     },
     "true__input.nv !== input.v": Object {
-      "Next": "251__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "253__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap250",
+      "ResultPath": "$.heap252",
       "Type": "Pass",
     },
     "true__input.nv !== null": Object {
@@ -12251,69 +12481,69 @@ Object {
       "Type": "Pass",
     },
     "true__input.nv == \\"hello\\"": Object {
+      "Next": "191__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap190",
+      "Type": "Pass",
+    },
+    "true__input.nv == 1": Object {
+      "Next": "207__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap206",
+      "Type": "Pass",
+    },
+    "true__input.nv == input.n": Object {
+      "Next": "267__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap266",
+      "Type": "Pass",
+    },
+    "true__input.nv == input.v": Object {
+      "Next": "251__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap250",
+      "Type": "Pass",
+    },
+    "true__input.nv == obj.und": Object {
+      "Next": "219__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap218",
+      "Type": "Pass",
+    },
+    "true__input.nv == obj.und 1": Object {
+      "Next": "223__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap222",
+      "Type": "Pass",
+    },
+    "true__input.nv == undefined": Object {
+      "Next": "155__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap154",
+      "Type": "Pass",
+    },
+    "true__input.nv == undefined 1": Object {
+      "Next": "159__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap158",
+      "Type": "Pass",
+    },
+    "true__input.nv === \\"hello\\"": Object {
       "Next": "189__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap188",
       "Type": "Pass",
     },
-    "true__input.nv == 1": Object {
+    "true__input.nv === 1": Object {
       "Next": "205__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap204",
       "Type": "Pass",
     },
-    "true__input.nv == input.n": Object {
+    "true__input.nv === input.n": Object {
       "Next": "265__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap264",
-      "Type": "Pass",
-    },
-    "true__input.nv == input.v": Object {
-      "Next": "249__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap248",
-      "Type": "Pass",
-    },
-    "true__input.nv == obj.und": Object {
-      "Next": "217__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap216",
-      "Type": "Pass",
-    },
-    "true__input.nv == obj.und 1": Object {
-      "Next": "221__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap220",
-      "Type": "Pass",
-    },
-    "true__input.nv == undefined": Object {
-      "Next": "153__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap152",
-      "Type": "Pass",
-    },
-    "true__input.nv == undefined 1": Object {
-      "Next": "157__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap156",
-      "Type": "Pass",
-    },
-    "true__input.nv === \\"hello\\"": Object {
-      "Next": "187__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap186",
-      "Type": "Pass",
-    },
-    "true__input.nv === 1": Object {
-      "Next": "203__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap202",
-      "Type": "Pass",
-    },
-    "true__input.nv === input.n": Object {
-      "Next": "263__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap262",
       "Type": "Pass",
     },
     "true__input.nv === input.nv": Object {
@@ -12323,9 +12553,9 @@ Object {
       "Type": "Pass",
     },
     "true__input.nv === input.v": Object {
-      "Next": "247__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "249__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap246",
+      "ResultPath": "$.heap248",
       "Type": "Pass",
     },
     "true__input.nv === null": Object {
@@ -12335,231 +12565,231 @@ Object {
       "Type": "Pass",
     },
     "true__input.nv === obj.und": Object {
-      "Next": "215__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "217__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap214",
+      "ResultPath": "$.heap216",
       "Type": "Pass",
     },
     "true__input.nv === obj.und 1": Object {
-      "Next": "219__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "221__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap218",
+      "ResultPath": "$.heap220",
       "Type": "Pass",
     },
     "true__input.nv === undefined": Object {
-      "Next": "151__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "153__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap150",
+      "ResultPath": "$.heap152",
       "Type": "Pass",
     },
     "true__input.nv === undefined 1": Object {
-      "Next": "155__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "157__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap154",
+      "ResultPath": "$.heap156",
       "Type": "Pass",
     },
     "true__input.und != \\"hello\\"": Object {
-      "Next": "185__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "187__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap184",
+      "ResultPath": "$.heap186",
       "Type": "Pass",
     },
     "true__input.und != input.v": Object {
-      "Next": "245__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "247__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap244",
+      "ResultPath": "$.heap246",
       "Type": "Pass",
     },
     "true__input.und != null": Object {
-      "Next": "177__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap176",
-      "Type": "Pass",
-    },
-    "true__input.und != obj.nv": Object {
-      "Next": "237__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap236",
-      "Type": "Pass",
-    },
-    "true__input.und != obj.und": Object {
-      "Next": "229__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap228",
-      "Type": "Pass",
-    },
-    "true__input.und != undefined": Object {
-      "Next": "165__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap164",
-      "Type": "Pass",
-    },
-    "true__input.und !== \\"hello\\"": Object {
-      "Next": "183__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap182",
-      "Type": "Pass",
-    },
-    "true__input.und !== input.v": Object {
-      "Next": "243__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap242",
-      "Type": "Pass",
-    },
-    "true__input.und !== null": Object {
-      "Next": "175__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap174",
-      "Type": "Pass",
-    },
-    "true__input.und !== obj.nv": Object {
-      "Next": "235__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap234",
-      "Type": "Pass",
-    },
-    "true__input.und !== obj.und": Object {
-      "Next": "227__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap226",
-      "Type": "Pass",
-    },
-    "true__input.und !== undefined": Object {
-      "Next": "163__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap162",
-      "Type": "Pass",
-    },
-    "true__input.und == \\"hello\\"": Object {
-      "Next": "181__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap180",
-      "Type": "Pass",
-    },
-    "true__input.und == input.v": Object {
-      "Next": "241__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap240",
-      "Type": "Pass",
-    },
-    "true__input.und == null": Object {
-      "Next": "173__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap172",
-      "Type": "Pass",
-    },
-    "true__input.und == obj.nv": Object {
-      "Next": "233__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap232",
-      "Type": "Pass",
-    },
-    "true__input.und == obj.und": Object {
-      "Next": "225__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap224",
-      "Type": "Pass",
-    },
-    "true__input.und == undefined": Object {
-      "Next": "161__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap160",
-      "Type": "Pass",
-    },
-    "true__input.und === \\"hello\\"": Object {
       "Next": "179__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap178",
       "Type": "Pass",
     },
-    "true__input.und === input.v": Object {
+    "true__input.und != obj.nv": Object {
       "Next": "239__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap238",
       "Type": "Pass",
     },
-    "true__input.und === null": Object {
-      "Next": "171__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap170",
-      "Type": "Pass",
-    },
-    "true__input.und === obj.nv": Object {
+    "true__input.und != obj.und": Object {
       "Next": "231__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap230",
       "Type": "Pass",
     },
-    "true__input.und === obj.und": Object {
-      "Next": "223__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+    "true__input.und != undefined": Object {
+      "Next": "167__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap222",
+      "ResultPath": "$.heap166",
+      "Type": "Pass",
+    },
+    "true__input.und !== \\"hello\\"": Object {
+      "Next": "185__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap184",
+      "Type": "Pass",
+    },
+    "true__input.und !== input.v": Object {
+      "Next": "245__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap244",
+      "Type": "Pass",
+    },
+    "true__input.und !== null": Object {
+      "Next": "177__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap176",
+      "Type": "Pass",
+    },
+    "true__input.und !== obj.nv": Object {
+      "Next": "237__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap236",
+      "Type": "Pass",
+    },
+    "true__input.und !== obj.und": Object {
+      "Next": "229__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap228",
+      "Type": "Pass",
+    },
+    "true__input.und !== undefined": Object {
+      "Next": "165__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap164",
+      "Type": "Pass",
+    },
+    "true__input.und == \\"hello\\"": Object {
+      "Next": "183__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap182",
+      "Type": "Pass",
+    },
+    "true__input.und == input.v": Object {
+      "Next": "243__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap242",
+      "Type": "Pass",
+    },
+    "true__input.und == null": Object {
+      "Next": "175__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap174",
+      "Type": "Pass",
+    },
+    "true__input.und == obj.nv": Object {
+      "Next": "235__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap234",
+      "Type": "Pass",
+    },
+    "true__input.und == obj.und": Object {
+      "Next": "227__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap226",
+      "Type": "Pass",
+    },
+    "true__input.und == undefined": Object {
+      "Next": "163__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap162",
+      "Type": "Pass",
+    },
+    "true__input.und === \\"hello\\"": Object {
+      "Next": "181__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap180",
+      "Type": "Pass",
+    },
+    "true__input.und === input.v": Object {
+      "Next": "241__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap240",
+      "Type": "Pass",
+    },
+    "true__input.und === null": Object {
+      "Next": "173__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap172",
+      "Type": "Pass",
+    },
+    "true__input.und === obj.nv": Object {
+      "Next": "233__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap232",
+      "Type": "Pass",
+    },
+    "true__input.und === obj.und": Object {
+      "Next": "225__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap224",
       "Type": "Pass",
     },
     "true__input.und === undefined": Object {
-      "Next": "159__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "161__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap158",
+      "ResultPath": "$.heap160",
       "Type": "Pass",
     },
     "true__input.undN != 1": Object {
+      "Next": "203__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap202",
+      "Type": "Pass",
+    },
+    "true__input.undN != input.n": Object {
+      "Next": "263__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Result": true,
+      "ResultPath": "$.heap262",
+      "Type": "Pass",
+    },
+    "true__input.undN !== 1": Object {
       "Next": "201__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap200",
       "Type": "Pass",
     },
-    "true__input.undN != input.n": Object {
+    "true__input.undN !== input.n": Object {
       "Next": "261__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap260",
       "Type": "Pass",
     },
-    "true__input.undN !== 1": Object {
+    "true__input.undN == 1": Object {
       "Next": "199__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap198",
       "Type": "Pass",
     },
-    "true__input.undN !== input.n": Object {
+    "true__input.undN == input.n": Object {
       "Next": "259__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap258",
       "Type": "Pass",
     },
-    "true__input.undN == 1": Object {
+    "true__input.undN === 1": Object {
       "Next": "197__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap196",
       "Type": "Pass",
     },
-    "true__input.undN == input.n": Object {
+    "true__input.undN === input.n": Object {
       "Next": "257__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
       "ResultPath": "$.heap256",
       "Type": "Pass",
     },
-    "true__input.undN === 1": Object {
-      "Next": "195__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap194",
-      "Type": "Pass",
-    },
-    "true__input.undN === input.n": Object {
-      "Next": "255__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
-      "Result": true,
-      "ResultPath": "$.heap254",
-      "Type": "Pass",
-    },
     "true__input.v != obj.und": Object {
-      "Next": "213__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "215__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap212",
+      "ResultPath": "$.heap214",
       "Type": "Pass",
     },
     "true__input.v != undefined": Object {
-      "Next": "149__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "151__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap148",
+      "ResultPath": "$.heap150",
       "Type": "Pass",
     },
     "true__input.v !== \\"val\\"": Object {
@@ -12581,15 +12811,15 @@ Object {
       "Type": "Pass",
     },
     "true__input.v !== obj.und": Object {
-      "Next": "211__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "213__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap210",
+      "ResultPath": "$.heap212",
       "Type": "Pass",
     },
     "true__input.v !== undefined": Object {
-      "Next": "147__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "149__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap146",
+      "ResultPath": "$.heap148",
       "Type": "Pass",
     },
     "true__input.v < \\"val2\\"": Object {
@@ -12617,15 +12847,15 @@ Object {
       "Type": "Pass",
     },
     "true__input.v == undefined": Object {
-      "Next": "145__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "147__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap144",
+      "ResultPath": "$.heap146",
       "Type": "Pass",
     },
     "true__input.v == undefined 1": Object {
-      "Next": "169__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "171__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap168",
+      "ResultPath": "$.heap170",
       "Type": "Pass",
     },
     "true__input.v === \\"val\\"": Object {
@@ -12647,15 +12877,15 @@ Object {
       "Type": "Pass",
     },
     "true__input.v === undefined": Object {
-      "Next": "143__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "145__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap142",
+      "ResultPath": "$.heap144",
       "Type": "Pass",
     },
     "true__input.v === undefined 1": Object {
-      "Next": "167__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
+      "Next": "169__return {constantStringEquals: \\"a\\" === \\"a\\", constantToVarStringEquals: ",
       "Result": true,
-      "ResultPath": "$.heap166",
+      "ResultPath": "$.heap168",
       "Type": "Pass",
     },
     "true__input.v > \\"val2\\"": Object {
@@ -12823,6 +13053,24 @@ Object {
                       "Variable": "$.heap8",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap8",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap8",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap8",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -13207,6 +13455,24 @@ Object {
                       },
                     ],
                   },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.a",
+                        },
+                      ],
+                    },
+                  },
                 ],
               },
             ],
@@ -13389,6 +13655,24 @@ Object {
                           },
                         ],
                       },
+                      Object {
+                        "Not": Object {
+                          "Or": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.falsyAndAssign",
+                            },
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.falsyAndAssign",
+                            },
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.falsyAndAssign",
+                            },
+                          ],
+                        },
+                      },
                     ],
                   },
                 ],
@@ -13468,6 +13752,24 @@ Object {
                             },
                           ],
                         },
+                        Object {
+                          "Not": Object {
+                            "Or": Array [
+                              Object {
+                                "IsBoolean": true,
+                                "Variable": "$.truthyOrAssign",
+                              },
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.truthyOrAssign",
+                              },
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.truthyOrAssign",
+                              },
+                            ],
+                          },
+                        },
                       ],
                     },
                   ],
@@ -13543,6 +13845,24 @@ Object {
                               "Variable": "$.falsyOrAssign",
                             },
                           ],
+                        },
+                        Object {
+                          "Not": Object {
+                            "Or": Array [
+                              Object {
+                                "IsBoolean": true,
+                                "Variable": "$.falsyOrAssign",
+                              },
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.falsyOrAssign",
+                              },
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.falsyOrAssign",
+                              },
+                            ],
+                          },
                         },
                       ],
                     },
@@ -13628,6 +13948,24 @@ Object {
                           },
                         ],
                       },
+                      Object {
+                        "Not": Object {
+                          "Or": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.falsyAndAssign",
+                            },
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.falsyAndAssign",
+                            },
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.falsyAndAssign",
+                            },
+                          ],
+                        },
+                      },
                     ],
                   },
                 ],
@@ -13704,6 +14042,24 @@ Object {
                           "Variable": "$.truthyOrAssign",
                         },
                       ],
+                    },
+                    Object {
+                      "Not": Object {
+                        "Or": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.truthyOrAssign",
+                          },
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.truthyOrAssign",
+                          },
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.truthyOrAssign",
+                          },
+                        ],
+                      },
                     },
                   ],
                 },
@@ -13785,6 +14141,24 @@ Object {
                         "Variable": "$.falsyAndAssign",
                       },
                     ],
+                  },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.falsyAndAssign",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.falsyAndAssign",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.falsyAndAssign",
+                        },
+                      ],
+                    },
                   },
                 ],
               },
@@ -13880,6 +14254,24 @@ Object {
                       "Variable": "$.falsyOrAssign",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.falsyOrAssign",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.falsyOrAssign",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.falsyOrAssign",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -13978,6 +14370,24 @@ Object {
                       },
                     ],
                   },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.a",
+                        },
+                      ],
+                    },
+                  },
                 ],
               },
             ],
@@ -14062,6 +14472,24 @@ Object {
                         "Variable": "$.input.a",
                       },
                     ],
+                  },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.a",
+                        },
+                      ],
+                    },
                   },
                 ],
               },
@@ -14148,6 +14576,24 @@ Object {
                       },
                     ],
                   },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.heap57",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.heap57",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.heap57",
+                        },
+                      ],
+                    },
+                  },
                 ],
               },
             ],
@@ -14233,6 +14679,24 @@ Object {
                       },
                     ],
                   },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.heap54",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.heap54",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.heap54",
+                        },
+                      ],
+                    },
+                  },
                 ],
               },
             ],
@@ -14315,6 +14779,24 @@ Object {
                       "Variable": "$.input.a",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.a",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -14399,6 +14881,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap36",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap36",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap36",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -14481,6 +14981,24 @@ Object {
                       "Variable": "$.input.b",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.b",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.b",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.b",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -14565,6 +15083,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap39",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap39",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap39",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -14647,6 +15183,24 @@ Object {
                       "Variable": "$.heap42",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap42",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap42",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap42",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -14731,6 +15285,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.b",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.b",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.b",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -14813,6 +15385,24 @@ Object {
                       "Variable": "$.heap47",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap47",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap47",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap47",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -14956,6 +15546,24 @@ Object {
                       },
                     ],
                   },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.z",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.z",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.z",
+                        },
+                      ],
+                    },
+                  },
                 ],
               },
             ],
@@ -15076,6 +15684,24 @@ Object {
                                   },
                                 ],
                               },
+                              Object {
+                                "Not": Object {
+                                  "Or": Array [
+                                    Object {
+                                      "IsBoolean": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
                             ],
                           },
                         ],
@@ -15156,6 +15782,24 @@ Object {
                                       },
                                     ],
                                   },
+                                  Object {
+                                    "Not": Object {
+                                      "Or": Array [
+                                        Object {
+                                          "IsBoolean": true,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                        Object {
+                                          "IsNumeric": true,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                        Object {
+                                          "IsString": true,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                      ],
+                                    },
+                                  },
                                 ],
                               },
                             ],
@@ -15235,6 +15879,24 @@ Object {
                                         },
                                       ],
                                     },
+                                    Object {
+                                      "Not": Object {
+                                        "Or": Array [
+                                          Object {
+                                            "IsBoolean": true,
+                                            "Variable": "$.truthyOrAssign",
+                                          },
+                                          Object {
+                                            "IsNumeric": true,
+                                            "Variable": "$.truthyOrAssign",
+                                          },
+                                          Object {
+                                            "IsString": true,
+                                            "Variable": "$.truthyOrAssign",
+                                          },
+                                        ],
+                                      },
+                                    },
                                   ],
                                 },
                               ],
@@ -15310,6 +15972,24 @@ Object {
                                           "Variable": "$.falsyOrAssign",
                                         },
                                       ],
+                                    },
+                                    Object {
+                                      "Not": Object {
+                                        "Or": Array [
+                                          Object {
+                                            "IsBoolean": true,
+                                            "Variable": "$.falsyOrAssign",
+                                          },
+                                          Object {
+                                            "IsNumeric": true,
+                                            "Variable": "$.falsyOrAssign",
+                                          },
+                                          Object {
+                                            "IsString": true,
+                                            "Variable": "$.falsyOrAssign",
+                                          },
+                                        ],
+                                      },
                                     },
                                   ],
                                 },
@@ -15429,6 +16109,24 @@ Object {
                                   },
                                 ],
                               },
+                              Object {
+                                "Not": Object {
+                                  "Or": Array [
+                                    Object {
+                                      "IsBoolean": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
                             ],
                           },
                         ],
@@ -15509,6 +16207,24 @@ Object {
                                       },
                                     ],
                                   },
+                                  Object {
+                                    "Not": Object {
+                                      "Or": Array [
+                                        Object {
+                                          "IsBoolean": true,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                        Object {
+                                          "IsNumeric": true,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                        Object {
+                                          "IsString": true,
+                                          "Variable": "$.falsyAndAssign",
+                                        },
+                                      ],
+                                    },
+                                  },
                                 ],
                               },
                             ],
@@ -15585,6 +16301,24 @@ Object {
                                       "Variable": "$.truthyOrAssign",
                                     },
                                   ],
+                                },
+                                Object {
+                                  "Not": Object {
+                                    "Or": Array [
+                                      Object {
+                                        "IsBoolean": true,
+                                        "Variable": "$.truthyOrAssign",
+                                      },
+                                      Object {
+                                        "IsNumeric": true,
+                                        "Variable": "$.truthyOrAssign",
+                                      },
+                                      Object {
+                                        "IsString": true,
+                                        "Variable": "$.truthyOrAssign",
+                                      },
+                                    ],
+                                  },
                                 },
                               ],
                             },
@@ -15702,6 +16436,24 @@ Object {
                                   },
                                 ],
                               },
+                              Object {
+                                "Not": Object {
+                                  "Or": Array [
+                                    Object {
+                                      "IsBoolean": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.truthyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
                             ],
                           },
                         ],
@@ -15779,6 +16531,24 @@ Object {
                                     "Variable": "$.falsyAndAssign",
                                   },
                                 ],
+                              },
+                              Object {
+                                "Not": Object {
+                                  "Or": Array [
+                                    Object {
+                                      "IsBoolean": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                  ],
+                                },
                               },
                             ],
                           },
@@ -15892,6 +16662,24 @@ Object {
                                 "Variable": "$.truthyAndAssign",
                               },
                             ],
+                          },
+                          Object {
+                            "Not": Object {
+                              "Or": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                              ],
+                            },
                           },
                         ],
                       },
@@ -16065,6 +16853,24 @@ Object {
                               },
                             ],
                           },
+                          Object {
+                            "Not": Object {
+                              "Or": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                              ],
+                            },
+                          },
                         ],
                       },
                     ],
@@ -16145,6 +16951,24 @@ Object {
                                   },
                                 ],
                               },
+                              Object {
+                                "Not": Object {
+                                  "Or": Array [
+                                    Object {
+                                      "IsBoolean": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
                             ],
                           },
                         ],
@@ -16224,6 +17048,24 @@ Object {
                                     },
                                   ],
                                 },
+                                Object {
+                                  "Not": Object {
+                                    "Or": Array [
+                                      Object {
+                                        "IsBoolean": true,
+                                        "Variable": "$.truthyOrAssign",
+                                      },
+                                      Object {
+                                        "IsNumeric": true,
+                                        "Variable": "$.truthyOrAssign",
+                                      },
+                                      Object {
+                                        "IsString": true,
+                                        "Variable": "$.truthyOrAssign",
+                                      },
+                                    ],
+                                  },
+                                },
                               ],
                             },
                           ],
@@ -16299,6 +17141,24 @@ Object {
                                       "Variable": "$.falsyOrAssign",
                                     },
                                   ],
+                                },
+                                Object {
+                                  "Not": Object {
+                                    "Or": Array [
+                                      Object {
+                                        "IsBoolean": true,
+                                        "Variable": "$.falsyOrAssign",
+                                      },
+                                      Object {
+                                        "IsNumeric": true,
+                                        "Variable": "$.falsyOrAssign",
+                                      },
+                                      Object {
+                                        "IsString": true,
+                                        "Variable": "$.falsyOrAssign",
+                                      },
+                                    ],
+                                  },
                                 },
                               ],
                             },
@@ -16402,6 +17262,24 @@ Object {
                               },
                             ],
                           },
+                          Object {
+                            "Not": Object {
+                              "Or": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                              ],
+                            },
+                          },
                         ],
                       },
                     ],
@@ -16482,6 +17360,24 @@ Object {
                                   },
                                 ],
                               },
+                              Object {
+                                "Not": Object {
+                                  "Or": Array [
+                                    Object {
+                                      "IsBoolean": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                    Object {
+                                      "IsNumeric": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                    Object {
+                                      "IsString": true,
+                                      "Variable": "$.falsyAndAssign",
+                                    },
+                                  ],
+                                },
+                              },
                             ],
                           },
                         ],
@@ -16558,6 +17454,24 @@ Object {
                                   "Variable": "$.truthyOrAssign",
                                 },
                               ],
+                            },
+                            Object {
+                              "Not": Object {
+                                "Or": Array [
+                                  Object {
+                                    "IsBoolean": true,
+                                    "Variable": "$.truthyOrAssign",
+                                  },
+                                  Object {
+                                    "IsNumeric": true,
+                                    "Variable": "$.truthyOrAssign",
+                                  },
+                                  Object {
+                                    "IsString": true,
+                                    "Variable": "$.truthyOrAssign",
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -16659,6 +17573,24 @@ Object {
                               },
                             ],
                           },
+                          Object {
+                            "Not": Object {
+                              "Or": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.truthyAndAssign",
+                                },
+                              ],
+                            },
+                          },
                         ],
                       },
                     ],
@@ -16736,6 +17668,24 @@ Object {
                                 "Variable": "$.falsyAndAssign",
                               },
                             ],
+                          },
+                          Object {
+                            "Not": Object {
+                              "Or": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                              ],
+                            },
                           },
                         ],
                       },
@@ -16833,6 +17783,24 @@ Object {
                             "Variable": "$.truthyAndAssign",
                           },
                         ],
+                      },
+                      Object {
+                        "Not": Object {
+                          "Or": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                          ],
+                        },
                       },
                     ],
                   },
@@ -17056,6 +18024,24 @@ Object {
                           },
                         ],
                       },
+                      Object {
+                        "Not": Object {
+                          "Or": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                          ],
+                        },
+                      },
                     ],
                   },
                 ],
@@ -17136,6 +18122,24 @@ Object {
                               },
                             ],
                           },
+                          Object {
+                            "Not": Object {
+                              "Or": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                              ],
+                            },
+                          },
                         ],
                       },
                     ],
@@ -17215,6 +18219,24 @@ Object {
                                 },
                               ],
                             },
+                            Object {
+                              "Not": Object {
+                                "Or": Array [
+                                  Object {
+                                    "IsBoolean": true,
+                                    "Variable": "$.truthyOrAssign",
+                                  },
+                                  Object {
+                                    "IsNumeric": true,
+                                    "Variable": "$.truthyOrAssign",
+                                  },
+                                  Object {
+                                    "IsString": true,
+                                    "Variable": "$.truthyOrAssign",
+                                  },
+                                ],
+                              },
+                            },
                           ],
                         },
                       ],
@@ -17290,6 +18312,24 @@ Object {
                                   "Variable": "$.falsyOrAssign",
                                 },
                               ],
+                            },
+                            Object {
+                              "Not": Object {
+                                "Or": Array [
+                                  Object {
+                                    "IsBoolean": true,
+                                    "Variable": "$.falsyOrAssign",
+                                  },
+                                  Object {
+                                    "IsNumeric": true,
+                                    "Variable": "$.falsyOrAssign",
+                                  },
+                                  Object {
+                                    "IsString": true,
+                                    "Variable": "$.falsyOrAssign",
+                                  },
+                                ],
+                              },
                             },
                           ],
                         },
@@ -17377,6 +18417,24 @@ Object {
                           },
                         ],
                       },
+                      Object {
+                        "Not": Object {
+                          "Or": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                          ],
+                        },
+                      },
                     ],
                   },
                 ],
@@ -17457,6 +18515,24 @@ Object {
                               },
                             ],
                           },
+                          Object {
+                            "Not": Object {
+                              "Or": Array [
+                                Object {
+                                  "IsBoolean": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                                Object {
+                                  "IsNumeric": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.falsyAndAssign",
+                                },
+                              ],
+                            },
+                          },
                         ],
                       },
                     ],
@@ -17533,6 +18609,24 @@ Object {
                               "Variable": "$.truthyOrAssign",
                             },
                           ],
+                        },
+                        Object {
+                          "Not": Object {
+                            "Or": Array [
+                              Object {
+                                "IsBoolean": true,
+                                "Variable": "$.truthyOrAssign",
+                              },
+                              Object {
+                                "IsNumeric": true,
+                                "Variable": "$.truthyOrAssign",
+                              },
+                              Object {
+                                "IsString": true,
+                                "Variable": "$.truthyOrAssign",
+                              },
+                            ],
+                          },
                         },
                       ],
                     },
@@ -17618,6 +18712,24 @@ Object {
                           },
                         ],
                       },
+                      Object {
+                        "Not": Object {
+                          "Or": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.truthyAndAssign",
+                            },
+                          ],
+                        },
+                      },
                     ],
                   },
                 ],
@@ -17695,6 +18807,24 @@ Object {
                             "Variable": "$.falsyAndAssign",
                           },
                         ],
+                      },
+                      Object {
+                        "Not": Object {
+                          "Or": Array [
+                            Object {
+                              "IsBoolean": true,
+                              "Variable": "$.falsyAndAssign",
+                            },
+                            Object {
+                              "IsNumeric": true,
+                              "Variable": "$.falsyAndAssign",
+                            },
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.falsyAndAssign",
+                            },
+                          ],
+                        },
                       },
                     ],
                   },
@@ -17777,6 +18907,24 @@ Object {
                         "Variable": "$.truthyAndAssign",
                       },
                     ],
+                  },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.truthyAndAssign",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.truthyAndAssign",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.truthyAndAssign",
+                        },
+                      ],
+                    },
                   },
                 ],
               },
@@ -17875,6 +19023,24 @@ Object {
                         },
                       ],
                     },
+                    Object {
+                      "Not": Object {
+                        "Or": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.truthyOrAssign",
+                          },
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.truthyOrAssign",
+                          },
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.truthyOrAssign",
+                          },
+                        ],
+                      },
+                    },
                   ],
                 },
               ],
@@ -17950,6 +19116,24 @@ Object {
                           "Variable": "$.falsyOrAssign",
                         },
                       ],
+                    },
+                    Object {
+                      "Not": Object {
+                        "Or": Array [
+                          Object {
+                            "IsBoolean": true,
+                            "Variable": "$.falsyOrAssign",
+                          },
+                          Object {
+                            "IsNumeric": true,
+                            "Variable": "$.falsyOrAssign",
+                          },
+                          Object {
+                            "IsString": true,
+                            "Variable": "$.falsyOrAssign",
+                          },
+                        ],
+                      },
                     },
                   ],
                 },
@@ -18029,6 +19213,24 @@ Object {
                       "Variable": "$.truthyOrAssign",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.truthyOrAssign",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.truthyOrAssign",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.truthyOrAssign",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -18217,6 +19419,24 @@ Object {
                       },
                     ],
                   },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.heap2.string",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.heap2.string",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.heap2.string",
+                        },
+                      ],
+                    },
+                  },
                 ],
               },
             ],
@@ -18301,6 +19521,24 @@ Object {
                         "Variable": "$.heap5",
                       },
                     ],
+                  },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.heap5",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.heap5",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.heap5",
+                        },
+                      ],
+                    },
                   },
                 ],
               },
@@ -18818,12 +20056,20 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsString": true,
+                              "IsNull": false,
                               "Variable": "$.result.Attributes.n.N",
                             },
                             Object {
-                              "StringEquals": "3",
-                              "Variable": "$.result.Attributes.n.N",
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                                Object {
+                                  "StringEquals": "3",
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                              ],
                             },
                           ],
                         },
@@ -18847,12 +20093,20 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsString": true,
+                              "IsNull": false,
                               "Variable": "$.result.Attributes.n.N",
                             },
                             Object {
-                              "StringEquals": "3",
-                              "Variable": "$.result.Attributes.n.N",
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                                Object {
+                                  "StringEquals": "3",
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                              ],
                             },
                           ],
                         },
@@ -18892,12 +20146,20 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsString": true,
+                              "IsNull": false,
                               "Variable": "$.result.Attributes.n.N",
                             },
                             Object {
-                              "StringEquals": "3",
-                              "Variable": "$.result.Attributes.n.N",
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                                Object {
+                                  "StringEquals": "3",
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                              ],
                             },
                           ],
                         },
@@ -18921,12 +20183,20 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsString": true,
+                              "IsNull": false,
                               "Variable": "$.result.Attributes.n.N",
                             },
                             Object {
-                              "StringEquals": "3",
-                              "Variable": "$.result.Attributes.n.N",
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                                Object {
+                                  "StringEquals": "3",
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                              ],
                             },
                           ],
                         },
@@ -18950,12 +20220,20 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsString": true,
+                              "IsNull": false,
                               "Variable": "$.result.Attributes.n.N",
                             },
                             Object {
-                              "StringEquals": "3",
-                              "Variable": "$.result.Attributes.n.N",
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                                Object {
+                                  "StringEquals": "3",
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                              ],
                             },
                           ],
                         },
@@ -18979,12 +20257,20 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsString": true,
+                              "IsNull": false,
                               "Variable": "$.result.Attributes.n.N",
                             },
                             Object {
-                              "StringEquals": "3",
-                              "Variable": "$.result.Attributes.n.N",
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                                Object {
+                                  "StringEquals": "3",
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                              ],
                             },
                           ],
                         },
@@ -19016,12 +20302,20 @@ Object {
                         Object {
                           "And": Array [
                             Object {
-                              "IsString": true,
+                              "IsNull": false,
                               "Variable": "$.result.Attributes.n.N",
                             },
                             Object {
-                              "StringEquals": "3",
-                              "Variable": "$.result.Attributes.n.N",
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                                Object {
+                                  "StringEquals": "3",
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                              ],
                             },
                           ],
                         },
@@ -19051,12 +20345,20 @@ Object {
                     Object {
                       "And": Array [
                         Object {
-                          "IsString": true,
+                          "IsNull": false,
                           "Variable": "$.result.Attributes.n.N",
                         },
                         Object {
-                          "StringEquals": "3",
-                          "Variable": "$.result.Attributes.n.N",
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.result.Attributes.n.N",
+                            },
+                            Object {
+                              "StringEquals": "3",
+                              "Variable": "$.result.Attributes.n.N",
+                            },
+                          ],
                         },
                       ],
                     },
@@ -19370,12 +20672,20 @@ Object {
                     Object {
                       "And": Array [
                         Object {
-                          "IsString": true,
+                          "IsNull": false,
                           "Variable": "$.result__1.Attributes.n.N",
                         },
                         Object {
-                          "StringEquals": "6",
-                          "Variable": "$.result__1.Attributes.n.N",
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.result__1.Attributes.n.N",
+                            },
+                            Object {
+                              "StringEquals": "6",
+                              "Variable": "$.result__1.Attributes.n.N",
+                            },
+                          ],
                         },
                       ],
                     },
@@ -19391,12 +20701,20 @@ Object {
                     Object {
                       "And": Array [
                         Object {
-                          "IsString": true,
+                          "IsNull": false,
                           "Variable": "$.result__1.Attributes.n.N",
                         },
                         Object {
-                          "StringEquals": "5",
-                          "Variable": "$.result__1.Attributes.n.N",
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.result__1.Attributes.n.N",
+                            },
+                            Object {
+                              "StringEquals": "5",
+                              "Variable": "$.result__1.Attributes.n.N",
+                            },
+                          ],
                         },
                       ],
                     },
@@ -19542,16 +20860,16 @@ Object {
     "return await $SFN.retry(function ()).Payload.str": Object {
       "Branches": Array [
         Object {
-          "StartAt": "return await $AWS.Lambda.Invoke({Function: func, Payload: obj})",
+          "StartAt": "return $AWS.Lambda.Invoke({Function: func, Payload: obj})",
           "States": Object {
-            "1__return await $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
+            "1__return $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
               "End": true,
               "InputPath": "$.heap0",
               "ResultPath": "$",
               "Type": "Pass",
             },
-            "return await $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
-              "Next": "1__return await $AWS.Lambda.Invoke({Function: func, Payload: obj})",
+            "return $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
+              "Next": "1__return $AWS.Lambda.Invoke({Function: func, Payload: obj})",
               "Parameters": Object {
                 "FunctionName": "__REPLACED_TOKEN",
                 "Payload.$": "$.obj",
@@ -20054,6 +21372,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap1[0]",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap1[0]",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap1[0]",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -20183,6 +21519,24 @@ Object {
                       "Variable": "$.input.a",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.a",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -21603,6 +22957,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap7",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap7",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap7",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -21685,6 +23057,24 @@ Object {
                       "Variable": "$.heap1",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap1",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap1",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap1",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -22142,6 +23532,24 @@ Object {
                       "Variable": "$.arr[0]",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.arr[0]",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.arr[0]",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.arr[0]",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -27854,6 +29262,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.f",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.f",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.f",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -27936,6 +29362,24 @@ Object {
                       "Variable": "$.input.f",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.f",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.f",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.f",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -28020,6 +29464,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.t",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.t",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.t",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -28102,6 +29564,24 @@ Object {
                       "Variable": "$.input.t",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.t",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.t",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.t",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -28196,6 +29676,24 @@ Object {
                       "Variable": "$.input.t",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.t",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.t",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.t",
+                      },
+                    ],
+                  },
                 },
               ],
             },

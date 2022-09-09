@@ -106,6 +106,6 @@ export class SelfDestructor extends Construct {
       policy: AwsCustomResourcePolicy.fromSdkCalls({
         resources: [selfDestructMachine.resource.stateMachineArn],
       }),
-    });
+    }).node.addDependency(selfDestructMachine.resource);
   }
 }
