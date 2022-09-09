@@ -46,8 +46,6 @@ export const runtimeTestExecutionContext: RuntimeTestExecutionContext = {
   deployTarget: deploymentTarget as RuntimeTestExecutionContext["deployTarget"],
 };
 
-console.log("runtime test context", runtimeTestExecutionContext);
-
 const clientConfig =
   runtimeTestExecutionContext.deployTarget === "AWS"
     ? {
