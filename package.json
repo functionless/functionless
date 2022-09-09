@@ -86,19 +86,24 @@
     "@aws-cdk/aws-appsync-alpha": "*"
   },
   "dependencies": {
-    "@functionless/ast-reflection": "^0.2.2",
+    "@functionless/ast-reflection": "^0.2.3",
     "@functionless/nodejs-closure-serializer": "^0.1.2",
     "@swc/cli": "^0.1.57",
     "@swc/core": "1.2.245",
     "@swc/register": "^0.1.10",
     "@types/aws-lambda": "^8.10.102",
     "fs-extra": "^10.1.0",
-    "minimatch": "^5.1.0"
+    "minimatch": "^5.1.0",
+    "source-map": "^0.7.4"
   },
   "main": "lib/index.js",
   "license": "Apache-2.0",
   "version": "0.0.0",
   "types": "lib/index.d.ts",
+  "resolutions": {
+    "@types/responselike": "1.0.0",
+    "got": "12.3.1"
+  },
   "lint-staged": {
     "*.{tsx,jsx,ts,js,json,md,css}": [
       "eslint --fix"

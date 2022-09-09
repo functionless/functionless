@@ -1,10 +1,9 @@
 // sourced from the lib.*.d.ts files
 import module from "module";
-import ts from "typescript";
 import globals from "./serialize-globals.json";
 import { callExpr, idExpr, propAccessExpr, stringExpr } from "./serialize-util";
 
-export const Globals = new Map<any, () => ts.Expression>();
+export const Globals = new Map<any, () => string>();
 
 for (const valueName of globals) {
   if (valueName in global) {
@@ -20,7 +19,7 @@ for (const moduleName of module.builtinModules) {
   registerOwnProperties(module, requireModule, true);
 }
 
-function registerValue(value: any, expr: ts.Expression) {
+function registerValue(value: any, expr: string) {
   if (Globals.has(value)) {
     return;
   }
@@ -35,11 +34,7 @@ function registerValue(value: any, expr: ts.Expression) {
   }
 }
 
-function registerOwnProperties(
-  value: any,
-  expr: ts.Expression,
-  isModule: boolean
-) {
+function registerOwnProperties(value: any, expr: string, isModule: boolean) {
   if (
     value &&
     (typeof value === "object" || typeof value === "function") &&

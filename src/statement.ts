@@ -175,9 +175,9 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly initializer: VariableDecl | Identifier,
+    readonly initializer: VariableDeclList | Identifier,
     readonly expr: Expr,
-    readonly body: BlockStmt,
+    readonly body: Stmt,
     /**
      * Whether this is a for-await-of statement
      * ```ts
@@ -188,10 +188,11 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
   ) {
     super(NodeKind.ForOfStmt, span, arguments);
     this.ensure(initializer, "initializer", [
-      NodeKind.VariableDecl,
+      NodeKind.VariableDeclList,
       NodeKind.Identifier,
     ]);
     this.ensure(expr, "expr", ["Expr"]);
+    this.ensure(body, "body", ["Stmt"]);
     this.ensure(isAwait, "isAwait", ["boolean"]);
   }
 }
@@ -216,13 +217,13 @@ export class ForStmt extends BaseStmt<NodeKind.ForStmt> {
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly body: BlockStmt,
+    readonly body: Stmt,
     readonly initializer?: VariableDeclList | Expr,
     readonly condition?: Expr,
     readonly incrementor?: Expr
   ) {
     super(NodeKind.ForStmt, span, arguments);
-    this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(body, "body", ["Stmt"]);
     this.ensure(initializer, "initializer", [
       "undefined",
       "Expr",
@@ -326,11 +327,11 @@ export class WhileStmt extends BaseStmt<NodeKind.WhileStmt> {
      */
     span: Span,
     readonly condition: Expr,
-    readonly block: BlockStmt
+    readonly block: Stmt
   ) {
     super(NodeKind.WhileStmt, span, arguments);
     this.ensure(condition, "condition", ["Expr"]);
-    this.ensure(block, "block", [NodeKind.BlockStmt]);
+    this.ensure(block, "block", ["Stmt"]);
   }
 }
 
@@ -340,11 +341,11 @@ export class DoStmt extends BaseStmt<NodeKind.DoStmt> {
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly block: BlockStmt,
+    readonly block: Stmt,
     readonly condition: Expr
   ) {
     super(NodeKind.DoStmt, span, arguments);
-    this.ensure(block, "block", [NodeKind.BlockStmt]);
+    this.ensure(block, "block", ["Stmt"]);
     this.ensure(condition, "condition", ["Expr"]);
   }
 }

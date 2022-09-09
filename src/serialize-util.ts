@@ -1,91 +1,152 @@
-import ts from "typescript";
+import path from "path";
+import { SourceNode } from "source-map";
+import { FunctionlessNode } from "./node";
 
 export function undefinedExpr() {
-  return ts.factory.createIdentifier("undefined");
+  return "undefined";
 }
 
 export function nullExpr() {
-  return ts.factory.createNull();
+  return "null";
 }
 
 export function trueExpr() {
-  return ts.factory.createTrue();
+  return "true";
 }
 
 export function falseExpr() {
-  return ts.factory.createFalse();
+  return "false";
 }
 
 export function idExpr(name: string) {
-  return ts.factory.createIdentifier(name);
+  return name;
 }
 
 export function stringExpr(name: string) {
-  return ts.factory.createStringLiteral(name);
+  // this seems dangerous - are we handling this right?
+  return `"${name.replaceAll('"', '\\"').replaceAll("\n", "\\n")}"`;
 }
 
 export function numberExpr(num: number) {
-  return ts.factory.createNumericLiteral(num);
+  return num.toString(10);
 }
 
-export function objectExpr(obj: Record<string, ts.Expression>) {
-  return ts.factory.createObjectLiteralExpression(
-    Object.entries(obj).map(([name, val]) =>
-      ts.factory.createPropertyAssignment(name, val)
-    )
+export function bigIntExpr(num: bigint) {
+  return `${num.toString(10)}n`;
+}
+
+export function regExpr(regex: RegExp) {
+  return `/${regex.source}/${regex.flags}`;
+}
+
+export function objectExpr(obj: Record<string, SourceNodeOrString>) {
+  return createSourceNodeWithoutSpan(
+    "{",
+    ...Object.entries(obj).flatMap(([name, val]) => [
+      createSourceNodeWithoutSpan(name, " : ", val),
+      ",",
+    ]),
+    "}"
   );
 }
 
 const propNameRegex = /^[_a-zA-Z][_a-zA-Z0-9]*$/g;
 
-export function propAccessExpr(expr: ts.Expression, name: string) {
-  if (name.match(propNameRegex)) {
-    return ts.factory.createPropertyAccessExpression(expr, name);
+export type SourceNodeOrString = string | SourceNode;
+
+export function createSourceNodeWithoutSpan<S extends SourceNodeOrString[]>(
+  ...exprs: S
+): S extends string ? string : SourceNodeOrString {
+  if (exprs.every((expr) => typeof expr === "string")) {
+    return exprs.join("");
   } else {
-    return ts.factory.createElementAccessExpression(expr, stringExpr(name));
+    return new SourceNode(null, null, "index.js", exprs) as any;
   }
 }
 
-export function assignExpr(left: ts.Expression, right: ts.Expression) {
-  return ts.factory.createBinaryExpression(
-    left,
-    ts.factory.createToken(ts.SyntaxKind.EqualsToken),
-    right
+export function createSourceNode(
+  node: FunctionlessNode,
+  chunks: string | SourceNodeOrString[]
+) {
+  const absoluteFileName = node.getFileName();
+
+  return new SourceNode(
+    node.span[0],
+    node.span[1],
+    path.relative(process.cwd(), absoluteFileName),
+    chunks
   );
 }
 
-export function callExpr(expr: ts.Expression, args: ts.Expression[]) {
-  return ts.factory.createCallExpression(expr, undefined, args);
+export function propAccessExpr<S extends SourceNodeOrString>(
+  expr: S,
+  name: string
+): S extends string ? string : SourceNodeOrString {
+  if (name.match(propNameRegex)) {
+    return createSourceNodeWithoutSpan(expr, ".", name) as S extends string
+      ? string
+      : SourceNodeOrString;
+  } else {
+    return createSourceNodeWithoutSpan(expr, "[", name, "]") as S extends string
+      ? string
+      : SourceNodeOrString;
+  }
 }
 
-export function newExpr(expr: ts.Expression, args: ts.Expression[]) {
-  return ts.factory.createNewExpression(expr, undefined, args);
+export function assignExpr(
+  left: SourceNodeOrString | SourceNode,
+  right: SourceNodeOrString | SourceNode
+) {
+  return createSourceNodeWithoutSpan(left, " = ", right);
 }
 
-export function exprStmt(expr: ts.Expression): ts.Statement {
-  return ts.factory.createExpressionStatement(expr);
+export function callExpr<
+  E extends SourceNodeOrString,
+  A extends SourceNodeOrString
+>(expr: E, args: A[]): E | A extends string ? string : SourceNodeOrString {
+  return createSourceNodeWithoutSpan(
+    expr,
+    "(",
+    ...args.flatMap((arg) => [arg, ","]),
+    ")"
+  ) as E | A extends string ? string : SourceNodeOrString;
+}
+
+export function newExpr(expr: string, args: string[]): string;
+export function newExpr(expr: SourceNodeOrString, args: SourceNodeOrString[]) {
+  return createSourceNodeWithoutSpan(
+    "new ",
+    expr,
+    "(",
+    ...args.flatMap((arg) => [arg, ","]),
+    ")"
+  );
+}
+
+export function exprStmt(expr: SourceNodeOrString | SourceNode) {
+  return createSourceNodeWithoutSpan(expr, ";");
 }
 
 export function setPropertyStmt(
-  on: ts.Expression,
+  on: SourceNodeOrString,
   key: string,
-  value: ts.Expression
+  value: SourceNodeOrString
 ) {
-  return exprStmt(setPropertyExpr(on, key, value));
+  return createSourceNodeWithoutSpan(setPropertyExpr(on, key, value), ";");
 }
 
 export function setPropertyExpr(
-  on: ts.Expression,
+  on: SourceNodeOrString,
   key: string,
-  value: ts.Expression
+  value: SourceNodeOrString
 ) {
   return assignExpr(propAccessExpr(on, key), value);
 }
 
 export function definePropertyExpr(
-  on: ts.Expression,
-  name: ts.Expression,
-  value: ts.Expression
+  on: SourceNodeOrString,
+  name: SourceNodeOrString,
+  value: SourceNodeOrString
 ) {
   return callExpr(propAccessExpr(idExpr("Object"), "defineProperty"), [
     on,
@@ -95,8 +156,8 @@ export function definePropertyExpr(
 }
 
 export function getOwnPropertyDescriptorExpr(
-  obj: ts.Expression,
-  key: ts.Expression
+  obj: SourceNodeOrString,
+  key: SourceNodeOrString
 ) {
   return callExpr(
     propAccessExpr(idExpr("Object"), "getOwnPropertyDescriptor"),

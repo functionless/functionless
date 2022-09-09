@@ -331,9 +331,18 @@ export class CallExpr<
      */
     span: Span,
     readonly expr: E,
-    readonly args: Argument[]
+    readonly args: Argument[],
+    /**
+     * Is this an optionally chained call?
+     *
+     * a?.()
+     */
+    readonly isOptional: boolean | undefined
   ) {
     super(NodeKind.CallExpr, span, arguments);
+    this.ensure(expr, "expr", ["Expr"]);
+    this.ensureArrayOf(args, "args", [NodeKind.Argument]);
+    this.ensure(isOptional, "isOptional", ["boolean", "undefined"]);
   }
 }
 

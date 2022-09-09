@@ -10,6 +10,7 @@ import { isNode } from "../src/guards";
 import {
   serializeClosure,
   SerializeClosureProps,
+  serializeCodeWithSourceMap,
 } from "../src/serialize-closure";
 
 // set to false to inspect generated js files in .test/
@@ -50,8 +51,8 @@ async function expectClosure<F extends AnyFunction>(
   f: F,
   options?: SerializeClosureProps
 ): Promise<F> {
-  const closure = serializeClosure(f, options);
-  expect(closure).toMatchSnapshot();
+  const closure = serializeCodeWithSourceMap(serializeClosure(f, options));
+  // expect(closure).toMatchSnapshot();
   const jsFile = path.join(tmpDir, `${v4()}.js`);
   await fs.promises.writeFile(jsFile, closure);
   // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -605,7 +606,7 @@ test.skip("instantiating the AWS SDK without esbuild", async () => {
       return client.config.endpoint;
     },
     {
-      useESBuild: false,
+      requireModules: false,
     }
   );
   expect(closure()).toEqual("dynamodb.undefined.amazonaws.com");
@@ -629,7 +630,7 @@ test.skip("instantiating the AWS SDK v3 without esbuild", async () => {
       return client.config.serviceId;
     },
     {
-      useESBuild: false,
+      requireModules: false,
     }
   );
 
@@ -669,4 +670,21 @@ test("serialize a proxy", async () => {
   });
 
   expect(closure()).toEqual("hello world");
+});
+
+test("thrown errors map back to source", async () => {
+  const closure = await expectClosure(() => {
+    throw new Error("oops");
+  });
+
+  let failed = false;
+  try {
+    closure();
+  } catch (err) {
+    failed = true;
+    console.log((err as Error).stack);
+  }
+  if (!failed) {
+    fail("expected a thrown erro");
+  }
 });

@@ -227,7 +227,7 @@
     },
     {
       "name": "@functionless/ast-reflection",
-      "version": "^0.2.2",
+      "version": "^0.2.3",
       "type": "runtime"
     },
     {
@@ -257,6 +257,10 @@
     },
     {
       "name": "minimatch",
+      "type": "runtime"
+    },
+    {
+      "name": "source-map",
       "type": "runtime"
     }
   ],
