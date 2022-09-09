@@ -544,17 +544,17 @@ export namespace $SFN {
           };
         }
 
-        const temp = context.newHeapVariable();
+        const heap = context.newHeapVariable();
 
         return {
           Type: "Parallel",
           Branches: [context.aslGraphToStates(functionStates)],
           Next: ASLGraph.DeferNext,
           Retry: retryValues,
-          ResultPath: temp,
+          ResultPath: heap,
           Parameters: context.cloneLexicalScopeParameters(body.expr),
           output: {
-            jsonPath: `${temp}[0]`,
+            jsonPath: `${heap}[0]`,
           },
         };
 
@@ -575,7 +575,7 @@ export namespace $SFN {
             retryValue.constant.length === 0
           ) {
             throw new SynthError(
-              ErrorCodes.Invalid_Input,
+              ErrorCodes.Step_Function_Retry_Invalid_Input,
               "Expected $SFN.retry retry argument to be an array literal which contains only constant values."
             );
           }
@@ -596,14 +596,14 @@ export namespace $SFN {
 
           if (!ErrorEquals || ErrorEquals.some((x) => typeof x !== "string")) {
             throw new SynthError(
-              ErrorCodes.Invalid_Input,
+              ErrorCodes.Step_Function_Retry_Invalid_Input,
               "$SFN.retry retry object must be an array literal of string with at least one value"
             );
           }
 
           if (Object.keys(rest).length !== 0) {
             throw new SynthError(
-              ErrorCodes.Invalid_Input,
+              ErrorCodes.Step_Function_Retry_Invalid_Input,
               "$SFN.retry retry object must only contain keys: ErrorEquals, BackoffRate, IntervalSeconds, or MaxAttempts"
             );
           }
