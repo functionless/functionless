@@ -18376,20 +18376,50 @@ Object {
     "await $SFN.forEach(input.arr, function (n))": Object {
       "ItemsPath": "$.input.arr",
       "Iterator": Object {
-        "StartAt": "return func(n)",
+        "StartAt": "return $SFN.retry(function ())",
         "States": Object {
-          "1__return func(n)": Object {
+          "1__return $SFN.retry(function ())": Object {
             "End": true,
-            "InputPath": "$.heap0",
+            "InputPath": "$.heap1[0]",
             "ResultPath": "$",
             "Type": "Pass",
           },
-          "return func(n)": Object {
-            "InputPath": "$.n",
-            "Next": "1__return func(n)",
-            "Resource": "__REPLACED_TOKEN",
-            "ResultPath": "$.heap0",
-            "Type": "Task",
+          "return $SFN.retry(function ())": Object {
+            "Branches": Array [
+              Object {
+                "StartAt": "return func(n)",
+                "States": Object {
+                  "1__return func(n)": Object {
+                    "End": true,
+                    "InputPath": "$.heap0",
+                    "ResultPath": "$",
+                    "Type": "Pass",
+                  },
+                  "return func(n)": Object {
+                    "InputPath": "$.n",
+                    "Next": "1__return func(n)",
+                    "Resource": "__REPLACED_TOKEN",
+                    "ResultPath": "$.heap0",
+                    "Type": "Task",
+                  },
+                },
+              },
+            ],
+            "Next": "1__return $SFN.retry(function ())",
+            "Parameters": Object {
+              "fnl_context.$": "$.fnl_context",
+              "input.$": "$.input",
+              "n.$": "$.n",
+            },
+            "ResultPath": "$.heap1",
+            "Retry": Array [
+              Object {
+                "ErrorEquals": Array [
+                  "States.ALL",
+                ],
+              },
+            ],
+            "Type": "Parallel",
           },
         },
       },
@@ -18399,7 +18429,7 @@ Object {
         "input.$": "$.input",
         "n.$": "$$.Map.Item.Value",
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap2",
       "Type": "Map",
     },
     "return null": Object {
@@ -18587,32 +18617,32 @@ Object {
   "States": Object {
     "1__return [a, b, c, d, e]": Object {
       "End": true,
-      "InputPath": "$.heap28.arr",
+      "InputPath": "$.heap13.arr",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return [a, b, c, d, e] 1": Object {
       "InputPath": "$.b",
       "Next": "2__return [a, b, c, d, e]",
-      "ResultPath": "$.heap24",
+      "ResultPath": "$.heap9",
       "Type": "Pass",
     },
     "2__return [a, b, c, d, e]": Object {
       "InputPath": "$.c",
       "Next": "3__return [a, b, c, d, e]",
-      "ResultPath": "$.heap25",
+      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "3__return [a, b, c, d, e]": Object {
       "InputPath": "$.d",
       "Next": "4__return [a, b, c, d, e]",
-      "ResultPath": "$.heap26",
+      "ResultPath": "$.heap11",
       "Type": "Pass",
     },
     "4__return [a, b, c, d, e]": Object {
       "InputPath": "$.e",
       "Next": "[a, b, c, d, e]",
-      "ResultPath": "$.heap27",
+      "ResultPath": "$.heap12",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -18628,13 +18658,13 @@ Object {
     "[a, b, c, d, e]": Object {
       "Next": "1__return [a, b, c, d, e]",
       "Parameters": Object {
-        "arr.$": "States.Array($.heap23, $.heap24, $.heap25, $.heap26, $.heap27)",
+        "arr.$": "States.Array($.heap8, $.heap9, $.heap10, $.heap11, $.heap12)",
       },
-      "ResultPath": "$.heap28",
+      "ResultPath": "$.heap13",
       "Type": "Pass",
     },
     "a": Object {
-      "InputPath": "$.heap6[0]",
+      "InputPath": "$.heap2[0]",
       "Next": "b = 0",
       "ResultPath": "$.a",
       "Type": "Pass",
@@ -18642,126 +18672,416 @@ Object {
     "a = await $SFN.retry(function ())": Object {
       "Branches": Array [
         Object {
-          "StartAt": "request = await $AWS.DynamoDB.GetItem({Key: {a: {S: id}}, Table: table})",
+          "StartAt": "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U",
           "States": Object {
-            "1__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1request.Item.n.S": Object {
-              "Next": "throw new StepFunctionError(\\"MyError\\", \\"Because\\")",
-              "Parameters": Object {
-                "Item": Object {
-                  "a": Object {
-                    "S": "key797",
-                  },
-                  "n": Object {
-                    "S.$": "$.heap4",
-                  },
+            "1__return Number(result.Attributes.n.N)": Object {
+              "End": true,
+              "InputPath": "$.heap1.num",
+              "ResultPath": "$",
+              "Type": "Pass",
+            },
+            "assign__return Number(result.Attributes.n.N)": Object {
+              "InputPath": "$.result.Attributes.n.N",
+              "Next": "1__return Number(result.Attributes.n.N)",
+              "ResultPath": "$.heap1.num",
+              "Type": "Pass",
+            },
+            "checkStringOutput__return Number(result.Attributes.n.N)": Object {
+              "Choices": Array [
+                Object {
+                  "IsNumeric": true,
+                  "Next": "1__return Number(result.Attributes.n.N)",
+                  "Variable": "$.heap1.num",
                 },
-                "TableName": "__REPLACED_TOKEN",
-              },
-              "Resource": "arn:aws:states:::aws-sdk:dynamodb:putItem",
-              "ResultPath": "$.heap5",
-              "Type": "Task",
+              ],
+              "Default": "null__return Number(result.Attributes.n.N)",
+              "Type": "Choice",
             },
-            "1__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1request.Item.n.S 1": Object {
-              "InputPath": "$.heap3.string",
-              "Next": "1__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1request.Item.n.S",
-              "ResultPath": "$.heap4",
-              "Type": "Pass",
-            },
-            "1request.Item.n.S ?? \\"\\"": Object {
-              "InputPath": "$.heap1",
-              "Next": "1request.Item.n.S ?? \\"\\" 1",
-              "ResultPath": "$.heap2",
-              "Type": "Pass",
-            },
-            "1request.Item.n.S ?? \\"\\" 1": Object {
-              "Next": "1__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1request.Item.n.S 1",
+            "format__return Number(result.Attributes.n.N)": Object {
+              "Next": "checkStringOutput__return Number(result.Attributes.n.N)",
               "Parameters": Object {
-                "string.$": "States.Format('{}1',$.heap2)",
+                "num.$": "States.StringToJson($.result.Attributes.n.N)",
               },
-              "ResultPath": "$.heap3",
-              "Type": "Pass",
-            },
-            "false__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1request.Item": Object {
-              "Next": "1request.Item.n.S ?? \\"\\"",
-              "Result": "",
               "ResultPath": "$.heap1",
               "Type": "Pass",
             },
-            "if(request.Item.n.S === \\"111\\")": Object {
+            "if(result.Attributes.n.N === \\"3\\")": Object {
               "Choices": Array [
                 Object {
                   "And": Array [
                     Object {
-                      "IsPresent": true,
-                      "Variable": "$.request.Item.n.S",
+                      "And": Array [
+                        Object {
+                          "IsPresent": true,
+                          "Variable": "$.result.Attributes.n.N",
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNull": false,
+                              "Variable": "$.result.Attributes.n.N",
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                                Object {
+                                  "StringEquals": "3",
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    Object {
+                      "IsPresent": false,
+                      "Variable": "$.result.Attributes.n.N",
+                    },
+                  ],
+                  "Next": "null__return Number(result.Attributes.n.N)",
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsPresent": true,
+                          "Variable": "$.result.Attributes.n.N",
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNull": false,
+                              "Variable": "$.result.Attributes.n.N",
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                                Object {
+                                  "StringEquals": "3",
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
                     },
                     Object {
                       "And": Array [
                         Object {
                           "IsString": true,
-                          "Variable": "$.request.Item.n.S",
+                          "Variable": "$.result.Attributes.n.N",
                         },
                         Object {
-                          "StringEquals": "111",
-                          "Variable": "$.request.Item.n.S",
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.result.Attributes.n.N",
+                            },
+                            Object {
+                              "StringEquals": "",
+                              "Variable": "$.result.Attributes.n.N",
+                            },
+                          ],
                         },
                       ],
                     },
                   ],
-                  "Next": "return 1",
+                  "Next": "zero__return Number(result.Attributes.n.N)",
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsPresent": true,
+                          "Variable": "$.result.Attributes.n.N",
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNull": false,
+                              "Variable": "$.result.Attributes.n.N",
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                                Object {
+                                  "StringEquals": "3",
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    Object {
+                      "IsNull": true,
+                      "Variable": "$.result.Attributes.n.N",
+                    },
+                  ],
+                  "Next": "zero__return Number(result.Attributes.n.N)",
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsPresent": true,
+                          "Variable": "$.result.Attributes.n.N",
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNull": false,
+                              "Variable": "$.result.Attributes.n.N",
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                                Object {
+                                  "StringEquals": "3",
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    Object {
+                      "IsString": true,
+                      "Variable": "$.result.Attributes.n.N",
+                    },
+                  ],
+                  "Next": "format__return Number(result.Attributes.n.N)",
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsPresent": true,
+                          "Variable": "$.result.Attributes.n.N",
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNull": false,
+                              "Variable": "$.result.Attributes.n.N",
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                                Object {
+                                  "StringEquals": "3",
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    Object {
+                      "IsNumeric": true,
+                      "Variable": "$.result.Attributes.n.N",
+                    },
+                  ],
+                  "Next": "assign__return Number(result.Attributes.n.N)",
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsPresent": true,
+                          "Variable": "$.result.Attributes.n.N",
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNull": false,
+                              "Variable": "$.result.Attributes.n.N",
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                                Object {
+                                  "StringEquals": "3",
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.result.Attributes.n.N",
+                        },
+                        Object {
+                          "BooleanEquals": true,
+                          "Variable": "$.result.Attributes.n.N",
+                        },
+                      ],
+                    },
+                  ],
+                  "Next": "one__return Number(result.Attributes.n.N)",
+                },
+                Object {
+                  "And": Array [
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsPresent": true,
+                          "Variable": "$.result.Attributes.n.N",
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsNull": false,
+                              "Variable": "$.result.Attributes.n.N",
+                            },
+                            Object {
+                              "And": Array [
+                                Object {
+                                  "IsString": true,
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                                Object {
+                                  "StringEquals": "3",
+                                  "Variable": "$.result.Attributes.n.N",
+                                },
+                              ],
+                            },
+                          ],
+                        },
+                      ],
+                    },
+                    Object {
+                      "And": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.result.Attributes.n.N",
+                        },
+                        Object {
+                          "BooleanEquals": false,
+                          "Variable": "$.result.Attributes.n.N",
+                        },
+                      ],
+                    },
+                  ],
+                  "Next": "zero__return Number(result.Attributes.n.N)",
                 },
                 Object {
                   "And": Array [
                     Object {
                       "IsPresent": true,
-                      "Variable": "$.request.Item.n.S",
+                      "Variable": "$.result.Attributes.n.N",
                     },
                     Object {
-                      "IsNull": false,
-                      "Variable": "$.request.Item.n.S",
+                      "And": Array [
+                        Object {
+                          "IsNull": false,
+                          "Variable": "$.result.Attributes.n.N",
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.result.Attributes.n.N",
+                            },
+                            Object {
+                              "StringEquals": "3",
+                              "Variable": "$.result.Attributes.n.N",
+                            },
+                          ],
+                        },
+                      ],
                     },
                   ],
-                  "Next": "true__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1request.Item.",
+                  "Next": "null__return Number(result.Attributes.n.N)",
                 },
               ],
-              "Default": "false__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1request.Item",
+              "Default": "throw new StepFunctionError(\\"MyError\\", \\"Because\\")",
               "Type": "Choice",
             },
-            "request": Object {
-              "InputPath": "$.heap0",
-              "Next": "if(request.Item.n.S === \\"111\\")",
-              "ResultPath": "$.request",
+            "null__return Number(result.Attributes.n.N)": Object {
+              "InputPath": "$.fnl_context.null",
+              "Next": "1__return Number(result.Attributes.n.N)",
+              "ResultPath": "$.heap1.num",
               "Type": "Pass",
             },
-            "request = await $AWS.DynamoDB.GetItem({Key: {a: {S: id}}, Table: table})": Object {
-              "Next": "request",
+            "one__return Number(result.Attributes.n.N)": Object {
+              "Next": "1__return Number(result.Attributes.n.N)",
+              "Result": 1,
+              "ResultPath": "$.heap1.num",
+              "Type": "Pass",
+            },
+            "result": Object {
+              "InputPath": "$.heap0",
+              "Next": "if(result.Attributes.n.N === \\"3\\")",
+              "ResultPath": "$.result",
+              "Type": "Pass",
+            },
+            "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U": Object {
+              "Next": "result",
               "Parameters": Object {
-                "Key": Object {
-                  "a": Object {
-                    "S": "key797",
+                "ExpressionAttributeValues": Object {
+                  ":inc": Object {
+                    "N": "1",
+                  },
+                  ":init": Object {
+                    "N": "0",
                   },
                 },
+                "Key": Object {
+                  "a": Object {
+                    "S": "key102",
+                  },
+                },
+                "ReturnValues": "ALL_NEW",
                 "TableName": "__REPLACED_TOKEN",
+                "UpdateExpression": "SET n = if_not_exists(n, :init) + :inc",
               },
-              "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
+              "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
               "ResultPath": "$.heap0",
               "Type": "Task",
-            },
-            "return 1": Object {
-              "End": true,
-              "Result": 1,
-              "ResultPath": "$",
-              "Type": "Pass",
             },
             "throw new StepFunctionError(\\"MyError\\", \\"Because\\")": Object {
               "Cause": "\\"Because\\"",
               "Error": "MyError",
               "Type": "Fail",
             },
-            "true__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1request.Item.": Object {
-              "InputPath": "$.request.Item.n.S",
-              "Next": "1request.Item.n.S ?? \\"\\"",
-              "ResultPath": "$.heap1",
+            "zero__return Number(result.Attributes.n.N)": Object {
+              "Next": "1__return Number(result.Attributes.n.N)",
+              "Result": 0,
+              "ResultPath": "$.heap1.num",
               "Type": "Pass",
             },
           },
@@ -18771,7 +19091,7 @@ Object {
       "Parameters": Object {
         "fnl_context.$": "$.fnl_context",
       },
-      "ResultPath": "$.heap6",
+      "ResultPath": "$.heap2",
       "Retry": Array [
         Object {
           "ErrorEquals": Array [
@@ -18788,7 +19108,7 @@ Object {
       "Type": "Pass",
     },
     "b = await $SFN.retry(function ())": Object {
-      "InputPath": "$.heap7[0]",
+      "InputPath": "$.heap3[0]",
       "Next": "c = 0",
       "ResultPath": "$.b",
       "Type": "Pass",
@@ -18800,7 +19120,7 @@ Object {
       "Type": "Pass",
     },
     "c = await $SFN.retry([{ErrorEquals: [\\"MyError\\"], BackoffRate: 1, IntervalSe": Object {
-      "InputPath": "$.heap8[0]",
+      "InputPath": "$.heap4[0]",
       "Next": "d = 0",
       "ResultPath": "$.c",
       "Type": "Pass",
@@ -18836,7 +19156,7 @@ Object {
       "Type": "Pass",
     },
     "d = await $SFN.retry([{ErrorEquals: [\\"MyError2\\"], BackoffRate: 1, IntervalS": Object {
-      "InputPath": "$.heap15[0]",
+      "InputPath": "$.heap5[0]",
       "Next": "e = 0",
       "ResultPath": "$.d",
       "Type": "Pass",
@@ -18848,7 +19168,7 @@ Object {
       "Type": "Pass",
     },
     "e = await $SFN.retry([{ErrorEquals: [\\"MyError2\\"], BackoffRate: 1, IntervalS": Object {
-      "InputPath": "$.heap22[0]",
+      "InputPath": "$.heap7[0]",
       "Next": "return [a, b, c, d, e]",
       "ResultPath": "$.e",
       "Type": "Pass",
@@ -18856,7 +19176,7 @@ Object {
     "return [a, b, c, d, e]": Object {
       "InputPath": "$.a",
       "Next": "1__return [a, b, c, d, e] 1",
-      "ResultPath": "$.heap23",
+      "ResultPath": "$.heap8",
       "Type": "Pass",
     },
     "try": Object {
@@ -18887,7 +19207,7 @@ Object {
         "b.$": "$.b",
         "fnl_context.$": "$.fnl_context",
       },
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap3",
       "Retry": Array [
         Object {
           "ErrorEquals": Array [
@@ -18926,7 +19246,7 @@ Object {
         "c.$": "$.c",
         "fnl_context.$": "$.fnl_context",
       },
-      "ResultPath": "$.heap8",
+      "ResultPath": "$.heap4",
       "Retry": Array [
         Object {
           "BackoffRate": 1,
@@ -18942,127 +19262,12 @@ Object {
     "try 2": Object {
       "Branches": Array [
         Object {
-          "StartAt": "{ Item } = await $AWS.DynamoDB.GetItem({Key: {a: {S: id}}, Table: table})",
+          "StartAt": "throw new StepFunctionError(\\"MyError\\", \\"Because\\") 3",
           "States": Object {
-            "1Item.n.S ?? \\"\\"": Object {
-              "InputPath": "$.heap10",
-              "Next": "1Item.n.S ?? \\"\\" 1",
-              "ResultPath": "$.heap11",
-              "Type": "Pass",
-            },
-            "1Item.n.S ?? \\"\\" 1": Object {
-              "Next": "1__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1Item.n.S ?? \\"\\"}} 1",
-              "Parameters": Object {
-                "string.$": "States.Format('{}1',$.heap11)",
-              },
-              "ResultPath": "$.heap12",
-              "Type": "Pass",
-            },
-            "1__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1Item.n.S ?? \\"\\"}}": Object {
-              "Next": "throw new StepFunctionError(\\"MyError\\", \\"Because\\") 3",
-              "Parameters": Object {
-                "Item": Object {
-                  "a": Object {
-                    "S": "key797",
-                  },
-                  "n": Object {
-                    "S.$": "$.heap13",
-                  },
-                },
-                "TableName": "__REPLACED_TOKEN",
-              },
-              "Resource": "arn:aws:states:::aws-sdk:dynamodb:putItem",
-              "ResultPath": "$.heap14",
-              "Type": "Task",
-            },
-            "1__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1Item.n.S ?? \\"\\"}} 1": Object {
-              "InputPath": "$.heap12.string",
-              "Next": "1__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1Item.n.S ?? \\"\\"}}",
-              "ResultPath": "$.heap13",
-              "Type": "Pass",
-            },
-            "Item": Object {
-              "InputPath": "$.heap9['Item']",
-              "Next": "if(Item.n.S === \\"11111\\")",
-              "ResultPath": "$.Item",
-              "Type": "Pass",
-            },
-            "false__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1Item.n.S ?? ": Object {
-              "Next": "1Item.n.S ?? \\"\\"",
-              "Result": "",
-              "ResultPath": "$.heap10",
-              "Type": "Pass",
-            },
-            "if(Item.n.S === \\"11111\\")": Object {
-              "Choices": Array [
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsPresent": true,
-                      "Variable": "$.Item.n.S",
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.Item.n.S",
-                        },
-                        Object {
-                          "StringEquals": "11111",
-                          "Variable": "$.Item.n.S",
-                        },
-                      ],
-                    },
-                  ],
-                  "Next": "return 4",
-                },
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsPresent": true,
-                      "Variable": "$.Item.n.S",
-                    },
-                    Object {
-                      "IsNull": false,
-                      "Variable": "$.Item.n.S",
-                    },
-                  ],
-                  "Next": "true__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1Item.n.S ?? \\"",
-                },
-              ],
-              "Default": "false__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1Item.n.S ?? ",
-              "Type": "Choice",
-            },
-            "return 4": Object {
-              "End": true,
-              "Result": 4,
-              "ResultPath": "$",
-              "Type": "Pass",
-            },
             "throw new StepFunctionError(\\"MyError\\", \\"Because\\") 3": Object {
               "Cause": "\\"Because\\"",
               "Error": "MyError",
               "Type": "Fail",
-            },
-            "true__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1Item.n.S ?? \\"": Object {
-              "InputPath": "$.Item.n.S",
-              "Next": "1Item.n.S ?? \\"\\"",
-              "ResultPath": "$.heap10",
-              "Type": "Pass",
-            },
-            "{ Item } = await $AWS.DynamoDB.GetItem({Key: {a: {S: id}}, Table: table})": Object {
-              "Next": "Item",
-              "Parameters": Object {
-                "Key": Object {
-                  "a": Object {
-                    "S": "key797",
-                  },
-                },
-                "TableName": "__REPLACED_TOKEN",
-              },
-              "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
-              "ResultPath": "$.heap9",
-              "Type": "Task",
             },
           },
         },
@@ -19084,7 +19289,7 @@ Object {
         "d.$": "$.d",
         "fnl_context.$": "$.fnl_context",
       },
-      "ResultPath": "$.heap15",
+      "ResultPath": "$.heap5",
       "Retry": Array [
         Object {
           "BackoffRate": 1,
@@ -19100,95 +19305,33 @@ Object {
     "try 3": Object {
       "Branches": Array [
         Object {
-          "StartAt": "response = await $AWS.DynamoDB.GetItem({Key: {a: {S: id}}, Table: table})",
+          "StartAt": "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U 1",
           "States": Object {
-            "1__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1response.Item.n.": Object {
-              "Next": "if(response.Item.n.S === \\"111111\\")",
-              "Parameters": Object {
-                "Item": Object {
-                  "a": Object {
-                    "S": "key797",
-                  },
-                  "n": Object {
-                    "S.$": "$.heap20",
-                  },
-                },
-                "TableName": "__REPLACED_TOKEN",
-              },
-              "Resource": "arn:aws:states:::aws-sdk:dynamodb:putItem",
-              "ResultPath": "$.heap21",
-              "Type": "Task",
-            },
-            "1__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1response.Item.n. 1": Object {
-              "InputPath": "$.heap19.string",
-              "Next": "1__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1response.Item.n.",
-              "ResultPath": "$.heap20",
-              "Type": "Pass",
-            },
-            "1response.Item.n.S ?? \\"\\"": Object {
-              "InputPath": "$.heap17",
-              "Next": "1response.Item.n.S ?? \\"\\" 1",
-              "ResultPath": "$.heap18",
-              "Type": "Pass",
-            },
-            "1response.Item.n.S ?? \\"\\" 1": Object {
-              "Next": "1__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1response.Item.n. 1",
-              "Parameters": Object {
-                "string.$": "States.Format('{}1',$.heap18)",
-              },
-              "ResultPath": "$.heap19",
-              "Type": "Pass",
-            },
-            "false__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1response.Ite": Object {
-              "Next": "1response.Item.n.S ?? \\"\\"",
-              "Result": "",
-              "ResultPath": "$.heap17",
-              "Type": "Pass",
-            },
-            "if(response.Item.n.S === \\"111111\\")": Object {
+            "if(result.Attributes.n.N === \\"6\\")": Object {
               "Choices": Array [
                 Object {
                   "And": Array [
                     Object {
                       "IsPresent": true,
-                      "Variable": "$.response.Item.n.S",
+                      "Variable": "$.result__1.Attributes.n.N",
                     },
                     Object {
                       "And": Array [
                         Object {
-                          "IsString": true,
-                          "Variable": "$.response.Item.n.S",
+                          "IsNull": false,
+                          "Variable": "$.result__1.Attributes.n.N",
                         },
                         Object {
-                          "StringEquals": "111111",
-                          "Variable": "$.response.Item.n.S",
-                        },
-                      ],
-                    },
-                  ],
-                  "Next": "throw new StepFunctionError(\\"MyError\\", \\"Because\\") 4",
-                },
-              ],
-              "Default": "throw new StepFunctionError(\\"MyError2\\", \\"Because\\")",
-              "Type": "Choice",
-            },
-            "if(response.Item.n.S === \\"1111111\\")": Object {
-              "Choices": Array [
-                Object {
-                  "And": Array [
-                    Object {
-                      "IsPresent": true,
-                      "Variable": "$.response.Item.n.S",
-                    },
-                    Object {
-                      "And": Array [
-                        Object {
-                          "IsString": true,
-                          "Variable": "$.response.Item.n.S",
-                        },
-                        Object {
-                          "StringEquals": "1111111",
-                          "Variable": "$.response.Item.n.S",
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.result__1.Attributes.n.N",
+                            },
+                            Object {
+                              "StringEquals": "6",
+                              "Variable": "$.result__1.Attributes.n.N",
+                            },
+                          ],
                         },
                       ],
                     },
@@ -19199,37 +19342,63 @@ Object {
                   "And": Array [
                     Object {
                       "IsPresent": true,
-                      "Variable": "$.response.Item.n.S",
+                      "Variable": "$.result__1.Attributes.n.N",
                     },
                     Object {
-                      "IsNull": false,
-                      "Variable": "$.response.Item.n.S",
+                      "And": Array [
+                        Object {
+                          "IsNull": false,
+                          "Variable": "$.result__1.Attributes.n.N",
+                        },
+                        Object {
+                          "And": Array [
+                            Object {
+                              "IsString": true,
+                              "Variable": "$.result__1.Attributes.n.N",
+                            },
+                            Object {
+                              "StringEquals": "5",
+                              "Variable": "$.result__1.Attributes.n.N",
+                            },
+                          ],
+                        },
+                      ],
                     },
                   ],
-                  "Next": "true__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1response.Item",
+                  "Next": "throw new StepFunctionError(\\"MyError\\", \\"Because\\") 4",
                 },
               ],
-              "Default": "false__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1response.Ite",
+              "Default": "throw new StepFunctionError(\\"MyError2\\", \\"Because\\")",
               "Type": "Choice",
             },
-            "response": Object {
-              "InputPath": "$.heap16",
-              "Next": "if(response.Item.n.S === \\"1111111\\")",
-              "ResultPath": "$.response",
+            "result 1": Object {
+              "InputPath": "$.heap6",
+              "Next": "if(result.Attributes.n.N === \\"6\\")",
+              "ResultPath": "$.result__1",
               "Type": "Pass",
             },
-            "response = await $AWS.DynamoDB.GetItem({Key: {a: {S: id}}, Table: table})": Object {
-              "Next": "response",
+            "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U 1": Object {
+              "Next": "result 1",
               "Parameters": Object {
-                "Key": Object {
-                  "a": Object {
-                    "S": "key797",
+                "ExpressionAttributeValues": Object {
+                  ":inc": Object {
+                    "N": "1",
+                  },
+                  ":init": Object {
+                    "N": "0",
                   },
                 },
+                "Key": Object {
+                  "a": Object {
+                    "S": "key102",
+                  },
+                },
+                "ReturnValues": "ALL_NEW",
                 "TableName": "__REPLACED_TOKEN",
+                "UpdateExpression": "SET n = if_not_exists(n, :init) + :inc",
               },
-              "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
-              "ResultPath": "$.heap16",
+              "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+              "ResultPath": "$.heap6",
               "Type": "Task",
             },
             "return 6": Object {
@@ -19247,12 +19416,6 @@ Object {
               "Cause": "\\"Because\\"",
               "Error": "MyError2",
               "Type": "Fail",
-            },
-            "true__await $AWS.DynamoDB.PutItem({Item: {a: {S: id}, n: {S: 1response.Item": Object {
-              "InputPath": "$.response.Item.n.S",
-              "Next": "1response.Item.n.S ?? \\"\\"",
-              "ResultPath": "$.heap17",
-              "Type": "Pass",
             },
           },
         },
@@ -19275,7 +19438,7 @@ Object {
         "e.$": "$.e",
         "fnl_context.$": "$.fnl_context",
       },
-      "ResultPath": "$.heap22",
+      "ResultPath": "$.heap7",
       "Retry": Array [
         Object {
           "BackoffRate": 1,
@@ -19333,9 +19496,9 @@ exports[`call lambda $AWS invoke 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return await $AWS.Lambda.Invoke({Function: func, Payload: obj}).Payload.": Object {
+    "1__return await $SFN.retry(function ()).Payload.str": Object {
       "End": true,
-      "InputPath": "$.heap0.Payload.str",
+      "InputPath": "$.heap1[0].Payload.str",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -19350,22 +19513,51 @@ Object {
       "Type": "Pass",
     },
     "obj = {str: \\"hello world\\"}": Object {
-      "Next": "return await $AWS.Lambda.Invoke({Function: func, Payload: obj}).Payload.str",
+      "Next": "return await $SFN.retry(function ()).Payload.str",
       "Result": Object {
         "str": "hello world",
       },
       "ResultPath": "$.obj",
       "Type": "Pass",
     },
-    "return await $AWS.Lambda.Invoke({Function: func, Payload: obj}).Payload.str": Object {
-      "Next": "1__return await $AWS.Lambda.Invoke({Function: func, Payload: obj}).Payload.",
+    "return await $SFN.retry(function ()).Payload.str": Object {
+      "Branches": Array [
+        Object {
+          "StartAt": "return await $AWS.Lambda.Invoke({Function: func, Payload: obj})",
+          "States": Object {
+            "1__return await $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
+              "End": true,
+              "InputPath": "$.heap0",
+              "ResultPath": "$",
+              "Type": "Pass",
+            },
+            "return await $AWS.Lambda.Invoke({Function: func, Payload: obj})": Object {
+              "Next": "1__return await $AWS.Lambda.Invoke({Function: func, Payload: obj})",
+              "Parameters": Object {
+                "FunctionName": "__REPLACED_TOKEN",
+                "Payload.$": "$.obj",
+              },
+              "Resource": "__REPLACED_ARN",
+              "ResultPath": "$.heap0",
+              "Type": "Task",
+            },
+          },
+        },
+      ],
+      "Next": "1__return await $SFN.retry(function ()).Payload.str",
       "Parameters": Object {
-        "FunctionName": "__REPLACED_TOKEN",
-        "Payload.$": "$.obj",
+        "fnl_context.$": "$.fnl_context",
+        "obj.$": "$.obj",
       },
-      "Resource": "__REPLACED_ARN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
+      "ResultPath": "$.heap1",
+      "Retry": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+        },
+      ],
+      "Type": "Parallel",
     },
   },
 }
@@ -19769,7 +19961,7 @@ exports[`conditionals 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__if(await func())": Object {
+    "1__if(await await $SFN.retry(function ()))": Object {
       "Choices": Array [
         Object {
           "And": Array [
@@ -19777,11 +19969,11 @@ Object {
               "And": Array [
                 Object {
                   "IsPresent": true,
-                  "Variable": "$.heap0",
+                  "Variable": "$.heap1[0]",
                 },
                 Object {
                   "IsNull": false,
-                  "Variable": "$.heap0",
+                  "Variable": "$.heap1[0]",
                 },
               ],
             },
@@ -19791,18 +19983,18 @@ Object {
                   "And": Array [
                     Object {
                       "IsString": true,
-                      "Variable": "$.heap0",
+                      "Variable": "$.heap1[0]",
                     },
                     Object {
                       "Not": Object {
                         "And": Array [
                           Object {
                             "IsString": true,
-                            "Variable": "$.heap0",
+                            "Variable": "$.heap1[0]",
                           },
                           Object {
                             "StringEquals": "",
-                            "Variable": "$.heap0",
+                            "Variable": "$.heap1[0]",
                           },
                         ],
                       },
@@ -19813,18 +20005,18 @@ Object {
                   "And": Array [
                     Object {
                       "IsNumeric": true,
-                      "Variable": "$.heap0",
+                      "Variable": "$.heap1[0]",
                     },
                     Object {
                       "Not": Object {
                         "And": Array [
                           Object {
                             "IsNumeric": true,
-                            "Variable": "$.heap0",
+                            "Variable": "$.heap1[0]",
                           },
                           Object {
                             "NumericEquals": 0,
-                            "Variable": "$.heap0",
+                            "Variable": "$.heap1[0]",
                           },
                         ],
                       },
@@ -19835,11 +20027,11 @@ Object {
                   "And": Array [
                     Object {
                       "IsBoolean": true,
-                      "Variable": "$.heap0",
+                      "Variable": "$.heap1[0]",
                     },
                     Object {
                       "BooleanEquals": true,
-                      "Variable": "$.heap0",
+                      "Variable": "$.heap1[0]",
                     },
                   ],
                 },
@@ -19863,12 +20055,41 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "if(await func())": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__if(await func())",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
+    "if(await await $SFN.retry(function ()))": Object {
+      "Branches": Array [
+        Object {
+          "StartAt": "return func()",
+          "States": Object {
+            "1__return func()": Object {
+              "End": true,
+              "InputPath": "$.heap0",
+              "ResultPath": "$",
+              "Type": "Pass",
+            },
+            "return func()": Object {
+              "InputPath": "$.fnl_context.null",
+              "Next": "1__return func()",
+              "Resource": "__REPLACED_TOKEN",
+              "ResultPath": "$.heap0",
+              "Type": "Task",
+            },
+          },
+        },
+      ],
+      "Next": "1__if(await await $SFN.retry(function ()))",
+      "Parameters": Object {
+        "fnl_context.$": "$.fnl_context",
+        "input.$": "$.input",
+      },
+      "ResultPath": "$.heap1",
+      "Retry": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+        },
+      ],
+      "Type": "Parallel",
     },
     "if(input.a)": Object {
       "Choices": Array [
@@ -19947,7 +20168,7 @@ Object {
               ],
             },
           ],
-          "Next": "if(await func())",
+          "Next": "if(await await $SFN.retry(function ()))",
         },
       ],
       "Default": "return \\"noop\\"",
@@ -25194,31 +25415,31 @@ exports[`map 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__l = await func().map(function (x))": Object {
-      "Next": "check__1__l = await func().map(function (x))",
+    "1__l = await $SFN.retry(function ()).map(function (x))": Object {
+      "Next": "check__1__l = await $SFN.retry(function ()).map(function (x))",
       "Parameters": Object {
-        "arr.$": "$.heap0",
+        "arr.$": "$.heap1[0]",
         "arrStr": "[null",
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "1__return l[0]l[1]l[2]l2[0]l2[1]l2[2]a": Object {
       "End": true,
-      "InputPath": "$.heap20.string",
+      "InputPath": "$.heap21.string",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return nixhead": Object {
-      "InputPath": "$.heap8.string",
+      "InputPath": "$.heap9.string",
       "Next": "handleResult__l2 = input.arr.map(function (x,i,[ head ]))",
-      "ResultPath": "$.heap4.arr[0]",
+      "ResultPath": "$.heap5.arr[0]",
       "Type": "Pass",
     },
     "1__return nx": Object {
-      "InputPath": "$.heap3.string",
-      "Next": "handleResult__1__l = await func().map(function (x))",
-      "ResultPath": "$.heap1.arr[0]",
+      "InputPath": "$.heap4.string",
+      "Next": "handleResult__1__l = await $SFN.retry(function ()).map(function (x))",
+      "ResultPath": "$.heap2.arr[0]",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -25235,11 +25456,11 @@ Object {
     "a": Object {
       "InputPath": "$.a",
       "Next": "l[0]l[1]l[2]l2[0]l2[1]l2[2]a",
-      "ResultPath": "$.heap19",
+      "ResultPath": "$.heap20",
       "Type": "Pass",
     },
     "a = \\"\\"": Object {
-      "Next": "l = await func().map(function (x))",
+      "Next": "l = await $SFN.retry(function ()).map(function (x))",
       "Result": "",
       "ResultPath": "$.a",
       "Type": "Pass",
@@ -25247,11 +25468,11 @@ Object {
     "a = aax": Object {
       "InputPath": "$.a",
       "Next": "x 3",
-      "ResultPath": "$.heap10",
+      "ResultPath": "$.heap11",
       "Type": "Pass",
     },
     "a = aax 1": Object {
-      "InputPath": "$.heap12.string",
+      "InputPath": "$.heap13.string",
       "Next": "return a",
       "ResultPath": "$.a",
       "Type": "Pass",
@@ -25259,20 +25480,20 @@ Object {
     "aax": Object {
       "Next": "a = aax 1",
       "Parameters": Object {
-        "string.$": "States.Format('{}a{}',$.heap10,$.heap11)",
+        "string.$": "States.Format('{}a{}',$.heap11,$.heap12)",
       },
-      "ResultPath": "$.heap12",
+      "ResultPath": "$.heap13",
       "Type": "Pass",
     },
-    "check__1__l = await func().map(function (x))": Object {
+    "check__1__l = await $SFN.retry(function ()).map(function (x))": Object {
       "Choices": Array [
         Object {
           "IsPresent": true,
           "Next": "x",
-          "Variable": "$.heap1.arr[0]",
+          "Variable": "$.heap2.arr[0]",
         },
       ],
-      "Default": "end__1__l = await func().map(function (x))",
+      "Default": "end__1__l = await $SFN.retry(function ()).map(function (x))",
       "Type": "Choice",
     },
     "check__input.arr.map(function (x))": Object {
@@ -25280,7 +25501,7 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "x 2",
-          "Variable": "$.heap9.arr[0]",
+          "Variable": "$.heap10.arr[0]",
         },
       ],
       "Default": "end__input.arr.map(function (x))",
@@ -25291,67 +25512,67 @@ Object {
         Object {
           "IsPresent": true,
           "Next": "function (x,i,[ head ])",
-          "Variable": "$.heap4.arr[0]",
+          "Variable": "$.heap5.arr[0]",
         },
       ],
       "Default": "end__l2 = input.arr.map(function (x,i,[ head ]))",
       "Type": "Choice",
     },
-    "end__1__l = await func().map(function (x))": Object {
-      "Next": "set__end__1__l = await func().map(function (x))",
+    "end__1__l = await $SFN.retry(function ()).map(function (x))": Object {
+      "Next": "set__end__1__l = await $SFN.retry(function ()).map(function (x))",
       "Parameters": Object {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap2.arrStr))",
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "end__input.arr.map(function (x))": Object {
       "Next": "set__end__input.arr.map(function (x))",
       "Parameters": Object {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap9.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap10.arrStr))",
       },
-      "ResultPath": "$.heap9",
+      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "end__l2 = input.arr.map(function (x,i,[ head ]))": Object {
       "Next": "set__end__l2 = input.arr.map(function (x,i,[ head ]))",
       "Parameters": Object {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap4.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]', $.heap5.arrStr))",
       },
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap5",
       "Type": "Pass",
     },
     "function (x,i,[ head ])": Object {
-      "InputPath": "$.heap4.arr[0].item",
+      "InputPath": "$.heap5.arr[0].item",
       "Next": "i",
       "ResultPath": "$.x__1",
       "Type": "Pass",
     },
-    "handleResult__1__l = await func().map(function (x))": Object {
-      "Next": "check__1__l = await func().map(function (x))",
+    "handleResult__1__l = await $SFN.retry(function ()).map(function (x))": Object {
+      "Next": "check__1__l = await $SFN.retry(function ()).map(function (x))",
       "Parameters": Object {
-        "arr.$": "$.heap1.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+        "arr.$": "$.heap2.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap2.arrStr, States.JsonToString($.heap2.arr[0]))",
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "handleResult__input.arr.map(function (x))": Object {
       "Next": "check__input.arr.map(function (x))",
       "Parameters": Object {
-        "arr.$": "$.heap9.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap9.arrStr, States.JsonToString($.heap9.arr[0]))",
+        "arr.$": "$.heap10.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap10.arrStr, States.JsonToString($.heap10.arr[0]))",
       },
-      "ResultPath": "$.heap9",
+      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "handleResult__l2 = input.arr.map(function (x,i,[ head ]))": Object {
       "Next": "check__l2 = input.arr.map(function (x,i,[ head ]))",
       "Parameters": Object {
-        "arr.$": "$.heap4.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap4.arrStr, States.JsonToString($.heap4.arr[0]))",
+        "arr.$": "$.heap5.arr[1:]",
+        "arrStr.$": "States.Format('{},{}', $.heap5.arrStr, States.JsonToString($.heap5.arr[0]))",
       },
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap5",
       "Type": "Pass",
     },
     "head": Object {
@@ -25363,11 +25584,11 @@ Object {
     "head 1": Object {
       "InputPath": "$.head",
       "Next": "nixhead",
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap8",
       "Type": "Pass",
     },
     "i": Object {
-      "InputPath": "$.heap4.arr[0].index",
+      "InputPath": "$.heap5.arr[0].index",
       "Next": "head",
       "ResultPath": "$.i",
       "Type": "Pass",
@@ -25378,24 +25599,54 @@ Object {
         "arr.$": "$.input.arr",
         "arrStr": "[null",
       },
-      "ResultPath": "$.heap9",
+      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "l": Object {
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap2",
       "Next": "l2 = input.arr.map(function (x,i,[ head ]))",
       "ResultPath": "$.l",
       "Type": "Pass",
     },
-    "l = await func().map(function (x))": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__l = await func().map(function (x))",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
+    "l = await $SFN.retry(function ()).map(function (x))": Object {
+      "Branches": Array [
+        Object {
+          "StartAt": "return func()",
+          "States": Object {
+            "1__return func()": Object {
+              "End": true,
+              "InputPath": "$.heap0",
+              "ResultPath": "$",
+              "Type": "Pass",
+            },
+            "return func()": Object {
+              "InputPath": "$.fnl_context.null",
+              "Next": "1__return func()",
+              "Resource": "__REPLACED_TOKEN",
+              "ResultPath": "$.heap0",
+              "Type": "Task",
+            },
+          },
+        },
+      ],
+      "Next": "1__l = await $SFN.retry(function ()).map(function (x))",
+      "Parameters": Object {
+        "a.$": "$.a",
+        "fnl_context.$": "$.fnl_context",
+        "input.$": "$.input",
+      },
+      "ResultPath": "$.heap1",
+      "Retry": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+        },
+      ],
+      "Type": "Parallel",
     },
     "l2": Object {
-      "InputPath": "$.heap4",
+      "InputPath": "$.heap5",
       "Next": "input.arr.map(function (x))",
       "ResultPath": "$.l2",
       "Type": "Pass",
@@ -25417,7 +25668,7 @@ Object {
         "index.$": "$$.Map.Item.Index",
         "item.$": "$$.Map.Item.Value",
       },
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap5",
       "ResultSelector": Object {
         "arr.$": "$",
         "arrStr": "[null",
@@ -25427,101 +25678,101 @@ Object {
     "l2[0]": Object {
       "InputPath": "$.l2[0]",
       "Next": "l2[1]",
-      "ResultPath": "$.heap16",
+      "ResultPath": "$.heap17",
       "Type": "Pass",
     },
     "l2[1]": Object {
       "InputPath": "$.l2[1]",
       "Next": "l2[2]",
-      "ResultPath": "$.heap17",
+      "ResultPath": "$.heap18",
       "Type": "Pass",
     },
     "l2[2]": Object {
       "InputPath": "$.l2[2]",
       "Next": "a",
-      "ResultPath": "$.heap18",
+      "ResultPath": "$.heap19",
       "Type": "Pass",
     },
     "l[0]l[1]l[2]l2[0]l2[1]l2[2]a": Object {
       "Next": "1__return l[0]l[1]l[2]l2[0]l2[1]l2[2]a",
       "Parameters": Object {
-        "string.$": "States.Format('{}{}{}{}{}{}{}',$.heap13,$.heap14,$.heap15,$.heap16,$.heap17,$.heap18,$.heap19)",
+        "string.$": "States.Format('{}{}{}{}{}{}{}',$.heap14,$.heap15,$.heap16,$.heap17,$.heap18,$.heap19,$.heap20)",
       },
-      "ResultPath": "$.heap20",
+      "ResultPath": "$.heap21",
       "Type": "Pass",
     },
     "l[1]": Object {
       "InputPath": "$.l[1]",
       "Next": "l[2]",
-      "ResultPath": "$.heap14",
+      "ResultPath": "$.heap15",
       "Type": "Pass",
     },
     "l[2]": Object {
       "InputPath": "$.l[2]",
       "Next": "l2[0]",
-      "ResultPath": "$.heap15",
+      "ResultPath": "$.heap16",
       "Type": "Pass",
     },
     "nixhead": Object {
       "Next": "1__return nixhead",
       "Parameters": Object {
-        "string.$": "States.Format('n{}{}{}',$.heap5,$.heap6,$.heap7)",
+        "string.$": "States.Format('n{}{}{}',$.heap6,$.heap7,$.heap8)",
       },
-      "ResultPath": "$.heap8",
+      "ResultPath": "$.heap9",
       "Type": "Pass",
     },
     "nx": Object {
       "Next": "1__return nx",
       "Parameters": Object {
-        "string.$": "States.Format('n{}',$.heap2)",
+        "string.$": "States.Format('n{}',$.heap3)",
       },
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap4",
       "Type": "Pass",
     },
     "return a": Object {
       "InputPath": "$.a",
       "Next": "handleResult__input.arr.map(function (x))",
-      "ResultPath": "$.heap9.arr[0]",
+      "ResultPath": "$.heap10.arr[0]",
       "Type": "Pass",
     },
     "return l[0]l[1]l[2]l2[0]l2[1]l2[2]a": Object {
       "InputPath": "$.l[0]",
       "Next": "l[1]",
-      "ResultPath": "$.heap13",
+      "ResultPath": "$.heap14",
       "Type": "Pass",
     },
     "return nixhead": Object {
       "InputPath": "$.i",
       "Next": "x 1",
-      "ResultPath": "$.heap5",
+      "ResultPath": "$.heap6",
       "Type": "Pass",
     },
     "return nx": Object {
       "InputPath": "$.x",
       "Next": "nx",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "set__end__1__l = await $SFN.retry(function ()).map(function (x))": Object {
+      "InputPath": "$.heap2.result[1:]",
+      "Next": "l",
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
-    "set__end__1__l = await func().map(function (x))": Object {
-      "InputPath": "$.heap1.result[1:]",
-      "Next": "l",
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
     "set__end__input.arr.map(function (x))": Object {
-      "InputPath": "$.heap9.result[1:]",
+      "InputPath": "$.heap10.result[1:]",
       "Next": "return l[0]l[1]l[2]l2[0]l2[1]l2[2]a",
-      "ResultPath": "$.heap9",
+      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "set__end__l2 = input.arr.map(function (x,i,[ head ]))": Object {
-      "InputPath": "$.heap4.result[1:]",
+      "InputPath": "$.heap5.result[1:]",
       "Next": "l2",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap5",
       "Type": "Pass",
     },
     "x": Object {
-      "InputPath": "$.heap1.arr[0]",
+      "InputPath": "$.heap2.arr[0]",
       "Next": "return nx",
       "ResultPath": "$.x",
       "Type": "Pass",
@@ -25529,11 +25780,11 @@ Object {
     "x 1": Object {
       "InputPath": "$.x__1",
       "Next": "head 1",
-      "ResultPath": "$.heap6",
+      "ResultPath": "$.heap7",
       "Type": "Pass",
     },
     "x 2": Object {
-      "InputPath": "$.heap9.arr[0]",
+      "InputPath": "$.heap10.arr[0]",
       "Next": "a = aax",
       "ResultPath": "$.x__2",
       "Type": "Pass",
@@ -25541,7 +25792,7 @@ Object {
     "x 3": Object {
       "InputPath": "$.x__2",
       "Next": "aax",
-      "ResultPath": "$.heap11",
+      "ResultPath": "$.heap12",
       "Type": "Pass",
     },
   },

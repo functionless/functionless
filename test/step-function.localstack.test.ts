@@ -345,10 +345,12 @@ runtimeTestSuite<
       return new StepFunction(parent, "sfn2", async () => {
         const obj = { str: "hello world" };
         return (
-          await $AWS.Lambda.Invoke({
-            Function: func,
-            Payload: obj,
-          })
+          await $SFN.retry(async () =>
+            $AWS.Lambda.Invoke({
+              Function: func,
+              Payload: obj,
+            })
+          )
         ).Payload.str;
       });
     },
@@ -404,7 +406,7 @@ runtimeTestSuite<
         }
       );
       return new StepFunction(parent, "sfn2", async (input) => {
-        await $SFN.forEach(input.arr, (n) => func(n));
+        await $SFN.forEach(input.arr, (n) => $SFN.retry(async () => func(n)));
       });
     },
     null,
@@ -603,7 +605,7 @@ runtimeTestSuite<
       );
       return new StepFunction(parent, "sfn2", async (input) => {
         if (input.a) {
-          if (await func()) {
+          if (await await $SFN.retry(() => func())) {
             return input.b;
           }
         }
@@ -734,7 +736,7 @@ runtimeTestSuite<
       );
       return new StepFunction(parent, "sfn2", async (input) => {
         let a = "";
-        const l = (await func()).map((x) => `n${x}`);
+        const l = (await $SFN.retry(() => func())).map((x) => `n${x}`);
         const l2 = input.arr.map((x, i, [head]) => `n${i}${x}${head}`);
         input.arr.map((x) => {
           a = `${a}a${x}`;
