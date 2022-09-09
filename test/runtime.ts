@@ -296,7 +296,6 @@ export function runtimeTestSuite<
                   key,
                   stack.resolve(
                     new CfnOutput(construct, `${key}_out`, {
-                      exportName: construct.node.addr + key,
                       value,
                     }).logicalId
                   ),
@@ -306,7 +305,6 @@ export function runtimeTestSuite<
             } as ResourceReference<any, any>;
           }
         } catch (e) {
-          console.log(e);
           /** if the node fails to add, remove it from the stack before continuing */
           stack.node.tryRemoveChild(construct.node.id);
           return {

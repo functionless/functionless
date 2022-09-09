@@ -117,6 +117,7 @@ export class SelfDestructor extends Construct {
       policy: AwsCustomResourcePolicy.fromSdkCalls({
         resources: [selfDestructMachine.resource.stateMachineArn],
       }),
+      installLatestAwsSdk: false,
     });
   }
 }
