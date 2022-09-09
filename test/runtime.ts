@@ -71,29 +71,29 @@ const clientConfig =
 const sts = new STS(clientConfig);
 
 async function getCfnClient() {
-  //clientConfig: ServiceConfigurationOptions
-  const sdkProvider = await SdkProvider
-    .withAwsCliCompatibleDefaults
-    //   {
-    //   httpOptions: clientConfig as any,
-    // }
-    ();
+  const sdkProvider = await SdkProvider.withAwsCliCompatibleDefaults(
+    runtimeTestExecutionContext.deployTarget === "LOCALSTACK"
+      ? {
+          httpOptions: clientConfig as any,
+        }
+      : undefined
+  );
 
-  // if (clientConfig) {
-  //   const credentials = clientConfig.credentialProvider
-  //     ? await clientConfig.credentialProvider.resolvePromise()
-  //     : clientConfig.credentials;
-  //   // @ts-ignore - assigning to private members
-  //   sdkProvider.sdkOptions = {
-  //     // @ts-ignore - using private members
-  //     ...sdkProvider.sdkOptions,
-  //     endpoint: clientConfig.endpoint,
-  //     s3ForcePathStyle: clientConfig.s3ForcePathStyle,
-  //     accessKeyId: credentials!.accessKeyId,
-  //     secretAccessKey: credentials!.secretAccessKey,
-  //     credentials: credentials,
-  //   };
-  // }
+  if (runtimeTestExecutionContext.deployTarget === "LOCALSTACK") {
+    const credentials = clientConfig.credentialProvider
+      ? await clientConfig.credentialProvider.resolvePromise()
+      : clientConfig.credentials;
+    // @ts-ignore - assigning to private members
+    sdkProvider.sdkOptions = {
+      // @ts-ignore - using private members
+      ...sdkProvider.sdkOptions,
+      endpoint: clientConfig.endpoint,
+      s3ForcePathStyle: clientConfig.s3ForcePathStyle,
+      accessKeyId: credentials!.accessKeyId,
+      secretAccessKey: credentials!.secretAccessKey,
+      credentials: credentials,
+    };
+  }
 
   return new CloudFormationDeployments({
     sdkProvider,
@@ -247,6 +247,7 @@ export function runtimeTestSuite<
   let testResolvedContexts:
     | ResolvedTestResource<BaseOutput, any, TestExtras>[]
     | undefined;
+
   // an optional callback the caller can send which is called after deploy and before
   // all test methods are invoked.
   let beforeAllTests:
@@ -294,7 +295,7 @@ export function runtimeTestSuite<
                 Object.entries(output.outputs).map(([key, value]) => [
                   key,
                   stack.resolve(
-                    new CfnOutput(construct, key, {
+                    new CfnOutput(construct, `${key}_out`, {
                       exportName: construct.node.addr + key,
                       value,
                     }).logicalId
@@ -305,6 +306,7 @@ export function runtimeTestSuite<
             } as ResourceReference<any, any>;
           }
         } catch (e) {
+          console.log(e);
           /** if the node fails to add, remove it from the stack before continuing */
           stack.node.tryRemoveChild(construct.node.id);
           return {
