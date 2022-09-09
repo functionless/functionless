@@ -190,8 +190,8 @@
       "name": "test",
       "description": "Run tests",
       "env": {
-        "NODE_OPTIONS": "--max-old-space-size=4096",
-        "TEST_DEPLOY_TARGET": "AWS"
+        "TEST_DEPLOY_TARGET": "AWS",
+        "NODE_OPTIONS": "--max-old-space-size=4096"
       },
       "steps": [
         {

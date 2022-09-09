@@ -332,6 +332,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap2",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap2",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap2",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -615,6 +633,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap2",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap2",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap2",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -892,6 +928,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap2",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap2",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap2",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -1136,6 +1190,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap2",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap2",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap2",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -1356,6 +1428,24 @@ Object {
                       "Variable": "$.heap2",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap2",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap2",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap2",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -1882,6 +1972,24 @@ Object {
                       "Variable": "$.input.value",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.value",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.value",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.value",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -2723,6 +2831,24 @@ Object {
                       "Variable": "$.input.value",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.value",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.value",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.value",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -4178,6 +4304,24 @@ Object {
                       },
                     ],
                   },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.heap12",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.heap12",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.heap12",
+                        },
+                      ],
+                    },
+                  },
                 ],
               },
             ],
@@ -4263,6 +4407,24 @@ Object {
                       },
                     ],
                   },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.heap15",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.heap15",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.heap15",
+                        },
+                      ],
+                    },
+                  },
                 ],
               },
             ],
@@ -4347,6 +4509,24 @@ Object {
                         "Variable": "$.heap19",
                       },
                     ],
+                  },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.heap19",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.heap19",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.heap19",
+                        },
+                      ],
+                    },
                   },
                 ],
               },
@@ -4649,6 +4829,24 @@ Object {
                       },
                     ],
                   },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.a",
+                        },
+                      ],
+                    },
+                  },
                 ],
               },
             ],
@@ -4733,6 +4931,24 @@ Object {
                         "Variable": "$.input.a",
                       },
                     ],
+                  },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.a",
+                        },
+                      ],
+                    },
                   },
                 ],
               },
@@ -5190,6 +5406,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.a",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -5273,6 +5507,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.a",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -5351,6 +5603,24 @@ Object {
                         "Variable": "$.input.b",
                       },
                     ],
+                  },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.b",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.b",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.b",
+                        },
+                      ],
+                    },
                   },
                 ],
               },
@@ -5435,6 +5705,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.a",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.a",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -5517,6 +5805,24 @@ Object {
                       "Variable": "$.input.b",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.b",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.b",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.b",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -5602,6 +5908,24 @@ Object {
                         "Variable": "$.input.a",
                       },
                     ],
+                  },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.a",
+                        },
+                      ],
+                    },
                   },
                 ],
               },
@@ -5808,6 +6132,24 @@ Object {
                         "Variable": "$.input.a",
                       },
                     ],
+                  },
+                  Object {
+                    "Not": Object {
+                      "Or": Array [
+                        Object {
+                          "IsBoolean": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsNumeric": true,
+                          "Variable": "$.input.a",
+                        },
+                        Object {
+                          "IsString": true,
+                          "Variable": "$.input.a",
+                        },
+                      ],
+                    },
                   },
                 ],
               },
@@ -9005,6 +9347,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.i[0]",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.i[0]",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.i[0]",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -11687,6 +12047,24 @@ Object {
                     },
                   ],
                 },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.heap0",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.heap0",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.heap0",
+                      },
+                    ],
+                  },
+                },
               ],
             },
           ],
@@ -12081,6 +12459,24 @@ Object {
                       "Variable": "$.input.b",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.b",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.b",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.b",
+                      },
+                    ],
+                  },
                 },
               ],
             },
@@ -15702,6 +16098,24 @@ Object {
                       "Variable": "$.input.cond",
                     },
                   ],
+                },
+                Object {
+                  "Not": Object {
+                    "Or": Array [
+                      Object {
+                        "IsBoolean": true,
+                        "Variable": "$.input.cond",
+                      },
+                      Object {
+                        "IsNumeric": true,
+                        "Variable": "$.input.cond",
+                      },
+                      Object {
+                        "IsString": true,
+                        "Variable": "$.input.cond",
+                      },
+                    ],
+                  },
                 },
               ],
             },
