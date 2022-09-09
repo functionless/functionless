@@ -514,7 +514,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         return [a, b, c, d, e];
       });
     },
-    [1, 2, 3, 5, 6]
+    [3, 2, 3, 5, 6]
   );
 
   test(
