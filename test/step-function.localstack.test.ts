@@ -552,7 +552,7 @@ runtimeTestSuite<
         return [a, b, c, d, e];
       });
     },
-    [1, 2, 3, 5, 6]
+    [3, 2, 3, 5, 6]
   );
 
   test(
