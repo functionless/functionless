@@ -13,7 +13,7 @@ import {
   StepFunctionError,
 } from "../src";
 import { makeIntegration } from "../src/integration";
-import { RuntimeTestExecutionContext, runtimeTestSuite } from "./runtime";
+import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
 import { testStepFunction } from "./runtime-util";
 import { normalizeCDKJson } from "./util";
 
@@ -22,7 +22,7 @@ import { normalizeCDKJson } from "./util";
 const localstackClientConfig: FunctionProps = {
   timeout: Duration.seconds(20),
   clientConfigRetriever:
-    RuntimeTestExecutionContext.deployTarget === "AWS"
+    runtimeTestExecutionContext.deployTarget === "AWS"
       ? undefined
       : () => ({
           endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,

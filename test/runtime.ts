@@ -15,27 +15,41 @@ import AWS, {
 import { Construct } from "constructs";
 import { asyncSynth } from "../src/async-synth";
 import { Function } from "../src/function";
-import { SelfDestructor } from "./self-destructor";
+import { SelfDestructor, SelfDestructorProps } from "./self-destructor";
 
-// const isGithub = !!process.env.CI;
+const selfDestructDelay = Number(process.env.TEST_SELF_DESTRUCT_DELAY_SECONDS);
+const deploymentTarget = process.env.TEST_DEPLOY_TARGET ?? "LOCALSTACK";
+
+export interface RuntimeTestExecutionContext {
+  stackSuffix?: string;
+  selfDestructProps: SelfDestructorProps;
+  stackRetentionPolicy: "RETAIN" | "DELETE" | "SELF_DESTRUCT";
+  deployTarget: "AWS" | "LOCALSTACK";
+}
 
 // https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
-export const RuntimeTestExecutionContext = {
+export const runtimeTestExecutionContext: RuntimeTestExecutionContext = {
   stackSuffix: process.env.GITHUB_REF
     ? `-${process.env.GITHUB_REF?.replace(/\//g, "-")}`
     : undefined,
-  // default: false unless CI is set
-  destroyStack: !!process.env.TEST_DESTROY_STACKS,
+  selfDestructProps: {
+    selfDestructAfterSeconds: Number.isNaN(selfDestructDelay)
+      ? undefined
+      : selfDestructDelay,
+  } as SelfDestructorProps,
+  // RETAIN | SELF_DESTRUCT | DELETE ; default: SELF_DESTRUCT
+  stackRetentionPolicy: (process.env.TEST_STACK_RETENTION_POLICY ??
+    (deploymentTarget === "LOCALSTACK"
+      ? "RETAIN"
+      : "SELF_DESTRUCT")) as RuntimeTestExecutionContext["stackRetentionPolicy"],
   // AWS | LOCALSTACK ; default: LOCALSTACK
-  deployTarget: (process.env.TEST_DEPLOY_TARGET ?? "LOCALSTACK") as
-    | "AWS"
-    | "LOCALSTACK",
+  deployTarget: deploymentTarget as RuntimeTestExecutionContext["deployTarget"],
 };
 
-console.log("runtime test context", RuntimeTestExecutionContext);
+console.log("runtime test context", runtimeTestExecutionContext);
 
 const clientConfig =
-  RuntimeTestExecutionContext.deployTarget === "AWS"
+  runtimeTestExecutionContext.deployTarget === "AWS"
     ? {
         region: "us-east-1",
         credentialProvider: new AWS.CredentialProviderChain(
@@ -206,12 +220,12 @@ export function runtimeTestSuite<
   let testContexts: DeployResult<BaseOutput>[];
 
   const fullStackName = `${stackName}${
-    RuntimeTestExecutionContext.stackSuffix ?? ""
+    runtimeTestExecutionContext.stackSuffix ?? ""
   }`;
   const app = new App();
   const stack = new Stack(app, fullStackName, {
     env:
-      RuntimeTestExecutionContext.deployTarget === "AWS"
+      runtimeTestExecutionContext.deployTarget === "AWS"
         ? undefined
         : {
             account: "000000000000",
@@ -219,7 +233,13 @@ export function runtimeTestSuite<
           },
   });
 
-  new SelfDestructor(stack, "selfDestruct");
+  if (runtimeTestExecutionContext.stackRetentionPolicy === "SELF_DESTRUCT") {
+    new SelfDestructor(
+      stack,
+      "selfDestruct",
+      runtimeTestExecutionContext.selfDestructProps
+    );
+  }
 
   let stackArtifact: cxapi.CloudFormationStackArtifact | undefined;
   let cfnClient: CloudFormationDeployments | undefined;
@@ -407,7 +427,10 @@ export function runtimeTestSuite<
   });
 
   afterAll(async () => {
-    if (stackArtifact && RuntimeTestExecutionContext.destroyStack) {
+    if (
+      stackArtifact &&
+      runtimeTestExecutionContext.stackRetentionPolicy === "DELETE"
+    ) {
       await cfnClient?.destroyStack({
         stack: stackArtifact!,
       });

@@ -95,10 +95,11 @@ test-app$ yarn watch
 
 ### Test Options
 
-| Env                 | Description                                                                                                           |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| TEST_DEPLOY_TARGET  | Deploy to `AWS` (with default credential chain) or `LOCALSTACK`, Default: `LOCALSTACK`                                |
-| TEST_DESTROY_STACKS | When truthy, will destroy any stacks created when the runtime test suite completes, Default: False (unless `CI=true`) |
+| Env                              | Description                                                                                                                              |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| TEST_DEPLOY_TARGET               | Deploy to `AWS` (with default credential chain) or `LOCALSTACK`, Default: `LOCALSTACK`                                                   |
+| TEST_STACK_RETENTION_POLICY      | After tests complete, `RETAIN`, `DELETE`, or `SELF_DESTRUCT` (delete after `TEST_SELF_DESTRUCT_DELAY_SECONDS`). Default: `SELF_DESTRUCT` |
+| TEST_SELF_DESTRUCT_DELAY_SECONDS | Number of seconds to wait before self destructing the stack, Default: 12 hours (43200s)                                                  |
 
 ### Website
 

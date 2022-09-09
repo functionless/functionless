@@ -7,14 +7,14 @@ import {
   JsonSecret,
   TextSecret,
 } from "../src";
-import { RuntimeTestExecutionContext, runtimeTestSuite } from "./runtime";
+import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
 
 // inject the localstack client config into the lambda clients
 // without this configuration, the functions will try to hit AWS proper
 const localstackClientConfig: FunctionProps = {
   timeout: Duration.seconds(20),
   clientConfigRetriever:
-    RuntimeTestExecutionContext.deployTarget === "AWS"
+    runtimeTestExecutionContext.deployTarget === "AWS"
       ? undefined
       : () => ({
           endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,

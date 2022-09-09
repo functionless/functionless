@@ -7,11 +7,9 @@ import {
 import { Construct } from "constructs";
 import { $AWS, $SFN, Function, StepFunction, StepFunctionError } from "../src";
 
-export interface SelfDestructorProps {
-  /**
-   * Default: 3600. (1 hour)
-   */
-  pollIntervalSeconds?: number;
+export interface SelfDestructorProps extends SelfDestructorMachineProps {}
+
+export interface SelfDestructorMachineProps {
   /**
    * Default: 43200 (12 hours)
    */
@@ -30,25 +28,29 @@ export class SelfDestructor extends Construct {
       resourceName: stack.stackName,
     });
 
-    const timestampOffsetAfterCurrent = new Function(
+    /**
+     * It is not possible to do timestamp math in StepFunctions unfortunately.
+     *
+     * Returns `true` if `timestamp + offset` is before the current date (`Date.now()`).
+     */
+    const dateAddSeconds = new Function(
       this,
-      "timestampOffsetAfterCurrent",
+      "timestampOffsetBeforeCurrent",
       async (input: {
-        timestamp: string;
-        offset: number;
-      }): Promise<boolean> => {
+        timestamp: Date | string;
+        offsetSeconds: number;
+      }): Promise<string> => {
         const date = new Date(input.timestamp);
-        date.setSeconds(date.getSeconds() + input.offset);
-        return Date.now() < date.getMilliseconds();
+        date.setSeconds(date.getSeconds() + input.offsetSeconds);
+        return date.toISOString();
       }
     );
 
-    // TODO: add option to turn on and off
-    // TODO: add option to change the default destroy time
     const selfDestructMachine = new StepFunction(
       this,
       "selfDestruct",
-      async () => {
+      async (input: SelfDestructorMachineProps) => {
+        let destructTime = "";
         do {
           const stackResult = await $AWS.SDK.CloudFormation.describeStacks(
             {
@@ -61,23 +63,19 @@ export class SelfDestructor extends Construct {
             }
           );
 
-          const currentStack = stackResult.Stacks
-            ? stackResult.Stacks[0] ?? null
-            : null;
+          const currentStack = stackResult.Stacks?.[0] ?? null;
           if (!currentStack) {
             throw new StepFunctionError("StackNotFound", "Stack was not found");
           }
 
-          const updateTime =
-            currentStack.LastUpdatedTime ?? currentStack.CreationTime;
+          const stackChangeTime = (currentStack.LastUpdatedTime ??
+            currentStack.CreationTime) as unknown as string;
 
-          if (
-            await timestampOffsetAfterCurrent({
-              // https://github.com/functionless/functionless/issues/489
-              timestamp: updateTime as unknown as string,
-              offset: props?.selfDestructAfterSeconds ?? 43200,
-            })
-          ) {
+          // if we made it through a wait period and stackChangeTime is still the same the last iteration, destroy the stack
+          if (destructTime === stackChangeTime) {
+            /**
+             * Stack deletion happens asynchronously after this call succeeds.
+             */
             await $AWS.SDK.CloudFormation.deleteStack(
               {
                 StackName: stack.stackName,
@@ -89,7 +87,17 @@ export class SelfDestructor extends Construct {
             return null;
           }
 
-          $SFN.waitFor(props?.pollIntervalSeconds ?? 3600);
+          // add the destruct delay to the last update or creation time.
+          const offsetTime = await dateAddSeconds({
+            timestamp: stackChangeTime,
+            offsetSeconds: input.selfDestructAfterSeconds ?? 43200,
+          });
+
+          // set the base time to the destruct time, if these are the same after selfDestructAfterSeconds, destroy the stack
+          destructTime = stackChangeTime as unknown as string;
+
+          // wait until selfDestructAfterSeconds + stackChangeTime
+          $SFN.waitUntil(offsetTime);
         } while (true);
       }
     );
@@ -101,11 +109,14 @@ export class SelfDestructor extends Construct {
         physicalResourceId: PhysicalResourceId.fromResponse("executionArn"),
         parameters: {
           stateMachineArn: selfDestructMachine.resource.stateMachineArn,
+          input: JSON.stringify({
+            selfDestructAfterSeconds: props?.selfDestructAfterSeconds,
+          } as SelfDestructorMachineProps),
         },
       },
       policy: AwsCustomResourcePolicy.fromSdkCalls({
         resources: [selfDestructMachine.resource.stateMachineArn],
       }),
-    }).node.addDependency(selfDestructMachine.resource);
+    });
   }
 }

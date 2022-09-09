@@ -24,7 +24,7 @@ import {
   StepFunction,
   Table,
 } from "../src";
-import { RuntimeTestExecutionContext, runtimeTestSuite } from "./runtime";
+import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
 import { testFunction } from "./runtime-util";
 
 // inject the localstack client config into the lambda clients
@@ -32,7 +32,7 @@ import { testFunction } from "./runtime-util";
 const localstackClientConfig: FunctionProps = {
   timeout: Duration.seconds(20),
   clientConfigRetriever:
-    RuntimeTestExecutionContext.deployTarget === "AWS"
+    runtimeTestExecutionContext.deployTarget === "AWS"
       ? undefined
       : () => ({
           endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
