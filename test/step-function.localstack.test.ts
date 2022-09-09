@@ -10,6 +10,7 @@ import {
   $SFN,
   Table,
   FunctionProps,
+  StepFunctionError,
 } from "../src";
 import { makeIntegration } from "../src/integration";
 import { RuntimeTestExecutionContext, runtimeTestSuite } from "./runtime";
@@ -421,6 +422,137 @@ runtimeTestSuite<
       });
     },
     [1, 2]
+  );
+
+  test(
+    "call $SFN retry",
+    (parent) => {
+      const id = `key${Math.floor(Math.random() * 1000)}`;
+      const table = new Table<{ a: string; n: number }, "a">(parent, "table", {
+        partitionKey: {
+          name: "a",
+          type: AttributeType.STRING,
+        },
+      });
+      return new StepFunction(parent, "sfn2", async () => {
+        // retry and then succeed - 3
+        const a = await $SFN.retry(async () => {
+          const result = await $AWS.DynamoDB.UpdateItem({
+            Key: {
+              a: { S: id },
+            },
+            Table: table,
+            UpdateExpression: "SET n = if_not_exists(n, :init) + :inc",
+            ReturnValues: "ALL_NEW",
+            ExpressionAttributeValues: {
+              ":init": { N: "0" },
+              ":inc": { N: "1" },
+            },
+          });
+          if (result.Attributes?.n?.N === "3") {
+            return Number(result.Attributes?.n.N);
+          }
+          throw new StepFunctionError("MyError", "Because");
+        });
+
+        // retry and fail
+        let b = 0;
+        try {
+          b = await $SFN.retry(async () => {
+            throw new StepFunctionError("MyError", "Because");
+          });
+        } catch {
+          b = 2;
+        }
+
+        // retry with custom error and fail
+        let c = 0;
+        try {
+          c = await $SFN.retry(
+            [
+              {
+                ErrorEquals: ["MyError"],
+                BackoffRate: 1,
+                IntervalSeconds: 1,
+                MaxAttempts: 1,
+              },
+            ],
+            async () => {
+              throw new StepFunctionError("MyError", "Because");
+            }
+          );
+        } catch {
+          c = 3;
+        }
+
+        // retry defined, but different error type, fail
+        let d = 0;
+        try {
+          d = await $SFN.retry(
+            [
+              {
+                ErrorEquals: ["MyError2"],
+                BackoffRate: 1,
+                IntervalSeconds: 1,
+                MaxAttempts: 1,
+              },
+            ],
+            async () => {
+              throw new StepFunctionError("MyError", "Because");
+            }
+          );
+        } catch {
+          d = 5;
+        }
+
+        // retry multiple error types - 111111
+        let e = 0;
+        try {
+          e = await $SFN.retry(
+            [
+              {
+                ErrorEquals: ["MyError2"],
+                BackoffRate: 1,
+                IntervalSeconds: 1,
+                MaxAttempts: 2,
+              },
+              {
+                ErrorEquals: ["MyError"],
+                BackoffRate: 1,
+                IntervalSeconds: 1,
+                MaxAttempts: 2,
+              },
+            ],
+            async () => {
+              const result = await $AWS.DynamoDB.UpdateItem({
+                Key: {
+                  a: { S: id },
+                },
+                Table: table,
+                UpdateExpression: "SET n = if_not_exists(n, :init) + :inc",
+                ReturnValues: "ALL_NEW",
+                ExpressionAttributeValues: {
+                  ":init": { N: "0" },
+                  ":inc": { N: "1" },
+                },
+              });
+              if (result.Attributes?.n?.N === "6") {
+                return 6;
+              }
+              if (result.Attributes?.n?.N === "5") {
+                throw new StepFunctionError("MyError", "Because");
+              }
+              throw new StepFunctionError("MyError2", "Because");
+            }
+          );
+        } catch {
+          e = 7;
+        }
+
+        return [a, b, c, d, e];
+      });
+    },
+    [1, 2, 3, 5, 6]
   );
 
   test(
