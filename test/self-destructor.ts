@@ -1,8 +1,9 @@
-import { Stack } from "aws-cdk-lib";
+import { ArnFormat, Stack } from "aws-cdk-lib";
 import {
   AwsCustomResource,
   AwsCustomResourcePolicy,
   PhysicalResourceId,
+  PhysicalResourceIdReference,
 } from "aws-cdk-lib/custom-resources";
 import { Construct } from "constructs";
 import { $AWS, $SFN, Function, StepFunction, StepFunctionError } from "../src";
@@ -119,8 +120,24 @@ export class SelfDestructor extends Construct {
           } as SelfDestructorMachineProps),
         },
       },
+      onDelete: {
+        action: "stopExecution",
+        service: "StepFunctions",
+        parameters: {
+          executionArn: new PhysicalResourceIdReference(),
+        },
+      },
       policy: AwsCustomResourcePolicy.fromSdkCalls({
-        resources: [selfDestructMachine.resource.stateMachineArn],
+        resources: [
+          selfDestructMachine.resource.stateMachineArn,
+          // execution arn
+          stack.formatArn({
+            resource: "execution",
+            resourceName: "*",
+            service: "states",
+            arnFormat: ArnFormat.COLON_RESOURCE_NAME,
+          }),
+        ],
       }),
       installLatestAwsSdk: false,
     });
