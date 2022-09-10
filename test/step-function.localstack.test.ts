@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { Duration, aws_dynamodb } from "aws-cdk-lib";
+import { Duration, aws_dynamodb, RemovalPolicy } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
@@ -15,7 +15,7 @@ import {
   StepFunctionError,
 } from "../src";
 import { makeIntegration } from "../src/integration";
-import { DEPLOY_AWS, localstackTestSuite } from "./localstack";
+import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
 import { testStepFunction } from "./runtime-util";
 import { normalizeCDKJson } from "./util";
 
@@ -23,11 +23,12 @@ import { normalizeCDKJson } from "./util";
 // without this configuration, the functions will try to hit AWS proper
 const localstackClientConfig: FunctionProps = {
   timeout: Duration.seconds(20),
-  clientConfigRetriever: DEPLOY_AWS
-    ? undefined
-    : () => ({
-        endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
-      }),
+  clientConfigRetriever:
+    runtimeTestExecutionContext.deployTarget === "AWS"
+      ? undefined
+      : () => ({
+          endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
+        }),
 };
 
 interface TestExpressStepFunctionBase {
@@ -60,16 +61,21 @@ interface TestExpressStepFunctionResource extends TestExpressStepFunctionBase {
   only: TestExpressStepFunctionBase;
 }
 
-localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
+runtimeTestSuite<
+  { function: string },
+  { payload: any | ((context: { function: string }) => any) }
+>("sfnStack", (testResource, _stack, _app, beforeAllTests) => {
   const _testSfn: (
     f: typeof testResource | typeof testResource.only
   ) => TestExpressStepFunctionBase = (f) => (name, sfn, expected, payload) => {
     f(
       name,
-      (parent) => {
+      (parent, role) => {
         const res = sfn(parent);
         const [funcRes, outputs] =
           res instanceof StepFunction ? [res, {}] : [res.sfn, res.outputs];
+        funcRes.resource.grantStartExecution(role);
+        funcRes.resource.grantRead(role);
         return {
           outputs: {
             function: funcRes.resource.stateMachineArn,
@@ -80,16 +86,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           },
         };
       },
-      async (context, extra) => {
-        const pay =
-          typeof payload === "function"
-            ? (<globalThis.Function>payload)(context)
-            : payload;
-
+      async (context, clients, extra) => {
         expect(
           normalizeCDKJson(JSON.parse(extra?.definition!))
         ).toMatchSnapshot();
-        const result = await testStepFunction(context.function, pay);
+        const result = await testStepFunction(
+          clients.stepFunctions,
+          // the execution is started in the `beforeAllTests`, poll on the execution id here.
+          extra?.execution!
+        );
 
         const exp =
           typeof expected === "function"
@@ -103,7 +108,8 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         expect(result.output ? JSON.parse(result.output) : undefined).toEqual(
           exp
         );
-      }
+      },
+      { payload }
     );
   };
 
@@ -113,11 +119,41 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     testResource.skip(
       name,
       () => {},
-      async () => {}
+      async () => {},
+      { payload: undefined }
     );
 
   // eslint-disable-next-line no-only-tests/no-only-tests
   test.only = _testSfn(testResource.only);
+
+  beforeAllTests(async (testOutputs, clients) => {
+    return Promise.all(
+      testOutputs.map(async (t) => {
+        const pay =
+          typeof t.test.extras?.payload === "function"
+            ? (<globalThis.Function>t.test.extras?.payload)(t.deployOutputs)
+            : t.test.extras?.payload;
+
+        const execution = await clients.stepFunctions
+          .startExecution({
+            stateMachineArn: t.deployOutputs.outputs.function,
+            input: JSON.stringify(pay),
+          })
+          .promise();
+
+        return {
+          ...t,
+          deployOutputs: {
+            ...t.deployOutputs,
+            extra: {
+              ...t.deployOutputs.extra,
+              execution: execution.executionArn,
+            },
+          },
+        };
+      })
+    );
+  });
 
   test(
     "simple",
@@ -135,13 +171,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       return new StepFunction(
         parent,
         "sfn2",
-        { stateMachineName: "magicMachine" },
+        {
+          stateMachineName: `magicMachine${runtimeTestExecutionContext.stackSuffix}`,
+        },
         async (_, context) => {
           return context.StateMachine.Name;
         }
       );
     },
-    "magicMachine"
+    `magicMachine${runtimeTestExecutionContext.stackSuffix}`
   );
 
   test(
@@ -311,10 +349,12 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       return new StepFunction(parent, "sfn2", async () => {
         const obj = { str: "hello world" };
         return (
-          await $AWS.Lambda.Invoke({
-            Function: func,
-            Payload: obj,
-          })
+          await $SFN.retry(async () =>
+            $AWS.Lambda.Invoke({
+              Function: func,
+              Payload: obj,
+            })
+          )
         ).Payload.str;
       });
     },
@@ -370,7 +410,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         }
       );
       return new StepFunction(parent, "sfn2", async (input) => {
-        await $SFN.forEach(input.arr, (n) => func(n));
+        await $SFN.forEach(input.arr, (n) => $SFN.retry(async () => func(n)));
       });
     },
     null,
@@ -497,6 +537,137 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
+    "call $SFN retry",
+    (parent) => {
+      const table = new Table<{ a: string; n: number }, "a">(parent, "table", {
+        partitionKey: {
+          name: "a",
+          type: AttributeType.STRING,
+        },
+      });
+      return new StepFunction(parent, "sfn2", async ({ id }) => {
+        // retry and then succeed - 3
+        const a = await $SFN.retry(async () => {
+          const result = await $AWS.DynamoDB.UpdateItem({
+            Key: {
+              a: { S: id },
+            },
+            Table: table,
+            UpdateExpression: "SET n = if_not_exists(n, :init) + :inc",
+            ReturnValues: "ALL_NEW",
+            ExpressionAttributeValues: {
+              ":init": { N: "0" },
+              ":inc": { N: "1" },
+            },
+          });
+          if (result.Attributes?.n?.N === "3") {
+            return Number(result.Attributes?.n.N);
+          }
+          throw new StepFunctionError("MyError", "Because");
+        });
+
+        // retry and fail
+        let b = 0;
+        try {
+          b = await $SFN.retry(async () => {
+            throw new StepFunctionError("MyError", "Because");
+          });
+        } catch {
+          b = 2;
+        }
+
+        // retry with custom error and fail
+        let c = 0;
+        try {
+          c = await $SFN.retry(
+            [
+              {
+                ErrorEquals: ["MyError"],
+                BackoffRate: 1,
+                IntervalSeconds: 1,
+                MaxAttempts: 1,
+              },
+            ],
+            async () => {
+              throw new StepFunctionError("MyError", "Because");
+            }
+          );
+        } catch {
+          c = 3;
+        }
+
+        // retry defined, but different error type, fail
+        let d = 0;
+        try {
+          d = await $SFN.retry(
+            [
+              {
+                ErrorEquals: ["MyError2"],
+                BackoffRate: 1,
+                IntervalSeconds: 1,
+                MaxAttempts: 1,
+              },
+            ],
+            async () => {
+              throw new StepFunctionError("MyError", "Because");
+            }
+          );
+        } catch {
+          d = 5;
+        }
+
+        // retry multiple error types - 111111
+        let e = 0;
+        try {
+          e = await $SFN.retry(
+            [
+              {
+                ErrorEquals: ["MyError2"],
+                BackoffRate: 1,
+                IntervalSeconds: 1,
+                MaxAttempts: 2,
+              },
+              {
+                ErrorEquals: ["MyError"],
+                BackoffRate: 1,
+                IntervalSeconds: 1,
+                MaxAttempts: 2,
+              },
+            ],
+            async () => {
+              const result = await $AWS.DynamoDB.UpdateItem({
+                Key: {
+                  a: { S: id },
+                },
+                Table: table,
+                UpdateExpression: "SET n = if_not_exists(n, :init) + :inc",
+                ReturnValues: "ALL_NEW",
+                ExpressionAttributeValues: {
+                  ":init": { N: "0" },
+                  ":inc": { N: "1" },
+                },
+              });
+              if (result.Attributes?.n?.N === "6") {
+                return 6;
+              }
+              if (result.Attributes?.n?.N === "5") {
+                throw new StepFunctionError("MyError", "Because");
+              }
+              throw new StepFunctionError("MyError2", "Because");
+            }
+          );
+        } catch {
+          e = 7;
+        }
+
+        return [a, b, c, d, e];
+      });
+    },
+    [3, 2, 3, 5, 6],
+    { id: `key${Math.floor(Math.random() * 1000)}` }
+  );
+
+  test(
     "$AWS.SDK.DynamoDB.describeTable",
     (parent) => {
       const table = new Table<{ id: string }, "id">(parent, "myTable", {
@@ -504,6 +675,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           name: "id",
           type: aws_dynamodb.AttributeType.STRING,
         },
+        removalPolicy: RemovalPolicy.DESTROY,
       });
 
       return {
@@ -543,7 +715,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       );
       return new StepFunction(parent, "sfn2", async (input) => {
         if (input.a) {
-          if (await func()) {
+          if (await await $SFN.retry(() => func())) {
             return input.b;
           }
         }
@@ -674,7 +846,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       );
       return new StepFunction(parent, "sfn2", async (input) => {
         let a = "";
-        const l = (await func()).map((x) => `n${x}`);
+        const l = (await $SFN.retry(() => func())).map((x) => `n${x}`);
         const l2 = input.arr.map((x, i, [head]) => `n${i}${x}${head}`);
         input.arr.map((x) => {
           a = `${a}a${x}`;
@@ -927,6 +1099,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           varNotNullFalse: !input.n,
           // @ts-ignore
           varNotPresentFalse: !input.x,
+          objNotPresentFalse: !input.obj,
           // varInVar: input.v in input.obj, // false - unsupported
           // varInConstant: input.v in { a: "val" }, // false - unsupported
           // undefined and null literals
@@ -1078,8 +1251,8 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       varNot: false,
       varNotPresentTrue: true,
       varNotNullFalse: false,
-      // @ts-ignore
       varNotPresentFalse: true,
+      objNotPresentFalse: false,
       // undefined and null literals
       varEqualEqualsUndefined: false,
       varEqualsUndefined: false,
@@ -1280,7 +1453,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
     "access",
     (parent) => {
       return new StepFunction(parent, "sfn2", async () => {
-        const obj = { 1: "a", x: "b" };
+        const obj = { 1: "a", x: "b" } as { 1: string; x: string; n?: string };
         const arr = [1];
         return {
           a: obj.x,
@@ -1289,6 +1462,8 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           d: obj["1"],
           e: arr[0],
           // f: arr["0"], -- invalid SFN - localstack hangs on error
+          g: obj?.n ?? "c",
+          h: obj?.n ?? "d",
         };
       });
     },
@@ -1298,7 +1473,9 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       // c: "a",
       d: "a",
       e: 1,
-      //  f: 1
+      //  f: 1,
+      g: "c",
+      h: "d",
     }
   );
 
@@ -1390,6 +1567,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             name: "id",
             type: AttributeType.STRING,
           },
+          removalPolicy: RemovalPolicy.DESTROY,
         }
       );
       const update = $AWS.DynamoDB.UpdateItem;
@@ -1459,6 +1637,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             name: "id",
             type: AttributeType.STRING,
           },
+          removalPolicy: RemovalPolicy.DESTROY,
         }
       );
       const update = $AWS.DynamoDB.UpdateItem;
@@ -1554,6 +1733,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             name: "id",
             type: AttributeType.STRING,
           },
+          removalPolicy: RemovalPolicy.DESTROY,
         }
       );
       return new StepFunction<{ id: string }, string>(
@@ -1763,6 +1943,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             name: "id",
             type: AttributeType.STRING,
           },
+          removalPolicy: RemovalPolicy.DESTROY,
         }
       );
       return new StepFunction(parent, "fn", async (input) => {

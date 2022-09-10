@@ -1,22 +1,20 @@
-import { aws_dynamodb, CfnOutput } from "aws-cdk-lib";
+import { aws_dynamodb, CfnOutput, RemovalPolicy } from "aws-cdk-lib";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { EventBridge, DynamoDB } from "aws-sdk";
 import { $AWS, EventBus, Event, StepFunction, Table } from "../src";
-import { clientConfig, localstackTestSuite } from "./localstack";
+import { runtimeTestSuite } from "./runtime";
 import { retry } from "./runtime-util";
 
-const EB = new EventBridge(clientConfig);
-const DB = new DynamoDB(clientConfig);
-
-localstackTestSuite("eventBusStack", (testResource) => {
+runtimeTestSuite("eventBusStack", (testResource) => {
   testResource(
     "Create bus",
-    (parent) => {
+    (parent, role) => {
       // creating a random ID
       const addr = new CfnOutput(parent, "out", { value: "" });
-      new EventBus(parent, "bus", {
+      const bus = new EventBus(parent, "bus", {
         eventBusName: addr.node.addr,
       });
+
+      bus.resource.grantPutEventsTo(role);
 
       return {
         outputs: {
@@ -24,20 +22,22 @@ localstackTestSuite("eventBusStack", (testResource) => {
         },
       };
     },
-    async (context) => {
-      await EB.putEvents({
-        Entries: [
-          {
-            EventBusName: context.bus,
-          },
-        ],
-      }).promise();
+    async (context, clients) => {
+      await clients.eventBridge
+        .putEvents({
+          Entries: [
+            {
+              EventBusName: context.bus,
+            },
+          ],
+        })
+        .promise();
     }
   );
 
   testResource(
     "Bus event starts step function and writes to dynamo",
-    (parent) => {
+    (parent, role) => {
       const addr = new CfnOutput(parent, "out", { value: "" });
       const bus = new EventBus<Event<{ id: string }, "test">>(parent, "bus", {
         eventBusName: addr.node.addr,
@@ -49,6 +49,7 @@ localstackTestSuite("eventBusStack", (testResource) => {
             name: "id",
             type: aws_dynamodb.AttributeType.STRING,
           },
+          removalPolicy: RemovalPolicy.DESTROY,
         })
       );
       const putMachine = new StepFunction<{ id: string }, void>(
@@ -63,6 +64,8 @@ localstackTestSuite("eventBusStack", (testResource) => {
           });
         }
       );
+      bus.resource.grantPutEventsTo(role);
+      table.resource.grantReadData(role);
       bus
         .when(parent, "rule", (event) => event.source === "test")
         .map((event) => event.detail)
@@ -75,20 +78,23 @@ localstackTestSuite("eventBusStack", (testResource) => {
         },
       };
     },
-    async (context) => {
+    async (context, clients) => {
       const id = `${context.bus}${Math.floor(Math.random() * 1000000)}`;
 
-      await EB.putEvents({
-        Entries: [
-          {
-            EventBusName: context.bus,
-            Source: "test",
-            Detail: JSON.stringify({
-              id,
-            }),
-          },
-        ],
-      }).promise();
+      await clients.eventBridge
+        .putEvents({
+          Entries: [
+            {
+              EventBusName: context.bus,
+              Source: "test",
+              Detail: JSON.stringify({
+                id,
+              }),
+              DetailType: "someType",
+            },
+          ],
+        })
+        .promise();
 
       // Give time for the event to make it to dynamo. Localstack is pretty slow.
       // 1 - 1s
@@ -98,13 +104,15 @@ localstackTestSuite("eventBusStack", (testResource) => {
       // 5 - 16s
       const item = await retry(
         () =>
-          DB.getItem({
-            Key: {
-              id: { S: id },
-            },
-            TableName: context.table,
-            ConsistentRead: true,
-          }).promise(),
+          clients.dynamoDB
+            .getItem({
+              Key: {
+                id: { S: id },
+              },
+              TableName: context.table,
+              ConsistentRead: true,
+            })
+            .promise(),
         (item) => !!item.Item,
         5,
         10000,

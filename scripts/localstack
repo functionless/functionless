@@ -3,7 +3,7 @@
 # Installs and runs localstack
 
 # install LocalStack cli and awslocal
-pip install localstack --upgrade awscli-local[ver1]
+pip install localstack pyOpenSSL awscli-local[ver1] --upgrade
 # install CDK Local
 npm install -g aws-cdk-local aws-cdk
 # Make sure to pull the latest version of the image

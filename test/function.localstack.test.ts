@@ -24,16 +24,19 @@ import {
   StepFunction,
   Table,
 } from "../src";
-import { localstackTestSuite } from "./localstack";
+import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
 import { testFunction } from "./runtime-util";
 
 // inject the localstack client config into the lambda clients
 // without this configuration, the functions will try to hit AWS proper
 const localstackClientConfig: FunctionProps = {
   timeout: Duration.seconds(20),
-  clientConfigRetriever: () => ({
-    endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
-  }),
+  clientConfigRetriever:
+    runtimeTestExecutionContext.deployTarget === "AWS"
+      ? undefined
+      : () => ({
+          endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
+        }),
 };
 
 interface TestFunctionBase {
@@ -50,7 +53,12 @@ interface TestFunctionBase {
     ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
     expected: OO extends void
       ? null
-      : OO | ((context: Outputs) => OO extends void ? null : O),
+      :
+          | OO
+          | ((
+              context: Outputs,
+              payload: OO extends void ? undefined : O
+            ) => void),
     payload?: I | ((context: Outputs) => I)
   ): void;
 }
@@ -60,16 +68,17 @@ interface TestFunctionResource extends TestFunctionBase {
   only: TestFunctionBase;
 }
 
-localstackTestSuite("functionStack", (testResource, _stack, _app) => {
+runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
   const _testFunc: (
     f: typeof testResource | typeof testResource.only
   ) => TestFunctionBase = (f) => (name, func, expected, payload) => {
     f(
       name,
-      (parent) => {
+      (parent, role) => {
         const res = func(parent);
         const [funcRes, outputs] =
           res instanceof Function ? [res, {}] : [res.func, res.outputs];
+        funcRes.resource.grantInvoke(role);
         return {
           outputs: {
             function: funcRes.resource.functionName,
@@ -77,13 +86,16 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
           },
         };
       },
-      async (context) => {
-        const exp =
-          // @ts-ignore
-          typeof expected === "function" ? expected(context) : expected;
-        // @ts-ignore
-        const pay = typeof payload === "function" ? payload(context) : payload;
-        await testFunction(context.function, pay, exp);
+      async (context, clients) => {
+        const pay =
+          typeof payload === "function"
+            ? (<globalThis.Function>payload)(context)
+            : payload;
+        await testFunction(clients.lambda, context.function, pay, (result) =>
+          typeof expected === "function"
+            ? (<globalThis.Function>expected)(context, result)
+            : expect(result).toEqual(expected)
+        );
       }
     );
   };
@@ -259,7 +271,12 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
           throw Error("AHHHHHHHHH");
         }
       ),
-    { errorMessage: "AHHHHHHHHH", errorType: "Error" }
+    (_, result) =>
+      expect(result).toMatchObject({
+        errorMessage: "AHHHHHHHHH",
+        errorType: "Error",
+      }),
+    undefined
   );
 
   test(
@@ -276,7 +293,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         }
       );
     },
-    (context) => context.function!
+    (context, result) => expect(result).toEqual(context.function)
   );
 
   test(
@@ -303,7 +320,8 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         },
       };
     },
-    (context) => `${context.bus} ${context.busbus}`
+    (context, result) =>
+      expect(`${context.bus} ${context.busbus}`).toEqual(result)
   );
 
   test(
@@ -375,13 +393,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         outputs: { bus: bus.eventBusArn },
       };
     },
-    (output) => ({
-      split: "aws",
-      join: output.bus.split(":").join("-"),
-      base64: "ZGF0YQ==",
-      mapToken: "value",
-      ref: "paramValue",
-    })
+    (output, result) =>
+      expect(result).toEqual({
+        split: "aws",
+        join: output.bus.split(":").join("-"),
+        base64: "ZGF0YQ==",
+        mapToken: "value",
+        ref: "paramValue",
+      })
   );
 
   test(
@@ -421,13 +440,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         outputs: { bus: bus.eventBusArn },
       };
     },
-    (output) => ({
-      split: "aws",
-      join: output.bus.split(":").join("-"),
-      base64: "ZGF0YQ==",
-      mapToken: "value",
-      ref: "paramValue",
-    })
+    (output, result) =>
+      expect(result).toEqual({
+        split: "aws",
+        join: output.bus.split(":").join("-"),
+        base64: "ZGF0YQ==",
+        mapToken: "value",
+        ref: "paramValue",
+      })
   );
 
   test(
@@ -733,6 +753,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
           name: "key",
           type: aws_dynamodb.AttributeType.STRING,
         },
+        removalPolicy: RemovalPolicy.DESTROY,
       });
       const get = $AWS.DynamoDB.GetItem;
       table.addGlobalSecondaryIndex({
@@ -807,8 +828,8 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         outputs: { table: table.tableArn },
       };
     },
-    (outputs) => {
-      return outputs.table;
+    (outputs, result) => {
+      return expect(result).toEqual(outputs.table);
     }
   );
 

@@ -10,7 +10,7 @@ import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
 import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
-import { ASL, ASLGraph, StateMachine, States } from "./asl";
+import { ASL, ASLGraph, Retry, StateMachine, States } from "./asl";
 import { assertDefined } from "./assert";
 import { FunctionLike } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
@@ -20,7 +20,7 @@ import {
   makeEventBusIntegration,
 } from "./event-bridge/event-bus";
 import { Event } from "./event-bridge/types";
-import { CallExpr } from "./expression";
+import { CallExpr, Expr } from "./expression";
 import { NativeIntegration } from "./function";
 import { PrewarmClients } from "./function-prewarm";
 import {
@@ -42,7 +42,7 @@ import {
   makeIntegration,
 } from "./integration";
 import { validateFunctionLike } from "./reflect";
-import { AnyFunction } from "./util";
+import { AnyFunction, evalToConstant } from "./util";
 import { VTL } from "./vtl";
 
 export type AnyStepFunction =
@@ -244,6 +244,49 @@ export interface $SFN {
       ? ParallelFunctionReturnType<Paths[i]>
       : Paths[i];
   }>;
+  /**
+   * Apply Step Function's built in Retry logic to a function.
+   *
+   * ```ts
+   * new ExpressStepFunction(this, "F", (id: string) => {
+   *   const results = $SFN.retry(
+   *     async () => { await task1(id) }
+   *   )
+   * })
+   * ```
+   *
+   * By default, all errors (`States.ALL`) will be caught and retried with the default backoff strategy:
+   * MaxAttempts: 3
+   * IntervalSeconds: 1
+   * BackoffRate: 2.0
+   *
+   * Optionally provide specific error codes and backoff strategies.
+   *
+   * ```ts
+   * new ExpressStepFunction(this, "F", (id: string) => {
+   *   const results = $SFN.retry(
+   *     [{ ErrorEquals: ["Lambda.ToManyRequestsException"], BackoffRate: 2.5, IntervalSeconds: 2, MaxAttempts: 4 }],
+   *     async () => { await task1(id) }
+   *   )
+   * })
+   * ```
+   *
+   * Caveat: `$SFN.retry` does not maintain the state of mutated variables within the callback.
+   *
+   * ```ts
+   * let a = 1;
+   * await $SFN.retry(() => { a = 2; return a * 4; })
+   * return a;
+   * ```
+   *
+   * The return value will be `1`.
+   *
+   */
+  retry<Func extends ParallelFunction<any>>(
+    retry: Retry[],
+    callback: Func
+  ): ReturnType<Func>;
+  retry<Func extends ParallelFunction<any>>(callback: Func): ReturnType<Func>;
   /**
    * Use the States.ArrayPartition intrinsic function to partition a large array.
    * You can also use this intrinsic to slice the data and then send the payload in smaller chunks.
@@ -447,6 +490,105 @@ export const $SFN = {
           }),
           Next: ASLGraph.DeferNext,
         });
+      },
+    }
+  ),
+  retry: makeStepFunctionIntegration<"$SFN.retry", $SFN["retry"]>(
+    "$SFN.retry",
+    {
+      asl(call, context) {
+        const [retries, body] =
+          call.args.length === 1 ? [undefined, call.args[0]] : call.args;
+
+        if (!body || !isFunctionLike(body.expr)) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Expected $SFN.retry callback argument to be a function."
+          );
+        }
+
+        const retryValues = processRetries(retries?.expr);
+
+        const functionStates = context.evalStmt(body.expr.body, {
+          End: true,
+          ResultPath: "$",
+        });
+
+        /**
+         * If there are no states for the function, just return an empty state, nothing to do here.
+         */
+        if (!functionStates) {
+          return {
+            Type: "Pass",
+            Next: ASLGraph.DeferNext,
+            output: { value: context.context.null, containsJsonPath: false },
+          };
+        }
+
+        const heap = context.newHeapVariable();
+
+        return {
+          Type: "Parallel",
+          Branches: [context.aslGraphToStates(functionStates)],
+          Next: ASLGraph.DeferNext,
+          Retry: retryValues,
+          ResultPath: heap,
+          Parameters: context.cloneLexicalScopeParameters(body.expr),
+          output: {
+            jsonPath: `${heap}[0]`,
+          },
+        };
+
+        function processRetries(expr?: Expr): Retry[] {
+          if (!expr) {
+            return [
+              {
+                ErrorEquals: ["States.ALL"],
+              },
+            ];
+          }
+
+          const retryValue = evalToConstant(expr);
+
+          if (
+            !retryValue ||
+            !Array.isArray(retryValue.constant) ||
+            retryValue.constant.length === 0
+          ) {
+            throw new SynthError(
+              ErrorCodes.Step_Function_Retry_Invalid_Input,
+              "Expected $SFN.retry retry argument to be an array literal which contains only constant values."
+            );
+          }
+
+          retryValue.constant.forEach(assertRetryObjects);
+
+          return retryValue.constant;
+        }
+
+        function assertRetryObjects(retry: any): asserts retry is Retry {
+          const {
+            ErrorEquals,
+            BackoffRate,
+            IntervalSeconds,
+            MaxAttempts,
+            ...rest
+          } = retry as Retry;
+
+          if (!ErrorEquals || ErrorEquals.some((x) => typeof x !== "string")) {
+            throw new SynthError(
+              ErrorCodes.Step_Function_Retry_Invalid_Input,
+              "$SFN.retry retry object must be an array literal of string with at least one value"
+            );
+          }
+
+          if (Object.keys(rest).length !== 0) {
+            throw new SynthError(
+              ErrorCodes.Step_Function_Retry_Invalid_Input,
+              "$SFN.retry retry object must only contain keys: ErrorEquals, BackoffRate, IntervalSeconds, or MaxAttempts"
+            );
+          }
+        }
       },
     }
   ),
