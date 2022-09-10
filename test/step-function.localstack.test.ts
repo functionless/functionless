@@ -1021,6 +1021,87 @@ runtimeTestSuite<
   );
 
   test(
+    "math",
+    (parent) =>
+      new StepFunction(parent, "sfn", async (input) => {
+        let a = input.p;
+
+        let b = 1;
+        const plusEqualsConst = (b += 1); // 2
+        const plusEqualsRef = (b += input.p); // 3
+        const minusEqualsConst = (b -= 1); // 2
+        const minusEqualsRef = (b -= input.p); // 1
+        const minusEqualsNegConst = (b -= -1); // 2
+
+        return {
+          b, // 2
+          plusEqualsConst, // 2
+          plusEqualsRef, // 3
+          minusEqualsConst, // 2
+          minusEqualsRef, // 1
+          minusEqualsNegConst, // 2
+          refPlusRef: input.p + input.p, //2
+          refPlusNegRef: input.p + input.n, // 0
+          refPlusZeroRef: input.p + input.z, // 1
+          refPlusConst: input.p + 1, // 2
+          refPlusNegConst: input.p + -1, // 0
+          refPlusZeroConst: input.p + -0, // 1
+          refMinusRef: input.p - input.p, // 0
+          refMinusNegRef: input.p - input.n, // 1
+          refMinusZeroRef: input.p - input.z, // 1
+          refMinusConst: input.p - 1, // 0
+          refMinusNegConst: input.p - -1, // 2
+          refMinusZeroConst: input.p - -0, // 0
+          postPlusPlus: a++, // 1=>2
+          prePlusPlus: ++a, // 3
+          postMinusMinus: a--, // 3 => 2
+          preMinusMinus: --a, // 1
+          negateConstant: -1, // -1
+          negateRef: -input.p, // -1
+          negateNegRef: -input.n, // 1
+          negateZeroRef: -input.z, // 0
+          positive: +1, // 1
+          positiveRef: +input.p, // 1
+          positiveNegRef: +input.n, // -1
+          positiveZeroReg: +input.z, // 0
+        };
+      }),
+    {
+      b: 2,
+      plusEqualsConst: 2,
+      plusEqualsRef: 3,
+      minusEqualsConst: 2,
+      minusEqualsRef: 1,
+      minusEqualsNegConst: 2,
+      refPlusRef: 2,
+      refPlusNegRef: 0,
+      refPlusZeroRef: 1,
+      refPlusConst: 2,
+      refPlusNegConst: 0,
+      refPlusZeroConst: 1,
+      refMinusRef: 0,
+      refMinusNegRef: 1,
+      refMinusZeroRef: 1,
+      refMinusConst: 0,
+      refMinusNegConst: 2,
+      refMinusZeroConst: 0,
+      postPlusPlus: 1,
+      prePlusPlus: 3,
+      postMinusMinus: 3,
+      preMinusMinus: 1,
+      negateConstant: -1,
+      negateRef: -1,
+      negateNegRef: 1,
+      negateZeroRef: 0,
+      positive: 1,
+      positiveRef: 1,
+      positiveNegRef: -1,
+      positiveZeroReg: 0,
+    },
+    { p: 1, n: -1, z: 0 }
+  );
+
+  test(
     "binary and unary comparison",
     (parent) => {
       return new StepFunction(parent, "sfn2", async (input) => {
