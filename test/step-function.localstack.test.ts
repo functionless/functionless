@@ -169,13 +169,15 @@ runtimeTestSuite<
       return new StepFunction(
         parent,
         "sfn2",
-        { stateMachineName: "magicMachine" },
+        {
+          stateMachineName: `magicMachine${runtimeTestExecutionContext.stackSuffix}`,
+        },
         async (_, context) => {
           return context.StateMachine.Name;
         }
       );
     },
-    "magicMachine"
+    `magicMachine${runtimeTestExecutionContext.stackSuffix}`
   );
 
   test(
