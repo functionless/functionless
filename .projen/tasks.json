@@ -85,7 +85,8 @@
       "name": "compile",
       "description": "Only compile",
       "env": {
-        "NODE_OPTIONS": "--max-old-space-size=4096"
+        "NODE_OPTIONS": "--max-old-space-size=6144",
+        "TEST_DEPLOY_TARGET": "AWS"
       },
       "steps": [
         {
@@ -189,16 +190,10 @@
       "name": "test",
       "description": "Run tests",
       "env": {
-        "NODE_OPTIONS": "--max-old-space-size=6144",
-        "DEFAULT_REGION": "ap-northeast-1",
-        "AWS_ACCOUNT_ID": "000000000000",
-        "AWS_ACCESS_KEY_ID": "test",
-        "AWS_SECRET_ACCESS_KEY": "test"
+        "TEST_DEPLOY_TARGET": "AWS",
+        "NODE_OPTIONS": "--max-old-space-size=6144"
       },
       "steps": [
-        {
-          "exec": "./scripts/localstack"
-        },
         {
           "exec": "cd ./test-app && yarn && yarn build && yarn synth --quiet"
         },
@@ -207,9 +202,6 @@
         },
         {
           "spawn": "eslint"
-        },
-        {
-          "exec": "localstack stop"
         }
       ]
     },
