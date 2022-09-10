@@ -5,8 +5,7 @@ export const testFunction = async (
   lambda: Lambda,
   functionName: string,
   payload: any,
-  expected: any,
-  matchObject: boolean
+  expected: (result: any) => void
 ) => {
   const result = await lambda
     .invoke({
@@ -20,11 +19,7 @@ export const testFunction = async (
     : undefined;
 
   try {
-    if (matchObject) {
-      expect(resultPayload).toMatchObject(expected);
-    } else {
-      expect(resultPayload).toEqual(expected);
-    }
+    expected(resultPayload);
   } catch (e) {
     console.error(result);
     throw e;

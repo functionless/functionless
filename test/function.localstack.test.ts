@@ -53,12 +53,13 @@ interface TestFunctionBase {
     ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
     expected: OO extends void
       ? null
-      : OO | ((context: Outputs) => OO extends void ? null : O),
-    payload?: I | ((context: Outputs) => I),
-    /**
-     * When true uses jest's {@link jest.Matchers.toMatchObject} logic instead of {@link jest.Matchers.toEqual}.
-     */
-    matchObject?: boolean
+      :
+          | OO
+          | ((
+              context: Outputs,
+              payload: OO extends void ? undefined : O
+            ) => void),
+    payload?: I | ((context: Outputs) => I)
   ): void;
 }
 
@@ -70,41 +71,34 @@ interface TestFunctionResource extends TestFunctionBase {
 runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
   const _testFunc: (
     f: typeof testResource | typeof testResource.only
-  ) => TestFunctionBase =
-    (f) => (name, func, expected, payload, matchObject) => {
-      f(
-        name,
-        (parent, role) => {
-          const res = func(parent);
-          const [funcRes, outputs] =
-            res instanceof Function ? [res, {}] : [res.func, res.outputs];
-          funcRes.resource.grantInvoke(role);
-          return {
-            outputs: {
-              function: funcRes.resource.functionName,
-              ...outputs,
-            },
-          };
-        },
-        async (context, clients) => {
-          const exp =
-            typeof expected === "function"
-              ? (<globalThis.Function>expected)(context)
-              : expected;
-          const pay =
-            typeof payload === "function"
-              ? (<globalThis.Function>payload)(context)
-              : payload;
-          await testFunction(
-            clients.lambda,
-            context.function,
-            pay,
-            exp,
-            matchObject ?? false
-          );
-        }
-      );
-    };
+  ) => TestFunctionBase = (f) => (name, func, expected, payload) => {
+    f(
+      name,
+      (parent, role) => {
+        const res = func(parent);
+        const [funcRes, outputs] =
+          res instanceof Function ? [res, {}] : [res.func, res.outputs];
+        funcRes.resource.grantInvoke(role);
+        return {
+          outputs: {
+            function: funcRes.resource.functionName,
+            ...outputs,
+          },
+        };
+      },
+      async (context, clients) => {
+        const pay =
+          typeof payload === "function"
+            ? (<globalThis.Function>payload)(context)
+            : payload;
+        await testFunction(clients.lambda, context.function, pay, (result) =>
+          typeof expected === "function"
+            ? (<globalThis.Function>expected)(context, result)
+            : expect(result).toEqual(expected)
+        );
+      }
+    );
+  };
 
   const test = _testFunc(testResource) as TestFunctionResource;
 
@@ -277,9 +271,12 @@ runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
           throw Error("AHHHHHHHHH");
         }
       ),
-    { errorMessage: "AHHHHHHHHH", errorType: "Error" },
-    undefined,
-    true
+    (_, result) =>
+      expect(result).toMatchObject({
+        errorMessage: "AHHHHHHHHH",
+        errorType: "Error",
+      }),
+    undefined
   );
 
   test(
@@ -296,7 +293,7 @@ runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
         }
       );
     },
-    (context) => context.function!
+    (context, result) => expect(result).toEqual(context.function)
   );
 
   test(
@@ -323,7 +320,8 @@ runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
         },
       };
     },
-    (context) => `${context.bus} ${context.busbus}`
+    (context, result) =>
+      expect(`${context.bus} ${context.busbus}`).toEqual(result)
   );
 
   test(
@@ -395,13 +393,14 @@ runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
         outputs: { bus: bus.eventBusArn },
       };
     },
-    (output) => ({
-      split: "aws",
-      join: output.bus.split(":").join("-"),
-      base64: "ZGF0YQ==",
-      mapToken: "value",
-      ref: "paramValue",
-    })
+    (output, result) =>
+      expect(result).toEqual({
+        split: "aws",
+        join: output.bus.split(":").join("-"),
+        base64: "ZGF0YQ==",
+        mapToken: "value",
+        ref: "paramValue",
+      })
   );
 
   test(
@@ -441,13 +440,14 @@ runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
         outputs: { bus: bus.eventBusArn },
       };
     },
-    (output) => ({
-      split: "aws",
-      join: output.bus.split(":").join("-"),
-      base64: "ZGF0YQ==",
-      mapToken: "value",
-      ref: "paramValue",
-    })
+    (output, result) =>
+      expect(result).toEqual({
+        split: "aws",
+        join: output.bus.split(":").join("-"),
+        base64: "ZGF0YQ==",
+        mapToken: "value",
+        ref: "paramValue",
+      })
   );
 
   test(
@@ -828,8 +828,8 @@ runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
         outputs: { table: table.tableArn },
       };
     },
-    (outputs) => {
-      return outputs.table;
+    (outputs, result) => {
+      return expect(result).toEqual(outputs.table);
     }
   );
 

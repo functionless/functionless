@@ -16,6 +16,12 @@ export interface SelfDestructorMachineProps {
   selfDestructAfterSeconds?: number;
 }
 
+/**
+ * Construct which destroys the current stack after {@link SelfDestructorProps.selfDestructAfterSeconds}.
+ *
+ * Creates a custom resource which starts a state machine that waits for
+ * stack last update time + {@link SelfDestructorProps.selfDestructAfterSeconds}.
+ */
 export class SelfDestructor extends Construct {
   constructor(scope: Construct, id: string, props?: SelfDestructorProps) {
     super(scope, id);
@@ -41,8 +47,7 @@ export class SelfDestructor extends Construct {
         offsetSeconds: number;
       }): Promise<string> => {
         const date = new Date(input.timestamp);
-        date.setSeconds(date.getSeconds() + input.offsetSeconds);
-        return date.toISOString();
+        return new Date(+date + input.offsetSeconds * 1000).toISOString();
       }
     );
 
