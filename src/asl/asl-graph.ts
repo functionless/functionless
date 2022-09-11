@@ -106,19 +106,21 @@ export namespace ASLGraph {
     return "output" in state;
   }
 
+  export type LiteralValueType =
+    | string
+    | number
+    | null
+    | boolean
+    | Record<string, any>
+    | any[];
+
   /**
    * A literal value of type string, number, boolean, object, or null.
    *
    * If this is an Object, the object may contain nested JsonPaths as denoted by `containsJsonPath`.
    */
   export interface LiteralValue<
-    Value extends
-      | string
-      | number
-      | null
-      | boolean
-      | Record<string, any>
-      | any[] = string | number | null | boolean | Record<string, any> | any[]
+    Value extends LiteralValueType = LiteralValueType
   > {
     /**
      * Whether there is json path in the constant.
@@ -1368,6 +1370,77 @@ export namespace ASLGraph {
       ErrorCodes.StepFunctions_Invalid_collection_access,
       "Only a constant object or array may be accessed."
     );
+  }
+
+  export function literalValue<V extends LiteralValueType = LiteralValueType>(
+    value: V,
+    containsJsonPath: boolean = false
+  ): ASLGraph.LiteralValue<V> {
+    return {
+      value,
+      containsJsonPath,
+    };
+  }
+
+  export function jsonPath(
+    jsonPath: string | ASLGraph.JsonPath,
+    ...segment: string[]
+  ): ASLGraph.JsonPath {
+    return {
+      jsonPath: `${
+        typeof jsonPath === "string" ? jsonPath : jsonPath.jsonPath
+      }${segment.length > 0 ? `.${segment.join(".")}` : ""}`,
+    };
+  }
+
+  /**
+   * Formats an intrinsic function.
+   *
+   * ```ts
+   * ASLGraph.intrinsicFunction("States.Format", `'{}{}'`, ASLGraph.jsonPath("$.val"), ASLGraph.literalValue("someString"));
+   * ```
+   * =>
+   * "States.format('{}{}', $.val, 'someString')"
+   */
+  export function intrinsicFunction(
+    name: string,
+    ...args: (ASLGraph.JsonPath | ASLGraph.LiteralValue | string)[]
+  ) {
+    return `${name}(${args
+      .map((arg) =>
+        typeof arg === "string"
+          ? arg
+          : ASLGraph.isLiteralString(arg)
+          ? `'${arg.value}'`
+          : ASLGraph.isLiteralValue(arg)
+          ? arg.value
+          : arg.jsonPath
+      )
+      .join(",")})`;
+  }
+
+  /**
+   * States.Format(template, ...args)
+   */
+  export function intrinsicFormat(
+    template: string | ASLGraph.JsonPath | ASLGraph.LiteralValue<string>,
+    ...args: (ASLGraph.JsonPath | ASLGraph.LiteralValue)[]
+  ) {
+    return ASLGraph.intrinsicFunction(
+      "States.Format",
+      typeof template === "string" ? ASLGraph.literalValue(template) : template,
+      ...args
+    );
+  }
+
+  /**
+   * States.MathAdd(left, right)
+   */
+  export function intrinsicMathAdd(
+    left: ASLGraph.JsonPath | ASLGraph.LiteralValue<number>,
+    right: ASLGraph.JsonPath | ASLGraph.LiteralValue<number>
+  ) {
+    return ASLGraph.intrinsicFunction("States.MathAdd", left, right);
   }
 }
 
