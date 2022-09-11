@@ -1064,10 +1064,10 @@ runtimeTestSuite<
           // prePlusPlus: ++a, // 3
           // postMinusMinus: a--, // 3 => 2
           // preMinusMinus: --a, // 1
-          // negateConstant: -1, // -1
-          // negateRef: -input.p, // -1
-          // negateNegRef: -input.n, // 1
-          // negateZeroRef: -input.z, // 0
+          negateConstant: -1, // -1
+          negateRef: -input.p, // -1
+          negateNegRef: -input.n, // 1
+          negateZeroRef: -input.z, // 0
           positive: +1, // 1
           positiveRef: +input.p, // 1
           positiveNegRef: +input.n, // -1

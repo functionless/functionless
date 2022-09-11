@@ -1421,10 +1421,13 @@ export namespace ASLGraph {
 
   /**
    * States.Format(template, ...args)
+   *
+   * @param template used to format the values. A bare string will be quoted.
+   *                 `intrinsicFormat("{}", ASLGraph.jsonPath("$.a"))` => States.Format('{}', $.a)
    */
   export function intrinsicFormat(
     template: string | ASLGraph.JsonPath | ASLGraph.LiteralValue<string>,
-    ...args: (ASLGraph.JsonPath | ASLGraph.LiteralValue)[]
+    ...args: (string | ASLGraph.JsonPath | ASLGraph.LiteralValue)[]
   ) {
     return ASLGraph.intrinsicFunction(
       "States.Format",
@@ -1434,13 +1437,128 @@ export namespace ASLGraph {
   }
 
   /**
+   * States.StringSplit(value, separator)
+   *
+   * @param value to split.
+   * @param separator used to split the value.
+   */
+  export function intrinsicStringSplit(
+    value: string | ASLGraph.JsonPath | ASLGraph.LiteralValue<string>,
+    separator: string | (ASLGraph.JsonPath | ASLGraph.LiteralValue<string>)
+  ) {
+    return ASLGraph.intrinsicFunction("States.StringSplit", value, separator);
+  }
+
+  /**
+   * States.StringToJson(value)
+   *
+   * @param value to turn to json.
+   */
+  export function intrinsicStringToJson(
+    value: string | ASLGraph.JsonPath | ASLGraph.LiteralValue<string>
+  ) {
+    return ASLGraph.intrinsicFunction("States.StringToJson", value);
+  }
+
+  /**
+   * States.JsonToString(value)
+   *
+   * @param value to turn to a string.
+   */
+  export function intrinsicJsonToString(
+    value: string | ASLGraph.JsonPath | ASLGraph.LiteralValue
+  ) {
+    return ASLGraph.intrinsicFunction("States.JsonToString", value);
+  }
+
+  /**
+   * States.ArrayGet(arr, index)
+   *
+   * @param arr to access.
+   * @param index position to access.
+   */
+  export function intrinsicArrayGetItem(
+    arr: string | ASLGraph.JsonPath,
+    index: number | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>
+  ) {
+    return ASLGraph.intrinsicFunction(
+      "States.ArrayGetItem",
+      arr,
+      typeof index === "number" ? ASLGraph.literalValue(index) : index
+    );
+  }
+
+  /**
+   * States.ArrayContains(arr, item)
+   *
+   * @param arr to access.
+   * @param item to search for.
+   */
+  export function intrinsicArrayContains(
+    arr: string | ASLGraph.JsonPath,
+    item: string | ASLGraph.JsonPath | ASLGraph.LiteralValue
+  ) {
+    return ASLGraph.intrinsicFunction("States.ArrayContains", arr, item);
+  }
+
+  /**
+   * States.ArrayLength(arr, index)
+   *
+   * @param arr to get length of
+   */
+  export function intrinsicArrayLength(arr: string | ASLGraph.JsonPath) {
+    return ASLGraph.intrinsicFunction("States.ArrayLength", arr);
+  }
+
+  /**
+   * States.ArrayRange(start, end, step)
+   *
+   * @param start inclusive start value of the output array
+   * @param end inclusive end value of the output array
+   * @param step increment to step between start and range
+   */
+  export function intrinsicArrayRange(
+    start: number | string | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>,
+    end: number | string | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>,
+    step: number | string | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>
+  ) {
+    return ASLGraph.intrinsicFunction(
+      "States.ArrayRange",
+      typeof start === "number" ? ASLGraph.literalValue(start) : start,
+      typeof end === "number" ? ASLGraph.literalValue(end) : end,
+      typeof step === "number" ? ASLGraph.literalValue(step) : step
+    );
+  }
+
+  /**
+   * States.Array(start, end, step)
+   *
+   * @param items to put in the list
+   */
+  export function intrinsicArray(
+    ...items: (
+      | string
+      | ASLGraph.JsonPath
+      | ASLGraph.LiteralValue<
+          Exclude<ASLGraph.LiteralValueType, Record<string, any> | any[]>
+        >
+    )[]
+  ) {
+    return ASLGraph.intrinsicFunction("States.Array", ...items);
+  }
+
+  /**
    * States.MathAdd(left, right)
    */
   export function intrinsicMathAdd(
-    left: ASLGraph.JsonPath | ASLGraph.LiteralValue<number>,
-    right: ASLGraph.JsonPath | ASLGraph.LiteralValue<number>
+    left: number | string | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>,
+    right: number | string | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>
   ) {
-    return ASLGraph.intrinsicFunction("States.MathAdd", left, right);
+    return ASLGraph.intrinsicFunction(
+      "States.MathAdd",
+      typeof left === "number" ? ASLGraph.literalValue(left) : left,
+      typeof right === "number" ? ASLGraph.literalValue(right) : right
+    );
   }
 }
 

@@ -160,10 +160,10 @@ import {
  * @param context - some helper functions specific to the evaluation context.
  * @returns a state with output or output to be merged into the other states generated during evaluation.
  */
-type EvalExprHandler<Output extends ASLGraph.Output = ASLGraph.Output> = (
-  output: Output,
-  context: EvalExprContext
-) => ASLGraph.NodeResults;
+type EvalExprHandler<
+  Output extends ASLGraph.Output = ASLGraph.Output,
+  Result extends ASLGraph.NodeResults = ASLGraph.NodeResults
+> = (output: Output, context: EvalExprContext) => Result;
 
 export interface EvalExprContext {
   /**
@@ -1250,7 +1250,10 @@ export class ASL {
    *                  An `addState` callback is also provided to inject additional states into the graph.
    *                  The state will be joined (@see ASLGraph.joinSubStates ) with the previous and next states in the order received.
    */
-  public evalExpr(expr: Expr, handler: EvalExprHandler): ASLGraph.NodeResults;
+  public evalExpr<Result extends ASLGraph.NodeResults = ASLGraph.NodeResults>(
+    expr: Expr,
+    handler: EvalExprHandler<any, Result>
+  ): Result;
   /**
    * Recursively evaluate a single expression, building a single {@link ASLGraph.NodeResults} object.
    *
@@ -1265,16 +1268,16 @@ export class ASL {
    *                  An `addState` callback is also provided to inject additional states into the graph.
    *                  The state will be joined (@see ASLGraph.joinSubStates ) with the previous and next states in the order received.
    */
-  public evalExpr(
+  public evalExpr<Result extends ASLGraph.NodeResults = ASLGraph.NodeResults>(
     expr: Expr,
     contextNode: FunctionlessNode,
-    handler: EvalExprHandler
-  ): ASLGraph.NodeResults;
-  public evalExpr(
+    handler: EvalExprHandler<any, Result>
+  ): Result;
+  public evalExpr<Result extends ASLGraph.NodeResults = ASLGraph.NodeResults>(
     expr: Expr,
-    nodeOrHandler: FunctionlessNode | EvalExprHandler,
-    maybeHandler?: EvalExprHandler
-  ): ASLGraph.NodeResults {
+    nodeOrHandler: FunctionlessNode | EvalExprHandler<any, Result>,
+    maybeHandler?: EvalExprHandler<any, Result>
+  ): Result {
     const [node, handler] = isNode(nodeOrHandler)
       ? [nodeOrHandler, maybeHandler!]
       : [expr, nodeOrHandler];
@@ -2062,20 +2065,13 @@ export class ASL {
             addState(assign);
             return assign.output;
           }
-          return value as ASLGraph.LiteralValue;
+          return value as ASLGraph.LiteralValue<
+            Exclude<ASLGraph.LiteralValueType, Record<string, any> | any[]>
+          >;
         });
 
         return this.assignJsonPathOrIntrinsic(
-          `States.Array(${items
-            // if the item is a conditional statement, normalize to a boolean reference
-            .map((item) =>
-              ASLGraph.isJsonPath(item)
-                ? item.jsonPath
-                : typeof item.value === "string"
-                ? `'${item.value}'`
-                : item.value
-            )
-            .join(", ")})`,
+          ASLGraph.intrinsicArray(...items),
           undefined,
           undefined,
           expr
@@ -2104,12 +2100,9 @@ export class ASL {
         }
       } else if (expr.op === "+") {
         return this.evalToNumber(expr.expr);
-      } else if (
-        expr.op === "-" ||
-        expr.op === "++" ||
-        expr.op === "--" ||
-        expr.op === "~"
-      ) {
+      } else if (expr.op === "-") {
+        return this.negateExpr(expr.expr);
+      } else if (expr.op === "++" || expr.op === "--" || expr.op === "~") {
         throw new SynthError(
           ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
           `Step Function does not support operator ${expr.op}`
@@ -2198,7 +2191,7 @@ export class ASL {
               const normArrayOutput = normalizeOutputToJsonPath(right);
 
               const arrayLength = this.assignJsonPathOrIntrinsic(
-                `States.ArrayLength(${normArrayOutput.jsonPath})`
+                ASLGraph.intrinsicArrayLength(normArrayOutput)
               );
 
               const _catch = this.throw(expr);
@@ -2632,6 +2625,98 @@ export class ASL {
   }
 
   /**
+   * Implements the logic of unary `-` on an expression.
+   *
+   * First the value is converted to a number and then it is negated.
+   */
+  public negateExpr(expr: Expr) {
+    return this.evalContext(expr, ({ addState }) => {
+      const number = this.evalToNumber(expr);
+
+      if (ASLGraph.isStateOrSubState(number)) {
+        addState(number);
+      }
+      const numberOutput = ASLGraph.isLiteralValue(number)
+        ? number
+        : number.output;
+
+      if (ASLGraph.isLiteralValue(numberOutput)) {
+        if (numberOutput.value === null) {
+          return numberOutput;
+        }
+        return ASLGraph.literalValue(-numberOutput.value);
+      } else {
+        const heap = this.newHeapVariable();
+        // we know we have a number or null (NaN) because that is what evalToNumber does.
+        // however, we do not know if the value is negative or positive and we cannot
+        // directly negate a number.
+        return {
+          startState: "check",
+          node: expr,
+          states: {
+            check: {
+              Type: "Choice",
+              Choices: [
+                { ...ASL.isNull(numberOutput.jsonPath), Next: "NaN" },
+                {
+                  ...ASL.numericLessThan(numberOutput.jsonPath, 0),
+                  Next: "negative",
+                },
+              ],
+              Default: "positive",
+            },
+            NaN: this.assignValue(
+              undefined,
+              ASLGraph.jsonPath(this.context.null),
+              `${heap}.num`
+            ),
+            // turn a negative number into a positive number -10 => 10
+            negative: ASLGraph.joinSubStates(
+              undefined,
+              // FIXME: This is split into two steps because step functions has a bug that string split
+              //        cannot be used as the first argument of array get item.
+              //        If they ever fix that... move the stringSplit into the arrayGetItem.
+              ASLGraph.assignJsonPathOrIntrinsic(
+                // split the string on the `-`: ["", "10"]
+                ASLGraph.intrinsicStringSplit(
+                  // turn number into a string: -10 => "-10"
+                  ASLGraph.intrinsicFormat(
+                    ASLGraph.literalValue("{}"),
+                    numberOutput
+                  ),
+                  ASLGraph.literalValue("-")
+                ),
+                heap,
+                "num"
+              ),
+              ASLGraph.assignJsonPathOrIntrinsic(
+                // turn the string fragment back to a number: 10
+                ASLGraph.intrinsicStringToJson(
+                  // take the right of the value (the number): "10"
+                  ASLGraph.intrinsicArrayGetItem(
+                    ASLGraph.jsonPath(heap, "num"),
+                    0
+                  )
+                ),
+                heap,
+                "num"
+              )
+            )!,
+            positive: ASLGraph.assignJsonPathOrIntrinsic(
+              ASLGraph.intrinsicStringToJson(
+                ASLGraph.intrinsicFormat("-{}", numberOutput)
+              ),
+              heap,
+              "num"
+            ),
+          },
+          output: ASLGraph.jsonPath(heap, "num"),
+        };
+      }
+    });
+  }
+
+  /**
    * Evaluates any jsonPath value to a string.
    *
    * https://262.ecma-international.org/5.1/#sec-9.8
@@ -2682,12 +2767,9 @@ export class ASL {
    *
    * https://262.ecma-international.org/5.1/#sec-9.3
    */
-  public evalToNumber(expr?: Expr): ASLGraph.NodeResults {
+  public evalToNumber(expr?: Expr) {
     if (!expr) {
-      return {
-        value: 0,
-        containsJsonPath: false,
-      };
+      return ASLGraph.literalValue(0);
     }
     return this.evalExpr(expr, (output) => {
       if (ASLGraph.isConditionOutput(output)) {
@@ -2714,16 +2796,14 @@ export class ASL {
       } else if (ASLGraph.isJsonPath(output)) {
         return this.jsonPathValueToNumber(output);
       } else {
-        return {
-          value:
-            typeof output.value === "number"
-              ? output.value
-              : Number.isNaN(output.value)
-              ? // Treat NaN as Null as we do not support special symbols.
-                null
-              : Number(output.value),
-          containsJsonPath: false,
-        };
+        return ASLGraph.literalValue(
+          typeof output.value === "number"
+            ? (output.value as number)
+            : Number.isNaN(output.value)
+            ? // Treat NaN as Null as we do not support special symbols.
+              null
+            : Number(output.value)
+        );
       }
     });
   }
@@ -2738,7 +2818,7 @@ export class ASL {
   public jsonPathValueToNumber(
     jsonPath: ASLGraph.JsonPath,
     resultPath?: string
-  ): ASLGraph.OutputSubState {
+  ): ASLGraph.OutputSubState & { output: ASLGraph.JsonPath } {
     const heap = resultPath ?? this.newHeapVariable();
     return {
       startState: "check",
@@ -2800,24 +2880,22 @@ export class ASL {
         assign: this.assignValue(undefined, jsonPath, `${heap}.num`),
         one: this.assignValue(
           undefined,
-          { value: 1, containsJsonPath: false },
+          ASLGraph.literalValue(1),
           `${heap}.num`
         ),
         zero: this.assignValue(
           undefined,
-          { value: 0, containsJsonPath: false },
+          ASLGraph.literalValue(0),
           `${heap}.num`
         ),
         // Treat NaN as Null as we do not support special symbols.
         null: this.assignValue(
           undefined,
-          { jsonPath: this.context.null },
+          ASLGraph.jsonPath(this.context.null),
           `${heap}.num`
         ),
       },
-      output: {
-        jsonPath: `${heap}.num`,
-      },
+      output: ASLGraph.jsonPath(heap, "num"),
     };
   }
 
@@ -3841,13 +3919,7 @@ export class ASL {
             : valueOutput;
 
         return this.assignJsonPathOrIntrinsic(
-          `States.ArrayContains(${normSubArrayOut.jsonPath}, ${
-            ASLGraph.isLiteralString(normValueOutput)
-              ? `'${normValueOutput.value}'`
-              : ASLGraph.isLiteralValue(normValueOutput)
-              ? normValueOutput.value
-              : normValueOutput.jsonPath
-          })`
+          ASLGraph.intrinsicArrayContains(normSubArrayOut, normValueOutput)
         );
       }
     );
@@ -3939,19 +4011,14 @@ export class ASL {
               Type: "Pass",
               Parameters: {
                 // ArrayRange is inclusive, need to subtract one from end
-                "indices.$": `States.ArrayRange(${
-                  startOut
-                    ? ASLGraph.isJsonPath(startOut)
-                      ? startOut.jsonPath
-                      : startOut.value
-                    : 0
-                }, States.MathAdd(${
-                  endOut
-                    ? ASLGraph.isJsonPath(endOut)
-                      ? endOut.jsonPath
-                      : endOut.value
-                    : `States.ArrayLength(${normArrayOut.jsonPath})`
-                }, -1), 1)`,
+                "indices.$": ASLGraph.intrinsicArrayRange(
+                  startOut ?? 0,
+                  ASLGraph.intrinsicMathAdd(
+                    endOut ?? ASLGraph.intrinsicArrayLength(normArrayOut),
+                    -1
+                  ),
+                  1
+                ),
                 str: "[null",
               },
               ResultPath: workingSpace,
@@ -3974,24 +4041,32 @@ export class ASL {
                 // tail
                 "indices.$": `${workingSpace}.indices[1:]`,
                 // append
-                "str.$": `States.Format('{},{}', ${workingSpace}.str, States.JsonToString(States.ArrayGetItem(${normArrayOut.jsonPath}, ${workingSpace}.indices[0])))`,
+                "str.$": ASLGraph.intrinsicFormat(
+                  "{},{}",
+                  ASLGraph.jsonPath(workingSpace, "str"),
+                  ASLGraph.intrinsicJsonToString(
+                    ASLGraph.intrinsicArrayGetItem(
+                      normArrayOut,
+                      ASLGraph.jsonPath(workingSpace, "indices[0]")
+                    )
+                  )
+                ),
               },
               ResultPath: workingSpace,
               Next: "checkRange",
             },
-            final: {
-              Type: "Pass",
-              Parameters: {
-                "arr.$": `States.StringToJson(States.Format('{}]',${workingSpace}.str))`,
-              },
-              ResultPath: workingSpace,
-              Next: ASLGraph.DeferNext,
-            },
+            final: ASLGraph.assignJsonPathOrIntrinsic(
+              ASLGraph.intrinsicStringToJson(
+                ASLGraph.intrinsicFormat(
+                  "{}]",
+                  ASLGraph.jsonPath(workingSpace, "str")
+                )
+              ),
+              workingSpace,
+              "arr"
+            ),
           },
-          output: {
-            // remove the null we injected in and return
-            jsonPath: `${workingSpace}.arr[1:]`,
-          },
+          output: ASLGraph.jsonPath(workingSpace, "arr[1:]"),
         };
       }
     );
@@ -4434,7 +4509,7 @@ export class ASL {
           const normArrayOutput = normalizeOutputToJsonPath(arrayOutput);
 
           const accessArray = this.assignJsonPathOrIntrinsic(
-            `States.ArrayGetItem(${normArrayOutput.jsonPath},${elementOutput.jsonPath})`
+            ASLGraph.intrinsicArrayGetItem(normArrayOutput, elementOutput)
           );
 
           const _catch = this.throw(access);
@@ -4495,7 +4570,7 @@ export class ASL {
     propertyName: string
   ) {
     return ASLGraph.assignJsonPathOrIntrinsic(
-      `States.ArrayLength(${arrayJsonPath.jsonPath})`,
+      ASLGraph.intrinsicArrayLength(arrayJsonPath),
       resultPath,
       propertyName
     );
@@ -4557,7 +4632,7 @@ export class ASL {
         array: whenArray,
         object: whenObject,
         stringify: ASLGraph.assignJsonPathOrIntrinsic(
-          `States.JsonToString(${arrayOrObjectReference.jsonPath})`,
+          ASLGraph.intrinsicJsonToString(arrayOrObjectReference),
           strTemp,
           "str",
           "checkString"

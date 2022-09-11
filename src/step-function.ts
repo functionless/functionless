@@ -717,11 +717,7 @@ export const $SFN = {
             assertLiteralNumberOrJsonPath(indexOut, "States.GetItem", "index");
 
             return context.assignJsonPathOrIntrinsic(
-              `States.ArrayGetItem(${arrOut.jsonPath}, ${
-                ASLGraph.isLiteralValue(indexOut)
-                  ? indexOut.value
-                  : indexOut.jsonPath
-              })`
+              ASLGraph.intrinsicArrayGetItem(arrOut, indexOut)
             );
           }
         );

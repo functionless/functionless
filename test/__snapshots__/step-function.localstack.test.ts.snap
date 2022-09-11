@@ -1464,7 +1464,7 @@ Object {
     "[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}] 1": Object {
       "Next": "1__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]",
       "Parameters": Object {
-        "out.$": "States.Array('a', $.heap7, $.heap12, $.heap13, $.heap14, $.heap16)",
+        "out.$": "States.Array('a',$.heap7,$.heap12,$.heap13,$.heap14,$.heap16)",
       },
       "ResultPath": "$.heap17",
       "Type": "Pass",
@@ -1518,7 +1518,7 @@ Object {
     "format__1__[\\"a\\", [\\"b\\"], [[input.val]], [], {}, {a: input.val}]": Object {
       "Next": "8__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
       "Parameters": Object {
-        "string.$": "States.JsonToString($.heap17.out)",
+        "str.$": "States.JsonToString($.heap17.out)",
       },
       "ResultPath": "$.heap18",
       "Type": "Pass",
@@ -1526,7 +1526,7 @@ Object {
     "format__input.str": Object {
       "Next": "3__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
       "Parameters": Object {
-        "string.$": "States.JsonToString($.input.str)",
+        "str.$": "States.JsonToString($.input.str)",
       },
       "ResultPath": "$.heap2",
       "Type": "Pass",
@@ -1534,7 +1534,7 @@ Object {
     "format__null": Object {
       "Next": "6__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu",
       "Parameters": Object {
-        "string.$": "States.JsonToString($.fnl_context.null)",
+        "str.$": "States.JsonToString($.fnl_context.null)",
       },
       "ResultPath": "$.heap5",
       "Type": "Pass",
@@ -1542,7 +1542,7 @@ Object {
     "format__return {stringString: String(\\"1\\"), stringBoolean: String(true), str": Object {
       "Next": "1__return {stringString: String(\\"1\\"), stringBoolean: String(true), stringNu 1",
       "Parameters": Object {
-        "string.$": "States.JsonToString($.input.val)",
+        "str.$": "States.JsonToString($.input.val)",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -1847,7 +1847,7 @@ Object {
     "[y, y = \\"a\\", y = \\"b\\" , y, y]": Object {
       "Next": "h",
       "Parameters": Object {
-        "out.$": "States.Array($.heap6, 'a', $.heap7, $.heap8)",
+        "out.$": "States.Array($.heap6,'a',$.heap7,$.heap8)",
       },
       "ResultPath": "$.heap9",
       "Type": "Pass",
@@ -19623,36 +19623,64 @@ exports[`binaryOps logic with calls 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
   "States": Object {
-    "1__return {and: true && await func(), or: false || await func()}": Object {
+    "1__return {and: true && await $SFN.retry(function ()), or: false || await $": Object {
       "End": true,
       "Parameters": Object {
-        "and.$": "$.heap1",
-        "or.$": "$.heap3",
+        "and.$": "$.heap2",
+        "or.$": "$.heap5",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "1__return {and: true && await func(), or: false || await func()} 1": Object {
-      "InputPath": "$.heap0",
-      "Next": "2__return {and: true && await func(), or: false || await func()}",
-      "ResultPath": "$.heap1",
+    "1__return {and: true && await $SFN.retry(function ()), or: false || await $ 1": Object {
+      "InputPath": "$.heap1[0]",
+      "Next": "2__return {and: true && await $SFN.retry(function ()), or: false || await $",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
-    "2__return {and: true && await func(), or: false || await func()}": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "3__return {and: true && await func(), or: false || await func()}",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap2",
-      "Type": "Task",
+    "2__return {and: true && await $SFN.retry(function ()), or: false || await $": Object {
+      "Branches": Array [
+        Object {
+          "StartAt": "return func() 1",
+          "States": Object {
+            "1__return func() 1": Object {
+              "End": true,
+              "InputPath": "$.heap3",
+              "ResultPath": "$",
+              "Type": "Pass",
+            },
+            "return func() 1": Object {
+              "InputPath": "$.fnl_context.null",
+              "Next": "1__return func() 1",
+              "Resource": "__REPLACED_TOKEN",
+              "ResultPath": "$.heap3",
+              "Type": "Task",
+            },
+          },
+        },
+      ],
+      "Next": "3__return {and: true && await $SFN.retry(function ()), or: false || await $",
+      "Parameters": Object {
+        "fnl_context.$": "$.fnl_context",
+      },
+      "ResultPath": "$.heap4",
+      "Retry": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+        },
+      ],
+      "Type": "Parallel",
     },
-    "3__return {and: true && await func(), or: false || await func()}": Object {
-      "InputPath": "$.heap2",
-      "Next": "1__return {and: true && await func(), or: false || await func()}",
-      "ResultPath": "$.heap3",
+    "3__return {and: true && await $SFN.retry(function ()), or: false || await $": Object {
+      "InputPath": "$.heap4[0]",
+      "Next": "1__return {and: true && await $SFN.retry(function ()), or: false || await $",
+      "ResultPath": "$.heap5",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "return {and: true && await func(), or: false || await func()}",
+      "Next": "return {and: true && await $SFN.retry(function ()), or: false || await $SFN",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -19661,12 +19689,40 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "return {and: true && await func(), or: false || await func()}": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__return {and: true && await func(), or: false || await func()} 1",
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap0",
-      "Type": "Task",
+    "return {and: true && await $SFN.retry(function ()), or: false || await $SFN": Object {
+      "Branches": Array [
+        Object {
+          "StartAt": "return func()",
+          "States": Object {
+            "1__return func()": Object {
+              "End": true,
+              "InputPath": "$.heap0",
+              "ResultPath": "$",
+              "Type": "Pass",
+            },
+            "return func()": Object {
+              "InputPath": "$.fnl_context.null",
+              "Next": "1__return func()",
+              "Resource": "__REPLACED_TOKEN",
+              "ResultPath": "$.heap0",
+              "Type": "Task",
+            },
+          },
+        },
+      ],
+      "Next": "1__return {and: true && await $SFN.retry(function ()), or: false || await $ 1",
+      "Parameters": Object {
+        "fnl_context.$": "$.fnl_context",
+      },
+      "ResultPath": "$.heap1",
+      "Retry": Array [
+        Object {
+          "ErrorEquals": Array [
+            "States.ALL",
+          ],
+        },
+      ],
+      "Type": "Parallel",
     },
   },
 }
@@ -19972,7 +20028,7 @@ Object {
     "[a, b, c, d, e]": Object {
       "Next": "1__return [a, b, c, d, e]",
       "Parameters": Object {
-        "out.$": "States.Array($.heap10, $.heap11, $.heap12, $.heap13, $.heap14)",
+        "out.$": "States.Array($.heap10,$.heap11,$.heap12,$.heap13,$.heap14)",
       },
       "ResultPath": "$.heap15",
       "Type": "Pass",
@@ -22019,7 +22075,7 @@ Object {
           "format__Default": Object {
             "Next": "assign__Default",
             "Parameters": Object {
-              "string.$": "States.JsonToString($.item)",
+              "str.$": "States.JsonToString($.item)",
             },
             "ResultPath": "$.heap12",
             "Type": "Pass",
@@ -24887,7 +24943,7 @@ Object {
           "format__Default 1": Object {
             "Next": "assign__Default 1 1",
             "Parameters": Object {
-              "string.$": "States.JsonToString($.item)",
+              "str.$": "States.JsonToString($.item)",
             },
             "ResultPath": "$.heap28",
             "Type": "Pass",
@@ -24985,7 +25041,7 @@ Object {
           "format__Default 2": Object {
             "Next": "assign__Default 2",
             "Parameters": Object {
-              "string.$": "States.JsonToString($.item)",
+              "str.$": "States.JsonToString($.item)",
             },
             "ResultPath": "$.heap32",
             "Type": "Pass",
@@ -25443,7 +25499,7 @@ Object {
           "format__Default": Object {
             "Next": "assign__Default",
             "Parameters": Object {
-              "string.$": "States.JsonToString($.item)",
+              "str.$": "States.JsonToString($.item)",
             },
             "ResultPath": "$.heap24",
             "Type": "Pass",
@@ -26125,7 +26181,7 @@ Object {
           "format__Default": Object {
             "Next": "assign__Default",
             "Parameters": Object {
-              "string.$": "States.JsonToString($.item)",
+              "str.$": "States.JsonToString($.item)",
             },
             "ResultPath": "$.heap15",
             "Type": "Pass",
@@ -26175,7 +26231,7 @@ Object {
     "1__[1, 2, 3, 4].includes(2)": Object {
       "Next": "21__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "Parameters": Object {
-        "out.$": "States.ArrayContains($.heap33, 2)",
+        "out.$": "States.ArrayContains($.heap33,2)",
       },
       "ResultPath": "$.heap34",
       "Type": "Pass",
@@ -26245,7 +26301,7 @@ Object {
     "22__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
       "Next": "23__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "Parameters": Object {
-        "out.$": "States.ArrayContains($.input.arr, $.input.part)",
+        "out.$": "States.ArrayContains($.input.arr,$.input.part)",
       },
       "ResultPath": "$.heap36",
       "Type": "Pass",
@@ -26259,7 +26315,7 @@ Object {
     "24__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
       "Next": "25__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "Parameters": Object {
-        "out.$": "States.ArrayContains($.input.arr, 'a')",
+        "out.$": "States.ArrayContains($.input.arr,'a')",
       },
       "ResultPath": "$.heap38",
       "Type": "Pass",
@@ -26279,7 +26335,7 @@ Object {
     "28__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
       "Next": "29__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "Parameters": Object {
-        "out.$": "States.ArrayGetItem($.input.arr, 0)",
+        "out.$": "States.ArrayGetItem($.input.arr,0)",
       },
       "ResultPath": "$.heap42",
       "Type": "Pass",
@@ -26301,7 +26357,7 @@ Object {
     "30__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": Object {
       "Next": "31__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "Parameters": Object {
-        "out.$": "States.ArrayGetItem($.input.arr, $.input.part)",
+        "out.$": "States.ArrayGetItem($.input.arr,$.input.part)",
       },
       "ResultPath": "$.heap44",
       "Type": "Pass",
@@ -26536,7 +26592,7 @@ Object {
       "Next": "checkRange__input.arr.slice(input.end)",
       "Parameters": Object {
         "indices.$": "$.heap64.indices[1:]",
-        "str.$": "States.Format('{},{}', $.heap64.str, States.JsonToString(States.ArrayGetItem($.input.arr, $.heap64.indices[0])))",
+        "str.$": "States.Format('{},{}',$.heap64.str,States.JsonToString(States.ArrayGetItem($.input.arr,$.heap64.indices[0])))",
       },
       "ResultPath": "$.heap64",
       "Type": "Pass",
@@ -26545,7 +26601,7 @@ Object {
       "Next": "checkRange__input.arr.slice(input.part, input.end)",
       "Parameters": Object {
         "indices.$": "$.heap62.indices[1:]",
-        "str.$": "States.Format('{},{}', $.heap62.str, States.JsonToString(States.ArrayGetItem($.input.arr, $.heap62.indices[0])))",
+        "str.$": "States.Format('{},{}',$.heap62.str,States.JsonToString(States.ArrayGetItem($.input.arr,$.heap62.indices[0])))",
       },
       "ResultPath": "$.heap62",
       "Type": "Pass",
@@ -26938,7 +26994,7 @@ Object {
     "input.arr.slice(input.end)": Object {
       "Next": "checkRange__input.arr.slice(input.end)",
       "Parameters": Object {
-        "indices.$": "States.ArrayRange($.input.end, States.MathAdd(States.ArrayLength($.input.arr), -1), 1)",
+        "indices.$": "States.ArrayRange($.input.end,States.MathAdd(States.ArrayLength($.input.arr),-1),1)",
         "str": "[null",
       },
       "ResultPath": "$.heap64",
@@ -26947,7 +27003,7 @@ Object {
     "input.arr.slice(input.part, input.end)": Object {
       "Next": "checkRange__input.arr.slice(input.part, input.end)",
       "Parameters": Object {
-        "indices.$": "States.ArrayRange($.input.part, States.MathAdd($.input.end, -1), 1)",
+        "indices.$": "States.ArrayRange($.input.part,States.MathAdd($.input.end,-1),1)",
         "str": "[null",
       },
       "ResultPath": "$.heap62",
@@ -27301,7 +27357,7 @@ Object {
           "format__Default 4": Object {
             "Next": "assign__Default 4",
             "Parameters": Object {
-              "string.$": "States.JsonToString($.item)",
+              "str.$": "States.JsonToString($.item)",
             },
             "ResultPath": "$.heap25",
             "Type": "Pass",
@@ -27354,7 +27410,7 @@ Object {
           "format__Default 2": Object {
             "Next": "assign__Default 2",
             "Parameters": Object {
-              "string.$": "States.JsonToString($.item)",
+              "str.$": "States.JsonToString($.item)",
             },
             "ResultPath": "$.heap11",
             "Type": "Pass",
@@ -27436,7 +27492,7 @@ Object {
     "[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null]": Object {
       "Next": "1__[\\"a\\", {a: \\"a\\"}, [\\"b\\"], input.obj, input.arr, null].join(\\"=\\")",
       "Parameters": Object {
-        "out.$": "States.Array('a', $.heap17, $.heap18, $.heap19, $.heap20, $.heap21)",
+        "out.$": "States.Array('a',$.heap17,$.heap18,$.heap19,$.heap20,$.heap21)",
       },
       "ResultPath": "$.heap22",
       "Type": "Pass",
@@ -27462,7 +27518,7 @@ Object {
     "[[\\"a\\", \\"b\\", \\"c\\"].join(\\"/\\"), input.arr.join(\\"-\\"), input.arr.join(input.sep),": Object {
       "Next": "resultArr",
       "Parameters": Object {
-        "out.$": "States.Array('a/b/c', $.heap3, $.heap7, $.heap12, '', $.heap16, $.heap26)",
+        "out.$": "States.Array('a/b/c',$.heap3,$.heap7,$.heap12,'',$.heap16,$.heap26)",
       },
       "ResultPath": "$.heap27",
       "Type": "Pass",
@@ -27816,7 +27872,7 @@ Object {
           "format__Default 3": Object {
             "Next": "assign__Default 3",
             "Parameters": Object {
-              "string.$": "States.JsonToString($.item)",
+              "str.$": "States.JsonToString($.item)",
             },
             "ResultPath": "$.heap15",
             "Type": "Pass",
@@ -27861,7 +27917,7 @@ Object {
           "format__Default 1": Object {
             "Next": "assign__Default 1 1",
             "Parameters": Object {
-              "string.$": "States.JsonToString($.item)",
+              "str.$": "States.JsonToString($.item)",
             },
             "ResultPath": "$.heap6",
             "Type": "Pass",
@@ -27912,7 +27968,7 @@ Object {
           "format__Default": Object {
             "Next": "assign__Default",
             "Parameters": Object {
-              "string.$": "States.JsonToString($.item)",
+              "str.$": "States.JsonToString($.item)",
             },
             "ResultPath": "$.heap2",
             "Type": "Pass",
@@ -27957,7 +28013,7 @@ Object {
           "format__Default 5": Object {
             "Next": "assign__Default 5",
             "Parameters": Object {
-              "string.$": "States.JsonToString($.item)",
+              "str.$": "States.JsonToString($.item)",
             },
             "ResultPath": "$.heap30",
             "Type": "Pass",
@@ -29200,15 +29256,15 @@ Object {
       "Type": "Pass",
     },
     "19__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n": Object {
-      "InputPath": "$.heap36.num",
+      "InputPath": "$.heap37.num",
       "Next": "input.n",
-      "ResultPath": "$.heap37",
+      "ResultPath": "$.heap38",
       "Type": "Pass",
     },
     "1__false__1 + input.str": Object {
-      "InputPath": "$.heap53.str",
-      "Next": "31__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-      "ResultPath": "$.heap54",
+      "InputPath": "$.heap62.str",
+      "Next": "37__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap63",
       "Type": "Pass",
     },
     "1__false__input.b + input.b": Object {
@@ -29260,21 +29316,21 @@ Object {
       "Type": "Pass",
     },
     "1__false__input.str + 1": Object {
-      "InputPath": "$.heap43.str",
-      "Next": "25__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-      "ResultPath": "$.heap44",
+      "InputPath": "$.heap52.str",
+      "Next": "31__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap53",
       "Type": "Pass",
     },
     "1__false__input.str + input.str": Object {
-      "InputPath": "$.heap63.str",
-      "Next": "37__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-      "ResultPath": "$.heap64",
+      "InputPath": "$.heap72.str",
+      "Next": "43__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap73",
       "Type": "Pass",
     },
     "1__false__input.str + true": Object {
-      "InputPath": "$.heap49.str",
-      "Next": "29__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-      "ResultPath": "$.heap50",
+      "InputPath": "$.heap58.str",
+      "Next": "35__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap59",
       "Type": "Pass",
     },
     "1__false__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + i": Object {
@@ -29284,17 +29340,17 @@ Object {
       "Type": "Pass",
     },
     "1__false__true + input.str": Object {
-      "InputPath": "$.heap59.str",
-      "Next": "35__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-      "ResultPath": "$.heap60",
+      "InputPath": "$.heap68.str",
+      "Next": "41__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap69",
       "Type": "Pass",
     },
     "1__left + toNumber(right)__false__1 + input.str": Object {
       "Next": "1__false__1 + input.str",
       "Parameters": Object {
-        "str.$": "States.MathAdd(1,$.heap53.num)",
+        "str.$": "States.MathAdd(1,$.heap62.num)",
       },
-      "ResultPath": "$.heap53",
+      "ResultPath": "$.heap62",
       "Type": "Pass",
     },
     "1__left + toNumber(right)__false__input.b + input.b": Object {
@@ -29324,9 +29380,9 @@ Object {
     "1__left + toNumber(right)__false__input.str + input.str": Object {
       "Next": "1__false__input.str + input.str",
       "Parameters": Object {
-        "str.$": "States.MathAdd($.input.str,$.heap63.num)",
+        "str.$": "States.MathAdd($.input.str,$.heap72.num)",
       },
-      "ResultPath": "$.heap63",
+      "ResultPath": "$.heap72",
       "Type": "Pass",
     },
     "1__left + toNumber(right)__false__return {refPlusRef: input.p + input.p, re": Object {
@@ -29340,25 +29396,25 @@ Object {
     "1__left + toNumber(right)__false__true + input.str": Object {
       "Next": "1__false__true + input.str",
       "Parameters": Object {
-        "str.$": "States.MathAdd(1,$.heap59.num)",
+        "str.$": "States.MathAdd(1,$.heap68.num)",
       },
-      "ResultPath": "$.heap59",
+      "ResultPath": "$.heap68",
       "Type": "Pass",
     },
     "1__left + toString(right)__\\"b\\" + input.str": Object {
-      "Next": "33__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Next": "39__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}','b',$.heap56.str)",
+        "str.$": "States.Format('{}{}','b',$.heap65.str)",
       },
-      "ResultPath": "$.heap56",
+      "ResultPath": "$.heap65",
       "Type": "Pass",
     },
     "1__left + toString(right)__true__1 + input.str": Object {
       "Next": "1__true__1 + input.str",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}','1',$.heap52.str)",
+        "str.$": "States.Format('{}{}','1',$.heap61.str)",
       },
-      "ResultPath": "$.heap52",
+      "ResultPath": "$.heap61",
       "Type": "Pass",
     },
     "1__left + toString(right)__true__input.b + input.b": Object {
@@ -29388,9 +29444,9 @@ Object {
     "1__left + toString(right)__true__input.str + input.str": Object {
       "Next": "1__true__input.str + input.str",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}',$.input.str,$.heap62.str)",
+        "str.$": "States.Format('{}{}',$.input.str,$.heap71.str)",
       },
-      "ResultPath": "$.heap62",
+      "ResultPath": "$.heap71",
       "Type": "Pass",
     },
     "1__left + toString(right)__true__return {refPlusRef: input.p + input.p, ref": Object {
@@ -29404,24 +29460,28 @@ Object {
     "1__left + toString(right)__true__true + input.str": Object {
       "Next": "1__true__true + input.str",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}','true',$.heap58.str)",
+        "str.$": "States.Format('{}{}','true',$.heap67.str)",
       },
-      "ResultPath": "$.heap58",
+      "ResultPath": "$.heap67",
       "Type": "Pass",
     },
     "1__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n,": Object {
       "End": true,
       "Parameters": Object {
-        "booleanConstPlusRefString.$": "$.heap61",
+        "booleanConstPlusRefString.$": "$.heap70",
         "constBooleanPlusBooleanConst": 2,
         "constStringPlusBooleanConst": "atrue",
         "constStringPlusNumberConst": "a1",
         "constStringPlusStringConst": "ab",
-        "numberConstPlusRefString.$": "$.heap55",
+        "negateConstant": -1,
+        "negateNegRef.$": "$.heap41",
+        "negateRef.$": "$.heap38",
+        "negateZeroRef.$": "$.heap44",
+        "numberConstPlusRefString.$": "$.heap64",
         "positive": 1,
-        "positiveNegRef.$": "$.heap39",
-        "positiveRef.$": "$.heap37",
-        "positiveZeroReg.$": "$.heap41",
+        "positiveNegRef.$": "$.heap48",
+        "positiveRef.$": "$.heap46",
+        "positiveZeroReg.$": "$.heap50",
         "refBooleanPlusBooleanConst.$": "$.heap31",
         "refBooleanPlusBooleanRef.$": "$.heap35",
         "refPlusBooleanConst.$": "$.heap27",
@@ -29431,11 +29491,11 @@ Object {
         "refPlusRef.$": "$.heap3",
         "refPlusZeroConst.$": "$.heap23",
         "refPlusZeroRef.$": "$.heap11",
-        "refStringPlusBooleanConst.$": "$.heap51",
-        "refStringPlusNumberConst.$": "$.heap45",
-        "refStringPlusRefString.$": "$.heap65",
-        "refStringPlusStringConst.$": "$.heap47",
-        "stringConstPlusRefString.$": "$.heap57",
+        "refStringPlusBooleanConst.$": "$.heap60",
+        "refStringPlusNumberConst.$": "$.heap54",
+        "refStringPlusRefString.$": "$.heap74",
+        "refStringPlusStringConst.$": "$.heap56",
+        "stringConstPlusRefString.$": "$.heap66",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -29513,25 +29573,25 @@ Object {
     "1__toNumber(left) + right__false__input.str + 1": Object {
       "Next": "1__false__input.str + 1",
       "Parameters": Object {
-        "str.$": "States.MathAdd($.heap43.num,1)",
+        "str.$": "States.MathAdd($.heap52.num,1)",
       },
-      "ResultPath": "$.heap43",
+      "ResultPath": "$.heap52",
       "Type": "Pass",
     },
     "1__toNumber(left) + right__false__input.str + input.str": Object {
       "Next": "1__false__input.str + input.str",
       "Parameters": Object {
-        "str.$": "States.MathAdd($.heap63.num,$.input.str)",
+        "str.$": "States.MathAdd($.heap72.num,$.input.str)",
       },
-      "ResultPath": "$.heap63",
+      "ResultPath": "$.heap72",
       "Type": "Pass",
     },
     "1__toNumber(left) + right__false__input.str + true": Object {
       "Next": "1__false__input.str + true",
       "Parameters": Object {
-        "str.$": "States.MathAdd($.heap49.num,1)",
+        "str.$": "States.MathAdd($.heap58.num,1)",
       },
-      "ResultPath": "$.heap49",
+      "ResultPath": "$.heap58",
       "Type": "Pass",
     },
     "1__toNumber(left) + right__false__return {refPlusRef: input.p + input.p, re": Object {
@@ -29908,11 +29968,11 @@ Object {
       "Type": "Choice",
     },
     "1__toString(left) + right__input.str + \\"b\\"": Object {
-      "Next": "27__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Next": "33__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}',$.heap46.str,'b')",
+        "str.$": "States.Format('{}{}',$.heap55.str,'b')",
       },
-      "ResultPath": "$.heap46",
+      "ResultPath": "$.heap55",
       "Type": "Pass",
     },
     "1__toString(left) + right__true__input.b + input.b": Object {
@@ -29982,25 +30042,25 @@ Object {
     "1__toString(left) + right__true__input.str + 1": Object {
       "Next": "1__true__input.str + 1",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}',$.heap42.str,'1')",
+        "str.$": "States.Format('{}{}',$.heap51.str,'1')",
       },
-      "ResultPath": "$.heap42",
+      "ResultPath": "$.heap51",
       "Type": "Pass",
     },
     "1__toString(left) + right__true__input.str + input.str": Object {
       "Next": "1__true__input.str + input.str",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}',$.heap62.str,$.input.str)",
+        "str.$": "States.Format('{}{}',$.heap71.str,$.input.str)",
       },
-      "ResultPath": "$.heap62",
+      "ResultPath": "$.heap71",
       "Type": "Pass",
     },
     "1__toString(left) + right__true__input.str + true": Object {
       "Next": "1__true__input.str + true",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}',$.heap48.str,'true')",
+        "str.$": "States.Format('{}{}',$.heap57.str,'true')",
       },
-      "ResultPath": "$.heap48",
+      "ResultPath": "$.heap57",
       "Type": "Pass",
     },
     "1__toString(left) + right__true__return {refPlusRef: input.p + input.p, ref": Object {
@@ -30012,9 +30072,9 @@ Object {
       "Type": "Pass",
     },
     "1__true__1 + input.str": Object {
-      "InputPath": "$.heap52.str",
-      "Next": "31__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-      "ResultPath": "$.heap54",
+      "InputPath": "$.heap61.str",
+      "Next": "37__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap63",
       "Type": "Pass",
     },
     "1__true__input.b + input.b": Object {
@@ -30066,21 +30126,21 @@ Object {
       "Type": "Pass",
     },
     "1__true__input.str + 1": Object {
-      "InputPath": "$.heap42.str",
-      "Next": "25__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-      "ResultPath": "$.heap44",
+      "InputPath": "$.heap51.str",
+      "Next": "31__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap53",
       "Type": "Pass",
     },
     "1__true__input.str + input.str": Object {
-      "InputPath": "$.heap62.str",
-      "Next": "37__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-      "ResultPath": "$.heap64",
+      "InputPath": "$.heap71.str",
+      "Next": "43__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap73",
       "Type": "Pass",
     },
     "1__true__input.str + true": Object {
-      "InputPath": "$.heap48.str",
-      "Next": "29__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-      "ResultPath": "$.heap50",
+      "InputPath": "$.heap57.str",
+      "Next": "35__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap59",
       "Type": "Pass",
     },
     "1__true__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + in": Object {
@@ -30090,39 +30150,39 @@ Object {
       "Type": "Pass",
     },
     "1__true__true + input.str": Object {
-      "InputPath": "$.heap58.str",
-      "Next": "35__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-      "ResultPath": "$.heap60",
+      "InputPath": "$.heap67.str",
+      "Next": "41__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap69",
       "Type": "Pass",
     },
     "21__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n": Object {
-      "InputPath": "$.heap38.num",
-      "Next": "input.z",
-      "ResultPath": "$.heap39",
-      "Type": "Pass",
-    },
-    "23__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n": Object {
       "InputPath": "$.heap40.num",
-      "Next": "input.str + 1",
+      "Next": "input.z",
       "ResultPath": "$.heap41",
       "Type": "Pass",
     },
+    "23__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n": Object {
+      "InputPath": "$.heap43.num",
+      "Next": "input.p 1",
+      "ResultPath": "$.heap44",
+      "Type": "Pass",
+    },
     "25__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n": Object {
-      "InputPath": "$.heap44",
-      "Next": "input.str + \\"b\\"",
-      "ResultPath": "$.heap45",
+      "InputPath": "$.heap45.num",
+      "Next": "input.n 1",
+      "ResultPath": "$.heap46",
       "Type": "Pass",
     },
     "27__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n": Object {
-      "InputPath": "$.heap46.str",
-      "Next": "input.str + true",
-      "ResultPath": "$.heap47",
+      "InputPath": "$.heap47.num",
+      "Next": "input.z 1",
+      "ResultPath": "$.heap48",
       "Type": "Pass",
     },
     "29__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n": Object {
-      "InputPath": "$.heap50",
-      "Next": "1 + input.str",
-      "ResultPath": "$.heap51",
+      "InputPath": "$.heap49.num",
+      "Next": "input.str + 1",
+      "ResultPath": "$.heap50",
       "Type": "Pass",
     },
     "2__toNumber(left) + toNumber(right)__false__input.b + input.b": Object {
@@ -30152,9 +30212,9 @@ Object {
     "2__toNumber(left) + toNumber(right)__false__input.str + input.str": Object {
       "Next": "1__false__input.str + input.str",
       "Parameters": Object {
-        "str.$": "States.MathAdd($.heap63.str.left.num,$.heap63.str.right.num)",
+        "str.$": "States.MathAdd($.heap72.str.left.num,$.heap72.str.right.num)",
       },
-      "ResultPath": "$.heap63",
+      "ResultPath": "$.heap72",
       "Type": "Pass",
     },
     "2__toNumber(left) + toNumber(right)__false__return {refPlusRef: input.p + i": Object {
@@ -30166,33 +30226,51 @@ Object {
       "Type": "Pass",
     },
     "31__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n": Object {
-      "InputPath": "$.heap54",
-      "Next": "\\"b\\" + input.str",
-      "ResultPath": "$.heap55",
+      "InputPath": "$.heap53",
+      "Next": "input.str + \\"b\\"",
+      "ResultPath": "$.heap54",
       "Type": "Pass",
     },
     "33__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n": Object {
-      "InputPath": "$.heap56.str",
-      "Next": "true + input.str",
-      "ResultPath": "$.heap57",
+      "InputPath": "$.heap55.str",
+      "Next": "input.str + true",
+      "ResultPath": "$.heap56",
       "Type": "Pass",
     },
     "35__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n": Object {
-      "InputPath": "$.heap60",
-      "Next": "input.str + input.str",
-      "ResultPath": "$.heap61",
+      "InputPath": "$.heap59",
+      "Next": "1 + input.str",
+      "ResultPath": "$.heap60",
       "Type": "Pass",
     },
     "37__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n": Object {
-      "InputPath": "$.heap64",
-      "Next": "1__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n,",
-      "ResultPath": "$.heap65",
+      "InputPath": "$.heap63",
+      "Next": "\\"b\\" + input.str",
+      "ResultPath": "$.heap64",
+      "Type": "Pass",
+    },
+    "39__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n": Object {
+      "InputPath": "$.heap65.str",
+      "Next": "true + input.str",
+      "ResultPath": "$.heap66",
       "Type": "Pass",
     },
     "3__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n,": Object {
       "InputPath": "$.heap6",
       "Next": "input.p + input.z",
       "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "41__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n": Object {
+      "InputPath": "$.heap69",
+      "Next": "input.str + input.str",
+      "ResultPath": "$.heap70",
+      "Type": "Pass",
+    },
+    "43__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n": Object {
+      "InputPath": "$.heap73",
+      "Next": "1__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n,",
+      "ResultPath": "$.heap74",
       "Type": "Pass",
     },
     "5__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n,": Object {
@@ -30224,6 +30302,24 @@ Object {
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "NaN__input.n 2": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "21__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap40.num",
+      "Type": "Pass",
+    },
+    "NaN__input.p 2": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "19__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap37.num",
+      "Type": "Pass",
+    },
+    "NaN__input.z 2": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "23__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap43.num",
+      "Type": "Pass",
+    },
     "assign__1__toNumber(left) + toNumber(right)__false__input.b + input.b": Object {
       "InputPath": "$.input.b",
       "Next": "2__toNumber(left) + toNumber(right)__false__input.b + input.b",
@@ -30245,7 +30341,7 @@ Object {
     "assign__1__toNumber(left) + toNumber(right)__false__input.str + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "2__toNumber(left) + toNumber(right)__false__input.str + input.str",
-      "ResultPath": "$.heap63.str.right.num",
+      "ResultPath": "$.heap72.str.right.num",
       "Type": "Pass",
     },
     "assign__1__toNumber(left) + toNumber(right)__false__return {refPlusRef: inp": Object {
@@ -30256,26 +30352,44 @@ Object {
     },
     "assign__input.n": Object {
       "InputPath": "$.input.n",
-      "Next": "21__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-      "ResultPath": "$.heap38.num",
+      "Next": "input.n 2",
+      "ResultPath": "$.heap39.num",
+      "Type": "Pass",
+    },
+    "assign__input.n 1": Object {
+      "InputPath": "$.input.n",
+      "Next": "27__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap47.num",
       "Type": "Pass",
     },
     "assign__input.p": Object {
       "InputPath": "$.input.p",
-      "Next": "19__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Next": "input.p 2",
       "ResultPath": "$.heap36.num",
+      "Type": "Pass",
+    },
+    "assign__input.p 1": Object {
+      "InputPath": "$.input.p",
+      "Next": "25__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap45.num",
       "Type": "Pass",
     },
     "assign__input.z": Object {
       "InputPath": "$.input.z",
-      "Next": "23__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-      "ResultPath": "$.heap40.num",
+      "Next": "input.z 2",
+      "ResultPath": "$.heap42.num",
+      "Type": "Pass",
+    },
+    "assign__input.z 1": Object {
+      "InputPath": "$.input.z",
+      "Next": "29__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap49.num",
       "Type": "Pass",
     },
     "assign__left + toNumber(right)__false__1 + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__left + toNumber(right)__false__1 + input.str",
-      "ResultPath": "$.heap53.num",
+      "ResultPath": "$.heap62.num",
       "Type": "Pass",
     },
     "assign__left + toNumber(right)__false__input.b + input.b": Object {
@@ -30299,7 +30413,7 @@ Object {
     "assign__left + toNumber(right)__false__input.str + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__left + toNumber(right)__false__input.str + input.str",
-      "ResultPath": "$.heap63.num",
+      "ResultPath": "$.heap72.num",
       "Type": "Pass",
     },
     "assign__left + toNumber(right)__false__return {refPlusRef: input.p + input.": Object {
@@ -30311,19 +30425,19 @@ Object {
     "assign__left + toNumber(right)__false__true + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__left + toNumber(right)__false__true + input.str",
-      "ResultPath": "$.heap59.num",
+      "ResultPath": "$.heap68.num",
       "Type": "Pass",
     },
     "assign__left + toString(right)__\\"b\\" + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__left + toString(right)__\\"b\\" + input.str",
-      "ResultPath": "$.heap56.str",
+      "ResultPath": "$.heap65.str",
       "Type": "Pass",
     },
     "assign__left + toString(right)__true__1 + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__left + toString(right)__true__1 + input.str",
-      "ResultPath": "$.heap52.str",
+      "ResultPath": "$.heap61.str",
       "Type": "Pass",
     },
     "assign__left + toString(right)__true__input.b + input.b": Object {
@@ -30347,7 +30461,7 @@ Object {
     "assign__left + toString(right)__true__input.str + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__left + toString(right)__true__input.str + input.str",
-      "ResultPath": "$.heap62.str",
+      "ResultPath": "$.heap71.str",
       "Type": "Pass",
     },
     "assign__left + toString(right)__true__return {refPlusRef: input.p + input.p": Object {
@@ -30359,7 +30473,7 @@ Object {
     "assign__left + toString(right)__true__true + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__left + toString(right)__true__true + input.str",
-      "ResultPath": "$.heap58.str",
+      "ResultPath": "$.heap67.str",
       "Type": "Pass",
     },
     "assign__toNumber(left) + right__false__input.b + input.b": Object {
@@ -30413,19 +30527,19 @@ Object {
     "assign__toNumber(left) + right__false__input.str + 1": Object {
       "InputPath": "$.input.str",
       "Next": "1__toNumber(left) + right__false__input.str + 1",
-      "ResultPath": "$.heap43.num",
+      "ResultPath": "$.heap52.num",
       "Type": "Pass",
     },
     "assign__toNumber(left) + right__false__input.str + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__toNumber(left) + right__false__input.str + input.str",
-      "ResultPath": "$.heap63.num",
+      "ResultPath": "$.heap72.num",
       "Type": "Pass",
     },
     "assign__toNumber(left) + right__false__input.str + true": Object {
       "InputPath": "$.input.str",
       "Next": "1__toNumber(left) + right__false__input.str + true",
-      "ResultPath": "$.heap49.num",
+      "ResultPath": "$.heap58.num",
       "Type": "Pass",
     },
     "assign__toNumber(left) + right__false__return {refPlusRef: input.p + input.": Object {
@@ -30455,7 +30569,7 @@ Object {
     "assign__toNumber(left) + toNumber(right)__false__input.str + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__toNumber(left) + toNumber(right)__false__input.str + input.str",
-      "ResultPath": "$.heap63.str.left.num",
+      "ResultPath": "$.heap72.str.left.num",
       "Type": "Pass",
     },
     "assign__toNumber(left) + toNumber(right)__false__return {refPlusRef: input.": Object {
@@ -30467,7 +30581,7 @@ Object {
     "assign__toString(left) + right__input.str + \\"b\\"": Object {
       "InputPath": "$.input.str",
       "Next": "1__toString(left) + right__input.str + \\"b\\"",
-      "ResultPath": "$.heap46.str",
+      "ResultPath": "$.heap55.str",
       "Type": "Pass",
     },
     "assign__toString(left) + right__true__input.b + input.b": Object {
@@ -30521,19 +30635,19 @@ Object {
     "assign__toString(left) + right__true__input.str + 1": Object {
       "InputPath": "$.input.str",
       "Next": "1__toString(left) + right__true__input.str + 1",
-      "ResultPath": "$.heap42.str",
+      "ResultPath": "$.heap51.str",
       "Type": "Pass",
     },
     "assign__toString(left) + right__true__input.str + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__toString(left) + right__true__input.str + input.str",
-      "ResultPath": "$.heap62.str",
+      "ResultPath": "$.heap71.str",
       "Type": "Pass",
     },
     "assign__toString(left) + right__true__input.str + true": Object {
       "InputPath": "$.input.str",
       "Next": "1__toString(left) + right__true__input.str + true",
-      "ResultPath": "$.heap48.str",
+      "ResultPath": "$.heap57.str",
       "Type": "Pass",
     },
     "assign__toString(left) + right__true__return {refPlusRef: input.p + input.p": Object {
@@ -30580,7 +30694,7 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "2__toNumber(left) + toNumber(right)__false__input.str + input.str",
-          "Variable": "$.heap63.str.right.num",
+          "Variable": "$.heap72.str.right.num",
         },
       ],
       "Default": "null__1__toNumber(left) + toNumber(right)__false__input.str + input.str",
@@ -30600,34 +30714,145 @@ Object {
     "checkStringOutput__input.n": Object {
       "Choices": Array [
         Object {
+          "And": Array [
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.heap39.num",
+            },
+            Object {
+              "IsNull": true,
+              "Variable": "$.heap39.num",
+            },
+          ],
+          "Next": "NaN__input.n 2",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.heap39.num",
+            },
+            Object {
+              "NumericLessThan": 0,
+              "Variable": "$.heap39.num",
+            },
+          ],
+          "Next": "negative__input.n 2",
+        },
+        Object {
           "IsNumeric": true,
-          "Next": "21__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-          "Variable": "$.heap38.num",
+          "Next": "positive__input.n 2",
+          "Variable": "$.heap39.num",
         },
       ],
       "Default": "null__input.n",
       "Type": "Choice",
     },
-    "checkStringOutput__input.p": Object {
+    "checkStringOutput__input.n 1": Object {
       "Choices": Array [
         Object {
           "IsNumeric": true,
-          "Next": "19__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+          "Next": "27__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+          "Variable": "$.heap47.num",
+        },
+      ],
+      "Default": "null__input.n 1",
+      "Type": "Choice",
+    },
+    "checkStringOutput__input.p": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.heap36.num",
+            },
+            Object {
+              "IsNull": true,
+              "Variable": "$.heap36.num",
+            },
+          ],
+          "Next": "NaN__input.p 2",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.heap36.num",
+            },
+            Object {
+              "NumericLessThan": 0,
+              "Variable": "$.heap36.num",
+            },
+          ],
+          "Next": "negative__input.p 2",
+        },
+        Object {
+          "IsNumeric": true,
+          "Next": "positive__input.p 2",
           "Variable": "$.heap36.num",
         },
       ],
       "Default": "null__input.p",
       "Type": "Choice",
     },
-    "checkStringOutput__input.z": Object {
+    "checkStringOutput__input.p 1": Object {
       "Choices": Array [
         Object {
           "IsNumeric": true,
-          "Next": "23__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-          "Variable": "$.heap40.num",
+          "Next": "25__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+          "Variable": "$.heap45.num",
+        },
+      ],
+      "Default": "null__input.p 1",
+      "Type": "Choice",
+    },
+    "checkStringOutput__input.z": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.heap42.num",
+            },
+            Object {
+              "IsNull": true,
+              "Variable": "$.heap42.num",
+            },
+          ],
+          "Next": "NaN__input.z 2",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsNumeric": true,
+              "Variable": "$.heap42.num",
+            },
+            Object {
+              "NumericLessThan": 0,
+              "Variable": "$.heap42.num",
+            },
+          ],
+          "Next": "negative__input.z 2",
+        },
+        Object {
+          "IsNumeric": true,
+          "Next": "positive__input.z 2",
+          "Variable": "$.heap42.num",
         },
       ],
       "Default": "null__input.z",
+      "Type": "Choice",
+    },
+    "checkStringOutput__input.z 1": Object {
+      "Choices": Array [
+        Object {
+          "IsNumeric": true,
+          "Next": "29__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+          "Variable": "$.heap49.num",
+        },
+      ],
+      "Default": "null__input.z 1",
       "Type": "Choice",
     },
     "checkStringOutput__left + toNumber(right)__false__1 + input.str": Object {
@@ -30635,7 +30860,7 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "1__left + toNumber(right)__false__1 + input.str",
-          "Variable": "$.heap53.num",
+          "Variable": "$.heap62.num",
         },
       ],
       "Default": "null__left + toNumber(right)__false__1 + input.str",
@@ -30679,7 +30904,7 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "1__left + toNumber(right)__false__input.str + input.str",
-          "Variable": "$.heap63.num",
+          "Variable": "$.heap72.num",
         },
       ],
       "Default": "null__left + toNumber(right)__false__input.str + input.str",
@@ -30701,7 +30926,7 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "1__left + toNumber(right)__false__true + input.str",
-          "Variable": "$.heap59.num",
+          "Variable": "$.heap68.num",
         },
       ],
       "Default": "null__left + toNumber(right)__false__true + input.str",
@@ -30800,7 +31025,7 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "1__toNumber(left) + right__false__input.str + 1",
-          "Variable": "$.heap43.num",
+          "Variable": "$.heap52.num",
         },
       ],
       "Default": "null__toNumber(left) + right__false__input.str + 1",
@@ -30811,7 +31036,7 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "1__toNumber(left) + right__false__input.str + input.str",
-          "Variable": "$.heap63.num",
+          "Variable": "$.heap72.num",
         },
       ],
       "Default": "null__toNumber(left) + right__false__input.str + input.str",
@@ -30822,7 +31047,7 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "1__toNumber(left) + right__false__input.str + true",
-          "Variable": "$.heap49.num",
+          "Variable": "$.heap58.num",
         },
       ],
       "Default": "null__toNumber(left) + right__false__input.str + true",
@@ -31247,7 +31472,7 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap63.str.left.num",
+              "Variable": "$.heap72.str.left.num",
             },
             Object {
               "IsPresent": false,
@@ -31260,7 +31485,7 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap63.str.left.num",
+              "Variable": "$.heap72.str.left.num",
             },
             Object {
               "And": Array [
@@ -31289,7 +31514,7 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap63.str.left.num",
+              "Variable": "$.heap72.str.left.num",
             },
             Object {
               "IsNull": true,
@@ -31302,7 +31527,7 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap63.str.left.num",
+              "Variable": "$.heap72.str.left.num",
             },
             Object {
               "IsString": true,
@@ -31315,7 +31540,7 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap63.str.left.num",
+              "Variable": "$.heap72.str.left.num",
             },
             Object {
               "IsNumeric": true,
@@ -31328,7 +31553,7 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap63.str.left.num",
+              "Variable": "$.heap72.str.left.num",
             },
             Object {
               "And": Array [
@@ -31349,7 +31574,7 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap63.str.left.num",
+              "Variable": "$.heap72.str.left.num",
             },
             Object {
               "And": Array [
@@ -31369,7 +31594,7 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "null__1__toNumber(left) + toNumber(right)__false__input.str + input.str",
-          "Variable": "$.heap63.str.left.num",
+          "Variable": "$.heap72.str.left.num",
         },
       ],
       "Default": "null__toNumber(left) + toNumber(right)__false__input.str + input.str",
@@ -31538,7 +31763,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.str)",
       },
-      "ResultPath": "$.heap63.str.right",
+      "ResultPath": "$.heap72.str.right",
       "Type": "Pass",
     },
     "format__1__toNumber(left) + toNumber(right)__false__return {refPlusRef: inp": Object {
@@ -31554,7 +31779,15 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.n)",
       },
-      "ResultPath": "$.heap38",
+      "ResultPath": "$.heap39",
+      "Type": "Pass",
+    },
+    "format__input.n 1": Object {
+      "Next": "checkStringOutput__input.n 1",
+      "Parameters": Object {
+        "num.$": "States.StringToJson($.input.n)",
+      },
+      "ResultPath": "$.heap47",
       "Type": "Pass",
     },
     "format__input.p": Object {
@@ -31565,12 +31798,28 @@ Object {
       "ResultPath": "$.heap36",
       "Type": "Pass",
     },
+    "format__input.p 1": Object {
+      "Next": "checkStringOutput__input.p 1",
+      "Parameters": Object {
+        "num.$": "States.StringToJson($.input.p)",
+      },
+      "ResultPath": "$.heap45",
+      "Type": "Pass",
+    },
     "format__input.z": Object {
       "Next": "checkStringOutput__input.z",
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.z)",
       },
-      "ResultPath": "$.heap40",
+      "ResultPath": "$.heap42",
+      "Type": "Pass",
+    },
+    "format__input.z 1": Object {
+      "Next": "checkStringOutput__input.z 1",
+      "Parameters": Object {
+        "num.$": "States.StringToJson($.input.z)",
+      },
+      "ResultPath": "$.heap49",
       "Type": "Pass",
     },
     "format__left + toNumber(right)__false__1 + input.str": Object {
@@ -31578,7 +31827,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.str)",
       },
-      "ResultPath": "$.heap53",
+      "ResultPath": "$.heap62",
       "Type": "Pass",
     },
     "format__left + toNumber(right)__false__input.b + input.b": Object {
@@ -31610,7 +31859,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.str)",
       },
-      "ResultPath": "$.heap63",
+      "ResultPath": "$.heap72",
       "Type": "Pass",
     },
     "format__left + toNumber(right)__false__return {refPlusRef: input.p + input.": Object {
@@ -31626,7 +31875,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.str)",
       },
-      "ResultPath": "$.heap59",
+      "ResultPath": "$.heap68",
       "Type": "Pass",
     },
     "format__left + toString(right)__\\"b\\" + input.str": Object {
@@ -31634,7 +31883,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap56",
+      "ResultPath": "$.heap65",
       "Type": "Pass",
     },
     "format__left + toString(right)__true__1 + input.str": Object {
@@ -31642,7 +31891,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap52",
+      "ResultPath": "$.heap61",
       "Type": "Pass",
     },
     "format__left + toString(right)__true__input.b + input.b": Object {
@@ -31674,7 +31923,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap62",
+      "ResultPath": "$.heap71",
       "Type": "Pass",
     },
     "format__left + toString(right)__true__return {refPlusRef: input.p + input.p": Object {
@@ -31690,7 +31939,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap58",
+      "ResultPath": "$.heap67",
       "Type": "Pass",
     },
     "format__toNumber(left) + right__false__input.b + input.b": Object {
@@ -31762,7 +32011,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.str)",
       },
-      "ResultPath": "$.heap43",
+      "ResultPath": "$.heap52",
       "Type": "Pass",
     },
     "format__toNumber(left) + right__false__input.str + input.str": Object {
@@ -31770,7 +32019,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.str)",
       },
-      "ResultPath": "$.heap63",
+      "ResultPath": "$.heap72",
       "Type": "Pass",
     },
     "format__toNumber(left) + right__false__input.str + true": Object {
@@ -31778,7 +32027,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.str)",
       },
-      "ResultPath": "$.heap49",
+      "ResultPath": "$.heap58",
       "Type": "Pass",
     },
     "format__toNumber(left) + right__false__return {refPlusRef: input.p + input.": Object {
@@ -31818,7 +32067,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.str)",
       },
-      "ResultPath": "$.heap63.str.left",
+      "ResultPath": "$.heap72.str.left",
       "Type": "Pass",
     },
     "format__toNumber(left) + toNumber(right)__false__return {refPlusRef: input.": Object {
@@ -31834,7 +32083,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap46",
+      "ResultPath": "$.heap55",
       "Type": "Pass",
     },
     "format__toString(left) + right__true__input.b + input.b": Object {
@@ -31906,7 +32155,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap42",
+      "ResultPath": "$.heap51",
       "Type": "Pass",
     },
     "format__toString(left) + right__true__input.str + input.str": Object {
@@ -31914,7 +32163,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap62",
+      "ResultPath": "$.heap71",
       "Type": "Pass",
     },
     "format__toString(left) + right__true__input.str + true": Object {
@@ -31922,7 +32171,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap48",
+      "ResultPath": "$.heap57",
       "Type": "Pass",
     },
     "format__toString(left) + right__true__return {refPlusRef: input.p + input.p": Object {
@@ -32568,6 +32817,95 @@ Object {
         },
       ],
       "Default": "null__input.n",
+      "Type": "Choice",
+    },
+    "input.n 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": false,
+          "Next": "null__input.n 1",
+          "Variable": "$.input.n",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.input.n",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.input.n",
+                },
+                Object {
+                  "StringEquals": "",
+                  "Variable": "$.input.n",
+                },
+              ],
+            },
+          ],
+          "Next": "zero__input.n 1",
+        },
+        Object {
+          "IsNull": true,
+          "Next": "zero__input.n 1",
+          "Variable": "$.input.n",
+        },
+        Object {
+          "IsString": true,
+          "Next": "format__input.n 1",
+          "Variable": "$.input.n",
+        },
+        Object {
+          "IsNumeric": true,
+          "Next": "assign__input.n 1",
+          "Variable": "$.input.n",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.n",
+            },
+            Object {
+              "BooleanEquals": true,
+              "Variable": "$.input.n",
+            },
+          ],
+          "Next": "one__input.n 1",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.n",
+            },
+            Object {
+              "BooleanEquals": false,
+              "Variable": "$.input.n",
+            },
+          ],
+          "Next": "zero__input.n 1",
+        },
+      ],
+      "Default": "null__input.n 1",
+      "Type": "Choice",
+    },
+    "input.n 2": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": true,
+          "Next": "NaN__input.n 2",
+          "Variable": "$.heap39.num",
+        },
+        Object {
+          "Next": "negative__input.n 2",
+          "NumericLessThan": 0,
+          "Variable": "$.heap39.num",
+        },
+      ],
+      "Default": "positive__input.n 2",
       "Type": "Choice",
     },
     "input.p": Object {
@@ -33989,6 +34327,95 @@ Object {
       "Default": "null__toNumber(left) + right__false__input.p + true",
       "Type": "Choice",
     },
+    "input.p 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": false,
+          "Next": "null__input.p 1",
+          "Variable": "$.input.p",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.input.p",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.input.p",
+                },
+                Object {
+                  "StringEquals": "",
+                  "Variable": "$.input.p",
+                },
+              ],
+            },
+          ],
+          "Next": "zero__input.p 1",
+        },
+        Object {
+          "IsNull": true,
+          "Next": "zero__input.p 1",
+          "Variable": "$.input.p",
+        },
+        Object {
+          "IsString": true,
+          "Next": "format__input.p 1",
+          "Variable": "$.input.p",
+        },
+        Object {
+          "IsNumeric": true,
+          "Next": "assign__input.p 1",
+          "Variable": "$.input.p",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.p",
+            },
+            Object {
+              "BooleanEquals": true,
+              "Variable": "$.input.p",
+            },
+          ],
+          "Next": "one__input.p 1",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.p",
+            },
+            Object {
+              "BooleanEquals": false,
+              "Variable": "$.input.p",
+            },
+          ],
+          "Next": "zero__input.p 1",
+        },
+      ],
+      "Default": "null__input.p 1",
+      "Type": "Choice",
+    },
+    "input.p 2": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": true,
+          "Next": "NaN__input.p 2",
+          "Variable": "$.heap36.num",
+        },
+        Object {
+          "Next": "negative__input.p 2",
+          "NumericLessThan": 0,
+          "Variable": "$.heap36.num",
+        },
+      ],
+      "Default": "positive__input.p 2",
+      "Type": "Choice",
+    },
     "input.str + \\"b\\"": Object {
       "Choices": Array [
         Object {
@@ -34751,12 +35178,101 @@ Object {
       "Default": "null__input.z",
       "Type": "Choice",
     },
+    "input.z 1": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": false,
+          "Next": "null__input.z 1",
+          "Variable": "$.input.z",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.input.z",
+            },
+            Object {
+              "And": Array [
+                Object {
+                  "IsString": true,
+                  "Variable": "$.input.z",
+                },
+                Object {
+                  "StringEquals": "",
+                  "Variable": "$.input.z",
+                },
+              ],
+            },
+          ],
+          "Next": "zero__input.z 1",
+        },
+        Object {
+          "IsNull": true,
+          "Next": "zero__input.z 1",
+          "Variable": "$.input.z",
+        },
+        Object {
+          "IsString": true,
+          "Next": "format__input.z 1",
+          "Variable": "$.input.z",
+        },
+        Object {
+          "IsNumeric": true,
+          "Next": "assign__input.z 1",
+          "Variable": "$.input.z",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.z",
+            },
+            Object {
+              "BooleanEquals": true,
+              "Variable": "$.input.z",
+            },
+          ],
+          "Next": "one__input.z 1",
+        },
+        Object {
+          "And": Array [
+            Object {
+              "IsBoolean": true,
+              "Variable": "$.input.z",
+            },
+            Object {
+              "BooleanEquals": false,
+              "Variable": "$.input.z",
+            },
+          ],
+          "Next": "zero__input.z 1",
+        },
+      ],
+      "Default": "null__input.z 1",
+      "Type": "Choice",
+    },
+    "input.z 2": Object {
+      "Choices": Array [
+        Object {
+          "IsNull": true,
+          "Next": "NaN__input.z 2",
+          "Variable": "$.heap42.num",
+        },
+        Object {
+          "Next": "negative__input.z 2",
+          "NumericLessThan": 0,
+          "Variable": "$.heap42.num",
+        },
+      ],
+      "Default": "positive__input.z 2",
+      "Type": "Choice",
+    },
     "left + right__\\"b\\" + input.str": Object {
-      "Next": "33__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Next": "39__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
       "Parameters": Object {
         "str.$": "States.Format('{}{}','b',$.input.str)",
       },
-      "ResultPath": "$.heap56",
+      "ResultPath": "$.heap65",
       "Type": "Pass",
     },
     "left + right__false__1 + input.str": Object {
@@ -34764,7 +35280,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.MathAdd(1,$.input.str)",
       },
-      "ResultPath": "$.heap53",
+      "ResultPath": "$.heap62",
       "Type": "Pass",
     },
     "left + right__false__input.b + input.b": Object {
@@ -34836,7 +35352,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.MathAdd($.input.str,1)",
       },
-      "ResultPath": "$.heap43",
+      "ResultPath": "$.heap52",
       "Type": "Pass",
     },
     "left + right__false__input.str + input.str": Object {
@@ -34844,7 +35360,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.MathAdd($.input.str,$.input.str)",
       },
-      "ResultPath": "$.heap63",
+      "ResultPath": "$.heap72",
       "Type": "Pass",
     },
     "left + right__false__input.str + true": Object {
@@ -34852,7 +35368,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.MathAdd($.input.str,1)",
       },
-      "ResultPath": "$.heap49",
+      "ResultPath": "$.heap58",
       "Type": "Pass",
     },
     "left + right__false__return {refPlusRef: input.p + input.p, refPlusNegRef: ": Object {
@@ -34868,15 +35384,15 @@ Object {
       "Parameters": Object {
         "str.$": "States.MathAdd(1,$.input.str)",
       },
-      "ResultPath": "$.heap59",
+      "ResultPath": "$.heap68",
       "Type": "Pass",
     },
     "left + right__input.str + \\"b\\"": Object {
-      "Next": "27__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Next": "33__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
       "Parameters": Object {
         "str.$": "States.Format('{}{}',$.input.str,'b')",
       },
-      "ResultPath": "$.heap46",
+      "ResultPath": "$.heap55",
       "Type": "Pass",
     },
     "left + right__true__1 + input.str": Object {
@@ -34884,7 +35400,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.Format('{}{}','1',$.input.str)",
       },
-      "ResultPath": "$.heap52",
+      "ResultPath": "$.heap61",
       "Type": "Pass",
     },
     "left + right__true__input.b + input.b": Object {
@@ -34956,7 +35472,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.Format('{}{}',$.input.str,'1')",
       },
-      "ResultPath": "$.heap42",
+      "ResultPath": "$.heap51",
       "Type": "Pass",
     },
     "left + right__true__input.str + input.str": Object {
@@ -34964,7 +35480,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.Format('{}{}',$.input.str,$.input.str)",
       },
-      "ResultPath": "$.heap62",
+      "ResultPath": "$.heap71",
       "Type": "Pass",
     },
     "left + right__true__input.str + true": Object {
@@ -34972,7 +35488,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.Format('{}{}',$.input.str,'true')",
       },
-      "ResultPath": "$.heap48",
+      "ResultPath": "$.heap57",
       "Type": "Pass",
     },
     "left + right__true__return {refPlusRef: input.p + input.p, refPlusNegRef: i": Object {
@@ -34988,7 +35504,31 @@ Object {
       "Parameters": Object {
         "str.$": "States.Format('{}{}','true',$.input.str)",
       },
-      "ResultPath": "$.heap58",
+      "ResultPath": "$.heap67",
+      "Type": "Pass",
+    },
+    "negative__input.n 2": Object {
+      "Next": "21__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Parameters": Object {
+        "num.$": "States.StringToJson(States.ArrayGetItem(States.StringSplit(States.Format('{}',$.heap39.num),'-'),0))",
+      },
+      "ResultPath": "$.heap40",
+      "Type": "Pass",
+    },
+    "negative__input.p 2": Object {
+      "Next": "19__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Parameters": Object {
+        "num.$": "States.StringToJson(States.ArrayGetItem(States.StringSplit(States.Format('{}',$.heap36.num),'-'),0))",
+      },
+      "ResultPath": "$.heap37",
+      "Type": "Pass",
+    },
+    "negative__input.z 2": Object {
+      "Next": "23__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Parameters": Object {
+        "num.$": "States.StringToJson(States.ArrayGetItem(States.StringSplit(States.Format('{}',$.heap42.num),'-'),0))",
+      },
+      "ResultPath": "$.heap43",
       "Type": "Pass",
     },
     "null__1__toNumber(left) + toNumber(right)__false__input.b + input.b": Object {
@@ -35012,7 +35552,7 @@ Object {
     "null__1__toNumber(left) + toNumber(right)__false__input.str + input.str": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "2__toNumber(left) + toNumber(right)__false__input.str + input.str",
-      "ResultPath": "$.heap63.str.right.num",
+      "ResultPath": "$.heap72.str.right.num",
       "Type": "Pass",
     },
     "null__1__toNumber(left) + toNumber(right)__false__return {refPlusRef: input": Object {
@@ -35023,26 +35563,44 @@ Object {
     },
     "null__input.n": Object {
       "InputPath": "$.fnl_context.null",
-      "Next": "21__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-      "ResultPath": "$.heap38.num",
+      "Next": "input.n 2",
+      "ResultPath": "$.heap39.num",
+      "Type": "Pass",
+    },
+    "null__input.n 1": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "27__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap47.num",
       "Type": "Pass",
     },
     "null__input.p": Object {
       "InputPath": "$.fnl_context.null",
-      "Next": "19__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Next": "input.p 2",
       "ResultPath": "$.heap36.num",
+      "Type": "Pass",
+    },
+    "null__input.p 1": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "25__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap45.num",
       "Type": "Pass",
     },
     "null__input.z": Object {
       "InputPath": "$.fnl_context.null",
-      "Next": "23__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
-      "ResultPath": "$.heap40.num",
+      "Next": "input.z 2",
+      "ResultPath": "$.heap42.num",
+      "Type": "Pass",
+    },
+    "null__input.z 1": Object {
+      "InputPath": "$.fnl_context.null",
+      "Next": "29__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "ResultPath": "$.heap49.num",
       "Type": "Pass",
     },
     "null__left + toNumber(right)__false__1 + input.str": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__left + toNumber(right)__false__1 + input.str",
-      "ResultPath": "$.heap53.num",
+      "ResultPath": "$.heap62.num",
       "Type": "Pass",
     },
     "null__left + toNumber(right)__false__input.b + input.b": Object {
@@ -35066,7 +35624,7 @@ Object {
     "null__left + toNumber(right)__false__input.str + input.str": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__left + toNumber(right)__false__input.str + input.str",
-      "ResultPath": "$.heap63.num",
+      "ResultPath": "$.heap72.num",
       "Type": "Pass",
     },
     "null__left + toNumber(right)__false__return {refPlusRef: input.p + input.p,": Object {
@@ -35078,7 +35636,7 @@ Object {
     "null__left + toNumber(right)__false__true + input.str": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__left + toNumber(right)__false__true + input.str",
-      "ResultPath": "$.heap59.num",
+      "ResultPath": "$.heap68.num",
       "Type": "Pass",
     },
     "null__toNumber(left) + right__false__input.b + input.b": Object {
@@ -35132,19 +35690,19 @@ Object {
     "null__toNumber(left) + right__false__input.str + 1": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__toNumber(left) + right__false__input.str + 1",
-      "ResultPath": "$.heap43.num",
+      "ResultPath": "$.heap52.num",
       "Type": "Pass",
     },
     "null__toNumber(left) + right__false__input.str + input.str": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__toNumber(left) + right__false__input.str + input.str",
-      "ResultPath": "$.heap63.num",
+      "ResultPath": "$.heap72.num",
       "Type": "Pass",
     },
     "null__toNumber(left) + right__false__input.str + true": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__toNumber(left) + right__false__input.str + true",
-      "ResultPath": "$.heap49.num",
+      "ResultPath": "$.heap58.num",
       "Type": "Pass",
     },
     "null__toNumber(left) + right__false__return {refPlusRef: input.p + input.p,": Object {
@@ -35174,7 +35732,7 @@ Object {
     "null__toNumber(left) + toNumber(right)__false__input.str + input.str": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__toNumber(left) + toNumber(right)__false__input.str + input.str",
-      "ResultPath": "$.heap63.str.left.num",
+      "ResultPath": "$.heap72.str.left.num",
       "Type": "Pass",
     },
     "null__toNumber(left) + toNumber(right)__false__return {refPlusRef: input.p ": Object {
@@ -35204,7 +35762,7 @@ Object {
     "one__1__toNumber(left) + toNumber(right)__false__input.str + input.str": Object {
       "Next": "2__toNumber(left) + toNumber(right)__false__input.str + input.str",
       "Result": 1,
-      "ResultPath": "$.heap63.str.right.num",
+      "ResultPath": "$.heap72.str.right.num",
       "Type": "Pass",
     },
     "one__1__toNumber(left) + toNumber(right)__false__return {refPlusRef: input.": Object {
@@ -35214,27 +35772,45 @@ Object {
       "Type": "Pass",
     },
     "one__input.n": Object {
-      "Next": "21__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Next": "input.n 2",
       "Result": 1,
-      "ResultPath": "$.heap38.num",
+      "ResultPath": "$.heap39.num",
+      "Type": "Pass",
+    },
+    "one__input.n 1": Object {
+      "Next": "27__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Result": 1,
+      "ResultPath": "$.heap47.num",
       "Type": "Pass",
     },
     "one__input.p": Object {
-      "Next": "19__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Next": "input.p 2",
       "Result": 1,
       "ResultPath": "$.heap36.num",
       "Type": "Pass",
     },
-    "one__input.z": Object {
-      "Next": "23__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+    "one__input.p 1": Object {
+      "Next": "25__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
       "Result": 1,
-      "ResultPath": "$.heap40.num",
+      "ResultPath": "$.heap45.num",
+      "Type": "Pass",
+    },
+    "one__input.z": Object {
+      "Next": "input.z 2",
+      "Result": 1,
+      "ResultPath": "$.heap42.num",
+      "Type": "Pass",
+    },
+    "one__input.z 1": Object {
+      "Next": "29__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Result": 1,
+      "ResultPath": "$.heap49.num",
       "Type": "Pass",
     },
     "one__left + toNumber(right)__false__1 + input.str": Object {
       "Next": "1__left + toNumber(right)__false__1 + input.str",
       "Result": 1,
-      "ResultPath": "$.heap53.num",
+      "ResultPath": "$.heap62.num",
       "Type": "Pass",
     },
     "one__left + toNumber(right)__false__input.b + input.b": Object {
@@ -35258,7 +35834,7 @@ Object {
     "one__left + toNumber(right)__false__input.str + input.str": Object {
       "Next": "1__left + toNumber(right)__false__input.str + input.str",
       "Result": 1,
-      "ResultPath": "$.heap63.num",
+      "ResultPath": "$.heap72.num",
       "Type": "Pass",
     },
     "one__left + toNumber(right)__false__return {refPlusRef: input.p + input.p, ": Object {
@@ -35270,7 +35846,7 @@ Object {
     "one__left + toNumber(right)__false__true + input.str": Object {
       "Next": "1__left + toNumber(right)__false__true + input.str",
       "Result": 1,
-      "ResultPath": "$.heap59.num",
+      "ResultPath": "$.heap68.num",
       "Type": "Pass",
     },
     "one__toNumber(left) + right__false__input.b + input.b": Object {
@@ -35324,19 +35900,19 @@ Object {
     "one__toNumber(left) + right__false__input.str + 1": Object {
       "Next": "1__toNumber(left) + right__false__input.str + 1",
       "Result": 1,
-      "ResultPath": "$.heap43.num",
+      "ResultPath": "$.heap52.num",
       "Type": "Pass",
     },
     "one__toNumber(left) + right__false__input.str + input.str": Object {
       "Next": "1__toNumber(left) + right__false__input.str + input.str",
       "Result": 1,
-      "ResultPath": "$.heap63.num",
+      "ResultPath": "$.heap72.num",
       "Type": "Pass",
     },
     "one__toNumber(left) + right__false__input.str + true": Object {
       "Next": "1__toNumber(left) + right__false__input.str + true",
       "Result": 1,
-      "ResultPath": "$.heap49.num",
+      "ResultPath": "$.heap58.num",
       "Type": "Pass",
     },
     "one__toNumber(left) + right__false__return {refPlusRef: input.p + input.p, ": Object {
@@ -35366,13 +35942,37 @@ Object {
     "one__toNumber(left) + toNumber(right)__false__input.str + input.str": Object {
       "Next": "1__toNumber(left) + toNumber(right)__false__input.str + input.str",
       "Result": 1,
-      "ResultPath": "$.heap63.str.left.num",
+      "ResultPath": "$.heap72.str.left.num",
       "Type": "Pass",
     },
     "one__toNumber(left) + toNumber(right)__false__return {refPlusRef: input.p +": Object {
       "Next": "1__toNumber(left) + toNumber(right)__false__return {refPlusRef: input.p + i",
       "Result": 1,
       "ResultPath": "$.heap1.str.left.num",
+      "Type": "Pass",
+    },
+    "positive__input.n 2": Object {
+      "Next": "21__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Parameters": Object {
+        "num.$": "States.StringToJson(States.Format('-{}',$.heap39.num))",
+      },
+      "ResultPath": "$.heap40",
+      "Type": "Pass",
+    },
+    "positive__input.p 2": Object {
+      "Next": "19__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Parameters": Object {
+        "num.$": "States.StringToJson(States.Format('-{}',$.heap36.num))",
+      },
+      "ResultPath": "$.heap37",
+      "Type": "Pass",
+    },
+    "positive__input.z 2": Object {
+      "Next": "23__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Parameters": Object {
+        "num.$": "States.StringToJson(States.Format('-{}',$.heap42.num))",
+      },
+      "ResultPath": "$.heap43",
       "Type": "Pass",
     },
     "return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n, re": Object {
@@ -35960,7 +36560,7 @@ Object {
     "zero__1__toNumber(left) + toNumber(right)__false__input.str + input.str": Object {
       "Next": "2__toNumber(left) + toNumber(right)__false__input.str + input.str",
       "Result": 0,
-      "ResultPath": "$.heap63.str.right.num",
+      "ResultPath": "$.heap72.str.right.num",
       "Type": "Pass",
     },
     "zero__1__toNumber(left) + toNumber(right)__false__return {refPlusRef: input": Object {
@@ -35970,27 +36570,45 @@ Object {
       "Type": "Pass",
     },
     "zero__input.n": Object {
-      "Next": "21__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Next": "input.n 2",
       "Result": 0,
-      "ResultPath": "$.heap38.num",
+      "ResultPath": "$.heap39.num",
+      "Type": "Pass",
+    },
+    "zero__input.n 1": Object {
+      "Next": "27__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Result": 0,
+      "ResultPath": "$.heap47.num",
       "Type": "Pass",
     },
     "zero__input.p": Object {
-      "Next": "19__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Next": "input.p 2",
       "Result": 0,
       "ResultPath": "$.heap36.num",
       "Type": "Pass",
     },
-    "zero__input.z": Object {
-      "Next": "23__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+    "zero__input.p 1": Object {
+      "Next": "25__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
       "Result": 0,
-      "ResultPath": "$.heap40.num",
+      "ResultPath": "$.heap45.num",
+      "Type": "Pass",
+    },
+    "zero__input.z": Object {
+      "Next": "input.z 2",
+      "Result": 0,
+      "ResultPath": "$.heap42.num",
+      "Type": "Pass",
+    },
+    "zero__input.z 1": Object {
+      "Next": "29__return {refPlusRef: input.p + input.p, refPlusNegRef: input.p + input.n",
+      "Result": 0,
+      "ResultPath": "$.heap49.num",
       "Type": "Pass",
     },
     "zero__left + toNumber(right)__false__1 + input.str": Object {
       "Next": "1__left + toNumber(right)__false__1 + input.str",
       "Result": 0,
-      "ResultPath": "$.heap53.num",
+      "ResultPath": "$.heap62.num",
       "Type": "Pass",
     },
     "zero__left + toNumber(right)__false__input.b + input.b": Object {
@@ -36014,7 +36632,7 @@ Object {
     "zero__left + toNumber(right)__false__input.str + input.str": Object {
       "Next": "1__left + toNumber(right)__false__input.str + input.str",
       "Result": 0,
-      "ResultPath": "$.heap63.num",
+      "ResultPath": "$.heap72.num",
       "Type": "Pass",
     },
     "zero__left + toNumber(right)__false__return {refPlusRef: input.p + input.p,": Object {
@@ -36026,7 +36644,7 @@ Object {
     "zero__left + toNumber(right)__false__true + input.str": Object {
       "Next": "1__left + toNumber(right)__false__true + input.str",
       "Result": 0,
-      "ResultPath": "$.heap59.num",
+      "ResultPath": "$.heap68.num",
       "Type": "Pass",
     },
     "zero__toNumber(left) + right__false__input.b + input.b": Object {
@@ -36080,19 +36698,19 @@ Object {
     "zero__toNumber(left) + right__false__input.str + 1": Object {
       "Next": "1__toNumber(left) + right__false__input.str + 1",
       "Result": 0,
-      "ResultPath": "$.heap43.num",
+      "ResultPath": "$.heap52.num",
       "Type": "Pass",
     },
     "zero__toNumber(left) + right__false__input.str + input.str": Object {
       "Next": "1__toNumber(left) + right__false__input.str + input.str",
       "Result": 0,
-      "ResultPath": "$.heap63.num",
+      "ResultPath": "$.heap72.num",
       "Type": "Pass",
     },
     "zero__toNumber(left) + right__false__input.str + true": Object {
       "Next": "1__toNumber(left) + right__false__input.str + true",
       "Result": 0,
-      "ResultPath": "$.heap49.num",
+      "ResultPath": "$.heap58.num",
       "Type": "Pass",
     },
     "zero__toNumber(left) + right__false__return {refPlusRef: input.p + input.p,": Object {
@@ -36122,7 +36740,7 @@ Object {
     "zero__toNumber(left) + toNumber(right)__false__input.str + input.str": Object {
       "Next": "1__toNumber(left) + toNumber(right)__false__input.str + input.str",
       "Result": 0,
-      "ResultPath": "$.heap63.str.left.num",
+      "ResultPath": "$.heap72.str.left.num",
       "Type": "Pass",
     },
     "zero__toNumber(left) + toNumber(right)__false__return {refPlusRef: input.p ": Object {
