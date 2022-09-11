@@ -2287,7 +2287,7 @@ export class ASL {
             );
           }
         });
-      } else if ("-") {
+      } else if (expr.op === "-") {
         return this.evalContext(
           expr,
           ({ evalExprToJsonPathOrLiteral, addState }) => {
@@ -2763,7 +2763,7 @@ export class ASL {
               // split the string on the `-`: ["", "10"]
               ASLGraph.intrinsicStringSplit(
                 // turn number into a string: -10 => "-10"
-                ASLGraph.intrinsicFormat(ASLGraph.literalValue("{}"), output),
+                ASLGraph.intrinsicFormat("{}", output),
                 ASLGraph.literalValue("-")
               ),
               heap,
@@ -2943,7 +2943,7 @@ export class ASL {
           Default: "null",
         },
         format: ASLGraph.assignJsonPathOrIntrinsic(
-          `States.StringToJson(${jsonPath.jsonPath})`,
+          ASLGraph.intrinsicStringToJson(jsonPath.jsonPath),
           heap,
           "num",
           "checkStringOutput"
@@ -2986,167 +2986,35 @@ export class ASL {
     rightOut: ASLGraph.JsonPath | ASLGraph.LiteralValue
   ): ASLGraph.NodeResults {
     const heap = this.newHeapVariable();
-    if (ASLGraph.isLiteralValue(leftOut)) {
-      if (ASLGraph.isLiteralValue(rightOut)) {
-        return ASLGraph.literalValue(
-          Number(leftOut.value) + Number(rightOut.value)
-        );
-      } else {
-        const toNumberLeft = ASLGraph.literalValue(Number(leftOut.value));
-        return {
-          startState: "check",
-          states: {
-            // check if either one or both sides needs to be coerced
-            check: {
-              Type: "Choice",
-              Choices: [
-                // already numbers, continue
-                {
-                  ...ASL.isNumeric(rightOut.jsonPath),
-                  Next: "left + right",
-                },
-              ],
-              // right is not a number, apply toNumber
-              Default: "left + toNumber(right)",
-            },
-            "left + right": ASLGraph.assignJsonPathOrIntrinsic(
-              ASLGraph.intrinsicMathAdd(toNumberLeft, rightOut),
-              heap,
-              "str"
-            ),
-            "left + toNumber(right)": ASLGraph.joinSubStates(
-              undefined,
-              this.jsonPathValueToNumber(rightOut, heap),
-              ASLGraph.assignJsonPathOrIntrinsic(
-                ASLGraph.intrinsicMathAdd(
-                  toNumberLeft,
-                  ASLGraph.jsonPath(heap, "num")
-                ),
-                heap,
-                "str"
-              )
-            )!,
-          },
-          output: ASLGraph.jsonPath(heap, "str"),
-        };
-      }
+    if (ASLGraph.isLiteralValue(leftOut) && ASLGraph.isLiteralValue(rightOut)) {
+      return ASLGraph.literalValue(
+        Number(leftOut.value) + Number(rightOut.value)
+      );
     } else {
-      if (ASLGraph.isLiteralValue(rightOut)) {
-        const toNumberRight = ASLGraph.literalValue(Number(rightOut.value));
-        return {
-          startState: "check",
-          states: {
-            // check if either one or both sides needs to be coerced
-            check: {
-              Type: "Choice",
-              Choices: [
-                // already numbers, continue
-                {
-                  ...ASL.isNumeric(leftOut.jsonPath),
-                  Next: "left + right",
-                },
-              ],
-              // left is not a number, apply toNumber
-              Default: "toNumber(left) + right",
-            },
-            "left + right": ASLGraph.assignJsonPathOrIntrinsic(
-              ASLGraph.intrinsicMathAdd(leftOut, toNumberRight),
-              heap,
-              "str"
+      return {
+        ...ASLGraph.joinSubStates(
+          undefined,
+          ASLGraph.isLiteralValue(leftOut)
+            ? undefined
+            : this.jsonPathValueToNumber(leftOut, `${heap}.str.left`),
+          ASLGraph.isLiteralValue(rightOut)
+            ? undefined
+            : this.jsonPathValueToNumber(rightOut, `${heap}.str.right`),
+          ASLGraph.assignJsonPathOrIntrinsic(
+            ASLGraph.intrinsicMathAdd(
+              ASLGraph.isLiteralValue(leftOut)
+                ? ASLGraph.literalValue(Number(leftOut.value))
+                : ASLGraph.jsonPath(heap, "str.left.num"),
+              ASLGraph.isLiteralValue(rightOut)
+                ? ASLGraph.literalValue(Number(rightOut.value))
+                : ASLGraph.jsonPath(heap, "str.right.num")
             ),
-            "toNumber(left) + right": ASLGraph.joinSubStates(
-              undefined,
-              this.jsonPathValueToNumber(leftOut, heap),
-              ASLGraph.assignJsonPathOrIntrinsic(
-                ASLGraph.intrinsicMathAdd(
-                  ASLGraph.jsonPath(heap, "num"),
-                  toNumberRight
-                ),
-                heap,
-                "str"
-              )
-            )!,
-          },
-          output: ASLGraph.jsonPath(heap, "str"),
-        };
-      } else {
-        return {
-          startState: "check",
-          states: {
-            // check if either one or both sides needs to be coerced
-            check: {
-              Type: "Choice",
-              Choices: [
-                // already numbers, continue
-                {
-                  ...ASL.and(
-                    ASL.isNumeric(leftOut.jsonPath),
-                    ASL.isNumeric(rightOut.jsonPath)
-                  ),
-                  Next: "left + right",
-                },
-                // right is not a string, apply toNumber
-                {
-                  ...ASL.isString(leftOut.jsonPath),
-                  Next: "left + toNumber(right)",
-                },
-                // left is not a string, apply toNumber
-                {
-                  ...ASL.isString(rightOut.jsonPath),
-                  Next: "toNumber(left) + right",
-                },
-              ],
-              // neither are numbers, coerce both
-              Default: "toNumber(left) + toNumber(right)",
-            },
-            "left + right": ASLGraph.assignJsonPathOrIntrinsic(
-              ASLGraph.intrinsicMathAdd(leftOut, rightOut),
-              heap,
-              "str"
-            ),
-            "left + toNumber(right)": ASLGraph.joinSubStates(
-              undefined,
-              this.jsonPathValueToNumber(rightOut, heap),
-              ASLGraph.assignJsonPathOrIntrinsic(
-                ASLGraph.intrinsicMathAdd(
-                  leftOut,
-                  ASLGraph.jsonPath(heap, "num")
-                ),
-                heap,
-                "str"
-              )
-            )!,
-            "toNumber(left) + right": ASLGraph.joinSubStates(
-              undefined,
-              this.jsonPathValueToNumber(leftOut, heap),
-              ASLGraph.assignJsonPathOrIntrinsic(
-                ASLGraph.intrinsicMathAdd(
-                  ASLGraph.jsonPath(heap, "num"),
-                  rightOut
-                ),
-                heap,
-                "str"
-              )
-            )!,
-            // coerce both left and right to numbers before apply adding,
-            // reuse he heap result location (heap.str)
-            "toNumber(left) + toNumber(right)": ASLGraph.joinSubStates(
-              undefined,
-              this.jsonPathValueToNumber(leftOut, `${heap}.str.left`),
-              this.jsonPathValueToNumber(rightOut, `${heap}.str.right`),
-              ASLGraph.assignJsonPathOrIntrinsic(
-                ASLGraph.intrinsicMathAdd(
-                  ASLGraph.jsonPath(heap, "str.left.num"),
-                  ASLGraph.jsonPath(heap, "str.right.num")
-                ),
-                heap,
-                "str"
-              )
-            )!,
-          },
-          output: ASLGraph.jsonPath(heap, "str"),
-        };
-      }
+            heap,
+            "str"
+          )
+        )!,
+        output: ASLGraph.jsonPath(heap, "str"),
+      };
     }
   }
 
@@ -3158,156 +3026,34 @@ export class ASL {
     rightOut: ASLGraph.JsonPath | ASLGraph.LiteralValue
   ): ASLGraph.NodeResults {
     const heap = this.newHeapVariable();
-    if (ASLGraph.isLiteralValue(leftOut)) {
-      if (ASLGraph.isLiteralValue(rightOut)) {
-        return ASLGraph.literalValue(`${leftOut.value}${rightOut.value}`);
-      } else {
-        const toStringLeft = ASLGraph.literalValue(String(leftOut.value));
-        return {
-          startState: "check",
-          states: {
-            // check if one side needs to be coerced
-            check: {
-              Type: "Choice",
-              Choices: [
-                // both are strings, concat
-                {
-                  ...ASL.isString(rightOut.jsonPath),
-                  Next: "left + right",
-                },
-              ],
-              // left is not a string, apply to string
-              Default: "left + toString(right)",
-            },
-            // simply format
-            "left + right": ASLGraph.assignJsonPathOrIntrinsic(
-              ASLGraph.intrinsicFormat("{}{}", toStringLeft, rightOut),
-              heap,
-              "str"
-            ),
-            // coerce right and then format, reuse the result heap location
-            "left + toString(right)": ASLGraph.joinSubStates(
-              undefined,
-              this.jsonPathValueToString(rightOut, heap),
-              ASLGraph.assignJsonPathOrIntrinsic(
-                ASLGraph.intrinsicFormat(
-                  "{}{}",
-                  toStringLeft,
-                  ASLGraph.jsonPath(heap, "str")
-                ),
-                heap,
-                "str"
-              )
-            )!,
-          },
-          output: ASLGraph.jsonPath(heap, "str"),
-        };
-      }
+    if (ASLGraph.isLiteralValue(leftOut) && ASLGraph.isLiteralValue(rightOut)) {
+      return ASLGraph.literalValue(`${leftOut.value}${rightOut.value}`);
     } else {
-      if (ASLGraph.isLiteralValue(rightOut)) {
-        const toStringRight = ASLGraph.literalValue(String(rightOut.value));
-        return {
-          startState: "check",
-          states: {
-            // check if one side needs to be coerced
-            check: {
-              Type: "Choice",
-              Choices: [
-                // both are strings, concat
-                {
-                  ...ASL.isString(leftOut.jsonPath),
-                  Next: "left + right",
-                },
-              ],
-              // left is not a string, apply to string
-              Default: "toString(left) + right",
-            },
-            // simply format
-            "left + right": ASLGraph.assignJsonPathOrIntrinsic(
-              ASLGraph.intrinsicFormat("{}{}", leftOut, toStringRight),
-              heap,
-              "str"
+      return {
+        ...ASLGraph.joinSubStates(
+          undefined,
+          ASLGraph.isLiteralValue(leftOut)
+            ? undefined
+            : this.jsonPathValueToString(leftOut, `${heap}.str.left`),
+          ASLGraph.isLiteralValue(rightOut)
+            ? undefined
+            : this.jsonPathValueToString(rightOut, `${heap}.str.right`),
+          ASLGraph.assignJsonPathOrIntrinsic(
+            ASLGraph.intrinsicFormat(
+              "{}{}",
+              ASLGraph.isLiteralValue(leftOut)
+                ? ASLGraph.literalValue(String(leftOut.value))
+                : ASLGraph.jsonPath(heap, "str.left.str"),
+              ASLGraph.isLiteralValue(rightOut)
+                ? ASLGraph.literalValue(String(rightOut.value))
+                : ASLGraph.jsonPath(heap, "str.right.str")
             ),
-            // coerce right and then format, reuse the result heap location
-            "toString(left) + right": ASLGraph.joinSubStates(
-              undefined,
-              this.jsonPathValueToString(leftOut, heap),
-              ASLGraph.assignJsonPathOrIntrinsic(
-                ASLGraph.intrinsicFormat(
-                  "{}{}",
-                  ASLGraph.jsonPath(heap, "str"),
-                  toStringRight
-                ),
-                heap,
-                "str"
-              )
-            )!,
-          },
-          output: ASLGraph.jsonPath(heap, "str"),
-        };
-      } else {
-        return {
-          startState: "check",
-          states: {
-            // check if one side needs to be coerced
-            check: {
-              Type: "Choice",
-              Choices: [
-                // both are strings, concat
-                {
-                  ...ASL.and(
-                    ASL.isString(leftOut.jsonPath),
-                    ASL.isString(rightOut.jsonPath)
-                  ),
-                  Next: "left + right",
-                },
-                // right is not a string, apply toString
-                {
-                  ...ASL.isString(leftOut.jsonPath),
-                  Next: "left + toString(right)",
-                },
-              ],
-              // left is not a string, apply to string
-              Default: "toString(left) + right",
-            },
-            // simply format
-            "left + right": ASLGraph.assignJsonPathOrIntrinsic(
-              ASLGraph.intrinsicFormat("{}{}", leftOut, rightOut),
-              heap,
-              "str"
-            ),
-            // coerce right and then format, reuse the result heap location
-            "left + toString(right)": ASLGraph.joinSubStates(
-              undefined,
-              this.jsonPathValueToString(rightOut, heap),
-              ASLGraph.assignJsonPathOrIntrinsic(
-                ASLGraph.intrinsicFormat(
-                  "{}{}",
-                  leftOut,
-                  ASLGraph.jsonPath(heap, "str")
-                ),
-                heap,
-                "str"
-              )
-            )!,
-            // coerce the left and then format, reuse the result heap location
-            "toString(left) + right": ASLGraph.joinSubStates(
-              undefined,
-              this.jsonPathValueToString(leftOut, heap),
-              ASLGraph.assignJsonPathOrIntrinsic(
-                ASLGraph.intrinsicFormat(
-                  "{}{}",
-                  ASLGraph.jsonPath(heap, "str"),
-                  rightOut
-                ),
-                heap,
-                "str"
-              )
-            )!,
-          },
-          output: ASLGraph.jsonPath(heap, "str"),
-        };
-      }
+            heap,
+            "str"
+          )
+        )!,
+        output: ASLGraph.jsonPath(heap, "str"),
+      };
     }
   }
 

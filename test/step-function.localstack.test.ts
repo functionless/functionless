@@ -1055,11 +1055,11 @@ runtimeTestSuite<
           // @ts-ignore
           constBooleanPlusBooleanConst: true + true, // 2
           refMinusRef: input.p - input.p, // 0
-          refMinusNegRef: input.p - input.n, // 1
+          refMinusNegRef: input.p - input.n, // 2
           refMinusZeroRef: input.p - input.z, // 1
           refMinusConst: input.p - 1, // 0
           refMinusNegConst: input.p - -1, // 2
-          refMinusZeroConst: input.p - -0, // 0
+          refMinusZeroConst: input.p - -0, // 1
           // postPlusPlus: a++, // 1=>2
           // prePlusPlus: ++a, // 3
           // postMinusMinus: a--, // 3 => 2
@@ -1102,11 +1102,11 @@ runtimeTestSuite<
       refBooleanPlusBooleanRef: 2,
       constBooleanPlusBooleanConst: 2,
       refMinusRef: 0,
-      refMinusNegRef: 1,
+      refMinusNegRef: 2,
       refMinusZeroRef: 1,
       refMinusConst: 0,
       refMinusNegConst: 2,
-      refMinusZeroConst: 0,
+      refMinusZeroConst: 1,
       postPlusPlus: 1,
       prePlusPlus: 3,
       postMinusMinus: 3,
