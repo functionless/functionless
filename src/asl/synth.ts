@@ -1,4 +1,5 @@
 import { aws_iam } from "aws-cdk-lib";
+import { AssociateSigninDelegateGroupsWithAccountRequest } from "aws-sdk/clients/chime";
 import { Construct } from "constructs";
 import { assertNever } from "../assert";
 import {
@@ -2286,8 +2287,75 @@ export class ASL {
             );
           }
         });
+      } else if ("-") {
+        return this.evalContext(
+          expr,
+          ({ evalExprToJsonPathOrLiteral, addState }) => {
+            const leftOut = evalExprToJsonPathOrLiteral(expr.left);
+            const rightOut = evalExprToJsonPathOrLiteral(expr.right);
+
+            // change literal value or reference value to a number
+            const leftNumber = ASLGraph.isLiteralValue(leftOut)
+              ? ASLGraph.literalValue(Number(leftOut.value))
+              : this.jsonPathValueToNumber(leftOut);
+
+            // NaN - anything = NaN - we use null for NaN
+            if (
+              ASLGraph.isLiteralNumber(leftNumber) &&
+              Number.isNaN(leftNumber.value)
+            ) {
+              return ASLGraph.literalValue(null);
+            }
+
+            // if there are states required to make a number, add them
+            if (ASLGraph.isStateOrSubState(leftNumber)) {
+              addState(leftNumber);
+            }
+
+            const leftNumberOut = ASLGraph.isLiteralValue(leftNumber)
+              ? leftNumber
+              : leftNumber.output;
+
+            // change literal value or reference value to a number
+            const rightNumber = ASLGraph.isLiteralValue(rightOut)
+              ? ASLGraph.literalValue(Number(rightOut.value))
+              : this.jsonPathValueToNumber(rightOut);
+
+            // if there are states required to make a number, add them
+            if (ASLGraph.isStateOrSubState(rightNumber)) {
+              addState(rightNumber);
+            }
+
+            const rightNumberOut = ASLGraph.isLiteralValue(rightNumber)
+              ? rightNumber
+              : rightNumber.output;
+
+            // we can only add in ASL, so negate the right side value (a - a) => (a + -a)
+            const negatedRight =
+              this.negateJsonPathOrLiteralValue(rightNumberOut);
+
+            if (ASLGraph.isStateOrSubState(negatedRight)) {
+              addState(negatedRight);
+            }
+
+            const negatedRightOut = ASLGraph.isLiteralValue(negatedRight)
+              ? negatedRight
+              : negatedRight.output;
+
+            // Anything - NaN = NaN
+            if (ASLGraph.isLiteralNull(negatedRightOut)) {
+              return negatedRightOut;
+            }
+
+            return this.assignJsonPathOrIntrinsic(
+              ASLGraph.intrinsicMathAdd(
+                leftNumberOut,
+                negatedRightOut as ASLGraph.LiteralValue<number>
+              )
+            );
+          }
+        );
       } else if (
-        expr.op === "-" ||
         expr.op === "*" ||
         expr.op === "/" ||
         expr.op === "%" ||
@@ -2640,80 +2708,91 @@ export class ASL {
         ? number
         : number.output;
 
-      if (ASLGraph.isLiteralValue(numberOutput)) {
-        if (numberOutput.value === null) {
-          return numberOutput;
-        }
-        return ASLGraph.literalValue(-numberOutput.value);
-      } else {
-        const heap = this.newHeapVariable();
-        // we know we have a number or null (NaN) because that is what evalToNumber does.
-        // however, we do not know if the value is negative or positive and we cannot
-        // directly negate a number.
-        return {
-          startState: "check",
-          node: expr,
-          states: {
-            check: {
-              Type: "Choice",
-              Choices: [
-                { ...ASL.isNull(numberOutput.jsonPath), Next: "NaN" },
-                {
-                  ...ASL.numericLessThan(numberOutput.jsonPath, 0),
-                  Next: "negative",
-                },
-              ],
-              Default: "positive",
-            },
-            NaN: this.assignValue(
-              undefined,
-              ASLGraph.jsonPath(this.context.null),
-              `${heap}.num`
-            ),
-            // turn a negative number into a positive number -10 => 10
-            negative: ASLGraph.joinSubStates(
-              undefined,
-              // FIXME: This is split into two steps because step functions has a bug that string split
-              //        cannot be used as the first argument of array get item.
-              //        If they ever fix that... move the stringSplit into the arrayGetItem.
-              ASLGraph.assignJsonPathOrIntrinsic(
-                // split the string on the `-`: ["", "10"]
-                ASLGraph.intrinsicStringSplit(
-                  // turn number into a string: -10 => "-10"
-                  ASLGraph.intrinsicFormat(
-                    ASLGraph.literalValue("{}"),
-                    numberOutput
-                  ),
-                  ASLGraph.literalValue("-")
-                ),
-                heap,
-                "num"
-              ),
-              ASLGraph.assignJsonPathOrIntrinsic(
-                // turn the string fragment back to a number: 10
-                ASLGraph.intrinsicStringToJson(
-                  // take the right of the value (the number): "10"
-                  ASLGraph.intrinsicArrayGetItem(
-                    ASLGraph.jsonPath(heap, "num"),
-                    0
-                  )
-                ),
-                heap,
-                "num"
-              )
-            )!,
-            positive: ASLGraph.assignJsonPathOrIntrinsic(
-              ASLGraph.intrinsicStringToJson(
-                ASLGraph.intrinsicFormat("-{}", numberOutput)
+      return this.negateJsonPathOrLiteralValue(numberOutput);
+    });
+  }
+
+  /**
+   * Invert the numeric value of a reference.
+   *
+   * Assumes that a jsonPath is a number or null.
+   */
+  public negateJsonPathOrLiteralValue(
+    output: ASLGraph.JsonPath | ASLGraph.LiteralValue<number | null>,
+    node?: FunctionlessNode
+  ):
+    | ASLGraph.LiteralValue<number | null>
+    | (ASLGraph.OutputSubState & { output: ASLGraph.JsonPath }) {
+    if (ASLGraph.isLiteralValue(output)) {
+      if (output.value === null) {
+        return output;
+      }
+      return ASLGraph.literalValue(-output.value);
+    } else {
+      const heap = this.newHeapVariable();
+      // we know we have a number or null (NaN) because that is what evalToNumber does.
+      // however, we do not know if the value is negative or positive and we cannot
+      // directly negate a number.
+      return {
+        startState: "check",
+        node: node,
+        states: {
+          check: {
+            Type: "Choice",
+            Choices: [
+              { ...ASL.isNull(output.jsonPath), Next: "NaN" },
+              {
+                ...ASL.numericLessThan(output.jsonPath, 0),
+                Next: "negative",
+              },
+            ],
+            Default: "positive",
+          },
+          NaN: this.assignValue(
+            undefined,
+            ASLGraph.jsonPath(this.context.null),
+            `${heap}.num`
+          ),
+          // turn a negative number into a positive number -10 => 10
+          negative: ASLGraph.joinSubStates(
+            undefined,
+            // FIXME: This is split into two steps because step functions has a bug that string split
+            //        cannot be used as the first argument of array get item.
+            //        If they ever fix that... move the stringSplit into the arrayGetItem.
+            ASLGraph.assignJsonPathOrIntrinsic(
+              // split the string on the `-`: ["", "10"]
+              ASLGraph.intrinsicStringSplit(
+                // turn number into a string: -10 => "-10"
+                ASLGraph.intrinsicFormat(ASLGraph.literalValue("{}"), output),
+                ASLGraph.literalValue("-")
               ),
               heap,
               "num"
             ),
-          },
-          output: ASLGraph.jsonPath(heap, "num"),
-        };
-      }
-    });
+            ASLGraph.assignJsonPathOrIntrinsic(
+              // turn the string fragment back to a number: 10
+              ASLGraph.intrinsicStringToJson(
+                // take the right of the value (the number): "10"
+                ASLGraph.intrinsicArrayGetItem(
+                  ASLGraph.jsonPath(heap, "num"),
+                  0
+                )
+              ),
+              heap,
+              "num"
+            )
+          )!,
+          positive: ASLGraph.assignJsonPathOrIntrinsic(
+            ASLGraph.intrinsicStringToJson(
+              ASLGraph.intrinsicFormat("-{}", output)
+            ),
+            heap,
+            "num"
+          ),
+        },
+        output: ASLGraph.jsonPath(heap, "num"),
+      };
+    }
   }
 
   /**

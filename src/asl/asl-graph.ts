@@ -152,6 +152,12 @@ export namespace ASLGraph {
     return "value" in state;
   }
 
+  export function isLiteralNull(
+    state: any
+  ): state is ASLGraph.LiteralValue<null> {
+    return isLiteralValue(state) && state.value === null;
+  }
+
   export function isLiteralNumber(
     state: any
   ): state is ASLGraph.LiteralValue<number> {
