@@ -1,0 +1,49 @@
+---
+sidebar_position: 4
+---
+
+import { Screenshot } from "../../src/components/screenshot";
+
+# Clean Up
+
+We can teardown the stack we just created by running:
+
+```bash
+npx cdk destroy
+```
+
+CDK will prompt you to confirm that you'd like to destroy your stack:
+
+import confirmDestroy from "./assets/confirm-destroy.png";
+
+<Screenshot src={confirmDestroy} />
+
+Typing `y <enter>` will confirm that you want to destroy your stack.
+You will see the status update as the stack resources are deleted.
+Once everything has been deleted, you should get a confirmation that your stack has been destroyed:
+
+import stackDestroyed from "./assets/stack-destroyed.png";
+
+<Screenshot src={stackDestroyed} />
+
+:::tip
+
+Cleaning up development stacks is good practice to avoid running into resource limits and to ensure your stack is deployable from scratch.
+
+:::
+
+## Wrapping Up
+
+We've only scratched the surface of what you can build with Functionless and we're hard at work [adding new functionality on a weekly basis][releases].
+
+You can read more about the [Step Function][step-function] and [Function][function] Constructs we used in this guide in our concepts documentation.
+This is also a good place to learn about other Constructs and features that were not included in this guide.
+
+If you'd like to keep up with the project, please [star us on GitHub][github].
+We're also [active on discord][discord] if you'd like some help or just want to share something exciting you've built with Functionless.
+
+[github]: https://github.com/functionless/functionless/stargazers
+[discord]: https://discord.com/invite/VRqHbjrbfC
+[step-function]: ../concepts/step-function
+[function]: ../concepts/function/
+[releases]: https://github.com/functionless/functionless/releases

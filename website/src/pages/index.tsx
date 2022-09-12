@@ -64,7 +64,10 @@ function HomepageHeader() {
                 xs={12}
                 sx={{ margin: { xs: 1, md: 0 } }}
               >
-                <HomeButton to="/docs/getting-started" label="Get Started" />
+                <HomeButton
+                  to="/docs/getting-started/setup"
+                  label="Get Started"
+                />
               </Grid>
             </Grid>
           </Grid>
