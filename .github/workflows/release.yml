@@ -11,6 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
+      id-token: write
     outputs:
       latest_commit: ${{ steps.git_remote.outputs.latest_commit }}
     env:

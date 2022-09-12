@@ -276,6 +276,20 @@ project.buildWorkflow.workflow.jobs.build = {
   },
 };
 
+// id-token is required for aws-actions/configure-aws-credentials@v1 with OIDC
+// https://github.com/aws-actions/configure-aws-credentials/issues/271#issuecomment-1012450577
+// @ts-ignore
+project.release.defaultBranch.workflow.jobs.release = {
+  // @ts-ignore
+  ...project.release.defaultBranch.workflow.jobs.release,
+  permissions: {
+    // @ts-ignore
+    ...project.release.defaultBranch.workflow.jobs.release.permissions,
+    "id-token": "write",
+    contents: "write",
+  },
+};
+
 project.eslint!.addRules({
   quotes: "off",
   "comma-dangle": "off",
