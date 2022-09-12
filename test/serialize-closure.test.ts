@@ -14,7 +14,7 @@ import {
 } from "../src/serialize-closure";
 
 // set to false to inspect generated js files in .test/
-const cleanup = true;
+const cleanup = false;
 
 const tmpDir = path.join(__dirname, ".test");
 beforeAll(async () => {
@@ -687,4 +687,37 @@ test("thrown errors map back to source", async () => {
   if (!failed) {
     fail("expected a thrown erro");
   }
+});
+
+test("serialize a class value", async () => {
+  class Foo {
+    constructor(readonly value: string) {}
+    public method() {
+      return `hello ${this.value}`;
+    }
+  }
+  const foo = new Foo("world");
+
+  const closure = await expectClosure(() => foo.method());
+
+  expect(closure()).toEqual("hello world");
+});
+
+test("serialize a class method calling super", async () => {
+  class Foo {
+    constructor(readonly value: string) {}
+    public method() {
+      return `hello ${this.value}`;
+    }
+  }
+  class Bar extends Foo {
+    public method() {
+      return `${super.method()}!`;
+    }
+  }
+  const foo = new Bar("world");
+
+  const closure = await expectClosure(() => foo.method());
+
+  expect(closure()).toEqual("hello world!");
 });
