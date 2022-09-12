@@ -623,6 +623,10 @@ export class ASL {
                 this.evalDecl(stmt.initializer, {
                   jsonPath: `${tempArrayPath}[0]`,
                 })!
+              : isVariableDeclList(stmt.initializer)
+              ? this.evalDecl(stmt.initializer.decls[0]!, {
+                  jsonPath: `${tempArrayPath}[0]`,
+                })!
               : this.evalAssignment(stmt.initializer, {
                   jsonPath: `${tempArrayPath}[0]`,
                 })!;
@@ -4703,7 +4707,9 @@ function toStateName(node?: FunctionlessNode): string {
     return `for(${
       isIdentifier(node.initializer)
         ? toStateName(node.initializer)
-        : toStateName(node.initializer.name)
+        : isVariableDecl(node.initializer)
+        ? toStateName(node.initializer.name)
+        : toStateName(node.initializer.decls[0]?.name)
     } in ${toStateName(node.expr)})`;
   } else if (isForOfStmt(node)) {
     return `for(${toStateName(node.initializer)} of ${toStateName(node.expr)})`;

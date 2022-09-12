@@ -175,7 +175,7 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly initializer: VariableDeclList | Identifier,
+    readonly initializer: VariableDeclList | VariableDecl | Identifier,
     readonly expr: Expr,
     readonly body: Stmt,
     /**
@@ -203,7 +203,7 @@ export class ForInStmt extends BaseStmt<NodeKind.ForInStmt> {
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly initializer: VariableDecl | Identifier,
+    readonly initializer: VariableDeclList | VariableDecl | Identifier,
     readonly expr: Expr,
     readonly body: BlockStmt
   ) {

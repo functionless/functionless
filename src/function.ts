@@ -58,7 +58,10 @@ import {
 } from "./integration";
 import { ReflectionSymbols, validateFunctionLike } from "./reflect";
 import { isSecret } from "./secret";
-import { serializeClosure } from "./serialize-closure";
+import {
+  serializeClosure,
+  serializeCodeWithSourceMap,
+} from "./serialize-closure";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
 import { AnyAsyncFunction, AnyFunction } from "./util";
@@ -938,18 +941,20 @@ export async function serialize(
   const preWarms = integrationPrewarms;
   const result =
     serializerImpl === SerializerImpl.EXPERIMENTAL_SWC
-      ? serializeClosure(
-          integrationPrewarms.length > 0
-            ? () => {
-                preWarms.forEach((i) => i?.(preWarmContext));
-                return f;
-              }
-            : f,
-          {
-            shouldCaptureProp,
-            serialize: serializeHook,
-            isFactoryFunction: integrationPrewarms.length > 0,
-          }
+      ? serializeCodeWithSourceMap(
+          serializeClosure(
+            integrationPrewarms.length > 0
+              ? () => {
+                  preWarms.forEach((i) => i?.(preWarmContext));
+                  return f;
+                }
+              : f,
+            {
+              shouldCaptureProp,
+              serialize: serializeHook,
+              isFactoryFunction: integrationPrewarms.length > 0,
+            }
+          )
         )
       : (
           await serializeFunction(

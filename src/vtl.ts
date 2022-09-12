@@ -88,6 +88,7 @@ import {
   isUnaryExpr,
   isUndefinedLiteralExpr,
   isVariableDecl,
+  isVariableDeclList,
   isVariableStmt,
   isVoidExpr,
   isWhileStmt,
@@ -599,7 +600,9 @@ export abstract class VTL {
         );
       }
       this.foreach(
-        node.initializer,
+        isVariableDeclList(node.initializer)
+          ? node.initializer.decls[0]!
+          : node.initializer,
         `${this.eval(node.expr)}${isForInStmt(node) ? ".keySet()" : ""}`,
         node.body
       );

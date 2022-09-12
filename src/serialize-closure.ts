@@ -438,6 +438,16 @@ export function serializeClosure(
         return serialize(Object.prototype);
       }
 
+      if (
+        Object.hasOwn(value, "constructor") &&
+        typeof value.constructor === "function" &&
+        value.constructor.prototype === value
+      ) {
+        // this is the prototype value of a Function/class
+        const clazz = serialize(value.constructor);
+        return singleton(value, () => propAccessExpr(clazz, "prototype"));
+      }
+
       const prototype = Object.getPrototypeOf(value);
 
       // serialize the prototype first

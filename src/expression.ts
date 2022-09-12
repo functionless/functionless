@@ -56,6 +56,7 @@ export type Expr =
   | SpreadAssignExpr
   | SpreadElementExpr
   | StringLiteralExpr
+  | SuperKeyword
   | TaggedTemplateExpr
   | TemplateExpr
   | ThisExpr
@@ -925,12 +926,7 @@ export class ThisExpr<T = any> extends BaseExpr<NodeKind.ThisExpr> {
   }
 }
 
-export class SuperKeyword extends BaseNode<NodeKind.SuperKeyword> {
-  // `super` is not an expression - a reference to it does not yield a value
-  // it only supports the following interactions
-  // 1. call in a constructor - `super(..)`
-  // 2. call a method on it - `super.method(..)`.
-  readonly nodeKind = "Node";
+export class SuperKeyword extends BaseExpr<NodeKind.SuperKeyword> {
   constructor(
     /**
      * Range of text in the source file where this Node resides.

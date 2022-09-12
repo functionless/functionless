@@ -538,7 +538,8 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
                     emptySpan(),
                     new StringLiteralExpr(emptySpan(), "[L")
                   ),
-                ]
+                ],
+                false
               ),
               "||",
               new CallExpr(
@@ -554,7 +555,8 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
                     emptySpan(),
                     new StringLiteralExpr(emptySpan(), "ArrayList")
                   ),
-                ]
+                ],
+                false
               )
             ),
             new BinaryExpr(
@@ -576,7 +578,8 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
                 new Identifier(emptySpan(), "containsKey"),
                 false
               ),
-              [new Argument(updatedNode.left.span, updatedNode.left)]
+              [new Argument(updatedNode.left.span, updatedNode.left)],
+              false
             )
           );
         }
