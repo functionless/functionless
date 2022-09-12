@@ -584,13 +584,6 @@ export class ASL {
           if (isForInStmt(stmt)) {
             const initializerName = isIdentifier(stmt.initializer)
               ? this.getIdentifierName(stmt.initializer)
-              : isVariableDecl(stmt.initializer) &&
-                isIdentifier(stmt.initializer.name)
-              ? this.getDeclarationName(
-                  stmt.initializer as VariableDecl & {
-                    name: Identifier;
-                  }
-                )
               : isVariableDeclList(stmt.initializer) &&
                 isIdentifier(stmt.initializer.decls[0].name)
               ? this.getDeclarationName(
@@ -626,12 +619,7 @@ export class ASL {
               },
             };
           } else {
-            return isVariableDecl(stmt.initializer)
-              ? this.evalDecl(stmt.initializer, {
-                  jsonPath: `${tempArrayPath}[0]`,
-                })!
-              : // TODO: deprecate ^ VariableDecl in favor of VariableDeclList
-              isVariableDeclList(stmt.initializer)
+            return isVariableDeclList(stmt.initializer)
               ? this.evalDecl(stmt.initializer.decls[0]!, {
                   jsonPath: `${tempArrayPath}[0]`,
                 })!
@@ -3782,9 +3770,6 @@ export class ASL {
             } else if (isVariableDeclList(parent.initializer)) {
               // for (let i in ..)
               return parent.initializer.decls[0] === element;
-            } else if (isVariableDecl(parent.initializer)) {
-              // for (let i in ..)
-              return parent.initializer === element;
             }
           }
           return false;

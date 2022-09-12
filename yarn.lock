@@ -1040,10 +1040,10 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@functionless/ast-reflection@^0.2.2":
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.2.2.tgz#976ec73af75028cb6216d70fa5266db368b0590a"
-  integrity sha512-YtvaEnorKparTOOIXmEbUXEfN4vOGl9jyXY7tvCDAgDpGMdJI2xAs108nHjNa6gabL9Xvojm6I1SuPC+EAsBvg==
+"@functionless/ast-reflection@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.3.1.tgz#5823249bbe3c9a57eb7b3471cff222577652cb38"
+  integrity sha512-to/pjwiN2KzZKY/ypTf4njFQ/dbFw+d9nfbpbjzBDwetFd+2b7KRjuI2c/FkiXlTrKTKNNYP9nyypocRk8q1bg==
 
 "@functionless/nodejs-closure-serializer@^0.1.2":
   version "0.1.2"
@@ -1868,7 +1868,7 @@
   resolved "https://registry.yarnpkg.com/@types/prettier/-/prettier-2.7.0.tgz#ea03e9f0376a4446f44797ca19d9c46c36e352dc"
   integrity sha512-RI1L7N4JnW5gQw2spvL7Sllfuf1SaHdrZpCHiBlCXjIlufi1SMNnbu2teze3/QE67Fg2tBlH7W+mi4hVNk4p0A==
 
-"@types/responselike@*", "@types/responselike@^1.0.0":
+"@types/responselike@*", "@types/responselike@1.0.0", "@types/responselike@^1.0.0":
   version "1.0.0"
   resolved "https://registry.yarnpkg.com/@types/responselike/-/responselike-1.0.0.tgz#251f4fe7d154d2bad125abe1b429b23afd262e29"
   integrity sha512-85Y2BjiufFzaMIlvJDvTTB8Fxl2xfLo4HgmHzVBz08w4wDePCTjYw66PdrolO0kzli3yam/YCgRufyo1DdQVTA==
@@ -4415,7 +4415,7 @@ globby@^11.0.4, globby@^11.1.0:
     merge2 "^1.4.1"
     slash "^3.0.0"
 
-got@^12.1.0:
+got@12.3.1, got@^12.1.0:
   version "12.3.1"
   resolved "https://registry.yarnpkg.com/got/-/got-12.3.1.tgz#79d6ebc0cb8358c424165698ddb828be56e74684"
   integrity sha512-tS6+JMhBh4iXMSXF6KkIsRxmloPln31QHDlcb6Ec3bzxjjFJFr/8aXdpyuLmVc9I4i2HyBHYw1QU5K1ruUdpkw==

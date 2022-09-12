@@ -259,12 +259,12 @@ export abstract class VTL {
   }
 
   public foreach(
-    iterVar: string | Expr | VariableDecl | VariableDeclList,
+    iterVar: string | Expr | VariableDeclList,
     iterValue: string | Expr,
     body: string | Stmt | (() => void)
   ) {
-    if (isVariableDecl(iterVar) || isVariableDeclList(iterVar)) {
-      const varDecl = isVariableDeclList(iterVar) ? iterVar.decls[0]! : iterVar;
+    if (isVariableDeclList(iterVar)) {
+      const varDecl = iterVar.decls[0]!;
       if (isBindingPattern(varDecl.name)) {
         // iterate into a temp variable
         const tempVar = this.newLocalVarName();
