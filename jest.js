@@ -1,30 +1,8 @@
 const swcJest = require("@swc/jest");
+const { config } = require("./lib/swc");
 
 function createTransformer() {
-  return swcJest.createTransformer({
-    jsc: {
-      parser: {
-        syntax: "typescript",
-        dynamicImport: false,
-        decorators: false,
-        hidden: {
-          jest: true,
-        },
-      },
-      transform: null,
-      target: "es2022",
-      loose: false,
-      externalHelpers: false,
-      experimental: {
-        plugins: [["@functionless/ast-reflection", {}]],
-      },
-    },
-    minify: true,
-    sourceMaps: "inline",
-    module: {
-      type: "commonjs",
-    },
-  });
+  return swcJest.createTransformer(config);
 }
 
 module.exports = { createTransformer };
