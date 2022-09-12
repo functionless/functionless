@@ -125,7 +125,7 @@ Functionless is doing three important things for us in this block of code:
 
 1. Allowing us to call the `sayFunction` Construct as a typed TypeScript function.
 2. Recognizing that we've called an Lambda Function and granting Step Functions permissions to invoke that Lambda Function.
-3. Converting a block of TypeScript code into Amazon States Language (ASL) for us.
+3. Converting a block of TypeScript code into [Amazon States Language (ASL)][asl-docs] for us.
 
 We're able to call the `sayFunction` Construct we just defined as if it were a standard TypeScript function call.
 Additionally, the arguments and return type of `sayFunction` match what we defined above:
@@ -142,9 +142,7 @@ Functionless maintains types across service boundaries eliminating data shape co
 
 :::
 
-"But wait!", you might say. "Don't I have to set up IAM permissions for this Step Function to call that Lambda?"
-
-Fear not...
+You also might have noticed that we don't need to to explicitly grant Step Functions permission to invoke your Lambda Function.
 
 :::info
 
@@ -167,3 +165,4 @@ At this point, your new project is [ready for deployment](./deploy-project).
 [cdk-resource]: https://docs.aws.amazon.com/cdk/v2/guide/resources.html
 [cdk-app]: https://docs.aws.amazon.com/cdk/v2/guide/apps.html
 [cdk-stack]: https://docs.aws.amazon.com/cdk/v2/guide/stacks.html
+[asl-docs]: https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html
