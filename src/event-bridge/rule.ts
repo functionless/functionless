@@ -6,6 +6,7 @@ import {
   DynamicProps,
   pipe,
   IntegrationWithEventBus,
+  IntegrationWithEventBusProps,
 } from "./event-bus";
 import {
   andDocuments,
@@ -143,9 +144,9 @@ export interface IRule<out OutEvnt extends Event> {
    * bus.when(...).pipe(new EventBus(targetBus))
    * ```
    */
-  pipe<Props extends object | undefined>(
-    integration: IntegrationWithEventBus<OutEvnt, Props>,
-    ...props: Parameters<DynamicProps<Props>>
+  pipe<I extends IntegrationWithEventBus<OutEvnt, any>>(
+    integration: I,
+    ...props: Parameters<DynamicProps<IntegrationWithEventBusProps<I>>>
   ): void;
   pipe(callback: () => aws_events.IRuleTarget): void;
 }
@@ -185,18 +186,21 @@ abstract class RuleBase<out OutEvnt extends Event> implements IRule<OutEvnt> {
   /**
    * @inheritdoc
    */
-  public pipe<Props extends object | undefined>(
-    integration: IntegrationWithEventBus<OutEvnt, Props>,
-    ...props: Parameters<DynamicProps<Props>>
+  public pipe<I extends IntegrationWithEventBus<OutEvnt, any>>(
+    integration: I,
+    ...props: Parameters<DynamicProps<IntegrationWithEventBusProps<I>>>
   ): void;
   public pipe(callback: () => aws_events.IRuleTarget): void;
-  public pipe<Props extends object | undefined>(
-    integration:
-      | IntegrationWithEventBus<OutEvnt, Props>
-      | (() => aws_events.IRuleTarget),
-    ...props: Parameters<DynamicProps<Props>>
+  public pipe<I extends IntegrationWithEventBus<OutEvnt, any>>(
+    integration: I | (() => aws_events.IRuleTarget),
+    ...props: Parameters<DynamicProps<IntegrationWithEventBusProps<I>>>
   ): void {
-    pipe(this as IRule<OutEvnt>, integration, props[0] as Props, undefined);
+    pipe(
+      this as IRule<OutEvnt>,
+      integration,
+      props[0] as IntegrationWithEventBusProps<I>,
+      undefined
+    );
   }
 }
 

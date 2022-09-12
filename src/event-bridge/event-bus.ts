@@ -841,8 +841,17 @@ export function makeEventBusIntegration<
   return integration as EventBusTargetIntegration<Payload, Props>;
 }
 
-export type DynamicProps<Props extends object | undefined> =
-  Props extends object ? (props: Props) => void : (props?: Props) => void;
+export type IntegrationWithEventBusProps<
+  Integration extends IntegrationWithEventBus<any, any>
+> = Integration extends IntegrationWithEventBus<any, infer Props>
+  ? Props
+  : undefined;
+
+export type DynamicProps<Props> = Props extends never
+  ? never
+  : [Props] extends [undefined]
+  ? (props?: Props | undefined) => void
+  : (props: Props) => void;
 
 /**
  * Add a target to the run based on the configuration given.
