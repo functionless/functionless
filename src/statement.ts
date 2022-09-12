@@ -192,6 +192,7 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
   ) {
     super(NodeKind.ForOfStmt, span, arguments);
     this.ensure(initializer, "initializer", [
+      NodeKind.VariableDeclList,
       NodeKind.VariableDecl,
       NodeKind.Identifier,
     ]);
@@ -216,7 +217,6 @@ export class ForInStmt extends BaseStmt<NodeKind.ForInStmt> {
   ) {
     super(NodeKind.ForInStmt, span, arguments);
     this.ensure(initializer, "initializer", [
-      "undefined",
       "Expr",
       NodeKind.VariableDeclList,
       NodeKind.VariableDecl,
