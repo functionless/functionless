@@ -51,6 +51,8 @@ const skipErrorCodes: ErrorCode[] = [
   ErrorCodes.StepFunction_invalid_filter_syntax,
   // will not support integration specific validation, for now.
   ErrorCodes.Unsupported_AWS_SDK_in_Resource,
+  // will not support integration specific validation, for now.
+  ErrorCodes.Step_Function_Retry_Invalid_Input,
 ];
 
 const file: string | undefined = fs

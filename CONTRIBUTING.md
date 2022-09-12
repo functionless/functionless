@@ -93,6 +93,14 @@ test-app$ yarn install
 test-app$ yarn watch
 ```
 
+### Test Options
+
+| Env                              | Description                                                                                                                              |
+| -------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------- |
+| TEST_DEPLOY_TARGET               | Deploy to `AWS` (with default credential chain) or `LOCALSTACK`, Default: `LOCALSTACK`                                                   |
+| TEST_STACK_RETENTION_POLICY      | After tests complete, `RETAIN`, `DELETE`, or `SELF_DESTRUCT` (delete after `TEST_SELF_DESTRUCT_DELAY_SECONDS`). Default: `SELF_DESTRUCT` |
+| TEST_SELF_DESTRUCT_DELAY_SECONDS | Number of seconds to wait before self destructing the stack, Default: 12 hours (43200s)                                                  |
+
 ### Website
 
 The doc site contains marketing, documentation, and blogs on `Functionless.org`. It is built using [Docusaurus v2](https://docusaurus.io/).

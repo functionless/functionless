@@ -1,7 +1,9 @@
-import { readFileSync, writeFileSync, chmodSync } from "fs";
+import * as fs from "fs";
 import { join } from "path";
 import { typescript, TextFile, JsonFile, Project } from "projen";
 import { GithubCredentials } from "projen/lib/github";
+import { JobStep } from "projen/lib/github/workflows-model";
+import { RenderWorkflowSetupOptions } from "projen/lib/javascript";
 
 /**
  * Adds githooks into the .git/hooks folder during projen synth.
@@ -16,7 +18,7 @@ class GitHooksPreCommitComponent extends TextFile {
   }
 
   public postSynthesize() {
-    chmodSync(this.path, "755");
+    fs.chmodSync(this.path, "755");
   }
 }
 
@@ -56,7 +58,7 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
     const rootPackageJson = join(outdir, "package.json");
 
     const packageJson = JSON.parse(
-      readFileSync(rootPackageJson).toString("utf8")
+      fs.readFileSync(rootPackageJson).toString("utf8")
     );
 
     const updated = {
@@ -67,7 +69,27 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
       },
     };
 
-    writeFileSync(rootPackageJson, `${JSON.stringify(updated, null, 2)}\n`);
+    fs.writeFileSync(rootPackageJson, `${JSON.stringify(updated, null, 2)}\n`);
+  }
+
+  public renderWorkflowSetup(
+    options?: RenderWorkflowSetupOptions | undefined
+  ): JobStep[] {
+    return [
+      ...super.renderWorkflowSetup(options),
+      // https://github.com/aws-actions/configure-aws-credentials#sample-iam-role-cloudformation-template
+      // the aws-org stacks create an OIDC provider for github.
+      {
+        name: "Configure AWS Credentials",
+        uses: "aws-actions/configure-aws-credentials@v1",
+        with: {
+          "role-to-assume":
+            "arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4",
+          "aws-region": "us-east-1",
+          "role-duration-seconds": 30 * 60,
+        },
+      },
+    ];
   }
 }
 
@@ -148,7 +170,7 @@ const project = new CustomTypescriptProject({
   ],
   eslintOptions: {
     dirs: ["src", "test"],
-    ignorePatterns: ["jest.config.ts", "scripts/**"],
+    ignorePatterns: ["jest.config.ts", "scripts/**", "register.js"],
     lintProjenRc: false,
   },
   tsconfig: {
@@ -172,7 +194,6 @@ const project = new CustomTypescriptProject({
   },
   gitignore: [".DS_Store", ".dccache", ".swc"],
   releaseToNpm: true,
-
   depsUpgradeOptions: {
     workflowOptions: {
       projenCredentials: GithubCredentials.fromApp(),
@@ -230,24 +251,42 @@ project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
 );
 project.compileTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
+project.compileTask.env("TEST_DEPLOY_TARGET", "AWS");
+
 project.compileTask.prependExec("ts-node ./scripts/sdk-gen.ts");
 
 project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth --quiet"
 );
-project.testTask.prependExec("./scripts/localstack");
-project.testTask.exec("localstack stop");
 
+// To run tests on github using localstack instead of AWS, uncomment the below and comment out TEST_DEPLOY_TARGET.
+// project.testTask.prependExec("./scripts/localstack");
+// project.testTask.exec("localstack stop");
+// project.testTask.env("DEFAULT_REGION", "ap-northeast-1");
+// project.testTask.env("AWS_ACCOUNT_ID", "000000000000");
+// project.testTask.env("AWS_ACCESS_KEY_ID", "test");
+// project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
+project.testTask.env("TEST_DEPLOY_TARGET", "AWS");
 project.testTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
-project.testTask.env("DEFAULT_REGION", "ap-northeast-1");
-project.testTask.env("AWS_ACCOUNT_ID", "000000000000");
-project.testTask.env("AWS_ACCESS_KEY_ID", "test");
-project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
 
 const testFast = project.addTask("test:fast");
 testFast.exec(`jest --testPathIgnorePatterns localstack --coverage false`);
 
 project.addPackageIgnore("/test-app");
+
+// id-token is required for aws-actions/configure-aws-credentials@v1 with OIDC
+// https://github.com/aws-actions/configure-aws-credentials/issues/271#issuecomment-1012450577
+// @ts-ignore
+project.buildWorkflow.workflow.jobs.build = {
+  // @ts-ignore
+  ...project.buildWorkflow.workflow.jobs.build,
+  permissions: {
+    // @ts-ignore
+    ...project.buildWorkflow.workflow.jobs.build.permissions,
+    "id-token": "write",
+    contents: "write",
+  },
+};
 
 project.eslint!.addRules({
   quotes: "off",

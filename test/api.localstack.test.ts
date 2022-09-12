@@ -8,9 +8,9 @@ import {
   LambdaMethod,
   MockMethod,
 } from "../src";
-import { localstackTestSuite } from "./localstack";
+import { runtimeTestSuite } from "./runtime";
 
-localstackTestSuite("apiGatewayStack", (test, stack) => {
+runtimeTestSuite("apiGatewayStack", (test, stack) => {
   // skipped because local stack does not support mapping templates https://github.com/localstack/localstack/issues/5850
   test.skip(
     "mock integration",
