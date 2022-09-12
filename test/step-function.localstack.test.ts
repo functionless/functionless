@@ -1025,21 +1025,15 @@ runtimeTestSuite<
     (parent) =>
       new StepFunction(parent, "sfn", async (input) => {
         // let a = input.p;
-
-        // let b = 1;
-        // const plusEqualsConst = (b += 1); // 2
-        // const plusEqualsRef = (b += input.p); // 3
-        // const minusEqualsConst = (b -= 1); // 2
-        // const minusEqualsRef = (b -= input.p); // 1
-        // const minusEqualsNegConst = (b -= -1); // 2
+        let b = 1;
 
         return {
-          // b, // 2
-          // plusEqualsConst, // 2
-          // plusEqualsRef, // 3
-          // minusEqualsConst, // 2
-          // minusEqualsRef, // 1
-          // minusEqualsNegConst, // 2
+          plusEqualsConst: (b += 1), // 2
+          plusEqualsRef: (b += input.p), // 3
+          minusEqualsConst: (b -= 1), // 2
+          minusEqualsRef: (b -= input.p), // 1
+          minusEqualsNegConst: (b -= -1), // 2
+          b, // 2
           refPlusRef: input.p + input.p, //2
           refPlusNegRef: input.p + input.n, // 0
           refPlusZeroRef: input.p + input.z, // 1
