@@ -11,6 +11,7 @@ import {
   FunctionLike,
   GetAccessorDecl,
   MethodDecl,
+  ParameterDecl,
   SetAccessorDecl,
   VariableDeclKind,
 } from "./declaration";
@@ -872,10 +873,7 @@ export function serializeClosure(
         ...(node.isAsterisk ? ["*"] : []),
         ...(node.name ? [toSourceNode(node.name, illegalNames)] : []),
         "(",
-        ...node.parameters.flatMap((param) => [
-          toSourceNode(param, illegalNames),
-          ",",
-        ]),
+        ...parametersToSourceNode(node.parameters, illegalNames),
         ")",
         toSourceNode(node.body, illegalNames),
       ])
@@ -918,10 +916,7 @@ export function serializeClosure(
       return createSourceNode(node, [
         ...(node.isAsync ? ["async"] : []),
         "(",
-        ...node.parameters.flatMap((param) => [
-          toSourceNode(param, illegalNames),
-          ",",
-        ]),
+        ...parametersToSourceNode(node.parameters, illegalNames),
         ") => ",
         toSourceNode(node.body, illegalNames),
       ]);
@@ -932,10 +927,7 @@ export function serializeClosure(
         ...(node.isAsterisk ? ["*"] : []),
         ...(node.name ? [node.name] : []),
         "(",
-        ...node.parameters.flatMap((param) => [
-          toSourceNode(param, illegalNames),
-          ",",
-        ]),
+        ...parametersToSourceNode(node.parameters, illegalNames),
         ")",
         toSourceNode(node.body, illegalNames),
       ]);
@@ -1126,9 +1118,9 @@ export function serializeClosure(
     } else if (isConstructorDecl(node)) {
       return createSourceNode(node, [
         "constructor(",
-        ...node.parameters.flatMap((param) => [
+        ...node.parameters.flatMap((param, i) => [
           toSourceNode(param, illegalNames),
-          ",",
+          ...(i < node.parameters.length ? [","] : []),
         ]),
         ")",
         toSourceNode(node.body, illegalNames),
@@ -1147,10 +1139,7 @@ export function serializeClosure(
         toSourceNode(node.name, illegalNames),
         ...(node.isAsterisk ? ["*"] : []),
         "(",
-        ...node.parameters.flatMap((param) => [
-          toSourceNode(param, illegalNames),
-          ",",
-        ]),
+        ...parametersToSourceNode(node.parameters, illegalNames),
         ")",
         toSourceNode(node.body, illegalNames),
       ]);
@@ -1396,7 +1385,7 @@ export function serializeClosure(
         toSourceNode(node.expr, illegalNames),
       ]);
     } else if (isDebuggerStmt(node)) {
-      return createSourceNode(node, "debugger;");
+      return createSourceNode(node, "");
     } else if (isEmptyStmt(node)) {
       return createSourceNode(node, ";");
     } else if (isReturnStmt(node)) {
@@ -1420,5 +1409,15 @@ export function serializeClosure(
     } else {
       return assertNever(node);
     }
+  }
+
+  function parametersToSourceNode(
+    parameters: ParameterDecl[],
+    illegalNames: Set<string>
+  ): (string | SourceNode)[] {
+    return parameters.flatMap((param, i) => [
+      toSourceNode(param, illegalNames),
+      ...(i < parameters.length - 1 ? [","] : []),
+    ]);
   }
 }

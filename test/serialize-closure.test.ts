@@ -721,3 +721,113 @@ test("serialize a class method calling super", async () => {
 
   expect(closure()).toEqual("hello world!");
 });
+
+test("broad spectrum syntax test", async () => {
+  const closure = await expectClosure(() => {
+    const arrowExpr = (a: string, ...b: string[]) => [a, ...b];
+    function funcDecl(a: string, ...b: string[]) {
+      return [a, ...b];
+    }
+    const funcExpr = function funcExpr(a: string, ...b: string[]) {
+      return [a, ...b];
+    };
+    const anonFuncExpr = function (a: string, ...b: string[]) {
+      return [a, ...b];
+    };
+
+    let getterSetterVal: string;
+    const obj = {
+      prop: "prop",
+      getProp() {
+        return this.prop + " 1";
+      },
+      get getterSetter(): string {
+        return getterSetterVal;
+      },
+      set getterSetter(val: string) {
+        getterSetterVal = val;
+      },
+    };
+
+    // destructuring
+    const {
+      a,
+      b: c,
+      d: [e],
+      f = "f",
+    } = {
+      a: "a",
+      b: "b",
+      d: ["e"],
+    };
+
+    obj.getterSetter = "getterSetter";
+
+    class Foo {
+      static VAL = "VAL";
+      static {
+        Foo.VAL = "VAL 1";
+        this.VAL = `${this.VAL} 2`;
+      }
+      readonly val: string;
+      constructor(readonly prop: string, val: string) {
+        this.val = val;
+      }
+      public method() {
+        return `${this.prop} ${this.val} ${Foo.VAL}`;
+      }
+    }
+
+    const foo = new Foo("foo prop", "foo val");
+
+    return [
+      ...arrowExpr("a", "b", "c"),
+      ...funcDecl("d", "e", "f"),
+      ...funcExpr("g", "h", "i"),
+      ...anonFuncExpr("j", "k", "l"),
+      obj.prop,
+      obj.getProp(),
+      obj.getterSetter,
+      a,
+      c,
+      e,
+      f,
+      (() => {
+        return "foo";
+      })(),
+      (function () {
+        return "bar";
+      })(),
+      (function baz() {
+        return "baz";
+      })(),
+      foo.method(),
+    ];
+  });
+
+  expect(closure()).toEqual([
+    "a",
+    "b",
+    "c",
+    "d",
+    "e",
+    "f",
+    "g",
+    "h",
+    "i",
+    "j",
+    "k",
+    "l",
+    "prop",
+    "prop 1",
+    "getterSetter",
+    "a",
+    "b",
+    "e",
+    "f",
+    "foo",
+    "bar",
+    "baz",
+    "foo prop foo val VAL 1 2",
+  ]);
+});
