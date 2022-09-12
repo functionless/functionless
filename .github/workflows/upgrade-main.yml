@@ -18,14 +18,15 @@ jobs:
         uses: actions/checkout@v3
         with:
           ref: main
-      - name: Install dependencies
-        run: yarn install --check-files --frozen-lockfile
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
           role-to-assume: arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4
           aws-region: us-east-1
           role-duration-seconds: 1800
+        if: github.workflow == "release" || github.workflow == "build"
+      - name: Install dependencies
+        run: yarn install --check-files --frozen-lockfile
       - name: Upgrade dependencies
         run: npx projen upgrade
       - id: create_patch
