@@ -318,7 +318,7 @@ export abstract class BaseNode<
         return self.exit();
       }
     } else if (isDoStmt(self)) {
-      return self.block.step();
+      return self.stmt.step();
     } else if (self.nodeKind === "Stmt") {
       return self;
     } else {

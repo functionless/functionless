@@ -11,6 +11,7 @@ import {
   CfnResource,
   DockerImage,
   IResolvable,
+  Lazy,
   Reference,
   Resource,
   SecretValue,
@@ -680,25 +681,58 @@ export class Function<
       onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
         onFailure
       ),
+      environment: {
+        functionless_infer: Lazy.string({
+          produce: () => {
+            // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
+            findAllIntegrations().forEach(({ integration, args }) => {
+              new IntegrationImpl(integration).native.bind(this, args);
+            });
+
+            return "DONE";
+          },
+        }),
+      },
     });
 
     super(_resource);
 
-    const integrations = findDeepIntegrations(ast).map(
-      (i) =>
-        <IntegrationInvocation>{
-          args: i.args,
-          integration: i.expr.ref(),
+    // retrieve all found native integrations. Will fail if the integration does not support native integration.
+    // TODO: move this logic into the synthesis phase, see https://github.com/functionless/functionless/issues/476
+    const nativeIntegrationsPrewarm = findAllIntegrations().flatMap(
+      ({ integration }) => {
+        const native = new IntegrationImpl(integration).native;
+        if (native.preWarm) {
+          return [native.preWarm];
+        } else {
+          return [];
         }
+      }
     );
 
-    // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
-    const nativeIntegrationsPrewarm = integrations.flatMap(
-      ({ integration, args }) => {
-        const integ = new IntegrationImpl(integration).native;
-        integ.bind(this, args);
-        return integ.preWarm ? [integ.preWarm] : [];
-      }
+    // Start serializing process, add the callback to the promises so we can later ensure completion
+    Function.promises.push(
+      (async () => {
+        try {
+          await callbackLambdaCode.generate(
+            nativeIntegrationsPrewarm,
+            props?.serializer ?? SerializerImpl.STABLE_DEBUGGER
+          );
+        } catch (e) {
+          if (e instanceof SynthError) {
+            throw new SynthError(
+              e.code,
+              `While serializing ${_resource.node.path}:\n\n${e.message}`
+            );
+          } else if (e instanceof Error) {
+            throw Error(
+              `While serializing ${_resource.node.path}:\n\n${e.message}`
+            );
+          } else {
+            throw e;
+          }
+        }
+      })()
     );
 
     /**
@@ -709,8 +743,6 @@ export class Function<
      * 2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
      * 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
      * https://github.com/functionless/functionless/issues/128
-     * NOTE: This operation should happen immediately before the `generate` promise is started.
-     *       Any operation between adding the validation and starting `generate` will always trigger the poison pill
      */
     _resource.node.addValidation({
       validate: () =>
@@ -725,29 +757,15 @@ export class Function<
             ],
     });
 
-    // Start serializing process, add the callback to the promises so we can later ensure completion
-    Function.promises.push(
-      (async () => {
-        try {
-          await callbackLambdaCode.generate(
-            nativeIntegrationsPrewarm,
-            // TODO: make the default ASYNC until we are happy
-            props?.serializer ?? SerializerImpl.STABLE_DEBUGGER
-          );
-        } catch (e) {
-          if (e instanceof SynthError) {
-            throw new SynthError(
-              e.code,
-              `While serializing ${_resource.node.path}:\n\n${e.message}\n${e.stack}`
-            );
-          } else if (e instanceof Error) {
-            throw Error(
-              `While serializing ${_resource.node.path}:\n\n${e.message}\n${e.stack}`
-            );
+    function findAllIntegrations() {
+      return findDeepIntegrations(ast).map(
+        (i) =>
+          <IntegrationInvocation>{
+            args: i.args,
+            integration: i.expr.ref(),
           }
-        }
-      })()
-    );
+      );
+    }
   }
 }
 

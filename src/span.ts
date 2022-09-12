@@ -10,7 +10,7 @@ export type Span = [
   /**
    * 0-based column of the span.
    */
-  col: number
+  column: number
 ];
 
 /**

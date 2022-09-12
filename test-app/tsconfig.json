@@ -9,7 +9,7 @@
     "inlineSourceMap": true,
     "inlineSources": true,
     "declarationMap": true,
-    "lib": ["dom"],
+    "lib": ["dom", "ES2019.Array"],
     "module": "CommonJS",
     "noEmitOnError": false,
     "noFallthroughCasesInSwitch": true,
@@ -24,7 +24,7 @@
     "strictNullChecks": true,
     "strictPropertyInitialization": true,
     "stripInternal": true,
-    "target": "ES2019",
+    "target": "ES2022",
     "plugins": [
       {
         "transform": "functionless/lib/compile"

@@ -39,6 +39,7 @@
     "jest.config.ts",
     "scripts/**",
     "register.js",
+    "hook.js",
     "!.projenrc.ts",
     "!projenrc/**/*.ts"
   ],

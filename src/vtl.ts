@@ -5,6 +5,7 @@ import {
   Decl,
   ParameterDecl,
   VariableDecl,
+  VariableDeclList,
 } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import {
@@ -259,20 +260,21 @@ export abstract class VTL {
   }
 
   public foreach(
-    iterVar: string | Expr | VariableDecl,
+    iterVar: string | Expr | VariableDecl | VariableDeclList,
     iterValue: string | Expr,
     body: string | Stmt | (() => void)
   ) {
-    if (isVariableDecl(iterVar)) {
-      if (isBindingPattern(iterVar.name)) {
+    if (isVariableDecl(iterVar) || isVariableDeclList(iterVar)) {
+      const varDecl = isVariableDeclList(iterVar) ? iterVar.decls[0]! : iterVar;
+      if (isBindingPattern(varDecl.name)) {
         // iterate into a temp variable
         const tempVar = this.newLocalVarName();
         this.add(`#foreach(${tempVar} in ${this.printExpr(iterValue)})`);
         // deconstruct from the temp variable
-        this.evaluateBindingPattern(iterVar.name, tempVar);
+        this.evaluateBindingPattern(varDecl.name, tempVar);
       } else {
         this.add(
-          `#foreach($${iterVar.name.name} in ${this.printExpr(iterValue)})`
+          `#foreach($${varDecl.name.name} in ${this.printExpr(iterValue)})`
         );
       }
     } else {
@@ -604,7 +606,7 @@ export abstract class VTL {
           ? node.initializer.decls[0]!
           : node.initializer,
         `${this.eval(node.expr)}${isForInStmt(node) ? ".keySet()" : ""}`,
-        node.body
+        node.stmt
       );
       return undefined;
     } else if (isFunctionExpr(node) || isArrowFunctionExpr(node)) {

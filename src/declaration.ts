@@ -1,4 +1,4 @@
-import {
+import type {
   ArrowFunctionExpr,
   ClassExpr,
   Expr,
@@ -9,10 +9,10 @@ import {
   PropName,
   ReferenceExpr,
 } from "./expression";
-import { Integration } from "./integration";
+import type { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
-import { Span } from "./span";
+import type { Span } from "./span";
 import type {
   BlockStmt,
   CatchClause,
@@ -21,7 +21,7 @@ import type {
   ForStmt,
   VariableStmt,
 } from "./statement";
-import { AnyClass, AnyFunction } from "./util";
+import type { AnyClass, AnyFunction } from "./util";
 
 export type Decl =
   | BindingElem
@@ -332,9 +332,12 @@ export class GetAccessorDecl<F extends () => any = () => any> extends BaseDecl<
     super(NodeKind.GetAccessorDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
-    this.ensure(isStatic, "isStatic", ["undefined", "boolean"]);
-    this.ensure(ownedBy, "ownedBy", ["undefined", NodeKind.ReferenceExpr]);
-    this.ensure(filename, "filename", ["undefined", "string"]);
+    this.ensure(isStatic, "isStatic", ["boolean", "undefined"]);
+    this.ensure(ownedBy, "ReferenceExpr", [
+      NodeKind.ReferenceExpr,
+      "undefined",
+    ]);
+    this.ensure(filename, "filename", ["string", "undefined"]);
   }
 }
 export class SetAccessorDecl<
@@ -397,7 +400,6 @@ export class SetAccessorDecl<
      * ```
      */
     readonly ownedBy: ReferenceExpr<AnyClass | object> | undefined,
-
     /**
      * Name of the source file this node originates from.
      *
@@ -674,6 +676,10 @@ export class VariableDecl<
 }
 
 export type VariableDeclListParent = ForStmt | VariableStmt;
+
+export type SingleEntryVariableDeclList = VariableDeclList & {
+  readonly decls: [VariableDecl];
+};
 
 export class VariableDeclList extends BaseNode<
   NodeKind.VariableDeclList,

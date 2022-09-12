@@ -19,7 +19,7 @@
       "request": "launch",
       "runtimeExecutable": "node",
       "runtimeArgs": ["--nolazy"],
-      "args": ["./lib/message-board.js"],
+      "args": ["-r", "./hook", "./src/order-processing-queue.ts"],
       "outFiles": [
         "${workspaceRoot}/lib/**/*.js",
         "${workspaceRoot}/test-app/lib/**/*.js",

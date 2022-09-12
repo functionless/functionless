@@ -890,9 +890,14 @@ export function serializeClosure(
   ): SourceNode {
     if (isReferenceExpr(node)) {
       // get the set of ReferenceExpr instances for thisId
-      let thisId = referenceInstanceIDs.get(node.thisId);
+      let thisId =
+        node.referenceId !== undefined
+          ? referenceInstanceIDs.get(node.referenceId)
+          : undefined;
       thisId = thisId === undefined ? 0 : thisId + 1;
-      referenceInstanceIDs.set(node.thisId, thisId);
+      if (node.referenceId) {
+        referenceInstanceIDs.set(node.referenceId, thisId);
+      }
 
       // a key that uniquely identifies the variable pointed to by this reference
       const varKey = `${node.getFileName()} ${node.name} ${node.id} ${thisId}`;
@@ -1261,7 +1266,7 @@ export function serializeClosure(
           ? [toSourceNode(node.incrementor, illegalNames)]
           : []),
         ")",
-        toSourceNode(node.body, illegalNames),
+        toSourceNode(node.stmt, illegalNames),
       ]);
     } else if (isForOfStmt(node)) {
       return createSourceNode(node, [
@@ -1272,7 +1277,7 @@ export function serializeClosure(
         " of ",
         toSourceNode(node.expr, illegalNames),
         ")",
-        toSourceNode(node.body, illegalNames),
+        toSourceNode(node.stmt, illegalNames),
       ]);
     } else if (isForInStmt(node)) {
       return createSourceNode(node, [
@@ -1281,19 +1286,19 @@ export function serializeClosure(
         " in ",
         toSourceNode(node.expr, illegalNames),
         ")",
-        toSourceNode(node.body, illegalNames),
+        toSourceNode(node.stmt, illegalNames),
       ]);
     } else if (isWhileStmt(node)) {
       return createSourceNode(node, [
         "while (",
         toSourceNode(node.condition, illegalNames),
         ")",
-        toSourceNode(node.block, illegalNames),
+        toSourceNode(node.stmt, illegalNames),
       ]);
     } else if (isDoStmt(node)) {
       return createSourceNode(node, [
         "do",
-        toSourceNode(node.block, illegalNames),
+        toSourceNode(node.stmt, illegalNames),
         "while (",
         toSourceNode(node.condition, illegalNames),
         ");",

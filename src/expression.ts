@@ -215,14 +215,17 @@ export class ReferenceExpr<
      * This is used to ensure that two ReferenceExpr's pointing to the same variable still point
      * to the same variable after transformation.
      */
-    readonly id: number,
-
-    readonly thisId: number
+    readonly id: number | undefined,
+    /**
+     * Unique ID of this {@link ReferenceExpr}.
+     */
+    readonly referenceId: number | undefined
   ) {
     super(NodeKind.ReferenceExpr, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensure(ref, "ref", ["function"]);
-    this.ensure(id, "id", ["number"]);
+    this.ensure(id, "id", ["number", "undefined"]);
+    this.ensure(referenceId, "referenceId", ["number", "undefined"]);
   }
 }
 
@@ -321,10 +324,7 @@ export class Argument extends BaseExpr<NodeKind.Argument, CallExpr | NewExpr> {
 }
 
 export class CallExpr<
-  E extends Expr | SuperKeyword | ImportKeyword =
-    | Expr
-    | SuperKeyword
-    | ImportKeyword
+  E extends Expr | ImportKeyword = Expr | ImportKeyword
 > extends BaseExpr<NodeKind.CallExpr> {
   constructor(
     /**
@@ -919,7 +919,7 @@ export class ThisExpr<T = any> extends BaseExpr<NodeKind.ThisExpr> {
     /**
      * Produce the value of `this`
      */
-    readonly ref?: () => T
+    readonly ref: (() => T) | undefined
   ) {
     super(NodeKind.ThisExpr, span, arguments);
     this.ensure(ref, "ref", ["undefined", "function"]);

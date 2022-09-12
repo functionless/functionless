@@ -2,8 +2,6 @@ import * as fs from "fs";
 import { join } from "path";
 import { typescript, TextFile, JsonFile, Project } from "projen";
 import { GithubCredentials } from "projen/lib/github";
-import { JobStep } from "projen/lib/github/workflows-model";
-import { RenderWorkflowSetupOptions } from "projen/lib/javascript";
 
 /**
  * Adds githooks into the .git/hooks folder during projen synth.
@@ -70,26 +68,6 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
     };
 
     fs.writeFileSync(rootPackageJson, `${JSON.stringify(updated, null, 2)}\n`);
-  }
-
-  public renderWorkflowSetup(
-    options?: RenderWorkflowSetupOptions | undefined
-  ): JobStep[] {
-    return [
-      ...super.renderWorkflowSetup(options),
-      // https://github.com/aws-actions/configure-aws-credentials#sample-iam-role-cloudformation-template
-      // the aws-org stacks create an OIDC provider for github.
-      {
-        name: "Configure AWS Credentials",
-        uses: "aws-actions/configure-aws-credentials@v1",
-        with: {
-          "role-to-assume":
-            "arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4",
-          "aws-region": "us-east-1",
-          "role-duration-seconds": 30 * 60,
-        },
-      },
-    ];
   }
 }
 
@@ -170,7 +148,7 @@ const project = new CustomTypescriptProject({
   ],
   eslintOptions: {
     dirs: ["src", "test"],
-    ignorePatterns: ["jest.config.ts", "scripts/**", "register.js"],
+    ignorePatterns: ["jest.config.ts", "scripts/**", "register.js", "hook.js"],
     lintProjenRc: false,
   },
   tsconfig: {
@@ -200,6 +178,19 @@ const project = new CustomTypescriptProject({
     },
   },
   prettier: true,
+  workflowBootstrapSteps: [
+    {
+      name: "Configure AWS Credentials",
+      uses: "aws-actions/configure-aws-credentials@v1",
+      with: {
+        "role-to-assume":
+          "arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4",
+        "aws-region": "us-east-1",
+        "role-duration-seconds": 30 * 60,
+      },
+      if: `contains(fromJson('["release", "build"]'), github.workflow)`,
+    },
+  ],
 });
 // projen assumes ts-jest
 delete project.jest!.config.globals;
@@ -283,6 +274,20 @@ project.buildWorkflow.workflow.jobs.build = {
   permissions: {
     // @ts-ignore
     ...project.buildWorkflow.workflow.jobs.build.permissions,
+    "id-token": "write",
+    contents: "write",
+  },
+};
+
+// id-token is required for aws-actions/configure-aws-credentials@v1 with OIDC
+// https://github.com/aws-actions/configure-aws-credentials/issues/271#issuecomment-1012450577
+// @ts-ignore
+project.release.defaultBranch.workflow.jobs.release = {
+  // @ts-ignore
+  ...project.release.defaultBranch.workflow.jobs.release,
+  permissions: {
+    // @ts-ignore
+    ...project.release.defaultBranch.workflow.jobs.release.permissions,
     "id-token": "write",
     contents: "write",
   },
