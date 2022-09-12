@@ -558,7 +558,7 @@ export class ASL {
       }
     } else if (isForOfStmt(stmt) || isForInStmt(stmt)) {
       return this.evalExprToSubState(stmt.expr, (output) => {
-        const body = this.evalStmt(stmt.body, returnPass);
+        const body = this.evalStmt(stmt.stmt, returnPass);
 
         // assigns either a constant or json path to a new variable
         const assignTempState = this.assignValue(undefined, output);
@@ -620,6 +620,11 @@ export class ASL {
             return isVariableDecl(stmt.initializer)
               ? // supports deconstruction variable declaration
                 this.evalDecl(stmt.initializer, {
+                  jsonPath: `${tempArrayPath}[0]`,
+                })!
+              : isVariableDeclList(stmt.initializer)
+              ? // TODO: deprecate ^ VariableDecl in favor of VariableDeclList
+                this.evalDecl(stmt.initializer.decls[0]!, {
                   jsonPath: `${tempArrayPath}[0]`,
                 })!
               : this.evalAssignment(stmt.initializer, {
@@ -685,7 +690,7 @@ export class ASL {
         };
       });
     } else if (isForStmt(stmt)) {
-      const body = this.evalStmt(stmt.body, returnPass);
+      const body = this.evalStmt(stmt.stmt, returnPass);
 
       return this.evalContextToSubState(stmt, ({ evalExpr }) => {
         const initializers = stmt.initializer
@@ -1156,7 +1161,7 @@ export class ASL {
         : undefined;
       return ASLGraph.joinSubStates(stmt, initialize, _catch);
     } else if (isWhileStmt(stmt) || isDoStmt(stmt)) {
-      const blockState = this.evalStmt(stmt.block, returnPass);
+      const blockState = this.evalStmt(stmt.stmt, returnPass);
       if (!blockState) {
         throw new SynthError(
           ErrorCodes.Unexpected_Error,
@@ -4658,6 +4663,8 @@ function toStateName(node?: FunctionlessNode): string {
     return `for(${
       isIdentifier(node.initializer)
         ? toStateName(node.initializer)
+        : isVariableDeclList(node.initializer)
+        ? toStateName(node.initializer.decls[0]!.name)
         : toStateName(node.initializer.name)
     } in ${toStateName(node.expr)})`;
   } else if (isForOfStmt(node)) {

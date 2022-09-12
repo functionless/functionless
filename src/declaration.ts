@@ -487,6 +487,10 @@ export class VariableDecl<
 
 export type VariableDeclListParent = ForStmt | VariableStmt;
 
+export type SingleEntryVariableDeclList = VariableDeclList & {
+  readonly decls: [VariableDecl];
+};
+
 export class VariableDeclList extends BaseNode<
   NodeKind.VariableDeclList,
   VariableDeclListParent

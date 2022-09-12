@@ -57,6 +57,7 @@ export type Expr =
   | SpreadAssignExpr
   | SpreadElementExpr
   | StringLiteralExpr
+  | SuperKeyword
   | TaggedTemplateExpr
   | TemplateExpr
   | ThisExpr
@@ -196,12 +197,37 @@ export class ReferenceExpr<
      * Range of text in the source file where this Node resides.
      */
     span: Span,
+    /**
+     * Name of the referenced variable.
+     *
+     * ```ts
+     * let i;
+     *
+     * i; // "i"
+     * ```
+     */
     readonly name: string,
-    readonly ref: () => R
+    /**
+     * A closure that produces the referred value.
+     */
+    readonly ref: () => R,
+    /**
+     * A number that uniquely identifies the variable within this AST.
+     *
+     * This is used to ensure that two ReferenceExpr's pointing to the same variable still point
+     * to the same variable after transformation.
+     */
+    readonly id: number | undefined,
+    /**
+     * Unique ID of this reference.
+     */
+    readonly referenceId: number | undefined
   ) {
     super(NodeKind.ReferenceExpr, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensure(ref, "ref", ["function"]);
+    this.ensure(id, "id", ["number", "undefined"]);
+    this.ensure(referenceId, "referenceId", ["number", "undefined"]);
   }
 }
 
@@ -300,10 +326,7 @@ export class Argument extends BaseExpr<NodeKind.Argument, CallExpr | NewExpr> {
 }
 
 export class CallExpr<
-  E extends Expr | SuperKeyword | ImportKeyword =
-    | Expr
-    | SuperKeyword
-    | ImportKeyword
+  E extends Expr | ImportKeyword = Expr | ImportKeyword
 > extends BaseExpr<NodeKind.CallExpr> {
   constructor(
     /**
@@ -311,9 +334,18 @@ export class CallExpr<
      */
     span: Span,
     readonly expr: E,
-    readonly args: Argument[]
+    readonly args: Argument[],
+    /**
+     * Is this an optionally chained call?
+     *
+     * a?.()
+     */
+    readonly isOptional: boolean | undefined
   ) {
     super(NodeKind.CallExpr, span, arguments);
+    this.ensure(expr, "expr", ["Expr"]);
+    this.ensureArrayOf(args, "args", [NodeKind.Argument]);
+    this.ensure(isOptional, "isOptional", ["boolean", "undefined"]);
   }
 }
 
@@ -889,19 +921,14 @@ export class ThisExpr<T = any> extends BaseExpr<NodeKind.ThisExpr> {
     /**
      * Produce the value of `this`
      */
-    readonly ref: () => T
+    readonly ref: (() => T) | undefined
   ) {
     super(NodeKind.ThisExpr, span, arguments);
-    this.ensure(ref, "ref", ["function"]);
+    this.ensure(ref, "ref", ["undefined", "function"]);
   }
 }
 
-export class SuperKeyword extends BaseNode<NodeKind.SuperKeyword> {
-  // `super` is not an expression - a reference to it does not yield a value
-  // it only supports the following interactions
-  // 1. call in a constructor - `super(..)`
-  // 2. call a method on it - `super.method(..)`.
-  readonly nodeKind = "Node";
+export class SuperKeyword extends BaseExpr<NodeKind.SuperKeyword> {
   constructor(
     /**
      * Range of text in the source file where this Node resides.
