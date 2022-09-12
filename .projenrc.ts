@@ -184,7 +184,7 @@ const project = new CustomTypescriptProject({
         "aws-region": "us-east-1",
         "role-duration-seconds": 30 * 60,
       },
-      if: 'github.workflow == "release" || github.workflow == "build"',
+      if: `contains(fromJson('["release", "build"]'), github.workflow)`,
     },
   ],
 });
