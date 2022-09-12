@@ -1314,6 +1314,40 @@ export namespace ErrorCodes {
     type: ErrorType.ERROR,
     title: "Step Function Retry Invalid Input.",
   };
+
+  /**
+   * Step Functions Arithmetic Only Supports Integer
+   *
+   * Step Functions only supports integer addition via the `States.MathAdd`.
+   *
+   * ```ts
+   * new StepFunction(stack, "sfn", async (input: { a: number }) => {
+   *    return 1.5 + input.a;
+   * });
+   * ```
+   *
+   * If the above machine is given input: `{ a: 0.5 }`, the result will be `1`.
+   *
+   * Effectively resulting in: `Math.floor(1.5) + Math.floor(0.5)` => `1`
+   *
+   * Workaround:
+   *
+   * Do floating point math within a lambda function.
+   *
+   * ```ts
+   * const floatingPointAdd = new Function(stack, "fn", async (input: { a: number, b: number }) => {
+   *    return input.a + input.b;
+   * });
+   * new StepFunction(stack, "sfn", async (input: { a: number }) => {
+   *    return floatingPointAdd(1.5, input.a);
+   * });
+   * ```
+   */
+  export const Step_Functions_Arithmetic_Only_Supports_Integers: ErrorCode = {
+    code: 10038,
+    type: ErrorType.WARN,
+    title: "Step Functions Arithmetic Only Supports Integers",
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.
