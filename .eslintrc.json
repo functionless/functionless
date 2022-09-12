@@ -39,6 +39,7 @@
     "scripts/**",
     "register.js",
     "jest.js",
+    "swc-config.js",
     "!.projenrc.ts",
     "!projenrc/**/*.ts"
   ],

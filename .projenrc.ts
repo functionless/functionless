@@ -145,7 +145,7 @@ const project = new CustomTypescriptProject({
   ],
   eslintOptions: {
     dirs: ["src", "test"],
-    ignorePatterns: ["scripts/**", "register.js", "jest.js"],
+    ignorePatterns: ["scripts/**", "register.js", "jest.js", "swc-config.js"],
     lintProjenRc: false,
   },
   tsconfig: {

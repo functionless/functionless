@@ -1,5 +1,5 @@
 const swcJest = require("@swc/jest");
-const { config } = require("./lib/swc");
+const { config } = require("./swc-config");
 
 function createTransformer() {
   return swcJest.createTransformer(config);

@@ -1,6 +1,4 @@
-import { Options } from "@swc/core";
-
-export const config = {
+exports.config = {
   jsc: {
     parser: {
       syntax: "typescript",
@@ -23,4 +21,4 @@ export const config = {
   module: {
     type: "commonjs",
   },
-} as Options;
+};

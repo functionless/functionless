@@ -1,5 +1,5 @@
 const register = require("@swc/register/lib/node").default;
-const { config } = require("./lib/swc");
+const { config } = require("./swc-config");
 const path = require("path");
 
 const src = path.resolve("src");
