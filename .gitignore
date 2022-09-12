@@ -54,4 +54,3 @@ junit.xml
 /dist/
 !/.eslintrc.json
 !/.git/hooks/pre-commit
-!/.swcrc

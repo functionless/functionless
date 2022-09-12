@@ -38,6 +38,7 @@
   "ignorePatterns": [
     "scripts/**",
     "register.js",
+    "jest.js",
     "!.projenrc.ts",
     "!projenrc/**/*.ts"
   ],
