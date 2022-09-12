@@ -176,10 +176,7 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly initializer:
-      | SingleEntryVariableDeclList
-      | VariableDecl
-      | Identifier,
+    readonly initializer: SingleEntryVariableDeclList | VariableDecl | Expr,
     readonly expr: Expr,
     readonly stmt: Stmt,
     /**
@@ -192,9 +189,9 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
   ) {
     super(NodeKind.ForOfStmt, span, arguments);
     this.ensure(initializer, "initializer", [
+      "Expr",
       NodeKind.VariableDeclList,
       NodeKind.VariableDecl,
-      NodeKind.Identifier,
     ]);
     this.ensure(expr, "expr", ["Expr"]);
     this.ensure(stmt, "stmt", ["Stmt"]);
@@ -208,10 +205,7 @@ export class ForInStmt extends BaseStmt<NodeKind.ForInStmt> {
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly initializer:
-      | SingleEntryVariableDeclList
-      | VariableDecl
-      | Identifier,
+    readonly initializer: SingleEntryVariableDeclList | VariableDecl | Expr,
     readonly expr: Expr,
     readonly stmt: Stmt
   ) {
