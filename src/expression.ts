@@ -210,24 +210,11 @@ export class ReferenceExpr<
     /**
      * A closure that produces the referred value.
      */
-    readonly ref: () => R,
-    /**
-     * A number that uniquely identifies the variable within this AST.
-     *
-     * This is used to ensure that two ReferenceExpr's pointing to the same variable still point
-     * to the same variable after transformation.
-     */
-    readonly id: number | undefined,
-    /**
-     * Unique ID of this reference.
-     */
-    readonly referenceId: number | undefined
+    readonly ref: () => R
   ) {
     super(NodeKind.ReferenceExpr, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensure(ref, "ref", ["function"]);
-    this.ensure(id, "id", ["number", "undefined"]);
-    this.ensure(referenceId, "referenceId", ["number", "undefined"]);
   }
 }
 
