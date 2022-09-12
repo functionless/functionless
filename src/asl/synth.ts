@@ -627,9 +627,16 @@ export class ASL {
                 this.evalDecl(stmt.initializer.decls[0]!, {
                   jsonPath: `${tempArrayPath}[0]`,
                 })!
-              : this.evalAssignment(stmt.initializer, {
+              : isIdentifier(stmt.initializer)
+              ? this.evalAssignment(stmt.initializer, {
                   jsonPath: `${tempArrayPath}[0]`,
-                })!;
+                })!
+              : (() => {
+                  throw new SynthError(
+                    ErrorCodes.Unsupported_Feature,
+                    `expression ${stmt.initializer.nodeKind} is not supported as the initializer in a ForInStmt`
+                  );
+                })();
           }
         })();
 
@@ -4665,7 +4672,7 @@ function toStateName(node?: FunctionlessNode): string {
         ? toStateName(node.initializer)
         : isVariableDeclList(node.initializer)
         ? toStateName(node.initializer.decls[0]!.name)
-        : toStateName(node.initializer.name)
+        : toStateName(node.initializer)
     } in ${toStateName(node.expr)})`;
   } else if (isForOfStmt(node)) {
     return `for(${toStateName(node.initializer)} of ${toStateName(node.expr)})`;
