@@ -1024,7 +1024,7 @@ runtimeTestSuite<
     "math",
     (parent) =>
       new StepFunction(parent, "sfn", async (input) => {
-        // let a = input.p;
+        let a = input.p;
         let b = 1;
 
         return {
@@ -1053,19 +1053,13 @@ runtimeTestSuite<
           refMinusZeroRef: input.p - input.z, // 1
           refMinusConst: input.p - 1, // 0
           refMinusNegConst: input.p - -1, // 2
-          refMinusZeroConst: input.p - -0, // 1
-          // postPlusPlus: a++, // 1=>2
-          // prePlusPlus: ++a, // 3
-          // postMinusMinus: a--, // 3 => 2
-          // preMinusMinus: --a, // 1
-          negateConstant: -1, // -1
+          postPlusPlus: a++, // 1=>2
+          prePlusPlus: ++a, // 3
+          postMinusMinus: a--, // 3 => 2
+          preMinusMinus: --a, // 1
           negateRef: -input.p, // -1
           negateNegRef: -input.n, // 1
           negateZeroRef: -input.z, // 0
-          positive: +1, // 1
-          positiveRef: +input.p, // 1
-          positiveNegRef: +input.n, // -1
-          positiveZeroReg: +input.z, // 0
           refStringPlusNumberConst: input.str + 1, // "a1",
           refStringPlusStringConst: input.str + "b", // "ab"
           refStringPlusBooleanConst: input.str + true, // "atrue"
@@ -1100,19 +1094,13 @@ runtimeTestSuite<
       refMinusZeroRef: 1,
       refMinusConst: 0,
       refMinusNegConst: 2,
-      refMinusZeroConst: 1,
       postPlusPlus: 1,
       prePlusPlus: 3,
       postMinusMinus: 3,
       preMinusMinus: 1,
-      negateConstant: -1,
       negateRef: -1,
       negateNegRef: 1,
       negateZeroRef: 0,
-      positive: 1,
-      positiveRef: 1,
-      positiveNegRef: -1,
-      positiveZeroReg: 0,
       refStringPlusNumberConst: "a1",
       refStringPlusStringConst: "ab",
       refStringPlusBooleanConst: "atrue",

@@ -2144,7 +2144,70 @@ export class ASL {
         return this.evalToNumber(expr.expr);
       } else if (expr.op === "-") {
         return this.negateExpr(expr.expr);
-      } else if (expr.op === "++" || expr.op === "--" || expr.op === "~") {
+      } else if (expr.op === "++" || expr.op === "--") {
+        if (!isVariableReference(expr.expr)) {
+          throw new SynthError(
+            ErrorCodes.Unexpected_Error,
+            "Expected left side of assignment to be a variable."
+          );
+        }
+        return this.evalExpr(expr.expr, (output) => {
+          if (!ASLGraph.isJsonPath(output)) {
+            throw new SynthError(
+              ErrorCodes.Unexpected_Error,
+              `Expected assignment to target a variable, found: ${
+                ASLGraph.isLiteralValue(output) ? output.value : "boolean"
+              }`
+            );
+          }
+
+          const mutateExpression = ASLGraph.intrinsicMathAdd(
+            output,
+            expr.op === "++" ? 1 : -1
+          );
+          const mutateResult = this.assignJsonPathOrIntrinsic(mutateExpression);
+
+          if (isUnaryExpr(expr)) {
+            // prefix
+            // update left value
+            // assign left to new value
+            // return new value (don't return left)
+
+            return {
+              ...ASLGraph.joinSubStates(
+                undefined,
+                mutateResult,
+                this.assignValue(
+                  undefined,
+                  mutateResult.output,
+                  output.jsonPath
+                )
+              )!,
+              output: mutateResult.output,
+            };
+          } else {
+            // postfix
+            // assign left to heap
+            // mutate left
+            // assign left
+            // return heap
+            const assignResult = this.assignValue(undefined, output);
+            return {
+              ...ASLGraph.joinSubStates(
+                expr,
+                assignResult,
+                mutateResult,
+                this.assignValue(
+                  undefined,
+                  mutateResult.output,
+                  output.jsonPath
+                )
+              )!,
+              output: assignResult.output,
+            };
+          }
+        });
+      } else if (expr.op === "~") {
         throw new SynthError(
           ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
           `Step Function does not support operator ${expr.op}`
@@ -3854,8 +3917,20 @@ export class ASL {
       node,
       ({ evalExprToJsonPathOrLiteral, normalizeOutputToJsonPath }) => {
         const arrayOut = evalExprToJsonPathOrLiteral(array);
-        const startOut = start ? evalExprToJsonPathOrLiteral(start) : undefined;
-        const endOut = end ? evalExprToJsonPathOrLiteral(end) : undefined;
+        const startOutTemp = start
+          ? evalExprToJsonPathOrLiteral(start, true)
+          : undefined;
+        const startOut =
+          !startOutTemp || ASLGraph.isLiteralUndefined(startOutTemp)
+            ? undefined
+            : startOutTemp;
+        const endOutTemp = end
+          ? evalExprToJsonPathOrLiteral(end, true)
+          : undefined;
+        const endOut =
+          !endOutTemp || ASLGraph.isLiteralUndefined(endOutTemp)
+            ? undefined
+            : endOutTemp;
 
         if (
           ASLGraph.isLiteralValue(arrayOut) &&

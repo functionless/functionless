@@ -7890,7 +7890,7 @@ Object {
     "[await task(input.items)]": Object {
       "Next": "for(_ of [await task(input.items)]) 1",
       "Parameters": Object {
-        "arr.$": "States.Array($.heap1)",
+        "out.$": "States.Array($.heap1)",
       },
       "ResultPath": "$.heap2",
       "Type": "Pass",
@@ -7909,7 +7909,7 @@ Object {
       "Type": "Task",
     },
     "for(_ of [await task(input.items)]) 1": Object {
-      "InputPath": "$.heap2.arr",
+      "InputPath": "$.heap2.out",
       "Next": "hasNext__for(_ of [await task(input.items)]) 1",
       "ResultPath": "$.heap3",
       "Type": "Pass",
@@ -8016,7 +8016,7 @@ Object {
     "[await task(input)]": Object {
       "Next": "for(i in [await task(input)]) 1",
       "Parameters": Object {
-        "arr.$": "States.Array($.heap1)",
+        "out.$": "States.Array($.heap1)",
       },
       "ResultPath": "$.heap2",
       "Type": "Pass",
@@ -8042,7 +8042,7 @@ Object {
       "Type": "Task",
     },
     "for(i in [await task(input)]) 1": Object {
-      "InputPath": "$.heap2.arr",
+      "InputPath": "$.heap2.out",
       "Next": "1__for(i in [await task(input)]) 1",
       "ResultPath": "$.heap5",
       "Type": "Pass",
@@ -8111,7 +8111,7 @@ Object {
     "[await task(input)]": Object {
       "Next": "for(i of [await task(input)]) 1",
       "Parameters": Object {
-        "arr.$": "States.Array($.heap1)",
+        "out.$": "States.Array($.heap1)",
       },
       "ResultPath": "$.heap2",
       "Type": "Pass",
@@ -8131,7 +8131,7 @@ Object {
       "Type": "Task",
     },
     "for(i of [await task(input)]) 1": Object {
-      "InputPath": "$.heap2.arr",
+      "InputPath": "$.heap2.out",
       "Next": "hasNext__for(i of [await task(input)]) 1",
       "ResultPath": "$.heap5",
       "Type": "Pass",
@@ -14520,16 +14520,16 @@ Object {
   "States": Object {
     "1__return JSON.parse(\\"{ a: 'a', b: { c: 'c' } }\\")": Object {
       "End": true,
-      "InputPath": "$.heap0.string",
+      "InputPath": "$.heap1.out",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return JSON.parse(\\"{ a: 'a', b: { c: 'c' } }\\") 1": Object {
       "Next": "1__return JSON.parse(\\"{ a: 'a', b: { c: 'c' } }\\")",
       "Parameters": Object {
-        "string.$": "States.StringToJson($.heap1)",
+        "out.$": "States.StringToJson($.heap0)",
       },
-      "ResultPath": "$.heap0",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -14545,7 +14545,7 @@ Object {
     "return JSON.parse(\\"{ a: 'a', b: { c: 'c' } }\\")": Object {
       "Next": "1__return JSON.parse(\\"{ a: 'a', b: { c: 'c' } }\\") 1",
       "Result": "{ a: 'a', b: { c: 'c' } }",
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
   },
@@ -15882,6 +15882,88 @@ Object {
 }
 `;
 
+exports[`return ElementAccessExpr number reference 1`] = `
+Object {
+  "StartAt": "Initialize Functionless Context",
+  "States": Object {
+    "1__return input.input.arr[id]": Object {
+      "End": true,
+      "InputPath": "$.heap0.out",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": Object {
+      "Next": "id = 0",
+      "Parameters": Object {
+        "fnl_context": Object {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "array__return input.input.arr[id]": Object {
+      "Next": "1__return input.input.arr[id]",
+      "Parameters": Object {
+        "out.$": "States.ArrayGetItem($.input.input.arr,$.id)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "checkString__return input.input.arr[id]": Object {
+      "Choices": Array [
+        Object {
+          "And": Array [
+            Object {
+              "IsString": true,
+              "Variable": "$.heap0.out.str",
+            },
+            Object {
+              "StringEquals": "[]",
+              "Variable": "$.heap0.out.str",
+            },
+          ],
+          "Next": "array__return input.input.arr[id]",
+        },
+      ],
+      "Default": "object__return input.input.arr[id]",
+      "Type": "Choice",
+    },
+    "id = 0": Object {
+      "Next": "return input.input.arr[id]",
+      "Result": 0,
+      "ResultPath": "$.id",
+      "Type": "Pass",
+    },
+    "object__return input.input.arr[id]": Object {
+      "Cause": "Reference element access is not valid for objects.",
+      "Error": "Functionless.InvalidAccess",
+      "Type": "Fail",
+    },
+    "return input.input.arr[id]": Object {
+      "Choices": Array [
+        Object {
+          "IsPresent": true,
+          "Next": "array__return input.input.arr[id]",
+          "Variable": "$.input.input.arr[0]",
+        },
+      ],
+      "Default": "stringify__return input.input.arr[id]",
+      "Type": "Choice",
+    },
+    "stringify__return input.input.arr[id]": Object {
+      "Next": "checkString__return input.input.arr[id]",
+      "Parameters": Object {
+        "str.$": "States.JsonToString($.input.input.arr)",
+      },
+      "ResultPath": "$.heap0.out",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`return PropAccessExpr 1`] = `
 Object {
   "StartAt": "Initialize Functionless Context",
@@ -16989,7 +17071,7 @@ Object {
   "States": Object {
     "1__return JSON.stringify(input)": Object {
       "End": true,
-      "InputPath": "$.heap0.string",
+      "InputPath": "$.heap0.out",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -17007,7 +17089,7 @@ Object {
     "return JSON.stringify(input)": Object {
       "Next": "1__return JSON.stringify(input)",
       "Parameters": Object {
-        "string.$": "States.JsonToString($.input)",
+        "out.$": "States.JsonToString($.input)",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -17022,16 +17104,16 @@ Object {
   "States": Object {
     "1__return JSON.stringify({a: \\"a\\", b: {c: \\"c\\"}})": Object {
       "End": true,
-      "InputPath": "$.heap0.string",
+      "InputPath": "$.heap1.out",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return JSON.stringify({a: \\"a\\", b: {c: \\"c\\"}}) 1": Object {
       "Next": "1__return JSON.stringify({a: \\"a\\", b: {c: \\"c\\"}})",
       "Parameters": Object {
-        "string.$": "States.JsonToString($.heap1)",
+        "out.$": "States.JsonToString($.heap0)",
       },
-      "ResultPath": "$.heap0",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
@@ -17052,7 +17134,7 @@ Object {
           "c": "c",
         },
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
   },

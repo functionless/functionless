@@ -29462,28 +29462,48 @@ Object {
       "ResultPath": "$.heap75",
       "Type": "Pass",
     },
-    "1__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE": Object {
-      "Next": "40__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "Parameters": Object {
-        "out.$": "States.MathAdd($.heap77.num,0)",
-      },
-      "ResultPath": "$.heap78",
+    "1__41__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE": Object {
+      "InputPath": "$.heap80.out",
+      "Next": "42__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "1__45__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE": Object {
+      "InputPath": "$.heap85.out",
+      "Next": "46__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "ResultPath": "$.a",
       "Type": "Pass",
     },
     "1__55__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE": Object {
       "Next": "56__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}',$.heap99.str.left.str,'b')",
+        "str.$": "States.Format('{}{}',$.heap100.str.left.str,'b')",
       },
-      "ResultPath": "$.heap99",
+      "ResultPath": "$.heap100",
       "Type": "Pass",
     },
     "1__61__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE": Object {
       "Next": "62__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}','b',$.heap109.str.right.str)",
+        "str.$": "States.Format('{}{}','b',$.heap110.str.right.str)",
       },
-      "ResultPath": "$.heap109",
+      "ResultPath": "$.heap110",
+      "Type": "Pass",
+    },
+    "1__a++": Object {
+      "Next": "2__a++",
+      "Parameters": Object {
+        "out.$": "States.MathAdd($.a,1)",
+      },
+      "ResultPath": "$.heap77",
+      "Type": "Pass",
+    },
+    "1__a--": Object {
+      "Next": "2__a--",
+      "Parameters": Object {
+        "out.$": "States.MathAdd($.a,-1)",
+      },
+      "ResultPath": "$.heap82",
       "Type": "Pass",
     },
     "1__b += input.p": Object {
@@ -29600,17 +29620,17 @@ Object {
       "Type": "Choice",
     },
     "1__false__1 + input.str": Object {
-      "InputPath": "$.heap106.str",
+      "InputPath": "$.heap107.str",
       "Next": "60__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap107",
+      "ResultPath": "$.heap108",
       "Type": "Pass",
     },
     "1__false__1 + input.str 1": Object {
       "Next": "1__false__1 + input.str",
       "Parameters": Object {
-        "str.$": "States.MathAdd(1,$.heap106.str.right.num)",
+        "str.$": "States.MathAdd(1,$.heap107.str.right.num)",
       },
-      "ResultPath": "$.heap106",
+      "ResultPath": "$.heap107",
       "Type": "Pass",
     },
     "1__false__b += input.p": Object {
@@ -30079,23 +30099,23 @@ Object {
       "Type": "Pass",
     },
     "1__false__input.str + 1": Object {
-      "InputPath": "$.heap96.str",
+      "InputPath": "$.heap97.str",
       "Next": "54__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap97",
+      "ResultPath": "$.heap98",
       "Type": "Pass",
     },
     "1__false__input.str + 1 1": Object {
       "Next": "1__false__input.str + 1",
       "Parameters": Object {
-        "str.$": "States.MathAdd($.heap96.str.left.num,1)",
+        "str.$": "States.MathAdd($.heap97.str.left.num,1)",
       },
-      "ResultPath": "$.heap96",
+      "ResultPath": "$.heap97",
       "Type": "Pass",
     },
     "1__false__input.str + input.str": Object {
-      "InputPath": "$.heap116.str",
+      "InputPath": "$.heap117.str",
       "Next": "66__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap117",
+      "ResultPath": "$.heap118",
       "Type": "Pass",
     },
     "1__false__input.str + input.str 1": Object {
@@ -30172,17 +30192,17 @@ Object {
       "Type": "Choice",
     },
     "1__false__input.str + true": Object {
-      "InputPath": "$.heap102.str",
+      "InputPath": "$.heap103.str",
       "Next": "58__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap103",
+      "ResultPath": "$.heap104",
       "Type": "Pass",
     },
     "1__false__input.str + true 1": Object {
       "Next": "1__false__input.str + true",
       "Parameters": Object {
-        "str.$": "States.MathAdd($.heap102.str.left.num,1)",
+        "str.$": "States.MathAdd($.heap103.str.left.num,1)",
       },
-      "ResultPath": "$.heap102",
+      "ResultPath": "$.heap103",
       "Type": "Pass",
     },
     "1__false__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, min": Object {
@@ -30200,17 +30220,17 @@ Object {
       "Type": "Pass",
     },
     "1__false__true + input.str": Object {
-      "InputPath": "$.heap112.str",
+      "InputPath": "$.heap113.str",
       "Next": "64__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap113",
+      "ResultPath": "$.heap114",
       "Type": "Pass",
     },
     "1__false__true + input.str 1": Object {
       "Next": "1__false__true + input.str",
       "Parameters": Object {
-        "str.$": "States.MathAdd(1,$.heap112.str.right.num)",
+        "str.$": "States.MathAdd(1,$.heap113.str.right.num)",
       },
-      "ResultPath": "$.heap112",
+      "ResultPath": "$.heap113",
       "Type": "Pass",
     },
     "1__input.n": Object {
@@ -30218,12 +30238,12 @@ Object {
         Object {
           "IsNull": true,
           "Next": "NaN__1__input.n",
-          "Variable": "$.heap83.num",
+          "Variable": "$.heap90.num",
         },
         Object {
           "Next": "negative__1__input.n",
           "NumericLessThan": 0,
-          "Variable": "$.heap83.num",
+          "Variable": "$.heap90.num",
         },
       ],
       "Default": "positive__1__input.n",
@@ -30234,12 +30254,12 @@ Object {
         Object {
           "IsNull": true,
           "Next": "NaN__1__input.p",
-          "Variable": "$.heap80.num",
+          "Variable": "$.heap87.num",
         },
         Object {
           "Next": "negative__1__input.p",
           "NumericLessThan": 0,
-          "Variable": "$.heap80.num",
+          "Variable": "$.heap87.num",
         },
       ],
       "Default": "positive__1__input.p",
@@ -30250,39 +30270,39 @@ Object {
         Object {
           "IsNull": true,
           "Next": "NaN__1__input.z",
-          "Variable": "$.heap86.num",
+          "Variable": "$.heap93.num",
         },
         Object {
           "Next": "negative__1__input.z",
           "NumericLessThan": 0,
-          "Variable": "$.heap86.num",
+          "Variable": "$.heap93.num",
         },
       ],
       "Default": "positive__1__input.z",
       "Type": "Choice",
     },
     "1__negative__1__input.n": Object {
-      "Next": "44__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "Next": "50__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
       "Parameters": Object {
-        "num.$": "States.StringToJson(States.ArrayGetItem($.heap84.num,0))",
+        "num.$": "States.StringToJson(States.ArrayGetItem($.heap91.num,0))",
       },
-      "ResultPath": "$.heap84",
+      "ResultPath": "$.heap91",
       "Type": "Pass",
     },
     "1__negative__1__input.p": Object {
-      "Next": "42__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "Next": "48__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
       "Parameters": Object {
-        "num.$": "States.StringToJson(States.ArrayGetItem($.heap81.num,0))",
+        "num.$": "States.StringToJson(States.ArrayGetItem($.heap88.num,0))",
       },
-      "ResultPath": "$.heap81",
+      "ResultPath": "$.heap88",
       "Type": "Pass",
     },
     "1__negative__1__input.z": Object {
-      "Next": "46__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "Next": "52__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
       "Parameters": Object {
-        "num.$": "States.StringToJson(States.ArrayGetItem($.heap87.num,0))",
+        "num.$": "States.StringToJson(States.ArrayGetItem($.heap94.num,0))",
       },
-      "ResultPath": "$.heap87",
+      "ResultPath": "$.heap94",
       "Type": "Pass",
     },
     "1__negative__2__29__return {plusEqualsConst: b += 1, plusEqualsRef: b += in": Object {
@@ -30321,7 +30341,7 @@ Object {
       "End": true,
       "Parameters": Object {
         "b.$": "$.heap19",
-        "booleanConstPlusRefString.$": "$.heap114",
+        "booleanConstPlusRefString.$": "$.heap115",
         "constBooleanPlusBooleanConst": 2,
         "constStringPlusBooleanConst": "atrue",
         "constStringPlusNumberConst": "a1",
@@ -30329,24 +30349,22 @@ Object {
         "minusEqualsConst.$": "$.heap10",
         "minusEqualsNegConst.$": "$.heap18",
         "minusEqualsRef.$": "$.heap15",
-        "negateConstant": -1,
-        "negateNegRef.$": "$.heap85",
-        "negateRef.$": "$.heap82",
-        "negateZeroRef.$": "$.heap88",
-        "numberConstPlusRefString.$": "$.heap108",
+        "negateNegRef.$": "$.heap92",
+        "negateRef.$": "$.heap89",
+        "negateZeroRef.$": "$.heap95",
+        "numberConstPlusRefString.$": "$.heap109",
         "plusEqualsConst.$": "$.heap3",
         "plusEqualsRef.$": "$.heap7",
-        "positive": 1,
-        "positiveNegRef.$": "$.heap92",
-        "positiveRef.$": "$.heap90",
-        "positiveZeroReg.$": "$.heap94",
+        "postMinusMinus.$": "$.heap84",
+        "postPlusPlus.$": "$.heap79",
+        "preMinusMinus.$": "$.heap86",
+        "prePlusPlus.$": "$.heap81",
         "refBooleanPlusBooleanConst.$": "$.heap51",
         "refBooleanPlusBooleanRef.$": "$.heap55",
         "refMinusConst.$": "$.heap73",
         "refMinusNegConst.$": "$.heap76",
         "refMinusNegRef.$": "$.heap65",
         "refMinusRef.$": "$.heap60",
-        "refMinusZeroConst.$": "$.heap79",
         "refMinusZeroRef.$": "$.heap70",
         "refPlusBooleanConst.$": "$.heap47",
         "refPlusConst.$": "$.heap35",
@@ -30355,11 +30373,11 @@ Object {
         "refPlusRef.$": "$.heap23",
         "refPlusZeroConst.$": "$.heap43",
         "refPlusZeroRef.$": "$.heap31",
-        "refStringPlusBooleanConst.$": "$.heap104",
-        "refStringPlusNumberConst.$": "$.heap98",
-        "refStringPlusRefString.$": "$.heap118",
-        "refStringPlusStringConst.$": "$.heap100",
-        "stringConstPlusRefString.$": "$.heap110",
+        "refStringPlusBooleanConst.$": "$.heap105",
+        "refStringPlusNumberConst.$": "$.heap99",
+        "refStringPlusRefString.$": "$.heap119",
+        "refStringPlusStringConst.$": "$.heap101",
+        "stringConstPlusRefString.$": "$.heap111",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -30377,17 +30395,17 @@ Object {
       "Type": "Pass",
     },
     "1__true__1 + input.str": Object {
-      "InputPath": "$.heap105.str",
+      "InputPath": "$.heap106.str",
       "Next": "60__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap107",
+      "ResultPath": "$.heap108",
       "Type": "Pass",
     },
     "1__true__1 + input.str 1": Object {
       "Next": "1__true__1 + input.str",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}','1',$.heap105.str.right.str)",
+        "str.$": "States.Format('{}{}','1',$.heap106.str.right.str)",
       },
-      "ResultPath": "$.heap105",
+      "ResultPath": "$.heap106",
       "Type": "Pass",
     },
     "1__true__b += input.p": Object {
@@ -30546,23 +30564,23 @@ Object {
       "Type": "Pass",
     },
     "1__true__input.str + 1": Object {
-      "InputPath": "$.heap95.str",
+      "InputPath": "$.heap96.str",
       "Next": "54__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap97",
+      "ResultPath": "$.heap98",
       "Type": "Pass",
     },
     "1__true__input.str + 1 1": Object {
       "Next": "1__true__input.str + 1",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}',$.heap95.str.left.str,'1')",
+        "str.$": "States.Format('{}{}',$.heap96.str.left.str,'1')",
       },
-      "ResultPath": "$.heap95",
+      "ResultPath": "$.heap96",
       "Type": "Pass",
     },
     "1__true__input.str + input.str": Object {
-      "InputPath": "$.heap115.str",
+      "InputPath": "$.heap116.str",
       "Next": "66__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap117",
+      "ResultPath": "$.heap118",
       "Type": "Pass",
     },
     "1__true__input.str + input.str 1": Object {
@@ -30577,17 +30595,17 @@ Object {
       "Type": "Choice",
     },
     "1__true__input.str + true": Object {
-      "InputPath": "$.heap101.str",
+      "InputPath": "$.heap102.str",
       "Next": "58__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap103",
+      "ResultPath": "$.heap104",
       "Type": "Pass",
     },
     "1__true__input.str + true 1": Object {
       "Next": "1__true__input.str + true",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}',$.heap101.str.left.str,'true')",
+        "str.$": "States.Format('{}{}',$.heap102.str.left.str,'true')",
       },
-      "ResultPath": "$.heap101",
+      "ResultPath": "$.heap102",
       "Type": "Pass",
     },
     "1__true__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minu": Object {
@@ -30605,17 +30623,17 @@ Object {
       "Type": "Pass",
     },
     "1__true__true + input.str": Object {
-      "InputPath": "$.heap111.str",
+      "InputPath": "$.heap112.str",
       "Next": "64__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap113",
+      "ResultPath": "$.heap114",
       "Type": "Pass",
     },
     "1__true__true + input.str 1": Object {
       "Next": "1__true__true + input.str",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}','true',$.heap111.str.right.str)",
+        "str.$": "States.Format('{}{}','true',$.heap112.str.right.str)",
       },
-      "ResultPath": "$.heap111",
+      "ResultPath": "$.heap112",
       "Type": "Pass",
     },
     "20__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
@@ -30769,6 +30787,18 @@ Object {
       "Default": "positive__2__33__return {plusEqualsConst: b += 1, plusEqualsRef: b += input",
       "Type": "Choice",
     },
+    "2__a++": Object {
+      "InputPath": "$.heap77.out",
+      "Next": "40__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "2__a--": Object {
+      "InputPath": "$.heap82.out",
+      "Next": "44__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
     "2__b -= input.p": Object {
       "Choices": Array [
         Object {
@@ -30828,9 +30858,9 @@ Object {
     "2__false__input.str + input.str": Object {
       "Next": "1__false__input.str + input.str",
       "Parameters": Object {
-        "str.$": "States.MathAdd($.heap116.str.left.num,$.heap116.str.right.num)",
+        "str.$": "States.MathAdd($.heap117.str.left.num,$.heap117.str.right.num)",
       },
-      "ResultPath": "$.heap116",
+      "ResultPath": "$.heap117",
       "Type": "Pass",
     },
     "2__true__b += input.p": Object {
@@ -30876,9 +30906,9 @@ Object {
     "2__true__input.str + input.str": Object {
       "Next": "1__true__input.str + input.str",
       "Parameters": Object {
-        "str.$": "States.Format('{}{}',$.heap115.str.left.str,$.heap115.str.right.str)",
+        "str.$": "States.Format('{}{}',$.heap116.str.left.str,$.heap116.str.right.str)",
       },
-      "ResultPath": "$.heap115",
+      "ResultPath": "$.heap116",
       "Type": "Pass",
     },
     "30__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
@@ -31199,82 +31229,9 @@ Object {
     },
     "38__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
       "InputPath": "$.heap75.out",
-      "Next": "39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "Next": "a++",
       "ResultPath": "$.heap76",
       "Type": "Pass",
-    },
-    "39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
-      "Choices": Array [
-        Object {
-          "IsPresent": false,
-          "Next": "null__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, min",
-          "Variable": "$.input.p",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsString": true,
-              "Variable": "$.input.p",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsString": true,
-                  "Variable": "$.input.p",
-                },
-                Object {
-                  "StringEquals": "",
-                  "Variable": "$.input.p",
-                },
-              ],
-            },
-          ],
-          "Next": "zero__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, min",
-        },
-        Object {
-          "IsNull": true,
-          "Next": "zero__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, min",
-          "Variable": "$.input.p",
-        },
-        Object {
-          "IsString": true,
-          "Next": "format__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, m",
-          "Variable": "$.input.p",
-        },
-        Object {
-          "IsNumeric": true,
-          "Next": "assign__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, m",
-          "Variable": "$.input.p",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.p",
-            },
-            Object {
-              "BooleanEquals": true,
-              "Variable": "$.input.p",
-            },
-          ],
-          "Next": "one__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minu",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.p",
-            },
-            Object {
-              "BooleanEquals": false,
-              "Variable": "$.input.p",
-            },
-          ],
-          "Next": "zero__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, min",
-        },
-      ],
-      "Default": "null__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, min",
-      "Type": "Choice",
     },
     "3__29__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE": Object {
       "Next": "30__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
@@ -31315,51 +31272,67 @@ Object {
       "Type": "Pass",
     },
     "40__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
-      "InputPath": "$.heap78.out",
-      "Next": "input.p",
+      "InputPath": "$.heap78",
+      "Next": "41__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
       "ResultPath": "$.heap79",
       "Type": "Pass",
     },
+    "41__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
+      "Next": "1__41__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE",
+      "Parameters": Object {
+        "out.$": "States.MathAdd($.a,1)",
+      },
+      "ResultPath": "$.heap80",
+      "Type": "Pass",
+    },
     "42__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
-      "InputPath": "$.heap81.num",
-      "Next": "input.n",
-      "ResultPath": "$.heap82",
+      "InputPath": "$.heap80.out",
+      "Next": "a--",
+      "ResultPath": "$.heap81",
       "Type": "Pass",
     },
     "44__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
-      "InputPath": "$.heap84.num",
-      "Next": "input.z",
+      "InputPath": "$.heap83",
+      "Next": "45__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "ResultPath": "$.heap84",
+      "Type": "Pass",
+    },
+    "45__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
+      "Next": "1__45__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE",
+      "Parameters": Object {
+        "out.$": "States.MathAdd($.a,-1)",
+      },
       "ResultPath": "$.heap85",
       "Type": "Pass",
     },
     "46__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
-      "InputPath": "$.heap87.num",
-      "Next": "input.p 1",
-      "ResultPath": "$.heap88",
+      "InputPath": "$.heap85.out",
+      "Next": "input.p",
+      "ResultPath": "$.heap86",
       "Type": "Pass",
     },
     "48__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
-      "InputPath": "$.heap89.num",
-      "Next": "input.n 1",
-      "ResultPath": "$.heap90",
+      "InputPath": "$.heap88.num",
+      "Next": "input.n",
+      "ResultPath": "$.heap89",
       "Type": "Pass",
     },
     "50__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
       "InputPath": "$.heap91.num",
-      "Next": "input.z 1",
+      "Next": "input.z",
       "ResultPath": "$.heap92",
       "Type": "Pass",
     },
     "52__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
-      "InputPath": "$.heap93.num",
+      "InputPath": "$.heap94.num",
       "Next": "input.str + 1",
-      "ResultPath": "$.heap94",
+      "ResultPath": "$.heap95",
       "Type": "Pass",
     },
     "54__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
-      "InputPath": "$.heap97",
+      "InputPath": "$.heap98",
       "Next": "55__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap98",
+      "ResultPath": "$.heap99",
       "Type": "Pass",
     },
     "55__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
@@ -31374,15 +31347,15 @@ Object {
       "Type": "Choice",
     },
     "56__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
-      "InputPath": "$.heap99.str",
+      "InputPath": "$.heap100.str",
       "Next": "input.str + true",
-      "ResultPath": "$.heap100",
+      "ResultPath": "$.heap101",
       "Type": "Pass",
     },
     "58__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
-      "InputPath": "$.heap103",
+      "InputPath": "$.heap104",
       "Next": "1 + input.str",
-      "ResultPath": "$.heap104",
+      "ResultPath": "$.heap105",
       "Type": "Pass",
     },
     "5__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqual": Object {
@@ -31392,9 +31365,9 @@ Object {
       "Type": "Pass",
     },
     "60__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
-      "InputPath": "$.heap107",
+      "InputPath": "$.heap108",
       "Next": "61__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap108",
+      "ResultPath": "$.heap109",
       "Type": "Pass",
     },
     "61__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
@@ -31409,21 +31382,21 @@ Object {
       "Type": "Choice",
     },
     "62__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
-      "InputPath": "$.heap109.str",
+      "InputPath": "$.heap110.str",
       "Next": "true + input.str",
-      "ResultPath": "$.heap110",
+      "ResultPath": "$.heap111",
       "Type": "Pass",
     },
     "64__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
-      "InputPath": "$.heap113",
+      "InputPath": "$.heap114",
       "Next": "input.str + input.str",
-      "ResultPath": "$.heap114",
+      "ResultPath": "$.heap115",
       "Type": "Pass",
     },
     "66__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua": Object {
-      "InputPath": "$.heap117",
+      "InputPath": "$.heap118",
       "Next": "1__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqual",
-      "ResultPath": "$.heap118",
+      "ResultPath": "$.heap119",
       "Type": "Pass",
     },
     "7__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqual": Object {
@@ -31439,7 +31412,7 @@ Object {
       "Type": "Pass",
     },
     "Initialize Functionless Context": Object {
-      "Next": "b = 1",
+      "Next": "a = input.p",
       "Parameters": Object {
         "fnl_context": Object {
           "null": null,
@@ -31451,20 +31424,20 @@ Object {
     },
     "NaN__1__input.n": Object {
       "InputPath": "$.fnl_context.null",
-      "Next": "44__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap84.num",
+      "Next": "50__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "ResultPath": "$.heap91.num",
       "Type": "Pass",
     },
     "NaN__1__input.p": Object {
       "InputPath": "$.fnl_context.null",
-      "Next": "42__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap81.num",
+      "Next": "48__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "ResultPath": "$.heap88.num",
       "Type": "Pass",
     },
     "NaN__1__input.z": Object {
       "InputPath": "$.fnl_context.null",
-      "Next": "46__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap87.num",
+      "Next": "52__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "ResultPath": "$.heap94.num",
       "Type": "Pass",
     },
     "NaN__2__29__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, m": Object {
@@ -31489,6 +31462,24 @@ Object {
       "InputPath": "$.fnl_context.null",
       "Next": "3__b -= input.p",
       "ResultPath": "$.heap13.num",
+      "Type": "Pass",
+    },
+    "a = input.p": Object {
+      "InputPath": "$.input.p",
+      "Next": "b = 1",
+      "ResultPath": "$.a",
+      "Type": "Pass",
+    },
+    "a++": Object {
+      "InputPath": "$.a",
+      "Next": "1__a++",
+      "ResultPath": "$.heap78",
+      "Type": "Pass",
+    },
+    "a--": Object {
+      "InputPath": "$.a",
+      "Next": "1__a--",
+      "ResultPath": "$.heap83",
       "Type": "Pass",
     },
     "assign__1__29__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p": Object {
@@ -31548,7 +31539,7 @@ Object {
     "assign__1__false__input.str + input.str 1": Object {
       "InputPath": "$.input.str",
       "Next": "2__false__input.str + input.str",
-      "ResultPath": "$.heap116.str.right.num",
+      "ResultPath": "$.heap117.str.right.num",
       "Type": "Pass",
     },
     "assign__1__true__b += input.p 1": Object {
@@ -31584,7 +31575,7 @@ Object {
     "assign__1__true__input.str + input.str 1": Object {
       "InputPath": "$.input.str",
       "Next": "2__true__input.str + input.str",
-      "ResultPath": "$.heap115.str.right.str",
+      "ResultPath": "$.heap116.str.right.str",
       "Type": "Pass",
     },
     "assign__29__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, m": Object {
@@ -31617,22 +31608,16 @@ Object {
       "ResultPath": "$.heap74.num",
       "Type": "Pass",
     },
-    "assign__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, m": Object {
-      "InputPath": "$.input.p",
-      "Next": "1__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE",
-      "ResultPath": "$.heap77.num",
-      "Type": "Pass",
-    },
     "assign__55__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, m": Object {
       "InputPath": "$.input.str",
       "Next": "1__55__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE",
-      "ResultPath": "$.heap99.str.left.str",
+      "ResultPath": "$.heap100.str.left.str",
       "Type": "Pass",
     },
     "assign__61__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, m": Object {
       "InputPath": "$.input.str",
       "Next": "1__61__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE",
-      "ResultPath": "$.heap109.str.right.str",
+      "ResultPath": "$.heap110.str.right.str",
       "Type": "Pass",
     },
     "assign__b -= -1": Object {
@@ -31656,7 +31641,7 @@ Object {
     "assign__false__1 + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__false__1 + input.str 1",
-      "ResultPath": "$.heap106.str.right.num",
+      "ResultPath": "$.heap107.str.right.num",
       "Type": "Pass",
     },
     "assign__false__b += input.p": Object {
@@ -31722,19 +31707,19 @@ Object {
     "assign__false__input.str + 1": Object {
       "InputPath": "$.input.str",
       "Next": "1__false__input.str + 1 1",
-      "ResultPath": "$.heap96.str.left.num",
+      "ResultPath": "$.heap97.str.left.num",
       "Type": "Pass",
     },
     "assign__false__input.str + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__false__input.str + input.str 1",
-      "ResultPath": "$.heap116.str.left.num",
+      "ResultPath": "$.heap117.str.left.num",
       "Type": "Pass",
     },
     "assign__false__input.str + true": Object {
       "InputPath": "$.input.str",
       "Next": "1__false__input.str + true 1",
-      "ResultPath": "$.heap102.str.left.num",
+      "ResultPath": "$.heap103.str.left.num",
       "Type": "Pass",
     },
     "assign__false__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p": Object {
@@ -31746,49 +31731,31 @@ Object {
     "assign__false__true + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__false__true + input.str 1",
-      "ResultPath": "$.heap112.str.right.num",
+      "ResultPath": "$.heap113.str.right.num",
       "Type": "Pass",
     },
     "assign__input.n": Object {
       "InputPath": "$.input.n",
       "Next": "1__input.n",
-      "ResultPath": "$.heap83.num",
-      "Type": "Pass",
-    },
-    "assign__input.n 1": Object {
-      "InputPath": "$.input.n",
-      "Next": "50__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap91.num",
+      "ResultPath": "$.heap90.num",
       "Type": "Pass",
     },
     "assign__input.p": Object {
       "InputPath": "$.input.p",
       "Next": "1__input.p",
-      "ResultPath": "$.heap80.num",
-      "Type": "Pass",
-    },
-    "assign__input.p 1": Object {
-      "InputPath": "$.input.p",
-      "Next": "48__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap89.num",
+      "ResultPath": "$.heap87.num",
       "Type": "Pass",
     },
     "assign__input.z": Object {
       "InputPath": "$.input.z",
       "Next": "1__input.z",
-      "ResultPath": "$.heap86.num",
-      "Type": "Pass",
-    },
-    "assign__input.z 1": Object {
-      "InputPath": "$.input.z",
-      "Next": "52__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
       "ResultPath": "$.heap93.num",
       "Type": "Pass",
     },
     "assign__true__1 + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__true__1 + input.str 1",
-      "ResultPath": "$.heap105.str.right.str",
+      "ResultPath": "$.heap106.str.right.str",
       "Type": "Pass",
     },
     "assign__true__b += input.p": Object {
@@ -31854,19 +31821,19 @@ Object {
     "assign__true__input.str + 1": Object {
       "InputPath": "$.input.str",
       "Next": "1__true__input.str + 1 1",
-      "ResultPath": "$.heap95.str.left.str",
+      "ResultPath": "$.heap96.str.left.str",
       "Type": "Pass",
     },
     "assign__true__input.str + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__true__input.str + input.str 1",
-      "ResultPath": "$.heap115.str.left.str",
+      "ResultPath": "$.heap116.str.left.str",
       "Type": "Pass",
     },
     "assign__true__input.str + true": Object {
       "InputPath": "$.input.str",
       "Next": "1__true__input.str + true 1",
-      "ResultPath": "$.heap101.str.left.str",
+      "ResultPath": "$.heap102.str.left.str",
       "Type": "Pass",
     },
     "assign__true__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p,": Object {
@@ -31878,7 +31845,7 @@ Object {
     "assign__true__true + input.str": Object {
       "InputPath": "$.input.str",
       "Next": "1__true__true + input.str 1",
-      "ResultPath": "$.heap111.str.right.str",
+      "ResultPath": "$.heap112.str.right.str",
       "Type": "Pass",
     },
     "b += input.p": Object {
@@ -32421,7 +32388,7 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "2__false__input.str + input.str",
-          "Variable": "$.heap116.str.right.num",
+          "Variable": "$.heap117.str.right.num",
         },
       ],
       "Default": "null__1__false__input.str + input.str 1",
@@ -32851,17 +32818,6 @@ Object {
       "Default": "null__37__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, min",
       "Type": "Choice",
     },
-    "checkStringOutput__39__return {plusEqualsConst: b += 1, plusEqualsRef: b +=": Object {
-      "Choices": Array [
-        Object {
-          "IsNumeric": true,
-          "Next": "1__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE",
-          "Variable": "$.heap77.num",
-        },
-      ],
-      "Default": "null__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, min",
-      "Type": "Choice",
-    },
     "checkStringOutput__b -= -1": Object {
       "Choices": Array [
         Object {
@@ -33023,7 +32979,7 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "1__false__1 + input.str 1",
-          "Variable": "$.heap106.str.right.num",
+          "Variable": "$.heap107.str.right.num",
         },
       ],
       "Default": "null__false__1 + input.str",
@@ -33759,7 +33715,7 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "1__false__input.str + 1 1",
-          "Variable": "$.heap96.str.left.num",
+          "Variable": "$.heap97.str.left.num",
         },
       ],
       "Default": "null__false__input.str + 1",
@@ -33771,7 +33727,7 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap116.str.left.num",
+              "Variable": "$.heap117.str.left.num",
             },
             Object {
               "IsPresent": false,
@@ -33784,7 +33740,7 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap116.str.left.num",
+              "Variable": "$.heap117.str.left.num",
             },
             Object {
               "And": Array [
@@ -33813,7 +33769,7 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap116.str.left.num",
+              "Variable": "$.heap117.str.left.num",
             },
             Object {
               "IsNull": true,
@@ -33826,7 +33782,7 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap116.str.left.num",
+              "Variable": "$.heap117.str.left.num",
             },
             Object {
               "IsString": true,
@@ -33839,7 +33795,7 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap116.str.left.num",
+              "Variable": "$.heap117.str.left.num",
             },
             Object {
               "IsNumeric": true,
@@ -33852,7 +33808,7 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap116.str.left.num",
+              "Variable": "$.heap117.str.left.num",
             },
             Object {
               "And": Array [
@@ -33873,7 +33829,7 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap116.str.left.num",
+              "Variable": "$.heap117.str.left.num",
             },
             Object {
               "And": Array [
@@ -33893,7 +33849,7 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "null__1__false__input.str + input.str 1",
-          "Variable": "$.heap116.str.left.num",
+          "Variable": "$.heap117.str.left.num",
         },
       ],
       "Default": "null__false__input.str + input.str",
@@ -33904,7 +33860,7 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "1__false__input.str + true 1",
-          "Variable": "$.heap102.str.left.num",
+          "Variable": "$.heap103.str.left.num",
         },
       ],
       "Default": "null__false__input.str + true",
@@ -33926,7 +33882,7 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "1__false__true + input.str 1",
-          "Variable": "$.heap112.str.right.num",
+          "Variable": "$.heap113.str.right.num",
         },
       ],
       "Default": "null__false__true + input.str",
@@ -33938,11 +33894,11 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap83.num",
+              "Variable": "$.heap90.num",
             },
             Object {
               "IsNull": true,
-              "Variable": "$.heap83.num",
+              "Variable": "$.heap90.num",
             },
           ],
           "Next": "NaN__1__input.n",
@@ -33951,11 +33907,11 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap83.num",
+              "Variable": "$.heap90.num",
             },
             Object {
               "NumericLessThan": 0,
-              "Variable": "$.heap83.num",
+              "Variable": "$.heap90.num",
             },
           ],
           "Next": "negative__1__input.n",
@@ -33963,21 +33919,10 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "positive__1__input.n",
-          "Variable": "$.heap83.num",
+          "Variable": "$.heap90.num",
         },
       ],
       "Default": "null__input.n",
-      "Type": "Choice",
-    },
-    "checkStringOutput__input.n 1": Object {
-      "Choices": Array [
-        Object {
-          "IsNumeric": true,
-          "Next": "50__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-          "Variable": "$.heap91.num",
-        },
-      ],
-      "Default": "null__input.n 1",
       "Type": "Choice",
     },
     "checkStringOutput__input.p": Object {
@@ -33986,11 +33931,11 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap80.num",
+              "Variable": "$.heap87.num",
             },
             Object {
               "IsNull": true,
-              "Variable": "$.heap80.num",
+              "Variable": "$.heap87.num",
             },
           ],
           "Next": "NaN__1__input.p",
@@ -33999,11 +33944,11 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap80.num",
+              "Variable": "$.heap87.num",
             },
             Object {
               "NumericLessThan": 0,
-              "Variable": "$.heap80.num",
+              "Variable": "$.heap87.num",
             },
           ],
           "Next": "negative__1__input.p",
@@ -34011,21 +33956,10 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "positive__1__input.p",
-          "Variable": "$.heap80.num",
+          "Variable": "$.heap87.num",
         },
       ],
       "Default": "null__input.p",
-      "Type": "Choice",
-    },
-    "checkStringOutput__input.p 1": Object {
-      "Choices": Array [
-        Object {
-          "IsNumeric": true,
-          "Next": "48__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-          "Variable": "$.heap89.num",
-        },
-      ],
-      "Default": "null__input.p 1",
       "Type": "Choice",
     },
     "checkStringOutput__input.z": Object {
@@ -34034,11 +33968,11 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap86.num",
+              "Variable": "$.heap93.num",
             },
             Object {
               "IsNull": true,
-              "Variable": "$.heap86.num",
+              "Variable": "$.heap93.num",
             },
           ],
           "Next": "NaN__1__input.z",
@@ -34047,11 +33981,11 @@ Object {
           "And": Array [
             Object {
               "IsNumeric": true,
-              "Variable": "$.heap86.num",
+              "Variable": "$.heap93.num",
             },
             Object {
               "NumericLessThan": 0,
-              "Variable": "$.heap86.num",
+              "Variable": "$.heap93.num",
             },
           ],
           "Next": "negative__1__input.z",
@@ -34059,21 +33993,10 @@ Object {
         Object {
           "IsNumeric": true,
           "Next": "positive__1__input.z",
-          "Variable": "$.heap86.num",
-        },
-      ],
-      "Default": "null__input.z",
-      "Type": "Choice",
-    },
-    "checkStringOutput__input.z 1": Object {
-      "Choices": Array [
-        Object {
-          "IsNumeric": true,
-          "Next": "52__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
           "Variable": "$.heap93.num",
         },
       ],
-      "Default": "null__input.z 1",
+      "Default": "null__input.z",
       "Type": "Choice",
     },
     "format__1__29__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p": Object {
@@ -34153,7 +34076,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.str)",
       },
-      "ResultPath": "$.heap116.str.right",
+      "ResultPath": "$.heap117.str.right",
       "Type": "Pass",
     },
     "format__1__true__b += input.p 1": Object {
@@ -34201,7 +34124,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap115.str.right",
+      "ResultPath": "$.heap116.str.right",
       "Type": "Pass",
     },
     "format__29__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, m": Object {
@@ -34244,20 +34167,12 @@ Object {
       "ResultPath": "$.heap74",
       "Type": "Pass",
     },
-    "format__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, m": Object {
-      "Next": "checkStringOutput__39__return {plusEqualsConst: b += 1, plusEqualsRef: b +=",
-      "Parameters": Object {
-        "num.$": "States.StringToJson($.input.p)",
-      },
-      "ResultPath": "$.heap77",
-      "Type": "Pass",
-    },
     "format__55__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, m": Object {
       "Next": "1__55__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE",
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap99.str.left",
+      "ResultPath": "$.heap100.str.left",
       "Type": "Pass",
     },
     "format__61__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, m": Object {
@@ -34265,7 +34180,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap109.str.right",
+      "ResultPath": "$.heap110.str.right",
       "Type": "Pass",
     },
     "format__b -= -1": Object {
@@ -34297,7 +34212,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.str)",
       },
-      "ResultPath": "$.heap106.str.right",
+      "ResultPath": "$.heap107.str.right",
       "Type": "Pass",
     },
     "format__false__b += input.p": Object {
@@ -34385,7 +34300,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.str)",
       },
-      "ResultPath": "$.heap96.str.left",
+      "ResultPath": "$.heap97.str.left",
       "Type": "Pass",
     },
     "format__false__input.str + input.str": Object {
@@ -34393,7 +34308,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.str)",
       },
-      "ResultPath": "$.heap116.str.left",
+      "ResultPath": "$.heap117.str.left",
       "Type": "Pass",
     },
     "format__false__input.str + true": Object {
@@ -34401,7 +34316,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.str)",
       },
-      "ResultPath": "$.heap102.str.left",
+      "ResultPath": "$.heap103.str.left",
       "Type": "Pass",
     },
     "format__false__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p": Object {
@@ -34417,7 +34332,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.str)",
       },
-      "ResultPath": "$.heap112.str.right",
+      "ResultPath": "$.heap113.str.right",
       "Type": "Pass",
     },
     "format__input.n": Object {
@@ -34425,15 +34340,7 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.n)",
       },
-      "ResultPath": "$.heap83",
-      "Type": "Pass",
-    },
-    "format__input.n 1": Object {
-      "Next": "checkStringOutput__input.n 1",
-      "Parameters": Object {
-        "num.$": "States.StringToJson($.input.n)",
-      },
-      "ResultPath": "$.heap91",
+      "ResultPath": "$.heap90",
       "Type": "Pass",
     },
     "format__input.p": Object {
@@ -34441,27 +34348,11 @@ Object {
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.p)",
       },
-      "ResultPath": "$.heap80",
-      "Type": "Pass",
-    },
-    "format__input.p 1": Object {
-      "Next": "checkStringOutput__input.p 1",
-      "Parameters": Object {
-        "num.$": "States.StringToJson($.input.p)",
-      },
-      "ResultPath": "$.heap89",
+      "ResultPath": "$.heap87",
       "Type": "Pass",
     },
     "format__input.z": Object {
       "Next": "checkStringOutput__input.z",
-      "Parameters": Object {
-        "num.$": "States.StringToJson($.input.z)",
-      },
-      "ResultPath": "$.heap86",
-      "Type": "Pass",
-    },
-    "format__input.z 1": Object {
-      "Next": "checkStringOutput__input.z 1",
       "Parameters": Object {
         "num.$": "States.StringToJson($.input.z)",
       },
@@ -34473,7 +34364,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap105.str.right",
+      "ResultPath": "$.heap106.str.right",
       "Type": "Pass",
     },
     "format__true__b += input.p": Object {
@@ -34561,7 +34452,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap95.str.left",
+      "ResultPath": "$.heap96.str.left",
       "Type": "Pass",
     },
     "format__true__input.str + input.str": Object {
@@ -34569,7 +34460,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap115.str.left",
+      "ResultPath": "$.heap116.str.left",
       "Type": "Pass",
     },
     "format__true__input.str + true": Object {
@@ -34577,7 +34468,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap101.str.left",
+      "ResultPath": "$.heap102.str.left",
       "Type": "Pass",
     },
     "format__true__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p,": Object {
@@ -34593,7 +34484,7 @@ Object {
       "Parameters": Object {
         "str.$": "States.JsonToString($.input.str)",
       },
-      "ResultPath": "$.heap111.str.right",
+      "ResultPath": "$.heap112.str.right",
       "Type": "Pass",
     },
     "input.b + input.b": Object {
@@ -34865,79 +34756,6 @@ Object {
         },
       ],
       "Default": "null__input.n",
-      "Type": "Choice",
-    },
-    "input.n 1": Object {
-      "Choices": Array [
-        Object {
-          "IsPresent": false,
-          "Next": "null__input.n 1",
-          "Variable": "$.input.n",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsString": true,
-              "Variable": "$.input.n",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsString": true,
-                  "Variable": "$.input.n",
-                },
-                Object {
-                  "StringEquals": "",
-                  "Variable": "$.input.n",
-                },
-              ],
-            },
-          ],
-          "Next": "zero__input.n 1",
-        },
-        Object {
-          "IsNull": true,
-          "Next": "zero__input.n 1",
-          "Variable": "$.input.n",
-        },
-        Object {
-          "IsString": true,
-          "Next": "format__input.n 1",
-          "Variable": "$.input.n",
-        },
-        Object {
-          "IsNumeric": true,
-          "Next": "assign__input.n 1",
-          "Variable": "$.input.n",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.n",
-            },
-            Object {
-              "BooleanEquals": true,
-              "Variable": "$.input.n",
-            },
-          ],
-          "Next": "one__input.n 1",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.n",
-            },
-            Object {
-              "BooleanEquals": false,
-              "Variable": "$.input.n",
-            },
-          ],
-          "Next": "zero__input.n 1",
-        },
-      ],
-      "Default": "null__input.n 1",
       "Type": "Choice",
     },
     "input.p": Object {
@@ -35698,79 +35516,6 @@ Object {
       "Default": "null__false__input.p + true",
       "Type": "Choice",
     },
-    "input.p 1": Object {
-      "Choices": Array [
-        Object {
-          "IsPresent": false,
-          "Next": "null__input.p 1",
-          "Variable": "$.input.p",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsString": true,
-              "Variable": "$.input.p",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsString": true,
-                  "Variable": "$.input.p",
-                },
-                Object {
-                  "StringEquals": "",
-                  "Variable": "$.input.p",
-                },
-              ],
-            },
-          ],
-          "Next": "zero__input.p 1",
-        },
-        Object {
-          "IsNull": true,
-          "Next": "zero__input.p 1",
-          "Variable": "$.input.p",
-        },
-        Object {
-          "IsString": true,
-          "Next": "format__input.p 1",
-          "Variable": "$.input.p",
-        },
-        Object {
-          "IsNumeric": true,
-          "Next": "assign__input.p 1",
-          "Variable": "$.input.p",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.p",
-            },
-            Object {
-              "BooleanEquals": true,
-              "Variable": "$.input.p",
-            },
-          ],
-          "Next": "one__input.p 1",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.p",
-            },
-            Object {
-              "BooleanEquals": false,
-              "Variable": "$.input.p",
-            },
-          ],
-          "Next": "zero__input.p 1",
-        },
-      ],
-      "Default": "null__input.p 1",
-      "Type": "Choice",
-    },
     "input.str + 1": Object {
       "Choices": Array [
         Object {
@@ -36133,101 +35878,28 @@ Object {
       "Default": "null__input.z",
       "Type": "Choice",
     },
-    "input.z 1": Object {
-      "Choices": Array [
-        Object {
-          "IsPresent": false,
-          "Next": "null__input.z 1",
-          "Variable": "$.input.z",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsString": true,
-              "Variable": "$.input.z",
-            },
-            Object {
-              "And": Array [
-                Object {
-                  "IsString": true,
-                  "Variable": "$.input.z",
-                },
-                Object {
-                  "StringEquals": "",
-                  "Variable": "$.input.z",
-                },
-              ],
-            },
-          ],
-          "Next": "zero__input.z 1",
-        },
-        Object {
-          "IsNull": true,
-          "Next": "zero__input.z 1",
-          "Variable": "$.input.z",
-        },
-        Object {
-          "IsString": true,
-          "Next": "format__input.z 1",
-          "Variable": "$.input.z",
-        },
-        Object {
-          "IsNumeric": true,
-          "Next": "assign__input.z 1",
-          "Variable": "$.input.z",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.z",
-            },
-            Object {
-              "BooleanEquals": true,
-              "Variable": "$.input.z",
-            },
-          ],
-          "Next": "one__input.z 1",
-        },
-        Object {
-          "And": Array [
-            Object {
-              "IsBoolean": true,
-              "Variable": "$.input.z",
-            },
-            Object {
-              "BooleanEquals": false,
-              "Variable": "$.input.z",
-            },
-          ],
-          "Next": "zero__input.z 1",
-        },
-      ],
-      "Default": "null__input.z 1",
-      "Type": "Choice",
-    },
     "negative__1__input.n": Object {
       "Next": "1__negative__1__input.n",
       "Parameters": Object {
-        "num.$": "States.StringSplit(States.Format('{}',$.heap83.num),'-')",
+        "num.$": "States.StringSplit(States.Format('{}',$.heap90.num),'-')",
       },
-      "ResultPath": "$.heap84",
+      "ResultPath": "$.heap91",
       "Type": "Pass",
     },
     "negative__1__input.p": Object {
       "Next": "1__negative__1__input.p",
       "Parameters": Object {
-        "num.$": "States.StringSplit(States.Format('{}',$.heap80.num),'-')",
+        "num.$": "States.StringSplit(States.Format('{}',$.heap87.num),'-')",
       },
-      "ResultPath": "$.heap81",
+      "ResultPath": "$.heap88",
       "Type": "Pass",
     },
     "negative__1__input.z": Object {
       "Next": "1__negative__1__input.z",
       "Parameters": Object {
-        "num.$": "States.StringSplit(States.Format('{}',$.heap86.num),'-')",
+        "num.$": "States.StringSplit(States.Format('{}',$.heap93.num),'-')",
       },
-      "ResultPath": "$.heap87",
+      "ResultPath": "$.heap94",
       "Type": "Pass",
     },
     "negative__2__29__return {plusEqualsConst: b += 1, plusEqualsRef: b += input": Object {
@@ -36319,7 +35991,7 @@ Object {
     "null__1__false__input.str + input.str 1": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "2__false__input.str + input.str",
-      "ResultPath": "$.heap116.str.right.num",
+      "ResultPath": "$.heap117.str.right.num",
       "Type": "Pass",
     },
     "null__29__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, min": Object {
@@ -36352,12 +36024,6 @@ Object {
       "ResultPath": "$.heap74.num",
       "Type": "Pass",
     },
-    "null__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, min": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "1__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE",
-      "ResultPath": "$.heap77.num",
-      "Type": "Pass",
-    },
     "null__b -= -1": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__b -= -1 1",
@@ -36379,7 +36045,7 @@ Object {
     "null__false__1 + input.str": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__false__1 + input.str 1",
-      "ResultPath": "$.heap106.str.right.num",
+      "ResultPath": "$.heap107.str.right.num",
       "Type": "Pass",
     },
     "null__false__b += input.p": Object {
@@ -36445,19 +36111,19 @@ Object {
     "null__false__input.str + 1": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__false__input.str + 1 1",
-      "ResultPath": "$.heap96.str.left.num",
+      "ResultPath": "$.heap97.str.left.num",
       "Type": "Pass",
     },
     "null__false__input.str + input.str": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__false__input.str + input.str 1",
-      "ResultPath": "$.heap116.str.left.num",
+      "ResultPath": "$.heap117.str.left.num",
       "Type": "Pass",
     },
     "null__false__input.str + true": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__false__input.str + true 1",
-      "ResultPath": "$.heap102.str.left.num",
+      "ResultPath": "$.heap103.str.left.num",
       "Type": "Pass",
     },
     "null__false__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, ": Object {
@@ -36469,42 +36135,24 @@ Object {
     "null__false__true + input.str": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__false__true + input.str 1",
-      "ResultPath": "$.heap112.str.right.num",
+      "ResultPath": "$.heap113.str.right.num",
       "Type": "Pass",
     },
     "null__input.n": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__input.n",
-      "ResultPath": "$.heap83.num",
-      "Type": "Pass",
-    },
-    "null__input.n 1": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "50__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap91.num",
+      "ResultPath": "$.heap90.num",
       "Type": "Pass",
     },
     "null__input.p": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__input.p",
-      "ResultPath": "$.heap80.num",
-      "Type": "Pass",
-    },
-    "null__input.p 1": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "48__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "ResultPath": "$.heap89.num",
+      "ResultPath": "$.heap87.num",
       "Type": "Pass",
     },
     "null__input.z": Object {
       "InputPath": "$.fnl_context.null",
       "Next": "1__input.z",
-      "ResultPath": "$.heap86.num",
-      "Type": "Pass",
-    },
-    "null__input.z 1": Object {
-      "InputPath": "$.fnl_context.null",
-      "Next": "52__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
       "ResultPath": "$.heap93.num",
       "Type": "Pass",
     },
@@ -36565,7 +36213,7 @@ Object {
     "one__1__false__input.str + input.str 1": Object {
       "Next": "2__false__input.str + input.str",
       "Result": 1,
-      "ResultPath": "$.heap116.str.right.num",
+      "ResultPath": "$.heap117.str.right.num",
       "Type": "Pass",
     },
     "one__29__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minu": Object {
@@ -36598,12 +36246,6 @@ Object {
       "ResultPath": "$.heap74.num",
       "Type": "Pass",
     },
-    "one__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minu": Object {
-      "Next": "1__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE",
-      "Result": 1,
-      "ResultPath": "$.heap77.num",
-      "Type": "Pass",
-    },
     "one__b -= -1": Object {
       "Next": "1__b -= -1 1",
       "Result": 1,
@@ -36625,7 +36267,7 @@ Object {
     "one__false__1 + input.str": Object {
       "Next": "1__false__1 + input.str 1",
       "Result": 1,
-      "ResultPath": "$.heap106.str.right.num",
+      "ResultPath": "$.heap107.str.right.num",
       "Type": "Pass",
     },
     "one__false__b += input.p": Object {
@@ -36691,19 +36333,19 @@ Object {
     "one__false__input.str + 1": Object {
       "Next": "1__false__input.str + 1 1",
       "Result": 1,
-      "ResultPath": "$.heap96.str.left.num",
+      "ResultPath": "$.heap97.str.left.num",
       "Type": "Pass",
     },
     "one__false__input.str + input.str": Object {
       "Next": "1__false__input.str + input.str 1",
       "Result": 1,
-      "ResultPath": "$.heap116.str.left.num",
+      "ResultPath": "$.heap117.str.left.num",
       "Type": "Pass",
     },
     "one__false__input.str + true": Object {
       "Next": "1__false__input.str + true 1",
       "Result": 1,
-      "ResultPath": "$.heap102.str.left.num",
+      "ResultPath": "$.heap103.str.left.num",
       "Type": "Pass",
     },
     "one__false__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, m": Object {
@@ -36715,67 +36357,49 @@ Object {
     "one__false__true + input.str": Object {
       "Next": "1__false__true + input.str 1",
       "Result": 1,
-      "ResultPath": "$.heap112.str.right.num",
+      "ResultPath": "$.heap113.str.right.num",
       "Type": "Pass",
     },
     "one__input.n": Object {
       "Next": "1__input.n",
       "Result": 1,
-      "ResultPath": "$.heap83.num",
-      "Type": "Pass",
-    },
-    "one__input.n 1": Object {
-      "Next": "50__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "Result": 1,
-      "ResultPath": "$.heap91.num",
+      "ResultPath": "$.heap90.num",
       "Type": "Pass",
     },
     "one__input.p": Object {
       "Next": "1__input.p",
       "Result": 1,
-      "ResultPath": "$.heap80.num",
-      "Type": "Pass",
-    },
-    "one__input.p 1": Object {
-      "Next": "48__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "Result": 1,
-      "ResultPath": "$.heap89.num",
+      "ResultPath": "$.heap87.num",
       "Type": "Pass",
     },
     "one__input.z": Object {
       "Next": "1__input.z",
       "Result": 1,
-      "ResultPath": "$.heap86.num",
-      "Type": "Pass",
-    },
-    "one__input.z 1": Object {
-      "Next": "52__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "Result": 1,
       "ResultPath": "$.heap93.num",
       "Type": "Pass",
     },
     "positive__1__input.n": Object {
-      "Next": "44__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "Next": "50__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
       "Parameters": Object {
-        "num.$": "States.StringToJson(States.Format('-{}',$.heap83.num))",
+        "num.$": "States.StringToJson(States.Format('-{}',$.heap90.num))",
       },
-      "ResultPath": "$.heap84",
+      "ResultPath": "$.heap91",
       "Type": "Pass",
     },
     "positive__1__input.p": Object {
-      "Next": "42__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "Next": "48__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
       "Parameters": Object {
-        "num.$": "States.StringToJson(States.Format('-{}',$.heap80.num))",
+        "num.$": "States.StringToJson(States.Format('-{}',$.heap87.num))",
       },
-      "ResultPath": "$.heap81",
+      "ResultPath": "$.heap88",
       "Type": "Pass",
     },
     "positive__1__input.z": Object {
-      "Next": "46__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
+      "Next": "52__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
       "Parameters": Object {
-        "num.$": "States.StringToJson(States.Format('-{}',$.heap86.num))",
+        "num.$": "States.StringToJson(States.Format('-{}',$.heap93.num))",
       },
-      "ResultPath": "$.heap87",
+      "ResultPath": "$.heap94",
       "Type": "Pass",
     },
     "positive__2__29__return {plusEqualsConst: b += 1, plusEqualsRef: b += input": Object {
@@ -37049,7 +36673,7 @@ Object {
     "zero__1__false__input.str + input.str 1": Object {
       "Next": "2__false__input.str + input.str",
       "Result": 0,
-      "ResultPath": "$.heap116.str.right.num",
+      "ResultPath": "$.heap117.str.right.num",
       "Type": "Pass",
     },
     "zero__29__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, min": Object {
@@ -37082,12 +36706,6 @@ Object {
       "ResultPath": "$.heap74.num",
       "Type": "Pass",
     },
-    "zero__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, min": Object {
-      "Next": "1__39__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusE",
-      "Result": 0,
-      "ResultPath": "$.heap77.num",
-      "Type": "Pass",
-    },
     "zero__b -= -1": Object {
       "Next": "1__b -= -1 1",
       "Result": 0,
@@ -37109,7 +36727,7 @@ Object {
     "zero__false__1 + input.str": Object {
       "Next": "1__false__1 + input.str 1",
       "Result": 0,
-      "ResultPath": "$.heap106.str.right.num",
+      "ResultPath": "$.heap107.str.right.num",
       "Type": "Pass",
     },
     "zero__false__b += input.p": Object {
@@ -37175,19 +36793,19 @@ Object {
     "zero__false__input.str + 1": Object {
       "Next": "1__false__input.str + 1 1",
       "Result": 0,
-      "ResultPath": "$.heap96.str.left.num",
+      "ResultPath": "$.heap97.str.left.num",
       "Type": "Pass",
     },
     "zero__false__input.str + input.str": Object {
       "Next": "1__false__input.str + input.str 1",
       "Result": 0,
-      "ResultPath": "$.heap116.str.left.num",
+      "ResultPath": "$.heap117.str.left.num",
       "Type": "Pass",
     },
     "zero__false__input.str + true": Object {
       "Next": "1__false__input.str + true 1",
       "Result": 0,
-      "ResultPath": "$.heap102.str.left.num",
+      "ResultPath": "$.heap103.str.left.num",
       "Type": "Pass",
     },
     "zero__false__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, ": Object {
@@ -37199,41 +36817,23 @@ Object {
     "zero__false__true + input.str": Object {
       "Next": "1__false__true + input.str 1",
       "Result": 0,
-      "ResultPath": "$.heap112.str.right.num",
+      "ResultPath": "$.heap113.str.right.num",
       "Type": "Pass",
     },
     "zero__input.n": Object {
       "Next": "1__input.n",
       "Result": 0,
-      "ResultPath": "$.heap83.num",
-      "Type": "Pass",
-    },
-    "zero__input.n 1": Object {
-      "Next": "50__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "Result": 0,
-      "ResultPath": "$.heap91.num",
+      "ResultPath": "$.heap90.num",
       "Type": "Pass",
     },
     "zero__input.p": Object {
       "Next": "1__input.p",
       "Result": 0,
-      "ResultPath": "$.heap80.num",
-      "Type": "Pass",
-    },
-    "zero__input.p 1": Object {
-      "Next": "48__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
-      "Result": 0,
-      "ResultPath": "$.heap89.num",
+      "ResultPath": "$.heap87.num",
       "Type": "Pass",
     },
     "zero__input.z": Object {
       "Next": "1__input.z",
-      "Result": 0,
-      "ResultPath": "$.heap86.num",
-      "Type": "Pass",
-    },
-    "zero__input.z 1": Object {
-      "Next": "52__return {plusEqualsConst: b += 1, plusEqualsRef: b += input.p, minusEqua",
       "Result": 0,
       "ResultPath": "$.heap93.num",
       "Type": "Pass",

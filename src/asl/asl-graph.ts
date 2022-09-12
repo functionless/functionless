@@ -107,6 +107,7 @@ export namespace ASLGraph {
   }
 
   export type LiteralValueType =
+    | undefined
     | string
     | number
     | null
@@ -156,6 +157,12 @@ export namespace ASLGraph {
     state: any
   ): state is ASLGraph.LiteralValue<null> {
     return isLiteralValue(state) && state.value === null;
+  }
+
+  export function isLiteralUndefined(
+    state: any
+  ): state is ASLGraph.LiteralValue<undefined> {
+    return isLiteralValue(state) && state.value === undefined;
   }
 
   export function isLiteralNumber(
@@ -980,7 +987,9 @@ export namespace ASLGraph {
         ((operator === "!=" || operator === "!==") &&
           leftOutput.value !== rightOutput.value) ||
         (leftOutput.value !== null &&
+          leftOutput.value !== undefined &&
           rightOutput.value !== null &&
+          rightOutput.value !== undefined &&
           ((operator === ">" && leftOutput.value > rightOutput.value) ||
             (operator === "<" && leftOutput.value < rightOutput.value) ||
             (operator === "<=" && leftOutput.value <= rightOutput.value) ||
