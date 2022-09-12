@@ -1987,11 +1987,9 @@ export class ASL {
               allowUndefined && expr.isOptional
             );
             if (ASLGraph.isLiteralValue(output) && output.value === undefined) {
-              return {
-                value: undefined as any,
-                containsJsonPath: false,
-              };
+              return ASLGraph.literalValue(undefined);
             }
+
             if (expr.name.name === "length") {
               const lengthAccess = this.accessLengthProperty(output);
               if (lengthAccess) {
@@ -2000,7 +1998,7 @@ export class ASL {
             }
             return ASLGraph.accessConstant(
               output,
-              { value: expr.name.name, containsJsonPath: false },
+              ASLGraph.literalValue(expr.name.name),
               false
             );
           });

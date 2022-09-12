@@ -288,6 +288,8 @@ project.eslint!.addRules({
   "no-debugger": "error",
 });
 
+project.eslint!.addIgnorePattern("test-app/hook.js");
+
 project.eslint!.addOverride({
   files: ["*.ts", "*.mts", "*.cts", "*.tsx"],
   // @ts-ignore

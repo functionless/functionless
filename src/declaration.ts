@@ -1,4 +1,4 @@
-import {
+import type {
   ArrowFunctionExpr,
   ClassExpr,
   Expr,
@@ -7,11 +7,12 @@ import {
   ObjectLiteralExpr,
   OmittedExpr,
   PropName,
+  ReferenceExpr,
 } from "./expression";
-import { Integration } from "./integration";
+import type { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
-import { Span } from "./span";
+import type { Span } from "./span";
 import type {
   BlockStmt,
   CatchClause,
@@ -20,7 +21,7 @@ import type {
   ForStmt,
   VariableStmt,
 } from "./statement";
-import { AnyClass, AnyFunction } from "./util";
+import type { AnyClass, AnyFunction } from "./util";
 
 export type Decl =
   | BindingElem
@@ -188,17 +189,17 @@ export class GetAccessorDecl extends BaseDecl<
     span: Span,
     readonly name: PropName,
     readonly body: BlockStmt,
-    /**
-     * Name of the source file this node originates from.
-     *
-     * Only set on the root of the tree, i.e. when `this` is `undefined`.
-     */
-    readonly filename?: string
+    readonly isStatic: boolean | undefined,
+    readonly ownedBy: ReferenceExpr | undefined
   ) {
     super(NodeKind.GetAccessorDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
-    this.ensure(filename, "filename", ["undefined", "string"]);
+    this.ensure(isStatic, "isStatic", ["boolean", "undefined"]);
+    this.ensure(ownedBy, "ReferenceExpr", [
+      NodeKind.ReferenceExpr,
+      "undefined",
+    ]);
   }
 }
 export class SetAccessorDecl extends BaseDecl<
@@ -213,18 +214,18 @@ export class SetAccessorDecl extends BaseDecl<
     readonly name: PropName,
     readonly parameter: ParameterDecl,
     readonly body: BlockStmt,
-    /**
-     * Name of the source file this node originates from.
-     *
-     * Only set on the root of the tree, i.e. when `this` is `undefined`.
-     */
-    readonly filename?: string
+    readonly isStatic: boolean | undefined,
+    readonly ownedBy: ReferenceExpr | undefined
   ) {
     super(NodeKind.SetAccessorDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensure(parameter, "parameter", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
-    this.ensure(filename, "filename", ["undefined", "string"]);
+    this.ensure(isStatic, "isStatic", ["boolean", "undefined"]);
+    this.ensure(ownedBy, "ReferenceExpr", [
+      NodeKind.ReferenceExpr,
+      "undefined",
+    ]);
   }
 }
 

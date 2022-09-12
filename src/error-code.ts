@@ -1,6 +1,4 @@
-// @ts-ignore - imported for tsdoc
 import type { AwsMethod } from "./api";
-// @ts-ignore - imported for tsdoc
 import { ExpressStepFunction } from "./step-function";
 
 const BASE_URL = process.env.FUNCTIONLESS_LOCAL

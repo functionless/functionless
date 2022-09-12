@@ -8,6 +8,7 @@ import AWS, {
   DynamoDB,
   EventBridge,
   Lambda,
+  SQS,
   StepFunctions,
   STS,
 } from "aws-sdk";
@@ -68,17 +69,18 @@ const clientConfig =
 // the env (OIDC) role can describe stack and assume roles
 const sts = new STS(clientConfig);
 
-interface RuntimeTestClients {
+export interface RuntimeTestClients {
   stepFunctions: StepFunctions;
   lambda: Lambda;
   dynamoDB: DynamoDB;
   eventBridge: EventBridge;
+  sqs: SQS;
 }
 
 /**
  * The data form of a test case created by {@link TestInterface}'s.
  */
-interface TestCase<
+export interface TestCase<
   Outputs extends Record<string, string> = Record<string, string>,
   Extra extends Record<string, string> = Record<string, string>,
   TestExtra extends Record<string, any> = Record<string, any>
@@ -575,5 +577,6 @@ async function getRuntimeClients(
     lambda: new Lambda(testClientConfig),
     dynamoDB: new DynamoDB(testClientConfig),
     eventBridge: new EventBridge(testClientConfig),
+    sqs: new SQS(testClientConfig),
   };
 }

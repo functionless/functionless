@@ -11,6 +11,7 @@ import {
   CfnResource,
   DockerImage,
   IResolvable,
+  Lazy,
   Reference,
   Resource,
   SecretValue,
@@ -654,50 +655,34 @@ export class Function<
       onFailure: FunctionBase.normalizeAsyncDestination<OutPayload, Out>(
         onFailure
       ),
+      environment: {
+        functionless_infer: Lazy.string({
+          produce: () => {
+            // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
+            findAllIntegrations().forEach(({ integration, args }) => {
+              new IntegrationImpl(integration).native.bind(this, args);
+            });
+
+            return "DONE";
+          },
+        }),
+      },
     });
 
     super(_resource);
 
-    const integrations = findDeepIntegrations(ast).map(
-      (i) =>
-        <IntegrationInvocation>{
-          args: i.args,
-          integration: i.expr.ref(),
+    // retrieve all found native integrations. Will fail if the integration does not support native integration.
+    // TODO: move this logic into the synthesis phase, see https://github.com/functionless/functionless/issues/476
+    const nativeIntegrationsPrewarm = findAllIntegrations().flatMap(
+      ({ integration }) => {
+        const native = new IntegrationImpl(integration).native;
+        if (native.preWarm) {
+          return [native.preWarm];
+        } else {
+          return [];
         }
-    );
-
-    // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
-    const nativeIntegrationsPrewarm = integrations.flatMap(
-      ({ integration, args }) => {
-        const integ = new IntegrationImpl(integration).native;
-        integ.bind(this, args);
-        return integ.preWarm ? [integ.preWarm] : [];
       }
     );
-
-    /**
-     * Poison pill that forces Function synthesis to fail when the closure serialization has not completed.
-     * Closure synthesis runs async, but CDK does not normally support async.
-     * In order for the synthesis to complete successfully
-     * 1. Use autoSynth `new App({ autoSynth: true })` or `new App()` with the CDK Cli (`cdk synth`)
-     * 2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
-     * 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
-     * https://github.com/functionless/functionless/issues/128
-     * NOTE: This operation should happen immediately before the `generate` promise is started.
-     *       Any operation between adding the validation and starting `generate` will always trigger the poison pill
-     */
-    _resource.node.addValidation({
-      validate: () =>
-        this.resource.node.metadata.find(
-          (m) => m.type === FUNCTION_CLOSURE_FLAG
-        )
-          ? []
-          : [
-              formatErrorMessage(
-                ErrorCodes.Function_Closure_Serialization_Incomplete
-              ),
-            ],
-    });
 
     // Start serializing process, add the callback to the promises so we can later ensure completion
     Function.promises.push(
@@ -714,10 +699,44 @@ export class Function<
             throw Error(
               `While serializing ${_resource.node.path}:\n\n${e.message}`
             );
+          } else {
+            throw e;
           }
         }
       })()
     );
+
+    /**
+     * Poison pill that forces Function synthesis to fail when the closure serialization has not completed.
+     * Closure synthesis runs async, but CDK does not normally support async.
+     * In order for the synthesis to complete successfully
+     * 1. Use autoSynth `new App({ autoSynth: true })` or `new App()` with the CDK Cli (`cdk synth`)
+     * 2. Use `await asyncSynth(app)` exported from Functionless in place of `app.synth()`
+     * 3. Manually await on the closure serializer promises `await Promise.all(Function.promises)`
+     * https://github.com/functionless/functionless/issues/128
+     */
+    _resource.node.addValidation({
+      validate: () =>
+        this.resource.node.metadata.find(
+          (m) => m.type === FUNCTION_CLOSURE_FLAG
+        )
+          ? []
+          : [
+              formatErrorMessage(
+                ErrorCodes.Function_Closure_Serialization_Incomplete
+              ),
+            ],
+    });
+
+    function findAllIntegrations() {
+      return findDeepIntegrations(ast).map(
+        (i) =>
+          <IntegrationInvocation>{
+            args: i.args,
+            integration: i.expr.ref(),
+          }
+      );
+    }
   }
 }
 
@@ -803,6 +822,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
       integrationPrewarms,
       this.props
     );
+
     const bundled = await bundle(serialized);
 
     const asset = aws_lambda.Code.fromAsset("", {

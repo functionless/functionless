@@ -5,8 +5,6 @@ import {
   StepFunction,
   Function,
   EventBus,
-  // @ts-ignore - tsdocs
-  ErrorCodes,
   AppsyncResolver,
   $AWS,
   Table,

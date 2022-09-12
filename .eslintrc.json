@@ -39,7 +39,8 @@
     "scripts/**",
     "register.js",
     "!.projenrc.ts",
-    "!projenrc/**/*.ts"
+    "!projenrc/**/*.ts",
+    "test-app/hook.js"
   ],
   "rules": {
     "prettier/prettier": [
