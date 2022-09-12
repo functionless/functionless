@@ -2,8 +2,6 @@ import * as fs from "fs";
 import { join } from "path";
 import { typescript, TextFile, JsonFile, Project } from "projen";
 import { GithubCredentials } from "projen/lib/github";
-import { JobStep } from "projen/lib/github/workflows-model";
-import { RenderWorkflowSetupOptions } from "projen/lib/javascript";
 
 /**
  * Adds githooks into the .git/hooks folder during projen synth.
@@ -70,26 +68,6 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
     };
 
     fs.writeFileSync(rootPackageJson, `${JSON.stringify(updated, null, 2)}\n`);
-  }
-
-  public renderWorkflowSetup(
-    options?: RenderWorkflowSetupOptions | undefined
-  ): JobStep[] {
-    return [
-      ...super.renderWorkflowSetup(options),
-      // https://github.com/aws-actions/configure-aws-credentials#sample-iam-role-cloudformation-template
-      // the aws-org stacks create an OIDC provider for github.
-      {
-        name: "Configure AWS Credentials",
-        uses: "aws-actions/configure-aws-credentials@v1",
-        with: {
-          "role-to-assume":
-            "arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4",
-          "aws-region": "us-east-1",
-          "role-duration-seconds": 30 * 60,
-        },
-      },
-    ];
   }
 }
 
@@ -196,6 +174,19 @@ const project = new CustomTypescriptProject({
     },
   },
   prettier: true,
+  workflowBootstrapSteps: [
+    {
+      name: "Configure AWS Credentials",
+      uses: "aws-actions/configure-aws-credentials@v1",
+      with: {
+        "role-to-assume":
+          "arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4",
+        "aws-region": "us-east-1",
+        "role-duration-seconds": 30 * 60,
+      },
+      if: 'github.workflow == "release" || github.workflow == "build"',
+    },
+  ],
 });
 // projen assumes ts-jest
 delete project.jest!.config.globals;
