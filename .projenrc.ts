@@ -1,7 +1,9 @@
 import * as fs from "fs";
 import { join } from "path";
+import { Trigger } from "aws-cdk-lib/triggers";
 import { typescript, TextFile, Project } from "projen";
 import { GithubCredentials } from "projen/lib/github";
+import { JobPermission } from "projen/lib/github/workflows-model";
 
 /**
  * Adds githooks into the .git/hooks folder during projen synth.
@@ -196,6 +198,20 @@ const packageJson = project.tryFindObjectFile("package.json")!;
 
 packageJson.addOverride("lint-staged", {
   "*.{tsx,jsx,ts,js,json,md,css}": ["eslint --fix"],
+});
+
+const closeWorkflow = project.github?.addWorkflow("close");
+closeWorkflow?.on({
+  pullRequest: {
+    types: ["closed"],
+  },
+});
+closeWorkflow?.addJob("clean up", {
+  permissions: { contents: JobPermission.WRITE, idToken: JobPermission.WRITE },
+  runsOn: ["ubuntu-latest"],
+  env: {
+    CI: "true",
+  },
 });
 
 project.compileTask.prependExec(
