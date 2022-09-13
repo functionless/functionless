@@ -24,7 +24,7 @@ jobs:
         if: contains(fromJson('["release", "build", "close"]'), github.workflow)
       - uses: marvinpinto/action-inject-ssm-secrets@latest
         with:
-          ssm_parameter: /functionlessTestDeleter/FunctionlessTest-${{ env.GITHUB_REF }}/deleteUrl
+          ssm_parameter: /functionlessTestDeleter/FunctionlessTest-${{ github.ref }}/deleteUrl
           env_variable_name: FL_DELETE_URL
       - uses: fjogeleit/http-request-action@v1
         with:

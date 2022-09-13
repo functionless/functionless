@@ -194,6 +194,8 @@ const project = new CustomTypescriptProject({
 // projen assumes ts-jest
 delete project.jest!.config.globals;
 delete project.jest!.config.preset;
+// @ts-ignore
+project.jest!.config.testMatch = ["**/secret.localstack.test.ts"];
 
 const packageJson = project.tryFindObjectFile("package.json")!;
 
@@ -220,7 +222,7 @@ const cleanJob: Job = {
       uses: "marvinpinto/action-inject-ssm-secrets@latest",
       with: {
         ssm_parameter:
-          "/functionlessTestDeleter/FunctionlessTest-${{ env.GITHUB_REF }}/deleteUrl",
+          "/functionlessTestDeleter/FunctionlessTest-${{ github.ref }}/deleteUrl",
         env_variable_name: "FL_DELETE_URL",
       },
     },
