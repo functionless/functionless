@@ -81,7 +81,8 @@ runtimeTestSuite("cleanUp", (test, stack) => {
       // const param =
       new StringParameter(scope, "deleterFunctionUrl", {
         stringValue: starterFuncUrl.url,
-        parameterName: `/functionlessTestDeleter/${runtimeTestExecutionContext.stackTag}`,
+        // FunctionlessTest-{process.env.GITHUB_REF}
+        parameterName: `/functionlessTestDeleter/${runtimeTestExecutionContext.stackTag}/deleteUrl`,
       });
 
       return {

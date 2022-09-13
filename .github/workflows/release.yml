@@ -16,6 +16,7 @@ jobs:
       latest_commit: ${{ steps.git_remote.outputs.latest_commit }}
     env:
       CI: "true"
+      TEST_STACK_RETENTION_POLICY: DELETE
     steps:
       - name: Checkout
         uses: actions/checkout@v3

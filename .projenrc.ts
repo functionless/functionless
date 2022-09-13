@@ -1,6 +1,5 @@
 import * as fs from "fs";
 import { join } from "path";
-import { Trigger } from "aws-cdk-lib/triggers";
 import { typescript, TextFile, Project } from "projen";
 import { GithubCredentials } from "projen/lib/github";
 import { JobPermission } from "projen/lib/github/workflows-model";
@@ -72,6 +71,18 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
     fs.writeFileSync(rootPackageJson, `${JSON.stringify(updated, null, 2)}\n`);
   }
 }
+
+const assumeRoleStep = {
+  name: "Configure AWS Credentials",
+  uses: "aws-actions/configure-aws-credentials@v1",
+  with: {
+    "role-to-assume":
+      "arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4",
+    "aws-region": "us-east-1",
+    "role-duration-seconds": 30 * 60,
+  },
+  if: `contains(fromJson('["release", "build"]'), github.workflow)`,
+};
 
 const project = new CustomTypescriptProject({
   defaultReleaseBranch: "main",
@@ -176,19 +187,7 @@ const project = new CustomTypescriptProject({
     },
   },
   prettier: true,
-  workflowBootstrapSteps: [
-    {
-      name: "Configure AWS Credentials",
-      uses: "aws-actions/configure-aws-credentials@v1",
-      with: {
-        "role-to-assume":
-          "arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4",
-        "aws-region": "us-east-1",
-        "role-duration-seconds": 30 * 60,
-      },
-      if: `contains(fromJson('["release", "build"]'), github.workflow)`,
-    },
-  ],
+  workflowBootstrapSteps: [assumeRoleStep],
 });
 // projen assumes ts-jest
 delete project.jest!.config.globals;
@@ -212,6 +211,24 @@ closeWorkflow?.addJob("clean up", {
   env: {
     CI: "true",
   },
+  steps: [
+    assumeRoleStep,
+    {
+      uses: "marvinpinto/action-inject-ssm-secrets@latest",
+      with: {
+        ssm_parameter:
+          "/functionlessTestDeleter/FunctionlessTest-${{ env.GITHUB_REF }}/deleteUrl",
+        env_variable_name: "FL_DELETE_URL",
+      },
+    },
+    {
+      uses: "fjogeleit/http-request-action@v1",
+      with: {
+        url: "${{ env.FL_DELETE_URL }}",
+        method: "GET",
+      },
+    },
+  ],
 });
 
 project.compileTask.prependExec(
@@ -261,6 +278,11 @@ project.buildWorkflow.workflow.jobs.build = {
 project.release.defaultBranch.workflow.jobs.release = {
   // @ts-ignore
   ...project.release.defaultBranch.workflow.jobs.release,
+  env: {
+    // @ts-ignore
+    ...project.release.defaultBranch.workflow.jobs.release.env,
+    TEST_STACK_RETENTION_POLICY: "DELETE",
+  },
   permissions: {
     // @ts-ignore
     ...project.release.defaultBranch.workflow.jobs.release.permissions,
