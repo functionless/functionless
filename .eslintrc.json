@@ -36,10 +36,11 @@
     }
   },
   "ignorePatterns": [
-    "jest.config.ts",
     "scripts/**",
     "register.js",
-    "hook.js",
+    "jest.js",
+    "swc-config.js",
+    "website/**",
     "!.projenrc.ts",
     "!projenrc/**/*.ts"
   ],

@@ -224,7 +224,12 @@ function validateFunctionlessNode<Node extends FunctionlessNode>(
   functionLocation: string,
   validate: (e: FunctionlessNode) => e is Node
 ): Node {
-  if (validate(a)) {
+  if (a === undefined) {
+    throw new SynthError(
+      ErrorCodes.Invalid_Input,
+      `Expected input function to ${functionLocation} to be present, received undefined.`
+    );
+  } else if (validate(a)) {
     return validateFunctionlessNodeSemantics(a);
   } else if (isErr(a)) {
     throw a.error;

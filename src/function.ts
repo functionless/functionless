@@ -736,10 +736,18 @@ export class Function<
     // Start serializing process, add the callback to the promises so we can later ensure completion
     Function.promises.push(
       (async () => {
+        const serializerImpl =
+          props?.serializer ?? SerializerImpl.EXPERIMENTAL_SWC;
+        const sourceMaps =
+          props?.sourceMaps ??
+          // if using SWC serializer, enable source maps by default
+          // otherwise disable by default
+          (serializerImpl === SerializerImpl.EXPERIMENTAL_SWC ? true : false);
         try {
           await callbackLambdaCode.generate(
             nativeIntegrationsPrewarm,
-            props?.serializer ?? SerializerImpl.EXPERIMENTAL_SWC
+            serializerImpl,
+            sourceMaps
           );
         } catch (e) {
           if (e instanceof SynthError) {
@@ -831,7 +839,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
 
   constructor(
     private func: AnyAsyncFunction,
-    private props?: CallbackLambdaCodeProps
+    private props: CallbackLambdaCodeProps
   ) {
     super();
   }
@@ -852,7 +860,8 @@ export class CallbackLambdaCode extends aws_lambda.Code {
    */
   public async generate(
     integrationPrewarms: NativeIntegration<AnyFunction>["preWarm"][],
-    serializerImpl: SerializerImpl
+    serializerImpl: SerializerImpl,
+    sourceMaps: boolean
   ) {
     if (!this.scope) {
       throw new SynthError(
@@ -876,7 +885,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
       serializerImpl,
       this.props
     );
-    const bundled = (await bundle(serialized)).contents;
+    const bundled = (await bundle(serialized, sourceMaps)).contents;
 
     const asset = aws_lambda.Code.fromAsset("", {
       assetHashType: AssetHashType.OUTPUT,
@@ -967,7 +976,7 @@ interface TokenContext {
 export async function serialize(
   func: AnyAsyncFunction,
   integrationPrewarms: NativeIntegration<AnyFunction>["preWarm"][],
-  serializerImpl: SerializerImpl,
+  serializerImpl: SerializerImpl = SerializerImpl.STABLE_DEBUGGER,
   props?: PrewarmProps
 ): Promise<[string, TokenContext[]]> {
   let tokens: string[] = [];
@@ -1249,7 +1258,7 @@ export async function serialize(
  */
 export async function bundle(
   text: string,
-  sourceMap?: boolean
+  sourceMap: boolean = false
 ): Promise<esbuild.OutputFile> {
   const bundle = await esbuild.build({
     stdin: {
@@ -1262,7 +1271,7 @@ export async function bundle(
     platform: "node",
     target: "node14",
     external: ["aws-sdk", "aws-cdk-lib", "esbuild"],
-    sourcemap: sourceMap === false ? undefined : "inline",
+    sourcemap: sourceMap ? "inline" : undefined,
   });
 
   // a bundled output will be one file

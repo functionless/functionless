@@ -1,0 +1,42 @@
+---
+sidebar_position: 3
+---
+
+import { Screenshot } from "../../src/components/screenshot";
+
+# Deploy Project
+
+Let's deploy our stack and verify everything behaves as expected:
+
+```bash
+npm run deploy
+```
+
+After the stack is synthesized and the assets are bundled, you should see a prompt to confirm IAM changes:
+
+import iamReview from "./assets/iam-review.png";
+
+<Screenshot src={iamReview} />
+
+:::caution
+
+If you don't see a prompt like the one above, please review the [setup guide](./setup) to make sure your environment is properly configured.
+
+:::
+
+It's good practice to review these changes to ensure we are only granting the expected permissions.
+In this case we can see we are granting:
+
+- `lambda` service principal permission to `sts:AssumeRole` against the `SayFunction` role.
+- `states` service principal permission to `sts:AssumeRole` against the `Workflow` role.
+- `Workflow` role permission to `lambda:InvokeFunction` against `SayFunction.Arn`.
+
+These values match what we would expect, so we can type `y <enter>` to continue with deployment.
+
+After the deployment completes, you should see an output similar to the one below:
+
+import deploymentConfirmation from "./assets/deployment-confirmation.png";
+
+<Screenshot src={deploymentConfirmation} />
+
+Before we wrap up, let's [clean up our stack](./clean-up).
