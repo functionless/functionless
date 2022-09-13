@@ -870,8 +870,8 @@ export function serializeClosure(
         `const ${methodName} = `,
         ...(node.isAsync ? ["async"] : []),
         "function ",
-        ...(node.isAsterisk ? ["*"] : []),
         ...(node.name ? [toSourceNode(node.name, illegalNames)] : []),
+        ...(node.isAsterisk ? ["*"] : []),
         "(",
         ...parametersToSourceNode(node.parameters, illegalNames),
         ")",
@@ -1136,8 +1136,8 @@ export function serializeClosure(
     } else if (isMethodDecl(node)) {
       return createSourceNode(node, [
         ...(node.isAsync ? [" async "] : []),
-        toSourceNode(node.name, illegalNames),
         ...(node.isAsterisk ? ["*"] : []),
+        toSourceNode(node.name, illegalNames),
         "(",
         ...parametersToSourceNode(node.parameters, illegalNames),
         ")",
@@ -1316,7 +1316,7 @@ export function serializeClosure(
       return createSourceNode(node, [
         `catch`,
         ...(node.variableDecl
-          ? [toSourceNode(node.variableDecl, illegalNames)]
+          ? ["(", toSourceNode(node.variableDecl, illegalNames), ")"]
           : []),
         toSourceNode(node.block, illegalNames),
       ]);
@@ -1385,7 +1385,7 @@ export function serializeClosure(
         toSourceNode(node.expr, illegalNames),
       ]);
     } else if (isDebuggerStmt(node)) {
-      return createSourceNode(node, "");
+      return createSourceNode(node, "debugger;");
     } else if (isEmptyStmt(node)) {
       return createSourceNode(node, ";");
     } else if (isReturnStmt(node)) {

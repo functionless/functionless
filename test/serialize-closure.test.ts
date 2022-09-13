@@ -14,7 +14,7 @@ import {
 } from "../src/serialize-closure";
 
 // set to false to inspect generated js files in .test/
-const cleanup = false;
+const cleanup = true;
 
 const tmpDir = path.join(__dirname, ".test");
 beforeAll(async () => {
@@ -722,9 +722,25 @@ test("serialize a class method calling super", async () => {
   expect(closure()).toEqual("hello world!");
 });
 
+test("serialize a this reference in an object literal", async () => {
+  const obj = {
+    prop: "prop",
+    get() {
+      return this.prop;
+    },
+  };
+
+  const closure = await expectClosure(() => obj.get());
+
+  expect(closure()).toEqual("prop");
+});
+
 test("broad spectrum syntax test", async () => {
-  const closure = await expectClosure(() => {
+  const closure = await expectClosure(async () => {
     const arrowExpr = (a: string, ...b: string[]) => [a, ...b];
+    const arrowBlockExpr = (a: string, ...b: string[]) => {
+      return [a, ...b];
+    };
     function funcDecl(a: string, ...b: string[]) {
       return [a, ...b];
     }
@@ -776,12 +792,176 @@ test("broad spectrum syntax test", async () => {
       public method() {
         return `${this.prop} ${this.val} ${Foo.VAL}`;
       }
+
+      public async asyncMethod() {
+        const result = await new Promise<string>((resolve) =>
+          resolve("asyncResult")
+        );
+        return result;
+      }
+
+      public *generatorMethod(): any {
+        yield "yielded item";
+        yield* generatorFuncDecl();
+        yield* generatorFuncExpr();
+        yield* anonGeneratorFuncExpr();
+      }
+    }
+
+    function* generatorFuncDecl() {
+      yield "yielded in function decl";
+    }
+
+    const generatorFuncExpr = function* generatorFuncExpr() {
+      yield "yielded in function expr";
+    };
+
+    const anonGeneratorFuncExpr = function* () {
+      yield "yielded in anonymous function expr";
+    };
+
+    class Bar extends Foo {
+      constructor() {
+        super("bar prop", "bar val");
+      }
+
+      public method() {
+        return `bar ${super.method()}`;
+      }
     }
 
     const foo = new Foo("foo prop", "foo val");
+    const bar = new Bar();
+    const generator = foo.generatorMethod();
+
+    function ifTest(condition: 0 | 1 | 2) {
+      if (condition === 0) {
+        return "if";
+      } else if (condition === 1) {
+        return "else if";
+      } else {
+        return "else";
+      }
+    }
+
+    const whileStmts = [];
+    while (whileStmts.length === 0) {
+      whileStmts.push("while block");
+    }
+
+    while (whileStmts.length === 1) whileStmts.push("while stmt");
+
+    const doWhileStmts = [];
+    do {
+      doWhileStmts.push("do while block");
+    } while (doWhileStmts.length === 0);
+
+    do doWhileStmts.push("do while stmt");
+    while (doWhileStmts.length === 1);
+
+    const whileTrue = [];
+    while (true) {
+      whileTrue.push(`while true ${whileTrue.length}`);
+      if (whileTrue.length === 1) {
+        continue;
+      }
+      break;
+    }
+
+    const tryCatchErr = [];
+    try {
+      tryCatchErr.push("try");
+      throw new Error("catch");
+    } catch (err: any) {
+      tryCatchErr.push(err.message);
+    } finally {
+      tryCatchErr.push("finally");
+    }
+
+    const tryCatch = [];
+    try {
+      tryCatch.push("try 2");
+      throw new Error("");
+    } catch {
+      tryCatch.push("catch 2");
+    } finally {
+      tryCatch.push("finally 2");
+    }
+
+    const tryNoFinally = [];
+    try {
+      tryNoFinally.push("try 3");
+      throw new Error("");
+    } catch {
+      tryNoFinally.push("catch 3");
+    }
+
+    const tryNoCatch: string[] = [];
+    try {
+      (() => {
+        try {
+          tryNoCatch.push("try 4");
+          throw new Error("");
+        } finally {
+          tryNoCatch.push("finally 4");
+        }
+      })();
+    } catch {}
+
+    const deleteObj: any = {
+      notDeleted: "value",
+      prop: "prop",
+      "spaces prop": "spaces prop",
+      [Symbol.for("prop")]: "symbol prop",
+    };
+    delete deleteObj.prop;
+    delete deleteObj["spaces prop"];
+    delete deleteObj[Symbol.for("prop")];
+
+    const regex = /a.*/g;
+
+    let unicode;
+    {
+      var HECOMḚṮH = 42;
+      const _ = "___";
+      const $ = "$$";
+      const ƒ = {
+        π: Math.PI,
+        ø: [],
+        Ø: NaN,
+        e: 2.7182818284590452353602874713527,
+        root2: 2.7182818284590452353602874713527,
+        α: 2.5029,
+        δ: 4.6692,
+        ζ: 1.2020569,
+        φ: 1.61803398874,
+        γ: 1.30357,
+        K: 2.685452001,
+        oo: 9999999999e999 * 9999999999e9999,
+        A: 1.2824271291,
+        C10: 0.12345678910111213141516171819202122232425252728293031323334353637,
+        c: 299792458,
+      };
+      unicode = { ƒ, out: `${HECOMḚṮH}${_}${$}` };
+    }
+
+    var homecometh = { H̹̙̦̮͉̩̗̗ͧ̇̏̊̾Eͨ͆͒̆ͮ̃͏̷̮̣̫̤̣Cͯ̂͐͏̨̛͔̦̟͈̻O̜͎͍͙͚̬̝̣̽ͮ͐͗̀ͤ̍̀͢M̴̡̲̭͍͇̼̟̯̦̉̒͠Ḛ̛̙̞̪̗ͥͤͩ̾͑̔͐ͅṮ̴̷̷̗̼͍̿̿̓̽͐H̙̙̔̄͜: 42 };
+
+    const parens = (2 + 3) * 2;
+
+    function tag(strings: TemplateStringsArray, ...args: number[]) {
+      // hi is tag function
+      return `tag ${strings.map((str, i) => `${str} ${args[i]}`).join("|")}`;
+    }
+
+    const noSubstitutionTemplateLiteral = `hello world`;
+
+    // eslint-disable-next-line no-debugger
+    debugger;
 
     return [
       ...arrowExpr("a", "b", "c"),
+      ...arrowBlockExpr("A", "B", "C"),
       ...funcDecl("d", "e", "f"),
       ...funcExpr("g", "h", "i"),
       ...anonFuncExpr("j", "k", "l"),
@@ -802,13 +982,41 @@ test("broad spectrum syntax test", async () => {
         return "baz";
       })(),
       foo.method(),
+      bar.method(),
+      await foo.asyncMethod(),
+      generator.next().value,
+      generator.next().value,
+      generator.next().value,
+      generator.next().value,
+      ifTest(0),
+      ifTest(1),
+      ifTest(2),
+      ...whileStmts,
+      ...doWhileStmts,
+      ...whileTrue,
+      ...tryCatchErr,
+      ...tryCatch,
+      ...tryNoFinally,
+      ...tryNoCatch,
+      deleteObj,
+      regex.test("abc"),
+      unicode,
+      homecometh,
+      parens,
+      tag`${1} + ${2} + ${3}`,
+      noSubstitutionTemplateLiteral,
+      typeof "hello world",
+      void 0,
     ];
   });
 
-  expect(closure()).toEqual([
+  expect(await closure()).toEqual([
     "a",
     "b",
     "c",
+    "A",
+    "B",
+    "C",
     "d",
     "e",
     "f",
@@ -829,5 +1037,60 @@ test("broad spectrum syntax test", async () => {
     "bar",
     "baz",
     "foo prop foo val VAL 1 2",
+    "bar bar prop bar val VAL 1 2",
+    "asyncResult",
+    "yielded item",
+    "yielded in function decl",
+    "yielded in function expr",
+    "yielded in anonymous function expr",
+    "if",
+    "else if",
+    "else",
+    "while block",
+    "while stmt",
+    "do while block",
+    "do while stmt",
+    "while true 0",
+    "while true 1",
+    "try",
+    "catch",
+    "finally",
+    "try 2",
+    "catch 2",
+    "finally 2",
+    "try 3",
+    "catch 3",
+    "try 4",
+    "finally 4",
+    {
+      notDeleted: "value",
+    },
+    true,
+    {
+      out: "42___$$",
+      ƒ: {
+        A: 1.2824271291,
+        C10: 0.12345678910111213,
+        K: 2.685452001,
+        c: 299792458,
+        e: 2.718281828459045,
+        oo: Infinity,
+        root2: 2.718281828459045,
+        Ø: NaN,
+        ø: [],
+        α: 2.5029,
+        γ: 1.30357,
+        δ: 4.6692,
+        ζ: 1.2020569,
+        π: 3.141592653589793,
+        φ: 1.61803398874,
+      },
+    },
+    { H̹̙̦̮͉̩̗̗ͧ̇̏̊̾Eͨ͆͒̆ͮ̃͏̷̮̣̫̤̣Cͯ̂͐͏̨̛͔̦̟͈̻O̜͎͍͙͚̬̝̣̽ͮ͐͗̀ͤ̍̀͢M̴̡̲̭͍͇̼̟̯̦̉̒͠Ḛ̛̙̞̪̗ͥͤͩ̾͑̔͐ͅṮ̴̷̷̗̼͍̿̿̓̽͐H̙̙̔̄͜: 42 },
+    10,
+    "tag  1| +  2| +  3| undefined",
+    "hello world",
+    "string",
+    void 0,
   ]);
 });
