@@ -2,7 +2,7 @@ import * as fs from "fs";
 import { join } from "path";
 import { typescript, TextFile, Project } from "projen";
 import { GithubCredentials } from "projen/lib/github";
-import { JobPermission } from "projen/lib/github/workflows-model";
+import { Job, JobPermission } from "projen/lib/github/workflows-model";
 
 /**
  * Adds githooks into the .git/hooks folder during projen synth.
@@ -205,12 +205,13 @@ closeWorkflow?.on({
     types: ["closed"],
   },
 });
-closeWorkflow?.addJob("cleanUp", {
+const cleanJob: Job = {
   permissions: { contents: JobPermission.WRITE, idToken: JobPermission.WRITE },
   runsOn: ["ubuntu-latest"],
   env: {
     CI: "true",
   },
+  needs: ["build"],
   steps: [
     assumeRoleStep,
     {
@@ -229,7 +230,10 @@ closeWorkflow?.addJob("cleanUp", {
       },
     },
   ],
-});
+};
+closeWorkflow?.addJob("cleanUp", cleanJob);
+
+project.buildWorkflow?.addPostBuildJob("testClean", cleanJob);
 
 project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
