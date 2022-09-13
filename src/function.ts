@@ -716,7 +716,7 @@ export class Function<
         try {
           await callbackLambdaCode.generate(
             nativeIntegrationsPrewarm,
-            props?.serializer ?? SerializerImpl.STABLE_DEBUGGER
+            props?.serializer ?? SerializerImpl.EXPERIMENTAL_SWC
           );
         } catch (e) {
           if (e instanceof SynthError) {
@@ -853,11 +853,7 @@ export class CallbackLambdaCode extends aws_lambda.Code {
       serializerImpl,
       this.props
     );
-    const bundled =
-      serializerImpl === SerializerImpl.STABLE_DEBUGGER
-        ? (await bundle(serialized)).contents
-        : // the SWC implementation runs es-build automatically
-          serialized;
+    const bundled = (await bundle(serialized)).contents;
 
     const asset = aws_lambda.Code.fromAsset("", {
       assetHashType: AssetHashType.OUTPUT,
@@ -1203,7 +1199,6 @@ export async function serialize(
             isSecret(integ))
         ) {
           const { resource, ...rest } = integ;
-
           return rest;
         }
         return integ;

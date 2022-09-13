@@ -107,7 +107,7 @@ export function callExpr<
   return createSourceNodeWithoutSpan(
     expr,
     "(",
-    ...args.flatMap((arg) => [arg, ","]),
+    ...args.flatMap((arg, i) => (i < args.length - 1 ? [arg, ","] : [arg])),
     ")"
   ) as E | A extends string ? string : SourceNodeOrString;
 }

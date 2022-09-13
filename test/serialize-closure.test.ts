@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-require-imports */
 import "jest";
 import fs from "fs";
 import path from "path";
@@ -589,6 +590,83 @@ test("avoid collision with a parameter with object binding nested in array bindi
   expect(closure([{ v1: 2 }])).toEqual(3);
 });
 
+test("avoid collision with a variable declaration in for-of", async () => {
+  const one = 1;
+  const closure = await expectClosure(() => {
+    let _v: number = 0;
+    for (const v1 of [2]) {
+      _v = v1;
+    }
+    // capture the v0 free variable
+    let free = one;
+    return _v + free;
+  });
+
+  expect(closure()).toEqual(3);
+});
+
+test("avoid collision with a variable declaration object binding in for-of", async () => {
+  const one = 1;
+  const closure = await expectClosure(() => {
+    let _v: number = 0;
+    for (const { v1 } of [{ v1: 2 }]) {
+      _v = v1;
+    }
+    // capture the v0 free variable
+    let free = one;
+    return _v + free;
+  });
+
+  expect(closure()).toEqual(3);
+});
+
+test("avoid collision with a variable declaration object binding in for-of", async () => {
+  const one = 1;
+  const closure = await expectClosure(() => {
+    let _v: number = 0;
+    for (const { v1 } of [{ v1: 2 }]) {
+      _v = v1;
+    }
+    // capture the v0 free variable
+    let free = one;
+    return _v + free;
+  });
+
+  expect(closure()).toEqual(3);
+});
+
+test("avoid collision with a variable declaration array binding in for-of", async () => {
+  const one = 1;
+  const closure = await expectClosure(() => {
+    let _v: number = 0;
+    for (const [v1] of [[2]]) {
+      _v = v1!;
+    }
+    // capture the v0 free variable
+    let free = one;
+    return _v + free;
+  });
+
+  expect(closure()).toEqual(3);
+});
+
+test("avoid collision with a catch variable", async () => {
+  const one = 1;
+  const closure = await expectClosure(() => {
+    let _v: number = 0;
+    try {
+      throw 2;
+    } catch (v1) {
+      _v = v1 as number;
+    }
+    // capture the v0 free variable
+    let free = one;
+    return _v + free;
+  });
+
+  expect(closure()).toEqual(3);
+});
+
 test("instantiating the AWS SDK", async () => {
   const closure = await expectClosure(() => {
     const client = new AWS.DynamoDB();
@@ -606,6 +684,7 @@ test.skip("instantiating the AWS SDK without esbuild", async () => {
       return client.config.endpoint;
     },
     {
+      // @ts-ignore
       requireModules: false,
     }
   );
@@ -630,6 +709,7 @@ test.skip("instantiating the AWS SDK v3 without esbuild", async () => {
       return client.config.serviceId;
     },
     {
+      // @ts-ignore
       requireModules: false,
     }
   );
@@ -1093,4 +1173,8 @@ test("broad spectrum syntax test", async () => {
     "string",
     void 0,
   ]);
+});
+
+test("should serialize the value pointed to by a PropAccessExpr", async () => {
+  //
 });

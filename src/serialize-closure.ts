@@ -1,8 +1,8 @@
 import fs from "fs";
 import path from "path";
 import util from "util";
+import { Token } from "aws-cdk-lib";
 import { CodeWithSourceMap, SourceNode } from "source-map";
-import ts from "typescript";
 
 import { assertNever } from "./assert";
 import {
@@ -127,20 +127,12 @@ import {
   createSourceNode,
   createSourceNodeWithoutSpan,
 } from "./serialize-util";
-import { AnyClass, AnyFunction } from "./util";
+import { AnyClass, AnyFunction, evalToConstant } from "./util";
 import { forEachChild } from "./visit";
 
 export interface SerializeClosureProps {
   /**
-   * Whether to use require statements when a value is detected to be imported from another module.
-   *
-   * @default true
-   */
-  requireModules?: boolean;
-
-  /**
-   * A function to prevent serialization of certain objects captured during the serialization.  Primarily used to
-   * prevent potential cycles.
+   * A function to prevent serialization of certain values captured during the serialization.
    */
   serialize?: (o: any) => boolean | any;
   /**
@@ -177,6 +169,9 @@ export function serializeCodeWithSourceMap(code: CodeWithSourceMap) {
   return `${code.code}\n//# sourceMappingURL=data:application/json;base64,${map}`;
 }
 
+// cache a map of directory -> module id
+const moduleIdCache = new Map<string, string | null>();
+
 /**
  * Serialize a closure to a bundle that can be remotely executed.
  * @param func
@@ -194,14 +189,18 @@ export function serializeClosure(
     module: NodeModule;
   }
 
+  // walk the entire require.cache and store a map of value
+  //   -> the module that exported it
+  //   -> the name of the exported value
+  //   -> the path of the module
   const requireCache = new Map<any, RequiredModule>(
-    Object.entries(require.cache).flatMap(([path, module]) => {
+    Object.entries(require.cache).flatMap(([_path, module]) => {
       try {
         return [
           [
             module?.exports as any,
             <RequiredModule>{
-              path: module?.path,
+              path: module?.id,
               exportName: undefined,
               exportValue: module?.exports,
               module,
@@ -210,19 +209,15 @@ export function serializeClosure(
           ...(Object.entries(
             Object.getOwnPropertyDescriptors(module?.exports ?? {})
           ).map(([exportName, exportValue]) => {
-            try {
-              return [
-                exportValue.value,
-                <RequiredModule>{
-                  path,
-                  exportName,
-                  exportValue: exportValue.value,
-                  module: module,
-                },
-              ];
-            } catch (err) {
-              throw err;
-            }
+            return [
+              exportValue.value,
+              <RequiredModule>{
+                path: module?.id,
+                exportName,
+                exportValue: exportValue.value,
+                module: module,
+              },
+            ];
           }) as [any, RequiredModule][]),
         ];
       } catch (err) {
@@ -231,14 +226,17 @@ export function serializeClosure(
     })
   );
 
-  let i = 0;
-  const uniqueName = (illegalNames?: Set<string>) => {
-    let name;
-    do {
-      name = `v${i++}`;
-    } while (illegalNames?.has(name));
-    return name;
-  };
+  const uniqueName = (() => {
+    let i = 0;
+
+    return (illegalNames?: Set<string>) => {
+      let name;
+      do {
+        name = `v${i++}`;
+      } while (illegalNames?.has(name));
+      return name;
+    };
+  })();
 
   const statements: (SourceNode | string)[] = [];
 
@@ -301,28 +299,32 @@ export function serializeClosure(
     );
   }
 
-  function getModuleId(jsFile: string): string {
-    return findModuleName(path.dirname(jsFile));
-    function findModuleName(dir: string): string {
-      if (path.resolve(dir) === path.resolve(process.cwd())) {
-        // reached the root workspace, import the absolute file path of the jsFile
-        return jsFile;
-      }
-      const pkgJsonPath = path.join(dir, "package.json");
-      if (fs.existsSync(pkgJsonPath)) {
-        const pkgJson = JSON.parse(
-          fs.readFileSync(pkgJsonPath).toString("utf-8")
-        );
-        if (typeof pkgJson.name === "string") {
-          return pkgJson.name;
-        }
-      }
-      return findModuleName(path.join(dir, ".."));
+  function serialize(value: any): string {
+    let serializedVal = valueIds.get(value);
+    if (serializedVal === undefined) {
+      serializedVal = serializeHook(value);
+      valueIds.set(value, serializedVal);
     }
+    return serializedVal;
   }
 
-  function serialize(value: any): string {
-    return valueIds.get(value) ?? serializeValue(value);
+  function serializeHook(value: any) {
+    if (options?.serialize) {
+      const result = options.serialize(value);
+      if (result === false) {
+        // do not serialize - emit `undefined`.
+        return undefinedExpr();
+      } else if (result === true) {
+        // `true` means serialize the original value
+        return serializeValue(value);
+      } else {
+        // otherwise, serialize the modified value
+        return serializeValue(result);
+      }
+    } else {
+      // there is no serialize hook, so just serialize the original value
+      return serializeValue(value);
+    }
   }
 
   function serializeValue(value: any): string {
@@ -357,16 +359,6 @@ export function serializeClosure(
         }
       });
     } else if (typeof value === "string") {
-      if (options?.serialize) {
-        const result = options.serialize(value);
-        if (result === false) {
-          return undefinedExpr();
-        } else if (result === true) {
-          return stringExpr(value);
-        } else {
-          return serialize(result);
-        }
-      }
       return stringExpr(value);
     } else if (value instanceof RegExp) {
       return singleton(value, () => regExpr(value));
@@ -411,32 +403,10 @@ export function serializeClosure(
         return emitVarDecl("const", uniqueName(), Globals.get(value)!());
       }
 
-      if (options?.serialize) {
-        const result = options.serialize(value);
-        if (!result) {
-          // do not serialize
-          return emitVarDecl("const", uniqueName(), undefinedExpr());
-        } else if (value === true || typeof result === "object") {
-          value = result;
-        } else {
-          return serialize(result);
-        }
-      }
-
       const mod = requireCache.get(value);
 
-      if (mod && options?.requireModules !== false) {
+      if (mod) {
         return serializeModule(value, mod);
-      }
-
-      if (
-        Object.hasOwn(value, "__defineGetter__") &&
-        value !== Object.prototype
-      ) {
-        // heuristic to detect an Object that looks like the Object.prototype but isn't
-        // we replace it with the actual Object.prototype since we don't know what to do
-        // with its native functions.
-        return serialize(Object.prototype);
       }
 
       if (
@@ -476,16 +446,6 @@ export function serializeClosure(
 
       return obj;
     } else if (typeof value === "function") {
-      if (options?.serialize) {
-        const result = options.serialize(value);
-        if (result === false) {
-          // do not serialize
-          return undefinedExpr();
-        } else if (result !== true) {
-          value = result;
-        }
-      }
-
       if (Globals.has(value)) {
         return singleton(value, () =>
           emitVarDecl("const", uniqueName(), Globals.get(value)!())
@@ -496,50 +456,89 @@ export function serializeClosure(
 
       // if this is a reference to an exported value from a module
       // and we're using esbuild, then emit a require
-      if (exportedValue && options?.requireModules !== false) {
+      if (exportedValue) {
         return serializeModule(value, exportedValue);
       }
 
       // if this is a bound closure, try and reconstruct it from its components
-      if (value.name.startsWith("bound ")) {
-        const boundFunction = serializeBoundFunction(value);
-        if (boundFunction) {
-          return boundFunction;
-        }
+      const boundFunction = serializeBoundFunction(value);
+      if (boundFunction) {
+        return boundFunction;
       }
 
       const ast = reflect(value);
 
       if (ast === undefined) {
-        if (exportedValue) {
-          return serializeModule(value, exportedValue);
-        } else {
-          return serializeUnknownFunction(value);
-        }
+        // this function does not have its AST available, so apply some heuristics
+        // to serialize it or fail
+        return serializeUnknownFunction(value);
       } else if (isFunctionLike(ast)) {
         return serializeFunction(value, ast);
       } else if (isClassDecl(ast) || isClassExpr(ast)) {
         return serializeClass(value, ast);
       } else if (isMethodDecl(ast)) {
+        /**
+         * This is a reference to a method - pull it out as an individual function
+         *
+         * This occurs in two cases:
+         * 1. a reference to a method on an object
+         * ```ts
+         * class Foo {
+         *   method() { }
+         * }
+         *
+         * const method = Foo.prototype.method;
+         *
+         * serialize(() => {
+         *   // serialize method as a function
+         *   method();
+         * })
+         * ```
+         * 2. a reference to a method on an object
+         *
+         * ```ts
+         * const o = {
+         *   prop: "value";
+         *   method() {
+         *     return this.prop;
+         *   }
+         * }
+         * ```
+         */
         return serializeMethodAsFunction(ast);
       } else if (isErr(ast)) {
         throw ast.error;
       }
-      throw new Error("not implemented");
+      console.error("cannot serialize node:", ast);
+      throw new Error(`cannot serialize node: ${ast.nodeKind}`);
     }
 
-    // eslint-disable-next-line no-debugger
-    throw new Error("not implemented");
+    console.error("cannot serialize value:", value);
+    throw new Error(`cannot serialize value: ${value}`);
   }
 
+  /**
+   * Require a module and import the exported value.
+   *
+   * ```ts
+   * const mod = require("module-id").<export-name>
+   * ```
+   *
+   * CAVEAT: only importing values exported by the module's index.
+   *
+   * ```ts
+   * // will map to require("aws-sdk").DynamoDB;
+   * const DynamoDB = require("aws-sdk/clients/dynamodb");
+   * ```
+   */
   function serializeModule(value: unknown, mod: RequiredModule) {
     const exports = mod.module?.exports;
     if (exports === undefined) {
       throw new Error(`undefined exports`);
     }
-    const requireMod = singleton(exports, () =>
-      emitRequire(getModuleId(mod.path))
-    );
+    const requireMod = singleton(exports, () => {
+      return emitRequire(getModuleId(mod.path));
+    });
     return singleton(value, () =>
       emitVarDecl(
         "const",
@@ -547,6 +546,42 @@ export function serializeClosure(
         mod.exportName ? propAccessExpr(requireMod, mod.exportName) : requireMod
       )
     );
+  }
+
+  /**
+   * Find the module-id of a jsFile by recursively walking back until
+   * finding the `package.json`.
+   *
+   * If the `package.json` isn't found, then the direct path of the file is returned.
+   */
+  function getModuleId(jsFile: string): string {
+    return findModuleName(path.dirname(jsFile)) ?? jsFile;
+
+    function findModuleName(dir: string): string | null {
+      let moduleId = moduleIdCache.get(dir);
+      if (moduleId !== undefined) {
+        return moduleId;
+      }
+      moduleIdCache.set(dir, (moduleId = _findModuleName(dir)));
+      return moduleId;
+    }
+
+    function _findModuleName(dir: string): string | null {
+      if (path.resolve(dir) === path.resolve(process.cwd())) {
+        // reached the root workspace - could not resolve the module ID
+        return null;
+      }
+      const pkgJsonPath = path.join(dir, "package.json");
+      if (fs.existsSync(pkgJsonPath)) {
+        const pkgJson = JSON.parse(
+          fs.readFileSync(pkgJsonPath).toString("utf-8")
+        );
+        if (typeof pkgJson.name === "string") {
+          return pkgJson.name;
+        }
+      }
+      return findModuleName(path.join(dir, ".."));
+    }
   }
 
   function serializeFunction(value: AnyFunction, ast: FunctionLike) {
@@ -620,13 +655,8 @@ export function serializeClosure(
       return idExpr("require");
     } else if (value.name === "Object") {
       return serialize(Object);
-    } else if (
-      value.toString() === `function ${value.name}() { [native code] }`
-    ) {
-      // eslint-disable-next-line no-debugger
     }
 
-    // eslint-disable-next-line no-debugger
     throw new Error(
       `cannot serialize closures that were not compiled with Functionless unless they are exported by a module: ${func}`
     );
@@ -856,7 +886,7 @@ export function serializeClosure(
   }
 
   /**
-   * Serialize a {@link MethodDecl} as a {@link ts.FunctionExpression} so that it can be individually referenced.
+   * Serialize a {@link MethodDecl} as a Function so that it can be individually referenced.
    */
   function serializeMethodAsFunction(node: MethodDecl): string {
     // find all names used as identifiers in the AST
@@ -882,6 +912,19 @@ export function serializeClosure(
     return methodName;
   }
 
+  /**
+   * Serialize a {@link FunctionlessNode} to a {@link SourceNode} representing the JavaScript.
+   *
+   * The {@link SourceNode} contains strings and other nested {@link SourceNode}s. Together,
+   * they form an entire JS file. Whenever a {@link FunctionlessNode} is mapped to a {@link SourceNode},
+   * the {@link FunctionlessNode.span} and {@link FunctionlessNode.getFileName} are included
+   * in the {@link SourceNode} so that a source map can be generated mapping the serialized
+   * JS back to the source code that created it.
+   *
+   * @param node
+   * @param illegalNames names used within the {@link node} that should not be used
+   *                     as free variable names.
+   */
   function toSourceNode(
     node: FunctionlessNode,
     illegalNames: Set<string>
@@ -957,12 +1000,26 @@ export function serializeClosure(
     } else if (isPrivateIdentifier(node)) {
       return createSourceNode(node, [node.name]);
     } else if (isPropAccessExpr(node)) {
+      const val = evalToConstant(node);
+      if (val?.constant) {
+        if (Token.isUnresolved(val.constant)) {
+          // if this is a reference to a Token, pluck it
+          return createSourceNode(node, [serialize(val.constant)]);
+        }
+      }
       return createSourceNode(node, [
         toSourceNode(node.expr, illegalNames),
         ...(node.isOptional ? ["?."] : ["."]),
         toSourceNode(node.name, illegalNames),
       ]);
     } else if (isElementAccessExpr(node)) {
+      const val = evalToConstant(node);
+      if (val?.constant) {
+        if (Token.isUnresolved(val.constant)) {
+          // if this is a reference to a Token, pluck it
+          return createSourceNode(node, [serialize(val.constant)]);
+        }
+      }
       return createSourceNode(node, [
         toSourceNode(node.expr, illegalNames),
         ...(node.isOptional ? ["?."] : []),
