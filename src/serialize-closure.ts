@@ -903,7 +903,7 @@ export function serializeClosure(
         ...(node.name ? [toSourceNode(node.name, illegalNames)] : []),
         ...(node.isAsterisk ? ["*"] : []),
         "(",
-        ...parametersToSourceNode(node.parameters, illegalNames),
+        ...commaSeparatedListSourceNode(node.parameters, illegalNames),
         ")",
         toSourceNode(node.body, illegalNames),
       ])
@@ -959,7 +959,7 @@ export function serializeClosure(
       return createSourceNode(node, [
         ...(node.isAsync ? ["async"] : []),
         "(",
-        ...parametersToSourceNode(node.parameters, illegalNames),
+        ...commaSeparatedListSourceNode(node.parameters, illegalNames),
         ") => ",
         toSourceNode(node.body, illegalNames),
       ]);
@@ -970,7 +970,7 @@ export function serializeClosure(
         ...(node.isAsterisk ? ["*"] : []),
         ...(node.name ? [node.name] : []),
         "(",
-        ...parametersToSourceNode(node.parameters, illegalNames),
+        ...commaSeparatedListSourceNode(node.parameters, illegalNames),
         ")",
         toSourceNode(node.body, illegalNames),
       ]);
@@ -1032,10 +1032,7 @@ export function serializeClosure(
         toSourceNode(node.expr, illegalNames),
         ...(node.isOptional ? ["?."] : []),
         "(",
-        ...node.args.flatMap((arg) => [
-          toSourceNode(arg.expr, illegalNames),
-          ",",
-        ]),
+        ...commaSeparatedListSourceNode(node.args, illegalNames),
         ")",
       ]);
     } else if (isNewExpr(node)) {
@@ -1077,10 +1074,7 @@ export function serializeClosure(
     } else if (isObjectLiteralExpr(node)) {
       return createSourceNode(node, [
         "{",
-        ...node.properties.flatMap((prop) => [
-          toSourceNode(prop, illegalNames),
-          ",",
-        ]),
+        ...commaSeparatedListSourceNode(node.properties, illegalNames),
         "}",
       ]);
     } else if (isPropAssignExpr(node)) {
@@ -1138,19 +1132,13 @@ export function serializeClosure(
     } else if (isObjectBinding(node)) {
       return createSourceNode(node, [
         "{",
-        ...node.bindings.flatMap((binding) => [
-          toSourceNode(binding, illegalNames),
-          ",",
-        ]),
+        ...commaSeparatedListSourceNode(node.bindings, illegalNames),
         "}",
       ]);
     } else if (isArrayBinding(node)) {
       return createSourceNode(node, [
         "[",
-        ...node.bindings.flatMap((binding) => [
-          toSourceNode(binding, illegalNames),
-          ",",
-        ]),
+        ...commaSeparatedListSourceNode(node.bindings, illegalNames),
         "]",
       ]);
     } else if (isClassDecl(node) || isClassExpr(node)) {
@@ -1196,7 +1184,7 @@ export function serializeClosure(
         ...(node.isAsterisk ? ["*"] : []),
         toSourceNode(node.name, illegalNames),
         "(",
-        ...parametersToSourceNode(node.parameters, illegalNames),
+        ...commaSeparatedListSourceNode(node.parameters, illegalNames),
         ")",
         toSourceNode(node.body, illegalNames),
       ]);
@@ -1468,13 +1456,13 @@ export function serializeClosure(
     }
   }
 
-  function parametersToSourceNode(
-    parameters: ParameterDecl[],
+  function commaSeparatedListSourceNode(
+    nodes: FunctionlessNode[],
     illegalNames: Set<string>
   ): (string | SourceNode)[] {
-    return parameters.flatMap((param, i) => [
-      toSourceNode(param, illegalNames),
-      ...(i < parameters.length - 1 ? [","] : []),
+    return nodes.flatMap((node, i) => [
+      toSourceNode(node, illegalNames),
+      ...(i < nodes.length - 1 ? [","] : []),
     ]);
   }
 }

@@ -1036,6 +1036,9 @@ test("broad spectrum syntax test", async () => {
 
     const noSubstitutionTemplateLiteral = `hello world`;
 
+    const { head, ...rest } = { head: "head", rest1: "rest1", rest2: "rest2" };
+    const [head2, ...rest2] = ["head array", "rest array1", "rest array2"];
+
     // eslint-disable-next-line no-debugger
     debugger;
 
@@ -1087,6 +1090,9 @@ test("broad spectrum syntax test", async () => {
       noSubstitutionTemplateLiteral,
       typeof "hello world",
       void 0,
+      rest,
+      head2,
+      rest2,
     ];
   });
 
@@ -1172,9 +1178,11 @@ test("broad spectrum syntax test", async () => {
     "hello world",
     "string",
     void 0,
+    {
+      rest1: "rest1",
+      rest2: "rest2",
+    },
+    "head array",
+    ["rest array1", "rest array2"],
   ]);
-});
-
-test("should serialize the value pointed to by a PropAccessExpr", async () => {
-  //
 });

@@ -50,8 +50,6 @@ export function objectExpr(obj: Record<string, SourceNodeOrString>) {
   );
 }
 
-const propNameRegex = /^[_a-zA-Z][_a-zA-Z0-9]*$/g;
-
 export type SourceNodeOrString = string | SourceNode;
 
 export function createSourceNodeWithoutSpan<S extends SourceNodeOrString[]>(
@@ -78,6 +76,8 @@ export function createSourceNode(
   );
 }
 
+const propNameRegex = /^[_a-zA-Z][_a-zA-Z0-9]*$/g;
+
 export function propAccessExpr<S extends SourceNodeOrString>(
   expr: S,
   name: string
@@ -87,9 +87,12 @@ export function propAccessExpr<S extends SourceNodeOrString>(
       ? string
       : SourceNodeOrString;
   } else {
-    return createSourceNodeWithoutSpan(expr, "[", name, "]") as S extends string
-      ? string
-      : SourceNodeOrString;
+    return createSourceNodeWithoutSpan(
+      expr,
+      "[",
+      stringExpr(name),
+      "]"
+    ) as S extends string ? string : SourceNodeOrString;
   }
 }
 
