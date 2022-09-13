@@ -114,7 +114,8 @@
       ]
     },
     "testMatch": [
-      "**/secret.localstack.test.ts"
+      "<rootDir>/src/**/__tests__/**/*.ts?(x)",
+      "<rootDir>/(test|src)/**/*(*.)@(spec|test).ts?(x)"
     ],
     "clearMocks": true,
     "coverageReporters": [

@@ -27,6 +27,7 @@ export interface RuntimeTestExecutionContext {
   selfDestructProps: SelfDestructorProps;
   stackRetentionPolicy: "RETAIN" | "DELETE" | "SELF_DESTRUCT";
   deployTarget: "AWS" | "LOCALSTACK";
+  cleanUpStack: boolean;
 }
 
 export const STACK_TAG_KEY = "functionless-test-stack";
@@ -51,6 +52,7 @@ export const runtimeTestExecutionContext: RuntimeTestExecutionContext = {
       : "SELF_DESTRUCT")) as RuntimeTestExecutionContext["stackRetentionPolicy"],
   // AWS | LOCALSTACK ; default: LOCALSTACK
   deployTarget: deploymentTarget as RuntimeTestExecutionContext["deployTarget"],
+  cleanUpStack: process.env.CLEAN_UP_STACK === "1" ? true : false,
 };
 
 export const clientConfig =

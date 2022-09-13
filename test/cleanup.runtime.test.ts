@@ -1,96 +1,95 @@
-// TODO add env variable to clean up
-
-// import { Role } from "aws-cdk-lib/aws-iam";
 import { FunctionUrlAuthType } from "aws-cdk-lib/aws-lambda";
 import { StringParameter } from "aws-cdk-lib/aws-ssm";
-// import { STS } from "aws-sdk";
 import { $AWS, $SFN, Function, StepFunction } from "../src";
 import {
-  // clientConfig,
   runtimeTestExecutionContext,
   runtimeTestSuite,
   STACK_TAG_KEY,
 } from "./runtime";
 
-// const sts = new STS(clientConfig);
+/**
+ * When cleanUpStack is enabled, deploys a small CDK/CFN stack which can delete all of the other test stacks in one go.
+ *
+ * Used by the Github Pull Request Closed CleanUp workflow to clean up all of the test stacks when a PR closes.
+ *
+ * SSM Parameter - stores reference to the function url to start the machine.
+ * Function Url (starter) - a open GET url which starts the step function.
+ * Step Function (deleter) - A step function which deletes all stacks deployed by this branch. (using the tagging api and CFN).
+ *
+ * Invoking the lambda, the lambda url, or the step function will execute the workflow.
+ */
+if (runtimeTestExecutionContext.cleanUpStack) {
+  runtimeTestSuite("cleanUp", (test, stack) => {
+    test(
+      "deleter",
+      async (scope) => {
+        const stackArnPrefix = stack.formatArn({
+          resource: "stack",
+          resourceName: "*",
+          service: "cloudformation",
+        });
 
-runtimeTestSuite("cleanUp", (test, stack) => {
-  test(
-    "deleter",
-    async (scope) => {
-      // step function which deletes all stacks
-      // lambda url to trigger
-      // set lambda url in ssm parameter
-      // grant access to ?? to call ssm and lambda url
-      // const stackPartition = new Function(
-      //   scope,
-      //   "stackPartition",
-      //   async (stackArns: string[]) => ({
-      //     cleanUpStack: stackArns.find((arn) => arn.includes("/cleanUp/")),
-      //     otherStacks: stackArns.filter((arn) => !arn.includes("/cleanUp/")),
-      //   })
-      // );
-
-      const stackArnPrefix = stack.formatArn({
-        resource: "stack",
-        resourceName: "*",
-        service: "cloudformation",
-      });
-
-      const deleterMachine = new StepFunction(scope, "deleter", async () => {
-        const stacksWithTag =
-          await $AWS.SDK.ResourceGroupsTaggingAPI.getResources(
-            {
-              TagFilters: [
-                {
-                  Key: STACK_TAG_KEY,
-                  Values: [runtimeTestExecutionContext.stackTag],
-                },
-              ],
-              ResourceTypeFilters: ["cloudformation:stack"],
-            },
-            {
-              iam: {
-                resources: ["*"],
+        // pulls all stacks from the current PR/Release/Deployment and deletes them
+        // uses the functionless-test-stack tag which matches the current stackTag (ex: github ref)
+        const deleterMachine = new StepFunction(scope, "deleter", async () => {
+          const stacksWithTag =
+            await $AWS.SDK.ResourceGroupsTaggingAPI.getResources(
+              {
+                TagFilters: [
+                  {
+                    Key: STACK_TAG_KEY,
+                    Values: [runtimeTestExecutionContext.stackTag],
+                  },
+                ],
+                ResourceTypeFilters: ["cloudformation:stack"],
               },
-            }
-          );
-
-        await $SFN.forEach(
-          stacksWithTag.ResourceTagMappingList ?? [],
-          (resource) =>
-            $AWS.SDK.CloudFormation.deleteStack(
-              { StackName: resource.ResourceARN! },
               {
                 iam: {
-                  resources: [stackArnPrefix],
+                  resources: ["*"],
                 },
               }
-            )
-        );
-      });
+            );
 
-      const starter = new Function(scope, "starter", async () => {
-        await deleterMachine({});
-      });
+          await $SFN.forEach(
+            stacksWithTag.ResourceTagMappingList ?? [],
+            (resource) =>
+              $AWS.SDK.CloudFormation.deleteStack(
+                { StackName: resource.ResourceARN! },
+                {
+                  iam: {
+                    resources: [stackArnPrefix],
+                  },
+                }
+              )
+          );
+        });
 
-      const starterFuncUrl = starter.resource.addFunctionUrl({
-        authType: FunctionUrlAuthType.NONE,
-      });
+        const starter = new Function(scope, "starter", async () => {
+          await deleterMachine({});
+        });
 
-      // const param =
-      new StringParameter(scope, "deleterFunctionUrl", {
-        stringValue: starterFuncUrl.url,
-        // FunctionlessTest-{process.env.GITHUB_REF}
-        parameterName: `/functionlessTestDeleter/${runtimeTestExecutionContext.stackTag}/deleteUrl`,
-      });
+        const starterFuncUrl = starter.resource.addFunctionUrl({
+          authType: FunctionUrlAuthType.NONE,
+        });
 
-      return {
-        outputs: {},
-      };
-    },
-    async () => {
-      expect(true).toBeTruthy();
-    }
-  );
-});
+        new StringParameter(scope, "deleterFunctionUrl", {
+          stringValue: starterFuncUrl.url,
+          // FunctionlessTest-{process.env.GITHUB_REF}
+          parameterName: `/functionlessTestDeleter/${runtimeTestExecutionContext.stackTag}/deleteUrl`,
+        });
+
+        return {
+          outputs: {},
+        };
+      },
+      async () => {
+        // not a real test, just using the harness to deploy things during build
+        expect(true).toBeTruthy();
+      }
+    );
+  });
+} else {
+  test("do nothing", () => {
+    expect(true).toBeTruthy();
+  });
+}

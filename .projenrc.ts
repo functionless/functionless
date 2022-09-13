@@ -194,8 +194,6 @@ const project = new CustomTypescriptProject({
 // projen assumes ts-jest
 delete project.jest!.config.globals;
 delete project.jest!.config.preset;
-// @ts-ignore
-project.jest!.config.testMatch = ["**/secret.localstack.test.ts"];
 
 const packageJson = project.tryFindObjectFile("package.json")!;
 
@@ -237,8 +235,6 @@ const cleanJob: Job = {
 };
 closeWorkflow?.addJob("cleanUp", cleanJob);
 
-project.buildWorkflow?.addPostBuildJob("testClean", cleanJob);
-
 project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
 );
@@ -272,6 +268,9 @@ project.addPackageIgnore("/test-app");
 project.buildWorkflow.workflow.jobs.build = {
   // @ts-ignore
   ...project.buildWorkflow.workflow.jobs.build,
+  // deploy the clean up stack during tests to be available for the cleanup pull_request closed job
+  // only do this for build workflow as the release workflow deletes immediately
+  env: { CLEAN_UP_STACK: "1" },
   permissions: {
     // @ts-ignore
     ...project.buildWorkflow.workflow.jobs.build.permissions,
@@ -289,6 +288,7 @@ project.release.defaultBranch.workflow.jobs.release = {
   env: {
     // @ts-ignore
     ...project.release.defaultBranch.workflow.jobs.release.env,
+    // on release, do not maintain the stacks, delete them right away
     TEST_STACK_RETENTION_POLICY: "DELETE",
   },
   permissions: {
