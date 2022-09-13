@@ -6,7 +6,7 @@ on:
     types:
       - closed
 jobs:
-  clean up:
+  cleanUp:
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -20,8 +20,12 @@ jobs:
           role-to-assume: arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4
           aws-region: us-east-1
           role-duration-seconds: 1800
-        if: contains(fromJson('["release", "build"]'), github.workflow)
+        if: contains(fromJson('["release", "build", "close"]'), github.workflow)
       - uses: marvinpinto/action-inject-ssm-secrets@latest
         with:
           ssm_parameter: /functionlessTestDeleter/FunctionlessTest-${{ env.GITHUB_REF }}/deleteUrl
           env_variable_name: FL_DELETE_URL
+      - uses: fjogeleit/http-request-action@v1
+        with:
+          url: ${{ env.FL_DELETE_URL }}
+          method: GET

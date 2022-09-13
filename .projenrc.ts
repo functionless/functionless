@@ -81,7 +81,7 @@ const assumeRoleStep = {
     "aws-region": "us-east-1",
     "role-duration-seconds": 30 * 60,
   },
-  if: `contains(fromJson('["release", "build"]'), github.workflow)`,
+  if: `contains(fromJson('["release", "build", "close"]'), github.workflow)`,
 };
 
 const project = new CustomTypescriptProject({
@@ -205,7 +205,7 @@ closeWorkflow?.on({
     types: ["closed"],
   },
 });
-closeWorkflow?.addJob("clean up", {
+closeWorkflow?.addJob("cleanUp", {
   permissions: { contents: JobPermission.WRITE, idToken: JobPermission.WRITE },
   runsOn: ["ubuntu-latest"],
   env: {
