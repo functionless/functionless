@@ -46,6 +46,9 @@ function registerOwnProperties(value: any, expr: string, isModule: boolean) {
       if (value === process && propName === "env") {
         // never serialize environment variables
         continue;
+      } else if (value === module && propName === "_cache") {
+        // never serialize the module cache
+        continue;
       }
       const propDesc = Object.getOwnPropertyDescriptor(value, propName);
       if (propDesc?.get && isModule) {

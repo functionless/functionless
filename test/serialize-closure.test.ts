@@ -3,10 +3,12 @@ import "jest";
 import fs from "fs";
 import path from "path";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
 import AWS from "aws-sdk";
 import { v4 } from "uuid";
-import { AnyFunction } from "../src";
+import { $AWS, AnyFunction, Table, Function } from "../src";
 
+import { NativePreWarmContext } from "../src/function-prewarm";
 import { isNode } from "../src/guards";
 import {
   serializeClosure,
@@ -1185,4 +1187,42 @@ test("broad spectrum syntax test", async () => {
     "head array",
     ["rest array1", "rest array2"],
   ]);
+});
+
+test("should serialize NativePreWarmContext", async () => {
+  const preWarm = new NativePreWarmContext();
+
+  const closure = await expectClosure(() => {
+    return preWarm.getOrInit({
+      key: "key",
+      init: () => "value",
+    });
+  });
+
+  expect(closure()).toEqual("value");
+});
+
+test("should serialize Function", async () => {
+  const app = new App({
+    autoSynth: false,
+  });
+  const stack = new Stack(app, "stack");
+
+  const table = new Table(stack, "Table", {
+    partitionKey: {
+      name: "id",
+      type: aws_dynamodb.AttributeType.STRING,
+    },
+  });
+
+  new Function(stack, "foo", async () => {
+    await $AWS.DynamoDB.GetItem({
+      Table: table,
+      Key: {
+        id: {
+          S: "id",
+        },
+      },
+    });
+  });
 });

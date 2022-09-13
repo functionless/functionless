@@ -11,7 +11,6 @@ import {
   FunctionLike,
   GetAccessorDecl,
   MethodDecl,
-  ParameterDecl,
   SetAccessorDecl,
   VariableDeclKind,
 } from "./declaration";
@@ -194,13 +193,13 @@ export function serializeClosure(
   //   -> the name of the exported value
   //   -> the path of the module
   const requireCache = new Map<any, RequiredModule>(
-    Object.entries(require.cache).flatMap(([_path, module]) => {
+    Object.entries(require.cache).flatMap(([path, module]) => {
       try {
         return [
           [
             module?.exports as any,
             <RequiredModule>{
-              path: module?.id,
+              path,
               exportName: undefined,
               exportValue: module?.exports,
               module,
@@ -212,7 +211,7 @@ export function serializeClosure(
             return [
               exportValue.value,
               <RequiredModule>{
-                path: module?.id,
+                path,
                 exportName,
                 exportValue: exportValue.value,
                 module: module,
@@ -537,7 +536,8 @@ export function serializeClosure(
       throw new Error(`undefined exports`);
     }
     const requireMod = singleton(exports, () => {
-      return emitRequire(getModuleId(mod.path));
+      const moduleId = getModuleId(mod.path);
+      return emitRequire(moduleId);
     });
     return singleton(value, () =>
       emitVarDecl(
@@ -577,6 +577,10 @@ export function serializeClosure(
           fs.readFileSync(pkgJsonPath).toString("utf-8")
         );
         if (typeof pkgJson.name === "string") {
+          if (pkgJson.name === "functionless") {
+            // always in-memory serialize functionless
+            return null;
+          }
           return pkgJson.name;
         }
       }

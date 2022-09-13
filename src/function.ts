@@ -539,6 +539,18 @@ export interface FunctionProps<in P = any, O = any, OutP extends P = P>
     aws_lambda.FunctionProps,
     "code" | "handler" | "runtime" | "onSuccess" | "onFailure"
   > {
+  /**
+   * Whether to generate source maps for serialized closures and
+   * to set --enableSourceMaps on NODE_OPTIONS environment variable.
+   *
+   * Only supported when using {@link SerializerImpl.EXPERIMENTAL_SWC}.
+   *
+   * @default true
+   */
+  sourceMaps?: boolean;
+  /**
+   * Which {@link SerializerImpl} to use when serializing closures.
+   */
   serializer?: SerializerImpl;
   /**
    * Method which allows runtime computation of AWS client configuration.
@@ -682,6 +694,17 @@ export class Function<
         onFailure
       ),
       environment: {
+        ...(props?.environment ?? {}),
+        ...(props?.sourceMaps !== false
+          ? {
+              // merge --enableSourceMaps
+              NODE_OPTIONS: `--enable-source-maps${
+                props?.environment?.NODE_OPTIONS
+                  ? ` ${props.environment.NODE_OPTIONS}`
+                  : ""
+              }`,
+            }
+          : {}),
         functionless_infer: Lazy.string({
           produce: () => {
             // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
@@ -1224,7 +1247,10 @@ export async function serialize(
 /**
  * Bundles a serialized function with esbuild.
  */
-export async function bundle(text: string): Promise<esbuild.OutputFile> {
+export async function bundle(
+  text: string,
+  sourceMap?: boolean
+): Promise<esbuild.OutputFile> {
   const bundle = await esbuild.build({
     stdin: {
       contents: text,
@@ -1236,6 +1262,7 @@ export async function bundle(text: string): Promise<esbuild.OutputFile> {
     platform: "node",
     target: "node14",
     external: ["aws-sdk", "aws-cdk-lib", "esbuild"],
+    sourcemap: sourceMap === false ? undefined : "inline",
   });
 
   // a bundled output will be one file

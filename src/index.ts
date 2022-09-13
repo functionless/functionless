@@ -12,6 +12,7 @@ export * from "./event-bridge";
 export * from "./event-source";
 export * from "./expression";
 export * from "./function";
+export * from "./function-prewarm";
 export * from "./guards";
 export * from "./iterable";
 export * from "./node-kind";
