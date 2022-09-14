@@ -116,7 +116,9 @@ runtimeTestSuite<
   test.skip = (name, _func, _expected, _payload?) =>
     testResource.skip(
       name,
-      () => {},
+      () => {
+        return { outputs: { function: "" } };
+      },
       async () => {},
       { payload: undefined }
     );

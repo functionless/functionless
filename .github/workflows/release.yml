@@ -16,6 +16,7 @@ jobs:
       latest_commit: ${{ steps.git_remote.outputs.latest_commit }}
     env:
       CI: "true"
+      TEST_STACK_RETENTION_POLICY: DELETE
     steps:
       - name: Checkout
         uses: actions/checkout@v3
@@ -31,7 +32,7 @@ jobs:
           role-to-assume: arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4
           aws-region: us-east-1
           role-duration-seconds: 1800
-        if: contains(fromJson('["release", "build"]'), github.workflow)
+        if: contains(fromJson('["release", "build", "close"]'), github.workflow)
       - name: Install dependencies
         run: yarn install --check-files --frozen-lockfile
       - name: release

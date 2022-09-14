@@ -22,14 +22,21 @@ const selfDestructDelay = Number(process.env.TEST_SELF_DESTRUCT_DELAY_SECONDS);
 const deploymentTarget = process.env.TEST_DEPLOY_TARGET ?? "LOCALSTACK";
 
 export interface RuntimeTestExecutionContext {
+  stackTag: string;
   stackSuffix?: string;
   selfDestructProps: SelfDestructorProps;
   stackRetentionPolicy: "RETAIN" | "DELETE" | "SELF_DESTRUCT";
   deployTarget: "AWS" | "LOCALSTACK";
+  cleanUpStack: boolean;
 }
+
+export const STACK_TAG_KEY = "functionless-test-stack";
 
 // https://docs.github.com/en/actions/learn-github-actions/environment-variables#default-environment-variables
 export const runtimeTestExecutionContext: RuntimeTestExecutionContext = {
+  stackTag: process.env.GITHUB_REF
+    ? `FunctionlessTest-${process.env.GITHUB_REF}`
+    : "FunctionlessTest",
   stackSuffix: process.env.GITHUB_REF
     ? `-${process.env.GITHUB_REF?.replace(/\//g, "-")}`
     : undefined,
@@ -45,9 +52,10 @@ export const runtimeTestExecutionContext: RuntimeTestExecutionContext = {
       : "SELF_DESTRUCT")) as RuntimeTestExecutionContext["stackRetentionPolicy"],
   // AWS | LOCALSTACK ; default: LOCALSTACK
   deployTarget: deploymentTarget as RuntimeTestExecutionContext["deployTarget"],
+  cleanUpStack: process.env.CLEAN_UP_STACK === "1" ? true : false,
 };
 
-const clientConfig =
+export const clientConfig =
   runtimeTestExecutionContext.deployTarget === "AWS"
     ? {
         region: "us-east-1",
@@ -89,7 +97,9 @@ export interface TestCase<
   resources: (
     parent: Construct,
     testRole: Role
-  ) => TestCaseDeploymentOutput<Outputs> | void;
+  ) =>
+    | Promise<TestCaseDeploymentOutput<Outputs>>
+    | TestCaseDeploymentOutput<Outputs>;
   test: (
     context: Outputs,
     clients: RuntimeTestClients,
@@ -241,6 +251,9 @@ export function runtimeTestSuite<
   }`;
   const app = new App();
   const stack = new Stack(app, fullStackName, {
+    tags: {
+      [STACK_TAG_KEY]: runtimeTestExecutionContext.stackTag,
+    },
     env:
       runtimeTestExecutionContext.deployTarget === "LOCALSTACK"
         ? {
@@ -295,8 +308,10 @@ export function runtimeTestSuite<
     });
 
     // register CDK resources of each test and return any outputs to use in the test or beforeAll
-    testContexts = tests.map((test, i) =>
-      collectTestCdkResources(stack, anyOnly, testRole, i, test)
+    testContexts = await Promise.all(
+      tests.map((test, i) =>
+        collectTestCdkResources(stack, anyOnly, testRole, i, test)
+      )
     );
 
     await Promise.all(Function.promises);
@@ -316,6 +331,10 @@ export function runtimeTestSuite<
       const deployOut = await getCfnClient().then((client) =>
         client.deployStack({
           stack: stackArtifact!,
+          tags: Object.entries(stack.tags.tagValues()).map(([k, v]) => ({
+            Key: k,
+            Value: v,
+          })),
           force: true,
         })
       );
@@ -470,7 +489,7 @@ async function getCfnClient() {
 /**
  * Given a test, collect the constructs it needs and register any outputs it needs and return.
  */
-function collectTestCdkResources<
+async function collectTestCdkResources<
   Output extends Record<string, string> = Record<string, string>
 >(
   stack: Stack,
@@ -478,13 +497,13 @@ function collectTestCdkResources<
   testRole: Role,
   index: number,
   test: TestCase<Output, any, any>
-): TestCaseDeployment<Output> {
+): Promise<TestCaseDeployment<Output, Record<string, string>>> {
   const { resources, skip, only } = test;
   // create the construct on skip to reduce output changes when moving between skip and not skip
   const construct = new Construct(stack, `parent${index}`);
   if (!skip && (!hasOnly || only)) {
     try {
-      const output = resources(construct, testRole);
+      const output = await resources(construct, testRole);
       // Place each output in a cfn output, encoded with the unique address of the construct
       if (typeof output === "object") {
         return {

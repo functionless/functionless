@@ -105,7 +105,9 @@ runtimeTestSuite("functionStack", (testResource, _stack, _app) => {
   test.skip = (name, _func, _expected, _payload?) =>
     testResource.skip(
       name,
-      () => {},
+      () => {
+        return { outputs: {} };
+      },
       async () => {}
     );
 
