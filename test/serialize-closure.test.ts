@@ -823,6 +823,12 @@ test("broad spectrum syntax test", async () => {
     const arrowBlockExpr = (a: string, ...b: string[]) => {
       return [a, ...b];
     };
+    const asyncArrowExpr = async () => {
+      return "asyncArrowExpr";
+    };
+    async function asyncFuncDecl() {
+      return "asyncFuncDecl";
+    }
     function funcDecl(a: string, ...b: string[]) {
       return [a, ...b];
     }
@@ -831,6 +837,12 @@ test("broad spectrum syntax test", async () => {
     };
     const anonFuncExpr = function (a: string, ...b: string[]) {
       return [a, ...b];
+    };
+    const asyncFuncExpr = async function asyncFuncExpr() {
+      return "asyncFuncExpr";
+    };
+    const anonAsyncFuncExpr = async function () {
+      return "anonAsyncFuncExpr";
     };
 
     let getterSetterVal: string;
@@ -1050,6 +1062,10 @@ test("broad spectrum syntax test", async () => {
       ...funcDecl("d", "e", "f"),
       ...funcExpr("g", "h", "i"),
       ...anonFuncExpr("j", "k", "l"),
+      await asyncArrowExpr(),
+      await asyncFuncDecl(),
+      await asyncFuncExpr(),
+      await anonAsyncFuncExpr(),
       obj.prop,
       obj.getProp(),
       obj.getterSetter,
@@ -1114,6 +1130,10 @@ test("broad spectrum syntax test", async () => {
     "j",
     "k",
     "l",
+    "asyncArrowExpr",
+    "asyncFuncDecl",
+    "asyncFuncExpr",
+    "anonAsyncFuncExpr",
     "prop",
     "prop 1",
     "getterSetter",

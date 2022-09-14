@@ -885,7 +885,8 @@ export class CallbackLambdaCode extends aws_lambda.Code {
       serializerImpl,
       this.props
     );
-    const bundled = (await bundle(serialized, sourceMaps)).contents;
+    const bundledPackage = await bundle(serialized, sourceMaps);
+    const bundled = bundledPackage.contents;
 
     const asset = aws_lambda.Code.fromAsset("", {
       assetHashType: AssetHashType.OUTPUT,

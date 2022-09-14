@@ -260,7 +260,7 @@ export function serializeClosure(
   const referenceInstanceIDs = new Map<number, number>();
 
   const handler = serialize(func);
-  emit(`exports.handler = ${handler}`);
+  emit(`exports.handler = ${handler}${options?.isFactoryFunction ? "()" : ""}`);
 
   // looks like TS does not expose the source-map functionality
   // TODO: figure out how to generate a source map since we have all the information ...
@@ -902,7 +902,7 @@ export function serializeClosure(
     emit(
       createSourceNode(node, [
         `const ${methodName} = `,
-        ...(node.isAsync ? ["async"] : []),
+        ...(node.isAsync ? ["async "] : []),
         "function ",
         ...(node.name ? [toSourceNode(node.name, illegalNames)] : []),
         ...(node.isAsterisk ? ["*"] : []),
@@ -934,6 +934,9 @@ export function serializeClosure(
     illegalNames: Set<string>
   ): SourceNode {
     if (isReferenceExpr(node)) {
+      if (isRequire(node.ref())) {
+        return createSourceNode(node, "require");
+      }
       // get the set of ReferenceExpr instances for thisId
       let thisId =
         node.referenceId !== undefined
@@ -961,7 +964,7 @@ export function serializeClosure(
       return createSourceNode(node, varId);
     } else if (isArrowFunctionExpr(node)) {
       return createSourceNode(node, [
-        ...(node.isAsync ? ["async"] : []),
+        ...(node.isAsync ? ["async "] : []),
         "(",
         ...commaSeparatedListSourceNode(node.parameters, illegalNames),
         ") => ",
@@ -969,7 +972,7 @@ export function serializeClosure(
       ]);
     } else if (isFunctionDecl(node) || isFunctionExpr(node)) {
       return createSourceNode(node, [
-        ...(node.isAsync ? ["async"] : []),
+        ...(node.isAsync ? ["async "] : []),
         "function ",
         ...(node.isAsterisk ? ["*"] : []),
         ...(node.name ? [node.name] : []),
@@ -1469,4 +1472,16 @@ export function serializeClosure(
       ...(i < nodes.length - 1 ? [","] : []),
     ]);
   }
+}
+
+/**
+ * Heuristic for detecting whether a value is the require function.
+ *
+ * Detects both the intrinsic require and jest's patched require.
+ */
+function isRequire(a: any): boolean {
+  return (
+    a === require ||
+    (typeof a === "function" && a.name === "bound requireModuleOrMock")
+  );
 }
