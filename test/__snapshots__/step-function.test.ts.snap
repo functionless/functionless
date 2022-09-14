@@ -16877,7 +16877,7 @@ Object {
       "Type": "Task",
     },
     "1__await queue.sendMessage({MessageBody: [input]}) 1": Object {
-      "InputPath": "$.heap1.arr",
+      "InputPath": "$.heap1.out",
       "Next": "1__await queue.sendMessage({MessageBody: [input]})",
       "ResultPath": "$.heap2",
       "Type": "Pass",
@@ -16896,7 +16896,7 @@ Object {
     "[input]": Object {
       "Next": "1__await queue.sendMessage({MessageBody: [input]}) 1",
       "Parameters": Object {
-        "arr.$": "States.Array($.heap0)",
+        "out.$": "States.Array($.heap0)",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
