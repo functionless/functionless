@@ -2,6 +2,7 @@ import * as fs from "fs";
 import { join } from "path";
 import { typescript, TextFile, Project } from "projen";
 import { GithubCredentials } from "projen/lib/github";
+import { Job, JobPermission } from "projen/lib/github/workflows-model";
 
 /**
  * Adds githooks into the .git/hooks folder during projen synth.
@@ -71,6 +72,18 @@ class CustomTypescriptProject extends typescript.TypeScriptProject {
   }
 }
 
+const assumeRoleStep = {
+  name: "Configure AWS Credentials",
+  uses: "aws-actions/configure-aws-credentials@v1",
+  with: {
+    "role-to-assume":
+      "arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4",
+    "aws-region": "us-east-1",
+    "role-duration-seconds": 30 * 60,
+  },
+  if: `contains(fromJson('["release", "build", "close"]'), github.workflow)`,
+};
+
 const project = new CustomTypescriptProject({
   defaultReleaseBranch: "main",
   name: "functionless",
@@ -129,6 +142,8 @@ const project = new CustomTypescriptProject({
       transform: {
         "^.+\\.(t|j)sx?$": ["./jest.js", {}],
       },
+      // TODO: delete me, just to shorten the test cycle
+      testMatch: ["**/secret.localstack.test.ts"],
     },
   },
   scripts: {
@@ -174,19 +189,7 @@ const project = new CustomTypescriptProject({
     },
   },
   prettier: true,
-  workflowBootstrapSteps: [
-    {
-      name: "Configure AWS Credentials",
-      uses: "aws-actions/configure-aws-credentials@v1",
-      with: {
-        "role-to-assume":
-          "arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4",
-        "aws-region": "us-east-1",
-        "role-duration-seconds": 30 * 60,
-      },
-      if: `contains(fromJson('["release", "build"]'), github.workflow)`,
-    },
-  ],
+  workflowBootstrapSteps: [assumeRoleStep],
 });
 // projen assumes ts-jest
 delete project.jest!.config.globals;
@@ -197,6 +200,40 @@ const packageJson = project.tryFindObjectFile("package.json")!;
 packageJson.addOverride("lint-staged", {
   "*.{tsx,jsx,ts,js,json,md,css}": ["eslint --fix"],
 });
+
+const closeWorkflow = project.github?.addWorkflow("close");
+closeWorkflow?.on({
+  pullRequest: {
+    types: ["closed"],
+  },
+});
+const cleanJob: Job = {
+  permissions: { contents: JobPermission.WRITE, idToken: JobPermission.WRITE },
+  runsOn: ["ubuntu-latest"],
+  env: {
+    CI: "true",
+  },
+  needs: ["build"],
+  steps: [
+    assumeRoleStep,
+    {
+      uses: "marvinpinto/action-inject-ssm-secrets@latest",
+      with: {
+        ssm_parameter:
+          "/functionlessTestDeleter/FunctionlessTest-${{ github.ref }}/deleteUrl",
+        env_variable_name: "FL_DELETE_URL",
+      },
+    },
+    {
+      uses: "fjogeleit/http-request-action@v1",
+      with: {
+        url: "${{ env.FL_DELETE_URL }}",
+        method: "GET",
+      },
+    },
+  ],
+};
+closeWorkflow?.addJob("cleanUp", cleanJob);
 
 project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
@@ -231,6 +268,9 @@ project.addPackageIgnore("/test-app");
 project.buildWorkflow.workflow.jobs.build = {
   // @ts-ignore
   ...project.buildWorkflow.workflow.jobs.build,
+  // deploy the clean up stack during tests to be available for the cleanup pull_request closed job
+  // only do this for build workflow as the release workflow deletes immediately
+  env: { CLEAN_UP_STACK: "1" },
   permissions: {
     // @ts-ignore
     ...project.buildWorkflow.workflow.jobs.build.permissions,
@@ -245,6 +285,12 @@ project.buildWorkflow.workflow.jobs.build = {
 project.release.defaultBranch.workflow.jobs.release = {
   // @ts-ignore
   ...project.release.defaultBranch.workflow.jobs.release,
+  env: {
+    // @ts-ignore
+    ...project.release.defaultBranch.workflow.jobs.release.env,
+    // on release, do not maintain the stacks, delete them right away
+    TEST_STACK_RETENTION_POLICY: "DELETE",
+  },
   permissions: {
     // @ts-ignore
     ...project.release.defaultBranch.workflow.jobs.release.permissions,

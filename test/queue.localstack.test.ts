@@ -119,7 +119,9 @@ runtimeTestSuite<{
   test.skip = (name, _func, _t) =>
     _test.skip(
       name,
-      () => {},
+      () => {
+        return { outputs: { queueUrl: "", tableName: "" } };
+      },
       async () => {},
       { payload: undefined }
     );
