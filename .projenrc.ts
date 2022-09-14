@@ -213,7 +213,6 @@ const cleanJob: Job = {
   env: {
     CI: "true",
   },
-  needs: ["build"],
   steps: [
     assumeRoleStep,
     {
