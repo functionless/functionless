@@ -146,16 +146,16 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
     return new Function(scope, id, localstackClientConfig, closure);
   }
 
-  function standardFunction<I, O>(
+  function functionWithSharedRole<I, O>(
     scope: Construct,
     closure: FunctionClosure<I, O>
   ): Function<I, O>;
-  function standardFunction<I, O>(
+  function functionWithSharedRole<I, O>(
     scope: Construct,
     id: string,
     closure: FunctionClosure<I, O>
   ): Function<I, O>;
-  function standardFunction<I, O>(
+  function functionWithSharedRole<I, O>(
     ...args:
       | [scope: Construct, id: string, closure: FunctionClosure<I, O>]
       | [scope: Construct, closure: FunctionClosure<I, O>]
@@ -170,7 +170,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
     );
   }
 
-  const stringFunction = standardFunction<undefined, string>(
+  const stringFunction = functionWithSharedRole<undefined, string>(
     stack,
     "stringFunction",
     async () => "hi"
@@ -200,7 +200,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
   test(
     "Call Lambda",
     (parent) => {
-      return standardFunction(parent, async (event) => event);
+      return functionWithSharedRole(parent, async (event) => event);
     },
     {}
   );
@@ -210,7 +210,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
     (parent) => {
       const create = () => {
         const val = "a";
-        return standardFunction(parent, async () => val);
+        return functionWithSharedRole(parent, async () => val);
       };
 
       return create();
@@ -222,7 +222,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
     "Call Lambda from closure with parameter",
     (parent) => {
       const create = (val: string) => {
-        return standardFunction(parent, async () => val);
+        return functionWithSharedRole(parent, async () => val);
       };
 
       return create("b");
@@ -231,7 +231,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
   );
 
   const create = (parent: Construct, id: string, val: string) => {
-    return standardFunction(parent, id, async () => val);
+    return functionWithSharedRole(parent, id, async () => val);
   };
 
   test(
@@ -249,7 +249,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
   test("Call Lambda with object", (parent) => {
     const create = () => {
       const obj = { val: 1 };
-      return standardFunction(parent, async () => obj.val);
+      return functionWithSharedRole(parent, async () => obj.val);
     };
 
     return create();
@@ -258,7 +258,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
   test(
     "Call Lambda with math",
     (parent) =>
-      standardFunction(parent, async () => {
+      functionWithSharedRole(parent, async () => {
         const v1 = 1 + 2; // 3
         const v2 = v1 * 3; // 9
         return v2 - 4; // 5
@@ -269,7 +269,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
   test(
     "Call Lambda payload",
     (parent) =>
-      standardFunction(parent, async (event: { val: string }) => {
+      functionWithSharedRole(parent, async (event: { val: string }) => {
         return `value: ${event.val}`;
       }),
     "value: hi",
@@ -279,7 +279,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
   test(
     "Call Lambda throw error",
     (parent) =>
-      standardFunction(parent, async () => {
+      functionWithSharedRole(parent, async () => {
         throw Error("AHHHHHHHHH");
       }),
     (_, result) =>
@@ -293,7 +293,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
   test(
     "Call Lambda return arns",
     (parent) =>
-      standardFunction(parent, async (_, context) => {
+      functionWithSharedRole(parent, async (_, context) => {
         return context.functionName;
       }),
     (context, result) => expect(result).toEqual(context.function)
@@ -323,7 +323,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
     "templated tokens",
     (parent) => {
       const token = Token.asString("hello");
-      return standardFunction(parent, async () => {
+      return functionWithSharedRole(parent, async () => {
         return `${token} stuff`;
       });
     },
@@ -332,7 +332,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
 
   test("numeric tokens", (parent) => {
     const token = Token.asNumber(1);
-    return standardFunction(parent, async () => {
+    return functionWithSharedRole(parent, async () => {
       return token;
     });
   }, 1);
@@ -611,7 +611,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
       const numberToken = Token.asNumber(1);
       const listToken = Token.asList(["1", "2"]);
       const nestedListToken = Token.asList([Token.asString("hello")]);
-      return standardFunction(parent, async () => {
+      return functionWithSharedRole(parent, async () => {
         return {
           string: token,
           object: token2 as unknown as typeof obj,
@@ -703,7 +703,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
       };
       const token = Token.asAny(obj);
 
-      return standardFunction(parent, async () => {
+      return functionWithSharedRole(parent, async () => {
         return (token as unknown as typeof obj).key;
       });
     },
@@ -733,7 +733,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
   );
 
   test("import", (parent) => {
-    return standardFunction(parent, async () => {
+    return functionWithSharedRole(parent, async () => {
       console.log("hi");
       return (await axios.get("https://google.com")).status;
     });
@@ -959,7 +959,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
   test.skip("chained methods", (parent) => {
     const mathStuff = (a: number, b: number) => a + b;
     const mathStuff2 = (a: number, b: number) => a + mathStuff(a, b);
-    return standardFunction(parent, async () => {
+    return functionWithSharedRole(parent, async () => {
       return mathStuff2(1, 2);
     });
   }, 4);
@@ -971,7 +971,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
       }
       return a * mult(a, b - 1);
     };
-    return standardFunction(parent, async () => {
+    return functionWithSharedRole(parent, async () => {
       return mult(2, 3);
     });
   }, 8);
@@ -984,7 +984,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
 
       return helper() + b;
     };
-    return standardFunction(parent, async () => {
+    return functionWithSharedRole(parent, async () => {
       return callMe(2, 3);
     });
   }, 7);

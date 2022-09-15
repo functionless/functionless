@@ -1774,7 +1774,15 @@ export class ASL {
           },
         };
 
-        // https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-intrinsic-functions.html#amazon-states-language-intrinsic-functions-escapes
+        /**
+         * Escape special characters in Step Functions intrinsics.
+         *
+         * } => \}
+         * { => \{
+         * ' => \'
+         *
+         * https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-intrinsic-functions.html#amazon-states-language-intrinsic-functions-escapes
+         */
         function escapeFormatString(literal: ASLGraph.LiteralValue) {
           if (typeof literal.value === "string") {
             return literal.value.replace(/[\}\{\'}]/g, "\\$&");
