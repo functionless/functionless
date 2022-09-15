@@ -2,8 +2,9 @@
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
   corePlugins: {
-    preflight: false, // TODO: Added to style default docusaurus components
+    // preflight: false, // TODO: Added to style default docusaurus components
   },
+  darkMode: ["class", '[data-theme="dark"]'],
   theme: {
     extend: {
       padding: {

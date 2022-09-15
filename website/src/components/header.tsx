@@ -1,4 +1,6 @@
 /* This example requires Tailwind CSS v2.0+ */
+import Link from "@docusaurus/Link";
+import useDocusaurusContext from "@docusaurus/useDocusaurusContext";
 import { Popover, Transition } from "@headlessui/react";
 import {
   Bars3Icon,
@@ -6,35 +8,31 @@ import {
   XMarkIcon,
 } from "@heroicons/react/24/outline";
 import { Fragment } from "react";
+import GitHubButton from "react-github-btn";
 
-const navigation = {
-  main: [
-    { name: "Docs", href: "/docs" },
-    { name: "Blog", href: "/blog" },
-    { name: "Team", href: "/team" },
-  ],
-  social: [
-    {
-      name: "Discord",
-      href: "/",
-      icon: "/img/social/discord.svg",
-    },
-    {
-      name: "Twitter",
-      href: "/",
-      icon: "/img/social/twitter.svg",
-    },
-    {
-      name: "Github",
-      href: "/",
-      icon: "/img/social/github.svg",
-    },
-  ],
+const NavItems = () => {
+  const context = useDocusaurusContext();
+  return (context.siteConfig.themeConfig.navbar as any).items.map(
+    ({
+      href,
+      label,
+      position,
+    }: {
+      href: string;
+      label: string;
+      position: string;
+    }) => (
+      <Link
+        key={label}
+        to={href}
+        // className="text-base font-medium text-gray-900 hover:text-gray-700"
+        className="text-functionless-black dark:text-functionless-white hover:no-underline hover:text-functionless-blue"
+      >
+        {label}
+      </Link>
+    )
+  );
 };
-
-function classNames(...classes) {
-  return classes.filter(Boolean).join(" ");
-}
 
 export const Header = () => {
   return (
@@ -58,7 +56,7 @@ export const Header = () => {
         </div>
         <div className="hidden md:flex md:flex-1 md:items-center md:justify-between">
           <Popover.Group as="nav" className="flex space-x-10">
-            <a
+            {/* <a
               href="/docs"
               className="text-functionless-black dark:text-functionless-white hover:no-underline hover:text-functionless-blue"
             >
@@ -75,7 +73,8 @@ export const Header = () => {
               className="text-functionless-black dark:text-functionless-white hover:no-underline hover:text-functionless-blue"
             >
               Team
-            </a>
+            </a> */}
+            <NavItems />
           </Popover.Group>
           <div className="flex-1 justify-center flex">
             <div className="relative mt-1 w-64">
@@ -101,14 +100,16 @@ export const Header = () => {
                 <img src={item.icon} className="icon" />
               </a>
             ))}
-            <iframe
-              src="https://ghbtns.com/github-btn.html?user=functionless&repo=functionless&type=star&count=true&size=small"
-              frameBorder={0}
-              scrolling="0"
-              width="150"
-              height="20"
-              title="GitHub"
-            ></iframe>
+            <GitHubButton
+              href="https://github.com/functionless/functionless"
+              data-color-scheme="no-preference: dark; light: light; dark: dark;"
+              data-icon="octicon-star"
+              data-size="small"
+              data-show-count="true"
+              aria-label="Star functionless/functionless on GitHub"
+            >
+              Star
+            </GitHubButton>
           </div>
         </div>
       </div>
@@ -133,7 +134,7 @@ export const Header = () => {
                   <img
                     className="h-8 w-auto"
                     src="/img/logo/light.svg"
-                    alt="Your Company"
+                    alt="Functionless logo"
                   />
                 </div>
                 <div className="-mr-2">
@@ -164,15 +165,7 @@ export const Header = () => {
             </div>
             <div className="py-6 px-5">
               <div className="grid grid-cols-2 gap-4">
-                {[].map((item) => (
-                  <a
-                    key={item.name}
-                    href={item.href}
-                    className="text-base font-medium text-gray-900 hover:text-gray-700"
-                  >
-                    {item.name}
-                  </a>
-                ))}
+                <NavItems />
               </div>
               <div className="mt-6"></div>
             </div>

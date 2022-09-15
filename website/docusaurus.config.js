@@ -90,10 +90,6 @@ const config = {
       }),
     ],
   ],
-  // https://buttons.github.io/
-  scripts: [
-    { src: "https://buttons.github.io/buttons.js", async: true, defer: true },
-  ],
   themeConfig:
     /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
     ({
@@ -108,8 +104,8 @@ const config = {
       ],
       // light color mode disabled for now
       colorMode: {
+        defaultMode: "dark",
         disableSwitch: false,
-        respectPrefersColorScheme: true,
       },
       prism: {
         additionalLanguages: ["graphql"],
@@ -128,20 +124,32 @@ const config = {
             type: "doc",
             docId: "what-is-functionless",
             position: "left",
-            label: "Documentation",
+            label: "Docs",
           },
           { to: "/blog", label: "Blog", position: "left" },
           {
-            href: "https://github.com/functionless/functionless",
-            position: "right",
-            className: "header-github-link",
-            "aria-label": "GitHub Repository",
+            to: "/team",
+            label: "Team",
+            position: "left",
           },
+
           {
             href: "https://discord.gg/VRqHbjrbfC",
+            icon: "/img/social/discord.svg",
             position: "right",
-            className: "navbar-community-menu",
-            "aria-label": "Discord Community",
+            label: "Discord Community",
+          },
+          {
+            href: "https://twitter.com/_functionless",
+            icon: "/img/social/twitter.svg",
+            position: "right",
+            label: "Twitter",
+          },
+          {
+            href: "https://github.com/functionless/functionless",
+            icon: "/img/social/github.svg",
+            position: "right",
+            label: "Github",
           },
         ],
       },
