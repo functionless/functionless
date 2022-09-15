@@ -616,21 +616,21 @@ https://functionless.org/docs/error-codes#step-functions-arithmetic-only-support
 
 [7m35[0m new StepFunction(stack, \\"input.i - 2\\", (input: { i: number }) => input.i - 2);
 [7m  [0m [93m                                                                ~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m36[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m36[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform all arithmetic on variables in Step Function
 
-https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
+https://functionless.org/docs/error-codes#cannot-perform-all-arithmetic-on-variables-in-step-function
 
 [7m36[0m new StepFunction(stack, \\"input.i * 2\\", (input: { i: number }) => input.i * 2);
 [7m  [0m [91m                                                                ~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m37[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m37[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform all arithmetic on variables in Step Function
 
-https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
+https://functionless.org/docs/error-codes#cannot-perform-all-arithmetic-on-variables-in-step-function
 
 [7m37[0m new StepFunction(stack, \\"input.i / 2\\", (input: { i: number }) => input.i / 2);
 [7m  [0m [91m                                                                ~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m38[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m38[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform all arithmetic on variables in Step Function
 
-https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
+https://functionless.org/docs/error-codes#cannot-perform-all-arithmetic-on-variables-in-step-function
 
 [7m38[0m new StepFunction(stack, \\"input.i % 2\\", (input: { i: number }) => input.i % 2);
 [7m  [0m [91m                                                                ~~~~~~~~~~~~[0m
@@ -640,9 +640,9 @@ https://functionless.org/docs/error-codes#step-functions-arithmetic-only-support
 
 [7m42[0m   (input: { i: number }) => (input.i += 2)
 [7m  [0m [93m                             ~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m47[0m:[93m30[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m47[0m:[93m30[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform all arithmetic on variables in Step Function
 
-https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
+https://functionless.org/docs/error-codes#cannot-perform-all-arithmetic-on-variables-in-step-function
 
 [7m47[0m   (input: { i: number }) => (input.i *= 2)
 [7m  [0m [91m                             ~~~~~~~~~~~~[0m
@@ -652,15 +652,15 @@ https://functionless.org/docs/error-codes#step-functions-arithmetic-only-support
 
 [7m52[0m   (input: { i: number }) => (input.i -= 2)
 [7m  [0m [93m                             ~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m57[0m:[93m30[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m57[0m:[93m30[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform all arithmetic on variables in Step Function
 
-https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
+https://functionless.org/docs/error-codes#cannot-perform-all-arithmetic-on-variables-in-step-function
 
 [7m57[0m   (input: { i: number }) => (input.i /= 2)
 [7m  [0m [91m                             ~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m62[0m:[93m30[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform arithmetic on variables in Step Function
+[96mtest/test-files/step-function.ts[0m:[93m62[0m:[93m30[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform all arithmetic on variables in Step Function
 
-https://functionless.org/docs/error-codes#cannot-perform-arithmetic-on-variables-in-step-function
+https://functionless.org/docs/error-codes#cannot-perform-all-arithmetic-on-variables-in-step-function
 
 [7m62[0m   (input: { i: number }) => (input.i %= 2)
 [7m  [0m [91m                             ~~~~~~~~~~~~[0m
