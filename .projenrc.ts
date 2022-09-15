@@ -79,7 +79,7 @@ const assumeRoleStep = {
     "role-to-assume":
       "arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4",
     "aws-region": "us-east-1",
-    "role-duration-seconds": 30 * 60,
+    "role-duration-seconds": 60 * 60,
   },
   if: `contains(fromJson('["release", "build", "close"]'), github.workflow)`,
 };
@@ -219,7 +219,9 @@ const cleanJob: Job = {
       uses: "marvinpinto/action-inject-ssm-secrets@latest",
       with: {
         ssm_parameter:
-          "/functionlessTestDeleter/FunctionlessTest-${{ github.ref }}/deleteUrl",
+          // on merge, github.ref no longer returns the same format. github.event.pull_request.number returns the PR number so we can re-construct the ref.
+          // https://github.com/actions/runner/issues/256/
+          "/functionlessTestDeleter/FunctionlessTest-refs/pull/${{ github.event.pull_request.number }}/merge/deleteUrl",
         env_variable_name: "FL_DELETE_URL",
       },
     },

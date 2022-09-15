@@ -3,7 +3,6 @@ import { App, CfnOutput, Stack } from "aws-cdk-lib";
 import { ArnPrincipal, Role } from "aws-cdk-lib/aws-iam";
 import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
 import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
-import { StackActivityProgress } from "aws-cdk/lib/api/util/cloudformation/stack-activity-monitor";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import AWS, {
   DynamoDB,
@@ -13,7 +12,7 @@ import AWS, {
   StepFunctions,
   STS,
 } from "aws-sdk";
-// import { ServiceConfigurationOptions } from "aws-sdk/lib/service";
+import { ServiceConfigurationOptions } from "aws-sdk/lib/service";
 import { Construct } from "constructs";
 import { asyncSynth } from "../src/async-synth";
 import { Function } from "../src/function";
@@ -56,7 +55,7 @@ export const runtimeTestExecutionContext: RuntimeTestExecutionContext = {
   cleanUpStack: process.env.CLEAN_UP_STACK === "1" ? true : false,
 };
 
-export const clientConfig =
+export const clientConfig: ServiceConfigurationOptions =
   runtimeTestExecutionContext.deployTarget === "AWS"
     ? {
         region: "us-east-1",
