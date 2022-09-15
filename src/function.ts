@@ -519,7 +519,7 @@ export enum SerializerImpl {
    *
    * @see https://github.com/functionless/nodejs-closure-serializer
    */
-  STABLE_DEBUGGER,
+  V1,
   /**
    * A new experimental serializer that makes use of Functionless's SWC AST
    * reflection library that decorates syntax for use at runtime.
@@ -529,7 +529,8 @@ export enum SerializerImpl {
    *
    * @see https://www.npmjs.com/package/@functionless/ast-reflection
    */
-  EXPERIMENTAL_SWC,
+  V2,
+  Default = V1,
 }
 
 const PromisesSymbol = Symbol.for("functionless.Function.promises");
@@ -543,13 +544,15 @@ export interface FunctionProps<in P = any, O = any, OutP extends P = P>
    * Whether to generate source maps for serialized closures and
    * to set --enableSourceMaps on NODE_OPTIONS environment variable.
    *
-   * Only supported when using {@link SerializerImpl.EXPERIMENTAL_SWC}.
+   * Only supported when using {@link SerializerImpl.V2}.
    *
    * @default true
    */
   sourceMaps?: boolean;
   /**
    * Which {@link SerializerImpl} to use when serializing closures.
+   *
+   * @default {@link SerializerImpl.V1}
    */
   serializer?: SerializerImpl;
   /**
@@ -736,13 +739,12 @@ export class Function<
     // Start serializing process, add the callback to the promises so we can later ensure completion
     Function.promises.push(
       (async () => {
-        const serializerImpl =
-          props?.serializer ?? SerializerImpl.EXPERIMENTAL_SWC;
+        const serializerImpl = props?.serializer ?? SerializerImpl.Default;
         const sourceMaps =
           props?.sourceMaps ??
           // if using SWC serializer, enable source maps by default
           // otherwise disable by default
-          (serializerImpl === SerializerImpl.EXPERIMENTAL_SWC ? true : false);
+          (serializerImpl === SerializerImpl.V2 ? true : false);
         try {
           await callbackLambdaCode.generate(
             nativeIntegrationsPrewarm,
@@ -977,7 +979,7 @@ interface TokenContext {
 export async function serialize(
   func: AnyAsyncFunction,
   integrationPrewarms: NativeIntegration<AnyFunction>["preWarm"][],
-  serializerImpl: SerializerImpl = SerializerImpl.STABLE_DEBUGGER,
+  serializerImpl: SerializerImpl = SerializerImpl.V1,
   props?: PrewarmProps
 ): Promise<[string, TokenContext[]]> {
   let tokens: string[] = [];
@@ -987,7 +989,7 @@ export async function serialize(
 
   const preWarms = integrationPrewarms;
   const result =
-    serializerImpl === SerializerImpl.EXPERIMENTAL_SWC
+    serializerImpl === SerializerImpl.V2
       ? serializeCodeWithSourceMap(
           serializeClosure(
             integrationPrewarms.length > 0
