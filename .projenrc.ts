@@ -146,7 +146,7 @@ const project = new CustomTypescriptProject({
         "^.+\\.(t|j)sx?$": ["./jest.js", {}],
       },
     },
-    extraCliOptions: ["--no-cache", "--forceExit"],
+    extraCliOptions: ["--testPathIgnorePatterns (runtime|localstack)"],
   },
   scripts: {
     localstack: "./scripts/localstack",
@@ -250,6 +250,10 @@ project.compileTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
 project.compileTask.env("TEST_DEPLOY_TARGET", "AWS");
 
 project.compileTask.prependExec("ts-node ./scripts/sdk-gen.ts");
+
+project.testTask.prependExec(
+  "jest --passWithNoTests --all --updateSnapshot --testPathPattern '(localstack|runtime)'"
+);
 
 project.testTask.prependExec(
   "cd ./test-app && yarn && yarn build && yarn synth --quiet"
