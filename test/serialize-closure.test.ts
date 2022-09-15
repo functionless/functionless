@@ -673,10 +673,10 @@ test("instantiating the AWS SDK", async () => {
   const closure = await expectClosure(() => {
     const client = new AWS.DynamoDB();
 
-    return client.config.endpoint;
+    return client;
   });
 
-  expect(closure()).toEqual("dynamodb.undefined.amazonaws.com");
+  expect(closure()).toBeInstanceOf(AWS.DynamoDB);
 });
 
 test.skip("instantiating the AWS SDK without esbuild", async () => {
@@ -690,17 +690,17 @@ test.skip("instantiating the AWS SDK without esbuild", async () => {
       requireModules: false,
     }
   );
-  expect(closure()).toEqual("dynamodb.undefined.amazonaws.com");
+  expect(closure()).toBeInstanceOf(AWS.DynamoDB);
 });
 
 test("instantiating the AWS SDK v3", async () => {
   const closure = await expectClosure(() => {
     const client = new DynamoDBClient({});
 
-    return client.config.serviceId;
+    return client;
   });
 
-  expect(closure()).toEqual("DynamoDB");
+  expect(closure()).toBeInstanceOf(DynamoDBClient);
 });
 
 test.skip("instantiating the AWS SDK v3 without esbuild", async () => {
@@ -767,7 +767,7 @@ test("thrown errors map back to source", async () => {
     console.log((err as Error).stack);
   }
   if (!failed) {
-    fail("expected a thrown erro");
+    fail("expected a thrown error");
   }
 });
 
@@ -1053,6 +1053,41 @@ test("broad spectrum syntax test", async () => {
     const { head, ...rest } = { head: "head", rest1: "rest1", rest2: "rest2" };
     const [head2, ...rest2] = ["head array", "rest array1", "rest array2"];
 
+    const binary = true && false;
+    const fooInstanceOf = foo instanceof Foo;
+    const condition = binary ? "condition true" : "condition false";
+
+    let switchDefault;
+    switch (0 as number) {
+      case 1:
+        switchDefault = "switchCase";
+        break;
+      default:
+        switchDefault = "switchDefault";
+    }
+
+    let switchCase;
+    switch (0 as number) {
+      case 0:
+        switchCase = "switchCase";
+        break;
+      default:
+        switchDefault = "switchDefault";
+    }
+
+    let num = 0;
+    const str = "hello";
+    const typeOf = typeof str;
+
+    const array = [1, 2];
+    const object = { key: "value" };
+    const key = "key";
+    const element = object[key];
+    const unary = !str;
+    const postfix = num++;
+    const prefix = ++num;
+    const binaryOp = (num += 1);
+
     // eslint-disable-next-line no-debugger
     debugger;
 
@@ -1111,6 +1146,18 @@ test("broad spectrum syntax test", async () => {
       rest,
       head2,
       rest2,
+      binary,
+      fooInstanceOf,
+      condition,
+      switchDefault,
+      switchCase,
+      typeOf,
+      array,
+      element,
+      unary,
+      postfix,
+      prefix,
+      binaryOp,
     ];
   });
 
@@ -1206,6 +1253,18 @@ test("broad spectrum syntax test", async () => {
     },
     "head array",
     ["rest array1", "rest array2"],
+    false,
+    true,
+    "condition false",
+    "switchDefault",
+    "switchCase",
+    "string",
+    [1, 2],
+    "value",
+    false,
+    0,
+    2,
+    3,
   ]);
 });
 

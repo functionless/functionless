@@ -259,8 +259,14 @@ export function serializeClosure(
   // map ReferenceExpr (syntactically) to the Closure Instance ID
   const referenceInstanceIDs = new Map<number, number>();
 
+  const funcAst = reflect(func)!;
   const handler = serialize(func);
-  emit(`exports.handler = ${handler}${options?.isFactoryFunction ? "()" : ""}`);
+  emit(
+    createSourceNode(
+      funcAst,
+      `exports.handler = ${handler}${options?.isFactoryFunction ? "()" : ""}`
+    )
+  );
 
   // looks like TS does not expose the source-map functionality
   // TODO: figure out how to generate a source map since we have all the information ...
@@ -1241,7 +1247,9 @@ export function serializeClosure(
     } else if (isBinaryExpr(node)) {
       return createSourceNode(node, [
         toSourceNode(node.left, illegalNames),
+        " ",
         node.op,
+        " ",
         toSourceNode(node.right, illegalNames),
       ]);
     } else if (isConditionExpr(node)) {
