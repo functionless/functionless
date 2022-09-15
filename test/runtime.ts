@@ -572,7 +572,7 @@ async function getRuntimeClients(
         .assumeRole({
           RoleArn: testRoleArn,
           RoleSessionName: "testSession",
-          DurationSeconds: 30 * 60,
+          DurationSeconds: 60 * 60, // hour
         })
         .promise()
     : undefined;
