@@ -145,8 +145,8 @@ const project = new CustomTypescriptProject({
       transform: {
         "^.+\\.(t|j)sx?$": ["./jest.js", {}],
       },
-      testPathIgnorePatterns: ["/node_modules/"],
     },
+    extraCliOptions: ["--no-cache"],
   },
   scripts: {
     localstack: "./scripts/localstack",
