@@ -3,6 +3,7 @@ import { App, CfnOutput, Stack } from "aws-cdk-lib";
 import { ArnPrincipal, Role } from "aws-cdk-lib/aws-iam";
 import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
 import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
+import { StackActivityProgress } from "aws-cdk/lib/api/util/cloudformation/stack-activity-monitor";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import AWS, {
   DynamoDB,
@@ -335,7 +336,8 @@ export function runtimeTestSuite<
             Key: k,
             Value: v,
           })),
-          force: true,
+          hotswap: true,
+          progress: StackActivityProgress.EVENTS,
         })
       );
 
