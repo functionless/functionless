@@ -1179,10 +1179,10 @@
     ts-node "^9"
     tslib "^2"
 
-"@functionless/ast-reflection@^0.2.2":
-  version "0.2.2"
-  resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.2.2.tgz#976ec73af75028cb6216d70fa5266db368b0590a"
-  integrity sha512-YtvaEnorKparTOOIXmEbUXEfN4vOGl9jyXY7tvCDAgDpGMdJI2xAs108nHjNa6gabL9Xvojm6I1SuPC+EAsBvg==
+"@functionless/ast-reflection@^0.3.1":
+  version "0.3.1"
+  resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.3.1.tgz#5823249bbe3c9a57eb7b3471cff222577652cb38"
+  integrity sha512-to/pjwiN2KzZKY/ypTf4njFQ/dbFw+d9nfbpbjzBDwetFd+2b7KRjuI2c/FkiXlTrKTKNNYP9nyypocRk8q1bg==
 
 "@functionless/language-service@^0.0.3":
   version "0.0.3"
@@ -2800,7 +2800,7 @@ function.prototype.name@^1.1.5:
 "functionless@file:..":
   version "0.0.0"
   dependencies:
-    "@functionless/ast-reflection" "^0.2.2"
+    "@functionless/ast-reflection" "^0.3.1"
     "@functionless/nodejs-closure-serializer" "^0.1.2"
     "@swc/cli" "^0.1.57"
     "@swc/core" "1.2.245"

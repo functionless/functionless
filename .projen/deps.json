@@ -223,7 +223,7 @@
     },
     {
       "name": "@functionless/ast-reflection",
-      "version": "^0.2.2",
+      "version": "^0.3.1",
       "type": "runtime"
     },
     {

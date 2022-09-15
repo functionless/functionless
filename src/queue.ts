@@ -922,12 +922,12 @@ abstract class BaseQueue<Message>
    * @hidden
    */
   protected createParser(): (event: lambda.SQSEvent) => SQSEvent<Message> {
-    const code = this.serializer?.create();
+    const codec = this.serializer?.create();
     return (event) => ({
       Records: event.Records.map((record) => ({
         ...record,
-        message: code
-          ? code.read(record.body)
+        message: codec
+          ? codec.read(record.body)
           : // this is unsafe - how can we ensure that, when no serializer is provided, then the message is always the raw string?
             (record.body as unknown as Message),
       })),

@@ -604,7 +604,7 @@ export class ASL {
       }
     } else if (isForOfStmt(stmt) || isForInStmt(stmt)) {
       return this.evalExprToSubState(stmt.expr, (output) => {
-        const body = this.evalStmt(stmt.body, returnPass);
+        const body = this.evalStmt(stmt.stmt, returnPass);
 
         // assigns either a constant or json path to a new variable
         const assignTempState = this.assignValue(undefined, output);
@@ -629,10 +629,12 @@ export class ASL {
           if (isForInStmt(stmt)) {
             const initializerName = isIdentifier(stmt.initializer)
               ? this.getIdentifierName(stmt.initializer)
-              : isVariableDecl(stmt.initializer) &&
-                isIdentifier(stmt.initializer.name)
+              : isVariableDeclList(stmt.initializer) &&
+                isIdentifier(stmt.initializer.decls[0].name)
               ? this.getDeclarationName(
-                  stmt.initializer as VariableDecl & { name: Identifier }
+                  stmt.initializer.decls[0] as VariableDecl & {
+                    name: Identifier;
+                  }
                 )
               : undefined;
 
@@ -662,14 +664,20 @@ export class ASL {
               },
             };
           } else {
-            return isVariableDecl(stmt.initializer)
-              ? // supports deconstruction variable declaration
-                this.evalDecl(stmt.initializer, {
+            return isVariableDeclList(stmt.initializer)
+              ? this.evalDecl(stmt.initializer.decls[0]!, {
                   jsonPath: `${tempArrayPath}[0]`,
                 })!
-              : this.evalAssignment(stmt.initializer, {
+              : isIdentifier(stmt.initializer)
+              ? this.evalAssignment(stmt.initializer, {
                   jsonPath: `${tempArrayPath}[0]`,
-                })!;
+                })!
+              : (() => {
+                  throw new SynthError(
+                    ErrorCodes.Unsupported_Feature,
+                    `expression ${stmt.initializer.nodeKind} is not supported as the initializer in a ForInStmt`
+                  );
+                })();
           }
         })();
 
@@ -730,7 +738,7 @@ export class ASL {
         };
       });
     } else if (isForStmt(stmt)) {
-      const body = this.evalStmt(stmt.body, returnPass);
+      const body = this.evalStmt(stmt.stmt, returnPass);
 
       return this.evalContextToSubState(stmt, ({ evalExpr }) => {
         const initializers = stmt.initializer
@@ -1198,7 +1206,7 @@ export class ASL {
         : undefined;
       return ASLGraph.joinSubStates(stmt, initialize, _catch);
     } else if (isWhileStmt(stmt) || isDoStmt(stmt)) {
-      const blockState = this.evalStmt(stmt.block, returnPass);
+      const blockState = this.evalStmt(stmt.stmt, returnPass);
       if (!blockState) {
         throw new SynthError(
           ErrorCodes.Unexpected_Error,
@@ -4467,9 +4475,9 @@ export class ASL {
               // let i;
               // for (i in ..)
               return element === parent.initializer.lookup();
-            } else if (isVariableDecl(parent.initializer)) {
+            } else if (isVariableDeclList(parent.initializer)) {
               // for (let i in ..)
-              return parent.initializer === element;
+              return parent.initializer.decls[0] === element;
             }
           }
           return false;
@@ -5554,7 +5562,9 @@ function toStateName(node?: FunctionlessNode): string {
     return `for(${
       isIdentifier(node.initializer)
         ? toStateName(node.initializer)
-        : toStateName(node.initializer.name)
+        : isVariableDeclList(node.initializer)
+        ? toStateName(node.initializer.decls[0]!.name)
+        : toStateName(node.initializer)
     } in ${toStateName(node.expr)})`;
   } else if (isForOfStmt(node)) {
     return `for(${toStateName(node.initializer)} of ${toStateName(node.expr)})`;
