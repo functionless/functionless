@@ -2,7 +2,7 @@
 import Cloud from "@site/static/img/cloud.png";
 import Friendly from "@site/static/img/friendly.png";
 import Keys from "@site/static/img/keys.png";
-
+import CodeBlock from "@theme/CodeBlock";
 import clsx from "clsx";
 
 import Highlighter from "../highlighter";
@@ -86,13 +86,15 @@ const FeatureList: FeatureItem[] = [
 ];
 
 function CodePreview(props: { title: string; code: string }) {
+  console.log(props.code);
   return (
     <div className="row">
       <div className="col col--12 padding-top--lg padding-bottom--md">
         {props.title}
       </div>
       <div className="col col--12">
-        <Highlighter>{props.code}</Highlighter>
+        <CodeBlock>{props.code}</CodeBlock>
+        {/* <Highlighter>{props.code}</Highlighter> */}
       </div>
     </div>
   );

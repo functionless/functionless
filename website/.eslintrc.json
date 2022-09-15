@@ -1,0 +1,9 @@
+{
+  "rules": {
+    "import/no-unresolved": [
+      "error",
+      { "ignore": ["^@theme", "^@docusaurus", "^@site"] }
+    ],
+    "import/no-extraneous-dependencies": ["off"]
+  }
+}

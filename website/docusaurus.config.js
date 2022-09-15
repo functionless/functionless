@@ -132,24 +132,20 @@ const config = {
             label: "Team",
             position: "left",
           },
-
           {
             href: "https://discord.gg/VRqHbjrbfC",
-            icon: "/img/social/discord.svg",
+            html: '<img src="/img/social/discord.svg" />',
             position: "right",
-            label: "Discord Community",
           },
           {
             href: "https://twitter.com/_functionless",
-            icon: "/img/social/twitter.svg",
+            html: '<img src="/img/social/twitter.svg" />',
             position: "right",
-            label: "Twitter",
           },
           {
             href: "https://github.com/functionless/functionless",
-            icon: "/img/social/github.svg",
+            html: '<img src="/img/social/github.svg" />',
             position: "right",
-            label: "Github",
           },
         ],
       },
@@ -197,6 +193,29 @@ const config = {
           },
         ],
         copyright: `Copyright © ${new Date().getFullYear()} Functionless`,
+      },
+      algolia: {
+        // The application ID provided by Algolia
+        appId: "YOUR_APP_ID",
+
+        // Public API key: it is safe to commit it
+        apiKey: "YOUR_SEARCH_API_KEY",
+
+        indexName: "YOUR_INDEX_NAME",
+
+        // Optional: see doc section below
+        contextualSearch: true,
+
+        // Optional: Specify domains where the navigation should occur through window.location instead on history.push. Useful when our Algolia config crawls multiple documentation sites and we want to navigate with window.location.href to them.
+        externalUrlRegex: "[]",
+
+        // Optional: Algolia search parameters
+        searchParameters: {},
+
+        // Optional: path for search page that enabled by default (`false` to disable it)
+        searchPagePath: "search",
+
+        //... other Algolia params
       },
     }),
 };
