@@ -5,7 +5,6 @@ import {
   Function,
   FunctionProps,
   JsonSecret,
-  SerializerImpl,
   TextSecret,
 } from "../src";
 import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";

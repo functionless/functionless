@@ -145,8 +145,7 @@ const project = new CustomTypescriptProject({
       transform: {
         "^.+\\.(t|j)sx?$": ["./jest.js", {}],
       },
-      // TODO: delete me, just to shorten the test cycle
-      testMatch: ["**/secret.localstack.test.ts"],
+      testPathIgnorePatterns: ["/node_modules/", ".*serialize.*"],
     },
   },
   scripts: {
