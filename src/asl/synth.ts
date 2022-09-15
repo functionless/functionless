@@ -614,9 +614,8 @@ export class ASL {
           ? assignTempState
           : // if `ForIn`, map the array into a tuple of index and item
             ASLGraph.joinSubStates(stmt.expr, assignTempState, {
-              ...this.zipArray(
-                tempArrayPath,
-                (indexJsonPath) => `States.Format('{}', ${indexJsonPath})`
+              ...this.zipArray(tempArrayPath, (indexJsonPath) =>
+                ASLGraph.intrinsicFormat("{}", indexJsonPath)
               ),
               ResultPath: tempArrayPath,
               Next: ASLGraph.DeferNext,
@@ -1072,7 +1071,7 @@ export class ASL {
           ? ASLGraph.joinSubStates(
               stmt.catchClause.variableDecl,
               ASLGraph.assignJsonPathOrIntrinsic(
-                `States.StringToJson($.${errorVariableName}.Cause)`,
+                ASLGraph.intrinsicStringToJson(`$.${errorVariableName}.Cause`),
                 `$.${errorVariableName}`,
                 "0_ParsedError"
               ),
@@ -1799,7 +1798,9 @@ export class ASL {
           .filter(ASLGraph.isJsonPath)
           .map(({ jsonPath }) => jsonPath)
           .map((jp) =>
-            jp.match(/\$\.[^a-zA-Z]/g) ? [jp, this.newHeapVariable()] : [jp, jp]
+            jp.match(/\$\.[^a-zA-Z]/g)
+              ? [jp, this.newHeapVariable()]
+              : ([jp, jp] as const)
           );
 
         // generate any pass states to rewrite variables as needed
@@ -1816,11 +1817,14 @@ export class ASL {
         rewriteStates.map(addState);
 
         return this.assignJsonPathOrIntrinsic(
-          `States.Format('${elementOutputs
-            .map((output) =>
-              ASLGraph.isJsonPath(output) ? "{}" : output.value
-            )
-            .join("")}',${jsonPaths.map(([, jp]) => jp)})`,
+          ASLGraph.intrinsicFormat(
+            elementOutputs
+              .map((output) =>
+                ASLGraph.isJsonPath(output) ? "{}" : output.value
+              )
+              .join(""),
+            ...jsonPaths.map(([, jp]) => jp)
+          ),
           "string",
           undefined,
           expr
@@ -1923,8 +1927,8 @@ export class ASL {
 
           return this.assignJsonPathOrIntrinsic(
             isJsonStringify(expr)
-              ? `States.JsonToString(${objectPath})`
-              : `States.StringToJson(${objectPath})`
+              ? ASLGraph.intrinsicJsonToString(objectPath)
+              : ASLGraph.intrinsicStringToJson(objectPath)
           );
         });
       } else if (isReferenceExpr(expr.expr)) {
@@ -2166,48 +2170,45 @@ export class ASL {
           const mutateResult = this.assignJsonPathOrIntrinsic(mutateExpression);
 
           if (isUnaryExpr(expr)) {
-            // prefix
-            // update left value
-            // assign left to new value
-            // return new value (don't return left)
-
             return {
               ...ASLGraph.joinSubStates(
                 undefined,
+                // update into a new variable
                 mutateResult,
+                // update the variable
                 this.assignValue(
                   undefined,
                   mutateResult.output,
                   output.jsonPath
                 )
               )!,
+              // return the new variable
               output: mutateResult.output,
             };
           } else {
-            // postfix
-            // assign left to heap
-            // mutate left
-            // assign left
-            // return heap
             const assignResult = this.assignValue(undefined, output);
             return {
               ...ASLGraph.joinSubStates(
                 expr,
+                // assign the value to a new variable
                 assignResult,
+                // update the new variable
                 mutateResult,
+                // update the original value
                 this.assignValue(
                   undefined,
                   mutateResult.output,
                   output.jsonPath
                 )
               )!,
+              // return the original value
               output: assignResult.output,
             };
           }
         });
       } else if (expr.op === "~") {
         throw new SynthError(
-          ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
+          ErrorCodes.Cannot_perform_all_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
           `Step Function does not support operator ${expr.op}`
         );
       }
@@ -2216,7 +2217,7 @@ export class ASL {
       const constant = evalToConstant(expr);
       if (constant !== undefined) {
         return {
-          value: constant,
+          value: constant as unknown as ASLGraph.LiteralValueType,
           containsJsonPath: false,
         };
       } else if (
@@ -2274,17 +2275,16 @@ export class ASL {
                 ASLGraph.isLiteralNumber(left)
               ) {
                 return ASLGraph.isLiteralValue(right)
-                  ? {
-                      value:
-                        right.value &&
-                        typeof right.value === "object" &&
-                        left.value in right.value,
-                      containsJsonPath: false,
-                    }
+                  ? // if the left and right are literal values, evaluate the expression now
+                    ASLGraph.literalValue(
+                      ASLGraph.isLiteralObject(right) &&
+                        left.value in right.value
+                    )
                   : ASLGraph.isConditionOutput(right)
                   ? // `in` is invalid with a boolean value
-                    { value: false, containsJsonPath: false }
-                  : { condition: ASLGraph.elementIn(left, right) };
+                    ASLGraph.literalValue(false)
+                  : // if the left is a literal value, but the right is a json path, check to see if the left is present in the right
+                    ASLGraph.conditionOutput(ASLGraph.elementIn(left, right));
               }
               throw new SynthError(
                 ErrorCodes.StepFunctions_Invalid_collection_access,
@@ -2391,7 +2391,7 @@ export class ASL {
       ) {
         // TODO: support string concat - https://github.com/functionless/functionless/issues/330
         throw new SynthError(
-          ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
+          ErrorCodes.Cannot_perform_all_arithmetic_or_bitwise_computations_on_variables_in_Step_Function,
           `Step Function does not support operator ${expr.op}`
         );
       } else if (expr.op === "instanceof") {
@@ -2866,7 +2866,7 @@ export class ASL {
           Default: "format",
         },
         format: ASLGraph.assignJsonPathOrIntrinsic(
-          `States.JsonToString(${jsonPath.jsonPath})`,
+          ASLGraph.intrinsicJsonToString(jsonPath),
           heap,
           "str"
         ),
@@ -3564,8 +3564,17 @@ export class ASL {
             // append the current string to the separator and the head of the array
             append: ASLGraph.assignJsonPathOrIntrinsic(
               ASLGraph.isJsonPath(separator)
-                ? `States.Format('{}{}{}', ${resultVariable}.string, ${separator.jsonPath}, ${arrayPath}[0])`
-                : `States.Format('{}${separator.value}{}', ${resultVariable}.string, ${arrayPath}[0])`,
+                ? ASLGraph.intrinsicFormat(
+                    "{}{}{}",
+                    ASLGraph.jsonPath(resultVariable, "string"),
+                    separator,
+                    `${arrayPath}[0]`
+                  )
+                : ASLGraph.intrinsicFormat(
+                    "{}${separator.value}{}",
+                    ASLGraph.jsonPath(resultVariable, "string"),
+                    `${arrayPath}[0]`
+                  ),
               resultVariable,
               "string",
               "tail"
@@ -3808,7 +3817,11 @@ export class ASL {
                 // tail
                 [`${tailTarget}.$`]: tailJsonPath,
                 // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
-                "arrStr.$": `States.Format('{},{}', ${workingSpaceJsonPath}.arrStr, States.JsonToString(${itemJsonPath}))`,
+                "arrStr.$": ASLGraph.intrinsicFormat(
+                  "{},{}",
+                  ASLGraph.jsonPath(workingSpaceJsonPath, "arrStr"),
+                  ASLGraph.intrinsicJsonToString(itemJsonPath)
+                ),
               },
               // write over the current working space
               ResultPath: workingSpaceJsonPath,
@@ -3825,7 +3838,12 @@ export class ASL {
           startState: "format",
           states: {
             format: ASLGraph.assignJsonPathOrIntrinsic(
-              `States.StringToJson(States.Format('{}]', ${workingJsonPath}.arrStr))`,
+              ASLGraph.intrinsicStringToJson(
+                ASLGraph.intrinsicFormat(
+                  "{}]",
+                  ASLGraph.jsonPath(workingJsonPath, "arrStr")
+                )
+              ),
               workingJsonPath,
               "result",
               "set"
@@ -4098,7 +4116,11 @@ export class ASL {
             Parameters: {
               [`${tailTarget}.$`]: `${tailJsonPath}`,
               // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
-              "arrStr.$": `States.Format('{},{}', ${workingSpaceJsonPath}.arrStr, States.JsonToString(${iterationResult}))`,
+              "arrStr.$": ASLGraph.intrinsicFormat(
+                "{},{}",
+                ASLGraph.jsonPath(workingSpaceJsonPath, "arrStr"),
+                ASLGraph.intrinsicJsonToString(iterationResult)
+              ),
             },
             ResultPath: workingSpaceJsonPath,
             Next: ASLGraph.DeferNext,
@@ -4109,7 +4131,12 @@ export class ASL {
             startState: "format",
             states: {
               format: ASLGraph.assignJsonPathOrIntrinsic(
-                `States.StringToJson(States.Format('{}]', ${workingSpaceJsonPath}.arrStr))`,
+                ASLGraph.intrinsicStringToJson(
+                  ASLGraph.intrinsicFormat(
+                    "{}]",
+                    ASLGraph.jsonPath(workingSpaceJsonPath, "arrStr")
+                  )
+                ),
                 workingSpaceJsonPath,
                 "result",
                 "set"
@@ -4870,11 +4897,7 @@ export class ASL {
               return {
                 jsonPath: `${value.jsonPath}['${propertyName}']`,
               };
-            } else if (
-              ASLGraph.isLiteralValue(value) &&
-              value.value &&
-              typeof value.value === "object"
-            ) {
+            } else if (ASLGraph.isLiteralObject(value)) {
               return {
                 value: value.value[propertyName as keyof typeof value.value],
                 containsJsonPath: value.containsJsonPath,

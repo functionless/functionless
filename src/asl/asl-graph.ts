@@ -19,6 +19,7 @@ import {
   State,
   Pass,
   Condition,
+  Parameters,
 } from "./states";
 import { ASL } from "./synth";
 
@@ -113,8 +114,10 @@ export namespace ASLGraph {
     | number
     | null
     | boolean
-    | Record<string, any>
-    | any[];
+    | {
+        [key: string]: LiteralValueType;
+      }
+    | LiteralValueType[];
 
   /**
    * A literal value of type string, number, boolean, object, or null.
@@ -897,7 +900,7 @@ export namespace ASLGraph {
           }
         : value.containsJsonPath
         ? {
-            Parameters: value.value,
+            Parameters: value.value as unknown as Parameters,
           }
         : {
             Result: value.value,
@@ -921,7 +924,7 @@ export namespace ASLGraph {
             InputPath: value.jsonPath,
           }
         : {
-            Parameters: value.value,
+            Parameters: value.value as unknown as Parameters,
           }),
     };
   }
@@ -1388,6 +1391,17 @@ export namespace ASLGraph {
     );
   }
 
+  /**
+   * Wraps any literal value which can be output an an ASL state.
+   *
+   * @param containsJsonPath - when true, denotes that an object contains json path in it's properties at any depth.
+   *                           ```ts
+   *                           { "key.$": "$.value" }
+   *                           ```
+   *                           ```ts
+   *                           { k: { "key.$": "$.value" } }
+   *                           ```
+   */
   export function literalValue<V extends LiteralValueType = LiteralValueType>(
     value: V,
     containsJsonPath: boolean = false
@@ -1398,15 +1412,38 @@ export namespace ASLGraph {
     };
   }
 
+  /**
+   * Represents any json path output by an ASL state.
+   *
+   * Provides a friendly helper for formatting json path segments.
+   *
+   * ```ts
+   * const j = ASLGraph.jsonPath("$.path", "seg");
+   * j.jsonPath // $.path.seg
+   * ```
+   */
   export function jsonPath(
-    jsonPath: string | ASLGraph.JsonPath,
+    jsonPath: string | JsonPath,
     ...segment: string[]
-  ): ASLGraph.JsonPath {
+  ): JsonPath {
     return {
       jsonPath: `${
         typeof jsonPath === "string" ? jsonPath : jsonPath.jsonPath
       }${segment.length > 0 ? `.${segment.join(".")}` : ""}`,
     };
+  }
+
+  /**
+   * Represents a conditional statement which can be returned from a state.
+   *
+   * For example
+   *
+   * ```ts
+   * x === 1 // ASLGraph.conditionOutput(ASL.equals(...))
+   * ```
+   */
+  export function conditionOutput(condition: Condition) {
+    return { condition };
   }
 
   /**
@@ -1445,7 +1482,7 @@ export namespace ASLGraph {
     template: string | ASLGraph.JsonPath | ASLGraph.LiteralValue<string>,
     ...args: (string | ASLGraph.JsonPath | ASLGraph.LiteralValue)[]
   ) {
-    return ASLGraph.intrinsicFunction(
+    return intrinsicFunction(
       "States.Format",
       typeof template === "string" ? ASLGraph.literalValue(template) : template,
       ...args
@@ -1462,7 +1499,7 @@ export namespace ASLGraph {
     value: string | ASLGraph.JsonPath | ASLGraph.LiteralValue<string>,
     separator: string | (ASLGraph.JsonPath | ASLGraph.LiteralValue<string>)
   ) {
-    return ASLGraph.intrinsicFunction("States.StringSplit", value, separator);
+    return intrinsicFunction("States.StringSplit", value, separator);
   }
 
   /**
@@ -1473,7 +1510,7 @@ export namespace ASLGraph {
   export function intrinsicStringToJson(
     value: string | ASLGraph.JsonPath | ASLGraph.LiteralValue<string>
   ) {
-    return ASLGraph.intrinsicFunction("States.StringToJson", value);
+    return intrinsicFunction("States.StringToJson", value);
   }
 
   /**
@@ -1484,7 +1521,7 @@ export namespace ASLGraph {
   export function intrinsicJsonToString(
     value: string | ASLGraph.JsonPath | ASLGraph.LiteralValue
   ) {
-    return ASLGraph.intrinsicFunction("States.JsonToString", value);
+    return intrinsicFunction("States.JsonToString", value);
   }
 
   /**
@@ -1497,7 +1534,7 @@ export namespace ASLGraph {
     arr: string | ASLGraph.JsonPath,
     index: number | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>
   ) {
-    return ASLGraph.intrinsicFunction(
+    return intrinsicFunction(
       "States.ArrayGetItem",
       arr,
       typeof index === "number" ? ASLGraph.literalValue(index) : index
@@ -1514,7 +1551,7 @@ export namespace ASLGraph {
     arr: string | ASLGraph.JsonPath,
     item: string | ASLGraph.JsonPath | ASLGraph.LiteralValue
   ) {
-    return ASLGraph.intrinsicFunction("States.ArrayContains", arr, item);
+    return intrinsicFunction("States.ArrayContains", arr, item);
   }
 
   /**
@@ -1523,7 +1560,7 @@ export namespace ASLGraph {
    * @param arr to get length of
    */
   export function intrinsicArrayLength(arr: string | ASLGraph.JsonPath) {
-    return ASLGraph.intrinsicFunction("States.ArrayLength", arr);
+    return intrinsicFunction("States.ArrayLength", arr);
   }
 
   /**
@@ -1538,7 +1575,7 @@ export namespace ASLGraph {
     end: number | string | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>,
     step: number | string | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>
   ) {
-    return ASLGraph.intrinsicFunction(
+    return intrinsicFunction(
       "States.ArrayRange",
       typeof start === "number" ? ASLGraph.literalValue(start) : start,
       typeof end === "number" ? ASLGraph.literalValue(end) : end,
@@ -1560,7 +1597,7 @@ export namespace ASLGraph {
         >
     )[]
   ) {
-    return ASLGraph.intrinsicFunction("States.Array", ...items);
+    return intrinsicFunction("States.Array", ...items);
   }
 
   /**
@@ -1570,7 +1607,7 @@ export namespace ASLGraph {
     left: number | string | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>,
     right: number | string | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>
   ) {
-    return ASLGraph.intrinsicFunction(
+    return intrinsicFunction(
       "States.MathAdd",
       typeof left === "number" ? ASLGraph.literalValue(left) : left,
       typeof right === "number" ? ASLGraph.literalValue(right) : right
