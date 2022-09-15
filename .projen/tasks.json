@@ -85,7 +85,7 @@
       "name": "compile",
       "description": "Only compile",
       "env": {
-        "NODE_OPTIONS": "--max-old-space-size=6144",
+        "NODE_OPTIONS": "--max-old-space-size=4096",
         "TEST_DEPLOY_TARGET": "AWS"
       },
       "steps": [
@@ -191,14 +191,14 @@
       "description": "Run tests",
       "env": {
         "TEST_DEPLOY_TARGET": "AWS",
-        "NODE_OPTIONS": "--max-old-space-size=6144"
+        "NODE_OPTIONS": "--max-old-space-size=4096"
       },
       "steps": [
         {
           "exec": "cd ./test-app && yarn && yarn build && yarn synth --quiet"
         },
         {
-          "exec": "jest --passWithNoTests --all --no-cache --force-exit --updateSnapshot"
+          "exec": "jest --passWithNoTests --all --no-cache --forceExit --updateSnapshot"
         },
         {
           "spawn": "eslint"
