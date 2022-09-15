@@ -7,7 +7,6 @@ on:
       - closed
 jobs:
   cleanUp:
-    needs: build
     runs-on: ubuntu-latest
     permissions:
       contents: write
