@@ -337,7 +337,6 @@ export function runtimeTestSuite<
             Value: v,
           })),
           hotswap: true,
-          progress: StackActivityProgress.EVENTS,
         })
       );
 
