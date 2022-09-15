@@ -146,7 +146,7 @@ const project = new CustomTypescriptProject({
         "^.+\\.(t|j)sx?$": ["./jest.js", {}],
       },
     },
-    extraCliOptions: ["--no-cache"],
+    extraCliOptions: ["--no-cache", "--force-exit"],
   },
   scripts: {
     localstack: "./scripts/localstack",

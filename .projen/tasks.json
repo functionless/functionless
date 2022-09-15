@@ -198,7 +198,7 @@
           "exec": "cd ./test-app && yarn && yarn build && yarn synth --quiet"
         },
         {
-          "exec": "jest --passWithNoTests --all --no-cache --updateSnapshot"
+          "exec": "jest --passWithNoTests --all --no-cache --force-exit --updateSnapshot"
         },
         {
           "spawn": "eslint"
