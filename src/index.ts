@@ -23,6 +23,7 @@ export * from "./reflect";
 export * from "./s-expression";
 export * from "./secret";
 export * from "./serializer";
+export * from "./serialize-closure/serialize";
 export * from "./statement";
 export * from "./step-function";
 export * from "./table";

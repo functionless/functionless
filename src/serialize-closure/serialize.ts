@@ -4,7 +4,7 @@ import util from "util";
 import { Token } from "aws-cdk-lib";
 import { CodeWithSourceMap, SourceNode } from "source-map";
 
-import { assertNever } from "./assert";
+import { assertNever } from "../assert";
 import {
   BindingName,
   ClassDecl,
@@ -13,8 +13,8 @@ import {
   MethodDecl,
   SetAccessorDecl,
   VariableDeclKind,
-} from "./declaration";
-import { ClassExpr } from "./expression";
+} from "../declaration";
+import { ClassExpr } from "../expression";
 import {
   isArgument,
   isArrayBinding,
@@ -99,10 +99,12 @@ import {
   isWhileStmt,
   isWithStmt,
   isYieldExpr,
-} from "./guards";
-import { FunctionlessNode } from "./node";
-import { reflect, reverseProxy, unbind } from "./reflect";
-import { Globals } from "./serialize-globals";
+} from "../guards";
+import { FunctionlessNode } from "../node";
+import { reflect, reverseProxy, unbind } from "../reflect";
+import { AnyClass, AnyFunction, evalToConstant } from "../util";
+import { forEachChild } from "../visit";
+import { Globals } from "./globals";
 import {
   exprStmt,
   assignExpr,
@@ -125,9 +127,7 @@ import {
   SourceNodeOrString,
   createSourceNode,
   createSourceNodeWithoutSpan,
-} from "./serialize-util";
-import { AnyClass, AnyFunction, evalToConstant } from "./util";
-import { forEachChild } from "./visit";
+} from "./util";
 
 export interface SerializeClosureProps {
   /**

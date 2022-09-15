@@ -14,7 +14,7 @@ import {
   serializeClosure,
   SerializeClosureProps,
   serializeCodeWithSourceMap,
-} from "../src/serialize-closure";
+} from "../src/serialize-closure/serialize";
 
 // set to false to inspect generated js files in .test/
 const cleanup = true;

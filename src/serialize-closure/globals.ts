@@ -1,7 +1,7 @@
 // sourced from the lib.*.d.ts files
 import module from "module";
-import globals from "./serialize-globals.json";
-import { callExpr, idExpr, propAccessExpr, stringExpr } from "./serialize-util";
+import globals from "./globals.json";
+import { callExpr, idExpr, propAccessExpr, stringExpr } from "./util";
 
 export const Globals = new Map<any, () => string>();
 

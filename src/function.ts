@@ -62,7 +62,7 @@ import { isSecret } from "./secret";
 import {
   serializeClosure,
   serializeCodeWithSourceMap,
-} from "./serialize-closure";
+} from "./serialize-closure/serialize";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
 import { AnyAsyncFunction, AnyFunction } from "./util";
