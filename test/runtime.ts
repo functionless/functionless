@@ -240,7 +240,7 @@ export function runtimeTestSuite<
     ) => void
   ) => void
 ): void {
-  jest.setTimeout(500000);
+  jest.setTimeout(1000000);
 
   const tests: TestCase<BaseOutput, any, TestExtras>[] = [];
   // will be set in the before all
