@@ -116,8 +116,7 @@
       ]
     },
     "testPathIgnorePatterns": [
-      "/node_modules/",
-      ".*serialize-closure.*"
+      "/node_modules/"
     ],
     "testMatch": [
       "<rootDir>/src/**/__tests__/**/*.ts?(x)",

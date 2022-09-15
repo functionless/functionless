@@ -145,7 +145,7 @@ const project = new CustomTypescriptProject({
       transform: {
         "^.+\\.(t|j)sx?$": ["./jest.js", {}],
       },
-      testPathIgnorePatterns: ["/node_modules/", ".*serialize-closure.*"],
+      testPathIgnorePatterns: ["/node_modules/"],
     },
   },
   scripts: {
