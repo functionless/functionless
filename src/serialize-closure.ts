@@ -162,9 +162,7 @@ export interface SerializeClosureProps {
  * @returns a a JavaScript string with the source map as a base64-encoded comment at the end of the file.
  */
 export function serializeCodeWithSourceMap(code: CodeWithSourceMap) {
-  const map = Buffer.from(JSON.stringify(code.map.toJSON())).toString(
-    "base64url"
-  );
+  const map = Buffer.from(JSON.stringify(code.map.toJSON())).toString("base64");
   return `${code.code}\n//# sourceMappingURL=data:application/json;base64,${map}`;
 }
 
