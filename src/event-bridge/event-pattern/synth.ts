@@ -26,7 +26,6 @@ import {
   isNullLiteralExpr,
   isParenthesizedExpr,
   isPropAccessExpr,
-  isSuperKeyword,
   isUnaryExpr,
   isUndefinedLiteralExpr,
 } from "../../guards";
@@ -640,12 +639,6 @@ export const synthesizePatternDocument = (
   const getEventReference = (
     expression: Expr | SuperKeyword
   ): ReferencePath | undefined => {
-    if (isSuperKeyword(expression)) {
-      throw new SynthError(
-        ErrorCodes.Unsupported_Feature,
-        "Event Bridge does not support super."
-      );
-    }
     return getReferencePath(expression);
   };
 

@@ -38,7 +38,6 @@ import {
   isParenthesizedExpr,
   isSpreadAssignExpr,
   isFunctionLike,
-  isSuperKeyword,
 } from "./guards";
 import { IntegrationImpl, tryFindIntegration } from "./integration";
 import { validateFunctionLike } from "./reflect";
@@ -661,12 +660,7 @@ export class APIGatewayVTL extends VTL {
       isIdentifier(node.name) &&
       node.name.name === "data"
     ) {
-      if (isSuperKeyword(node.expr)) {
-        throw new SynthError(
-          ErrorCodes.Unsupported_Feature,
-          "API Gateway does not support `super`."
-        );
-      } else if (isInputBody(node.expr)) {
+      if (isInputBody(node.expr)) {
         // $input.data maps to `$input.path('$')`
         // this returns a VTL object representing the root payload data
         return `$input.path('$')`;
@@ -851,12 +845,7 @@ export class APIGatewayVTL extends VTL {
         // this is a reference to an intermediate value, cannot be expressed as JSON Path
         return undefined;
       } else if (isPropAccessExpr(expr)) {
-        if (isSuperKeyword(expr.expr)) {
-          throw new SynthError(
-            ErrorCodes.Unsupported_Feature,
-            "API Gateway does not support `super`."
-          );
-        } else if (
+        if (
           isIdentifier(expr.name) &&
           expr.name.name === "data" &&
           isInputBody(expr.expr)

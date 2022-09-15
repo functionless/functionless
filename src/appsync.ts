@@ -42,7 +42,6 @@ import {
   isThisExpr,
   isVariableDecl,
   isFunctionLike,
-  isSuperKeyword,
 } from "./guards";
 import {
   findDeepIntegrations,
@@ -687,7 +686,7 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
           if (isCallExpr(expr)) {
             template.call(expr);
             return returnValName;
-          } else if (isPropAccessExpr(expr) && !isSuperKeyword(expr.expr)) {
+          } else if (isPropAccessExpr(expr)) {
             return `${getResult(expr.expr)}.${expr.name.name}`;
           } else if (isElementAccessExpr(expr)) {
             return `${getResult(expr.expr)}[${getResult(expr.element)}]`;
