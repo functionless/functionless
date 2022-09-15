@@ -480,7 +480,7 @@ abstract class BaseQueue<Message>
                   delete input.value.MessageBody;
                 } else if (
                   "MessageBody.$" in input.value &&
-                  typeof input.value === "string"
+                  typeof input.value["MessageBody.$"] === "string"
                 ) {
                   messageBodyJsonPath = input.value["MessageBody.$"];
                   delete input.value["MessageBody.$"];

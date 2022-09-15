@@ -1828,7 +1828,7 @@ export class ASL {
           ASLGraph.intrinsicFormat(
             elementOutputs
               .map((output) =>
-                ASLGraph.isJsonPath(output) ? "{}" : output.value
+                ASLGraph.isJsonPath(output) ? "{}" : escapeFormatString(output)
               )
               .join(""),
             ...jsonPaths.map(([, jp]) => jp)
@@ -1837,6 +1837,23 @@ export class ASL {
           undefined,
           expr
         );
+
+        /**
+         * Escape special characters in Step Functions intrinsics.
+         *
+         * } => \}
+         * { => \{
+         * ' => \'
+         *
+         * https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-intrinsic-functions.html#amazon-states-language-intrinsic-functions-escapes
+         */
+        function escapeFormatString(literal: ASLGraph.LiteralValue) {
+          if (typeof literal.value === "string") {
+            return literal.value.replace(/[\}\{\'}]/g, "\\$&");
+          } else {
+            return literal.value;
+          }
+        }
       });
     } else if (isCallExpr(expr)) {
       const integration = tryFindIntegration(expr.expr);
@@ -3579,7 +3596,7 @@ export class ASL {
                     `${arrayPath}[0]`
                   )
                 : ASLGraph.intrinsicFormat(
-                    "{}${separator.value}{}",
+                    `{}${separator.value}{}`,
                     ASLGraph.jsonPath(resultVariable, "string"),
                     `${arrayPath}[0]`
                   ),
