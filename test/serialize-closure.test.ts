@@ -55,7 +55,7 @@ async function expectClosure<F extends AnyFunction>(
   options?: SerializeClosureProps
 ): Promise<F> {
   const closure = serializeCodeWithSourceMap(serializeClosure(f, options));
-  // expect(closure).toMatchSnapshot();
+  expect(closure).toMatchSnapshot();
   const jsFile = path.join(tmpDir, `${v4()}.js`);
   await fs.promises.writeFile(jsFile, closure);
   // eslint-disable-next-line @typescript-eslint/no-require-imports
