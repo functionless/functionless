@@ -198,7 +198,7 @@
           "exec": "cd ./test-app && yarn && yarn build && yarn synth --quiet"
         },
         {
-          "exec": "jest --passWithNoTests --all --updateSnapshot --testPathPattern '(localstack|runtime)'"
+          "exec": "jest --passWithNoTests --all --updateSnapshot --testPathIgnorePatterns '(localstack|runtime)'"
         },
         {
           "exec": "jest --passWithNoTests --all --testPathIgnorePatterns (runtime|localstack) --updateSnapshot"
@@ -212,7 +212,7 @@
       "name": "test:fast",
       "steps": [
         {
-          "exec": "jest --testPathIgnorePatterns localstack --coverage false"
+          "exec": "jest --testPathPattern '(localstack|runtime)' --coverage false"
         }
       ]
     },

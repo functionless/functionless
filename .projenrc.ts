@@ -252,7 +252,7 @@ project.compileTask.env("TEST_DEPLOY_TARGET", "AWS");
 project.compileTask.prependExec("ts-node ./scripts/sdk-gen.ts");
 
 project.testTask.prependExec(
-  "jest --passWithNoTests --all --updateSnapshot --testPathPattern '(localstack|runtime)'"
+  "jest --passWithNoTests --all --updateSnapshot --testPathIgnorePatterns '(localstack|runtime)'"
 );
 
 project.testTask.prependExec(
@@ -270,7 +270,7 @@ project.testTask.env("TEST_DEPLOY_TARGET", "AWS");
 project.testTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
 
 const testFast = project.addTask("test:fast");
-testFast.exec(`jest --testPathIgnorePatterns localstack --coverage false`);
+testFast.exec(`jest --testPathPattern '(localstack|runtime)' --coverage false`);
 
 project.addPackageIgnore("/test-app");
 
