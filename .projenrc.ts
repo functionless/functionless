@@ -142,9 +142,8 @@ const project = new CustomTypescriptProject({
       transform: {
         "^.+\\.(t|j)sx?$": ["./jest.js", {}],
       },
-      // TODO: delete me, just to shorten the test cycle
-      testMatch: ["**/secret.localstack.test.ts"],
     },
+    extraCliOptions: ["--no-cache"],
   },
   scripts: {
     localstack: "./scripts/localstack",
@@ -237,7 +236,7 @@ closeWorkflow?.addJob("cleanUp", cleanJob);
 project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
 );
-project.compileTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
+project.compileTask.env("NODE_OPTIONS", "--max-old-space-size=6144");
 project.compileTask.env("TEST_DEPLOY_TARGET", "AWS");
 
 project.compileTask.prependExec("ts-node ./scripts/sdk-gen.ts");
@@ -254,7 +253,7 @@ project.testTask.prependExec(
 // project.testTask.env("AWS_ACCESS_KEY_ID", "test");
 // project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
 project.testTask.env("TEST_DEPLOY_TARGET", "AWS");
-project.testTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
+project.testTask.env("NODE_OPTIONS", "--max-old-space-size=6144");
 
 const testFast = project.addTask("test:fast");
 testFast.exec(`jest --testPathIgnorePatterns localstack --coverage false`);

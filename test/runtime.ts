@@ -336,7 +336,9 @@ export function runtimeTestSuite<
             Key: k,
             Value: v,
           })),
-          hotswap: true,
+          // hotswap uses the current user's role and not the bootstrapped role.
+          // the CI user does not have all of the right permissions.
+          hotswap: !process.env.CI,
         })
       );
 
