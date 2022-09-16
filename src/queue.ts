@@ -6,7 +6,7 @@ import {
 } from "aws-cdk-lib";
 import lambda from "aws-lambda";
 import { Construct } from "constructs";
-import { ASLGraph } from "./asl";
+import { ASLGraph, Parameters } from "./asl";
 import { ErrorCodes, SynthError } from "./error-code";
 import { EventBusTargetIntegration } from "./event-bridge";
 import { makeEventBusIntegration } from "./event-bridge/event-bus";
@@ -434,15 +434,15 @@ abstract class BaseQueue<Message>
               });
               if (this.serializer.dataType === DataType.Json) {
                 // request.MessageBody.value = JSON.stringify(request.MessageBody)
-                addState({
-                  Type: "Pass",
-                  ResultPath: `${input.jsonPath}.MessageBody`,
-                  Parameters: {
-                    "value.$":
-                      "States.JsonToString(${input.jsonPath}.MessageBody)",
-                  },
-                  Next: ASLGraph.DeferNext,
-                });
+                addState(
+                  ASLGraph.assignJsonPathOrIntrinsic(
+                    ASLGraph.intrinsicJsonToString(
+                      ASLGraph.jsonPath(input.jsonPath, "MessageBody")
+                    ),
+                    input.jsonPath,
+                    "MessageBody"
+                  )
+                );
                 // it's unfortunate that we have to do this
                 // request.MessageBody = request.MessageBody.value
                 addState({
@@ -472,12 +472,16 @@ abstract class BaseQueue<Message>
                   messageBodyJsonPath = context.newHeapVariable();
                   addState({
                     Type: "Pass",
-                    Parameters: input.value.MessageBody,
+                    Parameters: input.value
+                      .MessageBody as unknown as Parameters,
                     ResultPath: messageBodyJsonPath,
                     Next: ASLGraph.DeferNext,
                   });
                   delete input.value.MessageBody;
-                } else if ("MessageBody.$" in input.value) {
+                } else if (
+                  "MessageBody.$" in input.value &&
+                  typeof input.value["MessageBody.$"] === "string"
+                ) {
                   messageBodyJsonPath = input.value["MessageBody.$"];
                   delete input.value["MessageBody.$"];
                 } else {
@@ -491,7 +495,8 @@ abstract class BaseQueue<Message>
                   Resource: "arn:aws:states:::aws-sdk:sqs:sendMessage",
                   Parameters: {
                     ...input.value,
-                    "MessageBody.$": `States.JsonToString(${messageBodyJsonPath})`,
+                    "MessageBody.$":
+                      ASLGraph.intrinsicJsonToString(messageBodyJsonPath),
                     QueueUrl: this.queueUrl,
                   },
                   Next: ASLGraph.DeferNext,
@@ -501,7 +506,7 @@ abstract class BaseQueue<Message>
                   Type: "Task",
                   Resource: "arn:aws:states:::aws-sdk:sqs:sendMessage",
                   Parameters: {
-                    ...input.value,
+                    ...(input.value as any),
                     QueueUrl: this.queueUrl,
                   },
                   Next: ASLGraph.DeferNext,
@@ -611,14 +616,12 @@ abstract class BaseQueue<Message>
                   Iterator: {
                     StartAt: "serialize Message",
                     States: {
-                      "serialize Message": {
-                        Type: "Pass",
-                        Parameters: {
-                          "value.$": `States.JsonToString($.entry.MessageBody)`,
-                        },
-                        ResultPath: "$.entry.MessageBody",
-                        Next: "unwrap Message",
-                      },
+                      "serialize Message": ASLGraph.assignJsonPathOrIntrinsic(
+                        ASLGraph.intrinsicJsonToString("$.entry.MessageBody"),
+                        "$.entry",
+                        "MessageBody",
+                        "unwrap Message"
+                      ),
                       "unwrap Message": {
                         Type: "Pass",
                         InputPath: "$.entry.MessageBody.value",
@@ -775,14 +778,12 @@ abstract class BaseQueue<Message>
                       Iterator: {
                         StartAt: "JsonParse",
                         States: {
-                          JsonParse: {
-                            Type: "Pass",
-                            Parameters: {
-                              "parsed.$": `States.StringToJson($.message.Body)`,
-                            },
-                            ResultPath: "$.message.Message",
-                            Next: "UnwrapMessage",
-                          },
+                          JsonParse: ASLGraph.assignJsonPathOrIntrinsic(
+                            ASLGraph.intrinsicStringToJson("$.message.Body"),
+                            "$.message",
+                            "Message",
+                            "UnwrapMessage"
+                          ),
                           UnwrapMessage: {
                             Type: "Pass",
                             InputPath: "$.message.Message.parsed",

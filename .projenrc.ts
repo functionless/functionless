@@ -146,6 +146,7 @@ const project = new CustomTypescriptProject({
         "^.+\\.(t|j)sx?$": ["./jest.js", {}],
       },
     },
+    extraCliOptions: ["--no-cache"],
   },
   scripts: {
     localstack: "./scripts/localstack",
@@ -247,7 +248,7 @@ closeWorkflow?.addJob("cleanUp", cleanJob);
 project.compileTask.prependExec(
   "yarn link && cd ./test-app && yarn link functionless"
 );
-project.compileTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
+project.compileTask.env("NODE_OPTIONS", "--max-old-space-size=6144");
 project.compileTask.env("TEST_DEPLOY_TARGET", "AWS");
 
 project.compileTask.prependExec("ts-node ./scripts/sdk-gen.ts");
@@ -263,7 +264,7 @@ project.testTask.reset();
 // project.testTask.env("AWS_ACCESS_KEY_ID", "test");
 // project.testTask.env("AWS_SECRET_ACCESS_KEY", "test");
 project.testTask.env("TEST_DEPLOY_TARGET", "AWS");
-project.testTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
+project.testTask.env("NODE_OPTIONS", "--max-old-space-size=6144");
 
 const testFast = project.addTask("test:fast", {
   exec: "jest --passWithNoTests --all --updateSnapshot --testPathIgnorePatterns '(localstack|runtime)'",
@@ -337,6 +338,8 @@ project.eslint!.addRules({
   "@typescript-eslint/explicit-member-accessibility": "off",
   "no-debugger": "error",
 });
+
+project.eslint!.addIgnorePattern("test-app/hook.js");
 
 project.eslint!.addOverride({
   files: ["*.ts", "*.mts", "*.cts", "*.tsx"],

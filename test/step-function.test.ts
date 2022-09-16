@@ -98,36 +98,6 @@ test("return ElementAccessExpr", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
-test("return ElementAccessExpr identifier", () => {
-  const { stack } = initStepFunctionApp();
-  expect(
-    () =>
-      new ExpressStepFunction(
-        stack,
-        "fn",
-        (input: { input: { id: string } }) => {
-          const id = "id";
-          return input.input[id];
-        }
-      )
-  ).toThrow("Collection element accessor must be a constant string or number");
-});
-
-test("return ElementAccessExpr expression", () => {
-  const { stack } = initStepFunctionApp();
-  expect(
-    () =>
-      new ExpressStepFunction(
-        stack,
-        "fn",
-        (input: { input: { id: string } }) => {
-          const id: string | null = null;
-          return input.input[id ?? "id"];
-        }
-      )
-  ).toThrow("Collection element accessor must be a constant string or number");
-});
-
 test("return ElementAccessExpr number", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(
@@ -143,17 +113,16 @@ test("return ElementAccessExpr number", () => {
 
 test("return ElementAccessExpr number reference", () => {
   const { stack } = initStepFunctionApp();
-  expect(
-    () =>
-      new ExpressStepFunction(
-        stack,
-        "fn",
-        (input: { input: { arr: string[] } }) => {
-          const id = 0;
-          return input.input.arr[id];
-        }
-      )
-  ).toThrow("Collection element accessor must be a constant string or number");
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { input: { arr: string[] } }) => {
+      const id = 0;
+      return input.input.arr[id];
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return optional PropAccessExpr", () => {
@@ -519,22 +488,6 @@ test("binary and unary unsupported", () => {
     () =>
       new ExpressStepFunction<{ a: number }, number>(
         stack,
-        "fn",
-        (input) => input.a + input.a
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
-        "fn2",
-        (input) => input.a - input.a
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
         "fn3",
         (input) => input.a * input.a
       )
@@ -559,22 +512,6 @@ test("binary and unary unsupported", () => {
     () =>
       new ExpressStepFunction<{ a: number }, number>(
         stack,
-        "fn6",
-        (input) => (input.a += input.a)
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
-        "fn7",
-        (input) => (input.a -= input.a)
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
         "fn8",
         (input) => (input.a *= input.a)
       )
@@ -593,46 +530,6 @@ test("binary and unary unsupported", () => {
         stack,
         "fn10",
         (input) => (input.a %= input.a)
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
-        "fn11",
-        (input) => -input.a
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
-        "fn12",
-        (input) => --input.a
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
-        "fn13",
-        (input) => ++input.a
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
-        "fn14",
-        (input) => input.a++
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
-        "fn15",
-        (input) => input.a--
       )
   ).toThrow("Step Function does not support operator");
 });

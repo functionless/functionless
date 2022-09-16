@@ -430,11 +430,6 @@ new StepFunction(stack, "obj ref", async () => {
  * @see ErrorCodes.StepFunctions_Invalid_collection_access
  */
 
-new StepFunction(stack, "obj ref", async (input: { n: number }) => {
-  const arr = [1, 2, 3];
-  return arr[input.n];
-});
-
 new StepFunction(stack, "obj ref", async (input: { key: string }) => {
   const obj = { a: "" } as Record<string, any>;
   return obj[input.key];
@@ -445,6 +440,11 @@ new StepFunction(stack, "obj ref", async (input: { key: string }) => {
  * 10025 - Step Functions invalid collection access
  * @see ErrorCodes.StepFunctions_Invalid_collection_access
  */
+
+new StepFunction(stack, "obj ref", async (input: { n: number }) => {
+  const arr = [1, 2, 3];
+  return arr[input.n];
+});
 
 const arrayAccessFunc = new Function<
   { arr: number[]; n: number },

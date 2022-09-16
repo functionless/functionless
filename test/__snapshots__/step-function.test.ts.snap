@@ -241,7 +241,7 @@ exports[`[1,2,3,4].filter((item, index) => item > index) 1`] = `
     "end__[1, 2, 3, 4].filter(function (item,index))": {
       "Next": "set__end__[1, 2, 3, 4].filter(function (item,index))",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap1.arrStr))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -369,7 +369,7 @@ exports[`[1,2,3,4].filter((item, index) => item > index) 1`] = `
       "Next": "check__[1, 2, 3, 4].filter(function (item,index))",
       "Parameters": {
         "arr.$": "$.heap1.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0].item))",
+        "arrStr.$": "States.Format('{},{}',$.heap1.arrStr,States.JsonToString($.heap1.arr[0].item))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -542,7 +542,7 @@ exports[`[1,2,3,4].filter((item, index, array) => item > 1 + 2) 1`] = `
     "end__[1, 2, 3, 4].filter(function (item,_,arr))": {
       "Next": "set__end__[1, 2, 3, 4].filter(function (item,_,arr))",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap1.arrStr))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -664,7 +664,7 @@ exports[`[1,2,3,4].filter((item, index, array) => item > 1 + 2) 1`] = `
       "Next": "check__[1, 2, 3, 4].filter(function (item,_,arr))",
       "Parameters": {
         "arr.$": "$.heap1.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0].item))",
+        "arrStr.$": "States.Format('{},{}',$.heap1.arrStr,States.JsonToString($.heap1.arr[0].item))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -831,7 +831,7 @@ exports[`[1,2,3,4].filter((item, index, array) => item > 1 + 2) 2`] = `
     "end__[1, 2, 3, 4].filter(function (item,_,[ first ]))": {
       "Next": "set__end__[1, 2, 3, 4].filter(function (item,_,[ first ]))",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap1.arrStr))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -959,7 +959,7 @@ exports[`[1,2,3,4].filter((item, index, array) => item > 1 + 2) 2`] = `
       "Next": "check__[1, 2, 3, 4].filter(function (item,_,[ first ]))",
       "Parameters": {
         "arr.$": "$.heap1.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0].item))",
+        "arrStr.$": "States.Format('{},{}',$.heap1.arrStr,States.JsonToString($.heap1.arr[0].item))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -1105,7 +1105,7 @@ exports[`[1,2,3,4].filter(item => item > {}) 1`] = `
     "end__[{}].filter(function (item))": {
       "Next": "set__end__[{}].filter(function (item))",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap1.arrStr))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -1227,7 +1227,7 @@ exports[`[1,2,3,4].filter(item => item > {}) 1`] = `
       "Next": "check__[{}].filter(function (item))",
       "Parameters": {
         "arr.$": "$.heap1.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap1.arrStr,States.JsonToString($.heap1.arr[0]))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -1344,7 +1344,7 @@ exports[`[1,2,3,4].filter(item => item > {}) 2`] = `
     "end__[{value: "a"}].filter(function (item))": {
       "Next": "set__end__[{value: "a"}].filter(function (item))",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap1.arrStr))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -1466,7 +1466,7 @@ exports[`[1,2,3,4].filter(item => item > {}) 2`] = `
       "Next": "check__[{value: "a"}].filter(function (item))",
       "Parameters": {
         "arr.$": "$.heap1.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap1.arrStr,States.JsonToString($.heap1.arr[0]))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -1725,7 +1725,7 @@ exports[`[1,2,3].map(item => item) 1`] = `
     "end__1__return [1, 2, 3].map(function (item)) 1": {
       "Next": "set__end__1__return [1, 2, 3].map(function (item)) 1",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap1.arrStr))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -1734,7 +1734,7 @@ exports[`[1,2,3].map(item => item) 1`] = `
       "Next": "check__1__return [1, 2, 3].map(function (item)) 1",
       "Parameters": {
         "arr.$": "$.heap1.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap1.arrStr,States.JsonToString($.heap1.arr[0]))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -2331,7 +2331,7 @@ exports[`await Promise.all(input.list.map((item) => task(item)))).filter 1`] = `
     "end__return await Promise.all(input.list.map(function (item))).filter(funct": {
       "Next": "set__end__return await Promise.all(input.list.map(function (item))).filter(",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -2340,7 +2340,7 @@ exports[`await Promise.all(input.list.map((item) => task(item)))).filter 1`] = `
       "Next": "check__return await Promise.all(input.list.map(function (item))).filter(fun",
       "Parameters": {
         "arr.$": "$.heap0.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap0.arrStr,States.JsonToString($.heap0.arr[0]))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -3099,7 +3099,7 @@ exports[`binding functions $SFN.map 1`] = `
     "append__1__return await $SFN.map(input.value, function ({ value: b, arr: [ ": {
       "Next": "tail__1__return await $SFN.map(input.value, function ({ value: b, arr: [ c ",
       "Parameters": {
-        "string.$": "States.Format('{},{}', $.heap5.string, $.heap4[0])",
+        "string.$": "States.Format('{},{}',$.heap5.string,$.heap4[0])",
       },
       "ResultPath": "$.heap5",
       "Type": "Pass",
@@ -3412,7 +3412,7 @@ exports[`binding functions map 1`] = `
     "append__1__return input.value.map(function ({ value: b, arr: [ c ] })).join": {
       "Next": "tail__1__return input.value.map(function ({ value: b, arr: [ c ] })).join()",
       "Parameters": {
-        "string.$": "States.Format('{},{}', $.heap5.string, $.heap4[0])",
+        "string.$": "States.Format('{},{}',$.heap5.string,$.heap4[0])",
       },
       "ResultPath": "$.heap5",
       "Type": "Pass",
@@ -3451,7 +3451,7 @@ exports[`binding functions map 1`] = `
     "end__return input.value.map(function ({ value: b, arr: [ c ] })).join()": {
       "Next": "set__end__return input.value.map(function ({ value: b, arr: [ c ] })).join(",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -3460,7 +3460,7 @@ exports[`binding functions map 1`] = `
       "Next": "check__return input.value.map(function ({ value: b, arr: [ c ] })).join()",
       "Parameters": {
         "arr.$": "$.heap0.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap0.arrStr,States.JsonToString($.heap0.arr[0]))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -3636,7 +3636,7 @@ exports[`binding functions use in map 1`] = `
     "append__1__return [1, 2, 3].map(function ()).join() 1": {
       "Next": "tail__1__return [1, 2, 3].map(function ()).join() 1",
       "Parameters": {
-        "string.$": "States.Format('{},{}', $.heap6.string, $.heap5[0])",
+        "string.$": "States.Format('{},{}',$.heap6.string,$.heap5[0])",
       },
       "ResultPath": "$.heap6",
       "Type": "Pass",
@@ -3655,7 +3655,7 @@ exports[`binding functions use in map 1`] = `
     "end__1__return [1, 2, 3].map(function ()).join() 2": {
       "Next": "set__end__1__return [1, 2, 3].map(function ()).join() 2",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap1.arrStr))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -3664,7 +3664,7 @@ exports[`binding functions use in map 1`] = `
       "Next": "check__1__return [1, 2, 3].map(function ()).join() 2",
       "Parameters": {
         "arr.$": "$.heap1.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap1.arrStr,States.JsonToString($.heap1.arr[0]))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -7045,7 +7045,7 @@ exports[`closure from map 1`] = `
     "end__return input.list.map(function (item))": {
       "Next": "set__end__return input.list.map(function (item))",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -7054,7 +7054,7 @@ exports[`closure from map 1`] = `
       "Next": "check__return input.list.map(function (item))",
       "Parameters": {
         "arr.$": "$.heap0.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap0.arrStr,States.JsonToString($.heap0.arr[0]))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -7890,7 +7890,7 @@ exports[`empty for 1`] = `
     "[await task(input.items)]": {
       "Next": "for(_ of [await task(input.items)]) 1",
       "Parameters": {
-        "arr.$": "States.Array($.heap1)",
+        "out.$": "States.Array($.heap1)",
       },
       "ResultPath": "$.heap2",
       "Type": "Pass",
@@ -7909,7 +7909,7 @@ exports[`empty for 1`] = `
       "Type": "Task",
     },
     "for(_ of [await task(input.items)]) 1": {
-      "InputPath": "$.heap2.arr",
+      "InputPath": "$.heap2.out",
       "Next": "hasNext__for(_ of [await task(input.items)]) 1",
       "ResultPath": "$.heap3",
       "Type": "Pass",
@@ -7996,7 +7996,7 @@ exports[`for (const i in [task(input)]) 1`] = `
       },
       "Next": "hasNext__for(i in [await task(input)]) 1",
       "Parameters": {
-        "index.$": "States.Format('{}', $$.Map.Item.Index)",
+        "index.$": "States.Format('{}',$$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap5",
@@ -8016,7 +8016,7 @@ exports[`for (const i in [task(input)]) 1`] = `
     "[await task(input)]": {
       "Next": "for(i in [await task(input)]) 1",
       "Parameters": {
-        "arr.$": "States.Array($.heap1)",
+        "out.$": "States.Array($.heap1)",
       },
       "ResultPath": "$.heap2",
       "Type": "Pass",
@@ -8042,7 +8042,7 @@ exports[`for (const i in [task(input)]) 1`] = `
       "Type": "Task",
     },
     "for(i in [await task(input)]) 1": {
-      "InputPath": "$.heap2.arr",
+      "InputPath": "$.heap2.out",
       "Next": "1__for(i in [await task(input)]) 1",
       "ResultPath": "$.heap5",
       "Type": "Pass",
@@ -8111,7 +8111,7 @@ exports[`for (const i of [task(input)]) 1`] = `
     "[await task(input)]": {
       "Next": "for(i of [await task(input)]) 1",
       "Parameters": {
-        "arr.$": "States.Array($.heap1)",
+        "out.$": "States.Array($.heap1)",
       },
       "ResultPath": "$.heap2",
       "Type": "Pass",
@@ -8131,7 +8131,7 @@ exports[`for (const i of [task(input)]) 1`] = `
       "Type": "Task",
     },
     "for(i of [await task(input)]) 1": {
-      "InputPath": "$.heap2.arr",
+      "InputPath": "$.heap2.out",
       "Next": "hasNext__for(i of [await task(input)]) 1",
       "ResultPath": "$.heap5",
       "Type": "Pass",
@@ -8187,7 +8187,7 @@ exports[`for assign 1`] = `
       },
       "Next": "hasNext__for(i in input.items)",
       "Parameters": {
-        "index.$": "States.Format('{}', $$.Map.Item.Index)",
+        "index.$": "States.Format('{}',$$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap2",
@@ -8342,7 +8342,7 @@ exports[`for break 1`] = `
       },
       "Next": "hasNext__for(i in input.items)",
       "Parameters": {
-        "index.$": "States.Format('{}', $$.Map.Item.Index)",
+        "index.$": "States.Format('{}',$$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap0",
@@ -8521,7 +8521,7 @@ exports[`for const i in items, items[i] 1`] = `
       },
       "Next": "hasNext__for(i in input.items)",
       "Parameters": {
-        "index.$": "States.Format('{}', $$.Map.Item.Index)",
+        "index.$": "States.Format('{}',$$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap0",
@@ -8607,7 +8607,7 @@ exports[`for continue 1`] = `
       },
       "Next": "hasNext__for(i in input.items)",
       "Parameters": {
-        "index.$": "States.Format('{}', $$.Map.Item.Index)",
+        "index.$": "States.Format('{}',$$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap0",
@@ -8798,7 +8798,7 @@ exports[`for i in items, items[i] 1`] = `
       },
       "Next": "hasNext__for(i in input.items)",
       "Parameters": {
-        "index.$": "States.Format('{}', $$.Map.Item.Index)",
+        "index.$": "States.Format('{}',$$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap0",
@@ -8884,7 +8884,7 @@ exports[`for return 1`] = `
       },
       "Next": "hasNext__for(i in input.items)",
       "Parameters": {
-        "index.$": "States.Format('{}', $$.Map.Item.Index)",
+        "index.$": "States.Format('{}',$$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap0",
@@ -10114,7 +10114,7 @@ exports[`for-of-loop variable initializer 1`] = `
       },
       "Next": "hasNext__for(x in input.items)",
       "Parameters": {
-        "index.$": "States.Format('{}', $$.Map.Item.Index)",
+        "index.$": "States.Format('{}',$$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap0",
@@ -12533,7 +12533,7 @@ exports[`input.list.map((item) => item).filter((item) => item.length > 2) 1`] = 
     "end__return input.list.map(function (item)).filter(function (item))": {
       "Next": "set__end__return input.list.map(function (item)).filter(function (item))",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -12542,7 +12542,7 @@ exports[`input.list.map((item) => item).filter((item) => item.length > 2) 1`] = 
       "Next": "check__return input.list.map(function (item)).filter(function (item))",
       "Parameters": {
         "arr.$": "$.heap0.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap0.arrStr,States.JsonToString($.heap0.arr[0]))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -12973,7 +12973,7 @@ exports[`list.filter(item => item.length > 2).map(item => item) 1`] = `
     "end__return input.list.filter(function (item)).map(function (item))": {
       "Next": "set__end__return input.list.filter(function (item)).map(function (item))",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -12982,7 +12982,7 @@ exports[`list.filter(item => item.length > 2).map(item => item) 1`] = `
       "Next": "check__return input.list.filter(function (item)).map(function (item))",
       "Parameters": {
         "arr.$": "$.heap0.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap0.arrStr,States.JsonToString($.heap0.arr[0]))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -13059,7 +13059,7 @@ exports[`list.filter(item => item.length > 2).map(item => task(item)) 1`] = `
     "end__return Promise.all(input.list.filter(function (item)).map(function (it": {
       "Next": "set__end__return Promise.all(input.list.filter(function (item)).map(functio",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -13068,7 +13068,7 @@ exports[`list.filter(item => item.length > 2).map(item => task(item)) 1`] = `
       "Next": "check__return Promise.all(input.list.filter(function (item)).map(function (",
       "Parameters": {
         "arr.$": "$.heap0.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap0.arrStr,States.JsonToString($.heap0.arr[0]))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -13602,7 +13602,7 @@ exports[`list.map((item, i) => if (i == 0) task(item)) 1`] = `
     "end__return Promise.all(input.list.map(function (item,i)))": {
       "Next": "set__end__return Promise.all(input.list.map(function (item,i)))",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -13617,7 +13617,7 @@ exports[`list.map((item, i) => if (i == 0) task(item)) 1`] = `
       "Next": "check__return Promise.all(input.list.map(function (item,i)))",
       "Parameters": {
         "arr.$": "$.heap0.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap0.arrStr,States.JsonToString($.heap0.arr[0]))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -13757,7 +13757,7 @@ exports[`list.map((item, i, list) => if (i == 0) task(item) else task(list[0])) 
     "end__return Promise.all(input.list.map(function (item,i)))": {
       "Next": "set__end__return Promise.all(input.list.map(function (item,i)))",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -13772,7 +13772,7 @@ exports[`list.map((item, i, list) => if (i == 0) task(item) else task(list[0])) 
       "Next": "check__return Promise.all(input.list.map(function (item,i)))",
       "Parameters": {
         "arr.$": "$.heap0.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap0.arrStr,States.JsonToString($.heap0.arr[0]))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -13907,7 +13907,7 @@ exports[`list.map(item => task(item)) 1`] = `
     "end__return Promise.all(input.list.map(function (item)))": {
       "Next": "set__end__return Promise.all(input.list.map(function (item)))",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -13916,7 +13916,7 @@ exports[`list.map(item => task(item)) 1`] = `
       "Next": "check__return Promise.all(input.list.map(function (item)))",
       "Parameters": {
         "arr.$": "$.heap0.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap0.arrStr,States.JsonToString($.heap0.arr[0]))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -14056,7 +14056,7 @@ exports[`non-literal params AWS.SDK.CloudWatch.deleteAlarms 1`] = `
     "end__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(f": {
       "Next": "set__end__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap1.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap1.arrStr))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -14065,7 +14065,7 @@ exports[`non-literal params AWS.SDK.CloudWatch.deleteAlarms 1`] = `
       "Next": "check__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map",
       "Parameters": {
         "arr.$": "$.heap1.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap1.arrStr, States.JsonToString($.heap1.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap1.arrStr,States.JsonToString($.heap1.arr[0]))",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -14520,16 +14520,16 @@ exports[`parse json 1`] = `
   "States": {
     "1__return JSON.parse("{ a: 'a', b: { c: 'c' } }")": {
       "End": true,
-      "InputPath": "$.heap0.string",
+      "InputPath": "$.heap1.out",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return JSON.parse("{ a: 'a', b: { c: 'c' } }") 1": {
       "Next": "1__return JSON.parse("{ a: 'a', b: { c: 'c' } }")",
       "Parameters": {
-        "string.$": "States.StringToJson($.heap1)",
+        "out.$": "States.StringToJson($.heap0)",
       },
-      "ResultPath": "$.heap0",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -14545,7 +14545,7 @@ exports[`parse json 1`] = `
     "return JSON.parse("{ a: 'a', b: { c: 'c' } }")": {
       "Next": "1__return JSON.parse("{ a: 'a', b: { c: 'c' } }") 1",
       "Result": "{ a: 'a', b: { c: 'c' } }",
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
   },
@@ -14747,10 +14747,13 @@ exports[`receiveMessage with JSON serialization 1`] = `
           "JsonParse": {
             "Next": "UnwrapMessage",
             "Parameters": {
-              "parsed.$": "States.StringToJson($.message.Body)",
+              "Message.$": "States.StringToJson($.message.Body)",
             },
-            "ResultPath": "$.message.Message",
+            "ResultPath": "$.message",
             "Type": "Pass",
+            "output": {
+              "jsonPath": "$.message.Message",
+            },
           },
           "UnwrapMessage": {
             "End": true,
@@ -16020,6 +16023,88 @@ exports[`return ElementAccessExpr number 1`] = `
 }
 `;
 
+exports[`return ElementAccessExpr number reference 1`] = `
+{
+  "StartAt": "Initialize Functionless Context",
+  "States": {
+    "1__return input.input.arr[id]": {
+      "End": true,
+      "InputPath": "$.heap0.out",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": {
+      "Next": "id = 0",
+      "Parameters": {
+        "fnl_context": {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "array__return input.input.arr[id]": {
+      "Next": "1__return input.input.arr[id]",
+      "Parameters": {
+        "out.$": "States.ArrayGetItem($.input.input.arr,$.id)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "checkString__return input.input.arr[id]": {
+      "Choices": [
+        {
+          "And": [
+            {
+              "IsString": true,
+              "Variable": "$.heap0.out.str",
+            },
+            {
+              "StringEquals": "[]",
+              "Variable": "$.heap0.out.str",
+            },
+          ],
+          "Next": "array__return input.input.arr[id]",
+        },
+      ],
+      "Default": "object__return input.input.arr[id]",
+      "Type": "Choice",
+    },
+    "id = 0": {
+      "Next": "return input.input.arr[id]",
+      "Result": 0,
+      "ResultPath": "$.id",
+      "Type": "Pass",
+    },
+    "object__return input.input.arr[id]": {
+      "Cause": "Reference element access is not valid for objects.",
+      "Error": "Functionless.InvalidAccess",
+      "Type": "Fail",
+    },
+    "return input.input.arr[id]": {
+      "Choices": [
+        {
+          "IsPresent": true,
+          "Next": "array__return input.input.arr[id]",
+          "Variable": "$.input.input.arr[0]",
+        },
+      ],
+      "Default": "stringify__return input.input.arr[id]",
+      "Type": "Choice",
+    },
+    "stringify__return input.input.arr[id]": {
+      "Next": "checkString__return input.input.arr[id]",
+      "Parameters": {
+        "str.$": "States.JsonToString($.input.input.arr)",
+      },
+      "ResultPath": "$.heap0.out",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`return PropAccessExpr 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
@@ -16795,7 +16880,7 @@ exports[`sendMessage JSON array 1`] = `
       "Type": "Task",
     },
     "1__await queue.sendMessage({MessageBody: [input]}) 1": {
-      "InputPath": "$.heap1.arr",
+      "InputPath": "$.heap1.out",
       "Next": "1__await queue.sendMessage({MessageBody: [input]})",
       "ResultPath": "$.heap2",
       "Type": "Pass",
@@ -16814,7 +16899,7 @@ exports[`sendMessage JSON array 1`] = `
     "[input]": {
       "Next": "1__await queue.sendMessage({MessageBody: [input]}) 1",
       "Parameters": {
-        "arr.$": "States.Array($.heap0)",
+        "out.$": "States.Array($.heap0)",
       },
       "ResultPath": "$.heap1",
       "Type": "Pass",
@@ -17041,10 +17126,13 @@ exports[`sendMessageBatch with JSON serialization 1`] = `
           "serialize Message": {
             "Next": "unwrap Message",
             "Parameters": {
-              "value.$": "States.JsonToString($.entry.MessageBody)",
+              "MessageBody.$": "States.JsonToString($.entry.MessageBody)",
             },
-            "ResultPath": "$.entry.MessageBody",
+            "ResultPath": "$.entry",
             "Type": "Pass",
+            "output": {
+              "jsonPath": "$.entry.MessageBody",
+            },
           },
           "unwrap Message": {
             "End": true,
@@ -17117,7 +17205,7 @@ exports[`sendMessageBatch with JSON serialization 1`] = `
     "end__await queue.sendMessageBatch({Entries: input.messages.map(function (me": {
       "Next": "set__end__await queue.sendMessageBatch({Entries: input.messages.map(functio",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -17132,7 +17220,7 @@ exports[`sendMessageBatch with JSON serialization 1`] = `
       "Next": "check__await queue.sendMessageBatch({Entries: input.messages.map(function (",
       "Parameters": {
         "arr.$": "$.heap0.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap0.arrStr,States.JsonToString($.heap0.arr[0]))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -17273,7 +17361,7 @@ exports[`sendMessageBatch with Text serialization 1`] = `
     "end__await queue.sendMessageBatch({Entries: input.messages.map(function (me": {
       "Next": "set__end__await queue.sendMessageBatch({Entries: input.messages.map(functio",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -17288,7 +17376,7 @@ exports[`sendMessageBatch with Text serialization 1`] = `
       "Next": "check__await queue.sendMessageBatch({Entries: input.messages.map(function (",
       "Parameters": {
         "arr.$": "$.heap0.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap0.arrStr,States.JsonToString($.heap0.arr[0]))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -17413,7 +17501,7 @@ exports[`shadow 1`] = `
       },
       "Next": "hasNext__for(b in [1, 2, 3])",
       "Parameters": {
-        "index.$": "States.Format('{}', $$.Map.Item.Index)",
+        "index.$": "States.Format('{}',$$.Map.Item.Index)",
         "item.$": "$$.Map.Item.Value",
       },
       "ResultPath": "$.heap4",
@@ -17676,7 +17764,7 @@ exports[`stringify json 1`] = `
   "States": {
     "1__return JSON.stringify(input)": {
       "End": true,
-      "InputPath": "$.heap0.string",
+      "InputPath": "$.heap0.out",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -17694,7 +17782,7 @@ exports[`stringify json 1`] = `
     "return JSON.stringify(input)": {
       "Next": "1__return JSON.stringify(input)",
       "Parameters": {
-        "string.$": "States.JsonToString($.input)",
+        "out.$": "States.JsonToString($.input)",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -17709,16 +17797,16 @@ exports[`stringify object literal 1`] = `
   "States": {
     "1__return JSON.stringify({a: "a", b: {c: "c"}})": {
       "End": true,
-      "InputPath": "$.heap0.string",
+      "InputPath": "$.heap1.out",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return JSON.stringify({a: "a", b: {c: "c"}}) 1": {
       "Next": "1__return JSON.stringify({a: "a", b: {c: "c"}})",
       "Parameters": {
-        "string.$": "States.JsonToString($.heap1)",
+        "out.$": "States.JsonToString($.heap0)",
       },
-      "ResultPath": "$.heap0",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -17739,7 +17827,7 @@ exports[`stringify object literal 1`] = `
           "c": "c",
         },
       },
-      "ResultPath": "$.heap1",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
   },
@@ -19069,7 +19157,7 @@ exports[`try { list.map(item => task(item)) } 1`] = `
     "end__try": {
       "Next": "set__end__try",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -19078,7 +19166,7 @@ exports[`try { list.map(item => task(item)) } 1`] = `
       "Next": "check__try",
       "Parameters": {
         "arr.$": "$.heap0.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap0.arrStr,States.JsonToString($.heap0.arr[0]))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -19171,7 +19259,7 @@ exports[`try { list.map(item => task(item)) } 2`] = `
     "end__return Promise.all(input.list.map(function (item)))": {
       "Next": "set__end__return Promise.all(input.list.map(function (item)))",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -19180,7 +19268,7 @@ exports[`try { list.map(item => task(item)) } 2`] = `
       "Next": "check__return Promise.all(input.list.map(function (item)))",
       "Parameters": {
         "arr.$": "$.heap0.arr[1:]",
-        "arrStr.$": "States.Format('{},{}', $.heap0.arrStr, States.JsonToString($.heap0.arr[0]))",
+        "arrStr.$": "States.Format('{},{}',$.heap0.arrStr,States.JsonToString($.heap0.arr[0]))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -19267,7 +19355,7 @@ exports[`try { list.map(item => throw) } 1`] = `
     "end__try": {
       "Next": "set__end__try",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -19340,7 +19428,7 @@ exports[`try { list.map(item => throw) } catch (err) 1`] = `
     "end__try": {
       "Next": "set__end__try",
       "Parameters": {
-        "result.$": "States.StringToJson(States.Format('{}]', $.heap0.arrStr))",
+        "result.$": "States.StringToJson(States.Format('{}]',$.heap0.arrStr))",
       },
       "ResultPath": "$.heap0",
       "Type": "Pass",
