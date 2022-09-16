@@ -1,5 +1,6 @@
 import "jest";
 import fs from "fs";
+import fs_promise from "fs/promises";
 import path from "path";
 import ts from "typescript";
 import { ErrorCode, ErrorCodes } from "../src";
@@ -55,12 +56,6 @@ const skipErrorCodes: ErrorCode[] = [
   ErrorCodes.Step_Function_Retry_Invalid_Input,
 ];
 
-const file: string | undefined = fs
-  .readFileSync(
-    path.resolve(__dirname, "./__snapshots__/validate.test.ts.snap")
-  )
-  .toString("utf8");
-
 /**
  * Test for recorded validations of each error code.
  * 1. Checks if there is a validation for an error code.
@@ -69,10 +64,14 @@ const file: string | undefined = fs
  * If the error code cannot be validated or the validation cannot be easily tested, use skipErrorCodes to skip the code.
  */
 describe("all error codes tested", () => {
+  const file: Promise<string> = fs_promise
+    .readFile(path.resolve(__dirname, "./__snapshots__/validate.test.ts.snap"))
+    .then((f) => f.toString("utf8"));
+
   test.concurrent.each(
     Object.values(ErrorCodes).filter((code) => !skipErrorCodes.includes(code))
   )("$code: $title", async (code) => {
-    if (!file?.includes(`${code.code}`)) {
+    if (!(await file).includes(`${code.code}`)) {
       throw new Error(
         `validate.test.ts does not emit any errors for ${code.title}`
       );

@@ -1,12 +1,12 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`call function 1`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end
-#set($v1 = {\\"version\\": \\"2018-05-29\\", \\"operation\\": \\"Invoke\\", \\"payload\\": $context.arguments})
+#set($v1 = {"version": "2018-05-29", "operation": "Invoke", "payload": $context.arguments})
 $util.toJson($v1)",
   "#set( $context.stash.return__flag = true )
 #set( $context.stash.return__val = $context.result )
@@ -18,12 +18,12 @@ $util.toJson($v1)",
 `;
 
 exports[`call function and conditional return 1`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end
-#set($v1 = {\\"version\\": \\"2018-05-29\\", \\"operation\\": \\"Invoke\\", \\"payload\\": $context.arguments})
+#set($v1 = {"version": "2018-05-29", "operation": "Invoke", "payload": $context.arguments})
 $util.toJson($v1)",
   "#set($context.stash.result = $context.result)
 {}",
@@ -44,7 +44,7 @@ $util.toJson($v1)",
 `;
 
 exports[`call function including optional arg 1`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -52,7 +52,7 @@ Array [
 #set($v1 = {})
 $util.qr($v1.put('arg', $context.arguments.arg))
 $util.qr($v1.put('optional', 'hello'))
-#set($v2 = {\\"version\\": \\"2018-05-29\\", \\"operation\\": \\"Invoke\\", \\"payload\\": $v1})
+#set($v2 = {"version": "2018-05-29", "operation": "Invoke", "payload": $v1})
 $util.toJson($v2)",
   "#set( $context.stash.return__flag = true )
 #set( $context.stash.return__val = $context.result )
@@ -64,12 +64,12 @@ $util.toJson($v2)",
 `;
 
 exports[`call function including with no parameters 1`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end
-#set($v1 = {\\"version\\": \\"2018-05-29\\", \\"operation\\": \\"Invoke\\", \\"payload\\": $null})
+#set($v1 = {"version": "2018-05-29", "operation": "Invoke", "payload": $null})
 $util.toJson($v1)",
   "#set( $context.stash.return__flag = true )
 #set( $context.stash.return__val = $context.result )
@@ -81,12 +81,12 @@ $util.toJson($v1)",
 `;
 
 exports[`call function including with void result 1`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end
-#set($v1 = {\\"version\\": \\"2018-05-29\\", \\"operation\\": \\"Invoke\\", \\"payload\\": $context.arguments})
+#set($v1 = {"version": "2018-05-29", "operation": "Invoke", "payload": $context.arguments})
 $util.toJson($v1)",
   "#set( $context.stash.return__flag = true )
 #set( $context.stash.return__val = $context.result )
@@ -98,12 +98,12 @@ $util.toJson($v1)",
 `;
 
 exports[`call function omitting optional arg 1`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end
-#set($v1 = {\\"version\\": \\"2018-05-29\\", \\"operation\\": \\"Invoke\\", \\"payload\\": $context.arguments})
+#set($v1 = {"version": "2018-05-29", "operation": "Invoke", "payload": $context.arguments})
 $util.toJson($v1)",
   "#set( $context.stash.return__flag = true )
 #set( $context.stash.return__val = $context.result )
