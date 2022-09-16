@@ -1,7 +1,9 @@
 import type {
   BindingElem,
   BindingPattern,
+  ClassDecl,
   Decl,
+  FunctionDecl,
   ParameterDecl,
   VariableDecl,
   VariableDeclList,
@@ -14,7 +16,9 @@ import {
 } from "./ensure";
 import type { Err } from "./error";
 import type {
+  ClassExpr,
   Expr,
+  FunctionExpr,
   ImportKeyword,
   SuperKeyword,
   TemplateHead,
@@ -27,13 +31,19 @@ import {
   isBindingPattern,
   isBlockStmt,
   isCatchClause,
+  isClassDecl,
+  isClassExpr,
+  isClassLike,
   isDoStmt,
   isForInStmt,
   isForOfStmt,
   isForStmt,
+  isFunctionDecl,
+  isFunctionExpr,
   isFunctionLike,
   isIdentifier,
   isIfStmt,
+  isMethodDecl,
   isNode,
   isParameterDecl,
   isReturnStmt,
@@ -69,13 +79,20 @@ export interface HasParent<Parent extends FunctionlessNode> {
 }
 
 type Binding = [string, BindingDecl];
-export type BindingDecl = VariableDecl | ParameterDecl | BindingElem;
+export type BindingDecl =
+  | VariableDecl
+  | ParameterDecl
+  | BindingElem
+  | ClassDecl
+  | ClassExpr
+  | FunctionDecl
+  | FunctionExpr;
 
 export abstract class BaseNode<
   Kind extends NodeKind,
-  Parent extends FunctionlessNode | undefined = FunctionlessNode | undefined
+  Parent extends FunctionlessNode | undefined = FunctionlessNode
 > {
-  abstract readonly nodeKind: "Err" | "Expr" | "Stmt" | "Decl" | "Node";
+  abstract readonly nodeKind: "Decl" | "Err" | "Expr" | "Node" | "Stmt";
 
   // @ts-ignore - we have a convention to set this in the parent constructor
   readonly parent: Parent;
@@ -137,6 +154,22 @@ export abstract class BaseNode<
     // @ts-ignore
     node.parent = this;
     return node;
+  }
+
+  /**
+   * @returns the name of the file this node originates from.
+   */
+  public getFileName(): string {
+    if (
+      (isFunctionLike(this) || isClassLike(this) || isMethodDecl(this)) &&
+      this.filename
+    ) {
+      return this.filename;
+    } else if (this.parent === undefined) {
+      throw new Error(`cannot get filename of orphaned node`);
+    } else {
+      return this.parent.getFileName();
+    }
   }
 
   protected ensureArrayOf<Assert extends Assertion>(
@@ -466,14 +499,36 @@ export abstract class BaseNode<
       } else if (isBindingPattern(node)) {
         return node.bindings.flatMap((b) => getNames(b, kind));
       } else if (isFunctionLike(node)) {
-        if (kind === "sibling") return [];
-        return node.parameters.flatMap((param) => getNames(param, kind));
+        if (kind === "sibling" && isFunctionDecl(node)) {
+          if (node.name) {
+            return [[node.name, node]];
+          } else {
+            return [];
+          }
+        }
+        const parameters = node.parameters.flatMap((param) =>
+          getNames(param, kind)
+        );
+        if ((isFunctionExpr(node) || isFunctionDecl(node)) && node.name) {
+          return [[node.name, node], ...parameters];
+        } else {
+          return parameters;
+        }
       } else if (isForInStmt(node) || isForOfStmt(node) || isForStmt(node)) {
         if (kind === "sibling") return [];
         return getNames(node.initializer, kind);
       } else if (isCatchClause(node) && node.variableDecl?.name) {
         if (kind === "sibling") return [];
         return getNames(node.variableDecl, kind);
+      } else if (isClassDecl(node) || (isClassExpr(node) && node.name)) {
+        if (kind === "sibling" && isClassDecl(node)) {
+          if (node.name) {
+            return [[node.name.name, node]];
+          } else {
+            return [];
+          }
+        }
+        return [[node.name!.name, node]];
       } else {
         return [];
       }

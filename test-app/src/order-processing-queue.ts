@@ -1,5 +1,18 @@
-import { App, aws_logs, aws_stepfunctions, Stack } from "aws-cdk-lib";
-import { Queue, Function, EventBus, Event, StepFunction } from "functionless";
+import {
+  App,
+  aws_logs,
+  aws_stepfunctions,
+  SecretValue,
+  Stack,
+} from "aws-cdk-lib";
+import {
+  Queue,
+  Function,
+  EventBus,
+  Event,
+  StepFunction,
+  JsonSecret,
+} from "functionless";
 
 const app = new App();
 const stack = new Stack(app, "queue");
@@ -166,3 +179,28 @@ new StepFunction(
     });
   }
 );
+
+export interface UserPass {
+  username: string;
+  password: string;
+}
+
+const secret = new JsonSecret<UserPass>(stack, "JsonSecret", {
+  secretStringValue: SecretValue.unsafePlainText(
+    JSON.stringify({
+      username: "sam",
+      password: "sam",
+    })
+  ),
+});
+
+new Function(stack, "SecretFunc", async (input: "get" | UserPass) => {
+  if (input === "get") {
+    return (await secret.getSecretValue()).SecretValue;
+  } else {
+    const response = await secret.putSecretValue({
+      SecretValue: input,
+    });
+    return response;
+  }
+});

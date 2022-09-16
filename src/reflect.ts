@@ -1,4 +1,9 @@
-import { FunctionLike } from "./declaration";
+import {
+  FunctionLike,
+  GetAccessorDecl,
+  MethodDecl,
+  SetAccessorDecl,
+} from "./declaration";
 import { Err } from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
 import { isFunctionLike, isErr, isNewExpr } from "./guards";
@@ -7,6 +12,8 @@ import type { FunctionlessNode } from "./node";
 import { parseSExpr } from "./s-expression";
 import { AnyAsyncFunction, AnyFunction } from "./util";
 import { forEachChild } from "./visit";
+
+const Global: any = global;
 
 /**
  * A macro (compile-time) function that converts an ArrowFunction or FunctionExpression to a {@link FunctionDecl}.
@@ -36,10 +43,18 @@ import { forEachChild } from "./visit";
  */
 export function reflect<F extends AnyFunction | AnyAsyncFunction>(
   func: F
-): FunctionLike<F> | Err | undefined {
-  if (func.name.startsWith("bound ")) {
+):
+  | FunctionLike<F>
+  | MethodDecl<F>
+  | GetAccessorDecl<F>
+  | SetAccessorDecl<F>
+  | Err
+  | undefined {
+  if (func.name === "bound requireModuleOrMock") {
+    return undefined;
+  } else if (func.name.startsWith("bound ")) {
     // native bound function
-    const targetFunc = (<any>func)[ReflectionSymbols.TargetFunction];
+    const targetFunc = unbind(func)?.targetFunction;
     if (targetFunc) {
       return reflect(targetFunc);
     } else {
@@ -52,7 +67,7 @@ export function reflect<F extends AnyFunction | AnyAsyncFunction>(
     if (!reflectCache.has(astCallback)) {
       reflectCache.set(
         astCallback,
-        parseSExpr(astCallback()) as FunctionLike | Err
+        parseSExpr(astCallback()) as FunctionLike<F> | Err
       );
     }
     return reflectCache.get(astCallback) as FunctionLike<F> | Err | undefined;
@@ -60,15 +75,103 @@ export function reflect<F extends AnyFunction | AnyAsyncFunction>(
   return undefined;
 }
 
-const Global: any = global;
+export interface BoundFunctionComponents<F extends AnyFunction = AnyFunction> {
+  /**
+   * The target function
+   */
+  targetFunction: F;
+  /**
+   * The `this` argument bound to the function.
+   */
+  boundThis: any;
+  /**
+   * The arguments bound to the function.
+   */
+  boundArgs: any[];
+}
+
+/**
+ * Unbind a bound function into its components.
+ * @param boundFunction the bound function
+ * @returns the targetFunction, boundThis and boundArgs if this is a bound function compiled with Functionless, otherwise undefined.
+ */
+export function unbind<F extends AnyFunction>(
+  boundFunction: F
+): BoundFunctionComponents<F> | undefined {
+  if (boundFunction.name.startsWith("bound ")) {
+    const targetFunction = (<any>boundFunction)[
+      ReflectionSymbols.TargetFunction
+    ];
+    const boundThis = (<any>boundFunction)[ReflectionSymbols.BoundThis];
+    const boundArgs = (<any>boundFunction)[ReflectionSymbols.BoundArgs];
+    if (targetFunction) {
+      return {
+        targetFunction,
+        boundThis,
+        boundArgs,
+      };
+    }
+  }
+  return undefined;
+}
+
+/**
+ * The components of a {@link Proxy}.
+ */
+export interface ProxyComponents<T extends object = object> {
+  /**
+   * The target object that the {@link Proxy} is intercepting.
+   */
+  target: T;
+  /**
+   * The {@link ProxyHandler} interceptor handler functions.
+   */
+  handler: ProxyHandler<T>;
+}
+
+/**
+ * Reverses a {@link Proxy} instance into the args that were used to created it.
+ *
+ * ```ts
+ * const proxy = new Proxy({ hello: "world" }, { get: () => {} });
+ *
+ * const components = reverseProxy(proxy);
+ * components.target  // { hello: "world" }
+ * components.handler // { get: () => {} }
+ * ```
+ *
+ * @param proxy the proxy instance
+ * @returns the {@link ProxyComponents} if this proxy can be reversed, or `undefined`.
+ */
+export function reverseProxy<T extends object>(
+  proxy: T
+): ProxyComponents<T> | undefined {
+  const reversed = getProxyMap().get(proxy);
+  if (reversed) {
+    return {
+      target: reversed[0],
+      handler: reversed[1],
+    };
+  }
+  return undefined;
+}
+
+/**
+ * @returns the global WeakMap containing all intercepted Proxies.
+ */
+function getProxyMap() {
+  return (Global[Global.Symbol.for("functionless:Proxies")] =
+    Global[Global.Symbol.for("functionless:Proxies")] ?? new Global.WeakMap());
+}
 
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;
 
 export const ReflectionSymbolNames = {
   AST: "functionless:AST",
-  BoundThis: "functionless:BoundThis",
   BoundArgs: "functionless:BoundArgs",
+  BoundThis: "functionless:BoundThis",
+  Proxies: "functionless:Proxies",
   Reflect: "functionless:Reflect",
   TargetFunction: "functionless:TargetFunction",
 } as const;
@@ -77,6 +180,7 @@ export const ReflectionSymbols = {
   AST: Symbol.for(ReflectionSymbolNames.AST),
   BoundArgs: Symbol.for(ReflectionSymbolNames.BoundArgs),
   BoundThis: Symbol.for(ReflectionSymbolNames.BoundThis),
+  Proxies: Symbol.for(ReflectionSymbolNames.Proxies),
   Reflect: Symbol.for(ReflectionSymbolNames.Reflect),
   TargetFunction: Symbol.for(ReflectionSymbolNames.TargetFunction),
 } as const;
@@ -169,7 +273,7 @@ function validateFunctionlessNodeSemantics<N extends FunctionlessNode>(
           // we should definitely make this a Symbol
           typeof clazz.FunctionlessType === "string"
       );
-      if (references?.length > 0) {
+      if (references.length > 0) {
         throw new SynthError(
           ErrorCodes.Unsupported_initialization_of_resources,
           "Cannot initialize new CDK resources in a runtime function."

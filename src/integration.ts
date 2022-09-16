@@ -309,7 +309,7 @@ export function findDeepIntegrations(
             node.fork(
               new CallExpr(
                 node.span,
-                new ReferenceExpr(node.expr.span, "", () => integration),
+                new ReferenceExpr(node.expr.span, "", () => integration, 0, 0),
                 node.args.map((arg) => arg.clone()),
                 false
               )
@@ -420,7 +420,10 @@ export function tryResolveReferences(
       return tryResolveReferences(defaultValue, undefined);
     }
   } else if (isReferenceExpr(node) || isThisExpr(node)) {
-    return [node.ref?.()];
+    const ref = node.ref?.();
+    if (ref) {
+      return [ref];
+    }
   } else if (isIdentifier(node)) {
     return tryResolveReferences(node.lookup(), defaultValue);
   } else if (isBindingElem(node)) {

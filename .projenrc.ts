@@ -102,6 +102,7 @@ const project = new CustomTypescriptProject({
     "@swc/cli",
     "@swc/core@1.2.245",
     "@swc/register",
+    "source-map",
   ],
   devDeps: [
     `@aws-cdk/aws-appsync-alpha@${MIN_CDK_VERSION}-alpha.0`,
@@ -118,6 +119,7 @@ const project = new CustomTypescriptProject({
     /**
      * For CDK Local Stack tests
      */
+    "@aws-sdk/client-dynamodb",
     `@aws-cdk/cloud-assembly-schema@${MIN_CDK_VERSION}`,
     `@aws-cdk/cloudformation-diff@${MIN_CDK_VERSION}`,
     `@aws-cdk/cx-api@${MIN_CDK_VERSION}`,

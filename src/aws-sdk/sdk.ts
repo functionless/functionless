@@ -84,6 +84,7 @@ const SFN_SERVICE_BLOCK_LIST: {
     "skipWaitTimeForInstanceTermination",
   ],
   ComprehendMedical: ["detectEntities"],
+  ControlTower: true,
   DirectConnect: [
     "allocateConnectionOnInterconnect",
     "describeConnectionLoa",

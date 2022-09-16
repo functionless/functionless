@@ -4111,6 +4111,7 @@ export class ASL {
         `the 'callback' argument of map must be a function or arrow expression, found: ${callbackfn?.kindName}`
       );
     }
+
     return this.evalExprToJsonPath(expr.expr.expr, (listOutput) => {
       // we assume that an array literal or a call would return a variable.
       if (
@@ -5654,7 +5655,7 @@ function toStateName(node?: FunctionlessNode): string {
   } else if (isBooleanLiteralExpr(node)) {
     return `${node.value}`;
   } else if (isCallExpr(node) || isNewExpr(node)) {
-    if (isSuperKeyword(node.expr) || isImportKeyword(node.expr)) {
+    if (isImportKeyword(node.expr)) {
       throw new Error(`calling ${node.expr.kindName} is unsupported in ASL`);
     }
     return `${isNewExpr(node) ? "new " : ""}${toStateName(
@@ -5689,7 +5690,6 @@ function toStateName(node?: FunctionlessNode): string {
             `${prop.kindName} is not supported by Step Functions`
           );
         }
-
         return toStateName(prop);
       })
       .join(", ")}}`;

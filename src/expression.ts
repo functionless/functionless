@@ -1,7 +1,6 @@
 import type {
   BindingElem,
   ClassMember,
-  Decl,
   GetAccessorDecl,
   MethodDecl,
   ParameterDecl,
@@ -16,7 +15,7 @@ import {
   isPropAssignExpr,
   isStringLiteralExpr,
 } from "./guards";
-import { BaseNode, FunctionlessNode } from "./node";
+import { BaseNode, BindingDecl, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
 import { Span } from "./span";
 import type { BlockStmt, Stmt } from "./statement";
@@ -74,14 +73,13 @@ export abstract class BaseExpr<
     | Expr
     | Stmt
     | VariableDecl
-    | undefined
 > extends BaseNode<Kind, Parent> {
   readonly nodeKind: "Expr" = "Expr";
 }
 
 export class ArrowFunctionExpr<
   F extends AnyFunction = AnyFunction
-> extends BaseExpr<NodeKind.ArrowFunctionExpr> {
+> extends BaseExpr<NodeKind.ArrowFunctionExpr, FunctionlessNode | undefined> {
   readonly _functionBrand?: F;
   constructor(
     /**
@@ -163,7 +161,7 @@ export class FunctionExpr<
 
 export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
   NodeKind.ClassExpr,
-  undefined
+  FunctionlessNode | undefined
 > {
   readonly _classBrand?: C;
   constructor(
@@ -210,11 +208,24 @@ export class ReferenceExpr<
     /**
      * A closure that produces the referred value.
      */
-    readonly ref: () => R
+    readonly ref: () => R,
+    /**
+     * A number that uniquely identifies the variable within this AST.
+     *
+     * This is used to ensure that two ReferenceExpr's pointing to the same variable still point
+     * to the same variable after transformation.
+     */
+    readonly id: number | undefined,
+    /**
+     * Unique ID of this {@link ReferenceExpr}.
+     */
+    readonly referenceId: number | undefined
   ) {
     super(NodeKind.ReferenceExpr, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensure(ref, "ref", ["function"]);
+    this.ensure(id, "id", ["number", "undefined"]);
+    this.ensure(referenceId, "referenceId", ["number", "undefined"]);
   }
 }
 
@@ -232,7 +243,7 @@ export class Identifier extends BaseExpr<NodeKind.Identifier> {
     this.ensure(name, "name", ["string"]);
   }
 
-  public lookup(): Decl | undefined {
+  public lookup(): BindingDecl | undefined {
     return this.getLexicalScope().get(this.name);
   }
 }
@@ -249,7 +260,7 @@ export class PrivateIdentifier extends BaseExpr<NodeKind.PrivateIdentifier> {
     this.ensure(name, "name", ["string"]);
   }
 
-  public lookup(): Decl | undefined {
+  public lookup(): BindingDecl | undefined {
     return this.getLexicalScope().get(this.name);
   }
 }
@@ -260,7 +271,7 @@ export class PropAccessExpr extends BaseExpr<NodeKind.PropAccessExpr> {
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly expr: Expr,
+    readonly expr: Expr | SuperKeyword,
     readonly name: Identifier | PrivateIdentifier,
     /**
      * Whether this is using optional chaining.
@@ -271,7 +282,7 @@ export class PropAccessExpr extends BaseExpr<NodeKind.PropAccessExpr> {
     readonly isOptional: boolean
   ) {
     super(NodeKind.PropAccessExpr, span, arguments);
-    this.ensure(expr, "expr", ["Expr"]);
+    this.ensure(expr, "expr", ["Expr", NodeKind.SuperKeyword]);
     this.ensure(name, "ref", [NodeKind.Identifier, NodeKind.PrivateIdentifier]);
   }
 }
