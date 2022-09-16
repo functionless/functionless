@@ -65,14 +65,14 @@ const skipErrorCodes: ErrorCode[] = [
  * If the error code cannot be validated or the validation cannot be easily tested, use skipErrorCodes to skip the code.
  */
 describe("all error codes tested", () => {
-  const file: Promise<string | undefined> = fs_promise
+  const file: Promise<string> = fs_promise
     .readFile(path.resolve(__dirname, "./__snapshots__/validate.test.ts.snap"))
     .then((f) => f.toString("utf8"));
 
   test.concurrent.each(
     Object.values(ErrorCodes).filter((code) => !skipErrorCodes.includes(code))
   )("$code: $title", async (code) => {
-    if (!(await file)?.includes(`${code.code}`)) {
+    if (!(await file).includes(`${code.code}`)) {
       throw new Error(
         `validate.test.ts does not emit any errors for ${code.title}`
       );
