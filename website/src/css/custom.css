@@ -179,24 +179,6 @@
     @apply py-12;
   }
 
-  .type-in.token {
-    /* animation: name duration timing-function delay iteration-count direction
-      fill-mode; */
-    opacity: 0;
-    animation: fadeIn 200ms linear var(--intro-delay);
-    animation-iteration-count: 1;
-    animation-fill-mode: forwards;
-  }
-
-  @keyframes fadeIn {
-    0% {
-      opacity: 0;
-    }
-    100% {
-      opacity: 1;
-    }
-  }
-
   :root .home-features {
     --ifm-pre-background: none;
   }

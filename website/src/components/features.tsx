@@ -1,8 +1,5 @@
 import { Tab } from "@headlessui/react";
-import { MDXProvider } from "@mdx-js/react";
-import clsx from "clsx";
-import Highlight, { defaultProps } from "prism-react-renderer";
-import React, { Fragment } from "react";
+import { Fragment } from "react";
 
 import { Code } from "./code";
 import FunctionlessTableFunction from "./snippets/functionless-table-function.mdx";
@@ -62,68 +59,9 @@ export const Features = () => {
             </Tab.List>
           </Tab.Group>
           <div className="col-span-4">
-            <MDXProvider
-              components={{
-                code: ({ children }: { children: string }) => (
-                  <Highlight
-                    {...defaultProps}
-                    theme={{
-                      plain: { backgroundColor: "none" },
-                      styles: defaultProps.theme.styles,
-                    }}
-                    code={children}
-                    language="typescript"
-                  >
-                    {({
-                      className,
-                      style,
-                      tokens,
-                      getLineProps,
-                      getTokenProps,
-                    }) => (
-                      <div className={clsx(className, "text-xs")} style={style}>
-                        {tokens.map((line, i) => {
-                          const lineIndexStart = tokens
-                            .slice(0, i)
-                            .reduce((n, l) => n + l.length, 0);
-                          return (
-                            <div
-                              key={i}
-                              {...getLineProps({
-                                line,
-                                key: i,
-                                className: "grid grid-cols-[2em_auto]",
-                              })}
-                            >
-                              <div>{i + 1}</div>
-                              <div className="flex flex-wrap">
-                                {line.map((token, key) => (
-                                  <span
-                                    key={key}
-                                    {...getTokenProps({
-                                      token,
-                                      key,
-                                      className: "type-in",
-                                      style: {
-                                        "--intro-delay": `${
-                                          (lineIndexStart + key) * 30
-                                        }ms`,
-                                      },
-                                    })}
-                                  />
-                                ))}
-                              </div>
-                            </div>
-                          );
-                        })}
-                      </div>
-                    )}
-                  </Highlight>
-                ),
-              }}
-            >
+            <Code fileName="functionless.ts">
               <FunctionlessTableFunction />
-            </MDXProvider>
+            </Code>
           </div>
           <div className="col-span-2 -ml-7 -mt-12"></div>
           <div className="col-span-2 -mr-7 -mt-16"></div>
