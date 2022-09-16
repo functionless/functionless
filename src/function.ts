@@ -979,7 +979,7 @@ interface TokenContext {
 export async function serialize(
   func: AnyAsyncFunction,
   integrationPrewarms: NativeIntegration<AnyFunction>["preWarm"][],
-  serializerImpl: SerializerImpl = SerializerImpl.V1,
+  serializerImpl: SerializerImpl = SerializerImpl.Default,
   props?: PrewarmProps
 ): Promise<[string, TokenContext[]]> {
   let tokens: string[] = [];
