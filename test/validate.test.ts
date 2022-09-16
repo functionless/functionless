@@ -71,7 +71,7 @@ describe("all error codes tested", () => {
   test.concurrent.each(
     Object.values(ErrorCodes).filter((code) => !skipErrorCodes.includes(code))
   )("$code: $title", async (code) => {
-    if ((await file)?.includes(`${code.code}`)) {
+    if (!(await file).includes(`${code.code}`)) {
       throw new Error(
         `validate.test.ts does not emit any errors for ${code.title}`
       );
