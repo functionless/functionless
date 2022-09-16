@@ -396,11 +396,11 @@ return [a,...b,];
 }
 
 const asyncArrowExpr=async () => {
-return \\"asyncArrowExpr\\";
+return "asyncArrowExpr";
 }
 
 async function asyncFuncDecl(){
-return \\"asyncFuncDecl\\";
+return "asyncFuncDecl";
 }
 
 function funcDecl(a,...b){
@@ -416,16 +416,16 @@ return [a,...b,];
 }
 
 const asyncFuncExpr=async function asyncFuncExpr(){
-return \\"asyncFuncExpr\\";
+return "asyncFuncExpr";
 }
 
 const anonAsyncFuncExpr=async function (){
-return \\"anonAsyncFuncExpr\\";
+return "anonAsyncFuncExpr";
 }
 
 let getterSetterVal
-const obj={prop:\\"prop\\",getProp(){
-return this.prop + \\" 1\\";
+const obj={prop:"prop",getProp(){
+return this.prop + " 1";
 }
 ,get getterSetter(){
 return getterSetterVal;
@@ -434,12 +434,12 @@ return getterSetterVal;
 getterSetterVal = val;
 }
 }
-const {a,b:c,d:[e],f=\\"f\\"}={a:\\"a\\",b:\\"b\\",d:[\\"e\\",]}
-obj.getterSetter = \\"getterSetter\\";
+const {a,b:c,d:[e],f="f"}={a:"a",b:"b",d:["e",]}
+obj.getterSetter = "getterSetter";
 class Foo{
-static VAL = \\"VAL\\"
+static VAL = "VAL"
 static {
-Foo.VAL = \\"VAL 1\\";
+Foo.VAL = "VAL 1";
 this.VAL = \`\${this.VAL} 2\`;
 }
 
@@ -454,14 +454,14 @@ return \`\${this.prop} \${this.val} \${Foo.VAL}\`;
 
  async asyncMethod(){
 const result=await new v1((resolve) => {
-return resolve(\\"asyncResult\\");
+return resolve("asyncResult");
 }
 ,)
 return result;
 }
 
 *generatorMethod(){
-yield \\"yielded item\\";
+yield "yielded item";
 yield* generatorFuncDecl();
 yield* generatorFuncExpr();
 yield* anonGeneratorFuncExpr();
@@ -469,20 +469,20 @@ yield* anonGeneratorFuncExpr();
 
 }
 function *generatorFuncDecl(){
-yield \\"yielded in function decl\\";
+yield "yielded in function decl";
 }
 
 const generatorFuncExpr=function *generatorFuncExpr(){
-yield \\"yielded in function expr\\";
+yield "yielded in function expr";
 }
 
 const anonGeneratorFuncExpr=function *(){
-yield \\"yielded in anonymous function expr\\";
+yield "yielded in anonymous function expr";
 }
 
 class Bar extends Foo{
 constructor(){
-super(\\"bar prop\\",\\"bar val\\");
+super("bar prop","bar val");
 }
 
 method(){
@@ -490,38 +490,38 @@ return \`bar \${super.method()}\`;
 }
 
 }
-const foo=new Foo(\\"foo prop\\",\\"foo val\\",)
+const foo=new Foo("foo prop","foo val",)
 const bar=new Bar()
 const generator=foo.generatorMethod()
 function ifTest(condition){
 if (condition === 0){
-return \\"if\\";
+return "if";
 }
 else if (condition === 1){
-return \\"else if\\";
+return "else if";
 }
 else {
-return \\"else\\";
+return "else";
 }
 
 }
 
 const whileStmts=[]
 while (whileStmts.length === 0){
-whileStmts.push(\\"while block\\");
+whileStmts.push("while block");
 }
 
 while (whileStmts.length === 1){
-whileStmts.push(\\"while stmt\\");
+whileStmts.push("while stmt");
 }
 
 const doWhileStmts=[]
 do{
-doWhileStmts.push(\\"do while block\\");
+doWhileStmts.push("do while block");
 }
 while (doWhileStmts.length === 0);
 do{
-doWhileStmts.push(\\"do while stmt\\");
+doWhileStmts.push("do while stmt");
 }
 while (doWhileStmts.length === 1);
 const whileTrue=[]
@@ -536,46 +536,46 @@ break;
 
 const tryCatchErr=[]
 try {
-tryCatchErr.push(\\"try\\");
-throw new v3(\\"catch\\",);
+tryCatchErr.push("try");
+throw new v3("catch",);
 }
 catch(err){
 tryCatchErr.push(err.message);
 }
 finally {
-tryCatchErr.push(\\"finally\\");
+tryCatchErr.push("finally");
 }
 
 const tryCatch=[]
 try {
-tryCatch.push(\\"try 2\\");
-throw new v3(\\"\\",);
+tryCatch.push("try 2");
+throw new v3("",);
 }
 catch{
-tryCatch.push(\\"catch 2\\");
+tryCatch.push("catch 2");
 }
 finally {
-tryCatch.push(\\"finally 2\\");
+tryCatch.push("finally 2");
 }
 
 const tryNoFinally=[]
 try {
-tryNoFinally.push(\\"try 3\\");
-throw new v3(\\"\\",);
+tryNoFinally.push("try 3");
+throw new v3("",);
 }
 catch{
-tryNoFinally.push(\\"catch 3\\");
+tryNoFinally.push("catch 3");
 }
 
 const tryNoCatch=[]
 try {
 (() => {
 try {
-tryNoCatch.push(\\"try 4\\");
-throw new v3(\\"\\",);
+tryNoCatch.push("try 4");
+throw new v3("",);
 }
 finally {
-tryNoCatch.push(\\"finally 4\\");
+tryNoCatch.push("finally 4");
 }
 
 }
@@ -584,16 +584,16 @@ tryNoCatch.push(\\"finally 4\\");
 catch{
 }
 
-const deleteObj={notDeleted:\\"value\\",prop:\\"prop\\",\\"spaces prop\\":\\"spaces prop\\",[v5.for(\\"prop\\")]:\\"symbol prop\\"}
+const deleteObj={notDeleted:"value",prop:"prop","spaces prop":"spaces prop",[v5.for("prop")]:"symbol prop"}
 delete deleteObj.prop;;
-delete deleteObj[\\"spaces prop\\"];;
-delete deleteObj[v5.for(\\"prop\\")];;
+delete deleteObj["spaces prop"];;
+delete deleteObj[v5.for("prop")];;
 const regex=/a.*/g
 let unicode
 {
 var HECOMḚṮH=42
-const _=\\"___\\"
-const $=\\"$$\\"
+const _="___"
+const $="$$"
 const ƒ={π:v7.PI,ø:[],Ø:v9,e:2.718281828459045,root2:2.718281828459045,α:2.5029,δ:4.6692,ζ:1.2020569,φ:1.61803398874,γ:1.30357,K:2.685452001,oo:Infinity * Infinity,A:1.2824271291,C10:0.12345678910111213,c:299792458}
 unicode = {ƒ:ƒ,out:\`\${HECOMḚṮH}\${_}\${$}\`};
 }
@@ -604,55 +604,55 @@ function tag(strings,...args){
 return \`tag \${strings.map((str,i) => {
 return \`\${str} \${args[i]}\`;
 }
-).join(\\"|\\")}\`;
+).join("|")}\`;
 }
 
 const noSubstitutionTemplateLiteral=\`hello world\`
-const {head,...rest}={head:\\"head\\",rest1:\\"rest1\\",rest2:\\"rest2\\"}
-const [head2,...rest2]=[\\"head array\\",\\"rest array1\\",\\"rest array2\\",]
+const {head,...rest}={head:"head",rest1:"rest1",rest2:"rest2"}
+const [head2,...rest2]=["head array","rest array1","rest array2",]
 const binary=true && false
 const fooInstanceOf=foo instanceof Foo
-const condition=binary ? \\"condition true\\" : \\"condition false\\"
+const condition=binary ? "condition true" : "condition false"
 let switchDefault
 switch (0) {
-case 1:switchDefault = \\"switchCase\\";
+case 1:switchDefault = "switchCase";
 break;
 
 default:
-switchDefault = \\"switchDefault\\";
+switchDefault = "switchDefault";
 
 }
 let switchCase
 switch (0) {
-case 0:switchCase = \\"switchCase\\";
+case 0:switchCase = "switchCase";
 break;
 
 default:
-switchDefault = \\"switchDefault\\";
+switchDefault = "switchDefault";
 
 }
 let num=0
-const str=\\"hello\\"
+const str="hello"
 const typeOf=typeof str
 const array=[1,2,]
-const object={key:\\"value\\"}
-const key=\\"key\\"
+const object={key:"value"}
+const key="key"
 const element=object[key]
 const unary=!str
 const postfix=num++
 const prefix=++num
 const binaryOp=(num += 1)
 debugger;
-return [...arrowExpr(\\"a\\",\\"b\\",\\"c\\"),...arrowBlockExpr(\\"A\\",\\"B\\",\\"C\\"),...funcDecl(\\"d\\",\\"e\\",\\"f\\"),...funcExpr(\\"g\\",\\"h\\",\\"i\\"),...anonFuncExpr(\\"j\\",\\"k\\",\\"l\\"),await asyncArrowExpr(),await asyncFuncDecl(),await asyncFuncExpr(),await anonAsyncFuncExpr(),obj.prop,obj.getProp(),obj.getterSetter,a,c,e,f,(() => {
-return \\"foo\\";
+return [...arrowExpr("a","b","c"),...arrowBlockExpr("A","B","C"),...funcDecl("d","e","f"),...funcExpr("g","h","i"),...anonFuncExpr("j","k","l"),await asyncArrowExpr(),await asyncFuncDecl(),await asyncFuncExpr(),await anonAsyncFuncExpr(),obj.prop,obj.getProp(),obj.getterSetter,a,c,e,f,(() => {
+return "foo";
 }
 )(),(function (){
-return \\"bar\\";
+return "bar";
 }
 )(),(function baz(){
-return \\"baz\\";
+return "baz";
 }
-)(),foo.method(),bar.method(),await foo.asyncMethod(),generator.next().value,generator.next().value,generator.next().value,generator.next().value,ifTest(0),ifTest(1),ifTest(2),...whileStmts,...doWhileStmts,...whileTrue,...tryCatchErr,...tryCatch,...tryNoFinally,...tryNoCatch,deleteObj,regex.test(\\"abc\\"),unicode,homecometh,parens,tag\`\${1} + \${2} + \${3}\`,noSubstitutionTemplateLiteral,typeof \\"hello world\\",void 0,rest,head2,rest2,binary,fooInstanceOf,condition,switchDefault,switchCase,typeOf,array,element,unary,postfix,prefix,binaryOp,];
+)(),foo.method(),bar.method(),await foo.asyncMethod(),generator.next().value,generator.next().value,generator.next().value,generator.next().value,ifTest(0),ifTest(1),ifTest(2),...whileStmts,...doWhileStmts,...whileTrue,...tryCatchErr,...tryCatch,...tryNoFinally,...tryNoCatch,deleteObj,regex.test("abc"),unicode,homecometh,parens,tag\`\${1} + \${2} + \${3}\`,noSubstitutionTemplateLiteral,typeof "hello world",void 0,rest,head2,rest2,binary,fooInstanceOf,condition,switchDefault,switchCase,typeOf,array,element,unary,postfix,prefix,binaryOp,];
 }
 ;
 exports.handler = v0
@@ -662,7 +662,7 @@ exports.handler = v0
 
 exports[`instantiating the AWS SDK 1`] = `
 "var v0;
-const v2 = require(\\"aws-sdk\\");
+const v2 = require("aws-sdk");
 var v1 = v2;
 v0 = () => {
 const client=new v1.DynamoDB()
@@ -676,7 +676,7 @@ exports.handler = v0
 
 exports[`instantiating the AWS SDK v3 1`] = `
 "var v0;
-const v2 = require(\\"@aws-sdk/client-dynamodb\\");
+const v2 = require("@aws-sdk/client-dynamodb");
 const v3 = v2.DynamoDBClient;
 var v1 = v3;
 v0 = () => {
@@ -692,7 +692,7 @@ exports.handler = v0
 exports[`serialize a bound function 1`] = `
 "var v0;
 const v2 = {};
-v2.prop = \\"hello\\";
+v2.prop = "hello";
 const v3 = [];
 var v4;
 v4 = function foo(){
@@ -814,7 +814,7 @@ return \`\${super.method()}!\`;
 
 };
 const v5 = Object.create(v2.prototype);
-v5.value = \\"world\\";
+v5.value = "world";
 var v1 = v5;
 v0 = () => {
 return v1.method();
@@ -871,7 +871,7 @@ return \`hello \${this.value}\`;
 
 };
 const v3 = Object.create(v2.prototype);
-v3.value = \\"world\\";
+v3.value = "world";
 var v1 = v3;
 v0 = () => {
 return v1.method();
@@ -896,7 +896,7 @@ const v4 = function get(){
 return (v3 += 2);
 }
 
-Object.defineProperty(v2.prototype,\\"method\\",{get : v4,});
+Object.defineProperty(v2.prototype,"method",{get : v4,});
 var v1 = v2;
 v0 = () => {
 const foo=new v1()
@@ -932,7 +932,7 @@ const v5 = function set(val){
 v3 += val + 1;
 }
 
-Object.defineProperty(v2.prototype,\\"method\\",{get : v4,set : v5,});
+Object.defineProperty(v2.prototype,"method",{get : v4,set : v5,});
 var v1 = v2;
 v0 = () => {
 const foo=new v1()
@@ -964,7 +964,7 @@ const v4 = function get(){
 return v3 + 1;
 }
 
-Object.defineProperty(v2.prototype,\\"method\\",{get : v4,set : Object.getOwnPropertyDescriptor(v2.prototype,\\"method\\").set,});
+Object.defineProperty(v2.prototype,"method",{get : v4,set : Object.getOwnPropertyDescriptor(v2.prototype,"method").set,});
 var v1 = v2;
 v0 = () => {
 const foo=new v1()
@@ -1058,7 +1058,7 @@ const v4 = function set(val){
 v3 += val + 1;
 }
 
-Object.defineProperty(v2.prototype,\\"method\\",{set : v4,});
+Object.defineProperty(v2.prototype,"method",{set : v4,});
 var v1 = v2;
 v0 = () => {
 const foo=new v1()
@@ -1150,7 +1150,7 @@ exports.handler = v0
 exports[`serialize a proxy 1`] = `
 "var v0;
 const v2 = {};
-v2.value = \\"hello\\";
+v2.value = "hello";
 const v3 = {};
 var v4;
 v4 = (self,name) => {
@@ -1172,7 +1172,7 @@ exports.handler = v0
 exports[`serialize a this reference in an object literal 1`] = `
 "var v0;
 const v2 = {};
-v2.prop = \\"prop\\";
+v2.prop = "prop";
 const v3 = function get(){
 return this.prop;
 }
@@ -1191,7 +1191,7 @@ exports.handler = v0
 exports[`serialize an imported module 1`] = `
 "var v0;
 v0 = function isNode(a){
-return typeof a?.kind === \\"number\\";
+return typeof a?.kind === "number";
 }
 ;
 v0.prototype = v0.prototype;
@@ -1228,8 +1228,8 @@ const v4 = {};
 v3.cache = v4;
 var v1 = v3;
 v0 = () => {
-return v1.getOrInit({key:\\"key\\",init:() => {
-return \\"value\\";
+return v1.getOrInit({key:"key",init:() => {
+return "value";
 }
 });
 }
@@ -1244,7 +1244,7 @@ exports[`thrown errors map back to source 1`] = `
 const v2 = Error;
 var v1 = v2;
 v0 = () => {
-throw new v1(\\"oops\\",);
+throw new v1("oops",);
 }
 ;
 exports.handler = v0
