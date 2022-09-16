@@ -13,6 +13,7 @@ jobs:
     outputs:
       self_mutation_happened: ${{ steps.self_mutation.outputs.self_mutation_happened }}
     env:
+      CI: "true"
       CLEAN_UP_STACK: "1"
     steps:
       - name: Checkout
