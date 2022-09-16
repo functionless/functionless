@@ -14,6 +14,15 @@ module.exports = {
         dark: "0px 0px 24px 8px rgba(50,183,255,0.16)",
         light: "0px 0px 24px 8px rgba(0,0,0,0.12)",
       },
+      animation: {
+        "fade-in-text": "fadeIn 0.05s linear 0s 1 normal forwards",
+      },
+      keyframes: {
+        fadeIn: {
+          "0%": { opacity: 0 },
+          "100%": { opacity: 1 },
+        },
+      },
       colors: {
         blue: {
           50: "#E2F5FF",

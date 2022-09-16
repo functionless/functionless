@@ -1,27 +1,56 @@
 import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import { MDXProvider } from "@mdx-js/react";
+import { style } from "@mui/system";
 import clsx from "clsx";
-import Highlight, { defaultProps } from "prism-react-renderer";
+import Highlight, { defaultProps, Language } from "prism-react-renderer";
 import React, { ReactElement } from "react";
 import { useVisibility } from "../lib/useVisibility";
 
 export const Code = ({
   children,
   fileName,
-}: React.PropsWithChildren<{ fileName?: string }>) => {
+  language,
+  introDelayMs,
+}: React.PropsWithChildren<{
+  fileName?: string;
+  language: Language;
+  introDelayMs?: number;
+}>) => {
+  const { ref, visible } = useVisibility(0.5);
   return (
-    <MDXProvider
-      components={{
-        pre: ({ children }: { children: ReactElement }) => (
-          <pre className="p-0 overflow-visible">{children}</pre>
-        ),
-        code: ({ children: code }: { children: string }) => (
-          <VisibleCode code={code} fileName={fileName} />
-        ),
-      }}
-    >
-      {children}
-    </MDXProvider>
+    <div ref={ref}>
+      <div
+        className={clsx(
+          "transition duration-300",
+          visible
+            ? "opacity-100 translate-x-0 scale-100"
+            : "opacity-0 translate-y-10 scale-75"
+        )}
+        style={{
+          transitionDelay: introDelayMs
+            ? `${visible ? introDelayMs : 0}ms`
+            : undefined,
+        }}
+      >
+        <MDXProvider
+          components={{
+            pre: ({ children }: { children: ReactElement }) => (
+              <pre className="p-0 overflow-visible ">{children}</pre>
+            ),
+            code: ({ children: code }: { children: string }) => (
+              <VisibleCode
+                code={code}
+                fileName={fileName}
+                language={language}
+                introDelayMs={introDelayMs}
+              />
+            ),
+          }}
+        >
+          {children}
+        </MDXProvider>
+      </div>
+    </div>
   );
 };
 
@@ -50,14 +79,17 @@ const Header = ({ fileName, code }: { fileName: string; code: string }) => (
 const VisibleCode = ({
   code,
   fileName,
+  language,
+  introDelayMs,
 }: {
   code: string;
   fileName?: string;
+  language: Language;
+  introDelayMs?: number;
 }) => {
-  const { ref, visible } = useVisibility(0.25);
   return (
     <div
-      ref={ref}
+      key="code"
       className="round overflow-hidden p-0.5 code-gradient round shadow-light dark:shadow-dark"
     >
       {fileName && <Header fileName={fileName} code={code} />}
@@ -68,7 +100,7 @@ const VisibleCode = ({
           styles: defaultProps.theme.styles,
         }}
         code={code}
-        language="typescript"
+        language={language}
       >
         {({ className, style, tokens, getLineProps, getTokenProps }) => (
           <div
@@ -101,17 +133,12 @@ const VisibleCode = ({
                           {...getTokenProps({
                             token: { ...token, content: char },
                             key: k,
-                            className: clsx(
-                              "transition-opacity",
-                              visible ? "duration-75" : "duration-[0ms]"
-                            ),
+                            className: "animate-fade-in-text opacity-0",
                             style: {
-                              opacity: visible ? 1 : 0,
-                              transitionDelay: visible
-                                ? `${
-                                    (lineIndexStart + lineIndex + k) * 10 + 250
-                                  }ms`
-                                : "0ms",
+                              animationDelay: `${
+                                (lineIndexStart + lineIndex + k) * 10 +
+                                (introDelayMs ?? 0)
+                              }ms`,
                             },
                           })}
                         />
