@@ -11,6 +11,7 @@ import { validate } from "../src/validate";
 const testFilesDir = path.resolve(path.join(__dirname, "test-files"));
 
 const tsconfig = {};
+
 const compilerHost = ts.createCompilerHost(tsconfig, true);
 
 const fileNames = fs

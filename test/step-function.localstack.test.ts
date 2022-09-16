@@ -1,3 +1,4 @@
+import crypto from "crypto";
 import { Duration, aws_dynamodb, RemovalPolicy } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 import {
@@ -15,6 +16,7 @@ import {
   $SFN,
   Table,
   FunctionProps,
+  HashAlgorithm,
   StepFunctionError,
   FunctionClosure,
 } from "../src";
@@ -338,6 +340,112 @@ runtimeTestSuite<
     },
     { a: ["n1", "n2", "n3"], b: [1, 2], c: [1, 2] },
     { arr: [1, 2] }
+  );
+
+  const shasum = crypto.createHash("sha1");
+  shasum.update("hide me");
+  const sha256sum = crypto.createHash("sha256");
+  sha256sum.update("hashMe");
+
+  test(
+    "intrinsics",
+    (parent) => {
+      return new StepFunction(parent, "sfn", async (input) => {
+        let objAccess;
+        try {
+          objAccess = input.range[input.key];
+        } catch (err) {
+          objAccess = (<StepFunctionError>err).cause;
+        }
+        let objIn;
+        try {
+          objIn = input.key in input.range;
+        } catch (err) {
+          objIn = (<StepFunctionError>err).cause;
+        }
+        return {
+          partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4),
+          partitionRef: $SFN.partition(input.arr, input.part),
+          range: $SFN.range(4, 30, 5),
+          rangeRef: $SFN
+            .range(input.range.start, input.range.end, input.range.step)
+            .map((n) => `n${n}`)
+            .join(""),
+          unique: $SFN.unique(["a", 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, "a", "b"]),
+          uniqueRef: $SFN.unique(input.arr),
+          base64: $SFN.base64Decode($SFN.base64Encode("test")),
+          base64Ref: $SFN.base64Decode($SFN.base64Encode(input.baseTest)),
+          hash: $SFN.hash("hide me", "SHA-1"),
+          hashRef: $SFN.hash(input.hashTest, input.hashAlgo),
+          includes: [1, 2, 3, 4].includes(2),
+          includesRes: input.arr.includes(input.part),
+          notIncludesRes: input.arr.includes("a" as unknown as number),
+          get: [1, 2, 3, 4][0]!,
+          getRef: input.arr[input.part]!,
+          getFunc: $SFN.getItem(input.arr, 0),
+          getFuncRef: $SFN.getItem(input.arr, input.part),
+          objAccess,
+          inRef: input.part in input.arr,
+          inRefFalse: input.large in input.arr,
+          objIn,
+          length: [1, 2, 3, 4].length,
+          lengthRef: input.arr.length,
+          uniqueLength: $SFN.unique(input.arr).length,
+          lengthObj: input.lengthObj.length,
+          emptyLength: input.emptyArr.length,
+          slice: input.arr.slice(1, 3),
+          sliceRef: input.arr.slice(input.part, input.end),
+          sliceRefStart: input.arr.slice(input.end),
+        };
+      });
+    },
+    {
+      partition: [
+        [1, 2, 3, 4],
+        [5, 6],
+      ],
+      partitionRef: [[1, 2], [3, 1], [2, 3], [4]],
+      range: [4, 9, 14, 19, 24, 29],
+      rangeRef: "n1n3n5n7n9n11",
+      unique: ["a", 1, 2, "b", 3, 4, 5],
+      uniqueRef: [1, 2, 3, 4],
+      base64: "test",
+      base64Ref: "encodeMe",
+      hash: shasum.digest("hex"),
+      hashRef: sha256sum.digest("hex"),
+      includes: true,
+      includesRes: true,
+      notIncludesRes: false,
+      get: 1,
+      getRef: 3,
+      getFunc: 1,
+      getFuncRef: 3,
+      objAccess: "Reference element access is not valid for objects.",
+      inRef: true,
+      inRefFalse: false,
+      objIn: "Reference element access is not valid for objects.",
+      length: 4,
+      lengthRef: 7,
+      uniqueLength: 4,
+      lengthObj: "a",
+      emptyLength: 0,
+      slice: [2, 3],
+      sliceRef: [3, 1],
+      sliceRefStart: [2, 3, 4],
+    },
+    {
+      range: { start: 1, end: 11, step: 2 },
+      arr: [1, 2, 3, 1, 2, 3, 4],
+      part: 2,
+      end: 4,
+      large: 100,
+      baseTest: "encodeMe",
+      hashTest: "hashMe",
+      hashAlgo: "SHA-256" as HashAlgorithm,
+      lengthObj: { length: "a" },
+      emptyArr: [],
+      key: "start" as const,
+    }
   );
 
   test(
@@ -802,6 +910,101 @@ runtimeTestSuite<
   );
 
   test(
+    "math",
+    (parent) =>
+      new StepFunction(parent, "sfn", async (input) => {
+        let a = input.p;
+        let b = 1;
+
+        return {
+          plusEqualsConst: (b += 1), // 2
+          plusEqualsRef: (b += input.p), // 3
+          minusEqualsConst: (b -= 1), // 2
+          minusEqualsRef: (b -= input.p), // 1
+          minusEqualsNegConst: (b -= -1), // 2
+          b, // 2
+          refPlusRef: input.p + input.p, //2
+          refPlusNegRef: input.p + input.n, // 0
+          refPlusZeroRef: input.p + input.z, // 1
+          refPlusConst: input.p + 1, // 2
+          refPlusNegConst: input.p + -1, // 0
+          refPlusZeroConst: input.p + -0, // 1
+          // @ts-ignore
+          refPlusBooleanConst: input.p + true, // 2
+          // @ts-ignore
+          refBooleanPlusBooleanConst: input.b + true, // 2
+          // @ts-ignore
+          refBooleanPlusBooleanRef: input.b + input.b, // 2
+          // @ts-ignore
+          constBooleanPlusBooleanConst: true + true, // 2
+          refMinusRef: input.p - input.p, // 0
+          refMinusNegRef: input.p - input.n, // 2
+          refMinusZeroRef: input.p - input.z, // 1
+          refMinusConst: input.p - 1, // 0
+          refMinusNegConst: input.p - -1, // 2
+          postPlusPlus: a++, // 1=>2
+          prePlusPlus: ++a, // 3
+          postMinusMinus: a--, // 3 => 2
+          preMinusMinus: --a, // 1
+          negateRef: -input.p, // -1
+          negateNegRef: -input.n, // 1
+          negateZeroRef: -input.z, // 0
+          refStringPlusNumberConst: input.str + 1, // "a1",
+          refStringPlusStringConst: input.str + "b", // "ab"
+          refStringPlusBooleanConst: input.str + true, // "atrue"
+          numberConstPlusRefString: 1 + input.str, // "1a",
+          stringConstPlusRefString: "b" + input.str, // "ba"
+          booleanConstPlusRefString: true + input.str, // "truea"
+          refStringPlusRefString: input.str + input.str, // "aa"
+          constStringPlusStringConst: "a" + "b", // "ab"
+          constStringPlusNumberConst: "a" + 1, // "a1"
+          constStringPlusBooleanConst: "a" + true, // "atrue"
+        };
+      }),
+    {
+      b: 2,
+      plusEqualsConst: 2,
+      plusEqualsRef: 3,
+      minusEqualsConst: 2,
+      minusEqualsRef: 1,
+      minusEqualsNegConst: 2,
+      refPlusRef: 2,
+      refPlusNegRef: 0,
+      refPlusZeroRef: 1,
+      refPlusConst: 2,
+      refPlusNegConst: 0,
+      refPlusZeroConst: 1,
+      refPlusBooleanConst: 2,
+      refBooleanPlusBooleanConst: 2,
+      refBooleanPlusBooleanRef: 2,
+      constBooleanPlusBooleanConst: 2,
+      refMinusRef: 0,
+      refMinusNegRef: 2,
+      refMinusZeroRef: 1,
+      refMinusConst: 0,
+      refMinusNegConst: 2,
+      postPlusPlus: 1,
+      prePlusPlus: 3,
+      postMinusMinus: 3,
+      preMinusMinus: 1,
+      negateRef: -1,
+      negateNegRef: 1,
+      negateZeroRef: 0,
+      refStringPlusNumberConst: "a1",
+      refStringPlusStringConst: "ab",
+      refStringPlusBooleanConst: "atrue",
+      numberConstPlusRefString: "1a",
+      stringConstPlusRefString: "ba",
+      booleanConstPlusRefString: "truea",
+      refStringPlusRefString: "aa",
+      constStringPlusStringConst: "ab",
+      constStringPlusNumberConst: "a1",
+      constStringPlusBooleanConst: "atrue",
+    },
+    { p: 1, n: -1, z: 0, str: "a", b: true }
+  );
+
+  test(
     "binary and unary comparison",
     (parent) => {
       return new StepFunction(
@@ -1155,8 +1358,8 @@ runtimeTestSuite<
     (parent) => {
       return new StepFunction(parent, "sfn2", async () => {
         return {
-          and: true && (await trueFunc()),
-          or: false || (await trueFunc()),
+          and: true && (await $SFN.retry(() => trueFunc())),
+          or: false || (await $SFN.retry(() => trueFunc())),
         };
       });
     },

@@ -68,31 +68,36 @@ export interface ErrorCode {
 
 export namespace ErrorCodes {
   /**
-   * The computations that [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html)
-   * can do is restricted by JSON Path and the limited [Intrinsic Functions](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-intrinsic-functions.html). Currently, arithmetic expressions are not supported.
+   * Step Functions can only preform limited arithmetic operations.
+   *
+   * Add (`+`), Subtract (`-`) and their duratives (`+=`, `++`) are supported, but operations like multiply (`*`) and mod (`%`) are not.
+   *
    * ```ts
    * // ok
    * new StepFunction(scope, id, () => 1 + 2);
    *
-   * // illegal!
+   * // ok
    * new StepFunction(scope, id, (input: { num: number }) => input.number + 1);
+   *
+   * // illegal!
+   * new StepFunction(scope, id, (input: { num: number }) => input.number * 2);
    * ```
    *
    * To workaround, use a `Function` to implement the arithmetic expression. Be aware that this comes with added cost and operational risk.
    *
    * ```ts
-   * const add = new Function(scope, "add", (input: { a: number, b: number }) => input.a + input.b);
+   * const mult = new Function(scope, "add", (input: { a: number, b: number }) => input.a * input.b);
    *
    * new StepFunction(scope, id, async (input: { num: number }) => {
-   *   await add({a: input.number, b: 1});
+   *   await mult({a: input.number, b: 1});
    * });
    * ```
    */
-  export const Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function: ErrorCode =
+  export const Cannot_perform_all_arithmetic_or_bitwise_computations_on_variables_in_Step_Function: ErrorCode =
     {
       code: 10000,
       type: ErrorType.ERROR,
-      title: "Cannot perform arithmetic on variables in Step Function",
+      title: "Cannot perform all arithmetic on variables in Step Function",
     };
 
   /**
@@ -1313,6 +1318,40 @@ export namespace ErrorCodes {
     code: 10037,
     type: ErrorType.ERROR,
     title: "Step Function Retry Invalid Input.",
+  };
+
+  /**
+   * Step Functions Arithmetic Only Supports Integer
+   *
+   * Step Functions only supports integer addition via the `States.MathAdd`.
+   *
+   * ```ts
+   * new StepFunction(stack, "sfn", async (input: { a: number }) => {
+   *    return 1.5 + input.a;
+   * });
+   * ```
+   *
+   * If the above machine is given input: `{ a: 0.5 }`, the result will be `1`.
+   *
+   * Effectively resulting in: `1.5 + 0.5 === 1`
+   *
+   * Workaround:
+   *
+   * Do floating point math within a lambda function.
+   *
+   * ```ts
+   * const floatingPointAdd = new Function(stack, "fn", async (input: { a: number, b: number }) => {
+   *    return input.a + input.b;
+   * });
+   * new StepFunction(stack, "sfn", async (input: { a: number }) => {
+   *    return floatingPointAdd(1.5, input.a);
+   * });
+   * ```
+   */
+  export const Step_Functions_Arithmetic_Only_Supports_Integers: ErrorCode = {
+    code: 10038,
+    type: ErrorType.WARN,
+    title: "Step Functions Arithmetic Only Supports Integers",
   };
 }
 

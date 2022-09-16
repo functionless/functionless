@@ -19,6 +19,7 @@ import {
   State,
   Pass,
   Condition,
+  Parameters,
 } from "./states";
 import { ASL } from "./synth";
 
@@ -107,12 +108,25 @@ export namespace ASLGraph {
     return "output" in state;
   }
 
+  export type LiteralValueType =
+    | undefined
+    | string
+    | number
+    | null
+    | boolean
+    | {
+        [key: string]: LiteralValueType;
+      }
+    | LiteralValueType[];
+
   /**
    * A literal value of type string, number, boolean, object, or null.
    *
    * If this is an Object, the object may contain nested JsonPaths as denoted by `containsJsonPath`.
    */
-  export interface LiteralValue {
+  export interface LiteralValue<
+    Value extends LiteralValueType = LiteralValueType
+  > {
     /**
      * Whether there is json path in the constant.
      *
@@ -120,7 +134,7 @@ export namespace ASLGraph {
      * when false use Result in a Pass State instead of Parameters
      */
     containsJsonPath: boolean;
-    value: string | number | null | boolean | Record<string, any> | any[];
+    value: Value;
   }
 
   /**
@@ -141,6 +155,47 @@ export namespace ASLGraph {
 
   export function isLiteralValue(state: any): state is ASLGraph.LiteralValue {
     return "value" in state;
+  }
+
+  export function isLiteralNull(
+    state: any
+  ): state is ASLGraph.LiteralValue<null> {
+    return isLiteralValue(state) && state.value === null;
+  }
+
+  export function isLiteralUndefined(
+    state: any
+  ): state is ASLGraph.LiteralValue<undefined> {
+    return isLiteralValue(state) && state.value === undefined;
+  }
+
+  export function isLiteralNumber(
+    state: any
+  ): state is ASLGraph.LiteralValue<number> {
+    return isLiteralValue(state) && typeof state.value === "number";
+  }
+
+  export function isLiteralString(
+    state: any
+  ): state is ASLGraph.LiteralValue<string> {
+    return isLiteralValue(state) && typeof state.value === "string";
+  }
+
+  export function isLiteralArray(
+    state: any
+  ): state is ASLGraph.LiteralValue<any[]> {
+    return isLiteralValue(state) && Array.isArray(state.value);
+  }
+
+  export function isLiteralObject(
+    state: any
+  ): state is ASLGraph.LiteralValue<Record<string, any>> {
+    return (
+      isLiteralValue(state) &&
+      typeof state.value === "object" &&
+      !Array.isArray(state.value) &&
+      state.value !== null
+    );
   }
 
   export function isJsonPath(state: any): state is ASLGraph.JsonPath {
@@ -845,7 +900,7 @@ export namespace ASLGraph {
           }
         : value.containsJsonPath
         ? {
-            Parameters: value.value,
+            Parameters: value.value as unknown as Parameters,
           }
         : {
             Result: value.value,
@@ -869,8 +924,53 @@ export namespace ASLGraph {
             InputPath: value.jsonPath,
           }
         : {
-            Parameters: value.value,
+            Parameters: value.value as unknown as Parameters,
           }),
+    };
+  }
+
+  /**
+   * Helper that generates a {@link Pass} state to assign a single jsonPath or intrinsic to
+   * an output location.
+   *
+   * ```ts
+   * assignJsonPathOrIntrinsic("out", "$.var", "States.Array(1,2,3)");
+   * ```
+   *
+   * =>
+   *
+   * ```ts
+   * {
+   *    "Type": "Pass",
+   *    "Parameters": {
+   *       "out.$": "State.Array(1,2,3)"
+   *    },
+   *    "Next": ASLGraph.DeferNext,
+   *    "ResultPath": "$.var",
+   *    "output": { "jsonPath": "$.var.out" }
+   * }
+   * ```
+   *
+   * @param jsonPathOrIntrinsic - json path (ex: $.var) or instrinsic function (ex: States.Array) to place into the output.
+   */
+  export function assignJsonPathOrIntrinsic(
+    jsonPathOrIntrinsic: string,
+    resultPath: string,
+    propertyName: string = "out",
+    next: string = ASLGraph.DeferNext,
+    node?: FunctionlessNode
+  ): ASLGraph.NodeState & Pass & { output: ASLGraph.JsonPath } {
+    return {
+      node,
+      Type: "Pass",
+      Parameters: {
+        [`${propertyName}.$`]: jsonPathOrIntrinsic,
+      },
+      ResultPath: resultPath,
+      output: {
+        jsonPath: `${resultPath}.${propertyName}`,
+      },
+      Next: next,
     };
   }
 
@@ -891,7 +991,9 @@ export namespace ASLGraph {
         ((operator === "!=" || operator === "!==") &&
           leftOutput.value !== rightOutput.value) ||
         (leftOutput.value !== null &&
+          leftOutput.value !== undefined &&
           rightOutput.value !== null &&
+          rightOutput.value !== undefined &&
           ((operator === ">" && leftOutput.value > rightOutput.value) ||
             (operator === "<" && leftOutput.value < rightOutput.value) ||
             (operator === "<=" && leftOutput.value <= rightOutput.value) ||
@@ -1224,7 +1326,7 @@ export namespace ASLGraph {
   }
 
   export function elementIn(
-    element: string | number,
+    element: ASLGraph.LiteralValue<string> | ASLGraph.LiteralValue<number>,
     targetJsonPath: ASLGraph.JsonPath
   ): Condition {
     const accessed = ASLGraph.accessConstant(targetJsonPath, element, true);
@@ -1244,29 +1346,29 @@ export namespace ASLGraph {
    */
   export function accessConstant(
     value: ASLGraph.Output,
-    field: string | number,
+    field: ASLGraph.LiteralValue<string> | ASLGraph.LiteralValue<number>,
     element: boolean
   ): ASLGraph.JsonPath | ASLGraph.LiteralValue {
     if (ASLGraph.isJsonPath(value)) {
-      return typeof field === "number"
-        ? { jsonPath: `${value.jsonPath}[${field}]` }
+      return ASLGraph.isLiteralNumber(field)
+        ? { jsonPath: `${value.jsonPath}[${field.value}]` }
         : element
-        ? { jsonPath: `${value.jsonPath}['${field}']` }
-        : { jsonPath: `${value.jsonPath}.${field}` };
+        ? { jsonPath: `${value.jsonPath}['${field.value}']` }
+        : { jsonPath: `${value.jsonPath}.${field.value}` };
     }
 
     if (ASLGraph.isLiteralValue(value) && value.value) {
       const accessedValue = (() => {
         if (Array.isArray(value.value)) {
-          if (typeof field === "number") {
-            return value.value[field];
+          if (ASLGraph.isLiteralNumber(field)) {
+            return value.value[field.value];
           }
           throw new SynthError(
             ErrorCodes.StepFunctions_Invalid_collection_access,
             "Accessor to an array must be a constant number"
           );
-        } else if (typeof value.value === "object") {
-          return value.value[field];
+        } else if (ASLGraph.isLiteralObject(value)) {
+          return value.value[field.value];
         }
         throw new SynthError(
           ErrorCodes.StepFunctions_Invalid_collection_access,
@@ -1286,6 +1388,229 @@ export namespace ASLGraph {
     throw new SynthError(
       ErrorCodes.StepFunctions_Invalid_collection_access,
       "Only a constant object or array may be accessed."
+    );
+  }
+
+  /**
+   * Wraps any literal value which can be output an an ASL state.
+   *
+   * @param containsJsonPath - when true, denotes that an object contains json path in it's properties at any depth.
+   *                           ```ts
+   *                           { "key.$": "$.value" }
+   *                           ```
+   *                           ```ts
+   *                           { k: { "key.$": "$.value" } }
+   *                           ```
+   */
+  export function literalValue<V extends LiteralValueType = LiteralValueType>(
+    value: V,
+    containsJsonPath: boolean = false
+  ): ASLGraph.LiteralValue<V> {
+    return {
+      value,
+      containsJsonPath,
+    };
+  }
+
+  /**
+   * Represents any json path output by an ASL state.
+   *
+   * Provides a friendly helper for formatting json path segments.
+   *
+   * ```ts
+   * const j = ASLGraph.jsonPath("$.path", "seg");
+   * j.jsonPath // $.path.seg
+   * ```
+   */
+  export function jsonPath(
+    jsonPath: string | JsonPath,
+    ...segment: string[]
+  ): JsonPath {
+    return {
+      jsonPath: `${
+        typeof jsonPath === "string" ? jsonPath : jsonPath.jsonPath
+      }${segment.length > 0 ? `.${segment.join(".")}` : ""}`,
+    };
+  }
+
+  /**
+   * Represents a conditional statement which can be returned from a state.
+   *
+   * For example
+   *
+   * ```ts
+   * x === 1 // ASLGraph.conditionOutput(ASL.equals(...))
+   * ```
+   */
+  export function conditionOutput(condition: Condition) {
+    return { condition };
+  }
+
+  /**
+   * Formats an intrinsic function.
+   *
+   * ```ts
+   * ASLGraph.intrinsicFunction("States.Format", `'{}{}'`, ASLGraph.jsonPath("$.val"), ASLGraph.literalValue("someString"));
+   * ```
+   * =>
+   * "States.format('{}{}', $.val, 'someString')"
+   */
+  export function intrinsicFunction(
+    name: string,
+    ...args: (ASLGraph.JsonPath | ASLGraph.LiteralValue | string)[]
+  ) {
+    return `${name}(${args
+      .map((arg) =>
+        typeof arg === "string"
+          ? arg
+          : ASLGraph.isLiteralString(arg)
+          ? `'${arg.value}'`
+          : ASLGraph.isLiteralValue(arg)
+          ? arg.value
+          : arg.jsonPath
+      )
+      .join(",")})`;
+  }
+
+  /**
+   * States.Format(template, ...args)
+   *
+   * @param template used to format the values. A bare string will be quoted.
+   *                 `intrinsicFormat("{}", ASLGraph.jsonPath("$.a"))` => States.Format('{}', $.a)
+   */
+  export function intrinsicFormat(
+    template: string | ASLGraph.JsonPath | ASLGraph.LiteralValue<string>,
+    ...args: (string | ASLGraph.JsonPath | ASLGraph.LiteralValue)[]
+  ) {
+    return intrinsicFunction(
+      "States.Format",
+      typeof template === "string" ? ASLGraph.literalValue(template) : template,
+      ...args
+    );
+  }
+
+  /**
+   * States.StringSplit(value, separator)
+   *
+   * @param value to split.
+   * @param separator used to split the value.
+   */
+  export function intrinsicStringSplit(
+    value: string | ASLGraph.JsonPath | ASLGraph.LiteralValue<string>,
+    separator: string | (ASLGraph.JsonPath | ASLGraph.LiteralValue<string>)
+  ) {
+    return intrinsicFunction("States.StringSplit", value, separator);
+  }
+
+  /**
+   * States.StringToJson(value)
+   *
+   * @param value to turn to json.
+   */
+  export function intrinsicStringToJson(
+    value: string | ASLGraph.JsonPath | ASLGraph.LiteralValue<string>
+  ) {
+    return intrinsicFunction("States.StringToJson", value);
+  }
+
+  /**
+   * States.JsonToString(value)
+   *
+   * @param value to turn to a string.
+   */
+  export function intrinsicJsonToString(
+    value: string | ASLGraph.JsonPath | ASLGraph.LiteralValue
+  ) {
+    return intrinsicFunction("States.JsonToString", value);
+  }
+
+  /**
+   * States.ArrayGet(arr, index)
+   *
+   * @param arr to access.
+   * @param index position to access.
+   */
+  export function intrinsicArrayGetItem(
+    arr: string | ASLGraph.JsonPath,
+    index: number | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>
+  ) {
+    return intrinsicFunction(
+      "States.ArrayGetItem",
+      arr,
+      typeof index === "number" ? ASLGraph.literalValue(index) : index
+    );
+  }
+
+  /**
+   * States.ArrayContains(arr, item)
+   *
+   * @param arr to access.
+   * @param item to search for.
+   */
+  export function intrinsicArrayContains(
+    arr: string | ASLGraph.JsonPath,
+    item: string | ASLGraph.JsonPath | ASLGraph.LiteralValue
+  ) {
+    return intrinsicFunction("States.ArrayContains", arr, item);
+  }
+
+  /**
+   * States.ArrayLength(arr, index)
+   *
+   * @param arr to get length of
+   */
+  export function intrinsicArrayLength(arr: string | ASLGraph.JsonPath) {
+    return intrinsicFunction("States.ArrayLength", arr);
+  }
+
+  /**
+   * States.ArrayRange(start, end, step)
+   *
+   * @param start inclusive start value of the output array
+   * @param end inclusive end value of the output array
+   * @param step increment to step between start and range
+   */
+  export function intrinsicArrayRange(
+    start: number | string | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>,
+    end: number | string | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>,
+    step: number | string | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>
+  ) {
+    return intrinsicFunction(
+      "States.ArrayRange",
+      typeof start === "number" ? ASLGraph.literalValue(start) : start,
+      typeof end === "number" ? ASLGraph.literalValue(end) : end,
+      typeof step === "number" ? ASLGraph.literalValue(step) : step
+    );
+  }
+
+  /**
+   * States.Array(start, end, step)
+   *
+   * @param items to put in the list
+   */
+  export function intrinsicArray(
+    ...items: (
+      | string
+      | ASLGraph.JsonPath
+      | ASLGraph.LiteralValue<
+          Exclude<ASLGraph.LiteralValueType, Record<string, any> | any[]>
+        >
+    )[]
+  ) {
+    return intrinsicFunction("States.Array", ...items);
+  }
+
+  /**
+   * States.MathAdd(left, right)
+   */
+  export function intrinsicMathAdd(
+    left: number | string | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>,
+    right: number | string | ASLGraph.JsonPath | ASLGraph.LiteralValue<number>
+  ) {
+    return intrinsicFunction(
+      "States.MathAdd",
+      typeof left === "number" ? ASLGraph.literalValue(left) : left,
+      typeof right === "number" ? ASLGraph.literalValue(right) : right
     );
   }
 }

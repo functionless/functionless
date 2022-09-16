@@ -942,6 +942,8 @@ const BinaryArithmeticOperators = [
 ] as const;
 
 const UnaryArithmeticOperators = [
+  ts.SyntaxKind.PlusToken, // +
+  ts.SyntaxKind.MinusToken, // -
   ts.SyntaxKind.AsteriskAsteriskToken, // **
   ts.SyntaxKind.MinusMinusToken, // --
   ts.SyntaxKind.PlusPlusToken, // ++
