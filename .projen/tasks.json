@@ -201,7 +201,7 @@
           "exec": "jest --passWithNoTests --all --updateSnapshot --testPathIgnorePatterns '(localstack|runtime)'"
         },
         {
-          "exec": "jest --passWithNoTests --all --testPathIgnorePatterns (runtime|localstack) --updateSnapshot"
+          "exec": "jest --passWithNoTests --all --testPathIgnorePatterns '(runtime|localstack)' --updateSnapshot"
         },
         {
           "spawn": "eslint"

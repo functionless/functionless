@@ -146,7 +146,7 @@ const project = new CustomTypescriptProject({
         "^.+\\.(t|j)sx?$": ["./jest.js", {}],
       },
     },
-    extraCliOptions: ["--testPathIgnorePatterns (runtime|localstack)"],
+    extraCliOptions: ["--testPathIgnorePatterns '(runtime|localstack)'"],
   },
   scripts: {
     localstack: "./scripts/localstack",
@@ -270,7 +270,7 @@ project.testTask.env("TEST_DEPLOY_TARGET", "AWS");
 project.testTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
 
 const testFast = project.addTask("test:fast");
-testFast.exec(`jest --testPathPattern '(localstack|runtime)' --coverage false`);
+testFast.exec("jest --testPathPattern '(localstack|runtime)' --coverage false");
 
 project.addPackageIgnore("/test-app");
 
