@@ -121,6 +121,7 @@ const project = new CustomTypescriptProject({
     `@aws-cdk/cloud-assembly-schema@${MIN_CDK_VERSION}`,
     `@aws-cdk/cloudformation-diff@${MIN_CDK_VERSION}`,
     `@aws-cdk/cx-api@${MIN_CDK_VERSION}`,
+    "aws-sdk",
     `aws-cdk@${MIN_CDK_VERSION}`,
     `cdk-assets@${MIN_CDK_VERSION}`,
     "promptly",
@@ -142,8 +143,6 @@ const project = new CustomTypescriptProject({
       transform: {
         "^.+\\.(t|j)sx?$": ["./jest.js", {}],
       },
-      // TODO: delete me, just to shorten the test cycle
-      testMatch: ["**/secret.localstack.test.ts"],
     },
   },
   scripts: {
@@ -159,16 +158,23 @@ const project = new CustomTypescriptProject({
     "typescript@^4.8.2",
   ],
   eslintOptions: {
-    dirs: ["src", "test"],
-    ignorePatterns: ["scripts/**", "register.js", "jest.js", "swc-config.js"],
+    dirs: ["src"],
+    ignorePatterns: [
+      "scripts/**",
+      "register.js",
+      "jest.js",
+      "swc-config.js",
+      "website/**",
+    ],
     lintProjenRc: false,
   },
   tsconfig: {
     compilerOptions: {
       // @ts-ignore
       declarationMap: true,
+      lib: ["dom", "ES2022"],
       noUncheckedIndexedAccess: true,
-      lib: ["dom", "ES2019"],
+      resolveJsonModule: true,
       skipLibCheck: true,
     },
   },
@@ -244,9 +250,8 @@ project.compileTask.env("TEST_DEPLOY_TARGET", "AWS");
 
 project.compileTask.prependExec("ts-node ./scripts/sdk-gen.ts");
 
-project.testTask.prependExec(
-  "cd ./test-app && yarn && yarn build && yarn synth --quiet"
-);
+// start over...
+project.testTask.reset();
 
 // To run tests on github using localstack instead of AWS, uncomment the below and comment out TEST_DEPLOY_TARGET.
 // project.testTask.prependExec("./scripts/localstack");
@@ -258,10 +263,25 @@ project.testTask.prependExec(
 project.testTask.env("TEST_DEPLOY_TARGET", "AWS");
 project.testTask.env("NODE_OPTIONS", "--max-old-space-size=4096");
 
-const testFast = project.addTask("test:fast");
-testFast.exec(`jest --testPathIgnorePatterns localstack --coverage false`);
+const testFast = project.addTask("test:fast", {
+  exec: "jest --passWithNoTests --all --updateSnapshot --testPathIgnorePatterns '(localstack|runtime)'",
+});
+
+const testRuntime = project.addTask("test:runtime", {
+  exec: "jest --passWithNoTests --all --updateSnapshot --testPathPattern '(localstack|runtime)' --no-cache",
+});
+
+const testApp = project.addTask("test:app", {
+  exec: "cd ./test-app && yarn && yarn build && yarn synth --quiet",
+});
+
+project.testTask.spawn(testFast);
+project.testTask.spawn(testRuntime);
+project.testTask.spawn(testApp);
+project.testTask.spawn(project.tasks.tryFind("eslint")!);
 
 project.addPackageIgnore("/test-app");
+project.addPackageIgnore("/website");
 
 // id-token is required for aws-actions/configure-aws-credentials@v1 with OIDC
 // https://github.com/aws-actions/configure-aws-credentials/issues/271#issuecomment-1012450577
@@ -271,7 +291,11 @@ project.buildWorkflow.workflow.jobs.build = {
   ...project.buildWorkflow.workflow.jobs.build,
   // deploy the clean up stack during tests to be available for the cleanup pull_request closed job
   // only do this for build workflow as the release workflow deletes immediately
-  env: { CLEAN_UP_STACK: "1" },
+  env: {
+    // @ts-ignore
+    ...project.buildWorkflow.workflow.jobs.build.env,
+    CLEAN_UP_STACK: "1",
+  },
   permissions: {
     // @ts-ignore
     ...project.buildWorkflow.workflow.jobs.build.permissions,

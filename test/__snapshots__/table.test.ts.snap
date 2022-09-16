@@ -1,7 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`delete item 1`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -18,7 +18,7 @@ $util.qr($v4.put('expression', '#name = #name + 1'))
 $util.qr($v5.put('#name', 'name'))
 $util.qr($v4.put('expressionNames', $v5))
 $util.qr($v1.put('condition', $v4))
-#set($v6 = {\\"operation\\": \\"DeleteItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v6 = {"operation": "DeleteItem", "version": "2018-05-29"})
 $util.qr($v6.put('key', $v1.get('key')))
 #if($v1.containsKey('condition'))
 $util.qr($v6.put('condition', $v1.get('condition')))
@@ -37,7 +37,7 @@ $util.toJson($v6)",
 `;
 
 exports[`delete item 2`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -54,7 +54,7 @@ $util.qr($v4.put('expression', '#name = #name + 1'))
 $util.qr($v5.put('#name', 'name'))
 $util.qr($v4.put('expressionNames', $v5))
 $util.qr($v1.put('condition', $v4))
-#set($v6 = {\\"operation\\": \\"DeleteItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v6 = {"operation": "DeleteItem", "version": "2018-05-29"})
 $util.qr($v6.put('key', $v1.get('key')))
 #if($v1.containsKey('condition'))
 $util.qr($v6.put('condition', $v1.get('condition')))
@@ -73,7 +73,7 @@ $util.toJson($v6)",
 `;
 
 exports[`delete item 3`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -93,7 +93,7 @@ $util.qr($v5.put('expression', '#name = #name + 1'))
 $util.qr($v6.put('#name', 'name'))
 $util.qr($v5.put('expressionNames', $v6))
 $util.qr($v1.put('condition', $v5))
-#set($v7 = {\\"operation\\": \\"DeleteItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v7 = {"operation": "DeleteItem", "version": "2018-05-29"})
 $util.qr($v7.put('key', $v1.get('key')))
 #if($v1.containsKey('condition'))
 $util.qr($v7.put('condition', $v1.get('condition')))
@@ -112,7 +112,7 @@ $util.toJson($v7)",
 `;
 
 exports[`delete item 4`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -132,7 +132,7 @@ $util.qr($v5.put('expression', '#name = #name + 1'))
 $util.qr($v6.put('#name', 'name'))
 $util.qr($v5.put('expressionNames', $v6))
 $util.qr($v1.put('condition', $v5))
-#set($v7 = {\\"operation\\": \\"DeleteItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v7 = {"operation": "DeleteItem", "version": "2018-05-29"})
 $util.qr($v7.put('key', $v1.get('key')))
 #if($v1.containsKey('condition'))
 $util.qr($v7.put('condition', $v1.get('condition')))
@@ -151,7 +151,7 @@ $util.toJson($v7)",
 `;
 
 exports[`get item 1`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -162,7 +162,7 @@ Array [
 $util.qr($v3.put('S', $context.arguments.id))
 $util.qr($v2.put('id', $v3))
 $util.qr($v1.put('key', $v2))
-#set($v4 = {\\"operation\\": \\"GetItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v4 = {"operation": "GetItem", "version": "2018-05-29"})
 $util.qr($v4.put('key', $v1.get('key')))
 #if($v1.containsKey('consistentRead'))
 $util.qr($v4.put('consistentRead', $v1.get('consistentRead')))
@@ -178,7 +178,7 @@ $util.toJson($v4)",
 `;
 
 exports[`get item 2`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -189,7 +189,7 @@ Array [
 $util.qr($v3.put('S', $context.arguments.id))
 $util.qr($v2.put('id', $v3))
 $util.qr($v1.put('key', $v2))
-#set($v4 = {\\"operation\\": \\"GetItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v4 = {"operation": "GetItem", "version": "2018-05-29"})
 $util.qr($v4.put('key', $v1.get('key')))
 #if($v1.containsKey('consistentRead'))
 $util.qr($v4.put('consistentRead', $v1.get('consistentRead')))
@@ -205,7 +205,7 @@ $util.toJson($v4)",
 `;
 
 exports[`get item 3`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -219,7 +219,7 @@ $util.qr($v2.put('id', $v3))
 $util.qr($v4.put('N', '1'))
 $util.qr($v2.put('name', $v4))
 $util.qr($v1.put('key', $v2))
-#set($v5 = {\\"operation\\": \\"GetItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v5 = {"operation": "GetItem", "version": "2018-05-29"})
 $util.qr($v5.put('key', $v1.get('key')))
 #if($v1.containsKey('consistentRead'))
 $util.qr($v5.put('consistentRead', $v1.get('consistentRead')))
@@ -235,7 +235,7 @@ $util.toJson($v5)",
 `;
 
 exports[`get item 4`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -249,7 +249,7 @@ $util.qr($v2.put('id', $v3))
 $util.qr($v4.put('N', '1'))
 $util.qr($v2.put('name', $v4))
 $util.qr($v1.put('key', $v2))
-#set($v5 = {\\"operation\\": \\"GetItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v5 = {"operation": "GetItem", "version": "2018-05-29"})
 $util.qr($v5.put('key', $v1.get('key')))
 #if($v1.containsKey('consistentRead'))
 $util.qr($v5.put('consistentRead', $v1.get('consistentRead')))
@@ -265,7 +265,7 @@ $util.toJson($v5)",
 `;
 
 exports[`get item and set consistentRead:true 1`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -277,7 +277,7 @@ $util.qr($v3.put('S', $context.arguments.id))
 $util.qr($v2.put('id', $v3))
 $util.qr($v1.put('key', $v2))
 $util.qr($v1.put('consistentRead', true))
-#set($v4 = {\\"operation\\": \\"GetItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v4 = {"operation": "GetItem", "version": "2018-05-29"})
 $util.qr($v4.put('key', $v1.get('key')))
 #if($v1.containsKey('consistentRead'))
 $util.qr($v4.put('consistentRead', $v1.get('consistentRead')))
@@ -293,7 +293,7 @@ $util.toJson($v4)",
 `;
 
 exports[`get item and set consistentRead:true 2`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -305,7 +305,7 @@ $util.qr($v3.put('S', $context.arguments.id))
 $util.qr($v2.put('id', $v3))
 $util.qr($v1.put('key', $v2))
 $util.qr($v1.put('consistentRead', true))
-#set($v4 = {\\"operation\\": \\"GetItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v4 = {"operation": "GetItem", "version": "2018-05-29"})
 $util.qr($v4.put('key', $v1.get('key')))
 #if($v1.containsKey('consistentRead'))
 $util.qr($v4.put('consistentRead', $v1.get('consistentRead')))
@@ -321,7 +321,7 @@ $util.toJson($v4)",
 `;
 
 exports[`get item and set consistentRead:true 3`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -336,7 +336,7 @@ $util.qr($v4.put('N', '1'))
 $util.qr($v2.put('name', $v4))
 $util.qr($v1.put('key', $v2))
 $util.qr($v1.put('consistentRead', true))
-#set($v5 = {\\"operation\\": \\"GetItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v5 = {"operation": "GetItem", "version": "2018-05-29"})
 $util.qr($v5.put('key', $v1.get('key')))
 #if($v1.containsKey('consistentRead'))
 $util.qr($v5.put('consistentRead', $v1.get('consistentRead')))
@@ -352,7 +352,7 @@ $util.toJson($v5)",
 `;
 
 exports[`get item and set consistentRead:true 4`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -367,7 +367,7 @@ $util.qr($v4.put('N', '1'))
 $util.qr($v2.put('name', $v4))
 $util.qr($v1.put('key', $v2))
 $util.qr($v1.put('consistentRead', true))
-#set($v5 = {\\"operation\\": \\"GetItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v5 = {"operation": "GetItem", "version": "2018-05-29"})
 $util.qr($v5.put('key', $v1.get('key')))
 #if($v1.containsKey('consistentRead'))
 $util.qr($v5.put('consistentRead', $v1.get('consistentRead')))
@@ -383,7 +383,7 @@ $util.toJson($v5)",
 `;
 
 exports[`put item 1`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -396,7 +396,7 @@ $util.qr($v2.put('id', $v3))
 $util.qr($v1.put('key', $v2))
 #set($v4 = {})
 #set($v5 = {})
-$util.qr($v5.put('N', \\"\${context.arguments.name}\\"))
+$util.qr($v5.put('N', "\${context.arguments.name}"))
 $util.qr($v4.put('name', $v5))
 $util.qr($v1.put('attributeValues', $v4))
 #set($v6 = {})
@@ -410,7 +410,7 @@ $util.qr($v9.put('S', $context.arguments.id))
 $util.qr($v8.put(':val', $v9))
 $util.qr($v6.put('expressionValues', $v8))
 $util.qr($v1.put('condition', $v6))
-#set($v10 = {\\"operation\\": \\"PutItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v10 = {"operation": "PutItem", "version": "2018-05-29"})
 $util.qr($v10.put('key', $v1.get('key')))
 $util.qr($v10.put('attributeValues', $v1.get('attributeValues')))
 #if($v1.containsKey('condition'))
@@ -430,7 +430,7 @@ $util.toJson($v10)",
 `;
 
 exports[`put item 2`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -443,7 +443,7 @@ $util.qr($v2.put('id', $v3))
 $util.qr($v1.put('key', $v2))
 #set($v4 = {})
 #set($v5 = {})
-$util.qr($v5.put('N', \\"\${context.arguments.name}\\"))
+$util.qr($v5.put('N', "\${context.arguments.name}"))
 $util.qr($v4.put('name', $v5))
 $util.qr($v1.put('attributeValues', $v4))
 #set($v6 = {})
@@ -457,7 +457,7 @@ $util.qr($v9.put('S', $context.arguments.id))
 $util.qr($v8.put(':val', $v9))
 $util.qr($v6.put('expressionValues', $v8))
 $util.qr($v1.put('condition', $v6))
-#set($v10 = {\\"operation\\": \\"PutItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v10 = {"operation": "PutItem", "version": "2018-05-29"})
 $util.qr($v10.put('key', $v1.get('key')))
 $util.qr($v10.put('attributeValues', $v1.get('attributeValues')))
 #if($v1.containsKey('condition'))
@@ -477,7 +477,7 @@ $util.toJson($v10)",
 `;
 
 exports[`put item 3`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -504,7 +504,7 @@ $util.qr($v9.put('S', $context.arguments.id))
 $util.qr($v8.put(':val', $v9))
 $util.qr($v6.put('expressionValues', $v8))
 $util.qr($v1.put('condition', $v6))
-#set($v10 = {\\"operation\\": \\"PutItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v10 = {"operation": "PutItem", "version": "2018-05-29"})
 $util.qr($v10.put('key', $v1.get('key')))
 $util.qr($v10.put('attributeValues', $v1.get('attributeValues')))
 #if($v1.containsKey('condition'))
@@ -524,7 +524,7 @@ $util.toJson($v10)",
 `;
 
 exports[`put item 4`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -551,7 +551,7 @@ $util.qr($v9.put('S', $context.arguments.id))
 $util.qr($v8.put(':val', $v9))
 $util.qr($v6.put('expressionValues', $v8))
 $util.qr($v1.put('condition', $v6))
-#set($v10 = {\\"operation\\": \\"PutItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v10 = {"operation": "PutItem", "version": "2018-05-29"})
 $util.qr($v10.put('key', $v1.get('key')))
 $util.qr($v10.put('attributeValues', $v1.get('attributeValues')))
 #if($v1.containsKey('condition'))
@@ -571,7 +571,7 @@ $util.toJson($v10)",
 `;
 
 exports[`query 1`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -587,7 +587,7 @@ $util.qr($v4.put(':id', $util.dynamodb.toDynamoDB($context.arguments.id)))
 $util.qr($v4.put(':val', $util.dynamodb.toDynamoDB($context.arguments.sort)))
 $util.qr($v2.put('expressionValues', $v4))
 $util.qr($v1.put('query', $v2))
-#set($v5 = {\\"operation\\": \\"Query\\", \\"version\\": \\"2018-05-29\\"})
+#set($v5 = {"operation": "Query", "version": "2018-05-29"})
 $util.qr($v5.put('query', $v1.get('query')))
 #if($v1.containsKey('index'))
 $util.qr($v5.put('index', $v1.get('index')))
@@ -618,7 +618,7 @@ $util.toJson($v5)",
 `;
 
 exports[`query 2`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -634,7 +634,7 @@ $util.qr($v4.put(':id', $util.dynamodb.toDynamoDB($context.arguments.id)))
 $util.qr($v4.put(':val', $util.dynamodb.toDynamoDB($context.arguments.sort)))
 $util.qr($v2.put('expressionValues', $v4))
 $util.qr($v1.put('query', $v2))
-#set($v5 = {\\"operation\\": \\"Query\\", \\"version\\": \\"2018-05-29\\"})
+#set($v5 = {"operation": "Query", "version": "2018-05-29"})
 $util.qr($v5.put('query', $v1.get('query')))
 #if($v1.containsKey('index'))
 $util.qr($v5.put('index', $v1.get('index')))
@@ -665,7 +665,7 @@ $util.toJson($v5)",
 `;
 
 exports[`query 3`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -681,7 +681,7 @@ $util.qr($v4.put(':id', $util.dynamodb.toDynamoDB($context.arguments.id)))
 $util.qr($v4.put(':val', $util.dynamodb.toDynamoDB($context.arguments.sort)))
 $util.qr($v2.put('expressionValues', $v4))
 $util.qr($v1.put('query', $v2))
-#set($v5 = {\\"operation\\": \\"Query\\", \\"version\\": \\"2018-05-29\\"})
+#set($v5 = {"operation": "Query", "version": "2018-05-29"})
 $util.qr($v5.put('query', $v1.get('query')))
 #if($v1.containsKey('index'))
 $util.qr($v5.put('index', $v1.get('index')))
@@ -712,7 +712,7 @@ $util.toJson($v5)",
 `;
 
 exports[`query 4`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -728,7 +728,7 @@ $util.qr($v4.put(':id', $util.dynamodb.toDynamoDB($context.arguments.id)))
 $util.qr($v4.put(':val', $util.dynamodb.toDynamoDB($context.arguments.sort)))
 $util.qr($v2.put('expressionValues', $v4))
 $util.qr($v1.put('query', $v2))
-#set($v5 = {\\"operation\\": \\"Query\\", \\"version\\": \\"2018-05-29\\"})
+#set($v5 = {"operation": "Query", "version": "2018-05-29"})
 $util.qr($v5.put('query', $v1.get('query')))
 #if($v1.containsKey('index'))
 $util.qr($v5.put('index', $v1.get('index')))
@@ -759,7 +759,7 @@ $util.toJson($v5)",
 `;
 
 exports[`update item 1`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -776,7 +776,7 @@ $util.qr($v4.put('expression', '#name = #name + 1'))
 $util.qr($v5.put('#name', 'name'))
 $util.qr($v4.put('expressionNames', $v5))
 $util.qr($v1.put('update', $v4))
-#set($v6 = {\\"operation\\": \\"UpdateItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v6 = {"operation": "UpdateItem", "version": "2018-05-29"})
 $util.qr($v6.put('key', $v1.get('key')))
 $util.qr($v6.put('update', $v1.get('update')))
 #if($v1.containsKey('condition'))
@@ -796,7 +796,7 @@ $util.toJson($v6)",
 `;
 
 exports[`update item 2`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -813,7 +813,7 @@ $util.qr($v4.put('expression', '#name = #name + 1'))
 $util.qr($v5.put('#name', 'name'))
 $util.qr($v4.put('expressionNames', $v5))
 $util.qr($v1.put('update', $v4))
-#set($v6 = {\\"operation\\": \\"UpdateItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v6 = {"operation": "UpdateItem", "version": "2018-05-29"})
 $util.qr($v6.put('key', $v1.get('key')))
 $util.qr($v6.put('update', $v1.get('update')))
 #if($v1.containsKey('condition'))
@@ -833,7 +833,7 @@ $util.toJson($v6)",
 `;
 
 exports[`update item 3`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -853,7 +853,7 @@ $util.qr($v5.put('expression', '#name = #name + 1'))
 $util.qr($v6.put('#name', 'name'))
 $util.qr($v5.put('expressionNames', $v6))
 $util.qr($v1.put('update', $v5))
-#set($v7 = {\\"operation\\": \\"UpdateItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v7 = {"operation": "UpdateItem", "version": "2018-05-29"})
 $util.qr($v7.put('key', $v1.get('key')))
 $util.qr($v7.put('update', $v1.get('update')))
 #if($v1.containsKey('condition'))
@@ -873,7 +873,7 @@ $util.toJson($v7)",
 `;
 
 exports[`update item 4`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -893,7 +893,7 @@ $util.qr($v5.put('expression', '#name = #name + 1'))
 $util.qr($v6.put('#name', 'name'))
 $util.qr($v5.put('expressionNames', $v6))
 $util.qr($v1.put('update', $v5))
-#set($v7 = {\\"operation\\": \\"UpdateItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v7 = {"operation": "UpdateItem", "version": "2018-05-29"})
 $util.qr($v7.put('key', $v1.get('key')))
 $util.qr($v7.put('update', $v1.get('update')))
 #if($v1.containsKey('condition'))
@@ -913,7 +913,7 @@ $util.toJson($v7)",
 `;
 
 exports[`update item 5`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -933,7 +933,7 @@ $util.qr($v5.put('expression', '#name = #name + 1'))
 $util.qr($v6.put('#name', 'name'))
 $util.qr($v5.put('expressionNames', $v6))
 $util.qr($v1.put('update', $v5))
-#set($v7 = {\\"operation\\": \\"UpdateItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v7 = {"operation": "UpdateItem", "version": "2018-05-29"})
 $util.qr($v7.put('key', $v1.get('key')))
 $util.qr($v7.put('update', $v1.get('update')))
 #if($v1.containsKey('condition'))
@@ -953,7 +953,7 @@ $util.toJson($v7)",
 `;
 
 exports[`update item 6`] = `
-Array [
+[
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
@@ -973,7 +973,7 @@ $util.qr($v5.put('expression', '#name = #name + 1'))
 $util.qr($v6.put('#name', 'name'))
 $util.qr($v5.put('expressionNames', $v6))
 $util.qr($v1.put('update', $v5))
-#set($v7 = {\\"operation\\": \\"UpdateItem\\", \\"version\\": \\"2018-05-29\\"})
+#set($v7 = {"operation": "UpdateItem", "version": "2018-05-29"})
 $util.qr($v7.put('key', $v1.get('key')))
 $util.qr($v7.put('update', $v1.get('update')))
 #if($v1.containsKey('condition'))

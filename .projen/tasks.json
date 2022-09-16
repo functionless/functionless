@@ -126,7 +126,7 @@
       "description": "Runs eslint against the codebase",
       "steps": [
         {
-          "exec": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src test test build-tools projenrc"
+          "exec": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src test build-tools projenrc"
         }
       ]
     },
@@ -195,13 +195,24 @@
       },
       "steps": [
         {
-          "exec": "cd ./test-app && yarn && yarn build && yarn synth --quiet"
+          "spawn": "test:fast"
         },
         {
-          "exec": "jest --passWithNoTests --all --updateSnapshot"
+          "spawn": "test:runtime"
+        },
+        {
+          "spawn": "test:app"
         },
         {
           "spawn": "eslint"
+        }
+      ]
+    },
+    "test:app": {
+      "name": "test:app",
+      "steps": [
+        {
+          "exec": "cd ./test-app && yarn && yarn build && yarn synth --quiet"
         }
       ]
     },
@@ -209,7 +220,15 @@
       "name": "test:fast",
       "steps": [
         {
-          "exec": "jest --testPathIgnorePatterns localstack --coverage false"
+          "exec": "jest --passWithNoTests --all --updateSnapshot --testPathIgnorePatterns '(localstack|runtime)'"
+        }
+      ]
+    },
+    "test:runtime": {
+      "name": "test:runtime",
+      "steps": [
+        {
+          "exec": "jest --passWithNoTests --all --updateSnapshot --testPathPattern '(localstack|runtime)' --no-cache"
         }
       ]
     },

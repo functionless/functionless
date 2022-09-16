@@ -1,51 +1,51 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`AWS integration with DynamoDB Table 1`] = `
-Object {
-  "integrationResponses": Array [
-    Object {
-      "responseTemplates": Object {
+{
+  "integrationResponses": [
+    {
+      "responseTemplates": {
         "application/json": "#set($v1 = $input.path('$').Item != $null)
 #if($v1)
-{\\"data\\":$input.json('$.Item')}
+{"data":$input.json('$.Item')}
 #else
 #set($context.responseOverride.status = 404)
 $util.qr($context.responseOverride.status)
-{\\"requestId\\":$input.json('$.requestId'),\\"missing\\":true}
+{"requestId":$input.json('$.requestId'),"missing":true}
 #end",
       },
       "statusCode": "200",
     },
   ],
-  "requestTemplates": Object {
+  "requestTemplates": {
     "application/json": "{
-  \\"TableName\\":\\"__REPLACED_TOKEN\\",
-  \\"Key\\":{\\"pk\\":{\\"S\\":$input.json('$.id')}}
+  "TableName":"__REPLACED_TOKEN",
+  "Key":{"pk":{"S":$input.json('$.id')}}
 }",
   },
 }
 `;
 
 exports[`AWS integration with Event Bus 1`] = `
-Object {
-  "integrationResponses": Array [
-    Object {
-      "responseTemplates": Object {
-        "application/json": "\\"success\\"",
+{
+  "integrationResponses": [
+    {
+      "responseTemplates": {
+        "application/json": ""success"",
       },
       "statusCode": "200",
     },
   ],
-  "requestTemplates": Object {
-    "application/json": "#set($context.requestOverride.header.X-Amz-Target = \\"AWSEvents.PutEvents\\")
-#set($context.requestOverride.header.Content-Type = \\"application/x-amz-json-1.1\\")
+  "requestTemplates": {
+    "application/json": "#set($context.requestOverride.header.X-Amz-Target = "AWSEvents.PutEvents")
+#set($context.requestOverride.header.Content-Type = "application/x-amz-json-1.1")
 {
-\\"Entries\\":[{
-  \\"Source\\":\\"source\\",
-\\"Detail\\":\\"$util.escapeJavaScript($input.json('$'))\\",
-\\"DetailType\\":\\"data\\",
-\\"Resources\\":[\\"a\\",\\"$util.escapeJavaScript($input.json('$.value'))\\"],
-  \\"EventBusName\\":\\"__REPLACED_TOKEN\\"
+"Entries":[{
+  "Source":"source",
+"Detail":"$util.escapeJavaScript($input.json('$'))",
+"DetailType":"data",
+"Resources":["a","$util.escapeJavaScript($input.json('$.value'))"],
+  "EventBusName":"__REPLACED_TOKEN"
 }
 ]}",
   },
@@ -53,10 +53,10 @@ Object {
 `;
 
 exports[`AWS integration with Express Step Function 1`] = `
-Object {
-  "integrationResponses": Array [
-    Object {
-      "responseTemplates": Object {
+{
+  "integrationResponses": [
+    {
+      "responseTemplates": {
         "application/json": "#set($v1 = $input.path('$').status == 'SUCCEEDED')
 #if($v1)
 $input.json('$.output')
@@ -69,150 +69,150 @@ $input.json('$.error')
       "statusCode": "200",
     },
   ],
-  "requestTemplates": Object {
+  "requestTemplates": {
     "application/json": "{
-\\"stateMachineArn\\":\\"__REPLACED_TOKEN\\",
-\\"input\\":\\"{\\\\\\"num\\\\\\":$input.params('num'),\\\\\\"str\\\\\\":\\\\\\"$input.params('str')\\\\\\"}\\"
+"stateMachineArn":"__REPLACED_TOKEN",
+"input":"{\\"num\\":$input.params('num'),\\"str\\":\\"$input.params('str')\\"}"
 }",
   },
 }
 `;
 
 exports[`AWS integration with Function 1`] = `
-Object {
-  "integrationResponses": Array [
-    Object {
-      "responseTemplates": Object {
-        "application/json": "{\\"result\\":$input.json('$')}",
+{
+  "integrationResponses": [
+    {
+      "responseTemplates": {
+        "application/json": "{"result":$input.json('$')}",
       },
       "statusCode": "200",
     },
   ],
-  "requestTemplates": Object {
+  "requestTemplates": {
     "application/json": "$input.json('$.prop')",
   },
 }
 `;
 
 exports[`AWS integration with Standard Step Function 1`] = `
-Object {
-  "integrationResponses": Array [
-    Object {
-      "responseTemplates": Object {
+{
+  "integrationResponses": [
+    {
+      "responseTemplates": {
         "application/json": "$input.json('$.executionArn')",
       },
       "statusCode": "200",
     },
   ],
-  "requestTemplates": Object {
+  "requestTemplates": {
     "application/json": "{
-\\"stateMachineArn\\":\\"__REPLACED_TOKEN\\",
-\\"input\\":\\"{\\\\\\"num\\\\\\":$input.params('num'),\\\\\\"str\\\\\\":\\\\\\"$input.params('str')\\\\\\"}\\"
+"stateMachineArn":"__REPLACED_TOKEN",
+"input":"{\\"num\\":$input.params('num'),\\"str\\":\\"$input.params('str')\\"}"
 }",
   },
 }
 `;
 
 exports[`AWS integration with Standard Step Function using input data 1`] = `
-Object {
-  "integrationResponses": Array [
-    Object {
-      "responseTemplates": Object {
+{
+  "integrationResponses": [
+    {
+      "responseTemplates": {
         "application/json": "$input.json('$.executionArn')",
       },
       "statusCode": "200",
     },
   ],
-  "requestTemplates": Object {
+  "requestTemplates": {
     "application/json": "{
-\\"stateMachineArn\\":\\"__REPLACED_TOKEN\\",
-\\"input\\":\\"{\\\\\\"num\\\\\\":$input.params('num'),\\\\\\"obj\\\\\\":$util.escapeJavaScript($input.json('$'))}\\"
+"stateMachineArn":"__REPLACED_TOKEN",
+"input":"{\\"num\\":$input.params('num'),\\"obj\\":$util.escapeJavaScript($input.json('$'))}"
 }",
   },
 }
 `;
 
 exports[`mock integration with object literal 1`] = `
-Object {
-  "integrationResponses": Array [
-    Object {
-      "responseTemplates": Object {
-        "application/json": "{\\"response\\":\\"OK\\"}",
+{
+  "integrationResponses": [
+    {
+      "responseTemplates": {
+        "application/json": "{"response":"OK"}",
       },
       "selectionPattern": "^200$",
       "statusCode": "200",
     },
-    Object {
-      "responseTemplates": Object {
-        "application/json": "{\\"response\\":\\"BAD\\"}",
+    {
+      "responseTemplates": {
+        "application/json": "{"response":"BAD"}",
       },
       "selectionPattern": "^500$",
       "statusCode": "500",
     },
   ],
-  "requestTemplates": Object {
-    "application/json": "{\\"statusCode\\":$input.params('code')}",
+  "requestTemplates": {
+    "application/json": "{"statusCode":$input.params('code')}",
   },
 }
 `;
 
 exports[`mock integration with object literal and literal type in pathParameters 1`] = `
-Object {
-  "integrationResponses": Array [
-    Object {
-      "responseTemplates": Object {
-        "application/json": "{\\"response\\":\\"OK\\"}",
+{
+  "integrationResponses": [
+    {
+      "responseTemplates": {
+        "application/json": "{"response":"OK"}",
       },
       "selectionPattern": "^200$",
       "statusCode": "200",
     },
-    Object {
-      "responseTemplates": Object {
-        "application/json": "{\\"response\\":\\"BAD\\"}",
+    {
+      "responseTemplates": {
+        "application/json": "{"response":"BAD"}",
       },
       "selectionPattern": "^500$",
       "statusCode": "500",
     },
   ],
-  "requestTemplates": Object {
-    "application/json": "{\\"statusCode\\":$input.params('code')}",
+  "requestTemplates": {
+    "application/json": "{"statusCode":$input.params('code')}",
   },
 }
 `;
 
 exports[`return $input.data 1`] = `
-Object {
-  "integrationResponses": Array [
-    Object {
-      "responseTemplates": Object {
+{
+  "integrationResponses": [
+    {
+      "responseTemplates": {
         "application/json": "$input.json('$')",
       },
       "statusCode": "200",
     },
   ],
-  "requestTemplates": Object {
+  "requestTemplates": {
     "application/json": "{
-  \\"TableName\\":\\"__REPLACED_TOKEN\\",
-  \\"Key\\":{\\"pk\\":{\\"S\\":$input.json('$.id')}}
+  "TableName":"__REPLACED_TOKEN",
+  "Key":{"pk":{"S":$input.json('$.id')}}
 }",
   },
 }
 `;
 
 exports[`return $input.data.list[0] 1`] = `
-Object {
-  "integrationResponses": Array [
-    Object {
-      "responseTemplates": Object {
+{
+  "integrationResponses": [
+    {
+      "responseTemplates": {
         "application/json": "$input.json('$')",
       },
       "statusCode": "200",
     },
   ],
-  "requestTemplates": Object {
+  "requestTemplates": {
     "application/json": "{
-  \\"TableName\\":\\"__REPLACED_TOKEN\\",
-  \\"Key\\":{\\"pk\\":{\\"S\\":$input.json('$.list[0]')}}
+  "TableName":"__REPLACED_TOKEN",
+  "Key":{"pk":{"S":$input.json('$.list[0]')}}
 }",
   },
 }
