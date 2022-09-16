@@ -27,7 +27,7 @@ https://functionless.org/docs/error-codes#api-gateway-does-not-supported-compute
 
 [7m90[0m       ...$input.data,
 [7m  [0m [91m                     [0m
-[7m91[0m       [$input.params(\\"param\\")]: null,
+[7m91[0m       [$input.params("param")]: null,
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m114[0m:[93m11[0m - [91merror[0m[90m Functionless(10013): [0mAPI gateway response mapping template cannot call integration
 
@@ -58,7 +58,7 @@ https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m130[0m     const sfn = new StepFunction(stack, \\"\\", () => {});
+[7m130[0m     const sfn = new StepFunction(stack, "", () => {});
 [7m   [0m [91m               ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m131[0m:[93m11[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
 
@@ -72,25 +72,25 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 [7m133[0m   () => {
 [7m   [0m [91m         [0m
-[7m134[0m     new StepFunction(stack, \\"\\", () => {});
+[7m134[0m     new StepFunction(stack, "", () => {});
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m134[0m:[93m8[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: StepFunction
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
-[7m134[0m     new StepFunction(stack, \\"\\", () => {});
+[7m134[0m     new StepFunction(stack, "", () => {});
 [7m   [0m [91m       ~~~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m134[0m:[93m22[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
-[7m134[0m     new StepFunction(stack, \\"\\", () => {});
+[7m134[0m     new StepFunction(stack, "", () => {});
 [7m   [0m [91m                     ~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m141[0m:[93m17[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found Function.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m141[0m     const func = new Function<undefined, void>(stack, \\"\\", async () => {});
+[7m141[0m     const func = new Function<undefined, void>(stack, "", async () => {});
 [7m   [0m [91m                ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m142[0m:[93m11[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
 
@@ -104,25 +104,25 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 [7m144[0m   () => {
 [7m   [0m [91m         [0m
-[7m145[0m     new Function(stack, \\"\\", async () => {});
+[7m145[0m     new Function(stack, "", async () => {});
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m145[0m:[93m8[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: Function
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
-[7m145[0m     new Function(stack, \\"\\", async () => {});
+[7m145[0m     new Function(stack, "", async () => {});
 [7m   [0m [91m       ~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m145[0m:[93m18[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
-[7m145[0m     new Function(stack, \\"\\", async () => {});
+[7m145[0m     new Function(stack, "", async () => {});
 [7m   [0m [91m                 ~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m152[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found EventBus.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m152[0m     const bus = new EventBus(stack, \\"\\");
+[7m152[0m     const bus = new EventBus(stack, "");
 [7m   [0m [91m               ~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m155[0m:[93m10[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found EventBus.
 
@@ -130,19 +130,19 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 [7m155[0m   () => {
 [7m   [0m [91m         [0m
-[7m156[0m     new EventBus(stack, \\"\\");
+[7m156[0m     new EventBus(stack, "");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m156[0m:[93m8[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: EventBus
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
-[7m156[0m     new EventBus(stack, \\"\\");
+[7m156[0m     new EventBus(stack, "");
 [7m   [0m [91m       ~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m156[0m:[93m18[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
-[7m156[0m     new EventBus(stack, \\"\\");
+[7m156[0m     new EventBus(stack, "");
 [7m   [0m [91m                 ~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m162[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new CDK resources in a runtime function, found EventBus.
 
@@ -150,19 +150,19 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 [7m162[0m   async () => {
 [7m   [0m [91m               [0m
-[7m163[0m     new aws_events.EventBus(stack, \\"\\");
+[7m163[0m     new aws_events.EventBus(stack, "");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m163[0m:[93m8[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: aws_events
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
-[7m163[0m     new aws_events.EventBus(stack, \\"\\");
+[7m163[0m     new aws_events.EventBus(stack, "");
 [7m   [0m [91m       ~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m163[0m:[93m29[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
-[7m163[0m     new aws_events.EventBus(stack, \\"\\");
+[7m163[0m     new aws_events.EventBus(stack, "");
 [7m   [0m [91m                            ~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m166[0m:[93m10[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new CDK resources in a runtime function, found EventBus.
 
@@ -170,19 +170,19 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 [7m166[0m   () => {
 [7m   [0m [91m         [0m
-[7m167[0m     new aws_events.EventBus(stack, \\"\\");
+[7m167[0m     new aws_events.EventBus(stack, "");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m167[0m:[93m8[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: aws_events
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
-[7m167[0m     new aws_events.EventBus(stack, \\"\\");
+[7m167[0m     new aws_events.EventBus(stack, "");
 [7m   [0m [91m       ~~~~~~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m167[0m:[93m29[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
-[7m167[0m     new aws_events.EventBus(stack, \\"\\");
+[7m167[0m     new aws_events.EventBus(stack, "");
 [7m   [0m [91m                            ~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m183[0m:[93m33[0m - [91merror[0m[90m Functionless(10012): [0mExpected the first argument of $AWS.DynamoDB.getItem to be an object literal.
 
@@ -194,7 +194,7 @@ https://functionless.org/docs/error-codes#expected-an-object-literal
 
 https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function
 
-[7m216[0m     await x(\\"\\");
+[7m216[0m     await x("");
 [7m   [0m [91m         ~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m235[0m:[93m17[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: a
 
@@ -245,7 +245,7 @@ https://functionless.org/docs/error-codes#argument-must-be-an-inline-function
 
 https://functionless.org/docs/error-codes#argument-must-be-an-inline-function
 
-[7m101[0m         { api, typeName: \\"Query\\", fieldName: \\"getPost\\" },
+[7m101[0m         { api, typeName: "Query", fieldName: "getPost" },
 [7m   [0m [91m                                                         [0m
 [7m102[0m         // invalid - must be an inline function
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
@@ -302,7 +302,7 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 [7m258[0m   async () => {
 [7m   [0m [91m               [0m
-[7m259[0m     new StepFunction(stack, \\"\\", () => {});
+[7m259[0m     new StepFunction(stack, "", () => {});
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/appsync.ts[0m:[93m270[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found Function.
 
@@ -310,7 +310,7 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 [7m270[0m   async () => {
 [7m   [0m [91m               [0m
-[7m271[0m     new Function(stack, \\"\\", async () => {});
+[7m271[0m     new Function(stack, "", async () => {});
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/appsync.ts[0m:[93m282[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found EventBus.
 
@@ -318,7 +318,7 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 [7m282[0m   async () => {
 [7m   [0m [91m               [0m
-[7m283[0m     new EventBus(stack, \\"\\");
+[7m283[0m     new EventBus(stack, "");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/appsync.ts[0m:[93m294[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found AppsyncResolver.
 
@@ -351,19 +351,19 @@ https://functionless.org/docs/error-codes#appsync-unsupported-reference
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m299[0m         api: new GraphqlApi(stack, \\"\\", { name: \\"api\\" }),
+[7m299[0m         api: new GraphqlApi(stack, "", { name: "api" }),
 [7m   [0m [91m            ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/appsync.ts[0m:[93m299[0m:[93m17[0m - [91merror[0m[90m Functionless(10028): [0mAppSync Unsupported Reference: GraphqlApi
 
 https://functionless.org/docs/error-codes#appsync-unsupported-reference
 
-[7m299[0m         api: new GraphqlApi(stack, \\"\\", { name: \\"api\\" }),
+[7m299[0m         api: new GraphqlApi(stack, "", { name: "api" }),
 [7m   [0m [91m                ~~~~~~~~~~~[0m
 [96mtest/test-files/appsync.ts[0m:[93m299[0m:[93m29[0m - [91merror[0m[90m Functionless(10028): [0mAppSync Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#appsync-unsupported-reference
 
-[7m299[0m         api: new GraphqlApi(stack, \\"\\", { name: \\"api\\" }),
+[7m299[0m         api: new GraphqlApi(stack, "", { name: "api" }),
 [7m   [0m [91m                            ~~~~~[0m
 [96mtest/test-files/appsync.ts[0m:[93m315[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new CDK resources in a runtime function, found EventBus.
 
@@ -371,19 +371,19 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 [7m315[0m   async () => {
 [7m   [0m [91m               [0m
-[7m316[0m     new aws_events.EventBus(stack, \\"\\");
+[7m316[0m     new aws_events.EventBus(stack, "");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/appsync.ts[0m:[93m316[0m:[93m8[0m - [91merror[0m[90m Functionless(10028): [0mAppSync Unsupported Reference: aws_events
 
 https://functionless.org/docs/error-codes#appsync-unsupported-reference
 
-[7m316[0m     new aws_events.EventBus(stack, \\"\\");
+[7m316[0m     new aws_events.EventBus(stack, "");
 [7m   [0m [91m       ~~~~~~~~~~~[0m
 [96mtest/test-files/appsync.ts[0m:[93m316[0m:[93m29[0m - [91merror[0m[90m Functionless(10028): [0mAppSync Unsupported Reference: stack
 
 https://functionless.org/docs/error-codes#appsync-unsupported-reference
 
-[7m316[0m     new aws_events.EventBus(stack, \\"\\");
+[7m316[0m     new aws_events.EventBus(stack, "");
 [7m   [0m [91m                            ~~~~~[0m
 [96mtest/test-files/appsync.ts[0m:[93m333[0m:[93m12[0m - [91merror[0m[90m Functionless(10020): [0mAppsync Integration invocations must be unidirectional and defined statically
 
@@ -407,7 +407,7 @@ https://functionless.org/docs/error-codes#appsync-integration-invocations-must-b
 
 https://functionless.org/docs/error-codes#appsync-integration-invocations-must-be-unidirectional-and-defined-statically
 
-[7m377[0m     const c = $context.arguments.bool ? await func() : \\"x\\";
+[7m377[0m     const c = $context.arguments.bool ? await func() : "x";
 [7m   [0m [91m                                             ~~~~~~~[0m
 [96mtest/test-files/appsync.ts[0m:[93m398[0m:[93m33[0m - [91merror[0m[90m Functionless(10012): [0mExpected the first argument of Table.AppSync.getItem to be an object literal.
 
@@ -439,7 +439,7 @@ https://functionless.org/docs/error-codes#eventbus-input-transformers-do-not-sup
 [7m  [0m [91m                     [0m
 [7m17[0m   // eslint-disable-next-line @typescript-eslint/no-floating-promises
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[7m18[0m   bus.putEvents({ \\"detail-type\\": \\"detail\\", detail: {}, source: \\"\\" });
+[7m18[0m   bus.putEvents({ "detail-type": "detail", detail: {}, source: "" });
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/event-bus.ts[0m:[93m23[0m:[93m9[0m - [91merror[0m[90m Functionless(10014): [0mEventBus Input Transformers do not support integrations
 
@@ -451,73 +451,73 @@ https://functionless.org/docs/error-codes#eventbus-input-transformers-do-not-sup
 
 https://functionless.org/docs/error-codes#eventbus-rules-do-not-support-integrations
 
-[7m35[0m   return (func() as any) === \\"x\\";
+[7m35[0m   return (func() as any) === "x";
 [7m  [0m [91m          ~~~~~~[0m
 [96mtest/test-files/event-bus.ts[0m:[93m39[0m:[93m11[0m - [91merror[0m[90m Functionless(10015): [0mEventBus Rules do not support integrations
 
 https://functionless.org/docs/error-codes#eventbus-rules-do-not-support-integrations
 
-[7m39[0m   return (func() as any) === \\"x\\";
+[7m39[0m   return (func() as any) === "x";
 [7m  [0m [91m          ~~~~~~[0m
 [96mtest/test-files/event-bus.ts[0m:[93m43[0m:[93m34[0m - [91merror[0m[90m Functionless(10032): [0mEvent Bridge does not support a truthy comparison
 
 https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison
 
-[7m43[0m bus.when(\\"rule\\", (event) => <any>event);
+[7m43[0m bus.when("rule", (event) => <any>event);
 [7m  [0m [91m                                 ~~~~~[0m
 [96mtest/test-files/event-bus.ts[0m:[93m44[0m:[93m28[0m - [91merror[0m[90m Functionless(10032): [0mEvent Bridge does not support a truthy comparison
 
 https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison
 
-[7m44[0m bus.when(\\"rule\\", (event) => event as any);
+[7m44[0m bus.when("rule", (event) => event as any);
 [7m  [0m [91m                           ~~~~~~[0m
 [96mtest/test-files/event-bus.ts[0m:[93m45[0m:[93m28[0m - [91merror[0m[90m Functionless(10032): [0mEvent Bridge does not support a truthy comparison
 
 https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison
 
-[7m45[0m bus.when(\\"rule\\", (event) => event.detail.a);
+[7m45[0m bus.when("rule", (event) => event.detail.a);
 [7m  [0m [91m                           ~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/event-bus.ts[0m:[93m46[0m:[93m30[0m - [91merror[0m[90m Functionless(10032): [0mEvent Bridge does not support a truthy comparison
 
 https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison
 
-[7m46[0m bus.when(\\"rule\\", (event) => !event.detail.a);
+[7m46[0m bus.when("rule", (event) => !event.detail.a);
 [7m  [0m [91m                             ~~~~~~~~~~~~~~[0m
 [96mtest/test-files/event-bus.ts[0m:[93m47[0m:[93m30[0m - [91merror[0m[90m Functionless(10032): [0mEvent Bridge does not support a truthy comparison
 
 https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison
 
-[7m47[0m bus.when(\\"rule\\", (event) => !event.detail.a || event.detail.b === \\"b\\");
+[7m47[0m bus.when("rule", (event) => !event.detail.a || event.detail.b === "b");
 [7m  [0m [91m                             ~~~~~~~~~~~~~~[0m
 [96mtest/test-files/event-bus.ts[0m:[93m48[0m:[93m56[0m - [91merror[0m[90m Functionless(10032): [0mEvent Bridge does not support a truthy comparison
 
 https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison
 
-[7m48[0m bus.when(\\"rule\\", (event) => event.detail.a === \\"b\\" || !event.detail.b);
+[7m48[0m bus.when("rule", (event) => event.detail.a === "b" || !event.detail.b);
 [7m  [0m [91m                                                       ~~~~~~~~~~~~~~[0m
 [96mtest/test-files/event-bus.ts[0m:[93m49[0m:[93m28[0m - [91merror[0m[90m Functionless(10032): [0mEvent Bridge does not support a truthy comparison
 
 https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison
 
-[7m49[0m bus.when(\\"rule\\", (event) => event.detail.a && event.detail.b === \\"b\\");
+[7m49[0m bus.when("rule", (event) => event.detail.a && event.detail.b === "b");
 [7m  [0m [91m                           ~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/event-bus.ts[0m:[93m50[0m:[93m54[0m - [91merror[0m[90m Functionless(10032): [0mEvent Bridge does not support a truthy comparison
 
 https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison
 
-[7m50[0m bus.when(\\"rule\\", (event) => event.detail.a === \\"a\\" && event.detail.b);
+[7m50[0m bus.when("rule", (event) => event.detail.a === "a" && event.detail.b);
 [7m  [0m [91m                                                     ~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/event-bus.ts[0m:[93m51[0m:[93m28[0m - [91merror[0m[90m Functionless(10032): [0mEvent Bridge does not support a truthy comparison
 
 https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison
 
-[7m51[0m bus.when(\\"rule\\", (event) => event.detail.a || event.detail.b === \\"b\\");
+[7m51[0m bus.when("rule", (event) => event.detail.a || event.detail.b === "b");
 [7m  [0m [91m                           ~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/event-bus.ts[0m:[93m52[0m:[93m54[0m - [91merror[0m[90m Functionless(10032): [0mEvent Bridge does not support a truthy comparison
 
 https://functionless.org/docs/error-codes#event-bridge-does-not-support-a-truthy-comparison
 
-[7m52[0m bus.when(\\"rule\\", (event) => event.detail.a === \\"a\\" || event.detail.b);
+[7m52[0m bus.when("rule", (event) => event.detail.a === "a" || event.detail.b);
 [7m  [0m [91m                                                     ~~~~~~~~~~~~~~~[0m
 "
 `;
@@ -527,7 +527,7 @@ exports[`function.ts 1`] = `
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
-[7m36[0m new Function(stack, \\"event bus bus\\", async () => {
+[7m36[0m new Function(stack, "event bus bus", async () => {
 [7m  [0m [91m                                                  [0m
 [7m37[0m   bus.resource.eventBusArn;
 [7m  [0m [91m~~~~~[0m
@@ -535,7 +535,7 @@ https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
-[7m40[0m new Function(stack, \\"sfn resource\\", async () => {
+[7m40[0m new Function(stack, "sfn resource", async () => {
 [7m  [0m [91m                                                 [0m
 [7m41[0m   sfn.resource.stateMachineArn;
 [7m  [0m [91m~~~~~[0m
@@ -543,7 +543,7 @@ https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
-[7m44[0m new Function(stack, \\"func resource\\", async () => {
+[7m44[0m new Function(stack, "func resource", async () => {
 [7m  [0m [91m                                                  [0m
 [7m45[0m   func.resource;
 [7m  [0m [91m~~~~~~[0m
@@ -551,7 +551,7 @@ https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-
 
 https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-function-closure
 
-[7m48[0m new Function(stack, \\"table resource\\", async () => {
+[7m48[0m new Function(stack, "table resource", async () => {
 [7m  [0m [91m                                                   [0m
 [7m49[0m   table.resource;
 [7m  [0m [91m~~~~~~~[0m
@@ -565,7 +565,7 @@ https://functionless.org/docs/error-codes#cannot-use-infrastructure-resource-in-
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m106[0m new Function(stack, \\"new resolver\\", async () => {
+[7m106[0m new Function(stack, "new resolver", async () => {
 [7m   [0m [91m                                                 [0m
 [7m107[0m   new AppsyncResolver(
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~[0m
@@ -578,15 +578,15 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m111[0m       api: new GraphqlApi(stack, \\"\\", { name: \\"api\\" }),
+[7m111[0m       api: new GraphqlApi(stack, "", { name: "api" }),
 [7m   [0m [91m          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/function.ts[0m:[93m119[0m:[93m50[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new CDK resources in a runtime function, found EventBus.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m119[0m new Function(stack, \\"cdk resource\\", async () => {
+[7m119[0m new Function(stack, "cdk resource", async () => {
 [7m   [0m [91m                                                 [0m
-[7m120[0m   new aws_events.EventBus(stack, \\"\\");
+[7m120[0m   new aws_events.EventBus(stack, "");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/function.ts[0m:[93m133[0m:[93m31[0m - [91merror[0m[90m Functionless(10012): [0mExpected the first argument of $AWS.DynamoDB.getItem to be an object literal.
 
@@ -598,7 +598,7 @@ https://functionless.org/docs/error-codes#expected-an-object-literal
 
 https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function
 
-[7m154[0m   await x(\\"\\");
+[7m154[0m   await x("");
 [7m   [0m [91m       ~~[0m
 "
 `;
@@ -608,31 +608,31 @@ exports[`step-function.ts 1`] = `
 
 https://functionless.org/docs/error-codes#step-functions-arithmetic-only-supports-integers
 
-[7m34[0m new StepFunction(stack, \\"input.i + 2\\", (input: { i: number }) => input.i + 2);
+[7m34[0m new StepFunction(stack, "input.i + 2", (input: { i: number }) => input.i + 2);
 [7m  [0m [93m                                                                ~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m35[0m:[93m65[0m - [93mwarning[0m[90m Functionless(10038): [0mStep Functions Arithmetic Only Supports Integers
 
 https://functionless.org/docs/error-codes#step-functions-arithmetic-only-supports-integers
 
-[7m35[0m new StepFunction(stack, \\"input.i - 2\\", (input: { i: number }) => input.i - 2);
+[7m35[0m new StepFunction(stack, "input.i - 2", (input: { i: number }) => input.i - 2);
 [7m  [0m [93m                                                                ~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m36[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform all arithmetic on variables in Step Function
 
 https://functionless.org/docs/error-codes#cannot-perform-all-arithmetic-on-variables-in-step-function
 
-[7m36[0m new StepFunction(stack, \\"input.i * 2\\", (input: { i: number }) => input.i * 2);
+[7m36[0m new StepFunction(stack, "input.i * 2", (input: { i: number }) => input.i * 2);
 [7m  [0m [91m                                                                ~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m37[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform all arithmetic on variables in Step Function
 
 https://functionless.org/docs/error-codes#cannot-perform-all-arithmetic-on-variables-in-step-function
 
-[7m37[0m new StepFunction(stack, \\"input.i / 2\\", (input: { i: number }) => input.i / 2);
+[7m37[0m new StepFunction(stack, "input.i / 2", (input: { i: number }) => input.i / 2);
 [7m  [0m [91m                                                                ~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m38[0m:[93m65[0m - [91merror[0m[90m Functionless(10000): [0mCannot perform all arithmetic on variables in Step Function
 
 https://functionless.org/docs/error-codes#cannot-perform-all-arithmetic-on-variables-in-step-function
 
-[7m38[0m new StepFunction(stack, \\"input.i % 2\\", (input: { i: number }) => input.i % 2);
+[7m38[0m new StepFunction(stack, "input.i % 2", (input: { i: number }) => input.i % 2);
 [7m  [0m [91m                                                                ~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m42[0m:[93m30[0m - [93mwarning[0m[90m Functionless(10038): [0mStep Functions Arithmetic Only Supports Integers
 
@@ -668,31 +668,31 @@ https://functionless.org/docs/error-codes#cannot-perform-all-arithmetic-on-varia
 
 https://functionless.org/docs/error-codes#step-functions-arithmetic-only-supports-integers
 
-[7m64[0m new StepFunction(stack, \\"input.i++\\", (input: { i: number }) => input.i++);
+[7m64[0m new StepFunction(stack, "input.i++", (input: { i: number }) => input.i++);
 [7m  [0m [93m                                                              ~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m65[0m:[93m63[0m - [93mwarning[0m[90m Functionless(10038): [0mStep Functions Arithmetic Only Supports Integers
 
 https://functionless.org/docs/error-codes#step-functions-arithmetic-only-supports-integers
 
-[7m65[0m new StepFunction(stack, \\"++input.i\\", (input: { i: number }) => ++input.i);
+[7m65[0m new StepFunction(stack, "++input.i", (input: { i: number }) => ++input.i);
 [7m  [0m [93m                                                              ~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m66[0m:[93m63[0m - [93mwarning[0m[90m Functionless(10038): [0mStep Functions Arithmetic Only Supports Integers
 
 https://functionless.org/docs/error-codes#step-functions-arithmetic-only-supports-integers
 
-[7m66[0m new StepFunction(stack, \\"input.i--\\", (input: { i: number }) => input.i--);
+[7m66[0m new StepFunction(stack, "input.i--", (input: { i: number }) => input.i--);
 [7m  [0m [93m                                                              ~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m67[0m:[93m63[0m - [93mwarning[0m[90m Functionless(10038): [0mStep Functions Arithmetic Only Supports Integers
 
 https://functionless.org/docs/error-codes#step-functions-arithmetic-only-supports-integers
 
-[7m67[0m new StepFunction(stack, \\"--input.i\\", (input: { i: number }) => --input.i);
+[7m67[0m new StepFunction(stack, "--input.i", (input: { i: number }) => --input.i);
 [7m  [0m [93m                                                              ~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m68[0m:[93m62[0m - [93mwarning[0m[90m Functionless(10038): [0mStep Functions Arithmetic Only Supports Integers
 
 https://functionless.org/docs/error-codes#step-functions-arithmetic-only-supports-integers
 
-[7m68[0m new StepFunction(stack, \\"-input.i\\", (input: { i: number }) => -input.i);
+[7m68[0m new StepFunction(stack, "-input.i", (input: { i: number }) => -input.i);
 [7m  [0m [93m                                                             ~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m73[0m:[93m14[0m - [93mwarning[0m[90m Functionless(10038): [0mStep Functions Arithmetic Only Supports Integers
 
@@ -752,31 +752,31 @@ https://functionless.org/docs/error-codes#unsupported-use-of-promises
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m190[0m new StepFunction(stack, \\"new step function\\", async () => {
+[7m190[0m new StepFunction(stack, "new step function", async () => {
 [7m   [0m [91m                                                          [0m
-[7m191[0m   new StepFunction(stack, \\"\\", () => {});
+[7m191[0m   new StepFunction(stack, "", () => {});
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m194[0m:[93m54[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found Function.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m194[0m new StepFunction(stack, \\"new function\\", async () => {
+[7m194[0m new StepFunction(stack, "new function", async () => {
 [7m   [0m [91m                                                     [0m
-[7m195[0m   new Function(stack, \\"\\", async () => {});
+[7m195[0m   new Function(stack, "", async () => {});
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m198[0m:[93m49[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found EventBus.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m198[0m new StepFunction(stack, \\"new bus\\", async () => {
+[7m198[0m new StepFunction(stack, "new bus", async () => {
 [7m   [0m [91m                                                [0m
-[7m199[0m   new EventBus(stack, \\"\\");
+[7m199[0m   new EventBus(stack, "");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m202[0m:[93m54[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found AppsyncResolver.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m202[0m new StepFunction(stack, \\"new resolver\\", async () => {
+[7m202[0m new StepFunction(stack, "new resolver", async () => {
 [7m   [0m [91m                                                     [0m
 [7m203[0m   new AppsyncResolver(
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~[0m
@@ -789,15 +789,15 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m207[0m       api: new GraphqlApi(stack, \\"\\", { name: \\"api\\" }),
+[7m207[0m       api: new GraphqlApi(stack, "", { name: "api" }),
 [7m   [0m [91m          ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m215[0m:[93m48[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new CDK resources in a runtime function, found EventBus.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
 
-[7m215[0m new StepFunction(stack, \\"cdk resource\\", () => {
+[7m215[0m new StepFunction(stack, "cdk resource", () => {
 [7m   [0m [91m                                               [0m
-[7m216[0m   new aws_events.EventBus(stack, \\"\\");
+[7m216[0m   new aws_events.EventBus(stack, "");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m229[0m:[93m23[0m - [91merror[0m[90m Functionless(10023): [0mStepFunctions calls to EventBus putEvents must use object literals
 
@@ -809,7 +809,7 @@ https://functionless.org/docs/error-codes#stepfunctions-calls-to-eventbus-puteve
 
 https://functionless.org/docs/error-codes#stepfunctions-calls-to-eventbus-putevents-must-use-object-literals
 
-[7m236[0m   await bus.putEvents({ source: \\"\\", detail: {}, \\"detail-type\\": \\"\\" }, ...events);
+[7m236[0m   await bus.putEvents({ source: "", detail: {}, "detail-type": "" }, ...events);
 [7m   [0m [91m                                                                    ~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m245[0m:[93m23[0m - [91merror[0m[90m Functionless(10023): [0mStepFunctions calls to EventBus putEvents must use object literals
 
@@ -821,15 +821,15 @@ https://functionless.org/docs/error-codes#stepfunctions-calls-to-eventbus-puteve
 
 https://functionless.org/docs/error-codes#stepfunctions-calls-to-eventbus-putevents-must-use-object-literals
 
-[7m250[0m   await bus.putEvents({ [source]: \\"\\", detail: {}, \\"detail-type\\": \\"\\" });
+[7m250[0m   await bus.putEvents({ [source]: "", detail: {}, "detail-type": "" });
 [7m   [0m [91m                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m256[0m:[93m51[0m - [91merror[0m[90m Functionless(10023): [0mStepFunctions calls to EventBus putEvents must use object literals
 
 https://functionless.org/docs/error-codes#stepfunctions-calls-to-eventbus-putevents-must-use-object-literals
 
-[7m256[0m     { source: \\"\\", detail: {}, \\"detail-type\\": \\"\\" },
+[7m256[0m     { source: "", detail: {}, "detail-type": "" },
 [7m   [0m [91m                                                  [0m
-[7m257[0m     { [source]: \\"\\", detail: {}, \\"detail-type\\": \\"\\" }
+[7m257[0m     { [source]: "", detail: {}, "detail-type": "" }
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m274[0m:[93m15[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
 
@@ -945,7 +945,7 @@ https://functionless.org/docs/error-codes#stepfunction-property-names-must-be-co
 
 [7m508[0m   return {
 [7m   [0m [91m          [0m
-[7m509[0m     [input.key]: \\"\\",
+[7m509[0m     [input.key]: "",
 [7m   [0m [91m~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m563[0m:[93m23[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
 
@@ -957,31 +957,31 @@ https://functionless.org/docs/error-codes#stepfunctions-error-cause-must-be-a-co
 
 https://functionless.org/docs/error-codes#stepfunction-throw-must-be-error-or-stepfunctionerror-class
 
-[7m565[0m       throw new CustomError(\\"error\\");
+[7m565[0m       throw new CustomError("error");
 [7m   [0m [91m               ~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m568[0m:[93m35[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
 
 https://functionless.org/docs/error-codes#stepfunctions-error-cause-must-be-a-constant
 
-[7m568[0m       throw new StepFunctionError(input.key, { reason: \\"reason\\" });
+[7m568[0m       throw new StepFunctionError(input.key, { reason: "reason" });
 [7m   [0m [91m                                  ~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m571[0m:[93m47[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
 
 https://functionless.org/docs/error-codes#stepfunctions-error-cause-must-be-a-constant
 
-[7m571[0m       throw new StepFunctionError(\\"ErrorName\\", { reason: input.key });
+[7m571[0m       throw new StepFunctionError("ErrorName", { reason: input.key });
 [7m   [0m [91m                                              ~~~~~~~~~~~~~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m573[0m:[93m47[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
 
 https://functionless.org/docs/error-codes#stepfunctions-error-cause-must-be-a-constant
 
-[7m573[0m       throw new StepFunctionError(\\"ErrorName\\", input.key);
+[7m573[0m       throw new StepFunctionError("ErrorName", input.key);
 [7m   [0m [91m                                              ~~~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m587[0m:[93m40[0m - [91merror[0m[90m Functionless(10033): [0mStepFunctions does not support destructuring object with rest
 
 https://functionless.org/docs/error-codes#stepfunctions-does-not-support-destructuring-object-with-rest
 
-[7m587[0m new StepFunction(stack, \\"sfn\\", async ({ ...rest }) => {
+[7m587[0m new StepFunction(stack, "sfn", async ({ ...rest }) => {
 [7m   [0m [91m                                       ~~~~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m591[0m:[93m10[0m - [91merror[0m[90m Functionless(10033): [0mStepFunctions does not support destructuring object with rest
 
@@ -1017,7 +1017,7 @@ https://functionless.org/docs/error-codes#stepfunctions-mismatched-index-type.
 
 https://functionless.org/docs/error-codes#stepfunctions-mismatched-index-type.
 
-[7m663[0m   arr[\\"0\\"];
+[7m663[0m   arr["0"];
 [7m   [0m [93m      ~~~[0m
 "
 `;
