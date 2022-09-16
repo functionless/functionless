@@ -289,7 +289,11 @@ project.buildWorkflow.workflow.jobs.build = {
   ...project.buildWorkflow.workflow.jobs.build,
   // deploy the clean up stack during tests to be available for the cleanup pull_request closed job
   // only do this for build workflow as the release workflow deletes immediately
-  env: { CLEAN_UP_STACK: "1" },
+  env: {
+    // @ts-ignore
+    ...project.buildWorkflow.workflow.jobs.build.env,
+    CLEAN_UP_STACK: "1",
+  },
   permissions: {
     // @ts-ignore
     ...project.buildWorkflow.workflow.jobs.build.permissions,
