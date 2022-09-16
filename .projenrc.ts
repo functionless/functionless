@@ -102,6 +102,7 @@ const project = new CustomTypescriptProject({
     "@swc/cli",
     "@swc/core@1.2.245",
     "@swc/register",
+    "source-map",
   ],
   devDeps: [
     `@aws-cdk/aws-appsync-alpha@${MIN_CDK_VERSION}-alpha.0`,
@@ -118,6 +119,7 @@ const project = new CustomTypescriptProject({
     /**
      * For CDK Local Stack tests
      */
+    "@aws-sdk/client-dynamodb",
     `@aws-cdk/cloud-assembly-schema@${MIN_CDK_VERSION}`,
     `@aws-cdk/cloudformation-diff@${MIN_CDK_VERSION}`,
     `@aws-cdk/cx-api@${MIN_CDK_VERSION}`,
@@ -144,6 +146,7 @@ const project = new CustomTypescriptProject({
         "^.+\\.(t|j)sx?$": ["./jest.js", {}],
       },
     },
+    extraCliOptions: ["--testPathIgnorePatterns '(runtime|localstack)'"],
   },
   scripts: {
     localstack: "./scripts/localstack",
@@ -165,6 +168,7 @@ const project = new CustomTypescriptProject({
       "jest.js",
       "swc-config.js",
       "website/**",
+      "test-app/hook.js",
     ],
     lintProjenRc: false,
   },
@@ -248,7 +252,6 @@ project.compileTask.env("TEST_DEPLOY_TARGET", "AWS");
 
 project.compileTask.prependExec("ts-node ./scripts/sdk-gen.ts");
 
-// start over...
 project.testTask.reset();
 
 // To run tests on github using localstack instead of AWS, uncomment the below and comment out TEST_DEPLOY_TARGET.

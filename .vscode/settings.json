@@ -41,5 +41,8 @@
   "eslint.format.enable": false,
   "typescript.tsdk": "node_modules/typescript/lib",
   "jest.jestCommandLine": "node_modules/.bin/jest",
+  "jest.autoRun": {
+    "onStartup": []
+  },
   "cSpell.words": ["localstack", "stepfunctions", "typesafe"]
 }

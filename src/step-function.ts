@@ -652,6 +652,7 @@ export type StepFunctionCause =
  * }
  * ```
  */
+// @ts-ignore - TODO: rename error and cause
 export class StepFunctionError extends Error {
   static readonly kind = "StepFunctionError";
 

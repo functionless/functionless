@@ -14,7 +14,7 @@ import {
 
 // 15k arbitrary max bundle size. Some functions may need more.
 // In that case increase explicitly.
-const BUNDLED_MAX_SIZE = 15 * 1024;
+const BUNDLED_MAX_SIZE = 50 * 1024;
 
 interface CustomMatchers<R = unknown> {
   toHaveLengthLessThan(length: number): R;
