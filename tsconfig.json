@@ -10,7 +10,7 @@
     "inlineSources": true,
     "lib": [
       "dom",
-      "ES2019"
+      "ES2022"
     ],
     "module": "CommonJS",
     "noEmitOnError": false,
