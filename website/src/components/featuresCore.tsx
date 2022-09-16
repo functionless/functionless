@@ -1,13 +1,13 @@
 export const FeaturesCore = () => {
   return (
     <section className="py-36 bg-functionless-bg dark:bg-functionless-dark-bg">
-      <div className="container max-w-screen-md flex flex-col items-center">
+      <div className="container !max-w-screen-md flex flex-col items-center">
         <span className="over">WHY FUNCTIONLESS?</span>
         <h4 className="text-center mt-2">
           Our framework makes your Cloud Resources smarter.
         </h4>
       </div>
-      <div className="max-w-screen-xl container grid grid-cols-3 gap-11 mt-24">
+      <div className="!max-w-screen-xl container grid grid-cols-3 gap-11 mt-24">
         <div className="flex flex-col items-center">
           <img src="/img/shapes/7.svg" className="w-16" />
           <h6 className="mt-6 text-center">Unified Cloud Components</h6>

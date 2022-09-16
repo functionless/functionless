@@ -4,7 +4,7 @@ export const Hero = () => {
   return (
     <section className="relative pb-24">
       <div className="bg-[url('/img/lines.svg')] bg-no-repeat w-full h-full bg-bottom">
-        <div className="container max-w-screen-sm pt-28 pb-16 z-20">
+        <div className="container !max-w-screen-sm pt-28 pb-16 z-20">
           <span className="blue-chip">
             v1.02.5 Released <ChevronLeftIcon className="icon ml-2" />
           </span>
