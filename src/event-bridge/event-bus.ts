@@ -163,11 +163,7 @@ export interface IEventBus<in Evnt extends Event = Event>
       (
         event: PutEventInput<Evnt>,
         ...events: PutEventInput<Evnt>[]
-      ) => Promise<void>,
-      EventBusTargetIntegration<
-        PutEventInput<Evnt>,
-        aws_events_targets.EventBusProps | undefined
-      >
+      ) => Promise<void>
     > {
   readonly resource: aws_events.IEventBus;
   readonly eventBusArn: string;

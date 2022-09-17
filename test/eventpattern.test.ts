@@ -1419,4 +1419,9 @@ test("error when using rest parameters", () => {
       time;
     })
   );
+
+  bus.all().pipe(
+    // @ts-expect-error - type mismatch
+    new StepFunction(stack, "F", async (event: { key: string }) => {})
+  );
 };

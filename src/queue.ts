@@ -8,7 +8,6 @@ import lambda from "aws-lambda";
 import { Construct } from "constructs";
 import { ASLGraph, Parameters } from "./asl";
 import { ErrorCodes, SynthError } from "./error-code";
-import { EventBusTargetIntegration } from "./event-bridge";
 import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { EventSource, IEventSource } from "./event-source";
 import { SQSClient } from "./function-prewarm";
@@ -297,11 +296,7 @@ abstract class BaseQueue<Message>
     Integration<
       "Queue",
       // queue is not directly invokable, only via event bridge pipe.
-      () => any,
-      EventBusTargetIntegration<
-        Message,
-        Omit<aws_events_targets.SqsQueueProps, "message"> | undefined
-      >
+      () => any
     >
 {
   /**
