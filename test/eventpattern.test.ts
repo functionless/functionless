@@ -1,4 +1,5 @@
 import { App, Stack } from "aws-cdk-lib";
+import { StepFunction } from "../src";
 import { Event, EventBus } from "../src/event-bridge";
 import { Function } from "../src/function";
 import { ebEventPatternTestCase, ebEventPatternTestCaseError } from "./util";
@@ -1390,6 +1391,14 @@ test("error when using rest parameters", () => {
 
   bus.all().pipe(
     new Function(stack, "F", async (event) => {
+      // event should be inferred
+      const time: string = event.detail.time;
+      time;
+    })
+  );
+
+  bus.all().pipe(
+    new StepFunction(stack, "F", async (event) => {
       // event should be inferred
       const time: string = event.detail.time;
       time;
