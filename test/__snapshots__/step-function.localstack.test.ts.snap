@@ -1350,26 +1350,26 @@ exports[`String coerce 1`] = `
         {
           "IsString": true,
           "Next": "assign__1__["a", ["b"], [[input.val]], [], {}, {a: input.val}]",
-          "Variable": "$.heap17.out",
+          "Variable": "$.heap15.out",
         },
       ],
       "Default": "format__1__["a", ["b"], [[input.val]], [], {}, {a: input.val}]",
       "Type": "Choice",
     },
     "1__[[input.val]]": {
-      "InputPath": "$.heap9.out",
+      "InputPath": "$.heap8.out",
       "Next": "[[input.val]] 1",
-      "ResultPath": "$.heap10",
+      "ResultPath": "$.heap9",
       "Type": "Pass",
     },
     "1__return {stringString: String("1"), stringBoolean: String(true), stringNu": {
       "End": true,
       "Parameters": {
         "empty": "",
-        "stringArray.$": "$.heap19",
+        "stringArray.$": "$.heap16.str",
         "stringBoolean": "true",
         "stringEmpty": "",
-        "stringNull.$": "$.heap6",
+        "stringNull.$": "$.heap5",
         "stringNumber": "1",
         "stringObject": "[object Object]",
         "stringObjectWithRef": "[object Object]",
@@ -1387,59 +1387,41 @@ exports[`String coerce 1`] = `
       "Type": "Pass",
     },
     "2__["a", ["b"], [[input.val]], [], {}, {a: input.val}]": {
-      "InputPath": "$.heap11.out",
+      "InputPath": "$.heap10.out",
       "Next": "3__["a", ["b"], [[input.val]], [], {}, {a: input.val}]",
-      "ResultPath": "$.heap12",
+      "ResultPath": "$.heap11",
       "Type": "Pass",
     },
     "3__["a", ["b"], [[input.val]], [], {}, {a: input.val}]": {
       "Next": "4__["a", ["b"], [[input.val]], [], {}, {a: input.val}]",
       "Result": [],
-      "ResultPath": "$.heap13",
+      "ResultPath": "$.heap12",
       "Type": "Pass",
     },
     "3__return {stringString: String("1"), stringBoolean: String(true), stringNu": {
       "InputPath": "$.heap2.str",
-      "Next": "4__return {stringString: String("1"), stringBoolean: String(true), stringNu",
+      "Next": "null",
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "4__["a", ["b"], [[input.val]], [], {}, {a: input.val}]": {
       "Next": "5__["a", ["b"], [[input.val]], [], {}, {a: input.val}]",
       "Result": {},
-      "ResultPath": "$.heap14",
-      "Type": "Pass",
-    },
-    "4__return {stringString: String("1"), stringBoolean: String(true), stringNu": {
-      "InputPath": "$.input.val",
-      "Next": "null",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap13",
       "Type": "Pass",
     },
     "5__["a", ["b"], [[input.val]], [], {}, {a: input.val}]": {
-      "InputPath": "$.input.val",
-      "Next": "6__["a", ["b"], [[input.val]], [], {}, {a: input.val}]",
-      "ResultPath": "$.heap15",
-      "Type": "Pass",
-    },
-    "6__["a", ["b"], [[input.val]], [], {}, {a: input.val}]": {
       "Next": "["a", ["b"], [[input.val]], [], {}, {a: input.val}] 1",
       "Parameters": {
-        "a.$": "$.heap15",
+        "a.$": "$.input.val",
       },
-      "ResultPath": "$.heap16",
+      "ResultPath": "$.heap14",
       "Type": "Pass",
     },
-    "6__return {stringString: String("1"), stringBoolean: String(true), stringNu": {
-      "InputPath": "$.heap5.str",
+    "5__return {stringString: String("1"), stringBoolean: String(true), stringNu": {
+      "InputPath": "$.heap4.str",
       "Next": "["a", ["b"], [[input.val]], [], {}, {a: input.val}]",
-      "ResultPath": "$.heap6",
-      "Type": "Pass",
-    },
-    "8__return {stringString: String("1"), stringBoolean: String(true), stringNu": {
-      "InputPath": "$.heap18.str",
-      "Next": "1__return {stringString: String("1"), stringBoolean: String(true), stringNu",
-      "ResultPath": "$.heap19",
+      "ResultPath": "$.heap5",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -1458,43 +1440,43 @@ exports[`String coerce 1`] = `
       "Result": [
         "b",
       ],
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap6",
       "Type": "Pass",
     },
     "["a", ["b"], [[input.val]], [], {}, {a: input.val}] 1": {
       "Next": "1__["a", ["b"], [[input.val]], [], {}, {a: input.val}]",
       "Parameters": {
-        "out.$": "States.Array('a',$.heap7,$.heap12,$.heap13,$.heap14,$.heap16)",
+        "out.$": "States.Array('a',$.heap6,$.heap11,$.heap12,$.heap13,$.heap14)",
       },
-      "ResultPath": "$.heap17",
+      "ResultPath": "$.heap15",
       "Type": "Pass",
     },
     "[[input.val]]": {
       "InputPath": "$.input.val",
       "Next": "[input.val]",
-      "ResultPath": "$.heap8",
+      "ResultPath": "$.heap7",
       "Type": "Pass",
     },
     "[[input.val]] 1": {
       "Next": "2__["a", ["b"], [[input.val]], [], {}, {a: input.val}]",
       "Parameters": {
-        "out.$": "States.Array($.heap10)",
+        "out.$": "States.Array($.heap9)",
       },
-      "ResultPath": "$.heap11",
+      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "[input.val]": {
       "Next": "1__[[input.val]]",
       "Parameters": {
-        "out.$": "States.Array($.heap8)",
+        "out.$": "States.Array($.heap7)",
       },
-      "ResultPath": "$.heap9",
+      "ResultPath": "$.heap8",
       "Type": "Pass",
     },
     "assign__1__["a", ["b"], [[input.val]], [], {}, {a: input.val}]": {
-      "InputPath": "$.heap17.out",
-      "Next": "8__return {stringString: String("1"), stringBoolean: String(true), stringNu",
-      "ResultPath": "$.heap18.str",
+      "InputPath": "$.heap15.out",
+      "Next": "1__return {stringString: String("1"), stringBoolean: String(true), stringNu",
+      "ResultPath": "$.heap16.str",
       "Type": "Pass",
     },
     "assign__input.str": {
@@ -1505,8 +1487,8 @@ exports[`String coerce 1`] = `
     },
     "assign__null": {
       "InputPath": "$.fnl_context.null",
-      "Next": "6__return {stringString: String("1"), stringBoolean: String(true), stringNu",
-      "ResultPath": "$.heap5.str",
+      "Next": "5__return {stringString: String("1"), stringBoolean: String(true), stringNu",
+      "ResultPath": "$.heap4.str",
       "Type": "Pass",
     },
     "assign__return {stringString: String("1"), stringBoolean: String(true), str": {
@@ -1516,11 +1498,11 @@ exports[`String coerce 1`] = `
       "Type": "Pass",
     },
     "format__1__["a", ["b"], [[input.val]], [], {}, {a: input.val}]": {
-      "Next": "8__return {stringString: String("1"), stringBoolean: String(true), stringNu",
+      "Next": "1__return {stringString: String("1"), stringBoolean: String(true), stringNu",
       "Parameters": {
-        "str.$": "States.JsonToString($.heap17.out)",
+        "str.$": "States.JsonToString($.heap15.out)",
       },
-      "ResultPath": "$.heap18",
+      "ResultPath": "$.heap16",
       "Type": "Pass",
     },
     "format__input.str": {
@@ -1532,11 +1514,11 @@ exports[`String coerce 1`] = `
       "Type": "Pass",
     },
     "format__null": {
-      "Next": "6__return {stringString: String("1"), stringBoolean: String(true), stringNu",
+      "Next": "5__return {stringString: String("1"), stringBoolean: String(true), stringNu",
       "Parameters": {
         "str.$": "States.JsonToString($.fnl_context.null)",
       },
-      "ResultPath": "$.heap5",
+      "ResultPath": "$.heap4",
       "Type": "Pass",
     },
     "format__return {stringString: String("1"), stringBoolean: String(true), str": {
@@ -1596,7 +1578,7 @@ exports[`access 1`] = `
         "d.$": "$.heap2",
         "e.$": "$.heap3",
         "g.$": "$.heap5",
-        "h.$": "$.heap7",
+        "h.$": "$.heap6",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -1625,12 +1607,6 @@ exports[`access 1`] = `
       "ResultPath": "$.heap5",
       "Type": "Pass",
     },
-    "7__return {a: obj.x, b: obj.x, d: obj["1"], e: arr[0], g: obj.n ?? "c", h: ": {
-      "InputPath": "$.heap6",
-      "Next": "1__return {a: obj.x, b: obj.x, d: obj["1"], e: arr[0], g: obj.n ?? "c", h: ",
-      "ResultPath": "$.heap7",
-      "Type": "Pass",
-    },
     "Initialize Functionless Context": {
       "Next": "obj = {1: "a", x: "b"}",
       "Parameters": {
@@ -1656,7 +1632,7 @@ exports[`access 1`] = `
       "Type": "Pass",
     },
     "false__obj.n ?? "d"": {
-      "Next": "7__return {a: obj.x, b: obj.x, d: obj["1"], e: arr[0], g: obj.n ?? "c", h: ",
+      "Next": "1__return {a: obj.x, b: obj.x, d: obj["1"], e: arr[0], g: obj.n ?? "c", h: ",
       "Result": "d",
       "ResultPath": "$.heap6",
       "Type": "Pass",
@@ -1722,7 +1698,7 @@ exports[`access 1`] = `
     },
     "true__obj.n ?? "d"": {
       "InputPath": "$.obj.n",
-      "Next": "7__return {a: obj.x, b: obj.x, d: obj["1"], e: arr[0], g: obj.n ?? "c", h: ",
+      "Next": "1__return {a: obj.x, b: obj.x, d: obj["1"], e: arr[0], g: obj.n ?? "c", h: ",
       "ResultPath": "$.heap6",
       "Type": "Pass",
     },
@@ -1737,15 +1713,15 @@ exports[`assignment 1`] = `
     "1__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": {
       "End": true,
       "Parameters": {
-        "a.$": "$.heap13",
-        "b.$": "$.heap14",
-        "c.$": "$.heap15",
-        "d.$": "$.heap16",
-        "e.$": "$.heap17",
-        "f.$": "$.heap18",
-        "g.$": "$.heap19",
-        "h.$": "$.heap20",
-        "i.$": "$.heap21",
+        "a.$": "$.heap12",
+        "b.$": "$.heap13",
+        "c.$": "$.heap14",
+        "d.$": "$.heap15",
+        "e.$": "$.heap16",
+        "f.$": "$.heap17",
+        "g.$": "$.heap18",
+        "h.$": "$.heap19",
+        "i.$": "$.i",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -1753,13 +1729,13 @@ exports[`assignment 1`] = `
     "1__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i} 1": {
       "InputPath": "$.b",
       "Next": "2__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap14",
+      "ResultPath": "$.heap13",
       "Type": "Pass",
     },
     "2__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": {
       "InputPath": "$.c",
       "Next": "3__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap15",
+      "ResultPath": "$.heap14",
       "Type": "Pass",
     },
     "3__g = {a: z, b: z = "a", c: z = "b" , z, z: z, t: z === "b", o: {z: z}}": {
@@ -1771,13 +1747,13 @@ exports[`assignment 1`] = `
     "3__h = [y, y = "a", y = "b" , y, y]": {
       "InputPath": "$.y",
       "Next": "4__h = [y, y = "a", y = "b" , y, y]",
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap6",
       "Type": "Pass",
     },
     "3__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": {
       "InputPath": "$.d",
       "Next": "4__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap16",
+      "ResultPath": "$.heap15",
       "Type": "Pass",
     },
     "4__g = {a: z, b: z = "a", c: z = "b" , z, z: z, t: z === "b", o: {z: z}}": {
@@ -1789,49 +1765,37 @@ exports[`assignment 1`] = `
     "4__h = [y, y = "a", y = "b" , y, y]": {
       "InputPath": "$.y",
       "Next": "[y, y = "a", y = "b" , y, y]",
-      "ResultPath": "$.heap8",
+      "ResultPath": "$.heap7",
       "Type": "Pass",
     },
     "4__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": {
       "InputPath": "$.e",
       "Next": "5__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap17",
+      "ResultPath": "$.heap16",
       "Type": "Pass",
     },
     "5__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": {
       "InputPath": "$.f",
       "Next": "6__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap18",
+      "ResultPath": "$.heap17",
       "Type": "Pass",
     },
     "6__g = {a: z, b: z = "a", c: z = "b" , z, z: z, t: z === "b", o: {z: z}}": {
       "InputPath": "$.heap3",
-      "Next": "7__g = {a: z, b: z = "a", c: z = "b" , z, z: z, t: z === "b", o: {z: z}}",
+      "Next": "g",
       "ResultPath": "$.heap4",
       "Type": "Pass",
     },
     "6__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": {
       "InputPath": "$.g",
       "Next": "7__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap19",
-      "Type": "Pass",
-    },
-    "7__g = {a: z, b: z = "a", c: z = "b" , z, z: z, t: z === "b", o: {z: z}}": {
-      "InputPath": "$.z",
-      "Next": "g",
-      "ResultPath": "$.heap5",
+      "ResultPath": "$.heap18",
       "Type": "Pass",
     },
     "7__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": {
       "InputPath": "$.h",
-      "Next": "8__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap20",
-      "Type": "Pass",
-    },
-    "8__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": {
-      "InputPath": "$.i",
       "Next": "1__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
-      "ResultPath": "$.heap21",
+      "ResultPath": "$.heap19",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -1847,9 +1811,9 @@ exports[`assignment 1`] = `
     "[y, y = "a", y = "b" , y, y]": {
       "Next": "h",
       "Parameters": {
-        "out.$": "States.Array($.heap6,'a',$.heap7,$.heap8)",
+        "out.$": "States.Array($.heap5,'a',$.heap6,$.heap7)",
       },
-      "ResultPath": "$.heap9",
+      "ResultPath": "$.heap8",
       "Type": "Pass",
     },
     "a = "2"": {
@@ -1938,7 +1902,7 @@ exports[`assignment 1`] = `
         "b": "a",
         "c.$": "$.heap1",
         "o": {
-          "z.$": "$.heap5",
+          "z.$": "$.z",
         },
         "t.$": "$.heap4",
         "z.$": "$.heap2",
@@ -1953,7 +1917,7 @@ exports[`assignment 1`] = `
       "Type": "Pass",
     },
     "h": {
-      "InputPath": "$.heap9.out",
+      "InputPath": "$.heap8.out",
       "Next": "x = "0"",
       "ResultPath": "$.h",
       "Type": "Pass",
@@ -1961,19 +1925,19 @@ exports[`assignment 1`] = `
     "h = [y, y = "a", y = "b" , y, y]": {
       "InputPath": "$.y",
       "Next": "y = "a"",
-      "ResultPath": "$.heap6",
+      "ResultPath": "$.heap5",
       "Type": "Pass",
     },
     "hello  x x = "1" x = "3" , "2"x": {
       "Next": "i",
       "Parameters": {
-        "string.$": "States.Format('hello {} 1 2 {}',$.heap10,$.heap11)",
+        "string.$": "States.Format('hello {} 1 2 {}',$.heap9,$.heap10)",
       },
-      "ResultPath": "$.heap12",
+      "ResultPath": "$.heap11",
       "Type": "Pass",
     },
     "i": {
-      "InputPath": "$.heap12.string",
+      "InputPath": "$.heap11.string",
       "Next": "return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}",
       "ResultPath": "$.i",
       "Type": "Pass",
@@ -1981,13 +1945,13 @@ exports[`assignment 1`] = `
     "i = hello  x x = "1" x = "3" , "2"x": {
       "InputPath": "$.x",
       "Next": "x = "1"",
-      "ResultPath": "$.heap10",
+      "ResultPath": "$.heap9",
       "Type": "Pass",
     },
     "return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i}": {
       "InputPath": "$.a",
       "Next": "1__return {a: a, b: b, c: c, d: d, e: e, f: f, g: g, h: h, i: i} 1",
-      "ResultPath": "$.heap13",
+      "ResultPath": "$.heap12",
       "Type": "Pass",
     },
     "true__z === "b"": {
@@ -1999,7 +1963,7 @@ exports[`assignment 1`] = `
     "x": {
       "InputPath": "$.x",
       "Next": "hello  x x = "1" x = "3" , "2"x",
-      "ResultPath": "$.heap11",
+      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "x = "0"": {
@@ -3372,7 +3336,7 @@ exports[`binary and unary comparison 1`] = `
         "nullVarNotEqualEqualsString.$": "$.heap193",
         "nullVarNotEqualEqualsStringVar.$": "$.heap253",
         "nullVarNotEqualsNumber.$": "$.heap211",
-        "nullVarNotEqualsNumberVar.$": "$.heap271",
+        "nullVarNotEqualsNumberVar.$": "$.heap270",
         "nullVarNotEqualsString.$": "$.heap195",
         "nullVarNotEqualsStringVar.$": "$.heap255",
         "objNotPresentFalse.$": "$.heap143",
@@ -3688,12 +3652,6 @@ exports[`binary and unary comparison 1`] = `
       "InputPath": "$.heap268",
       "Next": "input.nv != input.n",
       "ResultPath": "$.heap269",
-      "Type": "Pass",
-    },
-    "271__return {constantStringEquals: "a" === "a", constantToVarStringEquals: ": {
-      "InputPath": "$.heap270",
-      "Next": "1__return {constantStringEquals: "a" === "a", constantToVarStringEquals: in",
-      "ResultPath": "$.heap271",
       "Type": "Pass",
     },
     "27__return {constantStringEquals: "a" === "a", constantToVarStringEquals: i": {
@@ -4544,7 +4502,7 @@ exports[`binary and unary comparison 1`] = `
       "Type": "Pass",
     },
     "false__input.nv != input.n": {
-      "Next": "271__return {constantStringEquals: "a" === "a", constantToVarStringEquals: ",
+      "Next": "1__return {constantStringEquals: "a" === "a", constantToVarStringEquals: in",
       "Result": false,
       "ResultPath": "$.heap270",
       "Type": "Pass",
@@ -12433,7 +12391,7 @@ exports[`binary and unary comparison 1`] = `
       "Type": "Pass",
     },
     "true__input.nv != input.n": {
-      "Next": "271__return {constantStringEquals: "a" === "a", constantToVarStringEquals: ",
+      "Next": "1__return {constantStringEquals: "a" === "a", constantToVarStringEquals: in",
       "Result": true,
       "ResultPath": "$.heap270",
       "Type": "Pass",
@@ -13100,7 +13058,7 @@ exports[`binaryOps logic 1`] = `
         "falsyAndAssign.$": "$.heap65",
         "falsyChainAnd.$": "$.heap53",
         "falsyChainOr.$": "$.heap44",
-        "falsyOrAssign.$": "$.heap67",
+        "falsyOrAssign.$": "$.falsyOrAssign",
         "invNullCoal.$": "$.heap27",
         "notNullishCoalAssign.$": "$.heap62",
         "nullCoal.$": "$.heap31",
@@ -13232,14 +13190,8 @@ exports[`binaryOps logic 1`] = `
     },
     "27__return {andVar: c, and: input.a && input.b, or: input.a || input.b, inv": {
       "InputPath": "$.truthyOrAssign",
-      "Next": "28__return {andVar: c, and: input.a && input.b, or: input.a || input.b, inv",
-      "ResultPath": "$.heap66",
-      "Type": "Pass",
-    },
-    "28__return {andVar: c, and: input.a && input.b, or: input.a || input.b, inv": {
-      "InputPath": "$.falsyOrAssign",
       "Next": "1__return {andVar: c, and: input.a && input.b, or: input.a || input.b, invN",
-      "ResultPath": "$.heap67",
+      "ResultPath": "$.heap66",
       "Type": "Pass",
     },
     "2__return {andVar: c, and: input.a && input.b, or: input.a || input.b, invN": {
@@ -19627,7 +19579,7 @@ exports[`binaryOps logic with calls 1`] = `
       "End": true,
       "Parameters": {
         "and.$": "$.heap2",
-        "or.$": "$.heap5",
+        "or.$": "$.heap4[0]",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -19659,7 +19611,7 @@ exports[`binaryOps logic with calls 1`] = `
           },
         },
       ],
-      "Next": "3__return {and: true && await $SFN.retry(function ()), or: false || await $",
+      "Next": "1__return {and: true && await $SFN.retry(function ()), or: false || await $",
       "Parameters": {
         "fnl_context.$": "$.fnl_context",
       },
@@ -19672,12 +19624,6 @@ exports[`binaryOps logic with calls 1`] = `
         },
       ],
       "Type": "Parallel",
-    },
-    "3__return {and: true && await $SFN.retry(function ()), or: false || await $": {
-      "InputPath": "$.heap4[0]",
-      "Next": "1__return {and: true && await $SFN.retry(function ()), or: false || await $",
-      "ResultPath": "$.heap5",
-      "Type": "Pass",
     },
     "Initialize Functionless Context": {
       "Next": "return {and: true && await $SFN.retry(function ()), or: false || await $SFN",
@@ -19795,7 +19741,7 @@ exports[`call $SFN map, foreach, and parallel 1`] = `
       "Parameters": {
         "a.$": "$.heap7",
         "b.$": "$.heap9",
-        "c.$": "$.heap11",
+        "c.$": "$.heap10",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -19837,15 +19783,9 @@ exports[`call $SFN map, foreach, and parallel 1`] = `
           },
         },
       ],
-      "Next": "5__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
+      "Next": "1__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
       "ResultPath": "$.heap10",
       "Type": "Parallel",
-    },
-    "5__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
-      "InputPath": "$.heap10",
-      "Next": "1__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
-      "ResultPath": "$.heap11",
-      "Type": "Pass",
     },
     "Initialize Functionless Context": {
       "Next": "await $SFN.forEach(input.arr, function (n))",
@@ -19937,32 +19877,32 @@ exports[`call $SFN retry 1`] = `
   "States": {
     "1__return [a, b, c, d, e]": {
       "End": true,
-      "InputPath": "$.heap15.out",
+      "InputPath": "$.heap13.out",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return [a, b, c, d, e] 1": {
       "InputPath": "$.b",
       "Next": "2__return [a, b, c, d, e]",
-      "ResultPath": "$.heap11",
+      "ResultPath": "$.heap9",
       "Type": "Pass",
     },
     "2__return [a, b, c, d, e]": {
       "InputPath": "$.c",
       "Next": "3__return [a, b, c, d, e]",
-      "ResultPath": "$.heap12",
+      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "3__return [a, b, c, d, e]": {
       "InputPath": "$.d",
       "Next": "4__return [a, b, c, d, e]",
-      "ResultPath": "$.heap13",
+      "ResultPath": "$.heap11",
       "Type": "Pass",
     },
     "4__return [a, b, c, d, e]": {
       "InputPath": "$.e",
       "Next": "[a, b, c, d, e]",
-      "ResultPath": "$.heap14",
+      "ResultPath": "$.heap12",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -19978,13 +19918,13 @@ exports[`call $SFN retry 1`] = `
     "[a, b, c, d, e]": {
       "Next": "1__return [a, b, c, d, e]",
       "Parameters": {
-        "out.$": "States.Array($.heap10,$.heap11,$.heap12,$.heap13,$.heap14)",
+        "out.$": "States.Array($.heap8,$.heap9,$.heap10,$.heap11,$.heap12)",
       },
-      "ResultPath": "$.heap15",
+      "ResultPath": "$.heap13",
       "Type": "Pass",
     },
     "a": {
-      "InputPath": "$.heap3[0]",
+      "InputPath": "$.heap2[0]",
       "Next": "b = 0",
       "ResultPath": "$.a",
       "Type": "Pass",
@@ -19994,40 +19934,16 @@ exports[`call $SFN retry 1`] = `
         {
           "StartAt": "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U",
           "States": {
-            "1__result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table": {
-              "Next": "result",
-              "Parameters": {
-                "ExpressionAttributeValues": {
-                  ":inc": {
-                    "N": "1",
-                  },
-                  ":init": {
-                    "N": "0",
-                  },
-                },
-                "Key": {
-                  "a": {
-                    "S.$": "$.heap0",
-                  },
-                },
-                "ReturnValues": "ALL_NEW",
-                "TableName": "__REPLACED_TOKEN",
-                "UpdateExpression": "SET n = if_not_exists(n, :init) + :inc",
-              },
-              "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
-              "ResultPath": "$.heap1",
-              "Type": "Task",
-            },
             "1__return Number(result.Attributes.n.N)": {
               "End": true,
-              "InputPath": "$.heap2.num",
+              "InputPath": "$.heap1.num",
               "ResultPath": "$",
               "Type": "Pass",
             },
             "assign__return Number(result.Attributes.n.N)": {
               "InputPath": "$.result.Attributes.n.N",
               "Next": "1__return Number(result.Attributes.n.N)",
-              "ResultPath": "$.heap2.num",
+              "ResultPath": "$.heap1.num",
               "Type": "Pass",
             },
             "checkStringOutput__return Number(result.Attributes.n.N)": {
@@ -20035,7 +19951,7 @@ exports[`call $SFN retry 1`] = `
                 {
                   "IsNumeric": true,
                   "Next": "1__return Number(result.Attributes.n.N)",
-                  "Variable": "$.heap2.num",
+                  "Variable": "$.heap1.num",
                 },
               ],
               "Default": "null__return Number(result.Attributes.n.N)",
@@ -20046,7 +19962,7 @@ exports[`call $SFN retry 1`] = `
               "Parameters": {
                 "num.$": "States.StringToJson($.result.Attributes.n.N)",
               },
-              "ResultPath": "$.heap2",
+              "ResultPath": "$.heap1",
               "Type": "Pass",
             },
             "if(result.Attributes.n.N === "3")": {
@@ -20378,26 +20294,44 @@ exports[`call $SFN retry 1`] = `
             "null__return Number(result.Attributes.n.N)": {
               "InputPath": "$.fnl_context.null",
               "Next": "1__return Number(result.Attributes.n.N)",
-              "ResultPath": "$.heap2.num",
+              "ResultPath": "$.heap1.num",
               "Type": "Pass",
             },
             "one__return Number(result.Attributes.n.N)": {
               "Next": "1__return Number(result.Attributes.n.N)",
               "Result": 1,
-              "ResultPath": "$.heap2.num",
+              "ResultPath": "$.heap1.num",
               "Type": "Pass",
             },
             "result": {
-              "InputPath": "$.heap1",
+              "InputPath": "$.heap0",
               "Next": "if(result.Attributes.n.N === "3")",
               "ResultPath": "$.result",
               "Type": "Pass",
             },
             "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U": {
-              "InputPath": "$.id",
-              "Next": "1__result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table",
+              "Next": "result",
+              "Parameters": {
+                "ExpressionAttributeValues": {
+                  ":inc": {
+                    "N": "1",
+                  },
+                  ":init": {
+                    "N": "0",
+                  },
+                },
+                "Key": {
+                  "a": {
+                    "S.$": "$.id",
+                  },
+                },
+                "ReturnValues": "ALL_NEW",
+                "TableName": "__REPLACED_TOKEN",
+                "UpdateExpression": "SET n = if_not_exists(n, :init) + :inc",
+              },
+              "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
               "ResultPath": "$.heap0",
-              "Type": "Pass",
+              "Type": "Task",
             },
             "throw new StepFunctionError("MyError", "Because")": {
               "Cause": ""Because"",
@@ -20407,7 +20341,7 @@ exports[`call $SFN retry 1`] = `
             "zero__return Number(result.Attributes.n.N)": {
               "Next": "1__return Number(result.Attributes.n.N)",
               "Result": 0,
-              "ResultPath": "$.heap2.num",
+              "ResultPath": "$.heap1.num",
               "Type": "Pass",
             },
           },
@@ -20418,7 +20352,7 @@ exports[`call $SFN retry 1`] = `
         "fnl_context.$": "$.fnl_context",
         "id.$": "$.id",
       },
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap2",
       "Retry": [
         {
           "ErrorEquals": [
@@ -20435,7 +20369,7 @@ exports[`call $SFN retry 1`] = `
       "Type": "Pass",
     },
     "b = await $SFN.retry(function ())": {
-      "InputPath": "$.heap4[0]",
+      "InputPath": "$.heap3[0]",
       "Next": "c = 0",
       "ResultPath": "$.b",
       "Type": "Pass",
@@ -20447,7 +20381,7 @@ exports[`call $SFN retry 1`] = `
       "Type": "Pass",
     },
     "c = await $SFN.retry([{ErrorEquals: ["MyError"], BackoffRate: 1, IntervalSe": {
-      "InputPath": "$.heap5[0]",
+      "InputPath": "$.heap4[0]",
       "Next": "d = 0",
       "ResultPath": "$.c",
       "Type": "Pass",
@@ -20483,7 +20417,7 @@ exports[`call $SFN retry 1`] = `
       "Type": "Pass",
     },
     "d = await $SFN.retry([{ErrorEquals: ["MyError2"], BackoffRate: 1, IntervalS": {
-      "InputPath": "$.heap6[0]",
+      "InputPath": "$.heap5[0]",
       "Next": "e = 0",
       "ResultPath": "$.d",
       "Type": "Pass",
@@ -20495,7 +20429,7 @@ exports[`call $SFN retry 1`] = `
       "Type": "Pass",
     },
     "e = await $SFN.retry([{ErrorEquals: ["MyError2"], BackoffRate: 1, IntervalS": {
-      "InputPath": "$.heap9[0]",
+      "InputPath": "$.heap7[0]",
       "Next": "return [a, b, c, d, e]",
       "ResultPath": "$.e",
       "Type": "Pass",
@@ -20509,7 +20443,7 @@ exports[`call $SFN retry 1`] = `
     "return [a, b, c, d, e]": {
       "InputPath": "$.a",
       "Next": "1__return [a, b, c, d, e] 1",
-      "ResultPath": "$.heap10",
+      "ResultPath": "$.heap8",
       "Type": "Pass",
     },
     "try": {
@@ -20541,7 +20475,7 @@ exports[`call $SFN retry 1`] = `
         "fnl_context.$": "$.fnl_context",
         "id.$": "$.id",
       },
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap3",
       "Retry": [
         {
           "ErrorEquals": [
@@ -20581,7 +20515,7 @@ exports[`call $SFN retry 1`] = `
         "fnl_context.$": "$.fnl_context",
         "id.$": "$.id",
       },
-      "ResultPath": "$.heap5",
+      "ResultPath": "$.heap4",
       "Retry": [
         {
           "BackoffRate": 1,
@@ -20625,7 +20559,7 @@ exports[`call $SFN retry 1`] = `
         "fnl_context.$": "$.fnl_context",
         "id.$": "$.id",
       },
-      "ResultPath": "$.heap6",
+      "ResultPath": "$.heap5",
       "Retry": [
         {
           "BackoffRate": 1,
@@ -20643,30 +20577,6 @@ exports[`call $SFN retry 1`] = `
         {
           "StartAt": "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U 1",
           "States": {
-            "1__result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table 1": {
-              "Next": "result 1",
-              "Parameters": {
-                "ExpressionAttributeValues": {
-                  ":inc": {
-                    "N": "1",
-                  },
-                  ":init": {
-                    "N": "0",
-                  },
-                },
-                "Key": {
-                  "a": {
-                    "S.$": "$.heap7",
-                  },
-                },
-                "ReturnValues": "ALL_NEW",
-                "TableName": "__REPLACED_TOKEN",
-                "UpdateExpression": "SET n = if_not_exists(n, :init) + :inc",
-              },
-              "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
-              "ResultPath": "$.heap8",
-              "Type": "Task",
-            },
             "if(result.Attributes.n.N === "6")": {
               "Choices": [
                 {
@@ -20732,16 +20642,34 @@ exports[`call $SFN retry 1`] = `
               "Type": "Choice",
             },
             "result 1": {
-              "InputPath": "$.heap8",
+              "InputPath": "$.heap6",
               "Next": "if(result.Attributes.n.N === "6")",
               "ResultPath": "$.result__1",
               "Type": "Pass",
             },
             "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U 1": {
-              "InputPath": "$.id",
-              "Next": "1__result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table 1",
-              "ResultPath": "$.heap7",
-              "Type": "Pass",
+              "Next": "result 1",
+              "Parameters": {
+                "ExpressionAttributeValues": {
+                  ":inc": {
+                    "N": "1",
+                  },
+                  ":init": {
+                    "N": "0",
+                  },
+                },
+                "Key": {
+                  "a": {
+                    "S.$": "$.id",
+                  },
+                },
+                "ReturnValues": "ALL_NEW",
+                "TableName": "__REPLACED_TOKEN",
+                "UpdateExpression": "SET n = if_not_exists(n, :init) + :inc",
+              },
+              "Resource": "arn:aws:states:::aws-sdk:dynamodb:updateItem",
+              "ResultPath": "$.heap6",
+              "Type": "Task",
             },
             "return 6": {
               "End": true,
@@ -20781,7 +20709,7 @@ exports[`call $SFN retry 1`] = `
         "fnl_context.$": "$.fnl_context",
         "id.$": "$.id",
       },
-      "ResultPath": "$.heap9",
+      "ResultPath": "$.heap7",
       "Retry": [
         {
           "BackoffRate": 1,
@@ -20869,7 +20797,7 @@ exports[`call lambda 1`] = `
           },
         },
       ],
-      "Next": "12__return {f1: f1, f2: await echoStringFunc(event.str).str, f3: await func",
+      "Next": "1__return {f1: f1, f2: await echoStringFunc(event.str).str, f3: await func2",
       "Parameters": {
         "arr.$": "$.arr",
         "event.$": "$.event",
@@ -20887,12 +20815,6 @@ exports[`call lambda 1`] = `
       ],
       "Type": "Parallel",
     },
-    "12__return {f1: f1, f2: await echoStringFunc(event.str).str, f3: await func": {
-      "InputPath": "$.heap13[0].Payload.str",
-      "Next": "1__return {f1: f1, f2: await echoStringFunc(event.str).str, f3: await func2",
-      "ResultPath": "$.heap14",
-      "Type": "Pass",
-    },
     "1__return {f1: f1, f2: await echoStringFunc(event.str).str, f3: await func2": {
       "End": true,
       "Parameters": {
@@ -20902,7 +20824,7 @@ exports[`call lambda 1`] = `
         "f4.$": "$.heap7",
         "f5.$": "$.heap9",
         "f6.$": "$.heap11",
-        "f7.$": "$.heap14",
+        "f7.$": "$.heap13[0].Payload.str",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -21031,7 +20953,7 @@ exports[`clean state after input 1`] = `
       "End": true,
       "Parameters": {
         "a.$": "$.heap2",
-        "initA.$": "$.heap6",
+        "initA.$": "$.heap5",
         "stateA.$": "$.heap1",
         "stateInput.$": "$.heap4",
       },
@@ -21054,12 +20976,6 @@ exports[`clean state after input 1`] = `
       "InputPath": "$.heap3",
       "Next": "a ?? null",
       "ResultPath": "$.heap4",
-      "Type": "Pass",
-    },
-    "6__return {stateA: state.a ?? null, a: input.a, stateInput: state.input.a ?": {
-      "InputPath": "$.heap5",
-      "Next": "1__return {stateA: state.a ?? null, a: input.a, stateInput: state.input.a ?",
-      "ResultPath": "$.heap6",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -21094,7 +21010,7 @@ exports[`clean state after input 1`] = `
     },
     "false__a ?? null": {
       "InputPath": "$.fnl_context.null",
-      "Next": "6__return {stateA: state.a ?? null, a: input.a, stateInput: state.input.a ?",
+      "Next": "1__return {stateA: state.a ?? null, a: input.a, stateInput: state.input.a ?",
       "ResultPath": "$.heap5",
       "Type": "Pass",
     },
@@ -21156,7 +21072,7 @@ exports[`clean state after input 1`] = `
     },
     "true__a ?? null": {
       "InputPath": "$.a",
-      "Next": "6__return {stateA: state.a ?? null, a: input.a, stateInput: state.input.a ?",
+      "Next": "1__return {stateA: state.a ?? null, a: input.a, stateInput: state.input.a ?",
       "ResultPath": "$.heap5",
       "Type": "Pass",
     },
@@ -21816,521 +21732,6 @@ exports[`continue break 1`] = `
       ],
       "Default": "b = """,
       "Type": "Choice",
-    },
-  },
-}
-`;
-
-exports[`depth 1`] = `
-{
-  "StartAt": "Initialize Functionless Context",
-  "States": {
-    "10__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "11__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap10",
-      "Type": "Pass",
-    },
-    "11__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "12__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap11",
-      "Type": "Pass",
-    },
-    "12__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "13__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap12",
-      "Type": "Pass",
-    },
-    "13__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "14__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap13",
-      "Type": "Pass",
-    },
-    "14__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "15__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap14",
-      "Type": "Pass",
-    },
-    "15__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "16__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap15",
-      "Type": "Pass",
-    },
-    "16__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "17__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap16",
-      "Type": "Pass",
-    },
-    "17__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "18__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap17",
-      "Type": "Pass",
-    },
-    "18__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "19__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap18",
-      "Type": "Pass",
-    },
-    "19__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "20__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap19",
-      "Type": "Pass",
-    },
-    "1__71__return {...input, ...input, ...input, ...input, ...input, ...input, ": {
-      "Next": "1__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
-      "Parameters": {
-        "out.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap71.out.d0,$.heap62,false),$.heap63,false),$.heap64,false),$.heap65,false),$.heap66,false),$.heap67,false),$.heap68,false),$.heap69,false),$.heap70,false),$.input,false)",
-      },
-      "ResultPath": "$.heap71",
-      "Type": "Pass",
-    },
-    "1__71__return {...input, ...input, ...input, ...input, ...input, ...input,  1": {
-      "Next": "1__71__return {...input, ...input, ...input, ...input, ...input, ...input, ",
-      "Parameters": {
-        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap71.out.d0.d0,$.heap53,false),$.heap54,false),$.heap55,false),$.heap56,false),$.heap57,false),$.heap58,false),$.heap59,false),$.heap60,false),$.heap61,false),$.heap62,false)",
-      },
-      "ResultPath": "$.heap71.out",
-      "Type": "Pass",
-    },
-    "1__71__return {...input, ...input, ...input, ...input, ...input, ...input,  2": {
-      "Next": "1__71__return {...input, ...input, ...input, ...input, ...input, ...input,  1",
-      "Parameters": {
-        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap71.out.d0.d0.d0,$.heap44,false),$.heap45,false),$.heap46,false),$.heap47,false),$.heap48,false),$.heap49,false),$.heap50,false),$.heap51,false),$.heap52,false),$.heap53,false)",
-      },
-      "ResultPath": "$.heap71.out.d0",
-      "Type": "Pass",
-    },
-    "1__71__return {...input, ...input, ...input, ...input, ...input, ...input,  3": {
-      "Next": "1__71__return {...input, ...input, ...input, ...input, ...input, ...input,  2",
-      "Parameters": {
-        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap71.out.d0.d0.d0.d0,$.heap35,false),$.heap36,false),$.heap37,false),$.heap38,false),$.heap39,false),$.heap40,false),$.heap41,false),$.heap42,false),$.heap43,false),$.heap44,false)",
-      },
-      "ResultPath": "$.heap71.out.d0.d0",
-      "Type": "Pass",
-    },
-    "1__71__return {...input, ...input, ...input, ...input, ...input, ...input,  4": {
-      "Next": "1__71__return {...input, ...input, ...input, ...input, ...input, ...input,  3",
-      "Parameters": {
-        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap71.out.d0.d0.d0.d0.d0,$.heap26,false),$.heap27,false),$.heap28,false),$.heap29,false),$.heap30,false),$.heap31,false),$.heap32,false),$.heap33,false),$.heap34,false),$.heap35,false)",
-      },
-      "ResultPath": "$.heap71.out.d0.d0.d0",
-      "Type": "Pass",
-    },
-    "1__71__return {...input, ...input, ...input, ...input, ...input, ...input,  5": {
-      "Next": "1__71__return {...input, ...input, ...input, ...input, ...input, ...input,  4",
-      "Parameters": {
-        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap71.out.d0.d0.d0.d0.d0.d0,$.heap17,false),$.heap18,false),$.heap19,false),$.heap20,false),$.heap21,false),$.heap22,false),$.heap23,false),$.heap24,false),$.heap25,false),$.heap26,false)",
-      },
-      "ResultPath": "$.heap71.out.d0.d0.d0.d0",
-      "Type": "Pass",
-    },
-    "1__71__return {...input, ...input, ...input, ...input, ...input, ...input,  6": {
-      "Next": "1__71__return {...input, ...input, ...input, ...input, ...input, ...input,  5",
-      "Parameters": {
-        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap71.out.d0.d0.d0.d0.d0.d0.d0,$.heap8,false),$.heap9,false),$.heap10,false),$.heap11,false),$.heap12,false),$.heap13,false),$.heap14,false),$.heap15,false),$.heap16,false),$.heap17,false)",
-      },
-      "ResultPath": "$.heap71.out.d0.d0.d0.d0.d0",
-      "Type": "Pass",
-    },
-    "1__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
-      "End": true,
-      "InputPath": "$.heap71.out",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "1__return {...input, ...input, ...input, ...input, ...input, ...input, ...i 1": {
-      "InputPath": "$.input",
-      "Next": "2__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "20__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "21__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap20",
-      "Type": "Pass",
-    },
-    "21__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "22__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap21",
-      "Type": "Pass",
-    },
-    "22__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "23__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap22",
-      "Type": "Pass",
-    },
-    "23__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "24__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap23",
-      "Type": "Pass",
-    },
-    "24__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "25__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap24",
-      "Type": "Pass",
-    },
-    "25__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "26__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap25",
-      "Type": "Pass",
-    },
-    "26__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "27__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap26",
-      "Type": "Pass",
-    },
-    "27__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "28__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap27",
-      "Type": "Pass",
-    },
-    "28__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "29__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap28",
-      "Type": "Pass",
-    },
-    "29__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "30__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap29",
-      "Type": "Pass",
-    },
-    "2__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
-      "InputPath": "$.input",
-      "Next": "3__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
-    "30__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "31__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap30",
-      "Type": "Pass",
-    },
-    "31__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "32__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap31",
-      "Type": "Pass",
-    },
-    "32__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "33__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap32",
-      "Type": "Pass",
-    },
-    "33__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "34__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap33",
-      "Type": "Pass",
-    },
-    "34__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "35__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap34",
-      "Type": "Pass",
-    },
-    "35__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "36__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap35",
-      "Type": "Pass",
-    },
-    "36__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "37__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap36",
-      "Type": "Pass",
-    },
-    "37__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "38__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap37",
-      "Type": "Pass",
-    },
-    "38__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "39__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap38",
-      "Type": "Pass",
-    },
-    "39__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "40__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap39",
-      "Type": "Pass",
-    },
-    "3__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
-      "InputPath": "$.input",
-      "Next": "4__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "40__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "41__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap40",
-      "Type": "Pass",
-    },
-    "41__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "42__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap41",
-      "Type": "Pass",
-    },
-    "42__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "43__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap42",
-      "Type": "Pass",
-    },
-    "43__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "44__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap43",
-      "Type": "Pass",
-    },
-    "44__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "45__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap44",
-      "Type": "Pass",
-    },
-    "45__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "46__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap45",
-      "Type": "Pass",
-    },
-    "46__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "47__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap46",
-      "Type": "Pass",
-    },
-    "47__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "48__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap47",
-      "Type": "Pass",
-    },
-    "48__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "49__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap48",
-      "Type": "Pass",
-    },
-    "49__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "50__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap49",
-      "Type": "Pass",
-    },
-    "4__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
-      "InputPath": "$.input",
-      "Next": "5__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
-      "ResultPath": "$.heap4",
-      "Type": "Pass",
-    },
-    "50__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "51__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap50",
-      "Type": "Pass",
-    },
-    "51__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "52__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap51",
-      "Type": "Pass",
-    },
-    "52__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "53__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap52",
-      "Type": "Pass",
-    },
-    "53__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "54__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap53",
-      "Type": "Pass",
-    },
-    "54__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "55__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap54",
-      "Type": "Pass",
-    },
-    "55__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "56__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap55",
-      "Type": "Pass",
-    },
-    "56__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "57__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap56",
-      "Type": "Pass",
-    },
-    "57__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "58__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap57",
-      "Type": "Pass",
-    },
-    "58__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "59__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap58",
-      "Type": "Pass",
-    },
-    "59__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "60__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap59",
-      "Type": "Pass",
-    },
-    "5__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
-      "InputPath": "$.input",
-      "Next": "6__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
-      "ResultPath": "$.heap5",
-      "Type": "Pass",
-    },
-    "60__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "61__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap60",
-      "Type": "Pass",
-    },
-    "61__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "62__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap61",
-      "Type": "Pass",
-    },
-    "62__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "63__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap62",
-      "Type": "Pass",
-    },
-    "63__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "64__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap63",
-      "Type": "Pass",
-    },
-    "64__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "65__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap64",
-      "Type": "Pass",
-    },
-    "65__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "66__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap65",
-      "Type": "Pass",
-    },
-    "66__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "67__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap66",
-      "Type": "Pass",
-    },
-    "67__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "68__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap67",
-      "Type": "Pass",
-    },
-    "68__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "69__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap68",
-      "Type": "Pass",
-    },
-    "69__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "70__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap69",
-      "Type": "Pass",
-    },
-    "6__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
-      "InputPath": "$.input",
-      "Next": "7__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
-      "ResultPath": "$.heap6",
-      "Type": "Pass",
-    },
-    "70__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "InputPath": "$.input",
-      "Next": "71__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap70",
-      "Type": "Pass",
-    },
-    "71__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
-      "Next": "1__71__return {...input, ...input, ...input, ...input, ...input, ...input,  6",
-      "Parameters": {
-        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap0,$.heap1,false),$.heap2,false),$.heap3,false),$.heap4,false),$.heap5,false),$.heap6,false),$.heap7,false),$.heap8,false)",
-      },
-      "ResultPath": "$.heap71.out.d0.d0.d0.d0.d0.d0",
-      "Type": "Pass",
-    },
-    "7__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
-      "InputPath": "$.input",
-      "Next": "8__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
-      "ResultPath": "$.heap7",
-      "Type": "Pass",
-    },
-    "8__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
-      "InputPath": "$.input",
-      "Next": "9__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
-      "ResultPath": "$.heap8",
-      "Type": "Pass",
-    },
-    "9__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
-      "InputPath": "$.input",
-      "Next": "10__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
-      "ResultPath": "$.heap9",
-      "Type": "Pass",
-    },
-    "Initialize Functionless Context": {
-      "Next": "return {...input, ...input, ...input, ...input, ...input, ...input, ...inpu",
-      "Parameters": {
-        "fnl_context": {
-          "null": null,
-        },
-        "input.$": "$$.Execution.Input",
-      },
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "return {...input, ...input, ...input, ...input, ...input, ...input, ...inpu": {
-      "InputPath": "$.input",
-      "Next": "1__return {...input, ...input, ...input, ...input, ...input, ...input, ...i 1",
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
     },
   },
 }
@@ -23693,15 +23094,9 @@ exports[`filter 1`] = `
       "End": true,
       "Parameters": {
         "arr1.$": "$.heap9",
-        "arr2.$": "$.heap10",
+        "arr2.$": "$.arr2",
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "1__return {arr1: arr1, arr2: arr2} 1": {
-      "InputPath": "$.arr2",
-      "Next": "1__return {arr1: arr1, arr2: arr2}",
-      "ResultPath": "$.heap10",
       "Type": "Pass",
     },
     "2__return itemKey === hikey": {
@@ -24354,7 +23749,7 @@ exports[`filter 1`] = `
     },
     "return {arr1: arr1, arr2: arr2}": {
       "InputPath": "$.arr1",
-      "Next": "1__return {arr1: arr1, arr2: arr2} 1",
+      "Next": "1__return {arr1: arr1, arr2: arr2}",
       "ResultPath": "$.heap9",
       "Type": "Pass",
     },
@@ -28886,7 +28281,7 @@ exports[`json parse and stringify 1`] = `
     "1__return {str: str, obj: obj, a: obj.a}": {
       "End": true,
       "Parameters": {
-        "a.$": "$.heap4",
+        "a.$": "$.obj.a",
         "obj.$": "$.heap3",
         "str.$": "$.heap2",
       },
@@ -28895,14 +28290,8 @@ exports[`json parse and stringify 1`] = `
     },
     "1__return {str: str, obj: obj, a: obj.a} 1": {
       "InputPath": "$.obj",
-      "Next": "2__return {str: str, obj: obj, a: obj.a}",
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "2__return {str: str, obj: obj, a: obj.a}": {
-      "InputPath": "$.obj.a",
       "Next": "1__return {str: str, obj: obj, a: obj.a}",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -37673,6 +37062,551 @@ exports[`no state pollution 1`] = `
 }
 `;
 
+exports[`object literal spread 1`] = `
+{
+  "StartAt": "Initialize Functionless Context",
+  "States": {
+    "10__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "11__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap11",
+      "Type": "Pass",
+    },
+    "11__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "12__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap12",
+      "Type": "Pass",
+    },
+    "12__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "13__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap13",
+      "Type": "Pass",
+    },
+    "13__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "14__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap14",
+      "Type": "Pass",
+    },
+    "14__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "15__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap15",
+      "Type": "Pass",
+    },
+    "15__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "16__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap16",
+      "Type": "Pass",
+    },
+    "16__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "17__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap17",
+      "Type": "Pass",
+    },
+    "17__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "18__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap18",
+      "Type": "Pass",
+    },
+    "18__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "19__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap19",
+      "Type": "Pass",
+    },
+    "19__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "20__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap20",
+      "Type": "Pass",
+    },
+    "1__73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...inpu": {
+      "Next": "1__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .",
+      "Parameters": {
+        "out.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap74.out.d0,$.heap65,false),$.heap66,false),$.heap74.out.d1,false),$.heap67,false),$.heap68,false),$.heap69,false),$.heap70,false),$.heap71,false),$.heap72,false),$.heap73,false)",
+      },
+      "ResultPath": "$.heap74",
+      "Type": "Pass",
+    },
+    "1__73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...inpu 1": {
+      "Next": "1__73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...inpu",
+      "Parameters": {
+        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap74.out.d0.d0,$.heap55,false),$.heap56,false),$.heap57,false),$.heap58,false),$.heap59,false),$.heap60,false),$.heap61,false),$.heap62,false),$.heap63,false),$.heap64,false)",
+        "d1.$": "States.StringToJson('{"x":7,"y":8,"z":9,"a":1,"m":4}')",
+      },
+      "ResultPath": "$.heap74.out",
+      "Type": "Pass",
+    },
+    "1__73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...inpu 2": {
+      "Next": "1__73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...inpu 1",
+      "Parameters": {
+        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap74.out.d0.d0.d0,$.heap45,false),$.heap46,false),$.heap47,false),$.heap48,false),$.heap49,false),$.heap50,false),$.heap51,false),$.heap52,false),$.heap53,false),$.heap54,false)",
+      },
+      "ResultPath": "$.heap74.out.d0",
+      "Type": "Pass",
+    },
+    "1__73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...inpu 3": {
+      "Next": "1__73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...inpu 2",
+      "Parameters": {
+        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap74.out.d0.d0.d0.d0,$.heap35,false),$.heap36,false),$.heap37,false),$.heap38,false),$.heap39,false),$.heap40,false),$.heap41,false),$.heap42,false),$.heap43,false),$.heap44,false)",
+      },
+      "ResultPath": "$.heap74.out.d0.d0",
+      "Type": "Pass",
+    },
+    "1__73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...inpu 4": {
+      "Next": "1__73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...inpu 3",
+      "Parameters": {
+        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap74.out.d0.d0.d0.d0.d0,$.heap25,false),$.heap26,false),$.heap27,false),$.heap28,false),$.heap29,false),$.heap30,false),$.heap31,false),$.heap32,false),$.heap33,false),$.heap34,false)",
+      },
+      "ResultPath": "$.heap74.out.d0.d0.d0",
+      "Type": "Pass",
+    },
+    "1__73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...inpu 5": {
+      "Next": "1__73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...inpu 4",
+      "Parameters": {
+        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap74.out.d0.d0.d0.d0.d0.d0,$.heap16,false),$.heap17,false),$.heap18,false),$.heap19,false),$.heap74.out.d0.d0.d0.d0.d0.d1,false),$.heap20,false),$.heap21,false),$.heap22,false),$.heap23,false),$.heap24,false)",
+      },
+      "ResultPath": "$.heap74.out.d0.d0.d0.d0",
+      "Type": "Pass",
+    },
+    "1__73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...inpu 6": {
+      "Next": "1__73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...inpu 5",
+      "Parameters": {
+        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap74.out.d0.d0.d0.d0.d0.d0.d0,$.heap6,false),$.heap7,false),$.heap8,false),$.heap9,false),$.heap10,false),$.heap11,false),$.heap12,false),$.heap13,false),$.heap14,false),$.heap15,false)",
+        "d1.$": "States.StringToJson('{"m":0,"n":5,"o":6}')",
+      },
+      "ResultPath": "$.heap74.out.d0.d0.d0.d0.d0",
+      "Type": "Pass",
+    },
+    "1__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .": {
+      "End": true,
+      "InputPath": "$.heap74.out",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, . 1": {
+      "InputPath": "$.input",
+      "Next": "2__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "20__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "21__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap21",
+      "Type": "Pass",
+    },
+    "21__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "22__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap22",
+      "Type": "Pass",
+    },
+    "22__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "23__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap23",
+      "Type": "Pass",
+    },
+    "23__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "24__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap24",
+      "Type": "Pass",
+    },
+    "24__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "25__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap25",
+      "Type": "Pass",
+    },
+    "25__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "26__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap26",
+      "Type": "Pass",
+    },
+    "26__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "27__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap27",
+      "Type": "Pass",
+    },
+    "27__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "28__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap28",
+      "Type": "Pass",
+    },
+    "28__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "29__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap29",
+      "Type": "Pass",
+    },
+    "29__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "30__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap30",
+      "Type": "Pass",
+    },
+    "2__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .": {
+      "InputPath": "$.input",
+      "Next": "3__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "30__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "31__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap31",
+      "Type": "Pass",
+    },
+    "31__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "32__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap32",
+      "Type": "Pass",
+    },
+    "32__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "33__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap33",
+      "Type": "Pass",
+    },
+    "33__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "34__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap34",
+      "Type": "Pass",
+    },
+    "34__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "35__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap35",
+      "Type": "Pass",
+    },
+    "35__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "36__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap36",
+      "Type": "Pass",
+    },
+    "36__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "37__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap37",
+      "Type": "Pass",
+    },
+    "37__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "38__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap38",
+      "Type": "Pass",
+    },
+    "38__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "39__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap39",
+      "Type": "Pass",
+    },
+    "39__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "40__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap40",
+      "Type": "Pass",
+    },
+    "3__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .": {
+      "InputPath": "$.input",
+      "Next": "4__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "40__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "41__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap41",
+      "Type": "Pass",
+    },
+    "41__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "42__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap42",
+      "Type": "Pass",
+    },
+    "42__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "43__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap43",
+      "Type": "Pass",
+    },
+    "43__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "44__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap44",
+      "Type": "Pass",
+    },
+    "44__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "45__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap45",
+      "Type": "Pass",
+    },
+    "45__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "46__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap46",
+      "Type": "Pass",
+    },
+    "46__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "47__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap47",
+      "Type": "Pass",
+    },
+    "47__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "48__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap48",
+      "Type": "Pass",
+    },
+    "48__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "49__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap49",
+      "Type": "Pass",
+    },
+    "49__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "50__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap50",
+      "Type": "Pass",
+    },
+    "4__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .": {
+      "InputPath": "$.input",
+      "Next": "5__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .",
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "50__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "51__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap51",
+      "Type": "Pass",
+    },
+    "51__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "52__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap52",
+      "Type": "Pass",
+    },
+    "52__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "53__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap53",
+      "Type": "Pass",
+    },
+    "53__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "54__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap54",
+      "Type": "Pass",
+    },
+    "54__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "55__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap55",
+      "Type": "Pass",
+    },
+    "55__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "56__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap56",
+      "Type": "Pass",
+    },
+    "56__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "57__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap57",
+      "Type": "Pass",
+    },
+    "57__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "58__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap58",
+      "Type": "Pass",
+    },
+    "58__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "59__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap59",
+      "Type": "Pass",
+    },
+    "59__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "60__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap60",
+      "Type": "Pass",
+    },
+    "5__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .": {
+      "InputPath": "$.input",
+      "Next": "6__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .",
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
+    "60__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "61__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap61",
+      "Type": "Pass",
+    },
+    "61__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "62__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap62",
+      "Type": "Pass",
+    },
+    "62__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "63__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap63",
+      "Type": "Pass",
+    },
+    "63__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "64__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap64",
+      "Type": "Pass",
+    },
+    "64__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "65__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap65",
+      "Type": "Pass",
+    },
+    "65__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "66__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap66",
+      "Type": "Pass",
+    },
+    "66__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "67__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap67",
+      "Type": "Pass",
+    },
+    "67__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "68__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap68",
+      "Type": "Pass",
+    },
+    "68__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "69__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap69",
+      "Type": "Pass",
+    },
+    "69__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "70__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap70",
+      "Type": "Pass",
+    },
+    "6__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .": {
+      "InputPath": "$.input",
+      "Next": "7__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .",
+      "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "70__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "71__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap71",
+      "Type": "Pass",
+    },
+    "71__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "InputPath": "$.input",
+      "Next": "72__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap72",
+      "Type": "Pass",
+    },
+    "72__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "Next": "73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "Parameters": {
+        "literalValueObjectLiterals.$": "$.literalValueObjectLiterals",
+      },
+      "ResultPath": "$.heap73",
+      "Type": "Pass",
+    },
+    "73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ": {
+      "Next": "1__73__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...inpu 6",
+      "Parameters": {
+        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.StringToJson('{"a":0,"b":2,"c":3}'),$.heap1,false),$.heap2,false),$.heap3,false),$.heap4,false),$.heap5,false)",
+      },
+      "ResultPath": "$.heap74.out.d0.d0.d0.d0.d0.d0",
+      "Type": "Pass",
+    },
+    "7__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .": {
+      "InputPath": "$.input",
+      "Next": "8__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .",
+      "ResultPath": "$.heap8",
+      "Type": "Pass",
+    },
+    "8__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .": {
+      "InputPath": "$.input",
+      "Next": "9__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .",
+      "ResultPath": "$.heap9",
+      "Type": "Pass",
+    },
+    "9__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, .": {
+      "InputPath": "$.input",
+      "Next": "10__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ",
+      "ResultPath": "$.heap10",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": {
+      "Next": "literalValueObjectLiterals = {x: 1, y: "a", j: {x: 2}, ...input}",
+      "Parameters": {
+        "fnl_context": {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "literalValueObjectLiterals": {
+      "InputPath": "$.heap0.out",
+      "Next": "return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ...i",
+      "ResultPath": "$.literalValueObjectLiterals",
+      "Type": "Pass",
+    },
+    "literalValueObjectLiterals = {x: 1, y: "a", j: {x: 2}, ...input}": {
+      "Next": "literalValueObjectLiterals",
+      "Parameters": {
+        "out.$": "States.JsonMerge(States.StringToJson('{"x":1,"y":"a","j":{"x":2}}'),$.input,false)",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, ...i": {
+      "InputPath": "$.input",
+      "Next": "1__return {...{a: 0, b: 2, c: 3}, ...input, ...input, ...input, ...input, . 1",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
 exports[`overlapping variable with input 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
@@ -37681,15 +37615,9 @@ exports[`overlapping variable with input 1`] = `
       "End": true,
       "Parameters": {
         "a.$": "$.heap0",
-        "b.$": "$.heap1",
+        "b.$": "$.a",
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "1__return {a: input.a, b: a} 1": {
-      "InputPath": "$.a",
-      "Next": "1__return {a: input.a, b: a}",
-      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -37711,7 +37639,7 @@ exports[`overlapping variable with input 1`] = `
     },
     "return {a: input.a, b: a}": {
       "InputPath": "$.input.a",
-      "Next": "1__return {a: input.a, b: a} 1",
+      "Next": "1__return {a: input.a, b: a}",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -38776,7 +38704,7 @@ exports[`ternary 1`] = `
         "constantFalse.$": "$.heap18",
         "constantTrue.$": "$.heap16",
         "false.$": "$.heap14",
-        "result.$": "$.heap19",
+        "result.$": "$.a",
         "true.$": "$.heap12",
       },
       "ResultPath": "$",
@@ -38834,14 +38762,8 @@ exports[`ternary 1`] = `
     },
     "7__return {true: if(input.t), false: if(input.f), constantTrue: if(true), c": {
       "InputPath": "$.heap17",
-      "Next": "8__return {true: if(input.t), false: if(input.f), constantTrue: if(true), c",
-      "ResultPath": "$.heap18",
-      "Type": "Pass",
-    },
-    "8__return {true: if(input.t), false: if(input.f), constantTrue: if(true), c": {
-      "InputPath": "$.a",
       "Next": "1__return {true: if(input.t), false: if(input.f), constantTrue: if(true), c",
-      "ResultPath": "$.heap19",
+      "ResultPath": "$.heap18",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -40390,7 +40312,7 @@ exports[`typeof 1`] = `
     "1__return {isString: typeof input.str === "string", stringType: typeof inpu": {
       "End": true,
       "Parameters": {
-        "arrType.$": "$.heap21",
+        "arrType.$": "$.heap20",
         "booleanType.$": "$.heap9",
         "isBool.$": "$.heap7",
         "isNumber.$": "$.heap12",
@@ -40401,12 +40323,6 @@ exports[`typeof 1`] = `
         "stringType.$": "$.heap4",
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "21__return {isString: typeof input.str === "string", stringType: typeof inp": {
-      "InputPath": "$.heap20",
-      "Next": "1__return {isString: typeof input.str === "string", stringType: typeof inpu",
-      "ResultPath": "$.heap21",
       "Type": "Pass",
     },
     "2__return {isString: typeof input.str === "string", stringType: typeof inpu": {
@@ -40445,7 +40361,7 @@ exports[`typeof 1`] = `
       "Type": "Pass",
     },
     "boolean__input.arr": {
-      "Next": "21__return {isString: typeof input.str === "string", stringType: typeof inp",
+      "Next": "1__return {isString: typeof input.str === "string", stringType: typeof inpu",
       "Result": "boolean",
       "ResultPath": "$.heap20",
       "Type": "Pass",
@@ -40923,7 +40839,7 @@ exports[`typeof 1`] = `
       "Type": "Choice",
     },
     "number__input.arr": {
-      "Next": "21__return {isString: typeof input.str === "string", stringType: typeof inp",
+      "Next": "1__return {isString: typeof input.str === "string", stringType: typeof inpu",
       "Result": "number",
       "ResultPath": "$.heap20",
       "Type": "Pass",
@@ -40977,7 +40893,7 @@ exports[`typeof 1`] = `
       "Type": "Pass",
     },
     "object__input.arr": {
-      "Next": "21__return {isString: typeof input.str === "string", stringType: typeof inp",
+      "Next": "1__return {isString: typeof input.str === "string", stringType: typeof inpu",
       "Result": "object",
       "ResultPath": "$.heap20",
       "Type": "Pass",
@@ -41081,7 +40997,7 @@ exports[`typeof 1`] = `
       "Type": "Choice",
     },
     "string__input.arr": {
-      "Next": "21__return {isString: typeof input.str === "string", stringType: typeof inp",
+      "Next": "1__return {isString: typeof input.str === "string", stringType: typeof inpu",
       "Result": "string",
       "ResultPath": "$.heap20",
       "Type": "Pass",
@@ -41299,7 +41215,7 @@ exports[`typeof 1`] = `
       "Type": "Choice",
     },
     "undefined__input.arr": {
-      "Next": "21__return {isString: typeof input.str === "string", stringType: typeof inp",
+      "Next": "1__return {isString: typeof input.str === "string", stringType: typeof inpu",
       "Result": "undefined",
       "ResultPath": "$.heap20",
       "Type": "Pass",

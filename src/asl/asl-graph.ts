@@ -945,6 +945,13 @@ export namespace ASLGraph {
   }
 
   /**
+   * As of Sept 2022, Step Functions failed validation when more than 10 intrinsic functions were nested.
+   * The below functions attempt to bypass the issue by dynamically splitting trees of intrinsic functions
+   * when the max is reached.
+   */
+  export const MAX_INTRINSIC_COUNT = 10;
+
+  /**
    * Helper that generates a {@link Pass} state to assign a single jsonPath or intrinsic to
    * an output location.
    *
@@ -966,6 +973,8 @@ export namespace ASLGraph {
    * }
    * ```
    *
+   * Note: when the nested intrinsic depth exceeds {@link ASLGraph.MAX_INTRINSIC_COUNT}, multiple states will be created to not hit the limit.
+   *
    * @param jsonPathOrIntrinsic - json path (ex: $.var) or instrinsic function (ex: States.Array) to place into the output.
    */
   export function assignJsonPathOrIntrinsic(
@@ -977,56 +986,186 @@ export namespace ASLGraph {
   ): ((ASLGraph.NodeState & Pass) | ASLGraph.OutputSubState) & {
     output: ASLGraph.JsonPath;
   } {
-    const intrinsicSequenceStates: (ASLGraph.SubState | State)[] = [];
-
-    let depthCounter = 0;
-
-    const renderIntrinsicSafeHandler = (
-      func: ASLGraph.IntrinsicFunction
-    ): ASLGraph.JsonPath => {
-      const depthProp = `d${depthCounter++}`;
-      intrinsicSequenceStates.push(
-        assignJsonPathOrIntrinsic(
-          func,
-          ASLGraph.jsonPath(resultPath, propertyName),
-          depthProp
-        )
-      );
-      return ASLGraph.jsonPath(resultPath, propertyName, depthProp);
-    };
+    const fullPath = ASLGraph.jsonPath(resultPath, propertyName);
+    const { rendered, states = undefined } = ASLGraph.isIntrinsicFunction(
+      jsonPathOrIntrinsic
+    )
+      ? safeRenderIntrinsicFunction(jsonPathOrIntrinsic, fullPath)
+      : { rendered: jsonPathOrIntrinsic.jsonPath };
 
     const returnState: Pass = {
       Type: "Pass",
       Parameters: {
-        [`${propertyName}.$`]: ASLGraph.isJsonPath(jsonPathOrIntrinsic)
-          ? jsonPathOrIntrinsic.jsonPath
-          : ASLGraph.renderIntrinsicFunctionSafe(
-              jsonPathOrIntrinsic,
-              renderIntrinsicSafeHandler
-            ),
+        [`${propertyName}.$`]: rendered,
       },
       ResultPath:
         typeof resultPath === "string" ? resultPath : resultPath.jsonPath,
       Next: next,
     };
 
-    if (intrinsicSequenceStates.length > 0) {
+    if (states) {
       return {
-        ...ASLGraph.joinSubStates(
-          node,
-          ...intrinsicSequenceStates,
-          returnState
-        )!,
+        ...ASLGraph.joinSubStates(node, states, returnState)!,
         node,
-        output: jsonPath(resultPath, propertyName),
+        output: fullPath,
       } as ASLGraph.OutputSubState & { output: ASLGraph.JsonPath };
     }
 
     return {
       ...returnState,
       node,
-      output: jsonPath(resultPath, propertyName),
+      output: fullPath,
     };
+  }
+
+  /**
+   * Render an {@link ASLGraph.IntrinsicFunction}.
+   *
+   * If an Intrinsic function contains nested intrinsic calls beyond {@link ASLGraph.MAX_INTRINSIC_COUNT},
+   * new states are also returned that render the nested calls in new Pass Parameters assignments.
+   *
+   * If the MAX is 2 for example `States.Call(States.Call(States.Call(), States.Call()))`
+   *
+   * The MAX of 2 means that having more than 2 intrinsic function calls in the same Parameter key will fail ASL validation.
+   *
+   * We would return the follow
+   *
+   * ```
+   * states => {
+   *    Pass,
+   *    Parameters: {
+   *      "d0.$": "States.Call()",
+   *      "d1.$": "States.Call()"
+   *    },
+   *    ResultPath: "$.result.out"
+   * }
+   *
+   *
+   * rendered => "States.Call(States.Call($.result.out.d1, $.result.out.d1))"
+   * ```
+   *
+   * Notice that the given resultPath is used for the nested calls, meaning the
+   * temporary values will be erased by the final assignment.
+   */
+  export function safeRenderIntrinsicFunction(
+    jsonPathOrIntrinsic: IntrinsicFunction,
+    resultPath: string | ASLGraph.JsonPath
+  ): { rendered: string; states?: ASLGraph.SubState | ASLGraph.NodeState } {
+    // all states required to render the nested functions, may be empty.
+    const intrinsicSequenceStates: (ASLGraph.SubState | State)[] = [];
+    // all properties to return in the final pass.
+    const nestedFunctionAssignment: [string, string][] = [];
+
+    // create unique property names for each nested function.
+    let subPropCounter = 0;
+
+    /**
+     * When the {@link renderMaxNestedIntrinsicFunctions} reaches {@link MAX_INTRINSIC_COUNT},
+     * this callback is called to handle the rendering of the next nested function.
+     *
+     * This next function may also need to be further de-nested, so call ourselves recursively until a leaf is found.
+     */
+    const renderIntrinsicSafeHandler = (func: ASLGraph.IntrinsicFunction) => {
+      const depthProp = `d${subPropCounter++}`;
+      const basePath = ASLGraph.jsonPath(resultPath, depthProp);
+      const { rendered, states } = safeRenderIntrinsicFunction(func, basePath);
+      if (states) {
+        // it may takes new states to render the children of this intrinsic function
+        // (when MAX_INTRINSIC_COUNT is reached again).
+        intrinsicSequenceStates.push(states);
+      }
+      // add the property to our set of properties to return
+      nestedFunctionAssignment.push([depthProp, rendered]);
+      // return a reference to the value we will create.
+      return basePath;
+    };
+
+    const rendered = ASLGraph.renderMaxNestedIntrinsicFunctions(
+      jsonPathOrIntrinsic,
+      renderIntrinsicSafeHandler
+    );
+
+    return {
+      rendered,
+      states: joinSubStates(
+        undefined,
+        ...intrinsicSequenceStates,
+        ...(nestedFunctionAssignment.length > 0
+          ? [
+              {
+                Type: "Pass" as const,
+                Parameters: Object.fromEntries(
+                  nestedFunctionAssignment.map(([key, value]) => [
+                    `${key}.$`,
+                    value,
+                  ])
+                ),
+                ResultPath: ASLGraph.jsonPath(resultPath).jsonPath,
+                Next: ASLGraph.DeferNext,
+              },
+            ]
+          : [])
+      ),
+    };
+  }
+
+  /**
+   * Render an {@link ASLGraph.IntrinsicFunction}.
+   *
+   * This render method may produce an invalid intrinsic function is the depth is greater than {@link ASLGraph.MAX_INTRINSIC_COUNT}.
+   *
+   * Use {@link ASLGraph.safeRenderIntrinsicFunction} or {@link ASLGraph.renderMaxNestedIntrinsicFunctions} to handle functions that can hit a max depth.
+   */
+  export function renderIntrinsicFunction(func: IntrinsicFunction): string {
+    return renderMaxNestedIntrinsicFunctions(func, (f) => f);
+  }
+
+  /**
+   * Render an {@link ASLGraph.IntrinsicFunction}.
+   *
+   * If an Intrinsic function contains nested intrinsic calls beyond {@link ASLGraph.MAX_INTRINSIC_COUNT},
+   * the `onMaxNestedReached` callback is called.
+   *
+   * If an {@link ASLGraph.IntrinsicFunction} is returned by the `onMaxNestedReached` callback,
+   * the rest of this branch will render unsafe (using {@link ASLGraph.renderIntrinsicFunction}).
+   */
+  export function renderMaxNestedIntrinsicFunctions(
+    func: IntrinsicFunction,
+    onMaxNestedReached: (
+      func: ASLGraph.IntrinsicFunction
+    ) => ASLGraph.JsonPath | ASLGraph.IntrinsicFunction
+  ): string {
+    let total = 1;
+
+    return render(func);
+
+    function render(func: IntrinsicFunction): string {
+      const { funcName, args } = func;
+      return `${funcName}(${args
+        .map((arg) => {
+          if (
+            // if the argument is an intrinsic function, check to see if we hit the limit.
+            ASLGraph.isIntrinsicFunction(arg) &&
+            total++ >= MAX_INTRINSIC_COUNT
+          ) {
+            // if so, ask the caller what to do and use their answer.
+            const depthHandled = onMaxNestedReached(arg);
+
+            return ASLGraph.isJsonPath(depthHandled)
+              ? depthHandled.jsonPath
+              : // if an intrinsic function is returned, render the test of the stack unsafe.
+                ASLGraph.renderIntrinsicFunction(depthHandled);
+          }
+          return ASLGraph.isIntrinsicFunction(arg)
+            ? render(arg)
+            : ASLGraph.isLiteralString(arg)
+            ? `'${arg.value}'`
+            : ASLGraph.isLiteralValue(arg)
+            ? arg.value
+            : arg.jsonPath;
+        })
+        .join(",")})`;
+    }
   }
 
   /**
@@ -1557,63 +1696,6 @@ export namespace ASLGraph {
     return { condition };
   }
 
-  export const MAX_INTRINSIC_DEPTH = 10;
-
-  /**
-   * Render an {@link ASLGraph.IntrinsicFunction}.
-   *
-   * This render method may produce an invalid intrinsic function is the depth is greater than {@link ASLGraph.MAX_INTRINSIC_DEPTH}.
-   *
-   * Use {@link ASLGraph.renderIntrinsicFunctionSafe} to handle functions that can hit a max depth.
-   */
-  export function renderIntrinsicFunction(func: IntrinsicFunction): string {
-    return renderIntrinsicFunctionSafe(func, (f) => f);
-  }
-
-  /**
-   * Render an {@link ASLGraph.IntrinsicFunction}.
-   *
-   * If an Intrinsic function contains nested intrinsic calls beyond {@link ASLGraph.MAX_INTRINSIC_DEPTH},
-   * the onMaxDepthReached callback is called.
-   *
-   * If an {@link ASLGraph.IntrinsicFunction} is returned by the callback,
-   * the rest of this branch will render unsafe (using {@link ASLGraph.renderIntrinsicFunction}).
-   */
-  export function renderIntrinsicFunctionSafe(
-    func: IntrinsicFunction,
-    onMaxDepthReached: (
-      func: ASLGraph.IntrinsicFunction
-    ) => ASLGraph.JsonPath | ASLGraph.IntrinsicFunction
-  ): string {
-    return render(func, 1);
-
-    function render(func: IntrinsicFunction, depth: number): string {
-      const { funcName, args } = func;
-      return `${funcName}(${args
-        .map((arg) => {
-          if (
-            ASLGraph.isIntrinsicFunction(arg) &&
-            depth === MAX_INTRINSIC_DEPTH
-          ) {
-            const depthHandled = onMaxDepthReached(func);
-
-            return ASLGraph.isJsonPath(depthHandled)
-              ? depthHandled.jsonPath
-              : // if an intrinsic function is returned, render it unsafe.
-                ASLGraph.renderIntrinsicFunction(depthHandled);
-          }
-          return ASLGraph.isIntrinsicFunction(arg)
-            ? render(arg, depth + 1)
-            : ASLGraph.isLiteralString(arg)
-            ? `'${arg.value}'`
-            : ASLGraph.isLiteralValue(arg)
-            ? arg.value
-            : arg.jsonPath;
-        })
-        .join(",")})`;
-    }
-  }
-
   /**
    * Formats an intrinsic function.
    *
@@ -1918,6 +2000,23 @@ export namespace ASLGraph {
       end,
       ...(seed ? [seed] : [])
     );
+  }
+
+  /**
+   * Escape special characters in Step Functions intrinsics.
+   *
+   * } => \}
+   * { => \{
+   * ' => \'
+   *
+   * https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-intrinsic-functions.html#amazon-states-language-intrinsic-functions-escapes
+   */
+  export function escapeFormatString(literal: ASLGraph.LiteralValue) {
+    if (typeof literal.value === "string") {
+      return literal.value.replace(/[\}\{\'}]/g, "\\$&");
+    } else {
+      return literal.value;
+    }
   }
 }
 

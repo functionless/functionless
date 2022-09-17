@@ -1860,7 +1860,9 @@ export class ASL {
           ASLGraph.intrinsicFormat(
             elementOutputs
               .map((output) =>
-                ASLGraph.isJsonPath(output) ? "{}" : escapeFormatString(output)
+                ASLGraph.isJsonPath(output)
+                  ? "{}"
+                  : ASLGraph.escapeFormatString(output)
               )
               .join(""),
             ...jsonPaths.map(([, jp]) => jp)
@@ -1869,23 +1871,6 @@ export class ASL {
           undefined,
           expr
         );
-
-        /**
-         * Escape special characters in Step Functions intrinsics.
-         *
-         * } => \}
-         * { => \{
-         * ' => \'
-         *
-         * https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-intrinsic-functions.html#amazon-states-language-intrinsic-functions-escapes
-         */
-        function escapeFormatString(literal: ASLGraph.LiteralValue) {
-          if (typeof literal.value === "string") {
-            return literal.value.replace(/[\}\{\'}]/g, "\\$&");
-          } else {
-            return literal.value;
-          }
-        }
       });
     } else if (isCallExpr(expr)) {
       const integration = tryFindIntegration(expr.expr);
@@ -2146,9 +2131,10 @@ export class ASL {
               } else {
                 const name = propertyName(prop);
 
-                const currentLiteral = ASLGraph.isLiteralValue(prev)
-                  ? prev
-                  : ASLGraph.literalValue({});
+                const currentLiteral =
+                  prev && ASLGraph.isLiteralValue(prev)
+                    ? prev
+                    : ASLGraph.literalValue({});
 
                 const updatedLiteral = ASLGraph.setKeyOnLiteralObject(
                   name,
@@ -2217,7 +2203,13 @@ export class ASL {
             return this.assignJsonPathOrIntrinsic(
               backwardsAssignmentOutputs
                 .map((output): ASLGraph.IntrinsicFunction | ASLGraph.JsonPath =>
-                  normalizeOutputToJsonPath(output)
+                  ASLGraph.isJsonPath(output)
+                    ? output
+                    : output.containsJsonPath
+                    ? normalizeOutputToJsonPath(output)
+                    : ASLGraph.intrinsicStringToJson(
+                        ASLGraph.literalValue(JSON.stringify(output.value))
+                      )
                 )
                 // items are in reverse order, reduce right
                 .reduceRight(ASLGraph.intrinsicJsonMerge)

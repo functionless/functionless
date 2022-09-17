@@ -364,7 +364,6 @@ runtimeTestSuite<
           objIn = (<StepFunctionError>err).cause;
         }
         return {
-          ...{ a: 0, b: 2, c: 3 },
           partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4),
           partitionRef: $SFN.partition(input.arr, input.part),
           range: $SFN.range(4, 30, 5),
@@ -387,7 +386,6 @@ runtimeTestSuite<
           getFuncRef: $SFN.getItem(input.arr, input.part),
           objAccess,
           ...input.range,
-          ...{ m: 0, n: 5, o: 6 },
           inRef: input.part in input.arr,
           inRefFalse: input.large in input.arr,
           objIn,
@@ -400,20 +398,10 @@ runtimeTestSuite<
           slice: input.arr.slice(1, 3),
           sliceRef: input.arr.slice(input.part, input.end),
           sliceRefStart: input.arr.slice(input.end),
-          ...{ x: 7, y: 8, z: 9, a: 1, m: 4 },
         };
       });
     },
     {
-      a: 1,
-      b: 2,
-      c: 3,
-      m: 4,
-      n: 5,
-      o: 6,
-      x: 7,
-      y: 8,
-      z: 9,
       partition: [
         [1, 2, 3, 4],
         [5, 6],
@@ -467,10 +455,20 @@ runtimeTestSuite<
   );
 
   test(
-    "depth",
+    "object literal spread",
     (parent) => {
       return new StepFunction(parent, "sfn", async (input) => {
+        const literalValueObjectLiterals = {
+          x: 1,
+          y: "a",
+          j: { x: 2 },
+          ...input,
+        };
+
+        // the duplication tests depth of intrinsic
+        // TODO: after optimization is added, turn some of it
         return {
+          ...{ a: 0, b: 2, c: 3 },
           ...input,
           ...input,
           ...input,
@@ -490,6 +488,7 @@ runtimeTestSuite<
           ...input,
           ...input,
           ...input,
+          ...{ m: 0, n: 5, o: 6 },
           ...input,
           ...input,
           ...input,
@@ -537,16 +536,29 @@ runtimeTestSuite<
           ...input,
           ...input,
           ...input,
+          ...{ x: 7, y: 8, z: 9, a: 1, m: 4 },
           ...input,
           ...input,
           ...input,
           ...input,
           ...input,
           ...input,
+          literalValueObjectLiterals,
         };
       });
     },
-    { a: 1 },
+    {
+      a: 1,
+      b: 2,
+      c: 3,
+      m: 4,
+      n: 5,
+      o: 6,
+      x: 7,
+      y: 8,
+      z: 9,
+      literalValueObjectLiterals: { x: 1, y: "a", j: { x: 2 }, a: 1 },
+    },
     { a: 1 }
   );
 

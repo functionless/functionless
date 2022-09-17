@@ -401,6 +401,7 @@ test("spread constant array and object", () => {
 test("depth", () => {
   const definition = new StepFunction(stack, "sfn", async (input) => {
     return {
+      ...{ a: 0, b: 2, c: 3 },
       ...input,
       ...input,
       ...input,
@@ -420,6 +421,7 @@ test("depth", () => {
       ...input,
       ...input,
       ...input,
+      ...{ m: 0, n: 5, o: 6 },
       ...input,
       ...input,
       ...input,
@@ -467,6 +469,14 @@ test("depth", () => {
       ...input,
       ...input,
       ...input,
+      ...{ x: 7, y: 8, z: 9, a: 1, m: 4 },
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      someKey: input,
     };
   }).definition;
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -481,7 +491,7 @@ test("spread any object", () => {
       b: {
         x: 1,
         ...input,
-        y: 2,
+        y: input,
       },
       c: {
         ...input,
