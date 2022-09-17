@@ -70,6 +70,9 @@ runtimeTestSuite<
           res instanceof StepFunction ? [res, {}] : [res.sfn, res.outputs];
         funcRes.resource.grantStartExecution(role);
         funcRes.resource.grantRead(role);
+
+        console.log(JSON.stringify(res.definition, null, 2));
+
         return {
           outputs: {
             function: funcRes.resource.stateMachineArn,

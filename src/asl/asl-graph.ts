@@ -1678,7 +1678,13 @@ export namespace ASLGraph {
   ): JsonPath {
     return {
       jsonPath: `${
-        typeof jsonPath === "string" ? jsonPath : jsonPath.jsonPath
+        typeof jsonPath === "string"
+          ? jsonPath.startsWith("$")
+            ? jsonPath
+            : // normalize leading segments to `$.`
+              // strings that are already $., $, or $$. should be unaffected
+              `$.${jsonPath}`
+          : jsonPath.jsonPath
       }${segment.length > 0 ? `.${segment.join(".")}` : ""}`,
     };
   }

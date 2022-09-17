@@ -877,9 +877,17 @@ function mapOrForEach(call: CallExpr, context: ASL) {
 
     const [paramInit, paramStates] = context.evalParameterDeclForStateParameter(
       callbackfn,
-      [itemParam, { jsonPath: "$$.Map.Item.Value" }],
-      [indexParam, { jsonPath: "$$.Map.Item.Index" }],
-      [arrayParam, { jsonPath: arrayPath }]
+      {
+        parameter: itemParam,
+        valuePath: ASLGraph.jsonPath("$$.Map.Item.Value"),
+        reassignBoundParameters: true,
+      },
+      {
+        parameter: indexParam,
+        valuePath: ASLGraph.jsonPath("$$.Map.Item.Index"),
+        reassignBoundParameters: true,
+      },
+      { parameter: arrayParam, valuePath: output }
     );
 
     const bodyStates = ASLGraph.joinSubStates(

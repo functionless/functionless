@@ -2981,7 +2981,7 @@ exports[`binding functions $SFN.forEach 1`] = `
             "Type": "Pass",
           },
           "c": {
-            "InputPath": "$$.Map.Item.Value['arr'][0]",
+            "InputPath": "$.heap3['arr'][0]",
             "Next": "return bc",
             "ResultPath": "$.c",
             "Type": "Pass",
@@ -2993,7 +2993,7 @@ exports[`binding functions $SFN.forEach 1`] = `
             "Type": "Pass",
           },
           "function ({ value: b, arr: [ c ] })": {
-            "InputPath": "$$.Map.Item.Value['value']",
+            "InputPath": "$.heap3['value']",
             "Next": "c",
             "ResultPath": "$.b",
             "Type": "Pass",
@@ -3009,9 +3009,10 @@ exports[`binding functions $SFN.forEach 1`] = `
       "Next": "return "success"",
       "Parameters": {
         "fnl_context.$": "$.fnl_context",
+        "heap3.$": "$$.Map.Item.Value",
         "input.$": "$.input",
       },
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap4",
       "Type": "Map",
     },
     "return "success"": {
@@ -3030,12 +3031,12 @@ exports[`binding functions $SFN.map 1`] = `
   "States": {
     "1__return await $SFN.map(input.value, function ({ value: b, arr: [ c ] })).": {
       "End": true,
-      "InputPath": "$.heap5.string",
+      "InputPath": "$.heap6.string",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return await $SFN.map(input.value, function ({ value: b, arr: [ c ] })). 1": {
-      "ItemsPath": "$.heap3",
+      "ItemsPath": "$.heap4",
       "Iterator": {
         "StartAt": "Default",
         "States": {
@@ -3052,14 +3053,14 @@ exports[`binding functions $SFN.map 1`] = `
           },
           "assign__Default": {
             "End": true,
-            "InputPath": "$.heap6.str",
+            "InputPath": "$.heap7.str",
             "ResultPath": "$",
             "Type": "Pass",
           },
           "assign__Default 1": {
             "InputPath": "$.item",
             "Next": "assign__Default",
-            "ResultPath": "$.heap6.str",
+            "ResultPath": "$.heap7.str",
             "Type": "Pass",
           },
           "format__Default": {
@@ -3067,7 +3068,7 @@ exports[`binding functions $SFN.map 1`] = `
             "Parameters": {
               "str.$": "States.JsonToString($.item)",
             },
-            "ResultPath": "$.heap6",
+            "ResultPath": "$.heap7",
             "Type": "Pass",
           },
         },
@@ -3076,7 +3077,7 @@ exports[`binding functions $SFN.map 1`] = `
       "Parameters": {
         "item.$": "$$.Map.Item.Value",
       },
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap5",
       "Type": "Map",
     },
     "Initialize Functionless Context": {
@@ -3093,9 +3094,9 @@ exports[`binding functions $SFN.map 1`] = `
     "append__1__return await $SFN.map(input.value, function ({ value: b, arr: [ ": {
       "Next": "tail__1__return await $SFN.map(input.value, function ({ value: b, arr: [ c ",
       "Parameters": {
-        "string.$": "States.Format('{},{}',$.heap5.string,$.heap4[0])",
+        "string.$": "States.Format('{},{}',$.heap6.string,$.heap5[0])",
       },
-      "ResultPath": "$.heap5",
+      "ResultPath": "$.heap6",
       "Type": "Pass",
     },
     "hasNext__1__return await $SFN.map(input.value, function ({ value: b, arr: [": {
@@ -3104,12 +3105,12 @@ exports[`binding functions $SFN.map 1`] = `
           "And": [
             {
               "IsPresent": true,
-              "Variable": "$.heap4[0]",
+              "Variable": "$.heap5[0]",
             },
             {
               "Not": {
                 "IsPresent": true,
-                "Variable": "$.heap5",
+                "Variable": "$.heap6",
               },
             },
           ],
@@ -3119,11 +3120,11 @@ exports[`binding functions $SFN.map 1`] = `
           "And": [
             {
               "IsPresent": false,
-              "Variable": "$.heap4[0]",
+              "Variable": "$.heap5[0]",
             },
             {
               "IsPresent": false,
-              "Variable": "$.heap5",
+              "Variable": "$.heap6",
             },
           ],
           "Next": "returnEmpty__1__return await $SFN.map(input.value, function ({ value: b, ar",
@@ -3131,16 +3132,16 @@ exports[`binding functions $SFN.map 1`] = `
         {
           "IsPresent": true,
           "Next": "append__1__return await $SFN.map(input.value, function ({ value: b, arr: [ ",
-          "Variable": "$.heap4[0]",
+          "Variable": "$.heap5[0]",
         },
       ],
       "Default": "1__return await $SFN.map(input.value, function ({ value: b, arr: [ c ] })).",
       "Type": "Choice",
     },
     "initValue__1__return await $SFN.map(input.value, function ({ value: b, arr:": {
-      "InputPath": "$.heap4[0]",
+      "InputPath": "$.heap5[0]",
       "Next": "tail__1__return await $SFN.map(input.value, function ({ value: b, arr: [ c ",
-      "ResultPath": "$.heap5.string",
+      "ResultPath": "$.heap6.string",
       "Type": "Pass",
     },
     "return await $SFN.map(input.value, function ({ value: b, arr: [ c ] })).joi": {
@@ -3163,7 +3164,7 @@ exports[`binding functions $SFN.map 1`] = `
             "Type": "Pass",
           },
           "c": {
-            "InputPath": "$$.Map.Item.Value['arr'][0]",
+            "InputPath": "$.heap3['arr'][0]",
             "Next": "return bc",
             "ResultPath": "$.c",
             "Type": "Pass",
@@ -3175,7 +3176,7 @@ exports[`binding functions $SFN.map 1`] = `
             "Type": "Pass",
           },
           "function ({ value: b, arr: [ c ] })": {
-            "InputPath": "$$.Map.Item.Value['value']",
+            "InputPath": "$.heap3['value']",
             "Next": "c",
             "ResultPath": "$.b",
             "Type": "Pass",
@@ -3191,21 +3192,22 @@ exports[`binding functions $SFN.map 1`] = `
       "Next": "1__return await $SFN.map(input.value, function ({ value: b, arr: [ c ] })). 1",
       "Parameters": {
         "fnl_context.$": "$.fnl_context",
+        "heap3.$": "$$.Map.Item.Value",
         "input.$": "$.input",
       },
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap4",
       "Type": "Map",
     },
     "returnEmpty__1__return await $SFN.map(input.value, function ({ value: b, ar": {
       "Next": "1__return await $SFN.map(input.value, function ({ value: b, arr: [ c ] })).",
       "Result": "",
-      "ResultPath": "$.heap5.string",
+      "ResultPath": "$.heap6.string",
       "Type": "Pass",
     },
     "tail__1__return await $SFN.map(input.value, function ({ value: b, arr: [ c ": {
-      "InputPath": "$.heap4[1:]",
+      "InputPath": "$.heap5[1:]",
       "Next": "hasNext__1__return await $SFN.map(input.value, function ({ value: b, arr: [",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap5",
       "Type": "Pass",
     },
   },

@@ -400,16 +400,20 @@ export class ASL {
     const [paramInitializer, paramStates] =
       this.evalParameterDeclForStateParameter(
         this.decl,
-        [inputParam, { jsonPath: "$$.Execution.Input" }],
-        [
+        {
+          parameter: inputParam,
+          valuePath: ASLGraph.jsonPath("$$.Execution.Input"),
+        },
+        {
           // for the context parameter, we only want to assign up front if we need to bind parameter names.
           // in the case a simple `Identifier` is used as the parameter name, we'll inject the jsonPath "$$" later.
           // This should save us space on the state by not assigning the entire context object when not needed.
-          contextParam && isBindingPattern(contextParam.name)
-            ? contextParam
-            : undefined,
-          { jsonPath: "$$" },
-        ]
+          parameter:
+            contextParam && isBindingPattern(contextParam.name)
+              ? contextParam
+              : undefined,
+          valuePath: ASLGraph.jsonPath("$$"),
+        }
       );
 
     /**
@@ -4884,10 +4888,18 @@ export class ASL {
    */
   public evalParameterDeclForStateParameter(
     node: FunctionlessNode,
-    ...parameters: [
-      parameter: ParameterDecl | undefined,
-      valuePath: ASLGraph.JsonPath
-    ][]
+    ...parameters: {
+      parameter: ParameterDecl | undefined;
+      valuePath: ASLGraph.JsonPath;
+      /**
+       * When true and the parameter requires states outside of the Parameter object,
+       * a new name will created in the Parameter object and assigned the valuePath.
+       *
+       * This is useful for Map states where the $$.Map.Item.* values
+       * are not present inside of the map states.
+       */
+      reassignBoundParameters?: boolean;
+    }[]
   ): [
     Record<string, Parameters>,
     ASLGraph.NodeState | ASLGraph.SubState | undefined
@@ -4898,30 +4910,56 @@ export class ASL {
         .filter(
           (
             parameter
-          ): parameter is [
-            ParameterDecl & { name: Identifier },
-            ASLGraph.JsonPath
-          ] => isIdentifier(parameter[0]?.name)
+          ): parameter is {
+            parameter: ParameterDecl & { name: Identifier };
+            valuePath: ASLGraph.JsonPath;
+          } => isIdentifier(parameter.parameter?.name)
         )
-        .map(([decl, { jsonPath }]) => [
-          [`${this.getIdentifierName(decl.name)}.$`],
-          jsonPath,
-        ])
+        .map(
+          ({ parameter, valuePath: { jsonPath } }) =>
+            [`${this.getIdentifierName(parameter.name)}.$`, jsonPath] as const
+        )
     );
 
     // Parameters with binding names because variable assignments.
-    const states = parameters
+    const evaledBinds = parameters
       .filter(
         (
           parameter
-        ): parameter is [
-          ParameterDecl & { name: BindingPattern },
-          ASLGraph.JsonPath
-        ] => isBindingPattern(parameter[0]?.name)
+        ): parameter is {
+          parameter: ParameterDecl & { name: BindingPattern };
+          valuePath: ASLGraph.JsonPath;
+          reassignBoundParameters?: boolean;
+        } => isBindingPattern(parameter.parameter?.name)
       )
-      .map(([decl, jsonPath]) => this.evalAssignment(decl.name, jsonPath));
+      .map(({ parameter, valuePath, reassignBoundParameters }) => {
+        const variableName = reassignBoundParameters
+          ? this.newHeapVariableName()
+          : valuePath.jsonPath;
 
-    return [params, ASLGraph.joinSubStates(node, ...states)];
+        return {
+          reassign: reassignBoundParameters
+            ? ([`${variableName}.$`, valuePath.jsonPath] as const)
+            : undefined,
+          states: this.evalAssignment(
+            parameter.name,
+            ASLGraph.jsonPath(variableName)
+          ),
+        };
+      });
+
+    const states = evaledBinds.map(({ states }) => states);
+
+    const additionalParams = Object.fromEntries(
+      evaledBinds
+        .filter((bind) => !!bind.reassign)
+        .map(({ reassign }) => reassign!)
+    );
+
+    return [
+      { ...params, ...additionalParams },
+      ASLGraph.joinSubStates(node, ...states),
+    ];
   }
 
   public evalDecl(
