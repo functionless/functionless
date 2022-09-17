@@ -20,6 +20,9 @@ import {
   ElementAccessExpr,
   ReferenceExpr,
   Identifier,
+  SpreadAssignExpr,
+  PropAssignExpr,
+  ObjectLiteralExpr,
 } from "../expression";
 import {
   isBlockStmt,
@@ -269,6 +272,18 @@ export interface EvalContextContext {
   normalizeOutputToJsonPathOrLiteral(
     output: ASLGraph.Output
   ): ASLGraph.JsonPath | ASLGraph.LiteralValue;
+  /**
+   * Assigns an {@link ASLGraph.Output} to a jsonPath variable.
+   *
+   * If the {@link value} is a {@link ASLGraph.ConditionOutput}, states are added to turn
+   * the condition into a boolean value.
+   *
+   * Any states required to assign the value are added to the graph in order.
+   */
+  assignValue(
+    value: ASLGraph.Output,
+    targetJsonPath?: string
+  ): ASLGraph.JsonPath;
 }
 
 /**
@@ -615,7 +630,12 @@ export class ASL {
           : // if `ForIn`, map the array into a tuple of index and item
             ASLGraph.joinSubStates(stmt.expr, assignTempState, {
               ...this.zipArray(tempArrayPath, (indexJsonPath) =>
-                ASLGraph.intrinsicFormat("{}", indexJsonPath)
+                ASLGraph.renderIntrinsicFunction(
+                  ASLGraph.intrinsicFormat(
+                    "{}",
+                    ASLGraph.jsonPath(indexJsonPath)
+                  )
+                )
               ),
               ResultPath: tempArrayPath,
               Next: ASLGraph.DeferNext,
@@ -1079,7 +1099,9 @@ export class ASL {
           ? ASLGraph.joinSubStates(
               stmt.catchClause.variableDecl,
               ASLGraph.assignJsonPathOrIntrinsic(
-                ASLGraph.intrinsicStringToJson(`$.${errorVariableName}.Cause`),
+                ASLGraph.intrinsicStringToJson(
+                  ASLGraph.jsonPath(`$.${errorVariableName}.Cause`)
+                ),
                 `$.${errorVariableName}`,
                 "0_ParsedError"
               ),
@@ -1716,6 +1738,17 @@ export class ASL {
           ? normalized.output
           : normalized;
       },
+      assignValue: (value, targetJsonPath?) => {
+        const assigned = this.assignValue(undefined, value, targetJsonPath);
+
+        if (ASLGraph.isStateOrSubState(assigned)) {
+          states.push(assigned);
+        }
+
+        return ASLGraph.isStateOrSubState(assigned)
+          ? assigned.output
+          : assigned;
+      },
     };
     return [handler(context), states];
   }
@@ -1804,10 +1837,9 @@ export class ASL {
          */
         const jsonPaths = elementOutputs
           .filter(ASLGraph.isJsonPath)
-          .map(({ jsonPath }) => jsonPath)
           .map((jp) =>
-            jp.match(/\$\.[^a-zA-Z]/g)
-              ? [jp, this.newHeapVariable()]
+            jp.jsonPath.match(/\$\.[^a-zA-Z]/g)
+              ? [jp, ASLGraph.jsonPath(this.newHeapVariable())]
               : ([jp, jp] as const)
           );
 
@@ -1817,8 +1849,8 @@ export class ASL {
           .filter(([original, updated]) => original !== updated)
           .map(([original, updated]) => ({
             Type: "Pass",
-            InputPath: original,
-            ResultPath: updated,
+            InputPath: original.jsonPath,
+            ResultPath: updated.jsonPath,
             Next: ASLGraph.DeferNext,
           }));
 
@@ -1948,12 +1980,10 @@ export class ASL {
         }
 
         return this.evalExprToJsonPath(objParamExpr, (output) => {
-          const objectPath = output.jsonPath;
-
           return this.assignJsonPathOrIntrinsic(
             isJsonStringify(expr)
-              ? ASLGraph.intrinsicJsonToString(objectPath)
-              : ASLGraph.intrinsicStringToJson(objectPath)
+              ? ASLGraph.intrinsicJsonToString(output)
+              : ASLGraph.intrinsicStringToJson(output)
           );
         });
       } else if (isReferenceExpr(expr.expr)) {
@@ -2041,80 +2071,183 @@ export class ASL {
     } else if (isObjectLiteralExpr(expr)) {
       return this.evalContext(
         expr,
-        ({ evalExprToJsonPathOrLiteral, addState }) => {
-          return expr.properties.reduce(
-            (obj: ASLGraph.LiteralValue, prop) => {
-              if (!isPropAssignExpr(prop)) {
-                throw new Error(
-                  `${prop.kindName} is not supported in Amazon States Language`
-                );
-              }
-              if (
-                (isComputedPropertyNameExpr(prop.name) &&
-                  isStringLiteralExpr(prop.name.expr)) ||
-                isIdentifier(prop.name) ||
-                isStringLiteralExpr(prop.name)
-              ) {
-                const name = isIdentifier(prop.name)
-                  ? prop.name.name
-                  : isStringLiteralExpr(prop.name)
-                  ? prop.name.value
-                  : isStringLiteralExpr(prop.name.expr)
-                  ? prop.name.expr.value
-                  : undefined;
-                if (!name) {
-                  throw new SynthError(
-                    ErrorCodes.StepFunctions_property_names_must_be_constant
+        ({
+          evalExprToJsonPathOrLiteral,
+          assignValue,
+          normalizeOutputToJsonPath,
+        }) => {
+          if (
+            !expr.properties.every(
+              (p): p is SpreadAssignExpr | PropAssignExpr =>
+                isSpreadAssignExpr(p) || isPropAssignExpr(p)
+            )
+          ) {
+            throw new SynthError(
+              ErrorCodes.Unsupported_Feature,
+              `Amazon States Language only supports property or spread assignments in Object Literals.`
+            );
+          }
+
+          /**
+           * Evaluate each property and merge together any simple properties or literal spreads.
+           *
+           * Outputs an in-order list of object literals and the objects to create the final literal.
+           */
+          const backwardsAssignmentOutputs = expr.properties.reduce(
+            (
+              partitions: (
+                | ASLGraph.JsonPath
+                | ASLGraph.LiteralValue<
+                    Record<string, ASLGraph.LiteralValueType>
+                  >
+              )[],
+              prop,
+              i
+            ): (
+              | ASLGraph.JsonPath
+              | ASLGraph.LiteralValue<Record<string, ASLGraph.LiteralValueType>>
+            )[] => {
+              const [prev, ...rest] = partitions;
+              const propValueOutput = evalSafeOutput(expr);
+
+              if (isSpreadAssignExpr(prop)) {
+                // ... { x: 1 }
+                if (ASLGraph.isLiteralValue(propValueOutput)) {
+                  if (
+                    propValueOutput.value === undefined ||
+                    propValueOutput.value === null
+                  ) {
+                    // ...undefined
+                    return partitions;
+                  } else if (!ASLGraph.isLiteralObject(propValueOutput)) {
+                    throw new SynthError(
+                      ErrorCodes.Invalid_Input,
+                      "Object spread can be only be done on objects, undefined, or null."
+                    );
+                  }
+
+                  if (!prev) {
+                    return [propValueOutput, ...partitions];
+                  } else if (ASLGraph.isJsonPath(prev)) {
+                    // if the previous was a json path, return whatever the output is.
+                    return [propValueOutput, prev, ...rest];
+                  }
+
+                  // both the previous object and the current are literals, merge them together.
+                  const merged = ASLGraph.mergeLiteralObject(
+                    prev,
+                    propValueOutput
                   );
+
+                  return [merged, ...rest];
                 }
 
-                const valueOutput = evalExprToJsonPathOrLiteral(prop.expr);
-
-                // if the value is a json path, assign to a new heap value that will not change
-                // we do this to prevent the edge case where a variable reference changes
-                // between evaluation and assignment. we'll optimize this out later.
-                const assign = ASLGraph.isJsonPath(valueOutput)
-                  ? this.stateWithHeapOutput({
-                      ...ASLGraph.passWithInput(
-                        {
-                          Type: "Pass",
-                          Next: ASLGraph.DeferNext,
-                        },
-                        valueOutput
-                      ),
-                    })
-                  : undefined;
-
-                if (assign) {
-                  addState(assign);
-                }
-
-                return {
-                  value: {
-                    ...(obj.value as Record<string, any>),
-                    ...ASLGraph.jsonAssignment(
-                      name,
-                      assign ? assign.output : valueOutput
-                    ),
-                  },
-                  containsJsonPath:
-                    obj.containsJsonPath ||
-                    ASLGraph.isJsonPath(valueOutput) ||
-                    valueOutput.containsJsonPath,
-                };
+                return [propValueOutput, ...partitions];
               } else {
-                throw new SynthError(
-                  ErrorCodes.StepFunctions_property_names_must_be_constant
+                const name = propertyName(prop);
+
+                const currentLiteral = ASLGraph.isLiteralValue(prev)
+                  ? prev
+                  : ASLGraph.literalValue({});
+
+                const updatedLiteral = ASLGraph.setKeyOnLiteralObject(
+                  name,
+                  currentLiteral,
+                  propValueOutput
                 );
+
+                if (!prev || ASLGraph.isLiteralValue(prev)) {
+                  return [updatedLiteral, ...rest];
+                } else {
+                  return [updatedLiteral, prev, ...rest];
+                }
+              }
+
+              /**
+               * A json path value may be mutated late in the literal object assignment.
+               * Re-reference the json path to ensure the value doesn't change.
+               * ```ts
+               * let b = { x: 0 };
+               * {
+               *    a: b,
+               *    ...b,
+               *    c: (b = { x: 1, y: 2 }),
+               *    ...b,
+               * }
+               * ```
+               * in ASL
+               * ```
+               * let b = {x: 0};
+               * let t0 = b;
+               * let t1 = b;
+               * let t2 = (b = { x: 1, y: 2});
+               * {
+               *    a: t0,
+               *    ...t1,
+               *    c: t2,
+               *    ...b // no mutation after the last assignment, this is safe to be a reference
+               * }
+               * ```
+               */
+              function evalSafeOutput(
+                expr: ObjectLiteralExpr
+              ): ASLGraph.LiteralValue | ASLGraph.JsonPath {
+                const output = evalExprToJsonPathOrLiteral(prop.expr);
+                return i < expr.properties.length - 1 &&
+                  ASLGraph.isJsonPath(output)
+                  ? assignValue(output)
+                  : output;
               }
             },
-            {
-              value: {},
-              containsJsonPath: false,
-            }
+            []
           );
+
+          if (backwardsAssignmentOutputs.length === 0) {
+            // empty object
+            return ASLGraph.literalValue({});
+          } else if (
+            backwardsAssignmentOutputs.length === 1 &&
+            backwardsAssignmentOutputs[0]
+          ) {
+            // all literal or only one spread object
+            return backwardsAssignmentOutputs[0];
+          } else {
+            // merge jsonMath(1, jsonMarge(2, 3))
+            // we know there are at least 2 items in the array, normalize all to json path and merge in order
+            return this.assignJsonPathOrIntrinsic(
+              backwardsAssignmentOutputs
+                .map((output): ASLGraph.IntrinsicFunction | ASLGraph.JsonPath =>
+                  normalizeOutputToJsonPath(output)
+                )
+                // items are in reverse order, reduce right
+                .reduceRight(ASLGraph.intrinsicJsonMerge)
+            );
+          }
         }
       );
+
+      function propertyName(prop: PropAssignExpr) {
+        if (
+          (isComputedPropertyNameExpr(prop.name) &&
+            isStringLiteralExpr(prop.name.expr)) ||
+          isIdentifier(prop.name) ||
+          isStringLiteralExpr(prop.name)
+        ) {
+          const name = isIdentifier(prop.name)
+            ? prop.name.name
+            : isStringLiteralExpr(prop.name)
+            ? prop.name.value
+            : isStringLiteralExpr(prop.name.expr)
+            ? prop.name.expr.value
+            : undefined;
+          if (name) {
+            return name;
+          }
+        }
+        throw new SynthError(
+          ErrorCodes.StepFunctions_property_names_must_be_constant
+        );
+      }
     } else if (isArrayLiteralExpr(expr)) {
       return this.evalContext(expr, ({ evalExpr, addState }) => {
         // evaluate each item
@@ -3012,7 +3145,7 @@ export class ASL {
           Default: "null",
         },
         format: ASLGraph.assignJsonPathOrIntrinsic(
-          ASLGraph.intrinsicStringToJson(jsonPath.jsonPath),
+          ASLGraph.intrinsicStringToJson(jsonPath),
           heap,
           "num",
           "checkStringOutput"
@@ -3286,11 +3419,11 @@ export class ASL {
    * @param jsonPathOrIntrinsic - json path (ex: $.var) or instrinsic function (ex: States.Array) to place into the output.
    */
   public assignJsonPathOrIntrinsic(
-    jsonPathOrIntrinsic: string,
+    jsonPathOrIntrinsic: ASLGraph.IntrinsicFunction | ASLGraph.JsonPath,
     propertyName: string = "out",
     next: string = ASLGraph.DeferNext,
     node?: FunctionlessNode
-  ): ASLGraph.NodeState & Pass & { output: ASLGraph.JsonPath } {
+  ) {
     const tempHeap = this.newHeapVariable();
     return ASLGraph.assignJsonPathOrIntrinsic(
       jsonPathOrIntrinsic,
@@ -3593,12 +3726,12 @@ export class ASL {
                     "{}{}{}",
                     ASLGraph.jsonPath(resultVariable, "string"),
                     separator,
-                    `${arrayPath}[0]`
+                    ASLGraph.jsonPath(`${arrayPath}[0]`)
                   )
                 : ASLGraph.intrinsicFormat(
                     `{}${separator.value}{}`,
                     ASLGraph.jsonPath(resultVariable, "string"),
-                    `${arrayPath}[0]`
+                    ASLGraph.jsonPath(`${arrayPath}[0]`)
                   ),
               resultVariable,
               "string",
@@ -3842,10 +3975,14 @@ export class ASL {
                 // tail
                 [`${tailTarget}.$`]: tailJsonPath,
                 // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
-                "arrStr.$": ASLGraph.intrinsicFormat(
-                  "{},{}",
-                  ASLGraph.jsonPath(workingSpaceJsonPath, "arrStr"),
-                  ASLGraph.intrinsicJsonToString(itemJsonPath)
+                "arrStr.$": ASLGraph.renderIntrinsicFunction(
+                  ASLGraph.intrinsicFormat(
+                    "{},{}",
+                    ASLGraph.jsonPath(workingSpaceJsonPath, "arrStr"),
+                    ASLGraph.intrinsicJsonToString(
+                      ASLGraph.jsonPath(itemJsonPath)
+                    )
+                  )
                 ),
               },
               // write over the current working space
@@ -4038,13 +4175,15 @@ export class ASL {
               Type: "Pass",
               Parameters: {
                 // ArrayRange is inclusive, need to subtract one from end
-                "indices.$": ASLGraph.intrinsicArrayRange(
-                  startOut ?? 0,
-                  ASLGraph.intrinsicMathAdd(
-                    endOut ?? ASLGraph.intrinsicArrayLength(normArrayOut),
-                    -1
-                  ),
-                  1
+                "indices.$": ASLGraph.renderIntrinsicFunction(
+                  ASLGraph.intrinsicArrayRange(
+                    startOut ?? 0,
+                    ASLGraph.intrinsicMathAdd(
+                      endOut ?? ASLGraph.intrinsicArrayLength(normArrayOut),
+                      -1
+                    ),
+                    1
+                  )
                 ),
                 str: "[null",
               },
@@ -4068,13 +4207,15 @@ export class ASL {
                 // tail
                 "indices.$": `${workingSpace}.indices[1:]`,
                 // append
-                "str.$": ASLGraph.intrinsicFormat(
-                  "{},{}",
-                  ASLGraph.jsonPath(workingSpace, "str"),
-                  ASLGraph.intrinsicJsonToString(
-                    ASLGraph.intrinsicArrayGetItem(
-                      normArrayOut,
-                      ASLGraph.jsonPath(workingSpace, "indices[0]")
+                "str.$": ASLGraph.renderIntrinsicFunction(
+                  ASLGraph.intrinsicFormat(
+                    "{},{}",
+                    ASLGraph.jsonPath(workingSpace, "str"),
+                    ASLGraph.intrinsicJsonToString(
+                      ASLGraph.intrinsicArrayGetItem(
+                        normArrayOut,
+                        ASLGraph.jsonPath(workingSpace, "indices[0]")
+                      )
                     )
                   )
                 ),
@@ -4141,10 +4282,14 @@ export class ASL {
             Parameters: {
               [`${tailTarget}.$`]: `${tailJsonPath}`,
               // const arrStr = `${arrStr},${JSON.stringify(arr[0])}`;
-              "arrStr.$": ASLGraph.intrinsicFormat(
-                "{},{}",
-                ASLGraph.jsonPath(workingSpaceJsonPath, "arrStr"),
-                ASLGraph.intrinsicJsonToString(iterationResult)
+              "arrStr.$": ASLGraph.renderIntrinsicFunction(
+                ASLGraph.intrinsicFormat(
+                  "{},{}",
+                  ASLGraph.jsonPath(workingSpaceJsonPath, "arrStr"),
+                  ASLGraph.intrinsicJsonToString(
+                    ASLGraph.jsonPath(iterationResult)
+                  )
+                )
               ),
             },
             ResultPath: workingSpaceJsonPath,

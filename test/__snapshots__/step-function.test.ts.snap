@@ -1871,15 +1871,9 @@ exports[`Boolean 1`] = `
         "trueNumber": true,
         "trueObject": true,
         "trueString": true,
-        "var.$": "$.heap1",
+        "var.$": "$.heap0",
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "1__return {trueString: Boolean("1"), trueBoolean: Boolean(true), trueNumber 1": {
-      "InputPath": "$.heap0",
-      "Next": "1__return {trueString: Boolean("1"), trueBoolean: Boolean(true), trueNumber",
-      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -1894,7 +1888,7 @@ exports[`Boolean 1`] = `
       "Type": "Pass",
     },
     "false__return {trueString: Boolean("1"), trueBoolean: Boolean(true), trueNu": {
-      "Next": "1__return {trueString: Boolean("1"), trueBoolean: Boolean(true), trueNumber 1",
+      "Next": "1__return {trueString: Boolean("1"), trueBoolean: Boolean(true), trueNumber",
       "Result": false,
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -2001,7 +1995,7 @@ exports[`Boolean 1`] = `
       "Type": "Choice",
     },
     "true__return {trueString: Boolean("1"), trueBoolean: Boolean(true), trueNum": {
-      "Next": "1__return {trueString: Boolean("1"), trueBoolean: Boolean(true), trueNumber 1",
+      "Next": "1__return {trueString: Boolean("1"), trueBoolean: Boolean(true), trueNumber",
       "Result": true,
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -4605,7 +4599,7 @@ exports[`boolean logic 1`] = `
         "orCondition.$": "$.heap7",
         "orFalsyConstantString.$": "$.heap25",
         "orTruthyConstantString": "hi",
-        "orVariable.$": "$.heap27",
+        "orVariable.$": "$.heap26",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -4626,12 +4620,6 @@ exports[`boolean logic 1`] = `
       "InputPath": "$.input.s",
       "Next": "input.b || input.s",
       "ResultPath": "$.heap25",
-      "Type": "Pass",
-    },
-    "23__return {and: input.a && input.b, or: input.a || input.b, andCondition: ": {
-      "InputPath": "$.heap26",
-      "Next": "1__return {and: input.a && input.b, or: input.a || input.b, andCondition: i",
-      "ResultPath": "$.heap27",
       "Type": "Pass",
     },
     "3__return {and: input.a && input.b, or: input.a || input.b, andCondition: i": {
@@ -4743,7 +4731,7 @@ exports[`boolean logic 1`] = `
     },
     "false__input.b || input.s": {
       "InputPath": "$.input.s",
-      "Next": "23__return {and: input.a && input.b, or: input.a || input.b, andCondition: ",
+      "Next": "1__return {and: input.a && input.b, or: input.a || input.b, andCondition: i",
       "ResultPath": "$.heap26",
       "Type": "Pass",
     },
@@ -6016,7 +6004,7 @@ exports[`boolean logic 1`] = `
     },
     "true__input.b || input.s": {
       "InputPath": "$.input.b",
-      "Next": "23__return {and: input.a && input.b, or: input.a || input.b, andCondition: ",
+      "Next": "1__return {and: input.a && input.b, or: input.a || input.b, andCondition: i",
       "ResultPath": "$.heap26",
       "Type": "Pass",
     },
@@ -6333,57 +6321,31 @@ exports[`call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
   "States": {
-    "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ": {
-      "Next": "person",
-      "Parameters": {
-        "Key": {
-          "id": {
-            "S.$": "$.heap0",
-          },
-        },
-        "TableName": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
-    },
     "1__return {id: person.Item.id.S, name: person.Item.name.S, score: score}": {
       "End": true,
       "Parameters": {
-        "id.$": "$.heap5",
-        "name.$": "$.heap6",
-        "score.$": "$.heap7",
+        "id.$": "$.heap3",
+        "name.$": "$.heap4",
+        "score.$": "$.score",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return {id: person.Item.id.S, name: person.Item.name.S, score: score} 1": {
       "InputPath": "$.person.Item.name.S",
-      "Next": "2__return {id: person.Item.id.S, name: person.Item.name.S, score: score}",
-      "ResultPath": "$.heap6",
+      "Next": "1__return {id: person.Item.id.S, name: person.Item.name.S, score: score}",
+      "ResultPath": "$.heap4",
       "Type": "Pass",
     },
     "1__score = await computeScore({id: person.Item.id.S, name: person.Item.name": {
       "Next": "score",
       "Parameters": {
-        "id.$": "$.heap2",
-        "name.$": "$.heap3",
+        "id.$": "$.heap1",
+        "name.$": "$.person.Item.name.S",
       },
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap2",
       "Type": "Task",
-    },
-    "1__score = await computeScore({id: person.Item.id.S, name: person.Item.name 1": {
-      "InputPath": "$.person.Item.name.S",
-      "Next": "1__score = await computeScore({id: person.Item.id.S, name: person.Item.name",
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "2__return {id: person.Item.id.S, name: person.Item.name.S, score: score}": {
-      "InputPath": "$.score",
-      "Next": "1__return {id: person.Item.id.S, name: person.Item.name.S, score: score}",
-      "ResultPath": "$.heap7",
-      "Type": "Pass",
     },
     "Initialize Functionless Context": {
       "Next": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
@@ -6432,16 +6394,24 @@ exports[`call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr 1`] = `
       "Type": "Choice",
     },
     "person": {
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "Next": "if(person.Item === undefined)",
       "ResultPath": "$.person",
       "Type": "Pass",
     },
     "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": {
-      "InputPath": "$.input.id",
-      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
+      "Next": "person",
+      "Parameters": {
+        "Key": {
+          "id": {
+            "S.$": "$.input.id",
+          },
+        },
+        "TableName": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
       "ResultPath": "$.heap0",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "return": {
       "End": true,
@@ -6452,19 +6422,19 @@ exports[`call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr 1`] = `
     "return {id: person.Item.id.S, name: person.Item.name.S, score: score}": {
       "InputPath": "$.person.Item.id.S",
       "Next": "1__return {id: person.Item.id.S, name: person.Item.name.S, score: score} 1",
-      "ResultPath": "$.heap5",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "score": {
-      "InputPath": "$.heap4",
+      "InputPath": "$.heap2",
       "Next": "return {id: person.Item.id.S, name: person.Item.name.S, score: score}",
       "ResultPath": "$.score",
       "Type": "Pass",
     },
     "score = await computeScore({id: person.Item.id.S, name: person.Item.name.S}": {
       "InputPath": "$.person.Item.id.S",
-      "Next": "1__score = await computeScore({id: person.Item.id.S, name: person.Item.name 1",
-      "ResultPath": "$.heap2",
+      "Next": "1__score = await computeScore({id: person.Item.id.S, name: person.Item.name",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
   },
@@ -6475,15 +6445,6 @@ exports[`call Lambda Function, store as variable, return variable 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
   "States": {
-    "1__person = await getPerson({id: input.id})": {
-      "Next": "person",
-      "Parameters": {
-        "id.$": "$.heap0",
-      },
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
-    },
     "Initialize Functionless Context": {
       "Next": "person = await getPerson({id: input.id})",
       "Parameters": {
@@ -6496,16 +6457,19 @@ exports[`call Lambda Function, store as variable, return variable 1`] = `
       "Type": "Pass",
     },
     "person": {
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "Next": "return person",
       "ResultPath": "$.person",
       "Type": "Pass",
     },
     "person = await getPerson({id: input.id})": {
-      "InputPath": "$.input.id",
-      "Next": "1__person = await getPerson({id: input.id})",
+      "Next": "person",
+      "Parameters": {
+        "id.$": "$.input.id",
+      },
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "return person": {
       "End": true,
@@ -6523,18 +6487,9 @@ exports[`call Lambda Function, store as variable, return variable no block 1`] =
   "States": {
     "1__return getPerson({id: input.id})": {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
       "Type": "Pass",
-    },
-    "1__return getPerson({id: input.id}) 1": {
-      "Next": "1__return getPerson({id: input.id})",
-      "Parameters": {
-        "id.$": "$.heap0",
-      },
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
     },
     "Initialize Functionless Context": {
       "Next": "return getPerson({id: input.id})",
@@ -6548,10 +6503,13 @@ exports[`call Lambda Function, store as variable, return variable no block 1`] =
       "Type": "Pass",
     },
     "return getPerson({id: input.id})": {
-      "InputPath": "$.input.id",
-      "Next": "1__return getPerson({id: input.id}) 1",
+      "Next": "1__return getPerson({id: input.id})",
+      "Parameters": {
+        "id.$": "$.input.id",
+      },
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
-      "Type": "Pass",
+      "Type": "Task",
     },
   },
 }
@@ -6663,21 +6621,9 @@ exports[`call Step Function from another Step Function with dynamic input 1`] = 
   "States": {
     "1__return machine1({input: {value: input.value1}})": {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
       "Type": "Pass",
-    },
-    "1__return machine1({input: {value: input.value1}}) 1": {
-      "Next": "1__return machine1({input: {value: input.value1}})",
-      "Parameters": {
-        "Input": {
-          "value.$": "$.heap0",
-        },
-        "StateMachineArn": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
     },
     "Initialize Functionless Context": {
       "Next": "return machine1({input: {value: input.value1}})",
@@ -6691,10 +6637,16 @@ exports[`call Step Function from another Step Function with dynamic input 1`] = 
       "Type": "Pass",
     },
     "return machine1({input: {value: input.value1}})": {
-      "InputPath": "$.input.value1",
-      "Next": "1__return machine1({input: {value: input.value1}}) 1",
+      "Next": "1__return machine1({input: {value: input.value1}})",
+      "Parameters": {
+        "Input": {
+          "value.$": "$.input.value1",
+        },
+        "StateMachineArn": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
       "ResultPath": "$.heap0",
-      "Type": "Pass",
+      "Type": "Task",
     },
   },
 }
@@ -6848,7 +6800,7 @@ exports[`call Step Function from another Step Function with null coalesce 1`] = 
   "States": {
     "1__return machine1({input: {value: input.value ?? "default"}})": {
       "End": true,
-      "InputPath": "$.heap2",
+      "InputPath": "$.heap1",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -6856,19 +6808,13 @@ exports[`call Step Function from another Step Function with null coalesce 1`] = 
       "Next": "1__return machine1({input: {value: input.value ?? "default"}})",
       "Parameters": {
         "Input": {
-          "value.$": "$.heap1",
+          "value.$": "$.heap0",
         },
         "StateMachineArn": "__REPLACED_TOKEN",
       },
       "Resource": "arn:aws:states:::aws-sdk:sfn:startSyncExecution",
-      "ResultPath": "$.heap2",
-      "Type": "Task",
-    },
-    "1__return machine1({input: {value: input.value ?? "default"}}) 2": {
-      "InputPath": "$.heap0",
-      "Next": "1__return machine1({input: {value: input.value ?? "default"}}) 1",
       "ResultPath": "$.heap1",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "Initialize Functionless Context": {
       "Next": "return machine1({input: {value: input.value ?? "default"}})",
@@ -6882,7 +6828,7 @@ exports[`call Step Function from another Step Function with null coalesce 1`] = 
       "Type": "Pass",
     },
     "false__return machine1({input: {value: input.value ?? "default"}})": {
-      "Next": "1__return machine1({input: {value: input.value ?? "default"}}) 2",
+      "Next": "1__return machine1({input: {value: input.value ?? "default"}}) 1",
       "Result": "default",
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -6908,7 +6854,7 @@ exports[`call Step Function from another Step Function with null coalesce 1`] = 
     },
     "true__return machine1({input: {value: input.value ?? "default"}})": {
       "InputPath": "$.input.value",
-      "Next": "1__return machine1({input: {value: input.value ?? "default"}}) 2",
+      "Next": "1__return machine1({input: {value: input.value ?? "default"}}) 1",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -7172,20 +7118,6 @@ exports[`conditionally call DynamoDB and then void 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
   "States": {
-    "1__await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}": {
-      "Next": "return null",
-      "Parameters": {
-        "Key": {
-          "id": {
-            "S.$": "$.heap0",
-          },
-        },
-        "TableName": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
-    },
     "Initialize Functionless Context": {
       "Next": "if(input.id === "hello")",
       "Parameters": {
@@ -7198,10 +7130,18 @@ exports[`conditionally call DynamoDB and then void 1`] = `
       "Type": "Pass",
     },
     "await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}}})": {
-      "InputPath": "$.input.id",
-      "Next": "1__await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}",
+      "Next": "return null",
+      "Parameters": {
+        "Key": {
+          "id": {
+            "S.$": "$.input.id",
+          },
+        },
+        "TableName": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
       "ResultPath": "$.heap0",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "if(input.id === "hello")": {
       "Choices": [
@@ -7624,6 +7564,485 @@ exports[`continue in while loop 1`] = `
       ],
       "Default": "return null",
       "Type": "Choice",
+    },
+  },
+}
+`;
+
+exports[`depth 1`] = `
+{
+  "StartAt": "Initialize Functionless Context",
+  "States": {
+    "10__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "11__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap10",
+      "Type": "Pass",
+    },
+    "11__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "12__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap11",
+      "Type": "Pass",
+    },
+    "12__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "13__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap12",
+      "Type": "Pass",
+    },
+    "13__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "14__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap13",
+      "Type": "Pass",
+    },
+    "14__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "15__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap14",
+      "Type": "Pass",
+    },
+    "15__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "16__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap15",
+      "Type": "Pass",
+    },
+    "16__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "17__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap16",
+      "Type": "Pass",
+    },
+    "17__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "18__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap17",
+      "Type": "Pass",
+    },
+    "18__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "19__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap18",
+      "Type": "Pass",
+    },
+    "19__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "20__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap19",
+      "Type": "Pass",
+    },
+    "1__65__return {...input, ...input, ...input, ...input, ...input, ...input, ": {
+      "Next": "1__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
+      "Parameters": {
+        "out.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap65.out.d0,$.heap56,false),$.heap57,false),$.heap58,false),$.heap59,false),$.heap60,false),$.heap61,false),$.heap62,false),$.heap63,false),$.heap64,false),$.input,false)",
+      },
+      "ResultPath": "$.heap65",
+      "Type": "Pass",
+    },
+    "1__65__return {...input, ...input, ...input, ...input, ...input, ...input,  1": {
+      "Next": "1__65__return {...input, ...input, ...input, ...input, ...input, ...input, ",
+      "Parameters": {
+        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap65.out.d0.d0,$.heap47,false),$.heap48,false),$.heap49,false),$.heap50,false),$.heap51,false),$.heap52,false),$.heap53,false),$.heap54,false),$.heap55,false),$.heap56,false)",
+      },
+      "ResultPath": "$.heap65.out",
+      "Type": "Pass",
+    },
+    "1__65__return {...input, ...input, ...input, ...input, ...input, ...input,  2": {
+      "Next": "1__65__return {...input, ...input, ...input, ...input, ...input, ...input,  1",
+      "Parameters": {
+        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap65.out.d0.d0.d0,$.heap38,false),$.heap39,false),$.heap40,false),$.heap41,false),$.heap42,false),$.heap43,false),$.heap44,false),$.heap45,false),$.heap46,false),$.heap47,false)",
+      },
+      "ResultPath": "$.heap65.out.d0",
+      "Type": "Pass",
+    },
+    "1__65__return {...input, ...input, ...input, ...input, ...input, ...input,  3": {
+      "Next": "1__65__return {...input, ...input, ...input, ...input, ...input, ...input,  2",
+      "Parameters": {
+        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap65.out.d0.d0.d0.d0,$.heap29,false),$.heap30,false),$.heap31,false),$.heap32,false),$.heap33,false),$.heap34,false),$.heap35,false),$.heap36,false),$.heap37,false),$.heap38,false)",
+      },
+      "ResultPath": "$.heap65.out.d0.d0",
+      "Type": "Pass",
+    },
+    "1__65__return {...input, ...input, ...input, ...input, ...input, ...input,  4": {
+      "Next": "1__65__return {...input, ...input, ...input, ...input, ...input, ...input,  3",
+      "Parameters": {
+        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap65.out.d0.d0.d0.d0.d0,$.heap20,false),$.heap21,false),$.heap22,false),$.heap23,false),$.heap24,false),$.heap25,false),$.heap26,false),$.heap27,false),$.heap28,false),$.heap29,false)",
+      },
+      "ResultPath": "$.heap65.out.d0.d0.d0",
+      "Type": "Pass",
+    },
+    "1__65__return {...input, ...input, ...input, ...input, ...input, ...input,  5": {
+      "Next": "1__65__return {...input, ...input, ...input, ...input, ...input, ...input,  4",
+      "Parameters": {
+        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap65.out.d0.d0.d0.d0.d0.d0,$.heap11,false),$.heap12,false),$.heap13,false),$.heap14,false),$.heap15,false),$.heap16,false),$.heap17,false),$.heap18,false),$.heap19,false),$.heap20,false)",
+      },
+      "ResultPath": "$.heap65.out.d0.d0.d0.d0",
+      "Type": "Pass",
+    },
+    "1__65__return {...input, ...input, ...input, ...input, ...input, ...input,  6": {
+      "Next": "1__65__return {...input, ...input, ...input, ...input, ...input, ...input,  5",
+      "Parameters": {
+        "d0.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap65.out.d0.d0.d0.d0.d0.d0.d0,$.heap2,false),$.heap3,false),$.heap4,false),$.heap5,false),$.heap6,false),$.heap7,false),$.heap8,false),$.heap9,false),$.heap10,false),$.heap11,false)",
+      },
+      "ResultPath": "$.heap65.out.d0.d0.d0.d0.d0",
+      "Type": "Pass",
+    },
+    "1__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
+      "End": true,
+      "InputPath": "$.heap65.out",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__return {...input, ...input, ...input, ...input, ...input, ...input, ...i 1": {
+      "InputPath": "$.input",
+      "Next": "2__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+    "20__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "21__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap20",
+      "Type": "Pass",
+    },
+    "21__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "22__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap21",
+      "Type": "Pass",
+    },
+    "22__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "23__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap22",
+      "Type": "Pass",
+    },
+    "23__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "24__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap23",
+      "Type": "Pass",
+    },
+    "24__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "25__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap24",
+      "Type": "Pass",
+    },
+    "25__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "26__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap25",
+      "Type": "Pass",
+    },
+    "26__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "27__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap26",
+      "Type": "Pass",
+    },
+    "27__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "28__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap27",
+      "Type": "Pass",
+    },
+    "28__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "29__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap28",
+      "Type": "Pass",
+    },
+    "29__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "30__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap29",
+      "Type": "Pass",
+    },
+    "2__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
+      "InputPath": "$.input",
+      "Next": "3__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "30__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "31__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap30",
+      "Type": "Pass",
+    },
+    "31__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "32__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap31",
+      "Type": "Pass",
+    },
+    "32__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "33__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap32",
+      "Type": "Pass",
+    },
+    "33__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "34__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap33",
+      "Type": "Pass",
+    },
+    "34__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "35__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap34",
+      "Type": "Pass",
+    },
+    "35__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "36__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap35",
+      "Type": "Pass",
+    },
+    "36__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "37__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap36",
+      "Type": "Pass",
+    },
+    "37__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "38__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap37",
+      "Type": "Pass",
+    },
+    "38__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "39__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap38",
+      "Type": "Pass",
+    },
+    "39__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "40__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap39",
+      "Type": "Pass",
+    },
+    "3__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
+      "InputPath": "$.input",
+      "Next": "4__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "40__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "41__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap40",
+      "Type": "Pass",
+    },
+    "41__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "42__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap41",
+      "Type": "Pass",
+    },
+    "42__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "43__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap42",
+      "Type": "Pass",
+    },
+    "43__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "44__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap43",
+      "Type": "Pass",
+    },
+    "44__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "45__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap44",
+      "Type": "Pass",
+    },
+    "45__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "46__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap45",
+      "Type": "Pass",
+    },
+    "46__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "47__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap46",
+      "Type": "Pass",
+    },
+    "47__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "48__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap47",
+      "Type": "Pass",
+    },
+    "48__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "49__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap48",
+      "Type": "Pass",
+    },
+    "49__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "50__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap49",
+      "Type": "Pass",
+    },
+    "4__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
+      "InputPath": "$.input",
+      "Next": "5__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "50__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "51__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap50",
+      "Type": "Pass",
+    },
+    "51__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "52__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap51",
+      "Type": "Pass",
+    },
+    "52__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "53__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap52",
+      "Type": "Pass",
+    },
+    "53__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "54__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap53",
+      "Type": "Pass",
+    },
+    "54__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "55__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap54",
+      "Type": "Pass",
+    },
+    "55__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "56__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap55",
+      "Type": "Pass",
+    },
+    "56__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "57__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap56",
+      "Type": "Pass",
+    },
+    "57__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "58__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap57",
+      "Type": "Pass",
+    },
+    "58__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "59__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap58",
+      "Type": "Pass",
+    },
+    "59__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "60__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap59",
+      "Type": "Pass",
+    },
+    "5__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
+      "InputPath": "$.input",
+      "Next": "6__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "60__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "61__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap60",
+      "Type": "Pass",
+    },
+    "61__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "62__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap61",
+      "Type": "Pass",
+    },
+    "62__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "63__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap62",
+      "Type": "Pass",
+    },
+    "63__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "64__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap63",
+      "Type": "Pass",
+    },
+    "64__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "InputPath": "$.input",
+      "Next": "65__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap64",
+      "Type": "Pass",
+    },
+    "65__return {...input, ...input, ...input, ...input, ...input, ...input, ...": {
+      "Next": "1__65__return {...input, ...input, ...input, ...input, ...input, ...input,  6",
+      "Parameters": {
+        "d0.$": "States.JsonMerge(States.JsonMerge($.heap0,$.heap1,false),$.heap2,false)",
+      },
+      "ResultPath": "$.heap65.out.d0.d0.d0.d0.d0.d0",
+      "Type": "Pass",
+    },
+    "6__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
+      "InputPath": "$.input",
+      "Next": "7__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
+    "7__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
+      "InputPath": "$.input",
+      "Next": "8__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
+      "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "8__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
+      "InputPath": "$.input",
+      "Next": "9__return {...input, ...input, ...input, ...input, ...input, ...input, ...i",
+      "ResultPath": "$.heap8",
+      "Type": "Pass",
+    },
+    "9__return {...input, ...input, ...input, ...input, ...input, ...input, ...i": {
+      "InputPath": "$.input",
+      "Next": "10__return {...input, ...input, ...input, ...input, ...input, ...input, ...",
+      "ResultPath": "$.heap9",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": {
+      "Next": "return {...input, ...input, ...input, ...input, ...input, ...input, ...inpu",
+      "Parameters": {
+        "fnl_context": {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return {...input, ...input, ...input, ...input, ...input, ...input, ...inpu": {
+      "InputPath": "$.input",
+      "Next": "1__return {...input, ...input, ...input, ...input, ...input, ...input, ...i 1",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
     },
   },
 }
@@ -9261,17 +9680,11 @@ exports[`for(;;) loop complex 1`] = `
       "Next": "i = i.slice(1) , j = j.slice(1)",
       "Parameters": {
         "i.$": "$.heap0",
-        "j.$": "$.heap1",
+        "j.$": "$.j",
       },
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap2",
-      "Type": "Task",
-    },
-    "1__await task({i: i, j: j}) 1": {
-      "InputPath": "$.j",
-      "Next": "1__await task({i: i, j: j})",
       "ResultPath": "$.heap1",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "2__for(i = [1, 2],j = [3, 4];i[0];i = i.slice(1) , j = j.slice(1))": {
       "Choices": [
@@ -9386,7 +9799,7 @@ exports[`for(;;) loop complex 1`] = `
     },
     "await task({i: i, j: j})": {
       "InputPath": "$.i",
-      "Next": "1__await task({i: i, j: j}) 1",
+      "Next": "1__await task({i: i, j: j})",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -9863,17 +10276,11 @@ exports[`for-loop over a list literal 1`] = `
       "Next": "tail__for(name of people)",
       "Parameters": {
         "id.$": "$.heap0",
-        "name.$": "$.heap1",
+        "name.$": "$.name",
       },
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap2",
-      "Type": "Task",
-    },
-    "1__await computeScore({id: input.id, name: name}) 1": {
-      "InputPath": "$.name",
-      "Next": "1__await computeScore({id: input.id, name: name})",
       "ResultPath": "$.heap1",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "Initialize Functionless Context": {
       "Next": "people = ["sam", "sam"]",
@@ -9888,14 +10295,14 @@ exports[`for-loop over a list literal 1`] = `
     },
     "await computeScore({id: input.id, name: name})": {
       "InputPath": "$.input.id",
-      "Next": "1__await computeScore({id: input.id, name: name}) 1",
+      "Next": "1__await computeScore({id: input.id, name: name})",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "for(name of people)": {
       "InputPath": "$.people",
       "Next": "hasNext__for(name of people)",
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "hasNext__for(name of people)": {
@@ -9903,14 +10310,14 @@ exports[`for-loop over a list literal 1`] = `
         {
           "IsPresent": true,
           "Next": "name",
-          "Variable": "$.heap3[0]",
+          "Variable": "$.heap2[0]",
         },
       ],
       "Default": "return null",
       "Type": "Choice",
     },
     "name": {
-      "InputPath": "$.heap3[0]",
+      "InputPath": "$.heap2[0]",
       "Next": "await computeScore({id: input.id, name: name})",
       "ResultPath": "$.name",
       "Type": "Pass",
@@ -9931,9 +10338,9 @@ exports[`for-loop over a list literal 1`] = `
       "Type": "Pass",
     },
     "tail__for(name of people)": {
-      "InputPath": "$.heap3[1:]",
+      "InputPath": "$.heap2[1:]",
       "Next": "hasNext__for(name of people)",
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
   },
@@ -13999,17 +14406,11 @@ exports[`non-literal params AWS.SDK.CloudWatch.deleteAlarms 1`] = `
     "1__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(fun": {
       "Next": "return null",
       "Parameters": {
-        "AlarmNames.$": "$.heap2",
+        "AlarmNames.$": "$.heap1",
       },
       "Resource": "arn:aws:states:::aws-sdk:cloudwatch:deleteAlarms",
-      "ResultPath": "$.heap3",
-      "Type": "Task",
-    },
-    "1__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(fun 1": {
-      "InputPath": "$.heap1",
-      "Next": "1__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(fun",
       "ResultPath": "$.heap2",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "Initialize Functionless Context": {
       "Next": "{ MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms({}, {iam: {reso",
@@ -14125,7 +14526,7 @@ exports[`non-literal params AWS.SDK.CloudWatch.deleteAlarms 1`] = `
     },
     "set__end__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.": {
       "InputPath": "$.heap1.result[1:]",
-      "Next": "1__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(fun 1",
+      "Next": "1__await $AWS.SDK.CloudWatch.deleteAlarms({AlarmNames: MetricAlarms.map(fun",
       "ResultPath": "$.heap1",
       "Type": "Pass",
     },
@@ -14147,15 +14548,9 @@ exports[`null coalesce logic 1`] = `
     "1__return {null: input.a ?? input.b}": {
       "End": true,
       "Parameters": {
-        "null.$": "$.heap1",
+        "null.$": "$.heap0",
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "1__return {null: input.a ?? input.b} 1": {
-      "InputPath": "$.heap0",
-      "Next": "1__return {null: input.a ?? input.b}",
-      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -14171,7 +14566,7 @@ exports[`null coalesce logic 1`] = `
     },
     "false__return {null: input.a ?? input.b}": {
       "InputPath": "$.input.b",
-      "Next": "1__return {null: input.a ?? input.b} 1",
+      "Next": "1__return {null: input.a ?? input.b}",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -14196,7 +14591,7 @@ exports[`null coalesce logic 1`] = `
     },
     "true__return {null: input.a ?? input.b}": {
       "InputPath": "$.input.a",
-      "Next": "1__return {null: input.a ?? input.b} 1",
+      "Next": "1__return {null: input.a ?? input.b}",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -14588,14 +14983,25 @@ exports[`put an event bus event 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
   "States": {
-    "1__await bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail": {
+    "Initialize Functionless Context": {
+      "Next": "await bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail: {",
+      "Parameters": {
+        "fnl_context": {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "await bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail: {": {
       "Next": "return null",
       "Parameters": {
         "Entries": [
           {
             "Account": "123456789012",
             "Detail": {
-              "value.$": "$.heap0",
+              "value.$": "$.input.id",
             },
             "DetailType": "someEvent",
             "EventBusName": "__REPLACED_TOKEN",
@@ -14611,25 +15017,8 @@ exports[`put an event bus event 1`] = `
         ],
       },
       "Resource": "__REPLACED_ARN",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
-    },
-    "Initialize Functionless Context": {
-      "Next": "await bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail: {",
-      "Parameters": {
-        "fnl_context": {
-          "null": null,
-        },
-        "input.$": "$$.Execution.Input",
-      },
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "await bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail: {": {
-      "InputPath": "$.input.id",
-      "Next": "1__await bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail",
       "ResultPath": "$.heap0",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "return null": {
       "End": true,
@@ -14645,39 +15034,6 @@ exports[`put multiple event bus events 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
   "States": {
-    "1__await bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail": {
-      "InputPath": "$.input.id",
-      "Next": "2__await bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail",
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "2__await bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail": {
-      "Next": "return null",
-      "Parameters": {
-        "Entries": [
-          {
-            "Detail": {
-              "value.$": "$.heap0",
-            },
-            "DetailType": "someEvent",
-            "EventBusName": "__REPLACED_TOKEN",
-            "Source": "sfnTest",
-          },
-          {
-            "Detail": {
-              "constant": "hi",
-              "value.$": "$.heap1",
-            },
-            "DetailType": "someOtherEvent",
-            "EventBusName": "__REPLACED_TOKEN",
-            "Source": "sfnTest",
-          },
-        ],
-      },
-      "Resource": "__REPLACED_ARN",
-      "ResultPath": "$.heap2",
-      "Type": "Task",
-    },
     "Initialize Functionless Context": {
       "Next": "await bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail: {",
       "Parameters": {
@@ -14690,10 +15046,31 @@ exports[`put multiple event bus events 1`] = `
       "Type": "Pass",
     },
     "await bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail: {": {
-      "InputPath": "$.input.id",
-      "Next": "1__await bus.putEvents({detail-type: "someEvent", source: "sfnTest", detail",
+      "Next": "return null",
+      "Parameters": {
+        "Entries": [
+          {
+            "Detail": {
+              "value.$": "$.input.id",
+            },
+            "DetailType": "someEvent",
+            "EventBusName": "__REPLACED_TOKEN",
+            "Source": "sfnTest",
+          },
+          {
+            "Detail": {
+              "constant": "hi",
+              "value.$": "$.input.id",
+            },
+            "DetailType": "someOtherEvent",
+            "EventBusName": "__REPLACED_TOKEN",
+            "Source": "sfnTest",
+          },
+        ],
+      },
+      "Resource": "__REPLACED_ARN",
       "ResultPath": "$.heap0",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "return null": {
       "End": true,
@@ -15462,6 +15839,101 @@ exports[`return AWS.DynamoDB.GetItem 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
   "States": {
+    "1__return {id: person.Item.id.S, name: person.Item.name.S}": {
+      "End": true,
+      "Parameters": {
+        "id.$": "$.heap1",
+        "name.$": "$.person.Item.name.S",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": {
+      "Next": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
+      "Parameters": {
+        "fnl_context": {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "if(person.Item === undefined)": {
+      "Choices": [
+        {
+          "Next": "return",
+          "Or": [
+            {
+              "IsPresent": false,
+              "Variable": "$.person.Item",
+            },
+            {
+              "And": [
+                {
+                  "IsPresent": true,
+                  "Variable": "$.person.Item",
+                },
+                {
+                  "And": [
+                    {
+                      "IsNull": false,
+                      "Variable": "$.person.Item",
+                    },
+                    {
+                      "IsNull": true,
+                      "Variable": "$$.Execution.Id",
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+      ],
+      "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
+      "Type": "Choice",
+    },
+    "person": {
+      "InputPath": "$.heap0",
+      "Next": "if(person.Item === undefined)",
+      "ResultPath": "$.person",
+      "Type": "Pass",
+    },
+    "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": {
+      "Next": "person",
+      "Parameters": {
+        "Key": {
+          "id": {
+            "S.$": "$.input.id",
+          },
+        },
+        "TableName": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+    "return": {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return {id: person.Item.id.S, name: person.Item.name.S}": {
+      "InputPath": "$.person.Item.id.S",
+      "Next": "1__return {id: person.Item.id.S, name: person.Item.name.S}",
+      "ResultPath": "$.heap1",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`return AWS.DynamoDB.GetItem dynamic parameters 1`] = `
+{
+  "StartAt": "Initialize Functionless Context",
+  "States": {
     "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ": {
       "Next": "person",
       "Parameters": {
@@ -15480,15 +15952,9 @@ exports[`return AWS.DynamoDB.GetItem 1`] = `
       "End": true,
       "Parameters": {
         "id.$": "$.heap2",
-        "name.$": "$.heap3",
+        "name.$": "$.person.Item.name.S",
       },
       "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "1__return {id: person.Item.id.S, name: person.Item.name.S} 1": {
-      "InputPath": "$.person.Item.name.S",
-      "Next": "1__return {id: person.Item.id.S, name: person.Item.name.S}",
-      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -15500,6 +15966,12 @@ exports[`return AWS.DynamoDB.GetItem 1`] = `
         "input.$": "$$.Execution.Input",
       },
       "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "false__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: ": {
+      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
+      "Result": "default",
+      "ResultPath": "$.heap0",
       "Type": "Pass",
     },
     "if(person.Item === undefined)": {
@@ -15544,125 +16016,6 @@ exports[`return AWS.DynamoDB.GetItem 1`] = `
       "Type": "Pass",
     },
     "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": {
-      "InputPath": "$.input.id",
-      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "return": {
-      "End": true,
-      "InputPath": "$.fnl_context.null",
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "return {id: person.Item.id.S, name: person.Item.name.S}": {
-      "InputPath": "$.person.Item.id.S",
-      "Next": "1__return {id: person.Item.id.S, name: person.Item.name.S} 1",
-      "ResultPath": "$.heap2",
-      "Type": "Pass",
-    },
-  },
-}
-`;
-
-exports[`return AWS.DynamoDB.GetItem dynamic parameters 1`] = `
-{
-  "StartAt": "Initialize Functionless Context",
-  "States": {
-    "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ": {
-      "Next": "person",
-      "Parameters": {
-        "Key": {
-          "id": {
-            "S.$": "$.heap1",
-          },
-        },
-        "TableName": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::aws-sdk:dynamodb:getItem",
-      "ResultPath": "$.heap2",
-      "Type": "Task",
-    },
-    "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S:  1": {
-      "InputPath": "$.heap0",
-      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "1__return {id: person.Item.id.S, name: person.Item.name.S}": {
-      "End": true,
-      "Parameters": {
-        "id.$": "$.heap3",
-        "name.$": "$.heap4",
-      },
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "1__return {id: person.Item.id.S, name: person.Item.name.S} 1": {
-      "InputPath": "$.person.Item.name.S",
-      "Next": "1__return {id: person.Item.id.S, name: person.Item.name.S}",
-      "ResultPath": "$.heap4",
-      "Type": "Pass",
-    },
-    "Initialize Functionless Context": {
-      "Next": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
-      "Parameters": {
-        "fnl_context": {
-          "null": null,
-        },
-        "input.$": "$$.Execution.Input",
-      },
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
-    "false__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: ": {
-      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S:  1",
-      "Result": "default",
-      "ResultPath": "$.heap0",
-      "Type": "Pass",
-    },
-    "if(person.Item === undefined)": {
-      "Choices": [
-        {
-          "Next": "return",
-          "Or": [
-            {
-              "IsPresent": false,
-              "Variable": "$.person.Item",
-            },
-            {
-              "And": [
-                {
-                  "IsPresent": true,
-                  "Variable": "$.person.Item",
-                },
-                {
-                  "And": [
-                    {
-                      "IsNull": false,
-                      "Variable": "$.person.Item",
-                    },
-                    {
-                      "IsNull": true,
-                      "Variable": "$$.Execution.Id",
-                    },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-      ],
-      "Default": "return {id: person.Item.id.S, name: person.Item.name.S}",
-      "Type": "Choice",
-    },
-    "person": {
-      "InputPath": "$.heap2",
-      "Next": "if(person.Item === undefined)",
-      "ResultPath": "$.person",
-      "Type": "Pass",
-    },
-    "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": {
       "Choices": [
         {
           "And": [
@@ -15689,13 +16042,13 @@ exports[`return AWS.DynamoDB.GetItem dynamic parameters 1`] = `
     },
     "return {id: person.Item.id.S, name: person.Item.name.S}": {
       "InputPath": "$.person.Item.id.S",
-      "Next": "1__return {id: person.Item.id.S, name: person.Item.name.S} 1",
-      "ResultPath": "$.heap3",
+      "Next": "1__return {id: person.Item.id.S, name: person.Item.name.S}",
+      "ResultPath": "$.heap2",
       "Type": "Pass",
     },
     "true__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {": {
       "InputPath": "$.input.id",
-      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S:  1",
+      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -15709,7 +16062,7 @@ exports[`return AWS.Lambda.Invoke dynamic parameters 1`] = `
   "States": {
     "1__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id ": {
       "End": true,
-      "InputPath": "$.heap2.Payload",
+      "InputPath": "$.heap1.Payload",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -15718,18 +16071,12 @@ exports[`return AWS.Lambda.Invoke dynamic parameters 1`] = `
       "Parameters": {
         "FunctionName": "__REPLACED_TOKEN",
         "Payload": {
-          "id.$": "$.heap1",
+          "id.$": "$.heap0",
         },
       },
       "Resource": "__REPLACED_ARN",
-      "ResultPath": "$.heap2",
-      "Type": "Task",
-    },
-    "1__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id  2": {
-      "InputPath": "$.heap0",
-      "Next": "1__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id  1",
       "ResultPath": "$.heap1",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "Initialize Functionless Context": {
       "Next": "return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id ?? ",
@@ -15743,7 +16090,7 @@ exports[`return AWS.Lambda.Invoke dynamic parameters 1`] = `
       "Type": "Pass",
     },
     "false__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input": {
-      "Next": "1__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id  2",
+      "Next": "1__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id  1",
       "Result": "default",
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -15769,7 +16116,7 @@ exports[`return AWS.Lambda.Invoke dynamic parameters 1`] = `
     },
     "true__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.": {
       "InputPath": "$.input.id",
-      "Next": "1__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id  2",
+      "Next": "1__return await $AWS.Lambda.Invoke({Function: task, Payload: {id: input.id  1",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -15862,17 +16209,11 @@ exports[`return AWS.SDK.CloudWatch.describeAlarms dynamic parameters 1`] = `
     "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu": {
       "Next": "alarms",
       "Parameters": {
-        "AlarmNamePrefix.$": "$.heap1",
+        "AlarmNamePrefix.$": "$.heap0",
       },
       "Resource": "arn:aws:states:::aws-sdk:cloudwatch:describeAlarms",
-      "ResultPath": "$.heap2",
-      "Type": "Task",
-    },
-    "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu 1": {
-      "InputPath": "$.heap0",
-      "Next": "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu",
       "ResultPath": "$.heap1",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "Initialize Functionless Context": {
       "Next": "alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: input.p",
@@ -15886,7 +16227,7 @@ exports[`return AWS.SDK.CloudWatch.describeAlarms dynamic parameters 1`] = `
       "Type": "Pass",
     },
     "alarms": {
-      "InputPath": "$.heap2",
+      "InputPath": "$.heap1",
       "Next": "if(alarms.MetricAlarms === undefined)",
       "ResultPath": "$.alarms",
       "Type": "Pass",
@@ -15911,7 +16252,7 @@ exports[`return AWS.SDK.CloudWatch.describeAlarms dynamic parameters 1`] = `
       "Type": "Choice",
     },
     "false__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: ": {
-      "Next": "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu 1",
+      "Next": "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu",
       "Result": "default",
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -15965,7 +16306,7 @@ exports[`return AWS.SDK.CloudWatch.describeAlarms dynamic parameters 1`] = `
     },
     "true__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: i": {
       "InputPath": "$.input.prefix",
-      "Next": "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu 1",
+      "Next": "1__alarms = await $AWS.SDK.CloudWatch.describeAlarms({AlarmNamePrefix: inpu",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -16136,18 +16477,9 @@ exports[`return a single Lambda Function call 1`] = `
   "States": {
     "1__return getPerson({id: input.id})": {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
       "Type": "Pass",
-    },
-    "1__return getPerson({id: input.id}) 1": {
-      "Next": "1__return getPerson({id: input.id})",
-      "Parameters": {
-        "id.$": "$.heap0",
-      },
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
     },
     "Initialize Functionless Context": {
       "Next": "return getPerson({id: input.id})",
@@ -16161,10 +16493,13 @@ exports[`return a single Lambda Function call 1`] = `
       "Type": "Pass",
     },
     "return getPerson({id: input.id})": {
-      "InputPath": "$.input.id",
-      "Next": "1__return getPerson({id: input.id}) 1",
+      "Next": "1__return getPerson({id: input.id})",
+      "Parameters": {
+        "id.$": "$.input.id",
+      },
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
-      "Type": "Pass",
+      "Type": "Task",
     },
   },
 }
@@ -16541,7 +16876,7 @@ exports[`return task({ key: items.filter(*) }) 1`] = `
   "States": {
     "1__return task({equals: input.items.filter(function (item)), and: input.ite": {
       "End": true,
-      "InputPath": "$.heap3",
+      "InputPath": "$.heap2",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -16550,22 +16885,16 @@ exports[`return task({ key: items.filter(*) }) 1`] = `
       "Parameters": {
         "and.$": "$.heap1",
         "equals.$": "$.heap0",
-        "or.$": "$.heap2",
+        "or.$": "$.input.items[?(@.str=='hello'||@.items[0]=='hello')]",
       },
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap3",
+      "ResultPath": "$.heap2",
       "Type": "Task",
     },
     "1__return task({equals: input.items.filter(function (item)), and: input.ite 2": {
       "InputPath": "$.input.items[?(@.str=='hello'&&@.items[0]=='hello')]",
-      "Next": "2__return task({equals: input.items.filter(function (item)), and: input.ite",
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "2__return task({equals: input.items.filter(function (item)), and: input.ite": {
-      "InputPath": "$.input.items[?(@.str=='hello'||@.items[0]=='hello')]",
       "Next": "1__return task({equals: input.items.filter(function (item)), and: input.ite 1",
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -16595,18 +16924,9 @@ exports[`return task({key: items.slice(1, 3)}) 1`] = `
   "States": {
     "1__return task({key: input.items.slice(1, 3)})": {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
       "Type": "Pass",
-    },
-    "1__return task({key: input.items.slice(1, 3)}) 1": {
-      "Next": "1__return task({key: input.items.slice(1, 3)})",
-      "Parameters": {
-        "key.$": "$.heap0",
-      },
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
     },
     "Initialize Functionless Context": {
       "Next": "return task({key: input.items.slice(1, 3)})",
@@ -16620,10 +16940,13 @@ exports[`return task({key: items.slice(1, 3)}) 1`] = `
       "Type": "Pass",
     },
     "return task({key: input.items.slice(1, 3)})": {
-      "InputPath": "$.input.items[1:3]",
-      "Next": "1__return task({key: input.items.slice(1, 3)}) 1",
+      "Next": "1__return task({key: input.items.slice(1, 3)})",
+      "Parameters": {
+        "key.$": "$.input.items[1:3]",
+      },
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
-      "Type": "Pass",
+      "Type": "Task",
     },
   },
 }
@@ -16872,18 +17195,12 @@ exports[`sendMessage JSON array 1`] = `
     "1__await queue.sendMessage({MessageBody: [input]})": {
       "Next": "return null",
       "Parameters": {
-        "MessageBody.$": "States.JsonToString($.heap2)",
+        "MessageBody.$": "States.JsonToString($.heap1.out)",
         "QueueUrl": "__REPLACED_TOKEN",
       },
       "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessage",
-      "ResultPath": "$.heap3",
-      "Type": "Task",
-    },
-    "1__await queue.sendMessage({MessageBody: [input]}) 1": {
-      "InputPath": "$.heap1.out",
-      "Next": "1__await queue.sendMessage({MessageBody: [input]})",
       "ResultPath": "$.heap2",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "Initialize Functionless Context": {
       "Next": "await queue.sendMessage({MessageBody: [input]})",
@@ -16897,7 +17214,7 @@ exports[`sendMessage JSON array 1`] = `
       "Type": "Pass",
     },
     "[input]": {
-      "Next": "1__await queue.sendMessage({MessageBody: [input]}) 1",
+      "Next": "1__await queue.sendMessage({MessageBody: [input]})",
       "Parameters": {
         "out.$": "States.Array($.heap0)",
       },
@@ -16924,16 +17241,6 @@ exports[`sendMessage TextSerializer 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
   "States": {
-    "1__await queue.sendMessage({MessageBody: input.message})": {
-      "Next": "return null",
-      "Parameters": {
-        "MessageBody.$": "$.heap0",
-        "QueueUrl": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessage",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
-    },
     "Initialize Functionless Context": {
       "Next": "await queue.sendMessage({MessageBody: input.message})",
       "Parameters": {
@@ -16946,10 +17253,14 @@ exports[`sendMessage TextSerializer 1`] = `
       "Type": "Pass",
     },
     "await queue.sendMessage({MessageBody: input.message})": {
-      "InputPath": "$.input.message",
-      "Next": "1__await queue.sendMessage({MessageBody: input.message})",
+      "Next": "return null",
+      "Parameters": {
+        "MessageBody.$": "$.input.message",
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessage",
       "ResultPath": "$.heap0",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "return null": {
       "End": true,
@@ -17000,21 +17311,13 @@ exports[`sendMessage object literal with JSON Path to SQS Queue 1`] = `
   "StartAt": "Initialize Functionless Context",
   "States": {
     "1__await queue.sendMessage({MessageBody: {orderId: input.orderId}})": {
-      "Next": "2__await queue.sendMessage({MessageBody: {orderId: input.orderId}})",
-      "Parameters": {
-        "orderId.$": "$.heap0",
-      },
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "2__await queue.sendMessage({MessageBody: {orderId: input.orderId}})": {
       "Next": "return null",
       "Parameters": {
-        "MessageBody.$": "States.JsonToString($.heap1)",
+        "MessageBody.$": "States.JsonToString($.heap0)",
         "QueueUrl": "__REPLACED_TOKEN",
       },
       "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessage",
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap1",
       "Type": "Task",
     },
     "Initialize Functionless Context": {
@@ -17029,8 +17332,10 @@ exports[`sendMessage object literal with JSON Path to SQS Queue 1`] = `
       "Type": "Pass",
     },
     "await queue.sendMessage({MessageBody: {orderId: input.orderId}})": {
-      "InputPath": "$.input.orderId",
       "Next": "1__await queue.sendMessage({MessageBody: {orderId: input.orderId}})",
+      "Parameters": {
+        "orderId.$": "$.input.orderId",
+      },
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -17048,16 +17353,6 @@ exports[`sendMessage when whole message is JSON Path 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
   "States": {
-    "1__await queue.sendMessage({MessageBody: input})": {
-      "Next": "return null",
-      "Parameters": {
-        "MessageBody.$": "States.JsonToString($.heap0)",
-        "QueueUrl": "__REPLACED_TOKEN",
-      },
-      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessage",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
-    },
     "Initialize Functionless Context": {
       "Next": "await queue.sendMessage({MessageBody: input})",
       "Parameters": {
@@ -17070,10 +17365,14 @@ exports[`sendMessage when whole message is JSON Path 1`] = `
       "Type": "Pass",
     },
     "await queue.sendMessage({MessageBody: input})": {
-      "InputPath": "$.input",
-      "Next": "1__await queue.sendMessage({MessageBody: input})",
+      "Next": "return null",
+      "Parameters": {
+        "MessageBody.$": "States.JsonToString($.input)",
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessage",
       "ResultPath": "$.heap0",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "return null": {
       "End": true,
@@ -17092,34 +17391,28 @@ exports[`sendMessageBatch with JSON serialization 1`] = `
     "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess": {
       "Next": "2__await queue.sendMessageBatch({Entries: input.messages.map(function (mess",
       "Parameters": {
-        "Entries.$": "$.heap5",
+        "Entries.$": "$.heap0",
       },
-      "ResultPath": "$.heap6",
-      "Type": "Pass",
-    },
-    "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess 1": {
-      "InputPath": "$.heap0",
-      "Next": "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess",
-      "ResultPath": "$.heap5",
+      "ResultPath": "$.heap4",
       "Type": "Pass",
     },
     "1__return {Id: i, MessageBody: message}": {
       "Next": "handleResult__await queue.sendMessageBatch({Entries: input.messages.map(fun",
       "Parameters": {
         "Id.$": "$.heap3",
-        "MessageBody.$": "$.heap4",
+        "MessageBody.$": "$.message",
       },
       "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "1__return {Id: i, MessageBody: message} 1": {
       "InputPath": "$.heap2.string",
-      "Next": "2__return {Id: i, MessageBody: message}",
+      "Next": "1__return {Id: i, MessageBody: message}",
       "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "2__await queue.sendMessageBatch({Entries: input.messages.map(function (mess": {
-      "ItemsPath": "$.heap6.Entries",
+      "ItemsPath": "$.heap4.Entries",
       "Iterator": {
         "StartAt": "serialize Message",
         "States": {
@@ -17147,14 +17440,8 @@ exports[`sendMessageBatch with JSON serialization 1`] = `
       "Parameters": {
         "entry.$": "$$.Map.Item.Value",
       },
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap5",
       "Type": "Map",
-    },
-    "2__return {Id: i, MessageBody: message}": {
-      "InputPath": "$.message",
-      "Next": "1__return {Id: i, MessageBody: message}",
-      "ResultPath": "$.heap4",
-      "Type": "Pass",
     },
     "Initialize Functionless Context": {
       "Next": "await queue.sendMessageBatch({Entries: input.messages.map(function (message",
@@ -17254,16 +17541,16 @@ exports[`sendMessageBatch with JSON serialization 1`] = `
     "send message batch__2__await queue.sendMessageBatch({Entries: input.message": {
       "Next": "return null",
       "Parameters": {
-        "Entries.$": "$.heap7",
+        "Entries.$": "$.heap5",
         "QueueUrl": "__REPLACED_TOKEN",
       },
       "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap5",
       "Type": "Task",
     },
     "set__end__await queue.sendMessageBatch({Entries: input.messages.map(functio": {
       "InputPath": "$.heap0.result[1:]",
-      "Next": "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess 1",
+      "Next": "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -17278,38 +17565,26 @@ exports[`sendMessageBatch with Text serialization 1`] = `
     "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess": {
       "Next": "return null",
       "Parameters": {
-        "Entries.$": "$.heap5",
+        "Entries.$": "$.heap0",
         "QueueUrl": "__REPLACED_TOKEN",
       },
       "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
-      "ResultPath": "$.heap6",
+      "ResultPath": "$.heap4",
       "Type": "Task",
-    },
-    "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess 1": {
-      "InputPath": "$.heap0",
-      "Next": "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess",
-      "ResultPath": "$.heap5",
-      "Type": "Pass",
     },
     "1__return {Id: i, MessageBody: message}": {
       "Next": "handleResult__await queue.sendMessageBatch({Entries: input.messages.map(fun",
       "Parameters": {
         "Id.$": "$.heap3",
-        "MessageBody.$": "$.heap4",
+        "MessageBody.$": "$.message",
       },
       "ResultPath": "$.heap0.arr[0]",
       "Type": "Pass",
     },
     "1__return {Id: i, MessageBody: message} 1": {
       "InputPath": "$.heap2.string",
-      "Next": "2__return {Id: i, MessageBody: message}",
-      "ResultPath": "$.heap3",
-      "Type": "Pass",
-    },
-    "2__return {Id: i, MessageBody: message}": {
-      "InputPath": "$.message",
       "Next": "1__return {Id: i, MessageBody: message}",
-      "ResultPath": "$.heap4",
+      "ResultPath": "$.heap3",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -17409,7 +17684,7 @@ exports[`sendMessageBatch with Text serialization 1`] = `
     },
     "set__end__await queue.sendMessageBatch({Entries: input.messages.map(functio": {
       "InputPath": "$.heap0.result[1:]",
-      "Next": "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess 1",
+      "Next": "1__await queue.sendMessageBatch({Entries: input.messages.map(function (mess",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },
@@ -17426,21 +17701,15 @@ exports[`set obj 1`] = `
       "Parameters": {
         "a.$": "$.heap0",
         "b.$": "$.heap1",
-        "c.$": "$.heap2",
+        "c.$": "$.c",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return {a: a, b: b, c: c} 1": {
       "InputPath": "$.b",
-      "Next": "2__return {a: a, b: b, c: c}",
-      "ResultPath": "$.heap1",
-      "Type": "Pass",
-    },
-    "2__return {a: a, b: b, c: c}": {
-      "InputPath": "$.c",
       "Next": "1__return {a: a, b: b, c: c}",
-      "ResultPath": "$.heap2",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
@@ -17689,18 +17958,9 @@ exports[`single quotes in StringLiteralExpr should be escaped in a JSON Path fil
   "States": {
     "1__return task({escape: input.items.filter(function (item))})": {
       "End": true,
-      "InputPath": "$.heap1",
+      "InputPath": "$.heap0",
       "ResultPath": "$",
       "Type": "Pass",
-    },
-    "1__return task({escape: input.items.filter(function (item))}) 1": {
-      "Next": "1__return task({escape: input.items.filter(function (item))})",
-      "Parameters": {
-        "escape.$": "$.heap0",
-      },
-      "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap1",
-      "Type": "Task",
     },
     "Initialize Functionless Context": {
       "Next": "return task({escape: input.items.filter(function (item))})",
@@ -17714,9 +17974,130 @@ exports[`single quotes in StringLiteralExpr should be escaped in a JSON Path fil
       "Type": "Pass",
     },
     "return task({escape: input.items.filter(function (item))})": {
-      "InputPath": "$.input.items[?(@.str=='hello\\'world')]",
-      "Next": "1__return task({escape: input.items.filter(function (item))}) 1",
+      "Next": "1__return task({escape: input.items.filter(function (item))})",
+      "Parameters": {
+        "escape.$": "$.input.items[?(@.str=='hello\\'world')]",
+      },
+      "Resource": "__REPLACED_TOKEN",
       "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
+exports[`spread any object 1`] = `
+{
+  "StartAt": "Initialize Functionless Context",
+  "States": {
+    "1__return {a: {...input}, b: {x: 1, ...input, y: 2}, c: {...input, ...input": {
+      "End": true,
+      "Parameters": {
+        "a.$": "$.heap0",
+        "b.$": "$.heap5",
+        "c.$": "$.heap9",
+        "d": {
+          "x": 1,
+          "y": 3,
+        },
+        "e.$": "$.heap11.out",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "1__{...input, ...input, ...input}": {
+      "InputPath": "$.input",
+      "Next": "2__{...input, ...input, ...input}",
+      "ResultPath": "$.heap7",
+      "Type": "Pass",
+    },
+    "1__{...{...{...{x: 1}}}, x: 2, ...input}": {
+      "Next": "1__return {a: {...input}, b: {x: 1, ...input, y: 2}, c: {...input, ...input",
+      "Parameters": {
+        "out.$": "States.JsonMerge($.input,$.heap10)",
+      },
+      "ResultPath": "$.heap11",
+      "Type": "Pass",
+    },
+    "1__{x: 1, ...input, y: 2}": {
+      "Next": "2__{x: 1, ...input, y: 2}",
+      "Result": {
+        "y": 2,
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "2__return {a: {...input}, b: {x: 1, ...input, y: 2}, c: {...input, ...input": {
+      "InputPath": "$.heap4.out",
+      "Next": "{...input, ...input, ...input}",
+      "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "2__{...input, ...input, ...input}": {
+      "Next": "4__return {a: {...input}, b: {x: 1, ...input, y: 2}, c: {...input, ...input",
+      "Parameters": {
+        "out.$": "States.JsonMerge(States.JsonMerge($.input,$.heap7),$.heap6)",
+      },
+      "ResultPath": "$.heap8",
+      "Type": "Pass",
+    },
+    "2__{x: 1, ...input, y: 2}": {
+      "Next": "3__{x: 1, ...input, y: 2}",
+      "Result": {
+        "x": 1,
+      },
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "3__{x: 1, ...input, y: 2}": {
+      "Next": "2__return {a: {...input}, b: {x: 1, ...input, y: 2}, c: {...input, ...input",
+      "Parameters": {
+        "out.$": "States.JsonMerge(States.JsonMerge($.heap2,$.heap1),$.heap3)",
+      },
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "4__return {a: {...input}, b: {x: 1, ...input, y: 2}, c: {...input, ...input": {
+      "InputPath": "$.heap8.out",
+      "Next": "{...{...{...{x: 1}}}, x: 2, ...input}",
+      "ResultPath": "$.heap9",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": {
+      "Next": "return {a: {...input}, b: {x: 1, ...input, y: 2}, c: {...input, ...input, .",
+      "Parameters": {
+        "fnl_context": {
+          "null": null,
+        },
+        "input.$": "$$.Execution.Input",
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return {a: {...input}, b: {x: 1, ...input, y: 2}, c: {...input, ...input, .": {
+      "InputPath": "$.input",
+      "Next": "{x: 1, ...input, y: 2}",
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "{...input, ...input, ...input}": {
+      "InputPath": "$.input",
+      "Next": "1__{...input, ...input, ...input}",
+      "ResultPath": "$.heap6",
+      "Type": "Pass",
+    },
+    "{...{...{...{x: 1}}}, x: 2, ...input}": {
+      "Next": "1__{...{...{...{x: 1}}}, x: 2, ...input}",
+      "Result": {
+        "x": 2,
+      },
+      "ResultPath": "$.heap10",
+      "Type": "Pass",
+    },
+    "{x: 1, ...input, y: 2}": {
+      "InputPath": "$.input",
+      "Next": "1__{x: 1, ...input, y: 2}",
+      "ResultPath": "$.heap1",
       "Type": "Pass",
     },
   },
@@ -18132,7 +18513,7 @@ exports[`template literal strings 1`] = `
   "StartAt": "Initialize Functionless Context",
   "States": {
     " input.obj.str "hello"input.obj.items[0]": {
-      "Next": "1__return task({key:  input.obj.str "hello"input.obj.items[0]}) 2",
+      "Next": "1__return task({key:  input.obj.str "hello"input.obj.items[0]}) 1",
       "Parameters": {
         "string.$": "States.Format('{} hello {}',$.heap0,$.heap1)",
       },
@@ -18141,24 +18522,18 @@ exports[`template literal strings 1`] = `
     },
     "1__return task({key:  input.obj.str "hello"input.obj.items[0]})": {
       "End": true,
-      "InputPath": "$.heap4",
+      "InputPath": "$.heap3",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return task({key:  input.obj.str "hello"input.obj.items[0]}) 1": {
       "Next": "1__return task({key:  input.obj.str "hello"input.obj.items[0]})",
       "Parameters": {
-        "key.$": "$.heap3",
+        "key.$": "$.heap2.string",
       },
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap4",
-      "Type": "Task",
-    },
-    "1__return task({key:  input.obj.str "hello"input.obj.items[0]}) 2": {
-      "InputPath": "$.heap2.string",
-      "Next": "1__return task({key:  input.obj.str "hello"input.obj.items[0]}) 1",
       "ResultPath": "$.heap3",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "Initialize Functionless Context": {
       "Next": "return task({key:  input.obj.str "hello"input.obj.items[0]})",
@@ -18198,7 +18573,7 @@ exports[`template literal strings complex 1`] = `
       "Type": "Pass",
     },
     " hello input.obj.str ?? "default" "hello"input.obj.items[0] ?? await task()": {
-      "Next": "1__return task({key:  hello input.obj.str ?? "default" "hello"input.obj.ite 2",
+      "Next": "1__return task({key:  hello input.obj.str ?? "default" "hello"input.obj.ite 1",
       "Parameters": {
         "string.$": "States.Format('{} hello hello {}',$.heap1,$.heap4)",
       },
@@ -18213,24 +18588,18 @@ exports[`template literal strings complex 1`] = `
     },
     "1__return task({key:  hello input.obj.str ?? "default" "hello"input.obj.ite": {
       "End": true,
-      "InputPath": "$.heap7",
+      "InputPath": "$.heap6",
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return task({key:  hello input.obj.str ?? "default" "hello"input.obj.ite 1": {
       "Next": "1__return task({key:  hello input.obj.str ?? "default" "hello"input.obj.ite",
       "Parameters": {
-        "key.$": "$.heap6",
+        "key.$": "$.heap5.string",
       },
       "Resource": "__REPLACED_TOKEN",
-      "ResultPath": "$.heap7",
-      "Type": "Task",
-    },
-    "1__return task({key:  hello input.obj.str ?? "default" "hello"input.obj.ite 2": {
-      "InputPath": "$.heap5.string",
-      "Next": "1__return task({key:  hello input.obj.str ?? "default" "hello"input.obj.ite 1",
       "ResultPath": "$.heap6",
-      "Type": "Pass",
+      "Type": "Task",
     },
     "Initialize Functionless Context": {
       "Next": "return task({key:  hello input.obj.str ?? "default" "hello"input.obj.items[",
@@ -21343,14 +21712,6 @@ exports[`use context in object 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
   "States": {
-    "1__return {a: context.Execution.Name}": {
-      "End": true,
-      "Parameters": {
-        "a.$": "$.heap0",
-      },
-      "ResultPath": "$",
-      "Type": "Pass",
-    },
     "Initialize Functionless Context": {
       "Next": "return {a: context.Execution.Name}",
       "Parameters": {
@@ -21363,9 +21724,11 @@ exports[`use context in object 1`] = `
       "Type": "Pass",
     },
     "return {a: context.Execution.Name}": {
-      "InputPath": "$$.Execution.Name",
-      "Next": "1__return {a: context.Execution.Name}",
-      "ResultPath": "$.heap0",
+      "End": true,
+      "Parameters": {
+        "a.$": "$$.Execution.Name",
+      },
+      "ResultPath": "$",
       "Type": "Pass",
     },
   },

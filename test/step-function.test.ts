@@ -398,6 +398,113 @@ test("spread constant array and object", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("depth", () => {
+  const definition = new StepFunction(stack, "sfn", async (input) => {
+    return {
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+    };
+  }).definition;
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("spread any object", () => {
+  const definition = new StepFunction(stack, "fn", (input) => {
+    return {
+      a: {
+        ...input,
+      },
+      b: {
+        x: 1,
+        ...input,
+        y: 2,
+      },
+      c: {
+        ...input,
+        ...input,
+        ...input,
+      },
+      d: {
+        // @ts-ignore
+        x: { y: 1 },
+        ...{ x: 1, y: 2 },
+        y: 3,
+      },
+      e: {
+        ...{ ...{ ...{ x: 1 } } },
+        x: 2,
+        ...input,
+      },
+    };
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("return void", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {
@@ -778,15 +885,15 @@ test("put an event bus event", () => {
     }
   ).definition;
 
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+
   expectTaskToMatch(
     definition,
     {
       Parameters: { Entries: [{ EventBusName: bus.eventBusArn }] },
     },
-    "1__await bus.putEvents"
+    "await bus.putEvent"
   );
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("put multiple event bus events", () => {
@@ -1077,7 +1184,7 @@ test("return a single Lambda Function call", () => {
     {
       Resource: getPerson.resource.functionArn,
     },
-    "1__return getPerson"
+    "return getPerson"
   );
 });
 
@@ -1481,6 +1588,8 @@ test("conditionally call DynamoDB and then void", () => {
     }
   ).definition;
 
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+
   expectTaskToMatch(
     definition,
     {
@@ -1488,10 +1597,8 @@ test("conditionally call DynamoDB and then void", () => {
         TableName: personTable.resource.tableName,
       },
     },
-    "1__await $AWS.DynamoDB.GetItem"
+    "await $AWS.DynamoDB.GetItem"
   );
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("waitFor literal number of seconds", () => {

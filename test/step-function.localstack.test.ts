@@ -364,6 +364,7 @@ runtimeTestSuite<
           objIn = (<StepFunctionError>err).cause;
         }
         return {
+          ...{ a: 0, b: 2, c: 3 },
           partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4),
           partitionRef: $SFN.partition(input.arr, input.part),
           range: $SFN.range(4, 30, 5),
@@ -385,21 +386,34 @@ runtimeTestSuite<
           getFunc: $SFN.getItem(input.arr, 0),
           getFuncRef: $SFN.getItem(input.arr, input.part),
           objAccess,
+          ...input.range,
+          ...{ m: 0, n: 5, o: 6 },
           inRef: input.part in input.arr,
           inRefFalse: input.large in input.arr,
           objIn,
-          length: [1, 2, 3, 4].length,
+          getLength: [1, 2, 3, 4].length,
           lengthRef: input.arr.length,
           uniqueLength: $SFN.unique(input.arr).length,
           lengthObj: input.lengthObj.length,
+          ...input.lengthObj,
           emptyLength: input.emptyArr.length,
           slice: input.arr.slice(1, 3),
           sliceRef: input.arr.slice(input.part, input.end),
           sliceRefStart: input.arr.slice(input.end),
+          ...{ x: 7, y: 8, z: 9, a: 1, m: 4 },
         };
       });
     },
     {
+      a: 1,
+      b: 2,
+      c: 3,
+      m: 4,
+      n: 5,
+      o: 6,
+      x: 7,
+      y: 8,
+      z: 9,
       partition: [
         [1, 2, 3, 4],
         [5, 6],
@@ -424,7 +438,8 @@ runtimeTestSuite<
       inRef: true,
       inRefFalse: false,
       objIn: "Reference element access is not valid for objects.",
-      length: 4,
+      getLength: 4,
+      length: "a",
       lengthRef: 7,
       uniqueLength: 4,
       lengthObj: "a",
@@ -432,6 +447,9 @@ runtimeTestSuite<
       slice: [2, 3],
       sliceRef: [3, 1],
       sliceRefStart: [2, 3, 4],
+      start: 1,
+      end: 11,
+      step: 2,
     },
     {
       range: { start: 1, end: 11, step: 2 },
@@ -446,6 +464,90 @@ runtimeTestSuite<
       emptyArr: [],
       key: "start" as const,
     }
+  );
+
+  test(
+    "depth",
+    (parent) => {
+      return new StepFunction(parent, "sfn", async (input) => {
+        return {
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+        };
+      });
+    },
+    { a: 1 },
+    { a: 1 }
   );
 
   test(
@@ -1968,6 +2070,15 @@ runtimeTestSuite<
             forV = `${forV}${h}${l}`;
           }
 
+          const arr = [{ a: "a", b: [1] }];
+
+          const sfnMap = await $SFN.map(arr, ({ a, b: [c] }) => a + c);
+
+          // just should not fail
+          await $SFN.forEach(arr, ({ a, b: [c] }) => {
+            `${a} ${c}`;
+          });
+
           let tr;
           try {
             throw new Error("hi");
@@ -1981,6 +2092,7 @@ runtimeTestSuite<
             map,
             forV,
             tr,
+            sfnMap,
           };
         }
       ),
@@ -1990,6 +2102,7 @@ runtimeTestSuite<
       map: "ab",
       forV: "ab",
       tr: "hi",
+      sfnMap: ["a1"],
     },
     {
       a: "hello",

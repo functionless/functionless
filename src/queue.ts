@@ -495,8 +495,11 @@ abstract class BaseQueue<Message>
                   Resource: "arn:aws:states:::aws-sdk:sqs:sendMessage",
                   Parameters: {
                     ...input.value,
-                    "MessageBody.$":
-                      ASLGraph.intrinsicJsonToString(messageBodyJsonPath),
+                    "MessageBody.$": ASLGraph.renderIntrinsicFunction(
+                      ASLGraph.intrinsicJsonToString(
+                        ASLGraph.jsonPath(messageBodyJsonPath)
+                      )
+                    ),
                     QueueUrl: this.queueUrl,
                   },
                   Next: ASLGraph.DeferNext,
@@ -613,11 +616,13 @@ abstract class BaseQueue<Message>
                   },
                   ResultPath: heapVar,
                   Next: "send message batch",
-                  Iterator: {
-                    StartAt: "serialize Message",
-                    States: {
+                  Iterator: context.aslGraphToStates({
+                    startState: "serialize Message",
+                    states: {
                       "serialize Message": ASLGraph.assignJsonPathOrIntrinsic(
-                        ASLGraph.intrinsicJsonToString("$.entry.MessageBody"),
+                        ASLGraph.intrinsicJsonToString(
+                          ASLGraph.jsonPath("$.entry.MessageBody")
+                        ),
                         "$.entry",
                         "MessageBody",
                         "unwrap Message"
@@ -630,7 +635,7 @@ abstract class BaseQueue<Message>
                         End: true,
                       },
                     },
-                  },
+                  }),
                 },
                 "send message batch": {
                   Type: "Task",
@@ -775,11 +780,13 @@ abstract class BaseQueue<Message>
                       Parameters: {
                         "message.$": "$$.Map.Item.Value",
                       },
-                      Iterator: {
-                        StartAt: "JsonParse",
-                        States: {
+                      Iterator: context.aslGraphToStates({
+                        startState: "JsonParse",
+                        states: {
                           JsonParse: ASLGraph.assignJsonPathOrIntrinsic(
-                            ASLGraph.intrinsicStringToJson("$.message.Body"),
+                            ASLGraph.intrinsicStringToJson(
+                              ASLGraph.jsonPath("$.message.Body")
+                            ),
                             "$.message",
                             "Message",
                             "UnwrapMessage"
@@ -792,7 +799,7 @@ abstract class BaseQueue<Message>
                             End: true,
                           },
                         },
-                      },
+                      }),
                     },
                   }
                 : {}),
