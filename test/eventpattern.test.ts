@@ -1394,7 +1394,22 @@ test("error when using rest parameters", () => {
       // event should be inferred
       const time: string = event.detail.time;
       time;
-    })
+    }),
+    {
+      retryAttempts: 1,
+    }
+  );
+
+  bus.all().pipe(
+    new Function(stack, "F", async (event) => {
+      // event should be inferred
+      const time: string = event.detail.time;
+      time;
+    }),
+    // @ts-expect-error
+    {
+      retryAttempts: "1",
+    }
   );
 
   bus.all().pipe(
