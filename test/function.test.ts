@@ -11,7 +11,6 @@ import {
   $AWS,
   Table,
 } from "../src";
-import { reflect } from "../src/reflect";
 import { appsyncTestCase } from "./util";
 
 interface Item {
@@ -46,38 +45,32 @@ beforeEach(() => {
 test("call function", () => {
   const fn1 = Function.fromFunction<{ arg: string }, Item>(lambda);
 
-  appsyncTestCase(
-    reflect((context: AppsyncContext<{ arg: string }>) => {
-      return fn1(context.arguments);
-    })
-  );
+  appsyncTestCase((context: AppsyncContext<{ arg: string }>) => {
+    return fn1(context.arguments);
+  });
 });
 
 test("call function and conditional return", () => {
   const fn1 = Function.fromFunction<{ arg: string }, Item>(lambda);
 
-  appsyncTestCase(
-    reflect(async (context: AppsyncContext<{ arg: string }>) => {
-      const result = await fn1(context.arguments);
+  appsyncTestCase(async (context: AppsyncContext<{ arg: string }>) => {
+    const result = await fn1(context.arguments);
 
-      if (result.id === "sam") {
-        return true;
-      } else {
-        return false;
-      }
-    })
-  );
+    if (result.id === "sam") {
+      return true;
+    } else {
+      return false;
+    }
+  });
 });
 
 test("call function omitting optional arg", () => {
   const fn2 = Function.fromFunction<{ arg: string; optional?: string }, Item>(
     lambda
   );
-  appsyncTestCase(
-    reflect((context: AppsyncContext<{ arg: string }>) => {
-      return fn2(context.arguments);
-    })
-  );
+  appsyncTestCase((context: AppsyncContext<{ arg: string }>) => {
+    return fn2(context.arguments);
+  });
 });
 
 test("call function including optional arg", () => {
@@ -85,31 +78,25 @@ test("call function including optional arg", () => {
     lambda
   );
 
-  appsyncTestCase(
-    reflect((context: AppsyncContext<{ arg: string }>) => {
-      return fn2({ arg: context.arguments.arg, optional: "hello" });
-    })
-  );
+  appsyncTestCase((context: AppsyncContext<{ arg: string }>) => {
+    return fn2({ arg: context.arguments.arg, optional: "hello" });
+  });
 });
 
 test("call function including with no parameters", () => {
   const fn3 = Function.fromFunction<undefined, Item>(lambda);
 
-  appsyncTestCase(
-    reflect(() => {
-      return fn3();
-    })
-  );
+  appsyncTestCase(() => {
+    return fn3();
+  });
 });
 
 test("call function including with void result", () => {
   const fn4 = Function.fromFunction<{ arg: string }, void>(lambda);
 
-  appsyncTestCase(
-    reflect((context: AppsyncContext<{ arg: string }>) => {
-      return fn4(context.arguments);
-    })
-  );
+  appsyncTestCase((context: AppsyncContext<{ arg: string }>) => {
+    return fn4(context.arguments);
+  });
 });
 
 test("set on success bus", () => {

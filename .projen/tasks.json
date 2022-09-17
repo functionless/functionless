@@ -195,6 +195,9 @@
       },
       "steps": [
         {
+          "exec": "tsc -p ./tsconfig.dev.json --noEmit"
+        },
+        {
           "spawn": "test:fast"
         },
         {

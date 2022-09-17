@@ -266,6 +266,8 @@ project.testTask.reset();
 project.testTask.env("TEST_DEPLOY_TARGET", "AWS");
 project.testTask.env("NODE_OPTIONS", "--max-old-space-size=6144");
 
+project.testTask.exec("tsc -p ./tsconfig.dev.json --noEmit");
+
 const testFast = project.addTask("test:fast", {
   exec: "jest --passWithNoTests --all --updateSnapshot --testPathIgnorePatterns '(localstack|runtime)'",
 });

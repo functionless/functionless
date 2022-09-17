@@ -5,7 +5,6 @@ import {
   DynamicProps,
   IEventBus,
   IntegrationWithEventBus,
-  IntegrationWithEventBusProps,
   pipe,
 } from "./event-bus";
 import { IRule } from "./rule";
@@ -75,27 +74,28 @@ export class EventTransform<
    *
    * @see Rule.pipe for more details on pipe.
    */
-  public pipe<I extends IntegrationWithEventBus<Out, any>>(
+  public pipe<
+    I extends IntegrationWithEventBus<Out, Props>,
+    Props extends object | undefined
+  >(
     integration: NonEventBusIntegration<I>,
-    ...props: Parameters<DynamicProps<IntegrationWithEventBusProps<I>>>
+    ...props: Parameters<DynamicProps<Props>>
   ): void;
   public pipe(
     callback: (
       targetInput: aws_events.RuleTargetInput
     ) => aws_events.IRuleTarget
   ): void;
-  public pipe<I extends IntegrationWithEventBus<Out>>(
+  public pipe<
+    I extends IntegrationWithEventBus<Out, Props>,
+    Props extends object | undefined
+  >(
     integration:
       | NonEventBusIntegration<I>
       | ((targetInput: aws_events.RuleTargetInput) => aws_events.IRuleTarget),
-    ...props: Parameters<DynamicProps<IntegrationWithEventBusProps<I>>>
+    ...props: Parameters<DynamicProps<Props>>
   ): void {
-    pipe(
-      this.rule,
-      integration,
-      props[0] as IntegrationWithEventBusProps<I>,
-      this.targetInput
-    );
+    pipe(this.rule, integration, props[0] as any, this.targetInput);
   }
 }
 
