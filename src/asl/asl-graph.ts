@@ -1527,7 +1527,8 @@ export namespace ASLGraph {
     literalObject: ASLGraph.LiteralValue<
       Record<string, ASLGraph.LiteralValueType>
     >,
-    value: ASLGraph.LiteralValue | ASLGraph.JsonPath
+    value: ASLGraph.LiteralValue | ASLGraph.JsonPath,
+    containsJsonPath?: boolean
   ): ASLGraph.LiteralValue<Record<string, ASLGraph.LiteralValueType>> {
     const obj = { ...literalObject.value };
     delete obj[`${key}.$`];
@@ -1539,7 +1540,8 @@ export namespace ASLGraph {
       },
       ASLGraph.isJsonPath(value) ||
         literalObject.containsJsonPath ||
-        value.containsJsonPath
+        value.containsJsonPath ||
+        containsJsonPath
     );
   }
 
@@ -1560,7 +1562,8 @@ export namespace ASLGraph {
       return setKeyOnLiteralObject(
         isJsonPath ? key.substring(0, key.length - 2) : key,
         obj,
-        isJsonPath ? ASLGraph.jsonPath(value) : ASLGraph.literalValue(value)
+        isJsonPath ? ASLGraph.jsonPath(value) : ASLGraph.literalValue(value),
+        literalObject2.containsJsonPath
       );
     }, literalObject);
   }

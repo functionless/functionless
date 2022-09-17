@@ -22,7 +22,6 @@ import {
   Identifier,
   SpreadAssignExpr,
   PropAssignExpr,
-  ObjectLiteralExpr,
 } from "../expression";
 import {
   isBlockStmt,
@@ -2077,135 +2076,87 @@ export class ASL {
             );
           }
 
-          /**
-           * Evaluate each property and merge together any simple properties or literal spreads.
-           *
-           * Outputs an in-order list of object literals and the objects to create the final literal.
-           */
-          const backwardsAssignmentOutputs = expr.properties.reduce(
-            (
-              partitions: (
+          // evaluate all of the properties in the object literal
+          const allOutputs = expr.properties.flatMap((prop, i) => {
+            const propValueOutput =
+              i === expr.properties.length - 1
+                ? evalExprToJsonPathOrLiteral(prop.expr)
+                : evalSafeOutput(prop);
+
+            if (isSpreadAssignExpr(prop)) {
+              if (ASLGraph.isLiteralValue(propValueOutput)) {
+                if (
+                  propValueOutput.value === undefined ||
+                  propValueOutput.value === null
+                ) {
+                  return [];
+                } else if (!ASLGraph.isLiteralObject(propValueOutput)) {
+                  throw new SynthError(
+                    ErrorCodes.Invalid_Input,
+                    "Object spread can be only be done on objects, undefined, or null."
+                  );
+                }
+              }
+
+              return propValueOutput;
+            } else {
+              const name = propertyName(prop);
+
+              return ASLGraph.literalValue(
+                ASLGraph.jsonAssignment(name, propValueOutput),
+                ASLGraph.isJsonPath(propValueOutput) ||
+                  propValueOutput.containsJsonPath
+              );
+            }
+          });
+
+          // try to merge the sequential literals together
+          const assignmentOutputs = allOutputs
+            .reduce(
+              (
+                partitions: (
+                  | ASLGraph.JsonPath
+                  | ASLGraph.LiteralValue<
+                      Record<string, ASLGraph.LiteralValueType>
+                    >
+                )[],
+                output
+              ): (
                 | ASLGraph.JsonPath
                 | ASLGraph.LiteralValue<
                     Record<string, ASLGraph.LiteralValueType>
                   >
-              )[],
-              prop,
-              i
-            ): (
-              | ASLGraph.JsonPath
-              | ASLGraph.LiteralValue<Record<string, ASLGraph.LiteralValueType>>
-            )[] => {
-              const [prev, ...rest] = partitions;
-              const propValueOutput = evalSafeOutput(expr);
+              )[] => {
+                const [prev, ...rest] = partitions;
 
-              if (isSpreadAssignExpr(prop)) {
-                // ... { x: 1 }
-                if (ASLGraph.isLiteralValue(propValueOutput)) {
-                  if (
-                    propValueOutput.value === undefined ||
-                    propValueOutput.value === null
-                  ) {
-                    // ...undefined
-                    return partitions;
-                  } else if (!ASLGraph.isLiteralObject(propValueOutput)) {
-                    throw new SynthError(
-                      ErrorCodes.Invalid_Input,
-                      "Object spread can be only be done on objects, undefined, or null."
-                    );
-                  }
-
-                  if (!prev) {
-                    return [propValueOutput, ...partitions];
-                  } else if (ASLGraph.isJsonPath(prev)) {
-                    // if the previous was a json path, return whatever the output is.
-                    return [propValueOutput, prev, ...rest];
-                  }
-
-                  // both the previous object and the current are literals, merge them together.
-                  const merged = ASLGraph.mergeLiteralObject(
-                    prev,
-                    propValueOutput
-                  );
-
+                if (!prev) {
+                  return [output, ...rest];
+                } else if (
+                  ASLGraph.isJsonPath(prev) ||
+                  ASLGraph.isJsonPath(output)
+                ) {
+                  return [output, ...partitions];
+                } else {
+                  // both are literal objects, merge them
+                  const merged = ASLGraph.mergeLiteralObject(prev, output);
                   return [merged, ...rest];
                 }
+              },
+              []
+            )
+            .reverse();
 
-                return [propValueOutput, ...partitions];
-              } else {
-                const name = propertyName(prop);
-
-                const currentLiteral =
-                  prev && ASLGraph.isLiteralValue(prev)
-                    ? prev
-                    : ASLGraph.literalValue({});
-
-                const updatedLiteral = ASLGraph.setKeyOnLiteralObject(
-                  name,
-                  currentLiteral,
-                  propValueOutput
-                );
-
-                if (!prev || ASLGraph.isLiteralValue(prev)) {
-                  return [updatedLiteral, ...rest];
-                } else {
-                  return [updatedLiteral, prev, ...rest];
-                }
-              }
-
-              /**
-               * A json path value may be mutated late in the literal object assignment.
-               * Re-reference the json path to ensure the value doesn't change.
-               * ```ts
-               * let b = { x: 0 };
-               * {
-               *    a: b,
-               *    ...b,
-               *    c: (b = { x: 1, y: 2 }),
-               *    ...b,
-               * }
-               * ```
-               * in ASL
-               * ```
-               * let b = {x: 0};
-               * let t0 = b;
-               * let t1 = b;
-               * let t2 = (b = { x: 1, y: 2});
-               * {
-               *    a: t0,
-               *    ...t1,
-               *    c: t2,
-               *    ...b // no mutation after the last assignment, this is safe to be a reference
-               * }
-               * ```
-               */
-              function evalSafeOutput(
-                expr: ObjectLiteralExpr
-              ): ASLGraph.LiteralValue | ASLGraph.JsonPath {
-                const output = evalExprToJsonPathOrLiteral(prop.expr);
-                return i < expr.properties.length - 1 &&
-                  ASLGraph.isJsonPath(output)
-                  ? assignValue(output)
-                  : output;
-              }
-            },
-            []
-          );
-
-          if (backwardsAssignmentOutputs.length === 0) {
+          if (assignmentOutputs.length === 0) {
             // empty object
             return ASLGraph.literalValue({});
-          } else if (
-            backwardsAssignmentOutputs.length === 1 &&
-            backwardsAssignmentOutputs[0]
-          ) {
+          } else if (assignmentOutputs.length === 1 && assignmentOutputs[0]) {
             // all literal or only one spread object
-            return backwardsAssignmentOutputs[0];
+            return assignmentOutputs[0];
           } else {
             // merge jsonMath(1, jsonMarge(2, 3))
             // we know there are at least 2 items in the array, normalize all to json path and merge in order
             return this.assignJsonPathOrIntrinsic(
-              backwardsAssignmentOutputs
+              assignmentOutputs
                 .map((output): ASLGraph.IntrinsicFunction | ASLGraph.JsonPath =>
                   ASLGraph.isJsonPath(output)
                     ? output
@@ -2216,8 +2167,41 @@ export class ASL {
                       )
                 )
                 // items are in reverse order, reduce right
-                .reduceRight(ASLGraph.intrinsicJsonMerge)
+                .reduce(ASLGraph.intrinsicJsonMerge)
             );
+          }
+
+          /**
+           * A json path value may be mutated late in the literal object assignment.
+           * Re-reference the json path to ensure the value doesn't change.
+           * ```ts
+           * let b = { x: 0 };
+           * {
+           *    a: b,
+           *    ...b,
+           *    c: (b = { x: 1, y: 2 }),
+           *    ...b,
+           * }
+           * ```
+           * in ASL
+           * ```
+           * let b = {x: 0};
+           * let t0 = b;
+           * let t1 = b;
+           * let t2 = (b = { x: 1, y: 2});
+           * {
+           *    a: t0,
+           *    ...t1,
+           *    c: t2,
+           *    ...b // no mutation after the last assignment, this is safe to be a reference
+           * }
+           * ```
+           */
+          function evalSafeOutput(
+            prop: PropAssignExpr | SpreadAssignExpr
+          ): ASLGraph.LiteralValue | ASLGraph.JsonPath {
+            const output = evalExprToJsonPathOrLiteral(prop.expr);
+            return ASLGraph.isJsonPath(output) ? assignValue(output) : output;
           }
         }
       );
@@ -4888,18 +4872,7 @@ export class ASL {
    */
   public evalParameterDeclForStateParameter(
     node: FunctionlessNode,
-    ...parameters: {
-      parameter: ParameterDecl | undefined;
-      valuePath: ASLGraph.JsonPath;
-      /**
-       * When true and the parameter requires states outside of the Parameter object,
-       * a new name will created in the Parameter object and assigned the valuePath.
-       *
-       * This is useful for Map states where the $$.Map.Item.* values
-       * are not present inside of the map states.
-       */
-      reassignBoundParameters?: boolean;
-    }[]
+    ...parameters: ASL.EvalParameterDeclEntry[]
   ): [
     Record<string, Parameters>,
     ASLGraph.NodeState | ASLGraph.SubState | undefined
@@ -4908,29 +4881,20 @@ export class ASL {
     const params = Object.fromEntries(
       parameters
         .filter(
-          (
-            parameter
-          ): parameter is {
-            parameter: ParameterDecl & { name: Identifier };
-            valuePath: ASLGraph.JsonPath;
-          } => isIdentifier(parameter.parameter?.name)
+          (parameter): parameter is ASL.EvalParameterDeclEntry<Identifier> =>
+            isIdentifier(parameter.parameter?.name)
         )
         .map(
           ({ parameter, valuePath: { jsonPath } }) =>
-            [`${this.getIdentifierName(parameter.name)}.$`, jsonPath] as const
+            [`${this.getIdentifierName(parameter!.name)}.$`, jsonPath] as const
         )
     );
 
-    // Parameters with binding names because variable assignments.
-    const evaledBinds = parameters
+    // Parameters with binding names become variable assignments.
+    const binds = parameters
       .filter(
-        (
-          parameter
-        ): parameter is {
-          parameter: ParameterDecl & { name: BindingPattern };
-          valuePath: ASLGraph.JsonPath;
-          reassignBoundParameters?: boolean;
-        } => isBindingPattern(parameter.parameter?.name)
+        (parameter): parameter is ASL.EvalParameterDeclEntry<BindingPattern> =>
+          isBindingPattern(parameter.parameter?.name)
       )
       .map(({ parameter, valuePath, reassignBoundParameters }) => {
         const variableName = reassignBoundParameters
@@ -4938,27 +4902,29 @@ export class ASL {
           : valuePath.jsonPath;
 
         return {
+          // some contexts cannot use the same jsonPath in Parameter and assignments like Map states.
+          // if reassignBoundParameters is true, create a new variable name and write up the references.
           reassign: reassignBoundParameters
             ? ([`${variableName}.$`, valuePath.jsonPath] as const)
             : undefined,
           states: this.evalAssignment(
-            parameter.name,
+            parameter!.name,
             ASLGraph.jsonPath(variableName)
           ),
         };
       });
 
-    const states = evaledBinds.map(({ states }) => states);
-
-    const additionalParams = Object.fromEntries(
-      evaledBinds
-        .filter((bind) => !!bind.reassign)
-        .map(({ reassign }) => reassign!)
-    );
-
     return [
-      { ...params, ...additionalParams },
-      ASLGraph.joinSubStates(node, ...states),
+      {
+        ...params,
+        // parameters generated by the binding elements
+        ...Object.fromEntries(
+          binds
+            .filter((bind) => !!bind.reassign)
+            .map(({ reassign }) => reassign!)
+        ),
+      },
+      ASLGraph.joinSubStates(node, ...binds.map(({ states }) => states)),
     ];
   }
 
@@ -5433,6 +5399,21 @@ function analyzeFlow(node: FunctionlessNode): FlowResult {
 }
 
 export namespace ASL {
+  export interface EvalParameterDeclEntry<
+    Name extends BindingName = BindingName
+  > {
+    parameter: (ParameterDecl & { name: Name }) | undefined;
+    valuePath: ASLGraph.JsonPath;
+    /**
+     * When true and the parameter requires states outside of the Parameter object,
+     * a new name will created in the Parameter object and assigned the valuePath.
+     *
+     * This is useful for Map states where the $$.Map.Item.* values
+     * are not present inside of the map states.
+     */
+    reassignBoundParameters?: boolean;
+  }
+
   export function isTruthy(v: string): Condition {
     return and(
       isPresentAndNotNull(v),
