@@ -131,11 +131,7 @@ export interface EventInvokeConfigOptions<Payload, Output>
  *                         empty to be inferred. ex: `Function<Payload1, Output1 | Output2>`.
  */
 export interface IFunction<in Payload, Output>
-  extends Integration<
-    "Function",
-    ConditionalFunction<Payload, Output>,
-    EventBusTargetIntegration<Payload, FunctionEventBusTargetProps | undefined>
-  > {
+  extends Integration<"Function", ConditionalFunction<Payload, Output>> {
   readonly functionlessKind: typeof Function.FunctionlessType;
   readonly kind: typeof Function.FunctionlessType;
   readonly resource: aws_lambda.IFunction;

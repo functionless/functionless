@@ -25,7 +25,12 @@ test("node.exit() from catch surrounded by while", () => {
     new BlockStmt(emptySpan(), [
       new ExprStmt(
         emptySpan(),
-        new CallExpr(emptySpan(), new Identifier(emptySpan(), "task"), [])
+        new CallExpr(
+          emptySpan(),
+          new Identifier(emptySpan(), "task"),
+          [],
+          false
+        )
       ),
     ])
   );

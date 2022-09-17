@@ -1,14 +1,6 @@
 import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
 import "jest";
-import {
-  Table,
-  $util,
-  AppsyncContext,
-  reflect,
-  $AWS,
-  ITable,
-  AnyTable,
-} from "../src";
+import { Table, $util, AppsyncContext, $AWS, ITable, AnyTable } from "../src";
 import { appsyncTestCase } from "./util";
 
 interface Item {
@@ -295,7 +287,39 @@ export async function typeCheckSortKey() {
 
 test.each([fromTable, newTable])("get item", (table) => {
   appsyncTestCase(
-    reflect(
+    async (
+      context: AppsyncContext<{ id: string }>
+    ): Promise<Item | undefined> => {
+      return table.appsync.getItem({
+        key: {
+          id: {
+            S: context.arguments.id,
+          },
+        },
+      });
+    }
+  );
+});
+
+test.each([fromTableSortKey, newTableSortKey])("get item", (table) => {
+  appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
+    return table.appsync.getItem({
+      key: {
+        id: {
+          S: context.arguments.id,
+        },
+        name: {
+          N: "1",
+        },
+      },
+    });
+  });
+});
+
+test.each([fromTable, newTable])(
+  "get item and set consistentRead:true",
+  (table) => {
+    appsyncTestCase(
       async (
         context: AppsyncContext<{ id: string }>
       ): Promise<Item | undefined> => {
@@ -305,15 +329,17 @@ test.each([fromTable, newTable])("get item", (table) => {
               S: context.arguments.id,
             },
           },
+          consistentRead: true,
         });
       }
-    )
-  );
-});
+    );
+  }
+);
 
-test.each([fromTableSortKey, newTableSortKey])("get item", (table) => {
-  appsyncTestCase(
-    reflect(async (context: AppsyncContext<{ id: string }>) => {
+test.each([fromTableSortKey, newTableSortKey])(
+  "get item and set consistentRead:true",
+  (table) => {
+    appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
       return table.appsync.getItem({
         key: {
           id: {
@@ -323,91 +349,47 @@ test.each([fromTableSortKey, newTableSortKey])("get item", (table) => {
             N: "1",
           },
         },
+        consistentRead: true,
       });
-    })
-  );
-});
-
-test.each([fromTable, newTable])(
-  "get item and set consistentRead:true",
-  (table) => {
-    appsyncTestCase(
-      reflect(
-        async (
-          context: AppsyncContext<{ id: string }>
-        ): Promise<Item | undefined> => {
-          return table.appsync.getItem({
-            key: {
-              id: {
-                S: context.arguments.id,
-              },
-            },
-            consistentRead: true,
-          });
-        }
-      )
-    );
-  }
-);
-
-test.each([fromTableSortKey, newTableSortKey])(
-  "get item and set consistentRead:true",
-  (table) => {
-    appsyncTestCase(
-      reflect(async (context: AppsyncContext<{ id: string }>) => {
-        return table.appsync.getItem({
-          key: {
-            id: {
-              S: context.arguments.id,
-            },
-            name: {
-              N: "1",
-            },
-          },
-          consistentRead: true,
-        });
-      })
-    );
+    });
   }
 );
 
 test.each([fromTable, newTable])("put item", (table) => {
   appsyncTestCase(
-    reflect(
-      async (
-        context: AppsyncContext<{ id: string; name: number }>
-      ): Promise<Item | undefined> => {
-        return table.appsync.putItem({
-          key: {
-            id: {
+    async (
+      context: AppsyncContext<{ id: string; name: number }>
+    ): Promise<Item | undefined> => {
+      return table.appsync.putItem({
+        key: {
+          id: {
+            S: context.arguments.id,
+          },
+        },
+        attributeValues: {
+          name: {
+            N: `${context.arguments.name}`,
+          },
+        },
+        condition: {
+          expression: "#name = :val",
+          expressionNames: {
+            "#name": "name",
+          },
+          expressionValues: {
+            ":val": {
               S: context.arguments.id,
             },
           },
-          attributeValues: {
-            name: {
-              N: `${context.arguments.name}`,
-            },
-          },
-          condition: {
-            expression: "#name = :val",
-            expressionNames: {
-              "#name": "name",
-            },
-            expressionValues: {
-              ":val": {
-                S: context.arguments.id,
-              },
-            },
-          },
-        });
-      }
-    )
+        },
+      });
+    }
   );
 });
 
 test.each([fromTableSortKey, newTableSortKey])("put item", (table) => {
   appsyncTestCase(
-    reflect(async (context: AppsyncContext<{ id: string; name: number }>) => {
+    async (context: AppsyncContext<{ id: string; name: number }>) => {
       return table.appsync.putItem({
         key: {
           id: {
@@ -430,37 +412,58 @@ test.each([fromTableSortKey, newTableSortKey])("put item", (table) => {
           },
         },
       });
-    })
+    }
   );
 });
 
 test.each([fromTable, newTable])("update item", (table) => {
   appsyncTestCase(
-    reflect(
-      async (
-        context: AppsyncContext<{ id: string }>
-      ): Promise<Item | undefined> => {
-        return table.appsync.updateItem({
-          key: {
-            id: {
-              S: context.arguments.id,
-            },
+    async (
+      context: AppsyncContext<{ id: string }>
+    ): Promise<Item | undefined> => {
+      return table.appsync.updateItem({
+        key: {
+          id: {
+            S: context.arguments.id,
           },
-          update: {
-            expression: "#name = #name + 1",
-            expressionNames: {
-              "#name": "name",
-            },
+        },
+        update: {
+          expression: "#name = #name + 1",
+          expressionNames: {
+            "#name": "name",
           },
-        });
-      }
-    )
+        },
+      });
+    }
   );
 });
 
 test.each([fromTableSortKey, newTableSortKey])("update item", (table) => {
+  appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
+    return table.appsync.updateItem({
+      key: {
+        id: {
+          S: context.arguments.id,
+        },
+        name: {
+          N: "1",
+        },
+      },
+      update: {
+        expression: "#name = #name + 1",
+        expressionNames: {
+          "#name": "name",
+        },
+      },
+    });
+  });
+});
+
+test.each([fromTableSortKey, newTableSortKey])("update item", (table) => {
   appsyncTestCase(
-    reflect(async (context: AppsyncContext<{ id: string }>) => {
+    async (
+      context: AppsyncContext<{ id: string }>
+    ): Promise<Item | undefined> => {
       return table.appsync.updateItem({
         key: {
           id: {
@@ -477,71 +480,19 @@ test.each([fromTableSortKey, newTableSortKey])("update item", (table) => {
           },
         },
       });
-    })
-  );
-});
-
-test.each([fromTableSortKey, newTableSortKey])("update item", (table) => {
-  appsyncTestCase(
-    reflect(
-      async (
-        context: AppsyncContext<{ id: string }>
-      ): Promise<Item | undefined> => {
-        return table.appsync.updateItem({
-          key: {
-            id: {
-              S: context.arguments.id,
-            },
-            name: {
-              N: "1",
-            },
-          },
-          update: {
-            expression: "#name = #name + 1",
-            expressionNames: {
-              "#name": "name",
-            },
-          },
-        });
-      }
-    )
+    }
   );
 });
 
 test.each([fromTable, newTable])("delete item", (table) => {
   appsyncTestCase(
-    reflect(
-      async (
-        context: AppsyncContext<{ id: string }>
-      ): Promise<Item | undefined> => {
-        return table.appsync.deleteItem({
-          key: {
-            id: {
-              S: context.arguments.id,
-            },
-          },
-          condition: {
-            expression: "#name = #name + 1",
-            expressionNames: {
-              "#name": "name",
-            },
-          },
-        });
-      }
-    )
-  );
-});
-
-test.each([fromTableSortKey, newTableSortKey])("delete item", (table) => {
-  appsyncTestCase(
-    reflect(async (context: AppsyncContext<{ id: string }>) => {
+    async (
+      context: AppsyncContext<{ id: string }>
+    ): Promise<Item | undefined> => {
       return table.appsync.deleteItem({
         key: {
           id: {
             S: context.arguments.id,
-          },
-          name: {
-            N: "1",
           },
         },
         condition: {
@@ -551,38 +502,36 @@ test.each([fromTableSortKey, newTableSortKey])("delete item", (table) => {
           },
         },
       });
-    })
+    }
   );
+});
+
+test.each([fromTableSortKey, newTableSortKey])("delete item", (table) => {
+  appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
+    return table.appsync.deleteItem({
+      key: {
+        id: {
+          S: context.arguments.id,
+        },
+        name: {
+          N: "1",
+        },
+      },
+      condition: {
+        expression: "#name = #name + 1",
+        expressionNames: {
+          "#name": "name",
+        },
+      },
+    });
+  });
 });
 
 test.each([fromTable, newTable])("query", (table) => {
   appsyncTestCase(
-    reflect(
-      async (
-        context: AppsyncContext<{ id: string; sort: number }>
-      ): Promise<Item[]> => {
-        return (
-          await table.appsync.query({
-            query: {
-              expression: "id = :id and #name = :val",
-              expressionNames: {
-                "#name": "name",
-              },
-              expressionValues: {
-                ":id": $util.dynamodb.toDynamoDB(context.arguments.id),
-                ":val": $util.dynamodb.toDynamoDB(context.arguments.sort),
-              },
-            },
-          })
-        ).items;
-      }
-    )
-  );
-});
-
-test.each([fromTableSortKey, newTableSortKey])("query", (table) => {
-  appsyncTestCase(
-    reflect(async (context: AppsyncContext<{ id: string; sort: number }>) => {
+    async (
+      context: AppsyncContext<{ id: string; sort: number }>
+    ): Promise<Item[]> => {
       return (
         await table.appsync.query({
           query: {
@@ -597,6 +546,27 @@ test.each([fromTableSortKey, newTableSortKey])("query", (table) => {
           },
         })
       ).items;
-    })
+    }
+  );
+});
+
+test.each([fromTableSortKey, newTableSortKey])("query", (table) => {
+  appsyncTestCase(
+    async (context: AppsyncContext<{ id: string; sort: number }>) => {
+      return (
+        await table.appsync.query({
+          query: {
+            expression: "id = :id and #name = :val",
+            expressionNames: {
+              "#name": "name",
+            },
+            expressionValues: {
+              ":id": $util.dynamodb.toDynamoDB(context.arguments.id),
+              ":val": $util.dynamodb.toDynamoDB(context.arguments.sort),
+            },
+          },
+        })
+      ).items;
+    }
   );
 });

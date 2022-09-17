@@ -86,13 +86,7 @@ export const INTEGRATION_TYPE_KEYS = Object.values(INTEGRATION_TYPES);
 /**
  * All integration methods supported by functionless.
  */
-export interface IntegrationMethods<
-  F extends AnyFunction,
-  EventBusInteg extends EventBusTargetIntegration<
-    any,
-    any
-  > = EventBusTargetIntegration<any, any>
-> {
+export interface IntegrationMethods<F extends AnyFunction> {
   /**
    * Integrate with AppSync VTL applications.
    * @private
@@ -111,7 +105,7 @@ export interface IntegrationMethods<
    * @private
    */
   asl: (call: CallExpr, context: ASL) => ASLGraph.NodeResults;
-  eventBus: EventBusInteg;
+  eventBus: EventBusTargetIntegration<any, any>;
   /**
    * Native javascript code integrations that execute at runtime like Lambda.
    */
@@ -168,12 +162,8 @@ export interface IntegrationMethods<
  */
 export interface Integration<
   K extends string = string,
-  F extends AnyFunction = AnyFunction,
-  EventBus extends EventBusTargetIntegration<
-    any,
-    any
-  > = EventBusTargetIntegration<any, any>
-> extends Partial<IntegrationMethods<F, EventBus>> {
+  F extends AnyFunction = AnyFunction
+> extends Partial<IntegrationMethods<F>> {
   /**
    * Brand the Function, F, into this type so that sub-typing rules apply to the function signature.
    */
