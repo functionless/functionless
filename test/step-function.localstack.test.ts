@@ -19,6 +19,7 @@ import {
   HashAlgorithm,
   StepFunctionError,
   FunctionClosure,
+  Queue,
 } from "../src";
 import { makeIntegration } from "../src/integration";
 import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
@@ -70,8 +71,6 @@ runtimeTestSuite<
           res instanceof StepFunction ? [res, {}] : [res.sfn, res.outputs];
         funcRes.resource.grantStartExecution(role);
         funcRes.resource.grantRead(role);
-
-        console.log(JSON.stringify(res.definition, null, 2));
 
         return {
           outputs: {
@@ -2322,6 +2321,26 @@ runtimeTestSuite<
       stringArray: '["a",["b"],[[1]],[],{},{"a":1}]',
     },
     { val: 1, str: "blah" }
+  );
+
+  test(
+    "queue",
+    (scope) => {
+      const queue = new Queue<{ id: string }>(stack, "Queue");
+
+      return new StepFunction(scope, "q", async () => {
+        await queue.sendMessage({ MessageBody: { id: "hello" } });
+        await queue.sendMessageBatch({
+          Entries: [{ MessageBody: { id: "hello" }, Id: "1" }],
+        });
+        await queue.sendMessageBatch({
+          Entries: [{ MessageBody: { id: "hello" }, Id: "2" }],
+        });
+        await queue.receiveMessage();
+        await queue.purge();
+      });
+    },
+    null
   );
 });
 

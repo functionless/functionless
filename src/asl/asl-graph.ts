@@ -282,6 +282,7 @@ export namespace ASLGraph {
     props:
       | {
           End: true;
+          OutputPath?: string;
         }
       | {
           Next: string;
@@ -300,6 +301,7 @@ export namespace ASLGraph {
     props:
       | {
           End: true;
+          OutputPath?: string;
         }
       | {
           Next: string;
@@ -335,14 +337,17 @@ export namespace ASLGraph {
     props:
       | {
           End: true;
+          OutputPath?: string;
         }
       | {
           Next: string;
         },
     state: T
   ): T {
-    const [End, Next] =
-      "End" in props ? [props.End, undefined] : [undefined, props.Next];
+    const [End, Next, OutputPath] =
+      "End" in props
+        ? [props.End, undefined, props.OutputPath]
+        : [undefined, props.Next, undefined];
 
     if (isChoiceState(state)) {
       return {
@@ -360,6 +365,8 @@ export namespace ASLGraph {
         ...state,
         End: state.Next === ASLGraph.DeferNext ? End : state.End,
         Next: state.Next === ASLGraph.DeferNext ? Next : state.Next,
+        OutputPath:
+          state.Next === ASLGraph.DeferNext ? OutputPath : state.OutputPath,
       } as T;
     } else if (
       isTaskState(state) ||
@@ -376,12 +383,16 @@ export namespace ASLGraph {
           : undefined,
         End: state.Next === ASLGraph.DeferNext ? End : state.End,
         Next: state.Next === ASLGraph.DeferNext ? Next : state.Next,
+        OutputPath:
+          state.Next === ASLGraph.DeferNext ? OutputPath : state.OutputPath,
       } as T;
     } else if (isPassState(state)) {
       return {
         ...state,
         End: state.Next === ASLGraph.DeferNext ? End : state.End,
         Next: state.Next === ASLGraph.DeferNext ? Next : state.Next,
+        OutputPath:
+          state.Next === ASLGraph.DeferNext ? OutputPath : state.OutputPath,
       };
     }
     assertNever(state);
@@ -1941,12 +1952,18 @@ export namespace ASLGraph {
     return intrinsicFunction("States.Base64Decode", data);
   }
 
-  export type HashAlgorithm =
-    | "MD5"
-    | "SHA-1"
-    | "SHA-256"
-    | "SHA-384"
-    | "SHA-512";
+  export const HashAlgorithms = [
+    "MD5",
+    "SHA-1",
+    "SHA-256",
+    "SHA-384",
+    "SHA-512",
+  ] as const;
+
+  /**
+   * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-intrinsic-functions.html#asl-intrsc-func-hash-calc
+   */
+  export type HashAlgorithm = typeof HashAlgorithms[number];
 
   /**
    * States.Hash(data, algorithm)

@@ -355,7 +355,7 @@ export interface $SFN {
    * @param data - data to hash.
    * @param algorithm - algorithm to use.
    */
-  hash(data: any, algorithm: HashAlgorithm): string;
+  hash(data: any, algorithm: ASLGraph.HashAlgorithm): string;
   /**
    * Use the States.MathRandom intrinsic function to return a random number between the specified start and end number.
    * For example, you can use this function to distribute a specific task between two or more resources.
@@ -366,11 +366,6 @@ export interface $SFN {
    */
   random(start: number, end: number, seed?: number): number;
 }
-
-/**
- * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-intrinsic-functions.html#asl-intrsc-func-hash-calc
- */
-export type HashAlgorithm = ASLGraph.HashAlgorithm;
 
 export const $SFN = {
   waitFor: makeStepFunctionIntegration<"waitFor", $SFN["waitFor"]>("waitFor", {
@@ -781,7 +776,7 @@ export const $SFN = {
               algorithmOut,
               "States.Hash",
               "algorithm",
-              ["MD5", "SHA-1", "SHA-256", "SHA-384", "SHA-512"]
+              ASLGraph.HashAlgorithms
             );
 
             return context.assignJsonPathOrIntrinsic(
@@ -2101,7 +2096,7 @@ function assertLiteralStringOrJsonPath<S extends string = string>(
   output: ASLGraph.JsonPath | ASLGraph.LiteralValue,
   operation: string,
   fieldName: string,
-  values?: S[]
+  values?: readonly S[]
 ): asserts output is ASLGraph.JsonPath | ASLGraph.LiteralValue<S> {
   if (!(ASLGraph.isJsonPath(output) || ASLGraph.isLiteralString(output))) {
     throw new SynthError(

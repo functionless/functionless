@@ -623,8 +623,8 @@ abstract class BaseQueue<Message>
                         ASLGraph.intrinsicJsonToString(
                           ASLGraph.jsonPath("$.entry.MessageBody")
                         ),
-                        "$.entry",
-                        "MessageBody",
+                        "$.entry.MessageBody",
+                        "value",
                         "unwrap Message"
                       ),
                       "unwrap Message": {
@@ -787,8 +787,8 @@ abstract class BaseQueue<Message>
                             ASLGraph.intrinsicStringToJson(
                               ASLGraph.jsonPath("$.message.Body")
                             ),
-                            "$.message",
-                            "Message",
+                            "$.message.Message",
+                            "parsed",
                             "UnwrapMessage"
                           ),
                           UnwrapMessage: {

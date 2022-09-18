@@ -37632,6 +37632,205 @@ exports[`overlapping variable with input 1`] = `
 }
 `;
 
+exports[`queue 1`] = `
+{
+  "StartAt": "Initialize Functionless Context",
+  "States": {
+    "1__await queue.sendMessage({MessageBody: {id: "hello"}})": {
+      "Next": "await queue.sendMessageBatch({Entries: [{MessageBody: {id: "hello"}, Id: "1",
+      "Parameters": {
+        "MessageBody.$": "States.JsonToString($.heap0)",
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessage",
+      "ResultPath": "$.heap1",
+      "Type": "Task",
+    },
+    "1__await queue.sendMessageBatch({Entries: [{MessageBody: {id: "hello"}, Id:": {
+      "ItemsPath": "$.heap2.Entries",
+      "Iterator": {
+        "StartAt": "Default",
+        "States": {
+          "Default": {
+            "Next": "unwrap Message__Default",
+            "Parameters": {
+              "value.$": "States.JsonToString($.entry.MessageBody)",
+            },
+            "ResultPath": "$.entry.MessageBody",
+            "Type": "Pass",
+          },
+          "unwrap Message__Default": {
+            "End": true,
+            "InputPath": "$.entry.MessageBody.value",
+            "OutputPath": "$.entry",
+            "ResultPath": "$.entry.MessageBody",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "send message batch__1__await queue.sendMessageBatch({Entries: [{MessageBody",
+      "Parameters": {
+        "entry.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap3",
+      "Type": "Map",
+    },
+    "1__await queue.sendMessageBatch({Entries: [{MessageBody: {id: "hello"}, Id: 1": {
+      "ItemsPath": "$.heap4.Entries",
+      "Iterator": {
+        "StartAt": "Default 1",
+        "States": {
+          "Default 1": {
+            "Next": "unwrap Message__Default 1",
+            "Parameters": {
+              "value.$": "States.JsonToString($.entry.MessageBody)",
+            },
+            "ResultPath": "$.entry.MessageBody",
+            "Type": "Pass",
+          },
+          "unwrap Message__Default 1": {
+            "End": true,
+            "InputPath": "$.entry.MessageBody.value",
+            "OutputPath": "$.entry",
+            "ResultPath": "$.entry.MessageBody",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "send message batch__1__await queue.sendMessageBatch({Entries: [{MessageBody 1",
+      "Parameters": {
+        "entry.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap5",
+      "Type": "Map",
+    },
+    "Initialize Functionless Context": {
+      "Next": "await queue.sendMessage({MessageBody: {id: "hello"}})",
+      "Parameters": {
+        "fnl_context": {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "await queue.receiveMessage()": {
+      "Next": "parseIfMessages__await queue.receiveMessage()",
+      "Parameters": {
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:receiveMessage",
+      "ResultPath": "$.heap6",
+      "Type": "Task",
+    },
+    "await queue.sendMessage({MessageBody: {id: "hello"}})": {
+      "Next": "1__await queue.sendMessage({MessageBody: {id: "hello"}})",
+      "Parameters": {
+        "id": "hello",
+      },
+      "ResultPath": "$.heap0",
+      "Type": "Pass",
+    },
+    "await queue.sendMessageBatch({Entries: [{MessageBody: {id: "hello"}, Id: "1": {
+      "Next": "1__await queue.sendMessageBatch({Entries: [{MessageBody: {id: "hello"}, Id:",
+      "Result": {
+        "Entries": [
+          {
+            "Id": "1",
+            "MessageBody": {
+              "id": "hello",
+            },
+          },
+        ],
+      },
+      "ResultPath": "$.heap2",
+      "Type": "Pass",
+    },
+    "await queue.sendMessageBatch({Entries: [{MessageBody: {id: "hello"}, Id: "2": {
+      "Next": "1__await queue.sendMessageBatch({Entries: [{MessageBody: {id: "hello"}, Id: 1",
+      "Result": {
+        "Entries": [
+          {
+            "Id": "2",
+            "MessageBody": {
+              "id": "hello",
+            },
+          },
+        ],
+      },
+      "ResultPath": "$.heap4",
+      "Type": "Pass",
+    },
+    "parseIfMessages__await queue.receiveMessage()": {
+      "Choices": [
+        {
+          "IsPresent": true,
+          "Next": "parse__await queue.receiveMessage()",
+          "Variable": "$.heap6.Messages",
+        },
+      ],
+      "Default": "return null",
+      "Type": "Choice",
+    },
+    "parse__await queue.receiveMessage()": {
+      "ItemsPath": "$.heap6.Messages",
+      "Iterator": {
+        "StartAt": "Default 2",
+        "States": {
+          "Default 2": {
+            "Next": "UnwrapMessage__Default 2",
+            "Parameters": {
+              "parsed.$": "States.StringToJson($.message.Body)",
+            },
+            "ResultPath": "$.message.Message",
+            "Type": "Pass",
+          },
+          "UnwrapMessage__Default 2": {
+            "End": true,
+            "InputPath": "$.message.Message.parsed",
+            "OutputPath": "$.message",
+            "ResultPath": "$.message.Message",
+            "Type": "Pass",
+          },
+        },
+      },
+      "Next": "return null",
+      "Parameters": {
+        "message.$": "$$.Map.Item.Value",
+      },
+      "ResultPath": "$.heap6.Messages",
+      "Type": "Map",
+    },
+    "return null": {
+      "End": true,
+      "InputPath": "$.fnl_context.null",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "send message batch__1__await queue.sendMessageBatch({Entries: [{MessageBody": {
+      "Next": "await queue.sendMessageBatch({Entries: [{MessageBody: {id: "hello"}, Id: "2",
+      "Parameters": {
+        "Entries.$": "$.heap3",
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
+      "ResultPath": "$.heap3",
+      "Type": "Task",
+    },
+    "send message batch__1__await queue.sendMessageBatch({Entries: [{MessageBody 1": {
+      "Next": "await queue.receiveMessage()",
+      "Parameters": {
+        "Entries.$": "$.heap5",
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:sendMessageBatch",
+      "ResultPath": "$.heap5",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
 exports[`shadowing maintains state 1`] = `
 {
   "StartAt": "Initialize Functionless Context",

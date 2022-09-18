@@ -398,7 +398,7 @@ test("spread constant array and object", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
-test("depth", () => {
+test("spread limits", () => {
   const definition = new StepFunction(stack, "sfn", async (input) => {
     return {
       ...{ a: 0, b: 2, c: 3 },
