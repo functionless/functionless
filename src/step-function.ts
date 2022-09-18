@@ -15,10 +15,7 @@ import { assertDefined } from "./assert";
 import { FunctionLike } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import { EventBus, PredicateRuleBase, Rule } from "./event-bridge";
-import {
-  EventBusTargetIntegration,
-  makeEventBusIntegration,
-} from "./event-bridge/event-bus";
+import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { Event } from "./event-bridge/types";
 import { CallExpr, Expr } from "./expression";
 import { NativeIntegration } from "./function";
@@ -959,6 +956,7 @@ export type StepFunctionCause =
  * }
  * ```
  */
+// @ts-ignore - TODO: rename error and cause
 export class StepFunctionError extends Error {
   static readonly kind = "StepFunctionError";
 
@@ -1047,15 +1045,7 @@ abstract class BaseStepFunction<
   Payload extends Record<string, any> | undefined,
   CallIn,
   CallOut
-> implements
-    Integration<
-      "StepFunction",
-      (input: CallIn) => Promise<CallOut>,
-      EventBusTargetIntegration<
-        Payload,
-        StepFunctionEventBusTargetProps | undefined
-      >
-    >
+> implements Integration<"StepFunction", (input: CallIn) => Promise<CallOut>>
 {
   readonly kind = "StepFunction";
   readonly functionlessKind = "StepFunction";
@@ -1789,11 +1779,7 @@ export interface IStepFunction<
     "StepFunction",
     (
       input: StepFunctionRequest<Payload>
-    ) => Promise<AWS.StepFunctions.StartExecutionOutput>,
-    EventBusTargetIntegration<
-      Payload,
-      StepFunctionEventBusTargetProps | undefined
-    >
+    ) => Promise<AWS.StepFunctions.StartExecutionOutput>
   > {
   describeExecution: IntegrationCall<
     "StepFunction.describeExecution",

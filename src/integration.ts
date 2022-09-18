@@ -86,13 +86,7 @@ export const INTEGRATION_TYPE_KEYS = Object.values(INTEGRATION_TYPES);
 /**
  * All integration methods supported by functionless.
  */
-export interface IntegrationMethods<
-  F extends AnyFunction,
-  EventBusInteg extends EventBusTargetIntegration<
-    any,
-    any
-  > = EventBusTargetIntegration<any, any>
-> {
+export interface IntegrationMethods<F extends AnyFunction> {
   /**
    * Integrate with AppSync VTL applications.
    * @private
@@ -111,7 +105,7 @@ export interface IntegrationMethods<
    * @private
    */
   asl: (call: CallExpr, context: ASL) => ASLGraph.NodeResults;
-  eventBus: EventBusInteg;
+  eventBus: EventBusTargetIntegration<any, any>;
   /**
    * Native javascript code integrations that execute at runtime like Lambda.
    */
@@ -168,12 +162,8 @@ export interface IntegrationMethods<
  */
 export interface Integration<
   K extends string = string,
-  F extends AnyFunction = AnyFunction,
-  EventBus extends EventBusTargetIntegration<
-    any,
-    any
-  > = EventBusTargetIntegration<any, any>
-> extends Partial<IntegrationMethods<F, EventBus>> {
+  F extends AnyFunction = AnyFunction
+> extends Partial<IntegrationMethods<F>> {
   /**
    * Brand the Function, F, into this type so that sub-typing rules apply to the function signature.
    */
@@ -309,7 +299,7 @@ export function findDeepIntegrations(
             node.fork(
               new CallExpr(
                 node.span,
-                new ReferenceExpr(node.expr.span, "", () => integration),
+                new ReferenceExpr(node.expr.span, "", () => integration, 0, 0),
                 node.args.map((arg) => arg.clone()),
                 false
               )
@@ -420,7 +410,10 @@ export function tryResolveReferences(
       return tryResolveReferences(defaultValue, undefined);
     }
   } else if (isReferenceExpr(node) || isThisExpr(node)) {
-    return [node.ref?.()];
+    const ref = node.ref?.();
+    if (ref) {
+      return [ref];
+    }
   } else if (isIdentifier(node)) {
     return tryResolveReferences(node.lookup(), defaultValue);
   } else if (isBindingElem(node)) {

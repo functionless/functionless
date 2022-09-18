@@ -658,12 +658,13 @@ export class APIGatewayVTL extends VTL {
     } else if (
       isPropAccessExpr(node) &&
       isIdentifier(node.name) &&
-      isInputBody(node.expr) &&
       node.name.name === "data"
     ) {
-      // $input.data maps to `$input.path('$')`
-      // this returns a VTL object representing the root payload data
-      return `$input.path('$')`;
+      if (isInputBody(node.expr)) {
+        // $input.data maps to `$input.path('$')`
+        // this returns a VTL object representing the root payload data
+        return `$input.path('$')`;
+      }
     }
     return super.eval(node as any, returnVar);
   }

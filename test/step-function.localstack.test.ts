@@ -2236,6 +2236,7 @@ runtimeTestSuite<
           zeroBooleanUnaryPlus: +false,
           zeroNumberUnaryPlus: +0,
           zeroVarUnaryPlus: +input.zero,
+          // @ts-ignore
           zeroNullUnaryPlus: +null,
           nanObjectUnaryPlus: +{},
           nanStringUnaryPlus: +"{}",

@@ -16,6 +16,7 @@ import {
   Expr,
   PropAccessExpr,
   UnaryExpr,
+  SuperKeyword,
 } from "../../expression";
 import {
   isBinaryExpr,
@@ -635,7 +636,9 @@ export const synthesizePatternDocument = (
   /**
    * Recurse an expression to find a reference to the event.
    */
-  const getEventReference = (expression: Expr): ReferencePath | undefined => {
+  const getEventReference = (
+    expression: Expr | SuperKeyword
+  ): ReferencePath | undefined => {
     return getReferencePath(expression);
   };
 

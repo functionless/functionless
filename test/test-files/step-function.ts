@@ -474,13 +474,12 @@ new StepFunction(stack, "obj ref", async (input: { key: string }) => {
  * Supported
  */
 
-const func2 = new Function<{ x: number; y: number }, string>(
-  stack,
-  "func",
-  async () => {
-    return "hello";
-  }
-);
+const func2 = new Function<
+  { x: number | undefined; y: number | undefined },
+  string
+>(stack, "func", async () => {
+  return "hello";
+});
 
 new StepFunction(stack, "obj ref", async () => {
   const arr = [1, 2, 3];
@@ -637,6 +636,7 @@ new StepFunction(stack, "fn", async (input: { value: number }) => {
     return item === value;
   });
   [{}].filter((item) => {
+    // @ts-ignore
     return item === {};
   });
 });

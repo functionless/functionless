@@ -116,6 +116,9 @@ runtimeTestSuite<{
 
   const test = _testQ(_test) as TestQueueResource;
 
+  // eslint-disable-next-line no-only-tests/no-only-tests
+  test.only = _testQ(_test.only);
+
   test.skip = (name, _func, _t) =>
     _test.skip(
       name,
