@@ -10,10 +10,10 @@ export const Hero = () => {
           </span>
           <h3 className="mt-3">Code-first, Cloud-native.</h3>
           <p className="body1 text-functionless-medium dark:text-functionless-dark-medium">
-            Develop APIs, Functions, Workflows and Event-Driven systems with
-            "batteries included" components and easy-to-follow conventions.
-            Perform operational tasks with an extensible CLI and UI that
-            understands your application.
+            Build APIs, functions, workflows and event-driven systems with
+            "batteries included" <b>Components</b> and easy-to-follow{" "}
+            <b>Conventions</b>. Perform operational tasks with an extensible CLI
+            and UI that understands your application.
           </p>
           <div className="space-x-7 pt-5 flex items-center">
             <button className="solid-button">

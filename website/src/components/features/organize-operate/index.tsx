@@ -13,8 +13,13 @@ export const OrganizeOperateFeature = () => (
         <HelloFunction />
       </Code>
     </div>
-    <div className="col-span-3 -ml-7 -mr-7 -mt-16">
-      <Code fileName="-zsh" language="json" introDelayMs={1800}>
+    <div className="col-span-3 ml-7 -mt-16">
+      <Code
+        fileName="-zsh"
+        language="json"
+        introDelayMs={1800}
+        lineNumbers={false}
+      >
         <HelloCli />
       </Code>
     </div>

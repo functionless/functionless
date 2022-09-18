@@ -10,10 +10,12 @@ export const Code = ({
   fileName,
   language,
   introDelayMs,
+  lineNumbers,
 }: React.PropsWithChildren<{
   fileName?: string;
   language: Language;
   introDelayMs?: number;
+  lineNumbers?: boolean;
 }>) => {
   const { ref, visible } = useVisibility(0.5);
   return (
@@ -42,6 +44,7 @@ export const Code = ({
                 fileName={fileName}
                 language={language}
                 introDelayMs={introDelayMs}
+                lineNumbers={lineNumbers}
               />
             ),
           }}
@@ -80,11 +83,13 @@ const VisibleCode = ({
   fileName,
   language,
   introDelayMs,
+  lineNumbers,
 }: {
   code: string;
   fileName?: string;
   language: Language;
   introDelayMs?: number;
+  lineNumbers?: boolean;
 }) => {
   return (
     <div
@@ -120,8 +125,12 @@ const VisibleCode = ({
                     className: "grid grid-cols-[2em_auto] py-0.5",
                   })}
                 >
-                  <div>{i + 1}</div>
-                  <div className="flex flex-wrap">
+                  <div>{lineNumbers === false ? undefined : i + 1}</div>
+                  <div
+                    className={`flex flex-wrap ${
+                      lineNumbers === false ? "-ml-7" : ""
+                    }`}
+                  >
                     {line.map((token, j) => {
                       const lineIndex = line
                         .slice(0, j)
