@@ -2,7 +2,7 @@
 import { Feature } from "./feature";
 
 export const organizeAndOperate: Feature = {
-  title: "Organize and operate",
+  title: "Organize and Operate",
   points: [{
     title: "Easy-to-follow conventions",
     body: "Structure your cloud stacks and resources with file system conventions optimized for simplicity and consistency."
@@ -13,7 +13,7 @@ export const organizeAndOperate: Feature = {
 }
 
 export const codeTheWayYouThink: Feature = {
-  title: "Develop naturally",
+  title: "Develop Naturally",
   points: [
     {
       title: "First-class cloud resources",
@@ -27,7 +27,7 @@ export const codeTheWayYouThink: Feature = {
 };
 
 export const upgradeFromServerlessToFunctionless: Feature = {
-  title: 'Upgrade to "functionless"',
+  title: 'Upgrade to "Functionless"',
   points: [
     {
       title: "Never compromise on architectural decisions",

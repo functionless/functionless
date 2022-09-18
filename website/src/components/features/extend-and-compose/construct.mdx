@@ -5,15 +5,9 @@ export class Cart extends Construct {
 
     this.cartTable = new Table(this, "cartTable");
 
-    this.getCart = new Function(this, "getCart", async (cartId: string) => {
-      return this.cartTable.getItem({
-        key: {
-          id: {
-            S: cartId,
-          },
-        },
-      });
-    });
+    this.getCart = new Function(this, "getCart", async (cartId) => {
+      return this.cartTable.getItem(cartId);
+    }
   }
 }
 ```
