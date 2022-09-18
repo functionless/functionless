@@ -1,0 +1,11 @@
+```ts
+import { users } from "./user-table";
+
+export const getUser = Function(async (name: string) => {
+  return users.getItem({
+    key: {
+      name,
+    },
+  });
+});
+```

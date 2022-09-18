@@ -1,21 +1,27 @@
-import { code } from "../lib/features";
+import {
+  codeTheWayYouThink,
+  extendAndCompose,
+  organizeAndOperate,
+  upgradeFromServerlessToFunctionless,
+} from "../lib/features";
 import { FeatureText } from "./feature";
-import { CodeFeature } from "./features/code/code";
+import { DevelopNaturallyCode } from "./features/develop-naturally";
+import { ExtendAndComposeCode } from "./features/extend-and-compose";
+import { OrganizeOperateFeature } from "./features/organize-operate";
+import { UpgradeToFunctionlessCode } from "./features/upgrade-functionless";
 
 export const Features = () => {
   return (
     <section className="py-36 bg-functionless-bg-alternate dark:bg-functionless-dark-bg-alternate home-features overflow-hidden">
-      <div className="!max-w-screen-md container text-center">
-        <span className="over">FEATURES</span>
-      </div>
-      <div className="!max-w-screen-md container flex flex-col items-center">
-        <h3 className="text-center mt-2">
-          Build Reliable and Scalable systems with Smart Resources.
-        </h3>
-      </div>
       <div className="grid grid-cols-1 md:grid-cols-2 container !max-w-screen-xl py-36 gap-11">
-        <FeatureText {...code} />
-        <CodeFeature />
+        <FeatureText {...organizeAndOperate} />
+        <OrganizeOperateFeature />
+        <DevelopNaturallyCode />
+        <FeatureText {...codeTheWayYouThink} />
+        <FeatureText {...upgradeFromServerlessToFunctionless} />
+        <UpgradeToFunctionlessCode />
+        <ExtendAndComposeCode />
+        <FeatureText {...extendAndCompose} />
       </div>
       {/* iv>
       <div className="grid grid-cols-1 md:grid-cols-2 container !max-w-screen-xl py-36 gap-11">

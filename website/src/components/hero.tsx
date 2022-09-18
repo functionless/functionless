@@ -8,12 +8,12 @@ export const Hero = () => {
           <span className="blue-chip">
             v1.02.5 Released <ChevronLeftIcon className="icon ml-2" />
           </span>
-          <h2 className="mt-3">Code the Cloud</h2>
+          <h3 className="mt-3">Code-first, Cloud-native.</h3>
           <p className="body1 text-functionless-medium dark:text-functionless-dark-medium">
-            Develop APIs, Functions, Workflows and Event-Driven Architectures
-            with “Smart Cloud Resources” that have best practices built-in.
-            Least-privilege IAM Policies, environment variables, SDK clients and
-            Domain Specific Languages are automatically configured.
+            Develop APIs, Functions, Workflows and Event-Driven systems with
+            "batteries included" components and easy-to-follow conventions.
+            Operate and manage services with an extensible CLI and UI that
+            understands your application.
           </p>
           <div className="space-x-7 pt-5 flex items-center">
             <button className="solid-button">

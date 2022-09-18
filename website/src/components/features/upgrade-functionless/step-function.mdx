@@ -1,0 +1,12 @@
+```ts
+import { StepFunction } from "functionless";
+import { queue } from "./queue";
+
+export const workflow = StepFunction(async (item) => {
+  await queue.sendMessage({
+    Message: item,
+  });
+});
+
+export default workflow;
+```

@@ -1,0 +1,19 @@
+```ts
+export class Cart extends Construct {
+  constructor(scope: Construct = getScope(), id: string = getId()) {
+    super(scope, id);
+
+    this.cartTable = new Table(this, "cartTable");
+
+    this.getCart = new Function(this, "getCart", async (cartId: string) => {
+      return this.cartTable.getItem({
+        key: {
+          id: {
+            S: cartId,
+          },
+        },
+      });
+    });
+  }
+}
+```
