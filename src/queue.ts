@@ -829,6 +829,7 @@ abstract class BaseQueue<Message>
           Parameters: {
             QueueUrl: this.queueUrl,
           },
+          ResultPath: null,
           Next: ASLGraph.DeferNext,
         });
       },
