@@ -16,10 +16,10 @@ import {
   $SFN,
   Table,
   FunctionProps,
-  HashAlgorithm,
   StepFunctionError,
   FunctionClosure,
   Queue,
+  ASLGraph,
 } from "../src";
 import { makeIntegration } from "../src/integration";
 import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
@@ -449,7 +449,7 @@ runtimeTestSuite<
       large: 100,
       baseTest: "encodeMe",
       hashTest: "hashMe",
-      hashAlgo: "SHA-256" as HashAlgorithm,
+      hashAlgo: "SHA-256" as ASLGraph.HashAlgorithm,
       lengthObj: { length: "a" },
       emptyArr: [],
       key: "start" as const,
