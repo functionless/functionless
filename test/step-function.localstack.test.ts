@@ -16,9 +16,10 @@ import {
   $SFN,
   Table,
   FunctionProps,
-  HashAlgorithm,
   StepFunctionError,
   FunctionClosure,
+  Queue,
+  ASLGraph,
 } from "../src";
 import { makeIntegration } from "../src/integration";
 import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
@@ -70,6 +71,7 @@ runtimeTestSuite<
           res instanceof StepFunction ? [res, {}] : [res.sfn, res.outputs];
         funcRes.resource.grantStartExecution(role);
         funcRes.resource.grantRead(role);
+
         return {
           outputs: {
             function: funcRes.resource.stateMachineArn,
@@ -385,13 +387,15 @@ runtimeTestSuite<
           getFunc: $SFN.getItem(input.arr, 0),
           getFuncRef: $SFN.getItem(input.arr, input.part),
           objAccess,
+          ...input.range,
           inRef: input.part in input.arr,
           inRefFalse: input.large in input.arr,
           objIn,
-          length: [1, 2, 3, 4].length,
+          getLength: [1, 2, 3, 4].length,
           lengthRef: input.arr.length,
           uniqueLength: $SFN.unique(input.arr).length,
           lengthObj: input.lengthObj.length,
+          ...input.lengthObj,
           emptyLength: input.emptyArr.length,
           slice: input.arr.slice(1, 3),
           sliceRef: input.arr.slice(input.part, input.end),
@@ -424,7 +428,8 @@ runtimeTestSuite<
       inRef: true,
       inRefFalse: false,
       objIn: "Reference element access is not valid for objects.",
-      length: 4,
+      getLength: 4,
+      length: "a",
       lengthRef: 7,
       uniqueLength: 4,
       lengthObj: "a",
@@ -432,6 +437,9 @@ runtimeTestSuite<
       slice: [2, 3],
       sliceRef: [3, 1],
       sliceRefStart: [2, 3, 4],
+      start: 1,
+      end: 11,
+      step: 2,
     },
     {
       range: { start: 1, end: 11, step: 2 },
@@ -441,11 +449,119 @@ runtimeTestSuite<
       large: 100,
       baseTest: "encodeMe",
       hashTest: "hashMe",
-      hashAlgo: "SHA-256" as HashAlgorithm,
+      hashAlgo: "SHA-256" as ASLGraph.HashAlgorithm,
       lengthObj: { length: "a" },
       emptyArr: [],
       key: "start" as const,
     }
+  );
+
+  test(
+    "object literal spread",
+    (parent) => {
+      return new StepFunction(parent, "sfn", async (input) => {
+        const literalValueObjectLiterals = {
+          x: 1,
+          y: "a",
+          j: { x: 2 },
+          ...input,
+        };
+
+        // the duplication tests depth of intrinsic
+        // TODO: after optimization is added, turn some of it
+        return {
+          ...{ a: 0, b: 2, c: 3 },
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...{ m: 0, n: 5, o: 6 },
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...{ x: 7, y: 8, z: 9, a: 1, m: 4 },
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          literalValueObjectLiterals,
+        };
+      });
+    },
+    {
+      a: 1,
+      b: 2,
+      c: 3,
+      m: 4,
+      n: 5,
+      o: 6,
+      x: 7,
+      y: 8,
+      z: 9,
+      literalValueObjectLiterals: { x: 1, y: "a", j: { x: 2 }, a: 1 },
+    },
+    { a: 1 }
   );
 
   test(
@@ -1968,6 +2084,15 @@ runtimeTestSuite<
             forV = `${forV}${h}${l}`;
           }
 
+          const arr = [{ a: "a", b: [1] }];
+
+          const sfnMap = await $SFN.map(arr, ({ a, b: [c] }) => a + c);
+
+          // just should not fail
+          await $SFN.forEach(arr, ({ a, b: [c] }) => {
+            `${a} ${c}`;
+          });
+
           let tr;
           try {
             throw new Error("hi");
@@ -1981,6 +2106,7 @@ runtimeTestSuite<
             map,
             forV,
             tr,
+            sfnMap,
           };
         }
       ),
@@ -1990,6 +2116,7 @@ runtimeTestSuite<
       map: "ab",
       forV: "ab",
       tr: "hi",
+      sfnMap: ["a1"],
     },
     {
       a: "hello",
@@ -2195,6 +2322,26 @@ runtimeTestSuite<
       stringArray: '["a",["b"],[[1]],[],{},{"a":1}]',
     },
     { val: 1, str: "blah" }
+  );
+
+  test(
+    "queue",
+    (scope) => {
+      const queue = new Queue<{ id: string }>(stack, "Queue");
+
+      return new StepFunction(scope, "q", async () => {
+        await queue.sendMessage({ MessageBody: { id: "hello" } });
+        await queue.sendMessageBatch({
+          Entries: [{ MessageBody: { id: "hello" }, Id: "1" }],
+        });
+        await queue.sendMessageBatch({
+          Entries: [{ MessageBody: { id: "hello" }, Id: "2" }],
+        });
+        await queue.receiveMessage();
+        await queue.purge();
+      });
+    },
+    null
   );
 });
 

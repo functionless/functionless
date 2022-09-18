@@ -352,7 +352,7 @@ export interface $SFN {
    * @param data - data to hash.
    * @param algorithm - algorithm to use.
    */
-  hash(data: any, algorithm: HashAlgorithm): string;
+  hash(data: any, algorithm: ASLGraph.HashAlgorithm): string;
   /**
    * Use the States.MathRandom intrinsic function to return a random number between the specified start and end number.
    * For example, you can use this function to distribute a specific task between two or more resources.
@@ -363,11 +363,6 @@ export interface $SFN {
    */
   random(start: number, end: number, seed?: number): number;
 }
-
-/**
- * @see https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-intrinsic-functions.html#asl-intrsc-func-hash-calc
- */
-export type HashAlgorithm = "MD5" | "SHA-1" | "SHA-256" | "SHA-384" | "SHA-512";
 
 export const $SFN = {
   waitFor: makeStepFunctionIntegration<"waitFor", $SFN["waitFor"]>("waitFor", {
@@ -615,11 +610,7 @@ export const $SFN = {
             );
 
             return context.assignJsonPathOrIntrinsic(
-              `States.ArrayPartition(${arrayOut.jsonPath}, ${
-                ASLGraph.isLiteralValue(sizeOut)
-                  ? sizeOut.value
-                  : sizeOut.jsonPath
-              })`
+              ASLGraph.intrinsicArrayPartition(arrayOut, sizeOut)
             );
           }
         );
@@ -653,19 +644,11 @@ export const $SFN = {
           }
 
           return context.assignJsonPathOrIntrinsic(
-            `States.ArrayRange(${
-              ASLGraph.isLiteralValue(startOut)
-                ? startOut.value
-                : startOut.jsonPath
-            }, ${
-              ASLGraph.isLiteralValue(endOut) ? endOut.value : endOut.jsonPath
-            }, ${
-              !stepOut
-                ? 1
-                : ASLGraph.isLiteralValue(stepOut)
-                ? stepOut.value
-                : stepOut.jsonPath
-            })`
+            ASLGraph.intrinsicArrayRange(
+              startOut,
+              endOut,
+              !stepOut ? ASLGraph.literalValue(1) : stepOut
+            )
           );
         });
       },
@@ -686,7 +669,7 @@ export const $SFN = {
 
         return context.evalExprToJsonPath(arr.expr, (arrayOut) => {
           return context.assignJsonPathOrIntrinsic(
-            `States.ArrayUnique(${arrayOut.jsonPath})`
+            ASLGraph.intrinsicArrayUnique(arrayOut)
           );
         });
       },
@@ -739,11 +722,7 @@ export const $SFN = {
         assertLiteralStringOrJsonPath(dataOut, "States.Base64Encode", "data");
 
         return context.assignJsonPathOrIntrinsic(
-          `States.Base64Encode(${
-            ASLGraph.isLiteralValue(dataOut)
-              ? `'${dataOut.value}'`
-              : dataOut.jsonPath
-          })`
+          ASLGraph.intrinsicBase64Encode(dataOut)
         );
       });
     },
@@ -766,11 +745,7 @@ export const $SFN = {
         assertLiteralStringOrJsonPath(dataOut, "States.Base64Decode", "data");
 
         return context.assignJsonPathOrIntrinsic(
-          `States.Base64Decode(${
-            ASLGraph.isLiteralValue(dataOut)
-              ? `'${dataOut.value}'`
-              : dataOut.jsonPath
-          })`
+          ASLGraph.intrinsicBase64Decode(dataOut)
         );
       });
     },
@@ -797,15 +772,12 @@ export const $SFN = {
             assertLiteralStringOrJsonPath(
               algorithmOut,
               "States.Hash",
-              "algorithm"
+              "algorithm",
+              ASLGraph.HashAlgorithms
             );
 
             return context.assignJsonPathOrIntrinsic(
-              `States.Hash(${dataOut.jsonPath}, ${
-                ASLGraph.isLiteralValue(algorithmOut)
-                  ? `'${algorithmOut.value}'`
-                  : algorithmOut.jsonPath
-              })`
+              ASLGraph.intrinsicHash(dataOut, algorithmOut)
             );
           }
         );
@@ -839,23 +811,7 @@ export const $SFN = {
           }
 
           return context.assignJsonPathOrIntrinsic(
-            `States.MathRandom(${
-              ASLGraph.isLiteralValue(startOut)
-                ? `'${startOut.value}'`
-                : startOut.jsonPath
-            }, ${
-              ASLGraph.isLiteralValue(endOut)
-                ? `'${endOut.value}'`
-                : endOut.jsonPath
-            }${
-              seedOut
-                ? `,${
-                    ASLGraph.isLiteralValue(seedOut)
-                      ? `'${seedOut.value}'`
-                      : seedOut.jsonPath
-                  }`
-                : ""
-            })`
+            ASLGraph.intrinsicMathRandom(startOut, endOut, seedOut)
           );
         });
       },
@@ -913,9 +869,17 @@ function mapOrForEach(call: CallExpr, context: ASL) {
 
     const [paramInit, paramStates] = context.evalParameterDeclForStateParameter(
       callbackfn,
-      [itemParam, { jsonPath: "$$.Map.Item.Value" }],
-      [indexParam, { jsonPath: "$$.Map.Item.Index" }],
-      [arrayParam, { jsonPath: arrayPath }]
+      {
+        parameter: itemParam,
+        valuePath: ASLGraph.jsonPath("$$.Map.Item.Value"),
+        reassignBoundParameters: true,
+      },
+      {
+        parameter: indexParam,
+        valuePath: ASLGraph.jsonPath("$$.Map.Item.Index"),
+        reassignBoundParameters: true,
+      },
+      { parameter: arrayParam, valuePath: output }
     );
 
     const bodyStates = ASLGraph.joinSubStates(
@@ -2114,15 +2078,27 @@ function getArgs(call: CallExpr) {
   return executionArn;
 }
 
-function assertLiteralStringOrJsonPath(
+function assertLiteralStringOrJsonPath<S extends string = string>(
   output: ASLGraph.JsonPath | ASLGraph.LiteralValue,
   operation: string,
-  fieldName: string
-): asserts output is ASLGraph.JsonPath | ASLGraph.LiteralValue<string> {
+  fieldName: string,
+  values?: readonly S[]
+): asserts output is ASLGraph.JsonPath | ASLGraph.LiteralValue<S> {
   if (!(ASLGraph.isJsonPath(output) || ASLGraph.isLiteralString(output))) {
     throw new SynthError(
       ErrorCodes.Invalid_Input,
       `Expected ${operation} ${fieldName} argument to be a string or reference.`
+    );
+  } else if (
+    values &&
+    ASLGraph.isLiteralString(output) &&
+    !values.includes(output.value as S)
+  ) {
+    throw new SynthError(
+      ErrorCodes.Invalid_Input,
+      `Expected ${operation} ${fieldName} argument to be one of: ${values.join(
+        ","
+      )}.`
     );
   }
 }

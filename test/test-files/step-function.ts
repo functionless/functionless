@@ -676,3 +676,11 @@ new StepFunction(stack, "fn", async () => {
   // valid
   arr[0];
 });
+
+/**
+ * Support - spread
+ */
+
+new StepFunction(stack, "fn", async (input) => {
+  return { a: 1, ...input, b: 2 };
+});
