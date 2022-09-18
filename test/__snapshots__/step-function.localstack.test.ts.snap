@@ -37714,6 +37714,15 @@ exports[`queue 1`] = `
       "ResultPath": "$",
       "Type": "Pass",
     },
+    "await queue.purge()": {
+      "Next": "return null",
+      "Parameters": {
+        "QueueUrl": "__REPLACED_TOKEN",
+      },
+      "Resource": "arn:aws:states:::aws-sdk:sqs:purgeQueue",
+      "ResultPath": null,
+      "Type": "Task",
+    },
     "await queue.receiveMessage()": {
       "Next": "parseIfMessages__await queue.receiveMessage()",
       "Parameters": {
@@ -37769,7 +37778,7 @@ exports[`queue 1`] = `
           "Variable": "$.heap6.Messages",
         },
       ],
-      "Default": "return null",
+      "Default": "await queue.purge()",
       "Type": "Choice",
     },
     "parse__await queue.receiveMessage()": {
@@ -37794,7 +37803,7 @@ exports[`queue 1`] = `
           },
         },
       },
-      "Next": "return null",
+      "Next": "await queue.purge()",
       "Parameters": {
         "message.$": "$$.Map.Item.Value",
       },
