@@ -7,7 +7,7 @@
       "Resource": "arn:..",
       "Parameters": {
         "QueueUrl": "https://..",
-        "Message": "States.JsonToString($.item)"
+        "MessageBody.$": "States.JsonToString($.item)"
       }
     }
   }

@@ -12,14 +12,14 @@ export const Hero = () => {
           <p className="body1 text-functionless-medium dark:text-functionless-dark-medium">
             Develop APIs, Functions, Workflows and Event-Driven systems with
             "batteries included" components and easy-to-follow conventions.
-            Operate and manage services with an extensible CLI and UI that
+            Perform operational tasks with an extensible CLI and UI that
             understands your application.
           </p>
           <div className="space-x-7 pt-5 flex items-center">
             <button className="solid-button">
               Read Docs <ChevronLeftIcon className="icon ml-2" />
             </button>
-            <button className="social-button w-auto bg-transparent">
+            <button className="outline-button w-auto bg-transparent">
               <img src="/img/social/github.svg" className="icon mr-2" />
               Star us on Github
             </button>

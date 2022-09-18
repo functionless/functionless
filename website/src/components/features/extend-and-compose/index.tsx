@@ -17,7 +17,7 @@ export const ExtendAndComposeCode = () => (
       <Code
         fileName="src/cart-service/cart.ts"
         language="typescript"
-        introDelayMs={3500}
+        introDelayMs={3200}
       >
         <Consume />
       </Code>

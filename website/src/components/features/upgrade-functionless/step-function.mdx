@@ -4,7 +4,7 @@ import { queue } from "./queue";
 
 export const workflow = StepFunction(async (item) => {
   await queue.sendMessage({
-    Message: item,
+    MessageBody: item,
   });
 });
 

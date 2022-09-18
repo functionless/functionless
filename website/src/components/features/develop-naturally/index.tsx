@@ -14,7 +14,7 @@ export const DevelopNaturallyCode = () => (
       </Code>
     </div>
     <div className="col-span-4 -ml-7 -mr-7 -mt-16">
-      <Code fileName="policy.json" language="json" introDelayMs={1900}>
+      <Code fileName="policy.json" language="json" introDelayMs={1800}>
         <IamPolicy />
       </Code>
     </div>

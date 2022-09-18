@@ -14,7 +14,7 @@ export const UpgradeToFunctionlessCode = () => (
       </Code>
     </div>
     <div className="col-span-3 -ml-7 -mr-7 -mt-16">
-      <Code fileName="policy.json" language="json" introDelayMs={2500}>
+      <Code fileName="state-machine.json" language="json" introDelayMs={2500}>
         <ASL />
       </Code>
     </div>

@@ -44,11 +44,11 @@ export const extendAndCompose: Feature = {
   title: "Extend and Compose",
   points: [
     {
-      title: "Build, share and re-use",
+      title: "Share and re-use",
       body: "Build custom components with their own runtime API and a purpose-built CLI experience for operators.",
     },
     {
-      title: "CDK-compatible",
+      title: "IaC-compatible",
       body: "Integrate any AWS service or CDK Construct library into your application - always choose the right service for the job and never be forced by your framework.",
     },
   ]
