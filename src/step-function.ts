@@ -10,7 +10,7 @@ import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
 import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
-import { ASL, ASLGraph, Retry, StateMachine, States } from "./asl";
+import { ASL, ASLGraph, Retry, StateMachine, States, Task } from "./asl";
 import { assertDefined } from "./assert";
 import { FunctionLike } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
@@ -110,6 +110,14 @@ export interface SfnContext {
      * @example  arn:aws:states:us-east-1:123456789012:stateMachine:stateMachineName
      */
     readonly Id: string;
+  };
+  readonly Task: {
+    /**
+     * Task token to be used with {@link $SFN.task} and the `waitForTaskToken` integration pattern.
+     *
+     * https://docs.aws.amazon.com/step-functions/latest/dg/connect-to-resource.html
+     */
+    readonly Token: string;
   };
 }
 
@@ -362,6 +370,31 @@ export interface $SFN {
    * @param seed - optional seed value to determine when generating the random value.
    */
   random(start: number, end: number, seed?: number): number;
+  /**
+   * Invoke any {@link StepFunction task}. Return type will be whatever the task would return in StepFunctions.
+   *
+   * https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-task-state.html
+   *
+   * @param definition.Resource - Resource to invoke - must be a string literal.
+   * @param definition.Retry - an array of {@link Retry}, must only contain literal values.
+   * @param definition.Comment - a comment added to the state machine - must be a string literal.
+   * @param definition.Parameters - values to pass to the task.
+   * @param definition.TimeoutSeconds - time to wait for the task to complete.
+   * @param definition.HeartbeatSeconds - time to wait for the task to complete.
+   *
+   * Note: If Parameters is a reference, TimeoutSeconds and Heartbeat cannot be references.
+   */
+  task<Result>(
+    definition: Pick<
+      Task,
+      | "Resource"
+      | "Retry"
+      | "Comment"
+      | "TimeoutSeconds"
+      | "HeartbeatSeconds"
+      | "Parameters"
+    >
+  ): Result;
 }
 
 export const $SFN = {
@@ -542,44 +575,9 @@ export const $SFN = {
 
           const retryValue = evalToConstant(expr);
 
-          if (
-            !retryValue ||
-            !Array.isArray(retryValue.constant) ||
-            retryValue.constant.length === 0
-          ) {
-            throw new SynthError(
-              ErrorCodes.Step_Function_Retry_Invalid_Input,
-              "Expected $SFN.retry retry argument to be an array literal which contains only constant values."
-            );
-          }
-
-          retryValue.constant.forEach(assertRetryObjects);
+          assertRetryArray(retryValue?.constant, "$SFN.retry");
 
           return retryValue.constant;
-        }
-
-        function assertRetryObjects(retry: any): asserts retry is Retry {
-          const {
-            ErrorEquals,
-            BackoffRate,
-            IntervalSeconds,
-            MaxAttempts,
-            ...rest
-          } = retry as Retry;
-
-          if (!ErrorEquals || ErrorEquals.some((x) => typeof x !== "string")) {
-            throw new SynthError(
-              ErrorCodes.Step_Function_Retry_Invalid_Input,
-              "$SFN.retry retry object must be an array literal of string with at least one value"
-            );
-          }
-
-          if (Object.keys(rest).length !== 0) {
-            throw new SynthError(
-              ErrorCodes.Step_Function_Retry_Invalid_Input,
-              "$SFN.retry retry object must only contain keys: ErrorEquals, BackoffRate, IntervalSeconds, or MaxAttempts"
-            );
-          }
         }
       },
     }
@@ -817,6 +815,174 @@ export const $SFN = {
       },
     }
   ),
+  /**
+   * Invoke any {@link StepFunction task}. Return type will be whatever the task would return in StepFunctions.
+   *
+   * https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-task-state.html
+   */
+  task: makeStepFunctionIntegration<"SFN.task", $SFN["task"]>("SFN.task", {
+    asl: (call, context) => {
+      const [definition] = call.args;
+
+      if (!definition) {
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "Step Function $SFN.task definition argument is required."
+        );
+      }
+
+      return context.evalExprToJsonPathOrLiteral(definition.expr, (output) => {
+        if (!ASLGraph.isLiteralObject(output)) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Step Function $SFN.task definition must be an object literal."
+          );
+        }
+
+        const resource: undefined | string = output.value.Resource;
+        if (!resource || typeof output.value.Resource !== "string") {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Step Function $SFN.task definition.Resource must be a literal string."
+          );
+        }
+
+        const comment: undefined | string = output.value.Comment;
+        if (
+          (comment && typeof output.value.Comment !== "string") ||
+          output.value["Comment.$"]
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Step Function $SFN.task definition.Comment must be a literal string or undefined."
+          );
+        }
+
+        const parameters = output.value.Parameters
+          ? ASLGraph.literalValue(output.value.Parameters, true)
+          : output.value["Parameters.$"]
+          ? ASLGraph.jsonPath(output.value["Parameters.$"])
+          : ASLGraph.literalValue({});
+
+        if (
+          ASLGraph.isLiteralValue(parameters) &&
+          !ASLGraph.isLiteralObject(parameters)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Step Functions $SFN.task definition.Parameters must be a reference, object literal, or undefined"
+          );
+        }
+
+        const retry: undefined | Retry[] = output.value.Retry;
+        if (retry) {
+          // reference was a literal, check the structure
+          assertRetryArray(retry, "$SFN.task");
+        } else if (output.value["Retry.$"]) {
+          // Retry was a reference and not a literal.
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Step Functions $SFN.task definition.Retry must be a reference, object literal, or undefined"
+          );
+        }
+
+        const timeoutSeconds = output.value.TimeoutSeconds
+          ? ASLGraph.literalValue(output.value.TimeoutSeconds)
+          : output.value["TimeoutSeconds.$"]
+          ? ASLGraph.jsonPath(output.value["TimeoutSeconds.$"])
+          : undefined;
+        if (
+          timeoutSeconds &&
+          ASLGraph.isLiteralValue(timeoutSeconds) &&
+          !ASLGraph.isLiteralNumber(timeoutSeconds)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Step Functions $SFN.task definition.TimeoutSeconds must be a reference, number literal, or undefined"
+          );
+        }
+
+        const heartbeatSeconds = output.value.HeartbeatSeconds
+          ? ASLGraph.literalValue(output.value.HeartbeatSeconds)
+          : output.value["HeartbeatSeconds.$"]
+          ? ASLGraph.jsonPath(output.value["HeartbeatSeconds.$"])
+          : undefined;
+        if (
+          heartbeatSeconds &&
+          ASLGraph.isLiteralValue(heartbeatSeconds) &&
+          !ASLGraph.isLiteralNumber(heartbeatSeconds)
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Step Functions $SFN.task definition.HeartbeatSeconds must be a reference, number literal, or undefined"
+          );
+        }
+
+        /**
+         * HeartbeatSecondsPath and TimeoutSecondsPath are relative to the InputPath of the task.
+         *
+         * We use InputPath to pass a json path directly into a Task (or Pass). Because of this, we cannot support
+         * reference values for heartbeat or timeout when the Parameters object is also a reference.
+         *
+         * ```ts
+         * {
+         *    Parameters: a,
+         *    HeartbeatSeconds: b // fail
+         * }
+         * {
+         *    Parameters: a,
+         *    HeartbeatSeconds: 10 // fine
+         * }
+         * {
+         *    Parameters: { a },
+         *    HeartbeatSeconds: b // fine
+         * }
+         * ```
+         *
+         * If Parameters in Task could directly accept a json path without impacting the rest of the state, this would not be a problem.
+         */
+        if (
+          ASLGraph.isJsonPath(parameters) &&
+          ((timeoutSeconds && ASLGraph.isJsonPath(timeoutSeconds)) ||
+            (heartbeatSeconds && ASLGraph.isJsonPath(heartbeatSeconds)))
+        ) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Step Function $SFN.task does not support timeout or heartbeat as references when the Parameters property is a reference."
+          );
+        }
+
+        return context.stateWithHeapOutput(
+          ASLGraph.taskWithInput(
+            {
+              Type: "Task",
+              Resource: resource,
+              Comment: comment,
+              Retry: retry,
+              Next: ASLGraph.DeferNext,
+              TimeoutSeconds:
+                timeoutSeconds && ASLGraph.isLiteralNumber(timeoutSeconds)
+                  ? timeoutSeconds.value
+                  : undefined,
+              TimeoutSecondsPath:
+                timeoutSeconds && ASLGraph.isJsonPath(timeoutSeconds)
+                  ? timeoutSeconds.jsonPath
+                  : undefined,
+              HeartbeatSeconds:
+                heartbeatSeconds && ASLGraph.isLiteralNumber(heartbeatSeconds)
+                  ? heartbeatSeconds.value
+                  : undefined,
+              HeartbeatSecondsPath:
+                heartbeatSeconds && ASLGraph.isJsonPath(heartbeatSeconds)
+                  ? heartbeatSeconds.jsonPath
+                  : undefined,
+            },
+            parameters
+          )
+        );
+      });
+    },
+  }),
 };
 
 function mapOrForEach(call: CallExpr, context: ASL) {
@@ -2113,6 +2279,39 @@ function assertLiteralNumberOrJsonPath(
       ErrorCodes.Invalid_Input,
       `Expected ${operation} ${fieldName} argument to be a number or reference.`
     );
+  }
+}
+
+function assertRetryArray(
+  retryArray: any,
+  operation: string
+): asserts retryArray is Retry[] {
+  if (!retryArray || !Array.isArray(retryArray) || retryArray.length === 0) {
+    throw new SynthError(
+      ErrorCodes.Step_Function_Retry_Invalid_Input,
+      `Expected ${operation} retry argument to be an array literal which contains only constant values.`
+    );
+  }
+
+  retryArray.forEach(assertRetryObjects);
+
+  function assertRetryObjects(retry: any): asserts retry is Retry {
+    const { ErrorEquals, BackoffRate, IntervalSeconds, MaxAttempts, ...rest } =
+      retry as Retry;
+
+    if (!ErrorEquals || ErrorEquals.some((x) => typeof x !== "string")) {
+      throw new SynthError(
+        ErrorCodes.Step_Function_Retry_Invalid_Input,
+        `${operation} retry object must be an array literal of string with at least one value`
+      );
+    }
+
+    if (Object.keys(rest).length !== 0) {
+      throw new SynthError(
+        ErrorCodes.Step_Function_Retry_Invalid_Input,
+        `${operation} retry object must only contain keys: ErrorEquals, BackoffRate, IntervalSeconds, or MaxAttempts`
+      );
+    }
   }
 }
 

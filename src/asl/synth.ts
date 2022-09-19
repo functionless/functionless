@@ -345,6 +345,8 @@ export class ASL {
    */
   private static readonly CatchState: string = "__catch";
 
+  private readonly contextParameter: undefined | ParameterDecl;
+
   constructor(
     readonly scope: Construct,
     readonly role: aws_iam.IRole,
@@ -394,6 +396,8 @@ export class ASL {
     });
 
     const [inputParam, contextParam] = this.decl.parameters;
+
+    this.contextParameter = contextParam;
 
     // get the State Parameters and ASLGraph states to initialize any provided parameters (assignment and binding).
     const [paramInitializer, paramStates] =
@@ -2899,6 +2903,8 @@ export class ASL {
       [`${FUNCTIONLESS_CONTEXT_NAME}.$`]: FUNCTIONLESS_CONTEXT_JSON_PATH,
       ...Object.fromEntries(
         Array.from(variableReferences.values())
+          // the context parameter is resolved by using `$$.*` anywhere in the machine, it never needs to be passed in.
+          .filter((decl) => decl !== this.contextParameter)
           .map((decl) =>
             // assume there is an identifier name if it is in the lexical scope
             this.getDeclarationName(decl as BindingDecl & { name: Identifier })

@@ -19674,7 +19674,7 @@ exports[`binaryOps logic with calls 1`] = `
 }
 `;
 
-exports[`call $SFN map, foreach, and parallel 1`] = `
+exports[`call $SFN map, foreach, parallel, task 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
   "States": {
@@ -19736,12 +19736,22 @@ exports[`call $SFN map, foreach, and parallel 1`] = `
       "ResultPath": "$.heap8",
       "Type": "Map",
     },
+    "11__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(i": {
+      "InputPath": "$.heap17",
+      "Next": "{Resource: trueFunc.resource.functionArn, Parameters: {value: 1, token: con",
+      "ResultPath": "$.heap18",
+      "Type": "Pass",
+    },
     "1__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
       "End": true,
       "Parameters": {
         "a.$": "$.heap7",
         "b.$": "$.heap9",
-        "c.$": "$.heap10",
+        "c.$": "$.heap11",
+        "d.$": "$.heap13",
+        "e.$": "$.heap15",
+        "f.$": "$.heap18",
+        "g.$": "$.heap20",
       },
       "ResultPath": "$",
       "Type": "Pass",
@@ -19751,6 +19761,36 @@ exports[`call $SFN map, foreach, and parallel 1`] = `
       "Next": "$SFN.map(input.arr, function (n))",
       "ResultPath": "$.heap7",
       "Type": "Pass",
+    },
+    "1__{Resource: trueFunc.resource.functionArn, Parameters: input, Comment: "h": {
+      "Comment": "hullo",
+      "HeartbeatSeconds": 10,
+      "InputPath": "$.heap16",
+      "Next": "11__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(i",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap17",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "SomeError",
+          ],
+        },
+      ],
+      "TimeoutSeconds": 10,
+      "Type": "Task",
+    },
+    "1__{Resource: trueFunc.resource.functionArn, Parameters: {value: 1, token: ": {
+      "Comment": "hullo again",
+      "HeartbeatSecondsPath": "$.heap19",
+      "Next": "1__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
+      "Parameters": {
+        "token.$": "$$.Task.Token",
+        "value": 1,
+      },
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap20",
+      "TimeoutSecondsPath": "$.input.n",
+      "Type": "Task",
     },
     "3__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
       "InputPath": "$.heap8",
@@ -19783,9 +19823,43 @@ exports[`call $SFN map, foreach, and parallel 1`] = `
           },
         },
       ],
-      "Next": "1__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
+      "Next": "5__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
       "ResultPath": "$.heap10",
       "Type": "Parallel",
+    },
+    "5__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
+      "InputPath": "$.heap10",
+      "Next": "6__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
+      "ResultPath": "$.heap11",
+      "Type": "Pass",
+    },
+    "6__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
+      "Next": "7__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
+      "Parameters": {},
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap12",
+      "Type": "Task",
+    },
+    "7__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
+      "InputPath": "$.heap12",
+      "Next": "8__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
+      "ResultPath": "$.heap13",
+      "Type": "Pass",
+    },
+    "8__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
+      "Next": "9__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
+      "Parameters": {
+        "arr.$": "$.input.arr",
+      },
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap14",
+      "Type": "Task",
+    },
+    "9__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
+      "InputPath": "$.heap14",
+      "Next": "{Resource: trueFunc.resource.functionArn, Parameters: input, Comment: "hull",
+      "ResultPath": "$.heap15",
+      "Type": "Pass",
     },
     "Initialize Functionless Context": {
       "Next": "await $SFN.forEach(input.arr, function (n))",
@@ -19865,6 +19939,18 @@ exports[`call $SFN map, foreach, and parallel 1`] = `
         3,
       ],
       "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "{Resource: trueFunc.resource.functionArn, Parameters: input, Comment: "hull": {
+      "InputPath": "$.input",
+      "Next": "1__{Resource: trueFunc.resource.functionArn, Parameters: input, Comment: "h",
+      "ResultPath": "$.heap16",
+      "Type": "Pass",
+    },
+    "{Resource: trueFunc.resource.functionArn, Parameters: {value: 1, token: con": {
+      "InputPath": "$.input.n",
+      "Next": "1__{Resource: trueFunc.resource.functionArn, Parameters: {value: 1, token: ",
+      "ResultPath": "$.heap19",
       "Type": "Pass",
     },
   },

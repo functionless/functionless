@@ -313,7 +313,7 @@ runtimeTestSuite<
   );
 
   test(
-    "call $SFN map, foreach, and parallel",
+    "call $SFN map, foreach, parallel, task",
     (parent) => {
       const func = sfnTestLambda<number, void>(
         parent,
@@ -323,25 +323,62 @@ runtimeTestSuite<
         }
       );
 
-      return new StepFunction(parent, "sfn2", async (input) => {
-        await $SFN.forEach(input.arr, (n) => $SFN.retry(async () => func(n)));
+      const sfn = new StepFunction(
+        parent,
+        "sfn2",
+        async (input: { arr: number[]; n: number }, context) => {
+          await $SFN.forEach(input.arr, (n) => $SFN.retry(async () => func(n)));
 
-        return {
-          a: await $SFN.map([1, 2, 3], (n) => {
-            return `n${n}`;
-          }),
-          b: await $SFN.map(input.arr, (n) => {
-            return n;
-          }),
-          c: await $SFN.parallel(
-            () => 1,
-            () => 2
-          ),
-        };
-      });
+          return {
+            a: await $SFN.map([1, 2, 3], (n) => {
+              return `n${n}`;
+            }),
+            b: await $SFN.map(input.arr, (n) => {
+              return n;
+            }),
+            c: await $SFN.parallel(
+              () => 1,
+              () => 2
+            ),
+            d: $SFN.task({ Resource: trueFunc.resource.functionArn }),
+            e: $SFN.task({
+              Resource: trueFunc.resource.functionArn,
+              Parameters: { arr: input.arr },
+            }),
+            f: $SFN.task({
+              Resource: trueFunc.resource.functionArn,
+              Parameters: input,
+              Comment: "hullo",
+              Retry: [{ ErrorEquals: ["SomeError"] }],
+              HeartbeatSeconds: 10,
+              TimeoutSeconds: 10,
+            }),
+            g: $SFN.task({
+              Resource: "arn:aws:states:::lambda:invoke.waitForTaskToken",
+              Parameters: {
+                FunctionName: trueFunc.resource.functionArn,
+                Payload: { value: 1, token: context.Task.Token },
+              },
+              Comment: "hullo again",
+              HeartbeatSeconds: input.n,
+              TimeoutSeconds: input.n,
+            }),
+          };
+        }
+      );
+      trueFunc.resource.grantInvoke(sfn.resource);
+      return sfn;
     },
-    { a: ["n1", "n2", "n3"], b: [1, 2], c: [1, 2] },
-    { arr: [1, 2] }
+    {
+      a: ["n1", "n2", "n3"],
+      b: [1, 2],
+      c: [1, 2],
+      d: true,
+      e: true,
+      f: true,
+      g: true,
+    },
+    { arr: [1, 2], n: 10 }
   );
 
   const shasum = crypto.createHash("sha1");
