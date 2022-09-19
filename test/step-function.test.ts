@@ -1,23 +1,27 @@
 import { aws_stepfunctions, Stack } from "aws-cdk-lib";
+import { Template } from "aws-cdk-lib/assertions";
 import { Pass } from "aws-cdk-lib/aws-stepfunctions";
 import "jest";
+import type * as AWS from "aws-sdk";
 import * as functionless from "../src";
 import {
   $AWS,
   $SFN,
-  EventBus,
-  Event,
-  ExpressStepFunction,
-  StepFunction,
-  SyncExecutionResult,
   ErrorCodes,
-  SynthError,
+  Event,
+  EventBus,
+  ExpressStepFunction,
+  Queue,
+  Serializer,
+  StepFunction,
   StepFunctionError,
+  SyncExecutionResult,
+  SynthError,
 } from "../src";
-import { ASLOptions, StateMachine, States, Task } from "../src/asl";
+import { StateMachine, States, Task } from "../src/asl";
+import { ASLOptions } from "../src/asl/synth";
 import { Function } from "../src/function";
 import { initStepFunctionApp, normalizeCDKJson, Person } from "./util";
-
 /**
  * Removes randomized values (CDK token strings) form the definitions.
  */
@@ -95,36 +99,6 @@ test("return ElementAccessExpr", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
-test("return ElementAccessExpr identifier", () => {
-  const { stack } = initStepFunctionApp();
-  expect(
-    () =>
-      new ExpressStepFunction(
-        stack,
-        "fn",
-        (input: { input: { id: string } }) => {
-          const id = "id";
-          return input.input[id];
-        }
-      )
-  ).toThrow("Collection element accessor must be a constant string or number");
-});
-
-test("return ElementAccessExpr expression", () => {
-  const { stack } = initStepFunctionApp();
-  expect(
-    () =>
-      new ExpressStepFunction(
-        stack,
-        "fn",
-        (input: { input: { id: string } }) => {
-          const id: string | null = null;
-          return input.input[id ?? "id"];
-        }
-      )
-  ).toThrow("Collection element accessor must be a constant string or number");
-});
-
 test("return ElementAccessExpr number", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(
@@ -140,17 +114,16 @@ test("return ElementAccessExpr number", () => {
 
 test("return ElementAccessExpr number reference", () => {
   const { stack } = initStepFunctionApp();
-  expect(
-    () =>
-      new ExpressStepFunction(
-        stack,
-        "fn",
-        (input: { input: { arr: string[] } }) => {
-          const id = 0;
-          return input.input.arr[id];
-        }
-      )
-  ).toThrow("Collection element accessor must be a constant string or number");
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { input: { arr: string[] } }) => {
+      const id = 0;
+      return input.input.arr[id];
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("return optional PropAccessExpr", () => {
@@ -426,6 +399,123 @@ test("spread constant array and object", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("spread limits", () => {
+  const definition = new StepFunction(stack, "sfn", async (input) => {
+    return {
+      ...{ a: 0, b: 2, c: 3 },
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...{ m: 0, n: 5, o: 6 },
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...{ x: 7, y: 8, z: 9, a: 1, m: 4 },
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      ...input,
+      someKey: input,
+    };
+  }).definition;
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("spread any object", () => {
+  const definition = new StepFunction(stack, "fn", (input) => {
+    return {
+      a: {
+        ...input,
+      },
+      b: {
+        x: 1,
+        ...input,
+        y: input,
+      },
+      c: {
+        ...input,
+        ...input,
+        ...input,
+      },
+      d: {
+        // @ts-ignore
+        x: { y: 1 },
+        ...{ x: 1, y: 2 },
+        y: 3,
+      },
+      e: {
+        ...{ ...{ ...{ x: 1 } } },
+        x: 2,
+        ...input,
+      },
+    };
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("return void", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {
@@ -598,22 +688,6 @@ test("binary and unary unsupported", () => {
     () =>
       new ExpressStepFunction<{ a: number }, number>(
         stack,
-        "fn",
-        (input) => input.a + input.a
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
-        "fn2",
-        (input) => input.a - input.a
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
         "fn3",
         (input) => input.a * input.a
       )
@@ -638,22 +712,6 @@ test("binary and unary unsupported", () => {
     () =>
       new ExpressStepFunction<{ a: number }, number>(
         stack,
-        "fn6",
-        (input) => (input.a += input.a)
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
-        "fn7",
-        (input) => (input.a -= input.a)
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
         "fn8",
         (input) => (input.a *= input.a)
       )
@@ -672,46 +730,6 @@ test("binary and unary unsupported", () => {
         stack,
         "fn10",
         (input) => (input.a %= input.a)
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
-        "fn11",
-        (input) => -input.a
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
-        "fn12",
-        (input) => --input.a
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
-        "fn13",
-        (input) => ++input.a
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
-        "fn14",
-        (input) => input.a++
-      )
-  ).toThrow("Step Function does not support operator");
-  expect(
-    () =>
-      new ExpressStepFunction<{ a: number }, number>(
-        stack,
-        "fn15",
-        (input) => input.a--
       )
   ).toThrow("Step Function does not support operator");
 });
@@ -980,15 +998,15 @@ test("put an event bus event", () => {
     }
   ).definition;
 
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+
   expectTaskToMatch(
     definition,
     {
       Parameters: { Entries: [{ EventBusName: bus.eventBusArn }] },
     },
-    "1__await bus.putEvents"
+    "await bus.putEvent"
   );
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("put multiple event bus events", () => {
@@ -1279,7 +1297,7 @@ test("return a single Lambda Function call", () => {
     {
       Resource: getPerson.resource.functionArn,
     },
-    "1__return getPerson"
+    "return getPerson"
   );
 });
 
@@ -1455,6 +1473,196 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("iam policy for AWS.SDK.CloudWatch.describeAlarms", () => {
+  const { stack } = initStepFunctionApp();
+  new ExpressStepFunction<undefined, AWS.CloudWatch.MetricAlarms | undefined>(
+    stack,
+    "fn",
+    async () => {
+      const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
+        {},
+        {
+          iam: { resources: ["*"] },
+        }
+      );
+
+      return MetricAlarms;
+    }
+  );
+
+  expect(Template.fromStack(stack)).toMatchSnapshot();
+});
+
+test("overwrite aslServiceName AWS.SDK.CloudWatch.describeAlarms", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    undefined,
+    AWS.CloudWatch.MetricAlarms | undefined
+  >(stack, "fn", async () => {
+    const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
+      {},
+      {
+        iam: { resources: ["*"] },
+        aslServiceName: "cw",
+      }
+    );
+
+    return MetricAlarms;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("overwrite iamActions AWS.SDK.CloudWatch.describeAlarms", () => {
+  const { stack } = initStepFunctionApp();
+  new ExpressStepFunction<undefined, AWS.CloudWatch.MetricAlarms | undefined>(
+    stack,
+    "fn",
+    async () => {
+      const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
+        {},
+        {
+          iam: { resources: ["*"], actions: ["cloudwatch:Describe*"] },
+        }
+      );
+
+      return MetricAlarms;
+    }
+  );
+
+  expect(Template.fromStack(stack)).toMatchSnapshot();
+});
+
+test("add iamConditions AWS.SDK.CloudWatch.describeAlarms", () => {
+  const { stack } = initStepFunctionApp();
+  new ExpressStepFunction<undefined, AWS.CloudWatch.MetricAlarms | undefined>(
+    stack,
+    "fn",
+    async () => {
+      const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
+        {},
+        {
+          iam: {
+            resources: ["*"],
+            conditions: {
+              StringEquals: {
+                "aws:ResourceTag/env": ["test"],
+              },
+            },
+          },
+        }
+      );
+
+      return MetricAlarms;
+    }
+  );
+
+  expect(Template.fromStack(stack)).toMatchSnapshot();
+});
+
+test("non-literal params AWS.SDK.CloudWatch.deleteAlarms", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<undefined, void>(
+    stack,
+    "fn",
+    async () => {
+      const { MetricAlarms } = await $AWS.SDK.CloudWatch.describeAlarms(
+        {},
+        {
+          iam: { resources: ["*"] },
+        }
+      );
+
+      if (MetricAlarms === undefined) {
+        return;
+      }
+
+      await $AWS.SDK.CloudWatch.deleteAlarms(
+        { AlarmNames: MetricAlarms.map((a) => a.AlarmName as string) },
+        {
+          iam: { resources: ["*"] },
+        }
+      );
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("return AWS.SDK.CloudWatch.describeAlarms", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    undefined,
+    AWS.CloudWatch.MetricAlarms | undefined
+  >(stack, "fn", async () => {
+    const alarms = await $AWS.SDK.CloudWatch.describeAlarms(
+      {},
+      {
+        iam: { resources: ["*"] },
+      }
+    );
+
+    if (alarms.MetricAlarms === undefined) {
+      return;
+    }
+
+    return alarms.MetricAlarms;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("return AWS.SDK.CloudWatch.describeAlarms dynamic parameters", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction<
+    { prefix: string | undefined },
+    AWS.CloudWatch.MetricAlarms | undefined
+  >(stack, "fn", async (input) => {
+    const alarms = await $AWS.SDK.CloudWatch.describeAlarms(
+      {
+        AlarmNamePrefix: input.prefix ?? "default",
+      },
+      {
+        iam: { resources: ["*"] },
+      }
+    );
+
+    if (alarms.MetricAlarms === undefined) {
+      return;
+    }
+
+    return alarms.MetricAlarms;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("return AWS.SDK.ApiGatewayManagementApi.postToConnection is not supported", () => {
+  const { stack } = initStepFunctionApp();
+  expect(
+    () =>
+      new ExpressStepFunction<{ prefix: string | undefined }, void>(
+        stack,
+        "fn",
+        async () => {
+          await $AWS.SDK.ApiGatewayManagementApi.postToConnection(
+            {
+              ConnectionId: "blah",
+              Data: "some data",
+            },
+            {
+              iam: {
+                resources: ["*"],
+              },
+            }
+          );
+        }
+      )
+  ).toThrow(
+    "Step Functions does not support an API Integration with ApiGatewayManagementApi and method postToConnection."
+  );
+});
+
 test("for-loop over a list literal", () => {
   const { stack, computeScore } = initStepFunctionApp();
   const definition = new ExpressStepFunction<{ id: string }, void>(
@@ -1493,6 +1701,8 @@ test("conditionally call DynamoDB and then void", () => {
     }
   ).definition;
 
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+
   expectTaskToMatch(
     definition,
     {
@@ -1500,10 +1710,8 @@ test("conditionally call DynamoDB and then void", () => {
         TableName: personTable.resource.tableName,
       },
     },
-    "1__await $AWS.DynamoDB.GetItem"
+    "await $AWS.DynamoDB.GetItem"
   );
-
-  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
 test("waitFor literal number of seconds", () => {
@@ -2306,6 +2514,7 @@ test("[1,2,3,4].filter((item, index, array) => item > 1 + 2)", () => {
 test("[1,2,3,4].filter(item => item > {})", () => {
   const { stack } = initStepFunctionApp();
   const { definition } = new ExpressStepFunction(stack, "fn", async () => {
+    // @ts-ignore
     return [{}].filter((item) => item === { a: "a" });
   });
 
@@ -4234,4 +4443,190 @@ test("throw SynthError when rest parameter is used", () => {
       });
     });
   }).toThrow("Step Functions does not yet support rest parameters");
+});
+
+test("sendMessage object literal with JSON Path to SQS Queue", () => {
+  interface Message {
+    orderId: string;
+  }
+
+  const queue = new Queue<Message>(stack, "Queue");
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: { orderId: string }): Promise<void> => {
+      await queue.sendMessage({
+        MessageBody: {
+          orderId: input.orderId,
+        },
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("sendMessage when whole message is JSON Path", () => {
+  interface Message {
+    orderId: string;
+  }
+
+  const queue = new Queue<Message>(stack, "Queue");
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: Message): Promise<void> => {
+      await queue.sendMessage({
+        MessageBody: input,
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("sendMessage JSON array", () => {
+  interface Message {
+    orderId: string;
+  }
+
+  const queue = new Queue<Message[]>(stack, "Queue");
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: Message): Promise<void> => {
+      await queue.sendMessage({
+        MessageBody: [input],
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("sendMessage TextSerializer", () => {
+  const queue = new Queue(stack, "Queue", {
+    serializer: Serializer.text(),
+  });
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: { message: string }): Promise<void> => {
+      await queue.sendMessage({
+        MessageBody: input.message,
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("sendMessage TextSerializer literal string", () => {
+  const queue = new Queue(stack, "Queue", {
+    serializer: Serializer.text(),
+  });
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (): Promise<void> => {
+      await queue.sendMessage({
+        MessageBody: "hello world",
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("purge SQS Queue", () => {
+  const queue = new Queue(stack, "Queue");
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (): Promise<void> => {
+      await queue.purge();
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("sendMessageBatch with JSON serialization", () => {
+  interface Message {
+    orderId: string;
+  }
+
+  const queue = new Queue<Message>(stack, "Queue");
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: { messages: Message[] }): Promise<void> => {
+      await queue.sendMessageBatch({
+        Entries: input.messages.map((message, i) => ({
+          Id: `${i}`,
+          MessageBody: message,
+        })),
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("sendMessageBatch with Text serialization", () => {
+  const queue = new Queue(stack, "Queue", {
+    serializer: Serializer.text(),
+  });
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (input: { messages: string[] }): Promise<void> => {
+      await queue.sendMessageBatch({
+        Entries: input.messages.map((message, i) => ({
+          Id: `${i}`,
+          MessageBody: message,
+        })),
+      });
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("receiveMessage with JSON serialization", () => {
+  interface Message {
+    orderId: string;
+  }
+
+  const queue = new Queue<Message>(stack, "Queue");
+
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    async (): Promise<void> => {
+      await queue.receiveMessage();
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("receiveMessage with Text serialization", () => {
+  const queue = new Queue(stack, "Queue", {
+    serializer: Serializer.text(),
+  });
+
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return queue.receiveMessage();
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
 });

@@ -55,7 +55,7 @@ type PREDEFINED = typeof PREDEFINED_VALUES[number];
  * https://docs.aws.amazon.com/eventbridge/latest/userguide/eb-transform-target-input.html
  */
 export const synthesizeEventBridgeTargets = (
-  maybeDecl: FunctionLike | Err | unknown
+  maybeDecl: FunctionLike | Err | undefined
 ): aws_events.RuleTargetInput => {
   const decl = validateFunctionLike(maybeDecl, "EventBridgeTarget");
 

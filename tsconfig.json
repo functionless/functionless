@@ -10,7 +10,7 @@
     "inlineSources": true,
     "lib": [
       "dom",
-      "ES2019"
+      "ES2022"
     ],
     "module": "CommonJS",
     "noEmitOnError": false,
@@ -27,7 +27,8 @@
     "stripInternal": true,
     "target": "ES2019",
     "declarationMap": true,
-    "noUncheckedIndexedAccess": true
+    "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true
   },
   "include": [
     "src/**/*.ts"

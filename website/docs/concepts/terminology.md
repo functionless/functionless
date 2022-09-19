@@ -63,7 +63,7 @@ See the [Integration Context](./integration/index.md#integration-context) docume
 
 ## TypeScript Transformer
 
-The Functionless Transformer is a process that runs when you compile your TypeScript code to JavaScript. It re-writes parts of your code to include the [Functionless AST](#abstract-syntax-tree-ast). See [Getting Started](../getting-started.md) for more information on how to configure the transformer.
+The Functionless Transformer is a process that runs when you compile your TypeScript code to JavaScript. It re-writes parts of your code to include the [Functionless AST](#abstract-syntax-tree-ast).
 
 ## Abstract Syntax Tree (AST)
 
@@ -75,7 +75,7 @@ An Interpreter is a process that runs during [Synthesis Time](#synthesis-time) t
 
 Examples include:
 
-- [Amazon States Language](../api/classes/ASL.md)
+- [Amazon States Language](../api/classes/ASL-1.md)
 - [Appsync Velocity Templates](../api/classes/AppsyncVTL.md)
 - [API Gateway Velocity Templates](../api/classes/APIGatewayVTL.md)
 - [Event Bus Rules and Targets](../api/classes/EventBus.md)

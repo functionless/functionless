@@ -1,6 +1,4 @@
-// @ts-ignore - imported for tsdoc
 import type { AwsMethod } from "./api";
-// @ts-ignore - imported for tsdoc
 import { ExpressStepFunction } from "./step-function";
 
 const BASE_URL = process.env.FUNCTIONLESS_LOCAL
@@ -70,31 +68,36 @@ export interface ErrorCode {
 
 export namespace ErrorCodes {
   /**
-   * The computations that [Amazon States Language](https://docs.aws.amazon.com/step-functions/latest/dg/concepts-amazon-states-language.html)
-   * can do is restricted by JSON Path and the limited [Intrinsic Functions](https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-intrinsic-functions.html). Currently, arithmetic expressions are not supported.
+   * Step Functions can only preform limited arithmetic operations.
+   *
+   * Add (`+`), Subtract (`-`) and their duratives (`+=`, `++`) are supported, but operations like multiply (`*`) and mod (`%`) are not.
+   *
    * ```ts
    * // ok
    * new StepFunction(scope, id, () => 1 + 2);
    *
-   * // illegal!
+   * // ok
    * new StepFunction(scope, id, (input: { num: number }) => input.number + 1);
+   *
+   * // illegal!
+   * new StepFunction(scope, id, (input: { num: number }) => input.number * 2);
    * ```
    *
    * To workaround, use a `Function` to implement the arithmetic expression. Be aware that this comes with added cost and operational risk.
    *
    * ```ts
-   * const add = new Function(scope, "add", (input: { a: number, b: number }) => input.a + input.b);
+   * const mult = new Function(scope, "add", (input: { a: number, b: number }) => input.a * input.b);
    *
    * new StepFunction(scope, id, async (input: { num: number }) => {
-   *   await add({a: input.number, b: 1});
+   *   await mult({a: input.number, b: 1});
    * });
    * ```
    */
-  export const Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function: ErrorCode =
+  export const Cannot_perform_all_arithmetic_or_bitwise_computations_on_variables_in_Step_Function: ErrorCode =
     {
       code: 10000,
       type: ErrorType.ERROR,
-      title: "Cannot perform arithmetic on variables in Step Function",
+      title: "Cannot perform all arithmetic on variables in Step Function",
     };
 
   /**
@@ -1263,6 +1266,92 @@ export namespace ErrorCodes {
     // Warn because we do not fail on this during synth, but SFN may fail during runtime.
     type: ErrorType.WARN,
     title: "StepFunctions mismatched index type.",
+  };
+
+  /**
+   * The AWS SDK being used in the current resource is unsupported by that resource.
+   *
+   * Workaround:
+   *
+   * Most of the ASK APIs will work within
+   */
+  export const Unsupported_AWS_SDK_in_Resource: ErrorCode = {
+    code: 10036,
+    type: ErrorType.ERROR,
+    title: "Unsupported AWS SDK in Resource.",
+  };
+
+  /**
+   * Step Function Retry Invalid Input.
+   *
+   * `$SFN.Retry` can either retry on all errors or be given a constant,
+   * array of literal objects ({@link Retry}) that determine which errors to retry on.
+   * The array must have 1 or more literal {@link Retry} objects.
+   *
+   * ```ts
+   * new StepFunction(stack, "sfn", async ()=> {
+   *    // Valid
+   *    await $SFN.retry(async () => func());
+   *    // Valid
+   *    await $SFN.retry([{ ErrorEquals: ["States.Timeout"] }], async () => func());
+   *    // Valid
+   *    await $SFN.retry([{ ErrorEquals: ["States.Timeout"], MaxAttempts: 5, IntervalSeconds: 2, BackoffRate: 0.5 }], async () => func());
+   *    // Valid
+   *    await $SFN.retry([{ ErrorEquals: ["States.Timeout"] }, { ErrorEquals: ["Lambda.TooManyRequestsException"] }], async () => func());
+   *
+   *    // Invalid - reference to retry objects
+   *    await $SFN.retry(myRetryObjects, async () => func());
+   *    // Invalid - reference to a retry object
+   *    await $SFN.retry([retryObject], async () => func());
+   *    // Invalid - reference to a error name
+   *    await $SFN.retry([{ ErrorEquals: [ myErrorType ] }], async () => func());
+   *    // Invalid - array is empty
+   *    await $SFN.retry([], async () => func());
+   * })
+   * ```
+   *
+   * The limitation is due to Step Function's lack of support for dynamic paths (json paths) for retry configuration.
+   *
+   * https://docs.aws.amazon.com/step-functions/latest/dg/concepts-error-handling.html#error-handling-retrying-after-an-error
+   */
+  export const Step_Function_Retry_Invalid_Input: ErrorCode = {
+    code: 10037,
+    type: ErrorType.ERROR,
+    title: "Step Function Retry Invalid Input.",
+  };
+
+  /**
+   * Step Functions Arithmetic Only Supports Integer
+   *
+   * Step Functions only supports integer addition via the `States.MathAdd`.
+   *
+   * ```ts
+   * new StepFunction(stack, "sfn", async (input: { a: number }) => {
+   *    return 1.5 + input.a;
+   * });
+   * ```
+   *
+   * If the above machine is given input: `{ a: 0.5 }`, the result will be `1`.
+   *
+   * Effectively resulting in: `1.5 + 0.5 === 1`
+   *
+   * Workaround:
+   *
+   * Do floating point math within a lambda function.
+   *
+   * ```ts
+   * const floatingPointAdd = new Function(stack, "fn", async (input: { a: number, b: number }) => {
+   *    return input.a + input.b;
+   * });
+   * new StepFunction(stack, "sfn", async (input: { a: number }) => {
+   *    return floatingPointAdd(1.5, input.a);
+   * });
+   * ```
+   */
+  export const Step_Functions_Arithmetic_Only_Supports_Integers: ErrorCode = {
+    code: 10038,
+    type: ErrorType.WARN,
+    title: "Step Functions Arithmetic Only Supports Integers",
   };
 }
 

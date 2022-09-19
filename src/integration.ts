@@ -18,8 +18,9 @@ import {
   isVariableDecl,
 } from "./guards";
 import { FunctionlessNode } from "./node";
-import { AnyFunction, evalToConstant } from "./util";
-import { visitEachChild } from "./visit";
+import { reflect } from "./reflect";
+import { AnyFunction, evalToConstant, isAnyFunction } from "./util";
+import { forEachChild } from "./visit";
 import { VTL } from "./vtl";
 
 export const isIntegration = <I extends Integration<string, AnyFunction>>(
@@ -85,13 +86,7 @@ export const INTEGRATION_TYPE_KEYS = Object.values(INTEGRATION_TYPES);
 /**
  * All integration methods supported by functionless.
  */
-export interface IntegrationMethods<
-  F extends AnyFunction,
-  EventBusInteg extends EventBusTargetIntegration<
-    any,
-    any
-  > = EventBusTargetIntegration<any, any>
-> {
+export interface IntegrationMethods<F extends AnyFunction> {
   /**
    * Integrate with AppSync VTL applications.
    * @private
@@ -110,7 +105,7 @@ export interface IntegrationMethods<
    * @private
    */
   asl: (call: CallExpr, context: ASL) => ASLGraph.NodeResults;
-  eventBus: EventBusInteg;
+  eventBus: EventBusTargetIntegration<any, any>;
   /**
    * Native javascript code integrations that execute at runtime like Lambda.
    */
@@ -167,12 +162,8 @@ export interface IntegrationMethods<
  */
 export interface Integration<
   K extends string = string,
-  F extends AnyFunction = AnyFunction,
-  EventBus extends EventBusTargetIntegration<
-    any,
-    any
-  > = EventBusTargetIntegration<any, any>
-> extends Partial<IntegrationMethods<F, EventBus>> {
+  F extends AnyFunction = AnyFunction
+> extends Partial<IntegrationMethods<F>> {
   /**
    * Brand the Function, F, into this type so that sub-typing rules apply to the function signature.
    */
@@ -249,7 +240,7 @@ export class IntegrationImpl<F extends AnyFunction = AnyFunction>
     return this.assertIntegrationDefined(
       context.kind,
       this.integration.asl
-    ).bind(this.integration)(call, context);
+    ).call(this.integration, call, context);
   }
 
   public get eventBus(): EventBusTargetIntegration<any, any> {
@@ -298,7 +289,8 @@ export function findDeepIntegrations(
   ast: FunctionlessNode
 ): CallExpr<ReferenceExpr>[] {
   const nodes: CallExpr<ReferenceExpr>[] = [];
-  visitEachChild(ast, function visit(node: FunctionlessNode): FunctionlessNode {
+  const seen = new Set();
+  forEachChild(ast, function visit(node: FunctionlessNode): void {
     if (isCallExpr(node)) {
       const integrations = tryFindIntegrations(node.expr);
       if (integrations) {
@@ -307,16 +299,34 @@ export function findDeepIntegrations(
             node.fork(
               new CallExpr(
                 node.span,
-                new ReferenceExpr(node.expr.span, "", () => integration),
-                node.args.map((arg) => arg.clone())
+                new ReferenceExpr(node.expr.span, "", () => integration, 0, 0),
+                node.args.map((arg) => arg.clone()),
+                false
               )
             )
           )
         );
       }
+    } else if (isReferenceExpr(node)) {
+      (function visitValue(value: any): void {
+        if (seen.has(value)) {
+          return;
+        }
+        seen.add(value);
+        if (isAnyFunction(value)) {
+          const ast = reflect(value);
+          if (ast) {
+            visit(ast);
+          }
+        } else if (Array.isArray(value)) {
+          value.forEach(visitValue);
+        } else if (value && typeof value === "object") {
+          Object.values(value).forEach(visitValue);
+        }
+      })(node.ref());
     }
 
-    return visitEachChild(node, visit);
+    forEachChild(node, visit);
   });
 
   return nodes;
@@ -400,14 +410,17 @@ export function tryResolveReferences(
       return tryResolveReferences(defaultValue, undefined);
     }
   } else if (isReferenceExpr(node) || isThisExpr(node)) {
-    return [node.ref()];
+    const ref = node.ref?.();
+    if (ref) {
+      return [ref];
+    }
   } else if (isIdentifier(node)) {
     return tryResolveReferences(node.lookup(), defaultValue);
   } else if (isBindingElem(node)) {
     return tryResolveReferences(node.parent, node.initializer).flatMap(
       (value) => {
         if (isIdentifier(node.name)) {
-          return [value[node.name.name]];
+          return [value?.[node.name.name]];
         } else {
           throw new Error("should be impossible");
         }

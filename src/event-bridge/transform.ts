@@ -1,6 +1,5 @@
 import { aws_events } from "aws-cdk-lib";
 import { FunctionDecl } from "../declaration";
-import { Integration } from "../integration";
 import {
   DynamicProps,
   IEventBus,
@@ -95,15 +94,14 @@ export class EventTransform<
       | ((targetInput: aws_events.RuleTargetInput) => aws_events.IRuleTarget),
     ...props: Parameters<DynamicProps<Props>>
   ): void {
-    pipe(this.rule, integration, props[0] as Props, this.targetInput);
+    pipe(this.rule, integration, props[0] as any, this.targetInput);
   }
 }
 
 /**
  * EventBus to EventBus input transform is not allowed.
  */
-export type NonEventBusIntegration<I extends Integration<any, any, any>> =
-  I extends IEventBus<any> ? never : I;
+export type NonEventBusIntegration<I> = I extends IEventBus<any> ? never : I;
 
 // to prevent the closure serializer from trying to import all of functionless.
 export const deploymentOnlyModule = true;

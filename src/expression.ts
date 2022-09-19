@@ -1,7 +1,6 @@
 import type {
   BindingElem,
   ClassMember,
-  Decl,
   GetAccessorDecl,
   MethodDecl,
   ParameterDecl,
@@ -16,7 +15,7 @@ import {
   isPropAssignExpr,
   isStringLiteralExpr,
 } from "./guards";
-import { BaseNode, FunctionlessNode } from "./node";
+import { BaseNode, BindingDecl, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
 import { Span } from "./span";
 import type { BlockStmt, Stmt } from "./statement";
@@ -57,6 +56,7 @@ export type Expr =
   | SpreadAssignExpr
   | SpreadElementExpr
   | StringLiteralExpr
+  | SuperKeyword
   | TaggedTemplateExpr
   | TemplateExpr
   | ThisExpr
@@ -73,14 +73,13 @@ export abstract class BaseExpr<
     | Expr
     | Stmt
     | VariableDecl
-    | undefined
 > extends BaseNode<Kind, Parent> {
   readonly nodeKind: "Expr" = "Expr";
 }
 
 export class ArrowFunctionExpr<
   F extends AnyFunction = AnyFunction
-> extends BaseExpr<NodeKind.ArrowFunctionExpr> {
+> extends BaseExpr<NodeKind.ArrowFunctionExpr, FunctionlessNode | undefined> {
   readonly _functionBrand?: F;
   constructor(
     /**
@@ -162,7 +161,7 @@ export class FunctionExpr<
 
 export class ClassExpr<C extends AnyClass = AnyClass> extends BaseExpr<
   NodeKind.ClassExpr,
-  undefined
+  FunctionlessNode | undefined
 > {
   readonly _classBrand?: C;
   constructor(
@@ -196,12 +195,37 @@ export class ReferenceExpr<
      * Range of text in the source file where this Node resides.
      */
     span: Span,
+    /**
+     * Name of the referenced variable.
+     *
+     * ```ts
+     * let i;
+     *
+     * i; // "i"
+     * ```
+     */
     readonly name: string,
-    readonly ref: () => R
+    /**
+     * A closure that produces the referred value.
+     */
+    readonly ref: () => R,
+    /**
+     * A number that uniquely identifies the variable within this AST.
+     *
+     * This is used to ensure that two ReferenceExpr's pointing to the same variable still point
+     * to the same variable after transformation.
+     */
+    readonly id: number | undefined,
+    /**
+     * Unique ID of this {@link ReferenceExpr}.
+     */
+    readonly referenceId: number | undefined
   ) {
     super(NodeKind.ReferenceExpr, span, arguments);
     this.ensure(name, "name", ["undefined", "string"]);
     this.ensure(ref, "ref", ["function"]);
+    this.ensure(id, "id", ["number", "undefined"]);
+    this.ensure(referenceId, "referenceId", ["number", "undefined"]);
   }
 }
 
@@ -219,7 +243,7 @@ export class Identifier extends BaseExpr<NodeKind.Identifier> {
     this.ensure(name, "name", ["string"]);
   }
 
-  public lookup(): Decl | undefined {
+  public lookup(): BindingDecl | undefined {
     return this.getLexicalScope().get(this.name);
   }
 }
@@ -236,7 +260,7 @@ export class PrivateIdentifier extends BaseExpr<NodeKind.PrivateIdentifier> {
     this.ensure(name, "name", ["string"]);
   }
 
-  public lookup(): Decl | undefined {
+  public lookup(): BindingDecl | undefined {
     return this.getLexicalScope().get(this.name);
   }
 }
@@ -247,7 +271,7 @@ export class PropAccessExpr extends BaseExpr<NodeKind.PropAccessExpr> {
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly expr: Expr,
+    readonly expr: Expr | SuperKeyword,
     readonly name: Identifier | PrivateIdentifier,
     /**
      * Whether this is using optional chaining.
@@ -258,7 +282,7 @@ export class PropAccessExpr extends BaseExpr<NodeKind.PropAccessExpr> {
     readonly isOptional: boolean
   ) {
     super(NodeKind.PropAccessExpr, span, arguments);
-    this.ensure(expr, "expr", ["Expr"]);
+    this.ensure(expr, "expr", ["Expr", NodeKind.SuperKeyword]);
     this.ensure(name, "ref", [NodeKind.Identifier, NodeKind.PrivateIdentifier]);
   }
 }
@@ -300,10 +324,7 @@ export class Argument extends BaseExpr<NodeKind.Argument, CallExpr | NewExpr> {
 }
 
 export class CallExpr<
-  E extends Expr | SuperKeyword | ImportKeyword =
-    | Expr
-    | SuperKeyword
-    | ImportKeyword
+  E extends Expr | ImportKeyword = Expr | ImportKeyword
 > extends BaseExpr<NodeKind.CallExpr> {
   constructor(
     /**
@@ -311,9 +332,18 @@ export class CallExpr<
      */
     span: Span,
     readonly expr: E,
-    readonly args: Argument[]
+    readonly args: Argument[],
+    /**
+     * Is this an optionally chained call?
+     *
+     * a?.()
+     */
+    readonly isOptional: boolean | undefined
   ) {
     super(NodeKind.CallExpr, span, arguments);
+    this.ensure(expr, "expr", ["Expr"]);
+    this.ensureArrayOf(args, "args", [NodeKind.Argument]);
+    this.ensure(isOptional, "isOptional", ["boolean", "undefined"]);
   }
 }
 
@@ -771,7 +801,10 @@ export class TaggedTemplateExpr extends BaseExpr<NodeKind.TaggedTemplateExpr> {
  * // TemplateHead is "".
  * ```
  */
-export class TemplateHead extends BaseNode<NodeKind.TemplateHead> {
+export class TemplateHead extends BaseNode<
+  NodeKind.TemplateHead,
+  TemplateExpr
+> {
   readonly nodeKind = "Node";
 
   constructor(
@@ -795,7 +828,7 @@ export class TemplateHead extends BaseNode<NodeKind.TemplateHead> {
  */
 export class TemplateSpan<
   Literal extends TemplateMiddle | TemplateTail = TemplateMiddle | TemplateTail
-> extends BaseNode<NodeKind.TemplateSpan> {
+> extends BaseNode<NodeKind.TemplateSpan, TemplateExpr> {
   readonly nodeKind = "Node";
 
   constructor(
@@ -815,7 +848,10 @@ export class TemplateSpan<
   }
 }
 
-export class TemplateMiddle extends BaseNode<NodeKind.TemplateMiddle> {
+export class TemplateMiddle extends BaseNode<
+  NodeKind.TemplateMiddle,
+  TemplateSpan
+> {
   readonly nodeKind = "Node";
 
   constructor(
@@ -830,7 +866,10 @@ export class TemplateMiddle extends BaseNode<NodeKind.TemplateMiddle> {
   }
 }
 
-export class TemplateTail extends BaseNode<NodeKind.TemplateTail> {
+export class TemplateTail extends BaseNode<
+  NodeKind.TemplateTail,
+  TemplateSpan
+> {
   readonly nodeKind = "Node";
 
   constructor(
@@ -880,19 +919,14 @@ export class ThisExpr<T = any> extends BaseExpr<NodeKind.ThisExpr> {
     /**
      * Produce the value of `this`
      */
-    readonly ref: () => T
+    readonly ref: (() => T) | undefined
   ) {
     super(NodeKind.ThisExpr, span, arguments);
-    this.ensure(ref, "ref", ["function"]);
+    this.ensure(ref, "ref", ["undefined", "function"]);
   }
 }
 
-export class SuperKeyword extends BaseNode<NodeKind.SuperKeyword> {
-  // `super` is not an expression - a reference to it does not yield a value
-  // it only supports the following interactions
-  // 1. call in a constructor - `super(..)`
-  // 2. call a method on it - `super.method(..)`.
-  readonly nodeKind = "Node";
+export class SuperKeyword extends BaseExpr<NodeKind.SuperKeyword> {
   constructor(
     /**
      * Range of text in the source file where this Node resides.

@@ -19,7 +19,7 @@
       "request": "launch",
       "runtimeExecutable": "node",
       "runtimeArgs": ["--nolazy"],
-      "args": ["./lib/message-board.js"],
+      "args": ["-r", "./hook", "./src/order-processing-queue.ts"],
       "outFiles": [
         "${workspaceRoot}/lib/**/*.js",
         "${workspaceRoot}/test-app/lib/**/*.js",
@@ -37,8 +37,8 @@
       "type": "node",
       "request": "launch",
       "runtimeExecutable": "node",
-      "runtimeArgs": ["--nolazy"],
-      "args": ["./lib/message-board.js"],
+      "runtimeArgs": ["--nolazy", "-r", "./hook"],
+      "args": ["./src/message-board.ts"],
       "outFiles": [
         "${workspaceRoot}/lib/**/*.js",
         "${workspaceRoot}/test-app/lib/**/*.js",
@@ -98,6 +98,7 @@
       "disableOptimisticBPs": true,
       "program": "${workspaceFolder}/node_modules/.bin/jest",
       "cwd": "${workspaceFolder}",
+      "runtimeArgs": ["--enable-source-maps"],
       "args": [
         "--runInBand",
         "--watchAll=false",
@@ -107,6 +108,34 @@
         "${jest.testFile}",
         "--coverage=false"
       ]
+    },
+    {
+      "name": ".projenrc.ts",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--nolazy", "-r", "@swc/register"],
+      "args": [".projenrc.ts"],
+      "cwd": "${workspaceRoot}",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "env": {
+        "TS_NODE_PROJECT": "${workspaceRoot}/test-app/tsconfig.json"
+      }
+    },
+    {
+      "name": "generate aws sdk types",
+      "type": "node",
+      "request": "launch",
+      "runtimeExecutable": "node",
+      "runtimeArgs": ["--nolazy", "-r", "ts-node/register/transpile-only"],
+      "args": ["./src/serialize-globals.ts"],
+      "cwd": "${workspaceRoot}",
+      "internalConsoleOptions": "openOnSessionStart",
+      "skipFiles": ["<node_internals>/**", "node_modules/**"],
+      "env": {
+        "TS_NODE_PROJECT": "${workspaceRoot}/tsconfig.json"
+      }
     }
   ]
 }

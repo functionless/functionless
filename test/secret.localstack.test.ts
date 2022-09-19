@@ -7,16 +7,18 @@ import {
   JsonSecret,
   TextSecret,
 } from "../src";
-import { localstackTestSuite } from "./localstack";
-import { localLambda } from "./runtime-util";
+import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
 
 // inject the localstack client config into the lambda clients
 // without this configuration, the functions will try to hit AWS proper
 const localstackClientConfig: FunctionProps = {
   timeout: Duration.seconds(20),
-  clientConfigRetriever: () => ({
-    endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
-  }),
+  clientConfigRetriever:
+    runtimeTestExecutionContext.deployTarget === "AWS"
+      ? undefined
+      : () => ({
+          endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
+        }),
 };
 
 interface UserPass {
@@ -24,10 +26,10 @@ interface UserPass {
   password: string;
 }
 
-localstackTestSuite("secretsManagerStack", (test) => {
+runtimeTestSuite("secretsManagerStack", (test) => {
   test(
     "JsonSecret should be able to get and put secret values",
-    (scope) => {
+    (scope, role) => {
       const secret = new JsonSecret<UserPass>(scope, "JsonSecret", {
         secretStringValue: SecretValue.unsafePlainText(
           JSON.stringify({
@@ -54,6 +56,7 @@ localstackTestSuite("secretsManagerStack", (test) => {
           }
         }
       );
+      func.resource.grantInvoke(role);
       return {
         outputs: {
           secretArn: secret.resource.secretArn,
@@ -61,20 +64,20 @@ localstackTestSuite("secretsManagerStack", (test) => {
         },
       };
     },
-    async (context) => {
+    async (context, clients) => {
       const userPass: UserPass = {
         username: "sam",
         password: "dragon ball zzz",
       };
 
-      await localLambda
+      await clients.lambda
         .invoke({
           FunctionName: context.functionArn,
           Payload: JSON.stringify(userPass),
         })
         .promise();
 
-      const value = await localLambda
+      const value = await clients.lambda
         .invoke({
           FunctionName: context.functionArn,
           Payload: JSON.stringify("get"),
@@ -87,7 +90,7 @@ localstackTestSuite("secretsManagerStack", (test) => {
 
   test(
     "TextSecret should be able to get and put secret values",
-    (scope) => {
+    (scope, role) => {
       const secret = new TextSecret(scope, "TextSecret", {
         secretStringValue: SecretValue.unsafePlainText("secret text"),
       });
@@ -109,6 +112,7 @@ localstackTestSuite("secretsManagerStack", (test) => {
           }
         }
       );
+      func.resource.grantInvoke(role);
       return {
         outputs: {
           secretArn: secret.resource.secretArn,
@@ -116,15 +120,15 @@ localstackTestSuite("secretsManagerStack", (test) => {
         },
       };
     },
-    async (context) => {
-      await localLambda
+    async (context, clients) => {
+      await clients.lambda
         .invoke({
           FunctionName: context.functionArn,
           Payload: JSON.stringify({ put: "value" }),
         })
         .promise();
 
-      const value = await localLambda
+      const value = await clients.lambda
         .invoke({
           FunctionName: context.functionArn,
           Payload: JSON.stringify("get"),
@@ -137,7 +141,7 @@ localstackTestSuite("secretsManagerStack", (test) => {
 
   test(
     "BinarySecret should be able to get and put secret values",
-    (scope) => {
+    (scope, role) => {
       const secret = new BinarySecret(scope, "BinarySecret", {
         secretStringValue: SecretValue.unsafePlainText(
           Buffer.from("secret text").toString("base64")
@@ -165,6 +169,7 @@ localstackTestSuite("secretsManagerStack", (test) => {
           }
         }
       );
+      func.resource.grantInvoke(role);
       return {
         outputs: {
           secretArn: secret.resource.secretArn,
@@ -172,9 +177,9 @@ localstackTestSuite("secretsManagerStack", (test) => {
         },
       };
     },
-    async (context) => {
+    async (context, clients) => {
       const secret = Buffer.from("value").toString("base64");
-      await localLambda
+      await clients.lambda
         .invoke({
           FunctionName: context.functionArn,
           Payload: JSON.stringify({
@@ -183,7 +188,7 @@ localstackTestSuite("secretsManagerStack", (test) => {
         })
         .promise();
 
-      const value = await localLambda
+      const value = await clients.lambda
         .invoke({
           FunctionName: context.functionArn,
           Payload: JSON.stringify("get"),

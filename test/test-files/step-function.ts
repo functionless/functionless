@@ -5,8 +5,6 @@ import {
   StepFunction,
   Function,
   EventBus,
-  // @ts-ignore - tsdocs
-  ErrorCodes,
   AppsyncResolver,
   $AWS,
   Table,
@@ -432,11 +430,6 @@ new StepFunction(stack, "obj ref", async () => {
  * @see ErrorCodes.StepFunctions_Invalid_collection_access
  */
 
-new StepFunction(stack, "obj ref", async (input: { n: number }) => {
-  const arr = [1, 2, 3];
-  return arr[input.n];
-});
-
 new StepFunction(stack, "obj ref", async (input: { key: string }) => {
   const obj = { a: "" } as Record<string, any>;
   return obj[input.key];
@@ -447,6 +440,11 @@ new StepFunction(stack, "obj ref", async (input: { key: string }) => {
  * 10025 - Step Functions invalid collection access
  * @see ErrorCodes.StepFunctions_Invalid_collection_access
  */
+
+new StepFunction(stack, "obj ref", async (input: { n: number }) => {
+  const arr = [1, 2, 3];
+  return arr[input.n];
+});
 
 const arrayAccessFunc = new Function<
   { arr: number[]; n: number },
@@ -476,13 +474,12 @@ new StepFunction(stack, "obj ref", async (input: { key: string }) => {
  * Supported
  */
 
-const func2 = new Function<{ x: number; y: number }, string>(
-  stack,
-  "func",
-  async () => {
-    return "hello";
-  }
-);
+const func2 = new Function<
+  { x: number | undefined; y: number | undefined },
+  string
+>(stack, "func", async () => {
+  return "hello";
+});
 
 new StepFunction(stack, "obj ref", async () => {
   const arr = [1, 2, 3];
@@ -639,6 +636,7 @@ new StepFunction(stack, "fn", async (input: { value: number }) => {
     return item === value;
   });
   [{}].filter((item) => {
+    // @ts-ignore
     return item === {};
   });
 });
@@ -677,4 +675,12 @@ new StepFunction(stack, "fn", async () => {
   obj["1"];
   // valid
   arr[0];
+});
+
+/**
+ * Support - spread
+ */
+
+new StepFunction(stack, "fn", async (input) => {
+  return { a: 1, ...input, b: 2 };
 });

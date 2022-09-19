@@ -4,13 +4,13 @@
  */
 export type Span = [
   /**
-   * Character position where this span starts.
+   * 1-based line number of the span.
    */
-  start: number,
+  line: number,
   /**
-   * Character position where this span ends.
+   * 0-based column of the span.
    */
-  end: number
+  column: number
 ];
 
 /**

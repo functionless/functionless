@@ -8,18 +8,18 @@ import {
 import * as amplify from "amplify-appsync-simulator/lib/velocity";
 import { App, aws_dynamodb, aws_events, aws_lambda, Stack } from "aws-cdk-lib";
 import { Rule } from "aws-cdk-lib/aws-events";
+import { stringify, parse } from "flatted";
 import {
   AppsyncResolver,
-  FunctionLike,
   Table,
   Function,
   Event,
   FunctionlessEventPattern,
   ResolverFunction,
   ResolverArguments,
+  reflect,
+  AnyFunction,
 } from "../src";
-
-import { Err } from "../src/error";
 import {
   synthesizeEventPattern,
   synthesizePatternDocument,
@@ -35,9 +35,7 @@ export function returnExpr(varName: string) {
 #return($context.stash.return__val)`;
 }
 
-export function getAppSyncTemplates(
-  decl: FunctionLike | Err | undefined
-): string[] {
+export function getAppSyncTemplates(decl: AnyFunction): string[] {
   const app = new App({ autoSynth: false });
   const stack = new Stack(app, "stack");
 
@@ -90,10 +88,7 @@ export function appsyncTestCase<
   Result,
   Source extends object | undefined = undefined
 >(
-  decl:
-    | FunctionLike<ResolverFunction<Arguments, Result, Source>>
-    | Err
-    | undefined,
+  decl: ResolverFunction<Arguments, Result, Source>,
   config?: {
     /**
      * Template count is generally [total integrations] * 2 + 2
@@ -101,7 +96,7 @@ export function appsyncTestCase<
     expectedTemplateCount?: number;
   }
 ) {
-  const actual = getAppSyncTemplates(decl);
+  const actual = getAppSyncTemplates(reflect(decl) as any);
 
   config?.expectedTemplateCount &&
     expect(actual).toHaveLength(config.expectedTemplateCount);
@@ -220,7 +215,7 @@ export function initStepFunctionApp() {
 }
 
 export function ebEventPatternTestCase(
-  decl: FunctionLike | Err | undefined,
+  decl: AnyFunction,
   expected: FunctionlessEventPattern
 ) {
   const document = synthesizePatternDocument(decl);
@@ -230,7 +225,7 @@ export function ebEventPatternTestCase(
 }
 
 export function ebEventPatternTestCaseError(
-  decl: FunctionLike | Err | undefined,
+  decl: AnyFunction,
   message?: string
 ) {
   expect(() => {
@@ -246,10 +241,10 @@ beforeEach(() => {
 });
 
 export function ebEventTargetTestCase<T extends Event>(
-  decl: FunctionLike<EventTransformFunction<T>> | Err | undefined,
+  decl: EventTransformFunction<T>,
   targetInput: aws_events.RuleTargetInput
 ) {
-  const result = synthesizeEventBridgeTargets(decl);
+  const result = synthesizeEventBridgeTargets(reflect(decl) as any);
 
   const rule = new Rule(stack, "testrule");
 
@@ -278,16 +273,19 @@ export function ebEventTargetTestCase<T extends Event>(
 }
 
 export function ebEventTargetTestCaseError<T extends Event>(
-  decl: FunctionLike<EventTransformFunction<T>> | Err | undefined,
+  decl: EventTransformFunction<T>,
   message?: string
 ) {
-  expect(() => synthesizeEventBridgeTargets(decl)).toThrow(message);
+  expect(() => synthesizeEventBridgeTargets(reflect(decl) as any)).toThrow(
+    message
+  );
 }
 
 export const normalizeCDKJson = (json: object) => {
-  return JSON.parse(
-    JSON.stringify(json)
+  return parse(
+    stringify(json)
       .replace(/\$\{Token\[[a-zA-Z0-9.-_]*\]\}/g, "__REPLACED_TOKEN")
-      .replace(/\"arn:[^\"]*\"/g, `"__REPLACED_ARN"`)
+      // do not replace arns that are for aws sdk service integrations
+      .replace(/\"arn:(?!aws:states:::aws-sdk)[^\"]*\"/g, `"__REPLACED_ARN"`)
   );
 };

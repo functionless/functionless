@@ -8,7 +8,7 @@
     "inlineSources": true,
     "lib": [
       "dom",
-      "ES2019"
+      "ES2022"
     ],
     "module": "CommonJS",
     "noEmitOnError": false,
@@ -26,6 +26,7 @@
     "target": "ES2019",
     "declarationMap": true,
     "noUncheckedIndexedAccess": true,
+    "skipLibCheck": true,
     "paths": {
       "@fnls": [
         "lib/index"

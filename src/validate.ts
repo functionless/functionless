@@ -1,16 +1,20 @@
+import ts from "typescript";
 import {
+  BinaryArithmeticToken,
   EventBusMapInterface,
   EventBusWhenInterface,
   EventTransformInterface,
   findParent,
   FunctionInterface,
   FunctionlessChecker,
-  isArithmeticToken,
+  isBinaryArithmeticToken,
+  isUnaryArithmeticToken,
   NewAppsyncFieldInterface,
   NewAppsyncResolverInterface,
   NewStepFunctionInterface,
   RuleInterface,
   typeMatch,
+  UnaryArithmeticToken,
 } from "./checker";
 import {
   ErrorCode,
@@ -19,6 +23,21 @@ import {
   SynthError,
 } from "./error-code";
 import { anyOf, hasOnlyAncestors } from "./util";
+
+const StepFunctions = {
+  SupportedBinaryArithmeticToken: new Set([
+    ts.SyntaxKind.MinusEqualsToken,
+    ts.SyntaxKind.MinusToken,
+    ts.SyntaxKind.PlusEqualsToken,
+    ts.SyntaxKind.PlusToken,
+  ]) as Set<BinaryArithmeticToken>,
+  SupportedUnaryBinaryArithmeticToken: new Set([
+    ts.SyntaxKind.MinusToken,
+    ts.SyntaxKind.PlusToken,
+    ts.SyntaxKind.MinusMinusToken,
+    ts.SyntaxKind.PlusPlusToken,
+  ]) as Set<UnaryArithmeticToken>,
+};
 
 /**
  * Validates a TypeScript SourceFile containing Functionless primitives does not
@@ -150,18 +169,39 @@ export function validate(
         }
       } else if (
         ((ts.isBinaryExpression(node) &&
-          isArithmeticToken(node.operatorToken.kind)) ||
+          isBinaryArithmeticToken(node.operatorToken.kind)) ||
           ((ts.isPrefixUnaryExpression(node) ||
             ts.isPostfixUnaryExpression(node)) &&
-            isArithmeticToken(node.operator))) &&
+            isUnaryArithmeticToken(node.operator))) &&
         !checker.isConstant(node)
       ) {
-        return [
-          newError(
-            node,
-            ErrorCodes.Cannot_perform_arithmetic_or_bitwise_computations_on_variables_in_Step_Function
-          ),
-        ];
+        if (
+          (ts.isBinaryExpression(node) &&
+            isBinaryArithmeticToken(node.operatorToken.kind) &&
+            StepFunctions.SupportedBinaryArithmeticToken.has(
+              node.operatorToken.kind
+            )) ||
+          ((ts.isPrefixUnaryExpression(node) ||
+            ts.isPostfixUnaryExpression(node)) &&
+            isUnaryArithmeticToken(node.operator) &&
+            StepFunctions.SupportedUnaryBinaryArithmeticToken.has(
+              node.operator
+            ))
+        ) {
+          return [
+            newWarning(
+              node,
+              ErrorCodes.Step_Functions_Arithmetic_Only_Supports_Integers
+            ),
+          ];
+        } else {
+          return [
+            newError(
+              node,
+              ErrorCodes.Cannot_perform_all_arithmetic_or_bitwise_computations_on_variables_in_Step_Function
+            ),
+          ];
+        }
       } else if (ts.isCallExpression(node)) {
         if (
           checker.getIntegrationNodeKind(node.expression) ===
@@ -269,12 +309,14 @@ export function validate(
           ];
         }
       } else if (ts.isElementAccessExpression(node)) {
+        const exprSymb = checker.getTypeAtLocation(node.expression).symbol;
         if (
           !(
             checker.isConstant(node.argumentExpression) ||
             (ts.isIdentifier(node.argumentExpression) &&
               checker.isForInVariable(node.argumentExpression))
-          )
+          ) &&
+          !(exprSymb && checker.isArraySymbol(exprSymb))
         ) {
           return [
             newError(

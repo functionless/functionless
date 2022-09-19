@@ -14,7 +14,7 @@ import {
 
 // 15k arbitrary max bundle size. Some functions may need more.
 // In that case increase explicitly.
-const BUNDLED_MAX_SIZE = 15 * 1024;
+const BUNDLED_MAX_SIZE = 50 * 1024;
 
 interface CustomMatchers<R = unknown> {
   toHaveLengthLessThan(length: number): R;
@@ -200,6 +200,41 @@ describe("serialize", () => {
         });
       }, []);
 
+      expect(srlz).toMatchSnapshot();
+
+      const bundled = await bundle(srlz);
+      expect(bundled.text).toMatchSnapshot();
+      expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
+    });
+  });
+
+  describe("sdk", () => {
+    test("SDK.CloudWatch.describeAlarms", async () => {
+      const [srlz] = await serialize(() => {
+        return $AWS.SDK.CloudWatch.describeAlarms(
+          {},
+          {
+            iam: { resources: ["*"] },
+          }
+        );
+      }, []);
+      expect(srlz).toMatchSnapshot();
+
+      const bundled = await bundle(srlz);
+      expect(bundled.text).toMatchSnapshot();
+      expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
+    });
+
+    test.skip("SDK.CloudWatch.describeAlarms referenced", async () => {
+      const describeAlarms = $AWS.SDK.CloudWatch.describeAlarms;
+      const [srlz] = await serialize(async () => {
+        return describeAlarms(
+          {},
+          {
+            iam: { resources: ["*"] },
+          }
+        );
+      }, []);
       expect(srlz).toMatchSnapshot();
 
       const bundled = await bundle(srlz);

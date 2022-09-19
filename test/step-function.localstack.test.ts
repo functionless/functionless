@@ -1,5 +1,11 @@
-import { Duration } from "aws-cdk-lib";
+import crypto from "crypto";
+import { Duration, aws_dynamodb, RemovalPolicy } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
+import {
+  CompositePrincipal,
+  Role,
+  ServicePrincipal,
+} from "aws-cdk-lib/aws-iam";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
@@ -10,20 +16,15 @@ import {
   $SFN,
   Table,
   FunctionProps,
+  StepFunctionError,
+  FunctionClosure,
+  Queue,
+  ASLGraph,
 } from "../src";
 import { makeIntegration } from "../src/integration";
-import { localstackTestSuite } from "./localstack";
+import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
 import { testStepFunction } from "./runtime-util";
 import { normalizeCDKJson } from "./util";
-
-// inject the localstack client config into the lambda clients
-// without this configuration, the functions will try to hit AWS proper
-const localstackClientConfig: FunctionProps = {
-  timeout: Duration.seconds(20),
-  clientConfigRetriever: () => ({
-    endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
-  }),
-};
 
 interface TestExpressStepFunctionBase {
   <
@@ -35,7 +36,7 @@ interface TestExpressStepFunctionBase {
   >(
     name: string,
     sfn: (
-      parent: Construct
+      scope: Construct
     ) => StepFunction<I, O> | { sfn: StepFunction<I, O>; outputs: Outputs },
     expected: OO extends void
       ? null
@@ -55,16 +56,24 @@ interface TestExpressStepFunctionResource extends TestExpressStepFunctionBase {
   only: TestExpressStepFunctionBase;
 }
 
-localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
+runtimeTestSuite<
+  { function: string },
+  { payload: any | ((context: { function: string }) => any) }
+>("sfnStack", (testResource, stack, _app, beforeAllTests) => {
   const _testSfn: (
     f: typeof testResource | typeof testResource.only
   ) => TestExpressStepFunctionBase = (f) => (name, sfn, expected, payload) => {
     f(
       name,
-      (parent) => {
+      (parent, role) => {
         const res = sfn(parent);
         const [funcRes, outputs] =
           res instanceof StepFunction ? [res, {}] : [res.sfn, res.outputs];
+        funcRes.resource.grantStartExecution(role);
+        funcRes.resource.grantRead(role);
+
+        console.log(JSON.stringify(funcRes.definition, null, 2));
+
         return {
           outputs: {
             function: funcRes.resource.stateMachineArn,
@@ -75,16 +84,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
           },
         };
       },
-      async (context, extra) => {
-        const pay =
-          typeof payload === "function"
-            ? (<globalThis.Function>payload)(context)
-            : payload;
-
+      async (context, clients, extra) => {
         expect(
           normalizeCDKJson(JSON.parse(extra?.definition!))
         ).toMatchSnapshot();
-        const result = await testStepFunction(context.function, pay);
+        const result = await testStepFunction(
+          clients.stepFunctions,
+          // the execution is started in the `beforeAllTests`, poll on the execution id here.
+          extra?.execution!
+        );
 
         const exp =
           typeof expected === "function"
@@ -98,7 +106,8 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         expect(result.output ? JSON.parse(result.output) : undefined).toEqual(
           exp
         );
-      }
+      },
+      { payload }
     );
   };
 
@@ -107,31 +116,139 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test.skip = (name, _func, _expected, _payload?) =>
     testResource.skip(
       name,
-      () => {},
-      async () => {}
+      () => {
+        return { outputs: { function: "" } };
+      },
+      async () => {},
+      { payload: undefined }
     );
 
   // eslint-disable-next-line no-only-tests/no-only-tests
   test.only = _testSfn(testResource.only);
 
+  beforeAllTests(async (testOutputs, clients) => {
+    return Promise.all(
+      testOutputs.map(async (t) => {
+        const pay =
+          typeof t.test.extras?.payload === "function"
+            ? (<globalThis.Function>t.test.extras?.payload)(t.deployOutputs)
+            : t.test.extras?.payload;
+
+        const execution = await clients.stepFunctions
+          .startExecution({
+            stateMachineArn: t.deployOutputs.outputs.function,
+            input: JSON.stringify(pay),
+          })
+          .promise();
+
+        return {
+          ...t,
+          deployOutputs: {
+            ...t.deployOutputs,
+            extra: {
+              ...t.deployOutputs.extra,
+              execution: execution.executionArn,
+            },
+          },
+        };
+      })
+    );
+  });
+
+  /**
+   * A role used to create functions and state machines.
+   *
+   * by default, all machines and state machines will create their own role, which results in hundreds of roles.
+   *
+   * Use this role when a test resource does not grant permissions (does not call another resource).
+   * Tests which make a call to another resource should use it's own role in order
+   * to test IAM inference.
+   */
+  const resourceRole = new Role(stack, "resourceRole", {
+    assumedBy: new CompositePrincipal(
+      new ServicePrincipal("states"),
+      new ServicePrincipal("lambda")
+    ),
+  });
+
+  // inject the localstack client config into the lambda clients
+  // without this configuration, the functions will try to hit AWS proper
+  const localstackClientConfig: FunctionProps = {
+    timeout: Duration.seconds(20),
+    role: resourceRole,
+    clientConfigRetriever:
+      runtimeTestExecutionContext.deployTarget === "AWS"
+        ? undefined
+        : () => ({
+            endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
+          }),
+  };
+
+  function sfnTestLambda<I, O>(
+    id: string,
+    closure: FunctionClosure<I, O>
+  ): Function<I, O>;
+  function sfnTestLambda<I, O>(
+    scope: Construct,
+    id: string,
+    closure: FunctionClosure<I, O>
+  ): Function<I, O>;
+  function sfnTestLambda<I, O>(
+    ...args:
+      | [id: string, closure: FunctionClosure<I, O>]
+      | [scope: Construct, id: string, closure: FunctionClosure<I, O>]
+  ) {
+    const [scope, id, closure] =
+      args.length === 2 ? [stack, args[0], args[1]] : args;
+    return new Function<I, O>(scope, id, localstackClientConfig, closure);
+  }
+
+  /**
+   * common function that returns an array.
+   */
+  const arrFunc = sfnTestLambda<undefined, number[]>("arrFunc", async () => {
+    return [1, 2, 3];
+  });
+
+  const trueFunc = sfnTestLambda<undefined, boolean>("trueFunc", async () => {
+    return true;
+  });
+
+  const echoStringFunc = sfnTestLambda("func", async (event) => {
+    return { str: event };
+  });
+
   test(
-    "simple",
+    "step function props are passed through to the resource",
     (parent) => {
-      return new StepFunction(parent, "sfn2", async () => {
-        return "hello world";
-      });
+      return new StepFunction(
+        parent,
+        "sfn2",
+        {
+          stateMachineName: `magicMachine${runtimeTestExecutionContext.stackSuffix}`,
+          role: resourceRole,
+        },
+        async (_, context) => {
+          return context.StateMachine.Name;
+        }
+      );
     },
-    "hello world"
+    `magicMachine${runtimeTestExecutionContext.stackSuffix}`
   );
 
   test(
     "duplicate nodes",
     (parent) => {
-      return new StepFunction(parent, "sfn2", async () => {
-        "hello world";
-        "hello world";
-        return "hello world";
-      });
+      return new StepFunction(
+        parent,
+        "sfn2",
+        { role: resourceRole },
+        async () => {
+          "hello world";
+          "hello world";
+          return "hello world";
+        }
+      );
     },
     "hello world"
   );
@@ -139,166 +256,52 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "call lambda",
     (parent) => {
-      const func = new Function<undefined, string>(
+      const func2 = sfnTestLambda<{ str: string }, { str: string }>(
         parent,
-        "func",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async (_event) => {
-          return "hello world";
-        }
-      );
-      return new StepFunction(parent, "sfn2", async () => {
-        return func();
-      });
-    },
-    "hello world"
-  );
-
-  test(
-    "call lambda with string reference",
-    (parent) => {
-      const func = new Function<string, { str: string }>(
-        parent,
-        "func",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async (event) => {
-          return { str: event };
-        }
-      );
-      return new StepFunction<{ str: string }, string>(
-        parent,
-        "sfn2",
-        async (event) => {
-          return (await func(event.str)).str;
-        }
-      );
-    },
-    "hello world",
-    { str: "hello world" }
-  );
-
-  test(
-    "call lambda with string parameter",
-    (parent) => {
-      const func = new Function<string, { str: string }>(
-        parent,
-        "func",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async (event) => {
-          return { str: event };
-        }
-      );
-      return new StepFunction(parent, "sfn2", async () => {
-        return (await func("hello world")).str;
-      });
-    },
-    "hello world"
-  );
-
-  test(
-    "call lambda with object literal parameter",
-    (parent) => {
-      const func = new Function<{ str: string }, { str: string }>(
-        parent,
-        "func",
-        {
-          timeout: Duration.seconds(20),
-        },
+        "func2",
         async (event) => {
           return event;
         }
       );
-      return new StepFunction(parent, "sfn2", async () => {
-        return (await func({ str: "hello world" })).str;
-      });
-    },
-    "hello world"
-  );
-
-  test(
-    "call lambda with object reference parameter",
-    (parent) => {
-      const func = new Function<{ str: string }, { str: string }>(
+      const func3 = sfnTestLambda<number[], number>(
         parent,
-        "func",
-        {
-          timeout: Duration.seconds(20),
-        },
+        "func3",
         async (event) => {
-          return event;
+          return event.length;
         }
       );
-      return new StepFunction(parent, "sfn2", async () => {
+      return new StepFunction(parent, "sfn2", async (event) => {
+        const f1 = (await echoStringFunc("hello world")).str;
         const obj = { str: "hello world" };
-        return (await func(obj)).str;
+        const arr = [1, 2, 3];
+        return {
+          f1,
+          f2: (await echoStringFunc(event.str)).str,
+          f3: (await func2({ str: "hello world 2" })).str,
+          f4: (await func2(obj)).str,
+          f5: await func3([1, 2]),
+          f6: await func3(arr),
+          f7: (
+            await $SFN.retry(async () =>
+              $AWS.Lambda.Invoke({
+                Function: func2,
+                Payload: obj,
+              })
+            )
+          ).Payload.str,
+        };
       });
     },
-    "hello world"
-  );
-
-  test("call lambda with array parameter", (parent) => {
-    const func = new Function<number[], number>(
-      parent,
-      "func",
-      {
-        timeout: Duration.seconds(20),
-      },
-      async (event) => {
-        return event.length;
-      }
-    );
-    return new StepFunction(parent, "sfn2", async () => {
-      return func([1, 2]);
-    });
-  }, 2);
-
-  test("call lambda with array ref", (parent) => {
-    const func = new Function<number[], number>(
-      parent,
-      "func",
-      {
-        timeout: Duration.seconds(20),
-      },
-      async (event) => {
-        return event.length;
-      }
-    );
-    return new StepFunction(parent, "sfn2", async () => {
-      const arr = [1, 2, 3];
-      return func(arr);
-    });
-  }, 3);
-
-  test(
-    "call lambda $AWS invoke",
-    (parent) => {
-      const func = new Function<{ str: string }, { str: string }>(
-        parent,
-        "func",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async (event) => {
-          return event;
-        }
-      );
-      return new StepFunction(parent, "sfn2", async () => {
-        const obj = { str: "hello world" };
-        return (
-          await $AWS.Lambda.Invoke({
-            Function: func,
-            Payload: obj,
-          })
-        ).Payload.str;
-      });
+    {
+      f1: "hello world",
+      f2: "world hello",
+      f3: "hello world 2",
+      f4: "hello world",
+      f5: 2,
+      f6: 3,
+      f7: "hello world",
     },
-    "hello world"
+    { str: "world hello" }
   );
 
   test(
@@ -312,77 +315,430 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "call $SFN map",
+    "call $SFN map, foreach, and parallel",
     (parent) => {
-      return new StepFunction(parent, "sfn2", async (input) => {
-        return $SFN.map(input.arr, (n) => {
-          return n;
-        });
-      });
-    },
-    [1, 2],
-    { arr: [1, 2] }
-  );
-
-  test(
-    "call $SFN map with constant array",
-    (parent) => {
-      return new StepFunction(parent, "sfn2", async () => {
-        return $SFN.map([1, 2, 3], (n) => {
-          return `n${n}`;
-        });
-      });
-    },
-    ["n1", "n2", "n3"]
-  );
-
-  test(
-    "call $SFN forEach",
-    (parent) => {
-      const func = new Function<number, void>(
+      const func = sfnTestLambda<number, void>(
         parent,
         "func",
-        {
-          timeout: Duration.seconds(20),
-        },
         async (event) => {
           console.log(event);
         }
       );
+
       return new StepFunction(parent, "sfn2", async (input) => {
-        await $SFN.forEach(input.arr, (n) => func(n));
+        await $SFN.forEach(input.arr, (n) => $SFN.retry(async () => func(n)));
+
+        return {
+          a: await $SFN.map([1, 2, 3], (n) => {
+            return `n${n}`;
+          }),
+          b: await $SFN.map(input.arr, (n) => {
+            return n;
+          }),
+          c: await $SFN.parallel(
+            () => 1,
+            () => 2
+          ),
+        };
       });
     },
-    null,
+    { a: ["n1", "n2", "n3"], b: [1, 2], c: [1, 2] },
     { arr: [1, 2] }
   );
 
+  const shasum = crypto.createHash("sha1");
+  shasum.update("hide me");
+  const sha256sum = crypto.createHash("sha256");
+  sha256sum.update("hashMe");
+
   test(
-    "call $SFN parallel",
+    "intrinsics",
     (parent) => {
-      return new StepFunction(parent, "sfn2", async () => {
-        return $SFN.parallel(
-          () => 1,
-          () => 2
-        );
+      return new StepFunction(parent, "sfn", async (input) => {
+        let objAccess;
+        try {
+          objAccess = input.range[input.key];
+        } catch (err) {
+          objAccess = (<StepFunctionError>err).cause;
+        }
+        let objIn;
+        try {
+          objIn = input.key in input.range;
+        } catch (err) {
+          objIn = (<StepFunctionError>err).cause;
+        }
+        return {
+          partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4),
+          partitionRef: $SFN.partition(input.arr, input.part),
+          range: $SFN.range(4, 30, 5),
+          rangeRef: $SFN
+            .range(input.range.start, input.range.end, input.range.step)
+            .map((n) => `n${n}`)
+            .join(""),
+          unique: $SFN.unique(["a", 5, 4, 3, 2, 1, 1, 2, 3, 4, 5, "a", "b"]),
+          uniqueRef: $SFN.unique(input.arr),
+          base64: $SFN.base64Decode($SFN.base64Encode("test")),
+          base64Ref: $SFN.base64Decode($SFN.base64Encode(input.baseTest)),
+          hash: $SFN.hash("hide me", "SHA-1"),
+          hashRef: $SFN.hash(input.hashTest, input.hashAlgo),
+          includes: [1, 2, 3, 4].includes(2),
+          includesRes: input.arr.includes(input.part),
+          notIncludesRes: input.arr.includes("a" as unknown as number),
+          get: [1, 2, 3, 4][0]!,
+          getRef: input.arr[input.part]!,
+          getFunc: $SFN.getItem(input.arr, 0),
+          getFuncRef: $SFN.getItem(input.arr, input.part),
+          objAccess,
+          ...input.range,
+          inRef: input.part in input.arr,
+          inRefFalse: input.large in input.arr,
+          objIn,
+          getLength: [1, 2, 3, 4].length,
+          lengthRef: input.arr.length,
+          uniqueLength: $SFN.unique(input.arr).length,
+          lengthObj: input.lengthObj.length,
+          ...input.lengthObj,
+          emptyLength: input.emptyArr.length,
+          slice: input.arr.slice(1, 3),
+          sliceRef: input.arr.slice(input.part, input.end),
+          sliceRefStart: input.arr.slice(input.end),
+        };
       });
     },
-    [1, 2]
+    {
+      partition: [
+        [1, 2, 3, 4],
+        [5, 6],
+      ],
+      partitionRef: [[1, 2], [3, 1], [2, 3], [4]],
+      range: [4, 9, 14, 19, 24, 29],
+      rangeRef: "n1n3n5n7n9n11",
+      unique: ["a", 1, 2, "b", 3, 4, 5],
+      uniqueRef: [1, 2, 3, 4],
+      base64: "test",
+      base64Ref: "encodeMe",
+      hash: shasum.digest("hex"),
+      hashRef: sha256sum.digest("hex"),
+      includes: true,
+      includesRes: true,
+      notIncludesRes: false,
+      get: 1,
+      getRef: 3,
+      getFunc: 1,
+      getFuncRef: 3,
+      objAccess: "Reference element access is not valid for objects.",
+      inRef: true,
+      inRefFalse: false,
+      objIn: "Reference element access is not valid for objects.",
+      getLength: 4,
+      length: "a",
+      lengthRef: 7,
+      uniqueLength: 4,
+      lengthObj: "a",
+      emptyLength: 0,
+      slice: [2, 3],
+      sliceRef: [3, 1],
+      sliceRefStart: [2, 3, 4],
+      start: 1,
+      end: 11,
+      step: 2,
+    },
+    {
+      range: { start: 1, end: 11, step: 2 },
+      arr: [1, 2, 3, 1, 2, 3, 4],
+      part: 2,
+      end: 4,
+      large: 100,
+      baseTest: "encodeMe",
+      hashTest: "hashMe",
+      hashAlgo: "SHA-256" as ASLGraph.HashAlgorithm,
+      lengthObj: { length: "a" },
+      emptyArr: [],
+      key: "start" as const,
+    }
+  );
+
+  test(
+    "object literal spread",
+    (parent) => {
+      return new StepFunction(parent, "sfn", async (input) => {
+        const literalValueObjectLiterals = {
+          x: 1,
+          y: "a",
+          j: { x: 2 },
+          ...input,
+        };
+
+        // the duplication tests depth of intrinsic
+        // TODO: after optimization is added, turn some of it
+        return {
+          ...{ a: 0, b: 2, c: 3 },
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...{ m: 0, n: 5, o: 6 },
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...{ x: 7, y: 8, z: 9, a: 1, m: 4 },
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          ...input,
+          literalValueObjectLiterals,
+        };
+      });
+    },
+    {
+      a: 1,
+      b: 2,
+      c: 3,
+      m: 4,
+      n: 5,
+      o: 6,
+      x: 7,
+      y: 8,
+      z: 9,
+      literalValueObjectLiterals: { x: 1, y: "a", j: { x: 2 }, a: 1 },
+    },
+    { a: 1 }
+  );
+
+  test(
+    "call $SFN retry",
+    (parent) => {
+      const table = new Table<{ a: string; n: number }, "a">(parent, "table", {
+        partitionKey: {
+          name: "a",
+          type: AttributeType.STRING,
+        },
+      });
+      return new StepFunction(parent, "sfn2", async ({ id }) => {
+        // retry and then succeed - 3
+        const a = await $SFN.retry(async () => {
+          const result = await $AWS.DynamoDB.UpdateItem({
+            Key: {
+              a: { S: id },
+            },
+            Table: table,
+            UpdateExpression: "SET n = if_not_exists(n, :init) + :inc",
+            ReturnValues: "ALL_NEW",
+            ExpressionAttributeValues: {
+              ":init": { N: "0" },
+              ":inc": { N: "1" },
+            },
+          });
+          if (result.Attributes?.n?.N === "3") {
+            return Number(result.Attributes?.n.N);
+          }
+          throw new StepFunctionError("MyError", "Because");
+        });
+
+        // retry and fail
+        let b = 0;
+        try {
+          b = await $SFN.retry(async () => {
+            throw new StepFunctionError("MyError", "Because");
+          });
+        } catch {
+          b = 2;
+        }
+
+        // retry with custom error and fail
+        let c = 0;
+        try {
+          c = await $SFN.retry(
+            [
+              {
+                ErrorEquals: ["MyError"],
+                BackoffRate: 1,
+                IntervalSeconds: 1,
+                MaxAttempts: 1,
+              },
+            ],
+            async () => {
+              throw new StepFunctionError("MyError", "Because");
+            }
+          );
+        } catch {
+          c = 3;
+        }
+
+        // retry defined, but different error type, fail
+        let d = 0;
+        try {
+          d = await $SFN.retry(
+            [
+              {
+                ErrorEquals: ["MyError2"],
+                BackoffRate: 1,
+                IntervalSeconds: 1,
+                MaxAttempts: 1,
+              },
+            ],
+            async () => {
+              throw new StepFunctionError("MyError", "Because");
+            }
+          );
+        } catch {
+          d = 5;
+        }
+
+        // retry multiple error types - 111111
+        let e = 0;
+        try {
+          e = await $SFN.retry(
+            [
+              {
+                ErrorEquals: ["MyError2"],
+                BackoffRate: 1,
+                IntervalSeconds: 1,
+                MaxAttempts: 2,
+              },
+              {
+                ErrorEquals: ["MyError"],
+                BackoffRate: 1,
+                IntervalSeconds: 1,
+                MaxAttempts: 2,
+              },
+            ],
+            async () => {
+              const result = await $AWS.DynamoDB.UpdateItem({
+                Key: {
+                  a: { S: id },
+                },
+                Table: table,
+                UpdateExpression: "SET n = if_not_exists(n, :init) + :inc",
+                ReturnValues: "ALL_NEW",
+                ExpressionAttributeValues: {
+                  ":init": { N: "0" },
+                  ":inc": { N: "1" },
+                },
+              });
+              if (result.Attributes?.n?.N === "6") {
+                return 6;
+              }
+              if (result.Attributes?.n?.N === "5") {
+                throw new StepFunctionError("MyError", "Because");
+              }
+              throw new StepFunctionError("MyError2", "Because");
+            }
+          );
+        } catch {
+          e = 7;
+        }
+
+        return [a, b, c, d, e];
+      });
+    },
+    [3, 2, 3, 5, 6],
+    { id: `key${Math.floor(Math.random() * 1000)}` }
+  );
+
+  test(
+    "$AWS.SDK.DynamoDB.describeTable",
+    (parent) => {
+      const table = new Table<{ id: string }, "id">(parent, "myTable", {
+        partitionKey: {
+          name: "id",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+        removalPolicy: RemovalPolicy.DESTROY,
+      });
+
+      return {
+        sfn: new StepFunction<{}, string | undefined>(
+          parent,
+          "fn",
+          async () => {
+            const tableInfo = await $AWS.SDK.DynamoDB.describeTable(
+              {
+                TableName: table.tableName,
+              },
+              {
+                iam: {
+                  resources: [table.tableArn],
+                },
+              }
+            );
+
+            return tableInfo.Table?.TableArn;
+          }
+        ),
+        outputs: { tableArn: table.tableArn },
+      };
+    },
+    ({ tableArn }) => tableArn
   );
 
   test(
     "conditionals",
     (parent) => {
-      const func = new Function<undefined, boolean>(
-        parent,
-        "func",
-        async () => {
-          return true;
-        }
-      );
       return new StepFunction(parent, "sfn2", async (input) => {
         if (input.a) {
-          if (await func()) {
+          if (await $SFN.retry(() => trueFunc())) {
             return input.b;
           }
         }
@@ -396,13 +752,6 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "for map conditional",
     (parent) => {
-      const func = new Function<undefined, number[]>(
-        parent,
-        "func",
-        async () => {
-          return [1, 2, 3];
-        }
-      );
       return new StepFunction(parent, "sfn2", async (input) => {
         let a = "x";
         const b = ["b"].map((v) => {
@@ -423,7 +772,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         });
         const d = await Promise.all(
           ["d"].map(async (v) => {
-            for (const i of await func()) {
+            for (const i of await arrFunc()) {
               if (i === 3) {
                 return `${v}${a}${i}`;
               }
@@ -445,13 +794,6 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "for loops",
     (parent) => {
-      const func = new Function<undefined, number[]>(
-        parent,
-        "func",
-        async () => {
-          return [1, 2, 3];
-        }
-      );
       return new StepFunction(parent, "sfn2", async (input) => {
         let a = "x";
         for (const i of [1, 2, 3]) {
@@ -460,7 +802,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
         for (const i of input.arr) {
           a = `${a}${i}`;
         }
-        for (const i of await func()) {
+        for (const i of await arrFunc()) {
           a = `${a}${i}`;
         }
         // must be an array
@@ -477,15 +819,8 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "map with dynamic for loops",
     (parent) => {
-      const func = new Function<undefined, number[]>(
-        parent,
-        "func",
-        async () => {
-          return [1, 2, 3];
-        }
-      );
       return new StepFunction(parent, "sfn2", async (input) => {
-        const l = (await func()).map((x) => `n${x}`);
+        const l = (await arrFunc()).map((x) => `n${x}`);
         const l2 = input.arr.map((x) => `n${x}`);
         let a = "";
         for (const x of l) {
@@ -504,16 +839,9 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "map",
     (parent) => {
-      const func = new Function<undefined, number[]>(
-        parent,
-        "func",
-        async () => {
-          return [1, 2, 3];
-        }
-      );
       return new StepFunction(parent, "sfn2", async (input) => {
         let a = "";
-        const l = (await func()).map((x) => `n${x}`);
+        const l = (await $SFN.retry(() => arrFunc())).map((x) => `n${x}`);
         const l2 = input.arr.map((x, i, [head]) => `n${i}${x}${head}`);
         input.arr.map((x) => {
           a = `${a}a${x}`;
@@ -529,15 +857,8 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "map uses input",
     (parent) => {
-      const func = new Function<undefined, number[]>(
-        parent,
-        "func",
-        async () => {
-          return [1, 2, 3];
-        }
-      );
       return new StepFunction(parent, "sfn2", async (input) => {
-        const l = (await func()).map((x) => `${input.prefix}${x}`);
+        const l = (await arrFunc()).map((x) => `${input.prefix}${x}`);
         const l2 = input.arr.map((x) => `${input.prefix}${x}`);
         return `${l[0]}${l[1]}${l[2]}${l2[0]}${l2[1]}${l2[2]}`;
       });
@@ -549,14 +870,19 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "foreach",
     (parent) => {
-      return new StepFunction(parent, "sfn2", async (input) => {
-        let a = "";
-        input.arr.forEach((x) => {
-          a = `${a}a${x}`;
+      return new StepFunction(
+        parent,
+        "sfn2",
+        { role: resourceRole },
+        async (input) => {
+          let a = "";
+          input.arr.forEach((x) => {
+            a = `${a}a${x}`;
+            return a;
+          });
           return a;
-        });
-        return a;
-      });
+        }
+      );
     },
     "a1a2a3",
     { arr: [1, 2, 3] }
@@ -565,22 +891,27 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "filter",
     (parent) => {
-      return new StepFunction(parent, "sfn2", async ({ arr, key }) => {
-        const arr1 = arr
-          .filter(({ value }) => value <= 3)
-          .filter(({ value }) => value <= key)
-          .filter((item) => {
-            const { key: itemKey } = item;
-            $SFN.waitFor(1);
-            return itemKey === `hi${key}`;
-          });
+      return new StepFunction(
+        parent,
+        "sfn2",
+        { role: resourceRole },
+        async ({ arr, key }) => {
+          const arr1 = arr
+            .filter(({ value }) => value <= 3)
+            .filter(({ value }) => value <= key)
+            .filter((item) => {
+              const { key: itemKey } = item;
+              $SFN.waitFor(1);
+              return itemKey === `hi${key}`;
+            });
 
-        const arr2 = [4, 3, 2, 1].filter(
-          (x, index, [first]) => x <= index || first === x
-        );
+          const arr2 = [4, 3, 2, 1].filter(
+            (x, index, [first]) => x <= index || first === x
+          );
 
-        return { arr1, arr2 };
-      });
+          return { arr1, arr2 };
+        }
+      );
     },
     {
       arr1: [
@@ -607,61 +938,70 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "binaryOps logic",
     (parent) => {
-      return new StepFunction(parent, "sfn2", async (input) => {
-        const c = input.a && input.b;
-        let x = "";
-        let notNullishCoalAssign = "a";
-        let nullishCoalAssign = null;
-        let truthyAndAssign = "a";
-        let falsyAndAssign = "";
-        let truthyOrAssign = "a";
-        let falsyOrAssign = "";
+      return new StepFunction(
+        parent,
+        "sfn2",
+        { role: resourceRole },
+        async (input) => {
+          const c = input.a && input.b;
+          let x = "";
+          let notNullishCoalAssign = "a";
+          let nullishCoalAssign = null;
+          let truthyAndAssign = "a";
+          let falsyAndAssign = "";
+          let truthyOrAssign = "a";
+          let falsyOrAssign = "";
 
-        notNullishCoalAssign ??= "b"; // "a"
-        nullishCoalAssign ??= "b"; // "b"
-        truthyAndAssign &&= "b"; // "b"
-        falsyAndAssign &&= "b"; // ""
-        truthyOrAssign ||= "b"; // "a"
-        falsyOrAssign ||= "b"; // "b"
+          notNullishCoalAssign ??= "b"; // "a"
+          nullishCoalAssign ??= "b"; // "b"
+          truthyAndAssign &&= "b"; // "b"
+          falsyAndAssign &&= "b"; // ""
+          truthyOrAssign ||= "b"; // "a"
+          falsyOrAssign ||= "b"; // "b"
 
-        let y = "";
+          let y = "";
 
-        if ((y = `${y}1`) && ((y = `${y}2`), false) && (y = `${y}3`)) {
-          y = `${y}4`;
+          if ((y = `${y}1`) && ((y = `${y}2`), false) && (y = `${y}3`)) {
+            y = `${y}4`;
+          }
+
+          if (
+            ((y = `${y}5`), false) ||
+            ((y = `${y}6`), true) ||
+            (y = `${y}7`)
+          ) {
+            y = `${y}8`;
+          }
+
+          return {
+            andVar: c,
+            and: input.a && input.b,
+            or: input.a || input.b,
+            invNullCoal: input.nv ?? ((x = `${x}1`), input.v),
+            nullCoal: input.v ?? ((x = `${x}2`), input.nv),
+            nullNull: input.nv ?? null,
+            nullVal: null ?? input.v,
+            falsyChainOr:
+              input.b ||
+              input.z ||
+              ((x = `${x}3`), true) ||
+              ((x = `${x}4`), false) ||
+              input.v, // sets x+=1 returns true
+            truthyChainOr: input.b || ((x = `${x}5`), false) || input.arr, // sets x+=3 returns v
+            falsyChainAnd: input.z && ((x = `${x}6`), true), // returns zero
+            truthyChainAnd:
+              input.a && input.v && ((x = `${x}7`), true) && input.v, // sets x+=5, returns v
+            x,
+            y,
+            notNullishCoalAssign,
+            nullishCoalAssign,
+            truthyAndAssign,
+            falsyAndAssign,
+            truthyOrAssign,
+            falsyOrAssign,
+          };
         }
-
-        if (((y = `${y}5`), false) || ((y = `${y}6`), true) || (y = `${y}7`)) {
-          y = `${y}8`;
-        }
-
-        return {
-          andVar: c,
-          and: input.a && input.b,
-          or: input.a || input.b,
-          invNullCoal: input.nv ?? ((x = `${x}1`), input.v),
-          nullCoal: input.v ?? ((x = `${x}2`), input.nv),
-          nullNull: input.nv ?? null,
-          nullVal: null ?? input.v,
-          falsyChainOr:
-            input.b ||
-            input.z ||
-            ((x = `${x}3`), true) ||
-            ((x = `${x}4`), false) ||
-            input.v, // sets x+=1 returns true
-          truthyChainOr: input.b || ((x = `${x}5`), false) || input.arr, // sets x+=3 returns v
-          falsyChainAnd: input.z && ((x = `${x}6`), true), // returns zero
-          truthyChainAnd:
-            input.a && input.v && ((x = `${x}7`), true) && input.v, // sets x+=5, returns v
-          x,
-          y,
-          notNullishCoalAssign,
-          nullishCoalAssign,
-          truthyAndAssign,
-          falsyAndAssign,
-          truthyOrAssign,
-          falsyOrAssign,
-        };
-      });
+      );
     },
     {
       andVar: false,
@@ -688,87 +1028,261 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
+    "math",
+    (parent) =>
+      new StepFunction(parent, "sfn", async (input) => {
+        let a = input.p;
+        let b = 1;
+
+        return {
+          plusEqualsConst: (b += 1), // 2
+          plusEqualsRef: (b += input.p), // 3
+          minusEqualsConst: (b -= 1), // 2
+          minusEqualsRef: (b -= input.p), // 1
+          minusEqualsNegConst: (b -= -1), // 2
+          b, // 2
+          refPlusRef: input.p + input.p, //2
+          refPlusNegRef: input.p + input.n, // 0
+          refPlusZeroRef: input.p + input.z, // 1
+          refPlusConst: input.p + 1, // 2
+          refPlusNegConst: input.p + -1, // 0
+          refPlusZeroConst: input.p + -0, // 1
+          // @ts-ignore
+          refPlusBooleanConst: input.p + true, // 2
+          // @ts-ignore
+          refBooleanPlusBooleanConst: input.b + true, // 2
+          // @ts-ignore
+          refBooleanPlusBooleanRef: input.b + input.b, // 2
+          // @ts-ignore
+          constBooleanPlusBooleanConst: true + true, // 2
+          refMinusRef: input.p - input.p, // 0
+          refMinusNegRef: input.p - input.n, // 2
+          refMinusZeroRef: input.p - input.z, // 1
+          refMinusConst: input.p - 1, // 0
+          refMinusNegConst: input.p - -1, // 2
+          postPlusPlus: a++, // 1=>2
+          prePlusPlus: ++a, // 3
+          postMinusMinus: a--, // 3 => 2
+          preMinusMinus: --a, // 1
+          negateRef: -input.p, // -1
+          negateNegRef: -input.n, // 1
+          negateZeroRef: -input.z, // 0
+          refStringPlusNumberConst: input.str + 1, // "a1",
+          refStringPlusStringConst: input.str + "b", // "ab"
+          refStringPlusBooleanConst: input.str + true, // "atrue"
+          numberConstPlusRefString: 1 + input.str, // "1a",
+          stringConstPlusRefString: "b" + input.str, // "ba"
+          booleanConstPlusRefString: true + input.str, // "truea"
+          refStringPlusRefString: input.str + input.str, // "aa"
+          constStringPlusStringConst: "a" + "b", // "ab"
+          constStringPlusNumberConst: "a" + 1, // "a1"
+          constStringPlusBooleanConst: "a" + true, // "atrue"
+        };
+      }),
+    {
+      b: 2,
+      plusEqualsConst: 2,
+      plusEqualsRef: 3,
+      minusEqualsConst: 2,
+      minusEqualsRef: 1,
+      minusEqualsNegConst: 2,
+      refPlusRef: 2,
+      refPlusNegRef: 0,
+      refPlusZeroRef: 1,
+      refPlusConst: 2,
+      refPlusNegConst: 0,
+      refPlusZeroConst: 1,
+      refPlusBooleanConst: 2,
+      refBooleanPlusBooleanConst: 2,
+      refBooleanPlusBooleanRef: 2,
+      constBooleanPlusBooleanConst: 2,
+      refMinusRef: 0,
+      refMinusNegRef: 2,
+      refMinusZeroRef: 1,
+      refMinusConst: 0,
+      refMinusNegConst: 2,
+      postPlusPlus: 1,
+      prePlusPlus: 3,
+      postMinusMinus: 3,
+      preMinusMinus: 1,
+      negateRef: -1,
+      negateNegRef: 1,
+      negateZeroRef: 0,
+      refStringPlusNumberConst: "a1",
+      refStringPlusStringConst: "ab",
+      refStringPlusBooleanConst: "atrue",
+      numberConstPlusRefString: "1a",
+      stringConstPlusRefString: "ba",
+      booleanConstPlusRefString: "truea",
+      refStringPlusRefString: "aa",
+      constStringPlusStringConst: "ab",
+      constStringPlusNumberConst: "a1",
+      constStringPlusBooleanConst: "atrue",
+    },
+    { p: 1, n: -1, z: 0, str: "a", b: true }
+  );
+
+  test(
     "binary and unary comparison",
     (parent) => {
-      return new StepFunction(parent, "sfn2", async (input) => {
-        return {
-          constantStringEquals: "a" === "a", // true
-          constantToVarStringEquals: input.v === "val", // true
-          varToConstantStringEquals: "val2" === input.v, // false
-          varToVarStringEquals: input.v === input.v, // true
-          constantStringNotEquals: "a" !== "a", // false
-          constantToVarStringNotEquals: input.v !== "val", // false
-          varToConstantStringNotEquals: "val2" !== input.v, // true
-          varToVarStringNotEquals: input.v !== input.v, // false
-          constantStringLess: "a" < "a", // false
-          constantToVarStringLess: input.v < "val2", // true
-          varToConstantStringLess: "val2" < input.v, // false
-          varToVarStringLess: input.v < input.v, // false
-          constantStringLessEquals: "a" <= "a", // true
-          constantToVarStringLessEquals: input.v <= "val2", // true
-          varToConstantStringLessEquals: "val2" <= input.v, // false
-          varToVarStringLessEquals: input.v <= input.v, // true
-          constantStringGreater: "a" > "a", // false
-          constantToVarStringGreater: input.v > "val2", // false
-          varToConstantStringGreater: "val2" > input.v, // true
-          varToVarStringGreaterE: input.v > input.v, // false
-          constantStringGreaterEquals: "a" >= "a", // true
-          constantToVarStringGreaterEquals: input.v >= "val2", // false
-          varToConstantStringGreaterEquals: "val2" >= input.v, // true
-          varToVarStringGreaterEquals: input.v >= input.v, // true
-          constantNumberEquals: 1 === 1, // true
-          constantToVarNumberEquals: input.n === 2, // false
-          varToConstantNumberEquals: 3 === input.n, // false
-          varToVarNumberEquals: input.n === input.n, // true
-          constantNumberNotEquals: 1 !== 1, // false
-          constantToVarNumberNotEquals: input.n !== 2, // true
-          varToConstantNumberNotEquals: 3 !== input.n, // true
-          varToVarNumberNotEquals: input.n !== input.n, // false
-          constantNumberLess: 1 < 1, // false
-          constantToVarNumberLess: input.n < 3, // true
-          varToConstantNumberLess: 3 < input.n, // false
-          varToVarNumberLess: input.n < input.n, // false
-          constantNumberLessEquals: 1 <= 1, // true
-          constantToVarNumberLessEquals: input.n <= 3, // true
-          varToConstantNumberLessEquals: 3 <= input.n, // false
-          varToVarNumberLessEquals: input.n <= input.n, // true
-          constantNumberGreater: 1 > 1, // false
-          constantToVarNumberGreater: input.n > 3, // false
-          varToConstantNumberGreater: 3 > input.n, // true
-          varToVarNumberGreaterE: input.n > input.n, // false
-          constantNumberGreaterEquals: 1 >= 1, // true
-          constantToVarNumberGreaterEquals: input.n >= 3, // false
-          varToConstantNumberGreaterEquals: 3 >= input.n, // true
-          varToVarNumberGreaterEquals: input.n >= input.n, // true
-          constantBooleanEquals: true === true, // true
-          constantToVarBooleanEquals: input.a === true, // true
-          varToConstantBooleanEquals: false === input.a, // false
-          varToVarBooleanEquals: input.a === input.a, // true
-          constantBooleanNotEquals: true !== true, // false
-          constantToVarBooleanNotEquals: input.a !== true, // false
-          varToConstantBooleanNotEquals: false !== input.a, // true
-          varToVarBooleanNotEquals: input.a !== input.a, // false
-          constantNullEquals: null === null, // true
-          constantToVarNullEquals: input.nv === null, // true
-          varToConstantNullEquals: input.v === input.nv, // false
-          varToVarNullEquals: input.nv === input.nv, // true
-          constantNullNotEquals: null !== null, // false
-          constantToVarNullNotEquals: input.nv !== null, // false
-          varToConstantNullNotEquals: input.v !== input.nv, // true
-          varToVarNullNotEquals: input.nv !== input.nv, // false
-          constantInConstant: "a" in { a: "val" }, // true
-          constantInVar: "a" in input.obj, // true
-          constantNotInVar: "b" in input.obj, // false
-          constantNot: !false,
-          varNot: !input.a,
-          varNotPresentTrue: !input.nv,
-          varNotNullFalse: !input.n,
-          // @ts-ignore
-          varNotPresentFalse: !input.x,
-          // varInVar: input.v in input.obj, // false - unsupported
-          // varInConstant: input.v in { a: "val" }, // false - unsupported
-        };
-      });
+      return new StepFunction(
+        parent,
+        "sfn2",
+        { role: resourceRole },
+        async (input) => {
+          const obj = { nv: null } as { und?: string; nv: null; v: string };
+          return {
+            constantStringEquals: "a" === "a", // true
+            constantToVarStringEquals: input.v === "val", // true
+            varToConstantStringEquals: "val2" === input.v, // false
+            varToVarStringEquals: input.v === input.v, // true
+            constantStringNotEquals: "a" !== "a", // false
+            constantToVarStringNotEquals: input.v !== "val", // false
+            varToConstantStringNotEquals: "val2" !== input.v, // true
+            varToVarStringNotEquals: input.v !== input.v, // false
+            constantStringLess: "a" < "a", // false
+            constantToVarStringLess: input.v < "val2", // true
+            varToConstantStringLess: "val2" < input.v, // false
+            varToVarStringLess: input.v < input.v, // false
+            constantStringLessEquals: "a" <= "a", // true
+            constantToVarStringLessEquals: input.v <= "val2", // true
+            varToConstantStringLessEquals: "val2" <= input.v, // false
+            varToVarStringLessEquals: input.v <= input.v, // true
+            constantStringGreater: "a" > "a", // false
+            constantToVarStringGreater: input.v > "val2", // false
+            varToConstantStringGreater: "val2" > input.v, // true
+            varToVarStringGreaterE: input.v > input.v, // false
+            constantStringGreaterEquals: "a" >= "a", // true
+            constantToVarStringGreaterEquals: input.v >= "val2", // false
+            varToConstantStringGreaterEquals: "val2" >= input.v, // true
+            varToVarStringGreaterEquals: input.v >= input.v, // true
+            constantNumberEquals: 1 === 1, // true
+            constantToVarNumberEquals: input.n === 2, // false
+            varToConstantNumberEquals: 3 === input.n, // false
+            varToVarNumberEquals: input.n === input.n, // true
+            constantNumberNotEquals: 1 !== 1, // false
+            constantToVarNumberNotEquals: input.n !== 2, // true
+            varToConstantNumberNotEquals: 3 !== input.n, // true
+            varToVarNumberNotEquals: input.n !== input.n, // false
+            constantNumberLess: 1 < 1, // false
+            constantToVarNumberLess: input.n < 3, // true
+            varToConstantNumberLess: 3 < input.n, // false
+            varToVarNumberLess: input.n < input.n, // false
+            constantNumberLessEquals: 1 <= 1, // true
+            constantToVarNumberLessEquals: input.n <= 3, // true
+            varToConstantNumberLessEquals: 3 <= input.n, // false
+            varToVarNumberLessEquals: input.n <= input.n, // true
+            constantNumberGreater: 1 > 1, // false
+            constantToVarNumberGreater: input.n > 3, // false
+            varToConstantNumberGreater: 3 > input.n, // true
+            varToVarNumberGreaterE: input.n > input.n, // false
+            constantNumberGreaterEquals: 1 >= 1, // true
+            constantToVarNumberGreaterEquals: input.n >= 3, // false
+            varToConstantNumberGreaterEquals: 3 >= input.n, // true
+            varToVarNumberGreaterEquals: input.n >= input.n, // true
+            constantBooleanEquals: true === true, // true
+            constantToVarBooleanEquals: input.a === true, // true
+            varToConstantBooleanEquals: false === input.a, // false
+            varToVarBooleanEquals: input.a === input.a, // true
+            constantBooleanNotEquals: true !== true, // false
+            constantToVarBooleanNotEquals: input.a !== true, // false
+            varToConstantBooleanNotEquals: false !== input.a, // true
+            varToVarBooleanNotEquals: input.a !== input.a, // false
+            constantNullEquals: null === null, // true
+            constantToVarNullEquals: input.nv === null, // true
+            varToConstantNullEquals: input.v === input.nv, // false
+            varToVarNullEquals: input.nv === input.nv, // true
+            constantNullNotEquals: null !== null, // false
+            constantToVarNullNotEquals: input.nv !== null, // false
+            varToConstantNullNotEquals: input.v !== input.nv, // true
+            varToVarNullNotEquals: input.nv !== input.nv, // false
+            constantInConstant: "a" in { a: "val" }, // true
+            constantInVar: "a" in input.obj, // true
+            constantNotInVar: "b" in input.obj, // false
+            constantNot: !false,
+            varNot: !input.a,
+            varNotPresentTrue: !input.nv,
+            varNotNullFalse: !input.n,
+            // @ts-ignore
+            varNotPresentFalse: !input.x,
+            objNotPresentFalse: !input.obj,
+            // varInVar: input.v in input.obj, // false - unsupported
+            // varInConstant: input.v in { a: "val" }, // false - unsupported
+            // undefined and null literals
+            varEqualEqualsUndefined: input.v === undefined, // false
+            varEqualsUndefined: input.v == undefined, // false
+            varNotEqualEqualsUndefined: input.v !== undefined, // true
+            varNotEqualsUndefined: input.v != undefined, // true
+            nullEqualEqualsUndefined: input.nv === undefined, // false
+            nullEqualsUndefined: input.nv == undefined, // false - incorrect - https://github.com/functionless/functionless/issues/445
+            nullNotEqualEqualsUndefined: input.nv === undefined, // false
+            nullNotEqualsUndefined: input.nv == undefined, // false - incorrect -https://github.com/functionless/functionless/issues/445
+            undefinedVarEqualEqualsUndefined: input.und === undefined, // true
+            undefinedVarEqualsUndefined: input.und == undefined, // true
+            undefinedVarNotEqualEqualsUndefined: input.und !== undefined, // false
+            undefinedVarNotEqualsUndefined: input.und != undefined, // false
+            varEqualEqualsUndefinedVar: input.v === undefined, // false
+            varEqualsUndefinedVar: input.v == undefined, // false
+            // null
+            undefinedVarEqualEqualsNull: input.und === null, // false
+            undefinedVarEqualsNull: input.und == null, // false - incorrect -https://github.com/functionless/functionless/issues/445
+            undefinedVarNotEqualEqualsNull: input.und !== null, // true
+            undefinedVarNotEqualsNull: input.und != null, // true - incorrect -https://github.com/functionless/functionless/issues/445
+            // string
+            undefinedVarEqualEqualsString: input.und === "hello", // false
+            undefinedVarEqualsString: input.und == "hello", // false
+            undefinedVarNotEqualEqualsString: input.und !== "hello", // true
+            undefinedVarNotEqualsString: input.und != "hello", // true
+            nullVarEqualEqualsString: input.nv === "hello", // false
+            nullVarEqualsString: input.nv == "hello", // false
+            nullVarNotEqualEqualsString: input.nv !== "hello", // true
+            nullVarNotEqualsString: input.nv != "hello", // true
+            // number
+            undefinedVarEqualEqualsNumber: input.undN === 1, // false
+            undefinedVarEqualsNumber: input.undN == 1, // false
+            undefinedVarNotEqualEqualsNumber: input.undN !== 1, // true
+            undefinedVarNotEqualsNumber: input.undN != 1, // true
+            nullVarEqualEqualsNumber: input.nv === 1, // false
+            nullVarEqualsNumber: input.nv == 1, // false
+            nullVarNotEqualEqualsNumber: input.nv !== 1, // true
+            nullVarNotEqualsNumber: input.nv != 1, // true
+            // undefined variables
+            varNotEqualEqualsUndefinedVar: input.v !== obj.und, // true
+            varNotEqualsUndefinedVar: input.v != obj.und, // true
+            nullEqualEqualsUndefinedVar: input.nv === obj.und, // false
+            nullEqualsUndefinedVar: input.nv == obj.und, // false - incorrect - https://github.com/functionless/functionless/issues/445
+            nullNotEqualEqualsUndefinedVar: input.nv === obj.und, // false
+            nullNotEqualsUndefinedVar: input.nv == obj.und, // false - incorrect -https://github.com/functionless/functionless/issues/445
+            undefinedVarEqualEqualsUndefinedVar: input.und === obj.und, // true
+            undefinedVarEqualsUndefinedVar: input.und == obj.und, // true
+            undefinedVarNotEqualEqualsUndefinedVar: input.und !== obj.und, // false
+            undefinedVarNotEqualsUndefinedVar: input.und != obj.und, // false
+            // null variable
+            undefinedVarEqualEqualsNullVar: input.und === obj.nv, // false
+            undefinedVarEqualsNullVar: input.und == obj.nv, // false - incorrect -https://github.com/functionless/functionless/issues/445
+            undefinedVarNotEqualEqualsNullVar: input.und !== obj.nv, // true
+            undefinedVarNotEqualsNullVar: input.und != obj.nv, // true - incorrect -https://github.com/functionless/functionless/issues/445
+            // string var
+            undefinedVarEqualEqualsStringVar: input.und === input.v, // false
+            undefinedVarEqualsStringVar: input.und == input.v, // false
+            undefinedVarNotEqualEqualsStringVar: input.und !== input.v, // true
+            undefinedVarNotEqualsStringVar: input.und != input.v, // true
+            nullVarEqualEqualsStringVar: input.nv === input.v, // false
+            nullVarEqualsStringVar: input.nv == input.v, // false
+            nullVarNotEqualEqualsStringVar: input.nv !== input.v, // true
+            nullVarNotEqualsStringVar: input.nv != input.v, // true
+            // number var
+            undefinedVarEqualEqualsNumberVar: input.undN === input.n, // false
+            undefinedVarEqualsNumberVar: input.undN == input.n, // false
+            undefinedVarNotEqualEqualsNumberVar: input.undN !== input.n, // true
+            undefinedVarNotEqualsNumberVar: input.undN != input.n, // true
+            nullVarEqualEqualsNumberVar: input.nv === input.n, // false
+            nullVarEqualsNumberVar: input.nv == input.n, // false
+            nullVarNotEqualEqualsNumberVar: input.nv !== input.n, // true
+            nullVarNotEqualsNumberVar: input.nv != input.n, // true
+          };
+        }
+      );
     },
     {
       constantStringEquals: true,
@@ -844,10 +1358,90 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       varNot: false,
       varNotPresentTrue: true,
       varNotNullFalse: false,
-      // @ts-ignore
       varNotPresentFalse: true,
+      objNotPresentFalse: false,
+      // undefined and null literals
+      varEqualEqualsUndefined: false,
+      varEqualsUndefined: false,
+      varNotEqualEqualsUndefined: true,
+      varNotEqualsUndefined: true,
+      nullEqualEqualsUndefined: false,
+      nullEqualsUndefined: false,
+      nullNotEqualEqualsUndefined: false,
+      nullNotEqualsUndefined: false,
+      undefinedVarEqualEqualsUndefined: true,
+      undefinedVarEqualsUndefined: true,
+      undefinedVarNotEqualEqualsUndefined: false,
+      undefinedVarNotEqualsUndefined: false,
+      varEqualEqualsUndefinedVar: false,
+      varEqualsUndefinedVar: false,
+      // null
+      undefinedVarEqualEqualsNull: false,
+      undefinedVarEqualsNull: false,
+      undefinedVarNotEqualEqualsNull: true,
+      undefinedVarNotEqualsNull: true,
+      // string
+      undefinedVarEqualEqualsString: false,
+      undefinedVarEqualsString: false,
+      undefinedVarNotEqualEqualsString: true,
+      undefinedVarNotEqualsString: true,
+      nullVarEqualEqualsString: false,
+      nullVarEqualsString: false,
+      nullVarNotEqualEqualsString: true,
+      nullVarNotEqualsString: true,
+      // number
+      undefinedVarEqualEqualsNumber: false,
+      undefinedVarEqualsNumber: false,
+      undefinedVarNotEqualEqualsNumber: true,
+      undefinedVarNotEqualsNumber: true,
+      nullVarEqualEqualsNumber: false,
+      nullVarEqualsNumber: false,
+      nullVarNotEqualEqualsNumber: true,
+      nullVarNotEqualsNumber: true,
+      // undefined variables
+      varNotEqualEqualsUndefinedVar: true,
+      varNotEqualsUndefinedVar: true,
+      nullEqualEqualsUndefinedVar: false,
+      nullEqualsUndefinedVar: false,
+      nullNotEqualEqualsUndefinedVar: false,
+      nullNotEqualsUndefinedVar: false,
+      undefinedVarEqualEqualsUndefinedVar: true,
+      undefinedVarEqualsUndefinedVar: true,
+      undefinedVarNotEqualEqualsUndefinedVar: false,
+      undefinedVarNotEqualsUndefinedVar: false,
+      // null variable
+      undefinedVarEqualEqualsNullVar: false,
+      undefinedVarEqualsNullVar: false,
+      undefinedVarNotEqualEqualsNullVar: true,
+      undefinedVarNotEqualsNullVar: true,
+      // string var
+      undefinedVarEqualEqualsStringVar: false,
+      undefinedVarEqualsStringVar: false,
+      undefinedVarNotEqualEqualsStringVar: true,
+      undefinedVarNotEqualsStringVar: true,
+      nullVarEqualEqualsStringVar: false,
+      nullVarEqualsStringVar: false,
+      nullVarNotEqualEqualsStringVar: true,
+      nullVarNotEqualsStringVar: true,
+      // number var
+      undefinedVarEqualEqualsNumberVar: false,
+      undefinedVarEqualsNumberVar: false,
+      undefinedVarNotEqualEqualsNumberVar: true,
+      undefinedVarNotEqualsNumberVar: true,
+      nullVarEqualEqualsNumberVar: false,
+      nullVarEqualsNumberVar: false,
+      nullVarNotEqualEqualsNumberVar: true,
+      nullVarNotEqualsNumberVar: true,
     },
-    { a: true, n: 1, v: "val", nv: null, obj: { a: "x" } }
+    { a: true, n: 1, v: "val", nv: null, obj: { a: "x" } } as {
+      a: boolean;
+      n: number;
+      v: string;
+      nv: null;
+      obj: { a: string };
+      und?: string;
+      undN?: number;
+    }
   );
 
   // localstack sends and empty object to lambda instead of boolean/numbers
@@ -855,12 +1449,9 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test.skip(
     "binaryOps logic with calls passed boolean",
     (parent) => {
-      const func = new Function<boolean, boolean>(
+      const func = sfnTestLambda<boolean, boolean>(
         parent,
         "func",
-        {
-          timeout: Duration.seconds(20),
-        },
         async (event) => {
           console.log(typeof event);
           console.log(event);
@@ -883,20 +1474,10 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "binaryOps logic with calls",
     (parent) => {
-      const func = new Function<undefined, boolean>(
-        parent,
-        "func",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async () => {
-          return true;
-        }
-      );
       return new StepFunction(parent, "sfn2", async () => {
         return {
-          and: true && (await func()),
-          or: false || (await func()),
+          and: true && (await $SFN.retry(() => trueFunc())),
+          or: false || (await $SFN.retry(() => trueFunc())),
         };
       });
     },
@@ -909,10 +1490,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "overlapping variable with input",
     (parent) => {
-      return new StepFunction(parent, "sfn2", async (input) => {
-        const a = "2";
-        return { a: input.a, b: a };
-      });
+      return new StepFunction(
+        parent,
+        "sfn2",
+        { role: resourceRole },
+        async (input) => {
+          const a = "2";
+          return { a: input.a, b: a };
+        }
+      );
     },
     { a: "1", b: "2" },
     { a: "1" }
@@ -921,36 +1507,41 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "assignment",
     (parent) => {
-      return new StepFunction(parent, "sfn2", async () => {
-        let a: any = "2";
-        const b = a;
-        a = null;
-        const c = a;
-        a = 1;
-        const j = a;
-        const jj = j;
-        const d = a;
-        a = [1, 2];
-        const e = a;
-        a = { x: "val" };
-        const f = a;
-        a = { 1: "val2" };
-        let z = "";
-        const g = {
-          a: z,
-          b: (z = "a"),
-          c: ((z = "b"), z),
-          z,
-          t: z === "b",
-          o: { z },
-        };
-        let y = "";
-        z = "c";
-        const h = [z, y, (y = "a"), ((y = "b"), y), y];
-        let x = "0";
-        const i = `hello ${x} ${(x = "1")} ${((x = "3"), "2")} ${x}`;
-        return { a, b, c, d, e, f, g, h, i, jj };
-      });
+      return new StepFunction(
+        parent,
+        "sfn2",
+        { role: resourceRole },
+        async () => {
+          let a: any = "2";
+          const b = a;
+          a = null;
+          const c = a;
+          a = 1;
+          const j = a;
+          const jj = j;
+          const d = a;
+          a = [1, 2];
+          const e = a;
+          a = { x: "val" };
+          const f = a;
+          a = { 1: "val2" };
+          let z = "";
+          const g = {
+            a: z,
+            b: (z = "a"),
+            c: ((z = "b"), z),
+            z,
+            t: z === "b",
+            o: { z },
+          };
+          let y = "";
+          z = "c";
+          const h = [z, y, (y = "a"), ((y = "b"), y), y];
+          let x = "0";
+          const i = `hello ${x} ${(x = "1")} ${((x = "3"), "2")} ${x}`;
+          return { a, b, c, d, e, f, g, h, i, jj };
+        }
+      );
     },
     {
       a: { "1": "val2" },
@@ -969,18 +1560,29 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "access",
     (parent) => {
-      return new StepFunction(parent, "sfn2", async () => {
-        const obj = { 1: "a", x: "b" };
-        const arr = [1];
-        return {
-          a: obj.x,
-          b: obj.x,
-          // c: obj[1], -- invalid SFN - localstack hangs on error
-          d: obj["1"],
-          e: arr[0],
-          // f: arr["0"], -- invalid SFN - localstack hangs on error
-        };
-      });
+      return new StepFunction(
+        parent,
+        "sfn2",
+        { role: resourceRole },
+        async () => {
+          const obj = { 1: "a", x: "b" } as {
+            1: string;
+            x: string;
+            n?: string;
+          };
+          const arr = [1];
+          return {
+            a: obj.x,
+            b: obj.x,
+            // c: obj[1], -- invalid SFN - localstack hangs on error
+            d: obj["1"],
+            e: arr[0],
+            // f: arr["0"], -- invalid SFN - localstack hangs on error
+            g: obj?.n ?? "c",
+            h: obj?.n ?? "d",
+          };
+        }
+      );
     },
     {
       a: "b",
@@ -988,7 +1590,9 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       // c: "a",
       d: "a",
       e: 1,
-      //  f: 1
+      //  f: 1,
+      g: "c",
+      h: "d",
     }
   );
 
@@ -1077,64 +1681,51 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "templates",
     (parent) => {
-      const func = new Function<string, { str: string }>(
-        parent,
-        "func",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async (event) => {
-          return { str: event };
-        }
-      );
       return new StepFunction<
         { obj: { str: string; str2?: string; items: number[] } },
         string
       >(parent, "fn", async (input) => {
         const partOfTheTemplateString = `hello ${input.obj.str2 ?? "default"}`;
 
-        const result = await func(
+        const templateWithSpecial = `{{'\\${input.obj.str}\\'}}`;
+
+        const result = await echoStringFunc(
           `${input.obj.str} ${"hello"} ${partOfTheTemplateString} ${
             input.obj.items[0]
           }`
         );
 
-        return `the result: ${result.str} ${input.obj.str === "hullo"}`;
+        return `the result: ${result.str} ${
+          input.obj.str === "hullo"
+        } ${templateWithSpecial}`;
       });
     },
-    "the result: hullo hello hello default 1 true",
+    "the result: hullo hello hello default 1 true {{'\\hullo\\'}}",
     { obj: { str: "hullo", items: [1] } }
-  );
-
-  test(
-    "templates simple",
-    (parent) => {
-      return new StepFunction(parent, "fn", async (input) => {
-        const x = input.str;
-        return `${x}`;
-      });
-    },
-    "hi",
-    { str: "hi" }
   );
 
   test(
     "typeof",
     (parent) => {
-      return new StepFunction(parent, "fn", async (input) => {
-        return {
-          isString: typeof input.str === "string",
-          stringType: typeof input.str,
-          isBool: typeof input.bool === "boolean",
-          booleanType: typeof input.bool,
-          isNumber: typeof input.num === "number",
-          numberType: typeof input.num,
-          isObject: typeof input.obj === "object",
-          objectType: typeof input.obj,
-          arrType: typeof input.arr,
-          //bigintType: typeof BigInt(0),
-        };
-      });
+      return new StepFunction(
+        parent,
+        "fn",
+        { role: resourceRole },
+        async (input) => {
+          return {
+            isString: typeof input.str === "string",
+            stringType: typeof input.str,
+            isBool: typeof input.bool === "boolean",
+            booleanType: typeof input.bool,
+            isNumber: typeof input.num === "number",
+            numberType: typeof input.num,
+            isObject: typeof input.obj === "object",
+            objectType: typeof input.obj,
+            arrType: typeof input.arr,
+            //bigintType: typeof BigInt(0),
+          };
+        }
+      );
     },
     {
       isString: true,
@@ -1154,162 +1745,84 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "for in",
     (parent) => {
-      const table = new Table<{ id: string; val: number }, "id">(
-        parent,
-        "table",
-        {
-          partitionKey: {
-            name: "id",
-            type: AttributeType.STRING,
-          },
-        }
-      );
-      const update = $AWS.DynamoDB.UpdateItem;
-      const func = new Function(
-        parent,
-        "func",
-        localstackClientConfig,
-        async (input: { n: `${number}`; id: string }) => {
-          console.log("input", input);
-          await update({
-            Table: table,
-            Key: {
-              id: {
-                S: input.id,
-              },
-            },
-            UpdateExpression: "SET val = if_not_exists(val, :start) + :inc",
-            ExpressionAttributeValues: {
-              ":start": { N: "0" },
-              ":inc": { N: input.n },
-            },
-          });
-        }
-      );
       return new StepFunction<{ arr: number[]; id: string }, string>(
         parent,
         "fn",
         async (input) => {
-          // 1, 2, 3 = 6
+          let a = "";
           for (const i in input.arr) {
-            await func({ n: `${input.arr[i]!}`, id: input.id });
+            a = `${a}${i}${input.arr[i]!}`;
           }
           for (const i in input.arr) {
             let j = "1";
             for (j in input.arr) {
-              await func({ n: `${input.arr[i]!}`, id: input.id }); // 1 1 1 2 2 2 3 3 3 = 18
-              await func({ n: i as `${number}`, id: input.id }); // 0 0 0 1 1 1 2 2 2 = 9
-              await func({ n: `${input.arr[j]!}`, id: input.id }); // 1 2 3 1 2 3 1 2 3 = 18
-              await func({ n: j as `${number}`, id: input.id }); // 0 1 2 0 1 2 0 1 2 = 9
+              a = `${a}|n${input.arr[i]!}i${i}n${input.arr[j]!}j${j}`;
             }
-            await func({ n: j as "2", id: input.id }); // 2 2 2 = 6
+            a = `${a}--${j}`;
           }
-          const item = await $AWS.DynamoDB.GetItem({
-            Table: table,
-            Key: {
-              id: { S: input.id },
-            },
-            ConsistentRead: true,
-          });
-          return item.Item!.val.N;
+          return a;
         }
       );
     },
-    // 6 + 54 + 6
-    "66",
+    "011223|n1i0n1j0|n1i0n2j1|n1i0n3j2--2|n2i1n1j0|n2i1n2j1|n2i1n3j2--2|n3i2n1j0|n3i2n2j1|n3i2n3j2--2",
     { arr: [1, 2, 3], id: `key${Math.floor(Math.random() * 1000)}` }
   );
 
   test(
     "for of",
     (parent) => {
-      const table = new Table<{ id: string; val: number }, "id">(
-        parent,
-        "table",
-        {
-          partitionKey: {
-            name: "id",
-            type: AttributeType.STRING,
-          },
-        }
-      );
-      const update = $AWS.DynamoDB.UpdateItem;
-      const func = new Function(
-        parent,
-        "func",
-        localstackClientConfig,
-        async (input: { n: `${number}`; id: string }) => {
-          console.log("input", input);
-          await update({
-            Table: table,
-            Key: {
-              id: {
-                S: input.id,
-              },
-            },
-            UpdateExpression: "SET val = if_not_exists(val, :start) + :inc",
-            ExpressionAttributeValues: {
-              ":start": { N: "0" },
-              ":inc": { N: input.n },
-            },
-          });
-        }
-      );
       return new StepFunction<{ arr: number[]; id: string }, string>(
         parent,
         "fn",
         async (input) => {
-          // 1, 2, 3 = 6
+          let a = "";
           for (const i of input.arr) {
-            await func({ n: `${i}`, id: input.id });
+            a = `${a}${i}`;
           }
           // 2 + 3 + 4 + 3 + 4 + 5 + 4 + 5 + 6 = 36 + 6 = 42
           for (const i of input.arr) {
             let j = 1;
             for (j of input.arr) {
-              await func({ n: `${i}`, id: input.id });
-              await func({ n: `${j}`, id: input.id });
+              a = `${a}|i${i}j${j}`;
             }
             // 3 + 3 + 3 = 9 = 51
-            await func({ n: `${j}`, id: input.id });
+            a = `${a}--${j}`;
           }
-          const item = await $AWS.DynamoDB.GetItem({
-            Table: table,
-            Key: {
-              id: { S: input.id },
-            },
-            ConsistentRead: true,
-          });
-          return item.Item!.val.N;
+          return a;
         }
       );
     },
-    "51",
+    "123|i1j1|i1j2|i1j3--3|i2j1|i2j2|i2j3--3|i3j1|i3j2|i3j3--3",
     { arr: [1, 2, 3], id: `key${Math.floor(Math.random() * 1000)}` }
   );
 
   test(
     "for",
     (parent) => {
-      return new StepFunction(parent, "sfn", (input) => {
-        let a = "";
-        for (let arr = input.arr; arr[0]; arr = arr.slice(1)) {
-          a = `${a}n${arr[0]}`;
-        }
-        let c = "";
-        for (;;) {
-          if (c === "1") {
+      return new StepFunction(
+        parent,
+        "sfn",
+        { role: resourceRole },
+        (input) => {
+          let a = "";
+          for (let arr = input.arr; arr[0]; arr = arr.slice(1)) {
+            a = `${a}n${arr[0]}`;
+          }
+          let c = "";
+          for (;;) {
+            if (c === "1") {
+              c = `${c}1`;
+              continue;
+            }
+            if (c === "111") {
+              break;
+            }
+            a = `${a}c${c}`;
             c = `${c}1`;
-            continue;
           }
-          if (c === "111") {
-            break;
-          }
-          a = `${a}c${c}`;
-          c = `${c}1`;
+          return a;
         }
-        return a;
-      });
+      );
     },
     "n1n2n3cc11",
     { arr: [1, 2, 3] }
@@ -1318,20 +1831,10 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "continue break",
     (parent) => {
-      const table = new Table<{ id: string; val: number }, "id">(
-        parent,
-        "table",
-        {
-          partitionKey: {
-            name: "id",
-            type: AttributeType.STRING,
-          },
-        }
-      );
       return new StepFunction<{ id: string }, string>(
         parent,
         "sfn",
-        async (input) => {
+        async () => {
           let a = "";
           while (true) {
             a = `${a}1`;
@@ -1344,46 +1847,27 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             a = `${a}2`;
           }
 
+          let b = "";
           for (const i of [1, 2, 3, 4]) {
             if (i === 1) {
               continue;
             }
-            await $AWS.DynamoDB.UpdateItem({
-              Table: table,
-              Key: {
-                id: {
-                  S: input.id,
-                },
-              },
-              UpdateExpression: "SET val = if_not_exists(val, :start) + :inc",
-              ExpressionAttributeValues: {
-                ":start": { N: "0" },
-                ":inc": { N: `${i}` },
-              },
-            });
+            b = `${b}${i}`;
             if (i === 3) {
               break;
             }
           }
-          const item = await $AWS.DynamoDB.GetItem({
-            Table: table,
-            Key: {
-              id: { S: input.id },
-            },
-            ConsistentRead: true,
-          });
-          return `${a}${item.Item?.val.N}`;
+          return `${a}${b}`;
         }
       );
     },
-    "111215",
-    { id: `key${Math.floor(Math.random() * 1000)}` }
+    "1112123"
   );
 
   test(
     "throw catch finally",
     (parent) => {
-      const func = new Function<undefined, void>(parent, "func", async () => {
+      const func = sfnTestLambda<undefined, void>(parent, "func", async () => {
         throw new Error("wat");
       });
 
@@ -1475,6 +1959,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       return new StepFunction<{ arr: number[] }, string>(
         parent,
         "fn",
+        { role: resourceRole },
         async (input) => {
           let a = "";
           for (const i in input.arr) {
@@ -1505,106 +1990,49 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "join",
     (parent) => {
-      return new StepFunction(parent, "sfn2", async (input) => {
-        const resultArr = [
-          ["a", "b", "c"].join("/"),
-          input.arr.join("-"),
-          input.arr.join(input.sep),
-          ["d", "e", "f"].join(input.sep),
-          [].join(""),
-          input.arr.join(),
-        ];
+      return new StepFunction(
+        parent,
+        "sfn2",
+        { role: resourceRole },
+        async (input) => {
+          const resultArr = [
+            ["a", "b", "c"].join("/"),
+            input.arr.join("-"),
+            input.arr.join(input.sep),
+            ["d", "e", "f"].join(input.sep),
+            [].join(""),
+            input.arr.join(),
+            ["a", { a: "a" }, ["b"], input.obj, input.arr, null].join("="),
+          ];
 
-        return resultArr.join("#");
-      });
+          return resultArr.join("#");
+        }
+      );
     },
-    "a/b/c#1-2-3#1|2|3#d|e|f##1,2,3",
-    { arr: [1, 2, 3], sep: "|" }
+    // Caveat: Unlike ECMA, we run JSON.stringify on object and arrays
+    'a/b/c#1-2-3#1|2|3#d|e|f##1,2,3#a={"a":"a"}=["b"]={"b":"b"}=[1,2,3]=null',
+    { arr: [1, 2, 3], sep: "|", obj: { b: "b" } }
   );
 
   test(
     "ternary",
     (parent) => {
-      const table = new Table<{ id: string; val: number }, "id">(
-        parent,
-        "table",
-        {
-          partitionKey: {
-            name: "id",
-            type: AttributeType.STRING,
-          },
-        }
-      );
       return new StepFunction(parent, "fn", async (input) => {
-        // should add 1
-        input.t
-          ? await $AWS.DynamoDB.UpdateItem({
-              Table: table,
-              Key: {
-                id: { S: input.id },
-              },
-              UpdateExpression: "SET val = if_not_exists(val, :start) + :inc",
-              ExpressionAttributeValues: {
-                ":start": { N: "0" },
-                ":inc": { N: "1" },
-              },
-            })
-          : null;
+        let a = "";
+        input.t ? (a = `${a}1`) : null;
 
         // should add 3
-        input.f
-          ? await $AWS.DynamoDB.UpdateItem({
-              Table: table,
-              Key: {
-                id: { S: input.id },
-              },
-              UpdateExpression: "SET val = if_not_exists(val, :start) + :inc",
-              ExpressionAttributeValues: {
-                ":start": { N: "0" },
-                ":inc": { N: "2" },
-              },
-            })
-          : await $AWS.DynamoDB.UpdateItem({
-              Table: table,
-              Key: {
-                id: { S: input.id },
-              },
-              UpdateExpression: "SET val = if_not_exists(val, :start) + :inc",
-              ExpressionAttributeValues: {
-                ":start": { N: "0" },
-                ":inc": { N: "3" },
-              },
-            });
+        input.f ? (a = `${a}2`) : (a = `${a}3`);
 
         // should not execute update
-        input.t
-          ? null
-          : await $AWS.DynamoDB.UpdateItem({
-              Table: table,
-              Key: {
-                id: { S: input.id },
-              },
-              UpdateExpression: "SET val = if_not_exists(val, :start) + :inc",
-              ExpressionAttributeValues: {
-                ":start": { N: "0" },
-                ":inc": { N: "4" },
-              },
-            });
+        input.t ? null : (a = `${a}4`);
 
         return {
           true: input.t ? "a" : "b",
           false: input.f ? "a" : "b",
           constantTrue: true ? "c" : "d",
           constantFalse: false ? "c" : "d",
-          result:
-            (
-              await $AWS.DynamoDB.GetItem({
-                Table: table,
-                Key: {
-                  id: { S: input.id },
-                },
-              })
-            ).Item?.val.N ?? null,
+          result: a,
         };
       });
     },
@@ -1613,7 +2041,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       false: "b",
       constantTrue: "c",
       constantFalse: "d",
-      result: "4",
+      result: "13",
     },
     { t: true, f: false, id: `key${Math.floor(Math.random() * 1000)}` }
   );
@@ -1621,15 +2049,20 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "json parse and stringify",
     (parent) => {
-      return new StepFunction(parent, "sfn", async (input) => {
-        const str = JSON.stringify(input);
-        const obj = JSON.parse(str);
-        return {
-          str: str,
-          obj: obj,
-          a: obj.a,
-        };
-      });
+      return new StepFunction(
+        parent,
+        "sfn",
+        { role: resourceRole },
+        async (input) => {
+          const str = JSON.stringify(input);
+          const obj = JSON.parse(str);
+          return {
+            str: str,
+            obj: obj,
+            a: obj.a,
+          };
+        }
+      );
     },
     {
       str: `{"a":"1","b":1,"c":{"d":"d"}}`,
@@ -1642,9 +2075,14 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "context",
     (parent) => {
-      return new StepFunction(parent, "sfn", async (_, context) => {
-        return `name: ${context.Execution.Name}`;
-      });
+      return new StepFunction(
+        parent,
+        "sfn",
+        { role: resourceRole },
+        async (_, context) => {
+          return `name: ${context.Execution.Name}`;
+        }
+      );
     },
     (_, result) => `name: ${result.name}`
   );
@@ -1668,7 +2106,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "clean state after input",
     (parent) =>
-      new StepFunction(parent, "sfn", async (input) => {
+      new StepFunction(parent, "sfn", { role: resourceRole }, async (input) => {
         const state = dumpState<
           Partial<typeof input> & { input: typeof input }
         >();
@@ -1690,7 +2128,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "no state pollution",
     (parent) =>
-      new StepFunction(parent, "sfn", async () => {
+      new StepFunction(parent, "sfn", { role: resourceRole }, async () => {
         let a;
         return a ?? null;
       }),
@@ -1704,6 +2142,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       new StepFunction(
         parent,
         "sfn",
+        { role: resourceRole },
         async ({
           a,
           bb: { value: b, [`${"a"}${"b"}`]: r },
@@ -1733,6 +2172,15 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             forV = `${forV}${h}${l}`;
           }
 
+          const arr = [{ a: "a", b: [1] }];
+
+          const sfnMap = await $SFN.map(arr, ({ a, b: [c] }) => a + c);
+
+          // just should not fail
+          await $SFN.forEach(arr, ({ a, b: [c] }) => {
+            `${a} ${c}`;
+          });
+
           let tr;
           try {
             throw new Error("hi");
@@ -1746,6 +2194,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
             map,
             forV,
             tr,
+            sfnMap,
           };
         }
       ),
@@ -1755,6 +2204,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       map: "ab",
       forV: "ab",
       tr: "hi",
+      sfnMap: ["a1"],
     },
     {
       a: "hello",
@@ -1784,7 +2234,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   test(
     "shadowing maintains state",
     (parent) =>
-      new StepFunction(parent, "sfn", async () => {
+      new StepFunction(parent, "sfn", { role: resourceRole }, async () => {
         const [a, b, c, d, e, f] = [1, 1, 1, 1, 1, 1];
         let res = "";
         for (const a in [2]) {
@@ -1798,7 +2248,7 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
                       await $SFN.map([7], (f) => {
                         return `${a}${b}${c}${d}${e}${f}`;
                       })
-                    )[0];
+                    )[0]!;
                     res = `${r}-${a}${b}${c}${d}${e}${f}`;
                   }
                   res = `${res}-${a}${b}${c}${d}${e}${f}`;
@@ -1817,9 +2267,9 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
   );
 
   test(
-    "boolean",
+    "Boolean coerce",
     (parent) =>
-      new StepFunction(parent, "sfn", (input) => {
+      new StepFunction(parent, "sfn", { role: resourceRole }, (input) => {
         return {
           trueString: Boolean("1"),
           trueBoolean: Boolean(true),
@@ -1846,6 +2296,140 @@ localstackTestSuite("sfnStack", (testResource, _stack, _app) => {
       falsyVar: false,
     },
     { value: "hello", nv: "" }
+  );
+
+  test(
+    "Number coerce",
+    (parent) =>
+      new StepFunction(parent, "sfn", { role: resourceRole }, (input) => {
+        return {
+          oneString: Number("1"),
+          oneBoolean: Number(true),
+          oneNumber: Number(1),
+          oneVar: Number(input.one),
+          zeroString: Number(""),
+          zeroBoolean: Number(false),
+          zeroNumber: Number(0),
+          zeroVar: Number(input.zero),
+          zeroNull: Number(null),
+          nanObject: Number({}),
+          nanString: Number("{}"),
+          nanTrueString: Number("true"),
+          nanVar: Number(input.nan),
+          oneStringUnaryPlus: +"1",
+          oneBooleanUnaryPlus: +true,
+          oneNumberUnaryPlus: +1,
+          oneVarUnaryPlus: +input.one,
+          zeroStringUnaryPlus: +"",
+          zeroBooleanUnaryPlus: +false,
+          zeroNumberUnaryPlus: +0,
+          zeroVarUnaryPlus: +input.zero,
+          // @ts-ignore
+          zeroNullUnaryPlus: +null,
+          nanObjectUnaryPlus: +{},
+          nanStringUnaryPlus: +"{}",
+          nanVarUnaryPlus: +input.nan,
+          empty: Number(),
+        };
+      }),
+    {
+      oneString: 1,
+      oneBoolean: 1,
+      oneNumber: 1,
+      oneVar: 1,
+      zeroString: 0,
+      zeroBoolean: 0,
+      zeroNumber: 0,
+      zeroVar: 0,
+      zeroNull: 0,
+      /**
+       * Functionless ASL uses null for NaN.
+       */
+      nanObject: null as unknown as number,
+      nanString: null as unknown as number,
+      nanVar: null as unknown as number,
+      nanTrueString: null as unknown as number,
+      oneStringUnaryPlus: 1,
+      oneBooleanUnaryPlus: 1,
+      oneNumberUnaryPlus: 1,
+      oneVarUnaryPlus: 1,
+      zeroStringUnaryPlus: 0,
+      zeroBooleanUnaryPlus: 0,
+      zeroNumberUnaryPlus: 0,
+      zeroVarUnaryPlus: 0,
+      zeroNullUnaryPlus: 0,
+      nanObjectUnaryPlus: null as unknown as number,
+      nanStringUnaryPlus: null as unknown as number,
+      nanVarUnaryPlus: null as unknown as number,
+      empty: 0,
+    },
+    { one: "1", zero: "0", nan: "{}" }
+  );
+
+  test(
+    "String coerce",
+    (parent) =>
+      new StepFunction(parent, "sfn", { role: resourceRole }, (input) => {
+        return {
+          stringString: String("1"),
+          stringBoolean: String(true),
+          stringNumber: String(1),
+          stringVar: String(input.val),
+          stringStringVar: String(input.str),
+          stringEmpty: String(""),
+          stringObject: String({ a: "a" }),
+          stringObjectWithRef: String({ a: input.val }),
+          stringNull: String(null),
+          empty: String(),
+          // stringUndefined: String(undefined), - not supported
+          stringArray: String([
+            "a",
+            ["b"],
+            [[input.val]],
+            [],
+            {},
+            { a: input.val },
+          ]),
+        };
+      }),
+    {
+      stringString: "1",
+      stringBoolean: "true",
+      stringNumber: "1",
+      stringVar: "1",
+      stringStringVar: "blah",
+      stringEmpty: "",
+      stringObject: "[object Object]",
+      stringObjectWithRef: "[object Object]",
+      stringNull: "null",
+      empty: "",
+      // stringUndefined: "undefined",
+      // Caveat: in ECMA, this test would output: a,b,1,,[object Object],[object Object]
+      // we are stringifying instead of ToString for object and arrays because SFN does not
+      // allow use to easily determine an Array from an Object and recursive to string would be expensive.
+      stringArray: '["a",["b"],[[1]],[],{},{"a":1}]',
+    },
+    { val: 1, str: "blah" }
+  );
+
+  test(
+    "queue",
+    (scope) => {
+      const queue = new Queue<{ id: string }>(stack, "Queue");
+
+      return new StepFunction(scope, "q", async () => {
+        await queue.sendMessage({ MessageBody: { id: "hello" } });
+        await queue.sendMessageBatch({
+          Entries: [{ MessageBody: { id: "hello" }, Id: "1" }],
+        });
+        await queue.sendMessageBatch({
+          Entries: [{ MessageBody: { id: "hello" }, Id: "2" }],
+        });
+        await queue.receiveMessage();
+        await queue.purge();
+      });
+    },
+    null
   );
 });
 

@@ -16,16 +16,15 @@ Functionless is all about embedding the business logic within the infrastructure
 
 ## Configure Properties
 
-To configure its properties, such as memory, timeout, runtime, etc. specify an object as the third argument:
+To configure its properties, such as memorySize, timeout, and log group, etc. specify an object as the third argument:
 
 ```ts
 new Function(
   scope,
   "F",
   {
-    memory: 512,
+    memorySize: 512,
     timeout: Duration.minutes(1),
-    runtime: aws_lambda.Runtime.NODE_JS_16,
   },
   async () => {
     console.log("hello, world");
@@ -283,9 +282,10 @@ new Function(scope, "foo", () => {
 ```ts
 const table = Table.fromTable(..)
 
-new Function(scope, "foo", (key: string) => {
+new Function(scope, "foo", async (key: string) => {
   // re-written as a call to an AWS.DynamoDB.GetItem API call
-  return table.getItem({
+  return $AWS.DynamoDB.GetItem({
+    Table: table,
     key
   });
 });

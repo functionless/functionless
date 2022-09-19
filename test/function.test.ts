@@ -1,4 +1,4 @@
-import { App, aws_lambda, Stack } from "aws-cdk-lib";
+import { App, aws_dynamodb, aws_lambda, Stack } from "aws-cdk-lib";
 import "jest";
 import {
   Function,
@@ -8,8 +8,9 @@ import {
   AsyncResponseSuccess,
   AsyncResponseFailure,
   asyncSynth,
+  $AWS,
+  Table,
 } from "../src";
-import { reflect } from "../src/reflect";
 import { appsyncTestCase } from "./util";
 
 interface Item {
@@ -20,6 +21,7 @@ interface Item {
 let app: App;
 let stack: Stack;
 let lambda: aws_lambda.Function;
+let table: Table<any, any, any>;
 
 beforeEach(() => {
   app = new App({ autoSynth: false });
@@ -32,43 +34,43 @@ beforeEach(() => {
     handler: "index.handler",
     runtime: aws_lambda.Runtime.NODEJS_14_X,
   });
+  table = new Table(stack, "T", {
+    partitionKey: {
+      name: "id",
+      type: aws_dynamodb.AttributeType.STRING,
+    },
+  });
 });
 
 test("call function", () => {
   const fn1 = Function.fromFunction<{ arg: string }, Item>(lambda);
 
-  appsyncTestCase(
-    reflect((context: AppsyncContext<{ arg: string }>) => {
-      return fn1(context.arguments);
-    })
-  );
+  appsyncTestCase((context: AppsyncContext<{ arg: string }>) => {
+    return fn1(context.arguments);
+  });
 });
 
 test("call function and conditional return", () => {
   const fn1 = Function.fromFunction<{ arg: string }, Item>(lambda);
 
-  appsyncTestCase(
-    reflect(async (context: AppsyncContext<{ arg: string }>) => {
-      const result = await fn1(context.arguments);
+  appsyncTestCase(async (context: AppsyncContext<{ arg: string }>) => {
+    const result = await fn1(context.arguments);
 
-      if (result.id === "sam") {
-        return true;
-      } else {
-        return false;
-      }
-    })
-  );
+    if (result.id === "sam") {
+      return true;
+    } else {
+      return false;
+    }
+  });
 });
 
 test("call function omitting optional arg", () => {
   const fn2 = Function.fromFunction<{ arg: string; optional?: string }, Item>(
     lambda
   );
-  appsyncTestCase(
-    reflect((context: AppsyncContext<{ arg: string }>) => {
-      return fn2(context.arguments);
-    })
-  );
+  appsyncTestCase((context: AppsyncContext<{ arg: string }>) => {
+    return fn2(context.arguments);
+  });
 });
 
 test("call function including optional arg", () => {
@@ -76,31 +78,25 @@ test("call function including optional arg", () => {
     lambda
   );
 
-  appsyncTestCase(
-    reflect((context: AppsyncContext<{ arg: string }>) => {
-      return fn2({ arg: context.arguments.arg, optional: "hello" });
-    })
-  );
+  appsyncTestCase((context: AppsyncContext<{ arg: string }>) => {
+    return fn2({ arg: context.arguments.arg, optional: "hello" });
+  });
 });
 
 test("call function including with no parameters", () => {
   const fn3 = Function.fromFunction<undefined, Item>(lambda);
 
-  appsyncTestCase(
-    reflect(() => {
-      return fn3();
-    })
-  );
+  appsyncTestCase(() => {
+    return fn3();
+  });
 });
 
 test("call function including with void result", () => {
   const fn4 = Function.fromFunction<{ arg: string }, void>(lambda);
 
-  appsyncTestCase(
-    reflect((context: AppsyncContext<{ arg: string }>) => {
-      return fn4(context.arguments);
-    })
-  );
+  appsyncTestCase((context: AppsyncContext<{ arg: string }>) => {
+    return fn4(context.arguments);
+  });
 });
 
 test("set on success bus", () => {
@@ -410,3 +406,63 @@ test("synth succeeds with async synth", async () => {
   await asyncSynth(app);
   // synth is slow
 }, 500000);
+
+// see https://github.com/functionless/functionless/issues/458
+test("$AWS.DynamoDB.* with non-ReferenceExpr Table property", () => {
+  const obj = { table };
+  new Function(
+    stack,
+    "$AWS.DynamoDB.* with non-ReferenceExpr Table property",
+    async () => {
+      await $AWS.DynamoDB.PutItem({
+        Table: obj.table,
+        Item: {
+          id: {
+            S: "key",
+          },
+          name: {
+            S: "name",
+          },
+        },
+      });
+    }
+  );
+});
+
+// see https://github.com/functionless/functionless/issues/458
+test("$AWS.DynamoDB.* with PropAccessExpr reference to constructor parameter", () => {
+  class Foo {
+    constructor(props: { bookingsTable: typeof table }) {
+      new Function<any, any>(stack, "Foo", async (event) => {
+        await $AWS.DynamoDB.PutItem({
+          Table: props.bookingsTable,
+          Item: {
+            pk: { S: event.reservation.trip_id },
+          },
+        });
+      });
+    }
+  }
+  new Foo({ bookingsTable: table });
+});
+
+test("$AWS.DynamoDB.* with ShorthandPropAssign", () => {
+  const Table = table;
+  new Function(
+    stack,
+    "$AWS.DynamoDB.* with non-ReferenceExpr Table property",
+    async () => {
+      await $AWS.DynamoDB.PutItem({
+        Table,
+        Item: {
+          id: {
+            S: "key",
+          },
+          name: {
+            S: "name",
+          },
+        },
+      });
+    }
+  );
+});

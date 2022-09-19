@@ -190,13 +190,8 @@ abstract class RuleBase<out OutEvnt extends Event> implements IRule<OutEvnt> {
     ...props: Parameters<DynamicProps<Props>>
   ): void;
   public pipe(callback: () => aws_events.IRuleTarget): void;
-  public pipe<Props extends object | undefined>(
-    integration:
-      | IntegrationWithEventBus<OutEvnt, Props>
-      | (() => aws_events.IRuleTarget),
-    ...props: Parameters<DynamicProps<Props>>
-  ): void {
-    pipe(this as IRule<OutEvnt>, integration, props[0] as Props, undefined);
+  public pipe(...[integration, ...props]: any): void {
+    pipe(this as IRule<OutEvnt>, integration, props[0], undefined);
   }
 }
 

@@ -1,5 +1,6 @@
 import type {
   FunctionDecl,
+  SingleEntryVariableDeclList,
   VariableDecl,
   VariableDeclList,
 } from "./declaration";
@@ -38,7 +39,7 @@ export type Stmt =
 
 export abstract class BaseStmt<
   Kind extends NodeKind,
-  Parent extends FunctionlessNode | undefined = BlockStmt | IfStmt
+  Parent extends FunctionlessNode = BlockStmt | IfStmt
 > extends BaseNode<Kind, Parent> {
   readonly nodeKind: "Stmt" = "Stmt";
 
@@ -99,7 +100,11 @@ export class BlockStmt extends BaseStmt<NodeKind.BlockStmt, BlockStmtParent> {
     readonly statements: Stmt[]
   ) {
     super(NodeKind.BlockStmt, span, arguments);
-    this.ensureArrayOf(statements, "statements", ["Stmt"]);
+    this.ensureArrayOf(statements, "statements", [
+      "Stmt",
+      NodeKind.FunctionDecl,
+      NodeKind.ClassDecl,
+    ]);
     statements.forEach((stmt, i) => {
       stmt.prev = i > 0 ? statements[i - 1] : undefined;
       stmt.next = i + 1 < statements.length ? statements[i + 1] : undefined;
@@ -171,9 +176,9 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly initializer: VariableDecl | Identifier,
+    readonly initializer: SingleEntryVariableDeclList | Expr,
     readonly expr: Expr,
-    readonly body: BlockStmt,
+    readonly stmt: Stmt,
     /**
      * Whether this is a for-await-of statement
      * ```ts
@@ -184,10 +189,11 @@ export class ForOfStmt extends BaseStmt<NodeKind.ForOfStmt> {
   ) {
     super(NodeKind.ForOfStmt, span, arguments);
     this.ensure(initializer, "initializer", [
-      NodeKind.VariableDecl,
-      NodeKind.Identifier,
+      "Expr",
+      NodeKind.VariableDeclList,
     ]);
     this.ensure(expr, "expr", ["Expr"]);
+    this.ensure(stmt, "stmt", ["Stmt"]);
     this.ensure(isAwait, "isAwait", ["boolean"]);
   }
 }
@@ -198,11 +204,17 @@ export class ForInStmt extends BaseStmt<NodeKind.ForInStmt> {
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly initializer: VariableDecl | Identifier,
+    readonly initializer: SingleEntryVariableDeclList | Expr,
     readonly expr: Expr,
-    readonly body: BlockStmt
+    readonly stmt: Stmt
   ) {
     super(NodeKind.ForInStmt, span, arguments);
+    this.ensure(initializer, "initializer", [
+      "Expr",
+      NodeKind.VariableDeclList,
+    ]);
+    this.ensure(stmt, "stmt", ["Stmt"]);
+    this.ensure(expr, "expr", ["Expr"]);
   }
 }
 
@@ -212,13 +224,13 @@ export class ForStmt extends BaseStmt<NodeKind.ForStmt> {
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly body: BlockStmt,
+    readonly stmt: Stmt,
     readonly initializer?: VariableDeclList | Expr,
     readonly condition?: Expr,
     readonly incrementor?: Expr
   ) {
     super(NodeKind.ForStmt, span, arguments);
-    this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(stmt, "stmt", ["Stmt"]);
     this.ensure(initializer, "initializer", [
       "undefined",
       "Expr",
@@ -322,11 +334,11 @@ export class WhileStmt extends BaseStmt<NodeKind.WhileStmt> {
      */
     span: Span,
     readonly condition: Expr,
-    readonly block: BlockStmt
+    readonly stmt: Stmt
   ) {
     super(NodeKind.WhileStmt, span, arguments);
     this.ensure(condition, "condition", ["Expr"]);
-    this.ensure(block, "block", [NodeKind.BlockStmt]);
+    this.ensure(stmt, "stmt", ["Stmt"]);
   }
 }
 
@@ -336,11 +348,11 @@ export class DoStmt extends BaseStmt<NodeKind.DoStmt> {
      * Range of text in the source file where this Node resides.
      */
     span: Span,
-    readonly block: BlockStmt,
+    readonly stmt: Stmt,
     readonly condition: Expr
   ) {
     super(NodeKind.DoStmt, span, arguments);
-    this.ensure(block, "block", [NodeKind.BlockStmt]);
+    this.ensure(stmt, "stmt", ["Stmt"]);
     this.ensure(condition, "condition", ["Expr"]);
   }
 }

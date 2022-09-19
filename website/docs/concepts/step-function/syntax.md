@@ -155,7 +155,7 @@ A `for-of` loop processes each item in an array.
 
 ```ts
 for (const item of items) {
-  task(item);
+  await task(item);
 }
 ```
 
@@ -188,7 +188,7 @@ A `for-in` loop processes each index in an array.
 
 ```ts
 for (const i in array) {
-  task(array[i]);
+  await task(array[i]);
 }
 ```
 
@@ -232,7 +232,7 @@ A `while` loop runs a block of code until some condition evaluates to `false`.
 
 ```ts
 while (flag) {
-  flag = task();
+  flag = await task();
 }
 return;
 ```
@@ -309,9 +309,9 @@ The `Catch` property of a Task within the `try` block transitions to a State wit
 
 ```ts
 try {
-  taskA();
+  await taskA();
 } catch {
-  taskB();
+  await taskB();
 }
 ```
 
@@ -336,9 +336,9 @@ If the error is caught and used within the `catch` block like below:
 
 ```ts
 try {
-  taskA();
+  await taskA();
 } catch (err) {
-  taskB(err);
+  await taskB(err);
 }
 ```
 
@@ -381,11 +381,11 @@ A `finally` block is always executed when exiting a `try` or `catch` block. It d
 
 ```ts
 try {
-  task("1");
+  await task("1");
 } catch {
-  task("2");
+  await task("2");
 } finally {
-  task("3");
+  await task("3");
 }
 ```
 

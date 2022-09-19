@@ -1,29 +1,25 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
-import { Lambda, StepFunctions } from "aws-sdk";
-import { clientConfig } from "./localstack";
-
-export const localLambda = new Lambda(clientConfig);
-export const localSFN = new StepFunctions({
-  ...clientConfig,
-  hostPrefixEnabled: false,
-});
+import { StepFunctions } from "aws-sdk";
+import Lambda from "aws-sdk/clients/lambda";
 
 export const testFunction = async (
+  lambda: Lambda,
   functionName: string,
   payload: any,
-  expected: any
+  expected: (result: any) => void
 ) => {
-  const result = await localLambda
+  const result = await lambda
     .invoke({
       FunctionName: functionName,
       Payload: JSON.stringify(payload),
     })
     .promise();
 
+  const resultPayload = result.Payload
+    ? JSON.parse(result.Payload.toString())
+    : undefined;
+
   try {
-    expect(
-      result.Payload ? JSON.parse(result.Payload.toString()) : undefined
-    ).toEqual(expected);
+    expected(resultPayload);
   } catch (e) {
     console.error(result);
     throw e;
@@ -35,11 +31,12 @@ export const testFunction = async (
  * https://github.com/localstack/localstack/issues/5258
  */
 export const testExprStepFunction = async (
+  sfn: StepFunctions,
   stateMachineArn: string,
   payload: any,
   expected: any
 ) => {
-  const result = await localSFN
+  const result = await sfn
     .startSyncExecution({
       stateMachineArn,
       input: JSON.stringify(payload),
@@ -56,21 +53,14 @@ export const testExprStepFunction = async (
 };
 
 export const testStepFunction = async (
-  stateMachineArn: string,
-  payload: any
+  sfn: StepFunctions,
+  executionArn: string
 ) => {
-  const execResult = await localSFN
-    .startExecution({
-      stateMachineArn,
-      input: JSON.stringify(payload),
-    })
-    .promise();
-
   return retry(
     () =>
-      localSFN
+      sfn
         .describeExecution({
-          executionArn: execResult.executionArn,
+          executionArn: executionArn,
         })
         .promise(),
     (exec) => exec.status !== "RUNNING",

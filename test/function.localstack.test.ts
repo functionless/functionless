@@ -11,6 +11,11 @@ import {
   Stack,
   Token,
 } from "aws-cdk-lib";
+import {
+  CompositePrincipal,
+  Role,
+  ServicePrincipal,
+} from "aws-cdk-lib/aws-iam";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import axios from "axios";
 import { Construct } from "constructs";
@@ -23,18 +28,10 @@ import {
   FunctionProps,
   StepFunction,
   Table,
+  FunctionClosure,
 } from "../src";
-import { localstackTestSuite } from "./localstack";
+import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
 import { testFunction } from "./runtime-util";
-
-// inject the localstack client config into the lambda clients
-// without this configuration, the functions will try to hit AWS proper
-const localstackClientConfig: FunctionProps = {
-  timeout: Duration.seconds(20),
-  clientConfigRetriever: () => ({
-    endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
-  }),
-};
 
 interface TestFunctionBase {
   <
@@ -50,7 +47,12 @@ interface TestFunctionBase {
     ) => Function<I, O> | { func: Function<I, O>; outputs: Outputs },
     expected: OO extends void
       ? null
-      : OO | ((context: Outputs) => OO extends void ? null : O),
+      :
+          | OO
+          | ((
+              context: Outputs,
+              payload: OO extends void ? undefined : O
+            ) => void),
     payload?: I | ((context: Outputs) => I)
   ): void;
 }
@@ -60,16 +62,17 @@ interface TestFunctionResource extends TestFunctionBase {
   only: TestFunctionBase;
 }
 
-localstackTestSuite("functionStack", (testResource, _stack, _app) => {
+runtimeTestSuite("functionStack", (testResource, stack, _app) => {
   const _testFunc: (
     f: typeof testResource | typeof testResource.only
   ) => TestFunctionBase = (f) => (name, func, expected, payload) => {
     f(
       name,
-      (parent) => {
+      (parent, role) => {
         const res = func(parent);
         const [funcRes, outputs] =
           res instanceof Function ? [res, {}] : [res.func, res.outputs];
+        funcRes.resource.grantInvoke(role);
         return {
           outputs: {
             function: funcRes.resource.functionName,
@@ -77,13 +80,16 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
           },
         };
       },
-      async (context) => {
-        const exp =
-          // @ts-ignore
-          typeof expected === "function" ? expected(context) : expected;
-        // @ts-ignore
-        const pay = typeof payload === "function" ? payload(context) : payload;
-        await testFunction(context.function, pay, exp);
+      async (context, clients) => {
+        const pay =
+          typeof payload === "function"
+            ? (<globalThis.Function>payload)(context)
+            : payload;
+        await testFunction(clients.lambda, context.function, pay, (result) =>
+          typeof expected === "function"
+            ? (<globalThis.Function>expected)(context, result)
+            : expect(result).toEqual(expected)
+        );
       }
     );
   };
@@ -93,42 +99,108 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test.skip = (name, _func, _expected, _payload?) =>
     testResource.skip(
       name,
-      () => {},
+      () => {
+        return { outputs: {} };
+      },
       async () => {}
     );
 
   // eslint-disable-next-line no-only-tests/no-only-tests
   test.only = _testFunc(testResource.only);
 
+  const resourceRole = new Role(stack, "resourceRole", {
+    assumedBy: new CompositePrincipal(
+      new ServicePrincipal("lambda"),
+      new ServicePrincipal("states")
+    ),
+  });
+
+  // inject the localstack client config into the lambda clients
+  // without this configuration, the functions will try to hit AWS proper
+  const localstackClientConfig: FunctionProps = {
+    timeout: Duration.seconds(20),
+    clientConfigRetriever:
+      runtimeTestExecutionContext.deployTarget === "AWS"
+        ? undefined
+        : () => ({
+            endpoint: `http://${process.env.LOCALSTACK_HOSTNAME}:4566`,
+          }),
+  };
+
+  function functionWithOwnRole<I, O>(
+    scope: Construct,
+    closure: FunctionClosure<I, O>
+  ): Function<I, O>;
+  function functionWithOwnRole<I, O>(
+    scope: Construct,
+    id: string,
+    closure: FunctionClosure<I, O>
+  ): Function<I, O>;
+  function functionWithOwnRole<I, O>(
+    ...args:
+      | [scope: Construct, id: string, closure: FunctionClosure<I, O>]
+      | [scope: Construct, closure: FunctionClosure<I, O>]
+  ) {
+    const [scope, id, closure] =
+      args.length === 2 ? [args[0], "func", args[1]] : args;
+    return new Function(scope, id, localstackClientConfig, closure);
+  }
+
+  function functionWithSharedRole<I, O>(
+    scope: Construct,
+    closure: FunctionClosure<I, O>
+  ): Function<I, O>;
+  function functionWithSharedRole<I, O>(
+    scope: Construct,
+    id: string,
+    closure: FunctionClosure<I, O>
+  ): Function<I, O>;
+  function functionWithSharedRole<I, O>(
+    ...args:
+      | [scope: Construct, id: string, closure: FunctionClosure<I, O>]
+      | [scope: Construct, closure: FunctionClosure<I, O>]
+  ) {
+    const [scope, id, closure] =
+      args.length === 2 ? [args[0], "func", args[1]] : args;
+    return new Function(
+      scope,
+      id,
+      { ...localstackClientConfig, role: resourceRole },
+      closure
+    );
+  }
+
+  const stringFunction = functionWithSharedRole<undefined, string>(
+    stack,
+    "stringFunction",
+    async () => "hi"
+  );
+
+  const stringStepFunction = new StepFunction<undefined, string>(
+    stack,
+    "stringStepFunction",
+    { role: resourceRole },
+    () => "hi"
+  );
+
+  const table = new Table<{ key: string; value: string }, "key">(
+    stack,
+    "table",
+    {
+      partitionKey: {
+        name: "key",
+        type: aws_dynamodb.AttributeType.STRING,
+      },
+      removalPolicy: RemovalPolicy.DESTROY,
+    }
+  );
+
+  const bus = new EventBus<Event>(stack, "bus");
+
   test(
     "Call Lambda",
     (parent) => {
-      return new Function(
-        parent,
-        "func2",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async (event) => event
-      );
-    },
-    {}
-  );
-
-  test(
-    "Call Lambda from closure",
-    (parent) => {
-      const create = () =>
-        new Function(
-          parent,
-          "function",
-          {
-            timeout: Duration.seconds(20),
-          },
-          async (event) => event
-        );
-
-      return create();
+      return functionWithSharedRole(parent, async (event) => event);
     },
     {}
   );
@@ -138,14 +210,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     (parent) => {
       const create = () => {
         const val = "a";
-        return new Function(
-          parent,
-          "function",
-          {
-            timeout: Duration.seconds(20),
-          },
-          async () => val
-        );
+        return functionWithSharedRole(parent, async () => val);
       };
 
       return create();
@@ -157,14 +222,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "Call Lambda from closure with parameter",
     (parent) => {
       const create = (val: string) => {
-        return new Function(
-          parent,
-          "func5",
-          {
-            timeout: Duration.seconds(20),
-          },
-          async () => val
-        );
+        return functionWithSharedRole(parent, async () => val);
       };
 
       return create("b");
@@ -173,14 +231,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   );
 
   const create = (parent: Construct, id: string, val: string) => {
-    return new Function(
-      parent,
-      id,
-      {
-        timeout: Duration.seconds(20),
-      },
-      async () => val
-    );
+    return functionWithSharedRole(parent, id, async () => val);
   };
 
   test(
@@ -198,14 +249,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test("Call Lambda with object", (parent) => {
     const create = () => {
       const obj = { val: 1 };
-      return new Function(
-        parent,
-        "function",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async () => obj.val
-      );
+      return functionWithSharedRole(parent, async () => obj.val);
     };
 
     return create();
@@ -214,34 +258,20 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test(
     "Call Lambda with math",
     (parent) =>
-      new Function(
-        parent,
-        "function",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async () => {
-          const v1 = 1 + 2; // 3
-          const v2 = v1 * 3; // 9
-          return v2 - 4; // 5
-        }
-      ),
+      functionWithSharedRole(parent, async () => {
+        const v1 = 1 + 2; // 3
+        const v2 = v1 * 3; // 9
+        return v2 - 4; // 5
+      }),
     5
   );
 
   test(
     "Call Lambda payload",
     (parent) =>
-      new Function(
-        parent,
-        "function",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async (event: { val: string }) => {
-          return `value: ${event.val}`;
-        }
-      ),
+      functionWithSharedRole(parent, async (event: { val: string }) => {
+        return `value: ${event.val}`;
+      }),
     "value: hi",
     { val: "hi" }
   );
@@ -249,51 +279,33 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test(
     "Call Lambda throw error",
     (parent) =>
-      new Function(
-        parent,
-        "function",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async () => {
-          throw Error("AHHHHHHHHH");
-        }
-      ),
-    { errorMessage: "AHHHHHHHHH", errorType: "Error" }
+      functionWithSharedRole(parent, async () => {
+        throw Error("AHHHHHHHHH");
+      }),
+    (_, result) =>
+      expect(result).toMatchObject({
+        errorMessage: "AHHHHHHHHH",
+        errorType: "Error",
+      }),
+    undefined
   );
 
   test(
     "Call Lambda return arns",
-    (parent) => {
-      return new Function(
-        parent,
-        "function",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async (_, context) => {
-          return context.functionName;
-        }
-      );
-    },
-    (context) => context.function!
+    (parent) =>
+      functionWithSharedRole(parent, async (_, context) => {
+        return context.functionName;
+      }),
+    (context, result) => expect(result).toEqual(context.function)
   );
 
   test(
     "Call Lambda return bus arns",
     (parent) => {
-      const bus = new EventBus(parent, "bus");
       const busbus = new aws_events.EventBus(parent, "busbus");
-      const func = new Function(
-        parent,
-        "function",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async () => {
-          return `${bus.eventBusArn} ${busbus.eventBusArn}`;
-        }
-      );
+      const func = functionWithOwnRole(parent, async () => {
+        return `${bus.eventBusArn} ${busbus.eventBusArn}`;
+      });
 
       return {
         func,
@@ -303,45 +315,31 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
         },
       };
     },
-    (context) => `${context.bus} ${context.busbus}`
+    (context, result) =>
+      expect(`${context.bus} ${context.busbus}`).toEqual(result)
   );
 
   test(
     "templated tokens",
     (parent) => {
       const token = Token.asString("hello");
-      return new Function(
-        parent,
-        "function",
-        {
-          timeout: Duration.seconds(20),
-        },
-        async () => {
-          return `${token} stuff`;
-        }
-      );
+      return functionWithSharedRole(parent, async () => {
+        return `${token} stuff`;
+      });
     },
     "hello stuff"
   );
 
   test("numeric tokens", (parent) => {
     const token = Token.asNumber(1);
-    return new Function(
-      parent,
-      "function",
-      {
-        timeout: Duration.seconds(20),
-      },
-      async () => {
-        return token;
-      }
-    );
+    return functionWithSharedRole(parent, async () => {
+      return token;
+    });
   }, 1);
 
   test(
     "function tokens",
     (parent) => {
-      const bus = new EventBus(parent, "bus");
       const split = Fn.select(1, Fn.split(":", bus.eventBusArn));
       const join = Fn.join("-", Fn.split(":", bus.eventBusArn, 6));
       const base64 = Fn.base64("data");
@@ -356,38 +354,31 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       });
       const ref = Fn.ref(param.logicalId);
       return {
-        func: new Function(
-          parent,
-          "function",
-          {
-            timeout: Duration.seconds(20),
-          },
-          async () => {
-            return {
-              split,
-              join,
-              base64,
-              mapToken,
-              ref,
-            };
-          }
-        ),
+        func: functionWithOwnRole(parent, async () => {
+          return {
+            split,
+            join,
+            base64,
+            mapToken,
+            ref,
+          };
+        }),
         outputs: { bus: bus.eventBusArn },
       };
     },
-    (output) => ({
-      split: "aws",
-      join: output.bus.split(":").join("-"),
-      base64: "ZGF0YQ==",
-      mapToken: "value",
-      ref: "paramValue",
-    })
+    (output, result) =>
+      expect(result).toEqual({
+        split: "aws",
+        join: output.bus.split(":").join("-"),
+        base64: "ZGF0YQ==",
+        mapToken: "value",
+        ref: "paramValue",
+      })
   );
 
   test(
     "function token strings",
     (parent) => {
-      const bus = new EventBus(parent, "bus");
       const split = Fn.select(1, Fn.split(":", bus.eventBusArn)).toString();
       const join = Fn.join("-", Fn.split(":", bus.eventBusArn, 6)).toString();
       const base64 = Fn.base64("data").toString();
@@ -402,86 +393,67 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       });
       const ref = Fn.ref(param.logicalId).toString();
       return {
-        func: new Function(
-          parent,
-          "function",
-          {
-            timeout: Duration.seconds(20),
-          },
-          async () => {
-            return {
-              split,
-              join,
-              base64,
-              mapToken,
-              ref,
-            };
-          }
-        ),
+        func: functionWithOwnRole(parent, async () => {
+          return {
+            split,
+            join,
+            base64,
+            mapToken,
+            ref,
+          };
+        }),
         outputs: { bus: bus.eventBusArn },
       };
     },
-    (output) => ({
-      split: "aws",
-      join: output.bus.split(":").join("-"),
-      base64: "ZGF0YQ==",
-      mapToken: "value",
-      ref: "paramValue",
-    })
+    (output, result) =>
+      expect(result).toEqual({
+        split: "aws",
+        join: output.bus.split(":").join("-"),
+        base64: "ZGF0YQ==",
+        mapToken: "value",
+        ref: "paramValue",
+      })
   );
 
   test(
     "Call Lambda put events",
     (parent) => {
-      const bus = new EventBus(parent, "bus");
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          await bus.putEvents({
-            "detail-type": "detail",
-            source: "lambda",
-            detail: {},
-            version: "1",
-            id: "bbbbbbbb-eeee-eeee-eeee-ffffffffffff",
-            account: "123456789012",
-            time: "2022-08-05T16:19:03Z",
-            region: "us-east-1",
-            resources: ["arn:aws:lambda:us-east-1:123456789012:function:foo"],
-            "trace-header":
-              "X-Amzn-Trace-Id: Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=1",
-          });
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        await bus.putEvents({
+          "detail-type": "detail",
+          source: "lambda",
+          detail: {},
+          version: "1",
+          id: "bbbbbbbb-eeee-eeee-eeee-ffffffffffff",
+          account: "123456789012",
+          time: "2022-08-05T16:19:03Z",
+          region: "us-east-1",
+          resources: ["arn:aws:lambda:us-east-1:123456789012:function:foo"],
+          "trace-header":
+            "X-Amzn-Trace-Id: Root=1-5759e988-bd862e3fe1be46a994272793;Parent=53995c3f42cd8ad8;Sampled=1",
+        });
+      });
     },
     null
   );
 
   test("Call Lambda AWS SDK put event to bus with reference", (parent) => {
-    const bus = new EventBus<any>(parent, "bus");
-
     // Necessary to keep the bundle small and stop the test from failing.
     // See https://github.com/functionless/functionless/pull/122
     const putEvents = $AWS.EventBridge.putEvents;
-    const func = new Function(
-      parent,
-      "function",
-      localstackClientConfig,
-      async () => {
-        const result = await putEvents({
-          Entries: [
-            {
-              EventBusName: bus.eventBusArn,
-              Source: "MyEvent",
-              DetailType: "DetailType",
-              Detail: "{}",
-            },
-          ],
-        });
-        return result.FailedEntryCount;
-      }
-    );
+    const func = functionWithOwnRole(parent, async () => {
+      const result = await putEvents({
+        Entries: [
+          {
+            EventBusName: bus.eventBusArn,
+            Source: "MyEvent",
+            DetailType: "DetailType",
+            Detail: "{}",
+          },
+        ],
+      });
+      return result.FailedEntryCount;
+    });
 
     bus.resource.grantPutEventsTo(func.resource);
 
@@ -490,45 +462,32 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
 
   // See https://github.com/functionless/functionless/pull/122
   test.skip("Call Lambda AWS SDK put event to bus without reference", (parent) => {
-    const bus = new EventBus<Event>(parent, "bus");
-
-    return new Function(
-      parent,
-      "function",
-      localstackClientConfig,
-      async () => {
-        const result = await $AWS.EventBridge.putEvents({
-          Entries: [
-            {
-              EventBusName: bus.eventBusArn,
-              Source: "MyEvent",
-              DetailType: "DetailType",
-              Detail: "{}",
-            },
-          ],
-        });
-        return result.FailedEntryCount;
-      }
-    );
+    return functionWithOwnRole(parent, async () => {
+      const result = await $AWS.EventBridge.putEvents({
+        Entries: [
+          {
+            EventBusName: bus.eventBusArn,
+            Source: "MyEvent",
+            DetailType: "DetailType",
+            Detail: "{}",
+          },
+        ],
+      });
+      return result.FailedEntryCount;
+    });
   }, 0);
 
   test(
     "Call Lambda AWS SDK put event to bus with in closure reference",
     (parent) => {
-      const bus = new EventBus<Event>(parent, "bus");
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          const busbus = bus;
-          await busbus.putEvents({
-            "detail-type": "anyDetail",
-            source: "anySource",
-            detail: {},
-          });
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        const busbus = bus;
+        await busbus.putEvents({
+          "detail-type": "anyDetail",
+          source: "anySource",
+          detail: {},
+        });
+      });
     },
     null
   );
@@ -536,85 +495,48 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test(
     "Call Lambda AWS SDK integration from destructured object",
     (parent) => {
-      const buses = { bus: new EventBus<Event>(parent, "bus") };
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          const { bus } = buses;
-          await bus.putEvents({
-            "detail-type": "anyDetail",
-            source: "anySource",
-            detail: {},
-          });
-        }
-      );
+      const buses = { bus };
+      return functionWithOwnRole(parent, async () => {
+        const { bus } = buses;
+        await bus.putEvents({
+          "detail-type": "anyDetail",
+          source: "anySource",
+          detail: {},
+        });
+      });
     },
     null
   );
 
   test(
     "Call Lambda invoke client",
-    (parent) => {
-      const func1 = new Function<undefined, string>(
-        parent,
-        "func1",
-        async () => "hi"
-      );
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          return func1();
-        }
-      );
-    },
+    (parent) =>
+      functionWithOwnRole(parent, async () => {
+        return stringFunction();
+      }),
     "hi"
   );
 
   test(
     "Call Lambda invoke client with promise.all",
-    (parent) => {
-      const func1 = new Function<undefined, string>(
-        parent,
-        "func1",
-        async () => "hi"
-      );
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          const promises = [func1(), func1(), func1()];
-          await Promise.all(promises);
-          return "DONE";
-        }
-      );
-    },
+    (parent) =>
+      functionWithOwnRole(parent, async () => {
+        const promises = [stringFunction(), stringFunction(), stringFunction()];
+        await Promise.all(promises);
+        return "DONE";
+      }),
     "DONE"
   );
 
   test(
     "Call Lambda invoke client with chained promises",
     (parent) => {
-      const func1 = new Function<undefined, string>(
-        parent,
-        "func1",
-        async () => "hi"
-      );
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          await func1()
-            .then(() => func1())
-            .then(() => func1());
-          return "DONE";
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        await stringFunction()
+          .then(() => stringFunction())
+          .then(() => stringFunction());
+        return "DONE";
+      });
     },
     "DONE"
   );
@@ -670,20 +592,10 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test(
     "step function integration",
     (parent) => {
-      const func1 = new StepFunction<undefined, string>(
-        parent,
-        "func1",
-        () => "hi"
-      );
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          await func1({});
-          return "started!";
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        await stringStepFunction({});
+        return "started!";
+      });
     },
     "started!"
   );
@@ -699,21 +611,16 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       const numberToken = Token.asNumber(1);
       const listToken = Token.asList(["1", "2"]);
       const nestedListToken = Token.asList([Token.asString("hello")]);
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          return {
-            string: token,
-            object: token2 as unknown as typeof obj,
-            nested: nestedToken as unknown as typeof obj2,
-            number: numberToken,
-            list: listToken,
-            nestedList: nestedListToken,
-          };
-        }
-      );
+      return functionWithSharedRole(parent, async () => {
+        return {
+          string: token,
+          object: token2 as unknown as typeof obj,
+          nested: nestedToken as unknown as typeof obj2,
+          number: numberToken,
+          list: listToken,
+          nestedList: nestedListToken,
+        };
+      });
     },
     {
       string: "hello",
@@ -733,6 +640,7 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
           name: "key",
           type: aws_dynamodb.AttributeType.STRING,
         },
+        removalPolicy: RemovalPolicy.DESTROY,
       });
       const get = $AWS.DynamoDB.GetItem;
       table.addGlobalSecondaryIndex({
@@ -745,19 +653,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
 
       const flTable = Table.fromTable(table);
 
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          await get({
-            Table: flTable,
-            Key: {
-              key: { S: "hi" },
-            },
-          });
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        await get({
+          Table: flTable,
+          Key: {
+            key: { S: "hi" },
+          },
+        });
+      });
     },
     null
   );
@@ -765,50 +668,29 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test(
     "serialize entire function",
     (parent) => {
-      const func = new Function<undefined, string>(parent, "func", async () => {
-        return "hello";
+      return functionWithOwnRole(parent, async () => {
+        const hello = stringFunction;
+        return hello();
       });
-
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          const hello = func;
-          return hello();
-        }
-      );
     },
-    "hello"
+    "hi"
   );
 
   test(
     "serialize token with nested string",
     (parent) => {
-      const table = new aws_dynamodb.Table(parent, "table", {
-        partitionKey: {
-          name: "key",
-          type: aws_dynamodb.AttributeType.STRING,
-        },
-      });
-
       const obj = { key: table.tableArn };
       const token = Token.asAny(obj);
 
       return {
-        func: new Function(
-          parent,
-          "function",
-          localstackClientConfig,
-          async () => {
-            return (token as unknown as typeof obj).key;
-          }
-        ),
+        func: functionWithOwnRole(parent, async () => {
+          return (token as unknown as typeof obj).key;
+        }),
         outputs: { table: table.tableArn },
       };
     },
-    (outputs) => {
-      return outputs.table;
+    (outputs, result) => {
+      return expect(result).toEqual(outputs.table);
     }
   );
 
@@ -821,14 +703,9 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       };
       const token = Token.asAny(obj);
 
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          return (token as unknown as typeof obj).key;
-        }
-      );
+      return functionWithSharedRole(parent, async () => {
+        return (token as unknown as typeof obj).key;
+      });
     },
     "value"
   );
@@ -836,43 +713,30 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test(
     "step function integration and wait for completion",
     (parent) => {
-      const func1 = new StepFunction<undefined, string>(
-        parent,
-        "func1",
-        () => "hi"
-      );
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          const result = await func1({});
-          let status = "RUNNING";
-          while (true) {
-            const state = await func1.describeExecution(result.executionArn);
-            status = state.status;
-            if (status !== "RUNNING") {
-              return state.output;
-            }
-            // wait for 100 ms
-            await new Promise((resolve) => setTimeout(resolve, 100));
+      return functionWithOwnRole(parent, async () => {
+        const result = await stringStepFunction({});
+        let status = "RUNNING";
+        while (true) {
+          const state = await stringStepFunction.describeExecution(
+            result.executionArn
+          );
+          status = state.status;
+          if (status !== "RUNNING") {
+            return state.output;
           }
+          // wait for 100 ms
+          await new Promise((resolve) => setTimeout(resolve, 100));
         }
-      );
+      });
     },
     `"hi"`
   );
 
   test("import", (parent) => {
-    return new Function(
-      parent,
-      "function",
-      localstackClientConfig,
-      async () => {
-        console.log("hi");
-        return (await axios.get("https://google.com")).status;
-      }
-    );
+    return functionWithSharedRole(parent, async () => {
+      console.log("hi");
+      return (await axios.get("https://google.com")).status;
+    });
   }, 200);
 
   // Localstack doesn't support start sync
@@ -883,17 +747,13 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       const func1 = new ExpressStepFunction<undefined, string>(
         parent,
         "func1",
+        { role: resourceRole },
         () => "hi"
       );
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          const result = await func1({});
-          return result.status === "SUCCEEDED" ? result.output : result.error;
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        const result = await func1({});
+        return result.status === "SUCCEEDED" ? result.output : result.error;
+      });
     },
     "hi"
   );
@@ -901,75 +761,61 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test(
     "dynamo integration aws dynamo functions",
     (parent) => {
-      const table = Table.fromTable<{ key: string; value: string }, "key">(
-        new aws_dynamodb.Table(parent, "table", {
-          partitionKey: {
-            name: "key",
-            type: aws_dynamodb.AttributeType.STRING,
-          },
-          removalPolicy: RemovalPolicy.DESTROY,
-        })
-      );
       const { GetItem, DeleteItem, PutItem, Query, Scan, UpdateItem } =
         $AWS.DynamoDB;
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          await PutItem({
-            Table: table,
-            Item: {
-              key: { S: "key" },
-              value: { S: "wee" },
+      return functionWithOwnRole(parent, async () => {
+        await PutItem({
+          Table: table,
+          Item: {
+            key: { S: "key" },
+            value: { S: "wee" },
+          },
+        });
+        const item = await GetItem({
+          Table: table,
+          Key: {
+            key: {
+              S: "key",
             },
-          });
-          const item = await GetItem({
-            Table: table,
-            Key: {
-              key: {
-                S: "key",
-              },
+          },
+          ConsistentRead: true,
+        });
+        await UpdateItem({
+          Table: table,
+          Key: {
+            key: { S: "key" },
+          },
+          UpdateExpression: "set #value = :value",
+          ExpressionAttributeValues: {
+            ":value": { S: "value" },
+          },
+          ExpressionAttributeNames: {
+            "#value": "value",
+          },
+        });
+        await DeleteItem({
+          Table: table,
+          Key: {
+            key: {
+              S: "key",
             },
-            ConsistentRead: true,
-          });
-          await UpdateItem({
-            Table: table,
-            Key: {
-              key: { S: "key" },
-            },
-            UpdateExpression: "set #value = :value",
-            ExpressionAttributeValues: {
-              ":value": { S: "value" },
-            },
-            ExpressionAttributeNames: {
-              "#value": "value",
-            },
-          });
-          await DeleteItem({
-            Table: table,
-            Key: {
-              key: {
-                S: "key",
-              },
-            },
-          });
-          await Query({
-            Table: table,
-            KeyConditionExpression: "#key = :key",
-            ExpressionAttributeValues: {
-              ":key": { S: "key" },
-            },
-            ExpressionAttributeNames: {
-              "#key": "key",
-            },
-          });
-          await Scan({
-            Table: table,
-          });
-          return item.Item?.key.S;
-        }
-      );
+          },
+        });
+        await Query({
+          Table: table,
+          KeyConditionExpression: "#key = :key",
+          ExpressionAttributeValues: {
+            ":key": { S: "key" },
+          },
+          ExpressionAttributeNames: {
+            "#key": "key",
+          },
+        });
+        await Scan({
+          Table: table,
+        });
+        return item.Item?.key.S;
+      });
     },
     "key"
   );
@@ -985,20 +831,14 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test.skip(
     "use method with closure",
     (parent) => {
-      const bus = new EventBus(parent, "bus");
       const getBus = () => bus;
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          await getBus().putEvents({
-            "detail-type": "detail",
-            source: "lambda",
-            detail: {},
-          });
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        await getBus().putEvents({
+          "detail-type": "detail",
+          source: "lambda",
+          detail: {},
+        });
+      });
     },
     null
   );
@@ -1006,21 +846,15 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test.skip(
     "use method with call",
     (parent) => {
-      const bus = new EventBus(parent, "bus");
       const callBus = () =>
         bus.putEvents({
           "detail-type": "detail",
           source: "lambda",
           detail: {},
         });
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          await callBus();
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        await callBus();
+      });
     },
     null
   );
@@ -1028,7 +862,6 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test.skip(
     "use dynamic method with call",
     (parent) => {
-      const bus = new EventBus(parent, "bus");
       const bus2 = new EventBus(parent, "bus2");
       const callBus = (bool: boolean) =>
         (bool ? bus : bus2).putEvents({
@@ -1036,15 +869,10 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
           source: "lambda",
           detail: {},
         });
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          await callBus(true);
-          await callBus(false);
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        await callBus(true);
+        await callBus(false);
+      });
     },
     null
   );
@@ -1052,7 +880,6 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test.skip(
     "use dynamic method with call once",
     (parent) => {
-      const bus = new EventBus(parent, "bus");
       const bus2 = new EventBus(parent, "bus2");
       const callBus = (bool: boolean) =>
         (bool ? bus : bus2).putEvents({
@@ -1060,14 +887,9 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
           source: "lambda",
           detail: {},
         });
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          await callBus(false);
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        await callBus(false);
+      });
     },
     null
   );
@@ -1075,26 +897,20 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test.skip(
     "use dynamic method",
     (parent) => {
-      const bus = new EventBus(parent, "bus");
       const bus2 = new EventBus(parent, "bus2");
       const getBus = (bool: boolean) => (bool ? bus : bus2);
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          await getBus(false).putEvents({
-            "detail-type": "detail",
-            source: "lambda",
-            detail: {},
-          });
-          await getBus(true).putEvents({
-            "detail-type": "detail",
-            source: "lambda",
-            detail: {},
-          });
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        await getBus(false).putEvents({
+          "detail-type": "detail",
+          source: "lambda",
+          detail: {},
+        });
+        await getBus(true).putEvents({
+          "detail-type": "detail",
+          source: "lambda",
+          detail: {},
+        });
+      });
     },
     null
   );
@@ -1102,21 +918,15 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test.skip(
     "use dynamic method don't call",
     (parent) => {
-      const bus = new EventBus(parent, "bus");
       const bus2 = new EventBus(parent, "bus2");
       const getBus = (bool: boolean) => (bool ? bus : bus2);
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          await getBus(false).putEvents({
-            "detail-type": "detail",
-            source: "lambda",
-            detail: {},
-          });
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        await getBus(false).putEvents({
+          "detail-type": "detail",
+          source: "lambda",
+          detail: {},
+        });
+      });
     },
     null
   );
@@ -1128,45 +938,30 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
     "method with new ",
     (parent) => {
       const getBus = () => new EventBus(parent, "bus");
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          await getBus().putEvents({
-            "detail-type": "detail",
-            source: "lambda",
-            detail: {},
-          });
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        await getBus().putEvents({
+          "detail-type": "detail",
+          source: "lambda",
+          detail: {},
+        });
+      });
     },
     null
   );
 
   test.skip("method with no integration ", (parent) => {
     const mathStuff = (a: number, b: number) => a + b;
-    return new Function(
-      parent,
-      "function",
-      localstackClientConfig,
-      async () => {
-        return mathStuff(1, 2);
-      }
-    );
+    return functionWithOwnRole(parent, async () => {
+      return mathStuff(1, 2);
+    });
   }, 3);
 
   test.skip("chained methods", (parent) => {
     const mathStuff = (a: number, b: number) => a + b;
     const mathStuff2 = (a: number, b: number) => a + mathStuff(a, b);
-    return new Function(
-      parent,
-      "function",
-      localstackClientConfig,
-      async () => {
-        return mathStuff2(1, 2);
-      }
-    );
+    return functionWithSharedRole(parent, async () => {
+      return mathStuff2(1, 2);
+    });
   }, 4);
 
   test.skip("recursion", (parent) => {
@@ -1176,14 +971,9 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
       }
       return a * mult(a, b - 1);
     };
-    return new Function(
-      parent,
-      "function",
-      localstackClientConfig,
-      async () => {
-        return mult(2, 3);
-      }
-    );
+    return functionWithSharedRole(parent, async () => {
+      return mult(2, 3);
+    });
   }, 8);
 
   test.skip("nested closured methods", (parent) => {
@@ -1194,36 +984,19 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
 
       return helper() + b;
     };
-    return new Function(
-      parent,
-      "function",
-      localstackClientConfig,
-      async () => {
-        return callMe(2, 3);
-      }
-    );
+    return functionWithSharedRole(parent, async () => {
+      return callMe(2, 3);
+    });
   }, 7);
 
   test.skip(
     "chained with integration",
     (parent) => {
-      const func = new Function<undefined, string>(
-        parent,
-        "func2",
-        async () => {
-          return "hello";
-        }
-      );
-      const callFunction = () => func();
+      const callFunction = () => stringFunction();
       const callFunction2 = () => callFunction();
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          return callFunction2();
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        return callFunction2();
+      });
     },
     "hello"
   );
@@ -1231,25 +1004,13 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test.skip(
     "nested with integration",
     (parent) => {
-      const func = new Function<undefined, string>(
-        parent,
-        "func2",
-        async () => {
-          return "hello";
-        }
-      );
       const callFunction = async () => {
-        const helper = async () => `formatted ${await func()}`;
+        const helper = async () => `formatted ${await stringFunction()}`;
         return helper();
       };
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          return callFunction();
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        return callFunction();
+      });
     },
     "formatted hello"
   );
@@ -1257,27 +1018,15 @@ localstackTestSuite("functionStack", (testResource, _stack, _app) => {
   test.skip(
     "recursion with integration",
     (parent) => {
-      const func = new Function<undefined, string>(
-        parent,
-        "func2",
-        async () => {
-          return "hello";
-        }
-      );
       const callFunction = async (n: number): Promise<string> => {
         if (n === 0) {
           return `${n}`;
         }
-        return (await callFunction(n - 1)) + (await func());
+        return (await callFunction(n - 1)) + (await stringFunction());
       };
-      return new Function(
-        parent,
-        "function",
-        localstackClientConfig,
-        async () => {
-          return callFunction(3);
-        }
-      );
+      return functionWithOwnRole(parent, async () => {
+        return callFunction(3);
+      });
     },
     "0hellohellohello"
   );

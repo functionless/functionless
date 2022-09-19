@@ -1,4 +1,4 @@
-import {
+import type {
   ArrowFunctionExpr,
   ClassExpr,
   Expr,
@@ -7,11 +7,12 @@ import {
   ObjectLiteralExpr,
   OmittedExpr,
   PropName,
+  ReferenceExpr,
 } from "./expression";
-import { Integration } from "./integration";
+import type { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
-import { Span } from "./span";
+import type { Span } from "./span";
 import type {
   BlockStmt,
   CatchClause,
@@ -20,7 +21,7 @@ import type {
   ForStmt,
   VariableStmt,
 } from "./statement";
-import { AnyClass, AnyFunction } from "./util";
+import type { AnyClass, AnyFunction } from "./util";
 
 export type Decl =
   | BindingElem
@@ -39,7 +40,7 @@ abstract class BaseDecl<
 
 export class ClassDecl<C extends AnyClass = AnyClass> extends BaseDecl<
   NodeKind.ClassDecl,
-  undefined
+  BlockStmt | undefined
 > {
   readonly _classBrand?: C;
   constructor(
@@ -73,7 +74,10 @@ export type ClassMember =
   | PropDecl
   | SetAccessorDecl;
 
-export class ClassStaticBlockDecl extends BaseDecl<NodeKind.ClassStaticBlockDecl> {
+export class ClassStaticBlockDecl extends BaseDecl<
+  NodeKind.ClassStaticBlockDecl,
+  ClassDecl | ClassExpr
+> {
   constructor(
     /**
      * Range of text in the source file where this Node resides.
@@ -99,16 +103,36 @@ export class ConstructorDecl extends BaseDecl<NodeKind.ConstructorDecl> {
      *
      * Only set on the root of the tree, i.e. when `this` is `undefined`.
      */
-    readonly filename?: string
+    readonly filename: string | undefined,
+    /**
+     * The class or object that owns this {@link ConstructorDecl}.
+     *
+     * This value is only set if this {@link ConstructorDecl} is the root node in the tree (parent === undefined).
+     *
+     * ```ts
+     * class Foo {
+     *     // ^
+     *   constructor() {}
+     * }
+     * ```
+     */
+    readonly ownedBy: ReferenceExpr<AnyClass | object> | undefined
   ) {
     super(NodeKind.ConstructorDecl, span, arguments);
     this.ensureArrayOf(parameters, "parameters", [NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
     this.ensure(filename, "filename", ["undefined", "string"]);
+    this.ensure(ownedBy, "ownedBy", ["undefined", NodeKind.ReferenceExpr]);
   }
 }
 
-export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
+export class MethodDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
+  NodeKind.MethodDecl,
+  ClassDecl | ClassExpr | undefined
+> {
+  // @ts-ignore
+  __methodBrand: F;
+
   constructor(
     /**
      * Range of text in the source file where this Node resides.
@@ -117,7 +141,6 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
     readonly name: PropName,
     readonly parameters: ParameterDecl[],
     readonly body: BlockStmt,
-
     /**
      * true if this function has an `async` modifier
      * ```ts
@@ -148,7 +171,34 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
      *
      * Only set on the root of the tree, i.e. when `this` is `undefined`.
      */
-    readonly filename?: string
+    readonly filename: string | undefined,
+    /**
+     * `true` if this is a static setter on a class.
+     *
+     * ```ts
+     * class Foo {
+     *   static method() {
+     *     return value;
+     *   }
+     * }
+     * ```
+     */
+    readonly isStatic: boolean | undefined,
+    /**
+     * The class or object that owns this {@link MethodDecl}.
+     *
+     * This value is only set if this {@link MethodDecl} is the root node in the tree (parent === undefined).
+     *
+     * ```ts
+     * class Foo {
+     *     // ^
+     *   static method() {
+     *     return value;
+     *   }
+     * }
+     * ```
+     */
+    readonly ownedBy: ReferenceExpr<AnyClass | object> | undefined
   ) {
     super(NodeKind.MethodDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
@@ -157,30 +207,81 @@ export class MethodDecl extends BaseDecl<NodeKind.MethodDecl> {
     this.ensure(isAsync, "isAsync", ["boolean"]);
     this.ensure(isAsterisk, "isAsterisk", ["boolean"]);
     this.ensure(filename, "filename", ["undefined", "string"]);
+    this.ensure(isStatic, "isStatic", ["undefined", "boolean"]);
+    this.ensure(ownedBy, "ownedBy", ["undefined", NodeKind.ReferenceExpr]);
   }
 }
 
-export class PropDecl extends BaseDecl<NodeKind.PropDecl> {
+export class PropDecl extends BaseDecl<
+  NodeKind.PropDecl,
+  ClassDecl | ClassExpr
+> {
   constructor(
     /**
      * Range of text in the source file where this Node resides.
      */
     span: Span,
+    /**
+     * Name of the {@link PropDecl}.
+     *
+     * ```ts
+     * class Foo {
+     *   prop;
+     * // ^
+     * }
+     * ```
+     */
     readonly name: PropName,
+    /**
+     * `true` if this is a static setter on a class.
+     *
+     * ```ts
+     * class Foo {
+     *   static prop: string = ?
+     * }
+     * ```
+     */
     readonly isStatic: boolean,
-    readonly initializer?: Expr
+    /**
+     * An optional initializer for the property.
+     *
+     * ```ts
+     * class Foo {
+     *   prop = <expr>
+     *         // ^
+     * }
+     * ```
+     */
+    readonly initializer: Expr | undefined,
+    /**
+     * A reference to the {@link ClassDecl} or {@link ClassExpr} instance that owns this {@link PropDecl}
+     *
+     * This value is only set if this {@link PropDecl} is the root node in the tree (parent === undefined).
+     *
+     * ```ts
+     * class Foo {
+     *     // ^
+     *   static prop: string = ?
+     * }
+     * ```
+     */
+    readonly ownedBy: ReferenceExpr<AnyClass> | undefined
   ) {
     super(NodeKind.PropDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensure(isStatic, "isStatic", ["boolean"]);
     this.ensure(initializer, "initializer", ["undefined", "Expr"]);
+    this.ensure(ownedBy, "ownedBy", ["undefined", NodeKind.ReferenceExpr]);
   }
 }
 
-export class GetAccessorDecl extends BaseDecl<
+export class GetAccessorDecl<F extends () => any = () => any> extends BaseDecl<
   NodeKind.GetAccessorDecl,
   ClassDecl | ClassExpr | ObjectLiteralExpr
 > {
+  // @ts-ignore
+  __getterBrand: F;
+
   constructor(
     /**
      * Range of text in the source file where this Node resides.
@@ -188,6 +289,39 @@ export class GetAccessorDecl extends BaseDecl<
     span: Span,
     readonly name: PropName,
     readonly body: BlockStmt,
+    /**
+     * `true` if this is a static getter on a class.
+     *
+     * ```ts
+     * class Foo {
+     *   static get getter() {
+     *     return value;
+     *   }
+     * }
+     * ```
+     */
+    readonly isStatic: boolean | undefined,
+    /**
+     * The class or object that owns this {@link GetAccessorDecl}. This value is only set
+     * if this {@link GetAccessorDecl} is the root node in the tree (parent === undefined).
+     *
+     * ```ts
+     * const object = {
+     *     // ^
+     *   get getter() {
+     *     return value;
+     *   }
+     * }
+     *
+     * class Foo {
+     *     // ^
+     *   get getter() {
+     *     return value;
+     *   }
+     * }
+     * ```
+     */
+    readonly ownedBy: ReferenceExpr<AnyClass | object> | undefined,
     /**
      * Name of the source file this node originates from.
      *
@@ -198,21 +332,74 @@ export class GetAccessorDecl extends BaseDecl<
     super(NodeKind.GetAccessorDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
-    this.ensure(filename, "filename", ["undefined", "string"]);
+    this.ensure(isStatic, "isStatic", ["boolean", "undefined"]);
+    this.ensure(ownedBy, "ReferenceExpr", [
+      NodeKind.ReferenceExpr,
+      "undefined",
+    ]);
+    this.ensure(filename, "filename", ["string", "undefined"]);
   }
 }
-export class SetAccessorDecl extends BaseDecl<
+export class SetAccessorDecl<
+  F extends (val: any) => typeof val = (val: any) => typeof val
+> extends BaseDecl<
   NodeKind.SetAccessorDecl,
   ClassDecl | ClassExpr | ObjectLiteralExpr
 > {
+  // @ts-ignore
+  __setterBrand: F;
+
   constructor(
     /**
      * Range of text in the source file where this Node resides.
      */
     span: Span,
     readonly name: PropName,
-    readonly parameter: ParameterDecl,
+    /**
+     * ```ts
+     * class Foo {
+     *   static get setter(value) {
+     *                   // ^
+     *     _value = value;
+     *   }
+     * }
+     * ```
+     */
+    readonly parameter: ParameterDecl | undefined,
     readonly body: BlockStmt,
+    /**
+     * `true` if this is a static setter on a class.
+     *
+     * ```ts
+     * class Foo {
+     *   static get setter(value) {
+     *     _value = value;
+     *   }
+     * }
+     * ```
+     */
+    readonly isStatic: boolean | undefined,
+    /**
+     * The class or object that owns this {@link SetAccessorDecl}. This value is only set
+     * if this {@link SetAccessorDecl} is the root node in the tree (parent === undefined).
+     *
+     * ```ts
+     * const object = {
+     *     // ^
+     *   get setter(value) {
+     *     _value = value;
+     *   }
+     * }
+     *
+     * class Foo {
+     *     // ^
+     *   get setter(value) {
+     *     _value = value;
+     *   }
+     * }
+     * ```
+     */
+    readonly ownedBy: ReferenceExpr<AnyClass | object> | undefined,
     /**
      * Name of the source file this node originates from.
      *
@@ -222,8 +409,10 @@ export class SetAccessorDecl extends BaseDecl<
   ) {
     super(NodeKind.SetAccessorDecl, span, arguments);
     this.ensure(name, "name", NodeKind.PropName);
-    this.ensure(parameter, "parameter", [NodeKind.ParameterDecl]);
+    this.ensure(parameter, "parameter", ["undefined", NodeKind.ParameterDecl]);
     this.ensure(body, "body", [NodeKind.BlockStmt]);
+    this.ensure(isStatic, "isStatic", ["undefined", "boolean"]);
+    this.ensure(ownedBy, "ownedBy", ["undefined", NodeKind.ReferenceExpr]);
     this.ensure(filename, "filename", ["undefined", "string"]);
   }
 }
@@ -233,9 +422,10 @@ export type FunctionLike<F extends AnyFunction = AnyFunction> =
   | FunctionExpr<F>
   | ArrowFunctionExpr<F>;
 
-export class FunctionDecl<
-  F extends AnyFunction = AnyFunction
-> extends BaseDecl<NodeKind.FunctionDecl> {
+export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
+  NodeKind.FunctionDecl,
+  BlockStmt | undefined
+> {
   readonly _functionBrand?: F;
   constructor(
     /**
@@ -305,7 +495,8 @@ export class ParameterDecl extends BaseDecl<
      * ```ts
      * function foo(...rest) {}
      * ```
-     */ readonly isRest: boolean
+     */
+    readonly isRest: boolean
   ) {
     super(NodeKind.ParameterDecl, span, arguments);
     this.ensure(name, "name", NodeKind.BindingNames);
@@ -485,6 +676,10 @@ export class VariableDecl<
 }
 
 export type VariableDeclListParent = ForStmt | VariableStmt;
+
+export type SingleEntryVariableDeclList = VariableDeclList & {
+  readonly decls: [VariableDecl];
+};
 
 export class VariableDeclList extends BaseNode<
   NodeKind.VariableDeclList,

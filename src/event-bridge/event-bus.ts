@@ -32,7 +32,6 @@ import {
   isIntegration,
   makeIntegration,
 } from "../integration";
-import type { AnyFunction } from "../util";
 import {
   RulePredicateFunction,
   Rule,
@@ -164,11 +163,7 @@ export interface IEventBus<in Evnt extends Event = Event>
       (
         event: PutEventInput<Evnt>,
         ...events: PutEventInput<Evnt>[]
-      ) => Promise<void>,
-      EventBusTargetIntegration<
-        PutEventInput<Evnt>,
-        aws_events_targets.EventBusProps | undefined
-      >
+      ) => Promise<void>
     > {
   readonly resource: aws_events.IEventBus;
   readonly eventBusArn: string;
@@ -809,7 +804,7 @@ export interface EventBusTargetIntegration<
    * We use a function interface in order to satisfy the covariant relationship that we expect the super-P in as opposed to
    * returning sub-P.
    */
-  __payloadBrand: (p: Payload) => void;
+  __payloadBrand: (p: Payload) => void | Promise<void>;
 
   /**
    * Method called when an integration is passed to EventBus's `.pipe` function.
@@ -826,7 +821,9 @@ export interface EventBusTargetIntegration<
 export type IntegrationWithEventBus<
   Payload,
   Props extends object | undefined = undefined
-> = Integration<string, AnyFunction, EventBusTargetIntegration<Payload, Props>>;
+> = {
+  eventBus: EventBusTargetIntegration<Payload, Props>;
+};
 
 /**
  * @typeParam - Payload - the type which the {@link Integration} expects as an input from {@link EventBus}.
@@ -841,8 +838,11 @@ export function makeEventBusIntegration<
   return integration as EventBusTargetIntegration<Payload, Props>;
 }
 
-export type DynamicProps<Props extends object | undefined> =
-  Props extends object ? (props: Props) => void : (props?: Props) => void;
+export type DynamicProps<Props> = Props extends never
+  ? never
+  : [Props] extends [undefined]
+  ? (props?: Props | undefined) => void
+  : (props: Props) => void;
 
 /**
  * Add a target to the run based on the configuration given.
@@ -862,14 +862,14 @@ export function pipe<
   props: Props,
   targetInput: Target
 ) {
-  if (isIntegration<IntegrationWithEventBus<Payload, Props>>(integration)) {
+  if (isIntegration(integration)) {
     const target = new IntegrationImpl(integration).eventBus.target(
       props,
       targetInput
     );
     return rule.resource.addTarget(target);
   } else {
-    return rule.resource.addTarget(integration(targetInput));
+    return rule.resource.addTarget((integration as any)(targetInput));
   }
 }
 

@@ -128,6 +128,8 @@ export const isFunctionLike = typeGuard(
   NodeKind.ArrowFunctionExpr
 );
 
+export const isClassLike = typeGuard(NodeKind.ClassDecl, NodeKind.ClassExpr);
+
 export const isClassDecl = typeGuard(NodeKind.ClassDecl);
 export const isClassStaticBlockDecl = typeGuard(NodeKind.ClassStaticBlockDecl);
 export const isConstructorDecl = typeGuard(NodeKind.ConstructorDecl);
@@ -168,7 +170,6 @@ export function typeGuard<Kind extends NodeKind>(
   return (a: any): a is Extract<FunctionlessNode, { kind: Kind }> =>
     kinds.find((kind) => a?.kind === kind) !== undefined;
 }
-
 export function isVariableReference(expr: Expr): expr is VariableReference {
   return (
     isIdentifier(expr) || isPropAccessExpr(expr) || isElementAccessExpr(expr)
