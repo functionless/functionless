@@ -1974,6 +1974,56 @@ export class ASL {
               : ASLGraph.intrinsicStringToJson(output)
           );
         });
+      } else if (isSplit(expr)) {
+        const [splitter, limit] = expr.args;
+
+        if (limit) {
+          throw new SynthError(
+            ErrorCodes.Unsupported_Feature,
+            "Step Functions does not support the limit parameter on String.split"
+          );
+        } else if (!splitter) {
+          throw new SynthError(
+            ErrorCodes.Invalid_Input,
+            "Step Functions String Split splitter argument is required"
+          );
+        }
+
+        return this.evalContext(expr, ({ evalExprToJsonPathOrLiteral }) => {
+          const valueOut = evalExprToJsonPathOrLiteral(expr.expr.expr);
+          const splitterOut = evalExprToJsonPathOrLiteral(splitter.expr);
+
+          if (ASLGraph.isLiteralValue(valueOut)) {
+            if (!ASLGraph.isLiteralString(valueOut)) {
+              throw new SynthError(
+                ErrorCodes.Invalid_Input,
+                "Step Functions String Split must be on a reference or string literal."
+              );
+            }
+          }
+
+          if (ASLGraph.isLiteralValue(splitterOut)) {
+            if (!ASLGraph.isLiteralString(splitterOut)) {
+              throw new SynthError(
+                ErrorCodes.Invalid_Input,
+                "Step Functions String Split splitter argument must be a reference or string literal."
+              );
+            }
+          }
+
+          if (
+            ASLGraph.isLiteralString(valueOut) &&
+            ASLGraph.isLiteralString(splitterOut)
+          ) {
+            return ASLGraph.literalValue(
+              valueOut.value.split(splitterOut.value)
+            );
+          }
+
+          return this.assignJsonPathOrIntrinsic(
+            ASLGraph.intrinsicStringSplit(valueOut, splitterOut)
+          );
+        });
       } else if (isReferenceExpr(expr.expr)) {
         const ref = expr.expr.ref();
         if (ref === Boolean) {
@@ -5368,6 +5418,18 @@ function isJsonStringify(call: CallExpr): call is CallExpr & {
     call.expr.name.name === "stringify" &&
     isReferenceExpr(call.expr.expr) &&
     call.expr.expr.ref() === JSON
+  );
+}
+
+function isSplit(expr: CallExpr): expr is CallExpr & {
+  expr: PropAccessExpr & {
+    name: "split";
+  };
+} {
+  return (
+    isPropAccessExpr(expr.expr) &&
+    isIdentifier(expr.expr.name) &&
+    expr.expr.name.name === "split"
   );
 }
 

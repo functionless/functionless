@@ -26366,7 +26366,7 @@ exports[`intrinsics 1`] = `
     },
     "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ": {
       "End": true,
-      "InputPath": "$.heap70.out",
+      "InputPath": "$.heap78.out",
       "ResultPath": "$",
       "Type": "Pass",
     },
@@ -26547,7 +26547,69 @@ exports[`intrinsics 1`] = `
       "Type": "Pass",
     },
     "52__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
+      "InputPath": "$.heap66.arr[1:]",
       "Next": "53__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap67",
+      "Type": "Pass",
+    },
+    "53__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
+      "Next": "54__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": {
+        "out.$": "States.StringSplit($.input.hashAlgo,'-')",
+      },
+      "ResultPath": "$.heap68",
+      "Type": "Pass",
+    },
+    "54__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
+      "InputPath": "$.heap68.out",
+      "Next": "55__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap69",
+      "Type": "Pass",
+    },
+    "55__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
+      "Next": "56__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": {
+        "out.$": "States.StringSplit($.input.hashAlgo,$.input.split)",
+      },
+      "ResultPath": "$.heap70",
+      "Type": "Pass",
+    },
+    "56__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
+      "InputPath": "$.heap70.out",
+      "Next": "57__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap71",
+      "Type": "Pass",
+    },
+    "57__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
+      "Next": "58__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": {
+        "out.$": "States.StringSplit('1-2-3-4',$.input.split)",
+      },
+      "ResultPath": "$.heap72",
+      "Type": "Pass",
+    },
+    "58__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
+      "InputPath": "$.heap72.out",
+      "Next": "59__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "ResultPath": "$.heap73",
+      "Type": "Pass",
+    },
+    "59__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
+      "Next": "60__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+      "Parameters": {
+        "out.$": "States.StringSplit('-1---4',$.input.split)",
+      },
+      "ResultPath": "$.heap74",
+      "Type": "Pass",
+    },
+    "5__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ": {
+      "InputPath": "$.heap7.out",
+      "Next": "$SFN.range(input.range.start, input.range.end, input.range.step).map(functi",
+      "ResultPath": "$.heap8",
+      "Type": "Pass",
+    },
+    "60__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
+      "Next": "61__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "Parameters": {
         "base64.$": "$.heap24",
         "base64Ref.$": "$.heap27",
@@ -26568,11 +26630,11 @@ exports[`intrinsics 1`] = `
         "unique.$": "$.heap19",
         "uniqueRef.$": "$.heap21",
       },
-      "ResultPath": "$.heap67",
+      "ResultPath": "$.heap75",
       "Type": "Pass",
     },
-    "53__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
-      "Next": "54__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+    "61__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
+      "Next": "62__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "Parameters": {
         "getLength": 4,
         "inRef.$": "$.heap49",
@@ -26582,32 +26644,34 @@ exports[`intrinsics 1`] = `
         "objIn.$": "$.heap52",
         "uniqueLength.$": "$.heap57",
       },
-      "ResultPath": "$.heap68",
+      "ResultPath": "$.heap76",
       "Type": "Pass",
     },
-    "54__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
-      "Next": "55__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
+    "62__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
+      "Next": "63__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:",
       "Parameters": {
+        "constantSplit": [
+          "literal",
+          "value",
+        ],
+        "constantSplitWithRef.$": "$.heap73",
         "emptyLength.$": "$.heap62",
+        "refSplitWithConstant.$": "$.heap69",
+        "refSplitWithRef.$": "$.heap71",
         "slice.$": "$.heap63",
         "sliceRef.$": "$.heap65",
-        "sliceRefStart.$": "$.heap66.arr[1:]",
+        "sliceRefStart.$": "$.heap67",
+        "splitEmpty.$": "$.heap74.out",
       },
-      "ResultPath": "$.heap69",
+      "ResultPath": "$.heap77",
       "Type": "Pass",
     },
-    "55__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
+    "63__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef:": {
       "Next": "1__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ",
       "Parameters": {
-        "out.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap67,$.heap47,false),$.heap68,false),$.heap60,false),$.heap69,false)",
+        "out.$": "States.JsonMerge(States.JsonMerge(States.JsonMerge(States.JsonMerge($.heap75,$.heap47,false),$.heap76,false),$.heap60,false),$.heap77,false)",
       },
-      "ResultPath": "$.heap70",
-      "Type": "Pass",
-    },
-    "5__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ": {
-      "InputPath": "$.heap7.out",
-      "Next": "$SFN.range(input.range.start, input.range.end, input.range.step).map(functi",
-      "ResultPath": "$.heap8",
+      "ResultPath": "$.heap78",
       "Type": "Pass",
     },
     "7__return {partition: $SFN.partition([1, 2, 3, 4, 5, 6], 4), partitionRef: ": {
