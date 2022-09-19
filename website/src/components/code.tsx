@@ -44,7 +44,7 @@ const CodeWindow = ({
 }>) => (
   <div
     key="code"
-    className="round overflow-hidden p-0.5 code-gradient round shadow-light dark:shadow-dark"
+    className="round p-0.5 code-gradient round shadow-light dark:shadow-dark"
   >
     <Header fileName={fileName} code={code} />
     <div className="py-4 bg-functionless-code">{children}</div>
@@ -64,7 +64,7 @@ export const Code = ({
   <MDXProvider
     components={{
       pre: ({ children }: { children: ReactElement }) => (
-        <pre className="p-0 overflow-visible ">{children}</pre>
+        <pre className="p-0 overflow-unset">{children}</pre>
       ),
       code: ({ children: code }: { children: string }) => (
         <CodeWindow fileName={fileName} code={code}>
@@ -96,7 +96,7 @@ export function TimelineCode<K extends string>({
     <MDXProvider
       components={{
         pre: ({ children }: { children: ReactElement }) => (
-          <pre className="p-0 overflow-visible ">{children}</pre>
+          <pre className="p-0 overflow-unset">{children}</pre>
         ),
         code: ({ children: code }: { children: string }) => {
           const splitCode = code.split("$$;");
@@ -136,7 +136,7 @@ const Header = ({ fileName, code }: { fileName: string; code: string }) => (
         {fileName}
       </div>
       <DocumentDuplicateIcon
-        className="icon"
+        className="icon [overflow:unset]"
         onClick={() => {
           void navigator.clipboard.writeText(code);
         }}
@@ -157,7 +157,7 @@ const HighlightedCode = ({
   language: Language;
   animate: boolean;
   introDelayMs: number;
-  lineNumberStart: number;
+  lineNumberStart?: number;
 }) => {
   return (
     <Highlight

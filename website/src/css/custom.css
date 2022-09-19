@@ -179,6 +179,10 @@
     @apply py-12;
   }
 
+  .overflow-unset {
+    overflow: unset;
+  }
+
   :root .home-features {
     --ifm-pre-background: none;
   }

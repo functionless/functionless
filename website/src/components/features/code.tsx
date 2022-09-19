@@ -17,14 +17,14 @@ const ButtonTab = ({ children }: PropsWithChildren<{}>) => (
 );
 
 export const CodeFeature = () => (
-  <Tab.Group as={"div"}>
+  <Tab.Group as="div">
     <Tab.List>
       <ButtonTab>{tab1}</ButtonTab>
       <ButtonTab>{tab2}</ButtonTab>
       <ButtonTab>{tab3}</ButtonTab>
     </Tab.List>
-    <Tab.Panels className="mt-8">
-      <Tab.Panel className="grid grid-cols-4 gap-8">
+    <Tab.Panels className={"mt-8 [&>*]:!overflow-unset"}>
+      <Tab.Panel as="div" className="grid grid-cols-4 gap-8">
         <div className="col-span-4">
           <VisibilityWindow visibiltyThreshold={0.5} delayMs={250}>
             <Code
@@ -36,14 +36,14 @@ export const CodeFeature = () => (
             </Code>
           </VisibilityWindow>
         </div>
-        <div className="col-span-2 -ml-7 -mt-12">
+        <div className="col-span-2 -ml-7 -mt-12 mb-12">
           <VisibilityWindow visibiltyThreshold={0.1} delayMs={2500}>
             <Code fileName="iam.json" language="json" introDelayMs={2500}>
               <IamPolicy />
             </Code>
           </VisibilityWindow>
         </div>
-        <div className="col-span-2 -mr-7 -mt-16">
+        <div className="col-span-2 -mr-7 -mt-16 mb-16">
           <VisibilityWindow visibiltyThreshold={0.1} delayMs={3500}>
             <Code fileName="output.json" language="json" introDelayMs={3500}>
               <Output />

@@ -1,3 +1,4 @@
+import ArchDiagram from "@site/static/img/Arch diagram 1.svg";
 import { ReactElement } from "react";
 import { code } from "../content/features/code/code";
 import { compose } from "../content/features/compose/compose";
@@ -28,6 +29,11 @@ export const Features = () => {
           >
             <ComposeFeature />
           </Code>
+        }
+        footer={
+          <div className="flex justify-center">
+            <ArchDiagram />
+          </div>
         }
       />
       {/*
@@ -87,11 +93,9 @@ const FeatureSection = ({
   aside: ReactElement;
   footer?: ReactElement;
 }) => (
-  <div>
-    <div className="grid grid-cols-1 md:grid-cols-2 container !max-w-screen-xl py-36 gap-11 snap-start">
-      <FeatureText {...feature} />
-      {aside}
-    </div>
-    {footer}
+  <div className="grid grid-cols-1 md:grid-cols-2 container !max-w-screen-xl my-36 gap-11 snap-start scroll-m-28">
+    <FeatureText {...feature} />
+    {aside}
+    <div className="col-span-2">{footer}</div>
   </div>
 );
