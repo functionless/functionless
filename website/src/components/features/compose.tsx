@@ -1,41 +1,30 @@
-import Events from "@site/src/content/features/compose/events.mdx";
-import Orders from "@site/src/content/features/compose/orders.mdx";
+import Compose from "@site/src/content/features/compose/compose.mdx";
 import { useTimeline } from "@site/src/lib/useTimeline";
-import { ReactElement } from "react";
-import { Code } from "../code";
+import { useMemo } from "react";
+import { TimelineCode, VisibilityWindow } from "../code";
 
 const composeTimeline = {
-  events: 250,
+  events: 500,
   orders: 2000,
+  processOrder: 5000,
 } as const;
 
-const CodeStage = ({
-  timeline,
-}: {
-  timeline: Array<keyof typeof composeTimeline>;
-}): ReactElement => {
-  switch (timeline.at(-1)) {
-    case "events":
-      return <Events />;
-    case "orders":
-      return <Orders />;
-    default:
-      return <></>;
-  }
-};
-
-export const ComposeFeature = () => {
-  const timeline = useTimeline(composeTimeline);
-  console.log(timeline);
-
-  return (
-    <Code
+const ComposeCode = () => (
+  <VisibilityWindow delayMs={0} visibiltyThreshold={0.5}>
+    <TimelineCode
       fileName="functionless.ts"
       language="typescript"
-      introDelayMs={250}
-      triggerVisibility={0.5}
+      timeline={composeTimeline}
     >
-      <CodeStage timeline={timeline} />
-    </Code>
-  );
+      <Compose />
+    </TimelineCode>
+  </VisibilityWindow>
+);
+
+export const ComposeFeature = () => {
+  const elapsedTimeline = useTimeline(composeTimeline);
+  //We memo compose to stop it re-rendering every time the timeline updates
+  const memodCompose = useMemo(ComposeCode, []);
+
+  return <div>{memodCompose}</div>;
 };

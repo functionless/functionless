@@ -1,13 +1,13 @@
 ```ts
 const events = new EventBus(this, "events");
-
+$$;
 const orders = new Queue(this, "orders");
 
 events
   .when("Order", (event) => event["detail-type"] === "Order")
   .map((event) => event.detail)
   .pipe(orders);
-
+$$;
 import { aws_lambda } from "aws-cdk-lib";
 
 declare const golangWorker: aws_lambda.IFunction;

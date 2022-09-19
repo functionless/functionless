@@ -25,7 +25,6 @@ export const Features = () => {
             fileName="functionless.ts"
             language="typescript"
             introDelayMs={250}
-            triggerVisibility={0.5}
           >
             <ComposeFeature />
           </Code>
