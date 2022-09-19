@@ -187,6 +187,18 @@
     --ifm-navbar-height: auto;
   }
 
+  body {
+    overflow: hidden !important;
+    height: 100vh !important;
+  }
+
+  body #__docusaurus {
+    min-height: 100vh;
+    height: 100vh;
+    overflow: auto;
+    scroll-snap-type: y proximity;
+  }
+
   .search-bar .DocSearch-Button-Key {
     filter: grayscale(100%) contrast(200%);
   }

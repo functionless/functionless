@@ -1,6 +1,6 @@
 export const FeaturesCore = () => {
   return (
-    <section className="py-36 bg-functionless-bg dark:bg-functionless-dark-bg">
+    <section className="py-36 bg-functionless-bg dark:bg-functionless-dark-bg snap-start">
       <div className="container !max-w-screen-md flex flex-col items-center">
         <span className="over">WHY FUNCTIONLESS?</span>
         <h4 className="text-center mt-2">

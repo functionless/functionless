@@ -10,7 +10,7 @@ import { ComposeFeature } from "./features/compose";
 
 export const Features = () => {
   return (
-    <section className="py-36 bg-functionless-bg-alternate dark:bg-functionless-dark-bg-alternate home-features overflow-hidden">
+    <section className="py-36 bg-functionless-bg-alternate dark:bg-functionless-dark-bg-alternate home-features snap-start">
       <div className="!max-w-screen-md container text-center">
         <span className="over">{title}</span>
       </div>
@@ -88,7 +88,7 @@ const FeatureSection = ({
   footer?: ReactElement;
 }) => (
   <div>
-    <div className="grid grid-cols-1 md:grid-cols-2 container !max-w-screen-xl py-36 gap-11">
+    <div className="grid grid-cols-1 md:grid-cols-2 container !max-w-screen-xl py-36 gap-11 snap-start">
       <FeatureText {...feature} />
       {aside}
     </div>

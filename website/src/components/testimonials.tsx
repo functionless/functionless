@@ -2,7 +2,7 @@ import { Testimonial } from "./testimonial";
 
 export const Testimonials = () => {
   return (
-    <section className="bg-functionless-bg-alternate dark:bg-functionless-dark-bg-alternate py-36">
+    <section className="bg-functionless-bg-alternate dark:bg-functionless-dark-bg-alternate py-36 snap-start">
       <div className="container !max-w-screen-md flex flex-col items-center">
         <span className="over">TWEETS</span>
         <h4 className="text-center mt-2">

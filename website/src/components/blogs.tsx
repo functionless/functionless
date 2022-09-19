@@ -5,7 +5,7 @@ type Props = {};
 
 export const Blogs = (props: Props) => {
   return (
-    <section className="py-36 bg-fusnctionless-bg dark:bg-functionless-dark-bg">
+    <section className="py-36 bg-functionless-bg dark:bg-functionless-dark-bg snap-start">
       <div className="container !max-w-screen-sm flex flex-col items-center">
         <span className="over">BLOG</span>
         <h4 className="text-center mt-2">Read Our Latest Updates</h4>
