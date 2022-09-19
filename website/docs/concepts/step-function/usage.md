@@ -288,6 +288,18 @@ Functionless has chosen to run JSON.stringify on Objects and Arrays because:
 2. Recursive `Array.join()` would be expensive.
 3. It is not possible currently to determine if a value is an Array or an Object when empty.
 
+### String.split behavior
+
+`String.split` will not return empty strings. This deviates from ECMA (and most runtimes) which would return empty string if the splitter appears at the beginning, end, or immediately after another splitter value.
+
+```ts
+const result = "-1-2--3".split("-");
+// ECMA ["", "1", "2", "", "3"]
+// StepFunctions ["1", "2", "3"]
+```
+
+Functionless uses StepFunction's `States.StringSplit()` intrinsic function to support ECMA's `String.split()`. This function will strip out empty strings.
+
 ### Arithmetic only supports integers
 
 Step Functions only supports integer addition via the `States.MathAdd` intrinsic function.

@@ -400,6 +400,13 @@ runtimeTestSuite<
           slice: input.arr.slice(1, 3),
           sliceRef: input.arr.slice(input.part, input.end),
           sliceRefStart: input.arr.slice(input.end),
+          constantSplit: "literal.value".split("."),
+          refSplitWithConstant: input.hashAlgo.split("-"),
+          refSplitWithRef: input.hashAlgo.split(input.split),
+          constantSplitWithRef: "1-2-3-4".split(input.split),
+          // step functions split filters out empty strings
+          // https://twitter.com/sussmansa/status/1569051340575494144
+          splitEmpty: "-1---4".split(input.split),
         };
       });
     },
@@ -440,6 +447,11 @@ runtimeTestSuite<
       start: 1,
       end: 11,
       step: 2,
+      constantSplit: ["literal", "value"],
+      refSplitWithConstant: ["SHA", "256"],
+      refSplitWithRef: ["SHA", "256"],
+      constantSplitWithRef: ["1", "2", "3", "4"],
+      splitEmpty: ["1", "4"],
     },
     {
       range: { start: 1, end: 11, step: 2 },
@@ -453,6 +465,7 @@ runtimeTestSuite<
       lengthObj: { length: "a" },
       emptyArr: [],
       key: "start" as const,
+      split: "-",
     }
   );
 
