@@ -6,8 +6,8 @@ import {
   githubLink,
   title,
   versionRelease,
-} from "../../content/hero";
-import { githubUrl } from "../../content/site";
+} from "../content/hero";
+import { githubUrl } from "../content/site";
 
 export const Hero = () => {
   return (

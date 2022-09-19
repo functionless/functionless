@@ -1,23 +1,37 @@
-import { code } from "../lib/features";
+import { ReactElement } from "react";
+import { code } from "../content/features/code/code";
+import { compose } from "../content/features/compose/compose";
+import { title, subtitle } from "../content/features/features";
+import { Feature } from "../lib/feature";
+import { Code } from "./code";
 import { FeatureText } from "./feature";
 import { CodeFeature } from "./features/code";
+import { ComposeFeature } from "./features/compose";
 
 export const Features = () => {
   return (
     <section className="py-36 bg-functionless-bg-alternate dark:bg-functionless-dark-bg-alternate home-features overflow-hidden">
       <div className="!max-w-screen-md container text-center">
-        <span className="over">FEATURES</span>
+        <span className="over">{title}</span>
       </div>
       <div className="!max-w-screen-md container flex flex-col items-center">
-        <h3 className="text-center mt-2">
-          Build Reliable and Scalable systems with Smart Resources.
-        </h3>
+        <h3 className="text-center mt-2">{subtitle}</h3>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 container !max-w-screen-xl py-36 gap-11">
-        <FeatureText {...code} />
-        <CodeFeature />
-      </div>
-      {/* iv>
+      <FeatureSection feature={code} aside={<CodeFeature />} />
+      <FeatureSection
+        feature={compose}
+        aside={
+          <Code
+            fileName="functionless.ts"
+            language="typescript"
+            introDelayMs={250}
+            triggerVisibility={0.5}
+          >
+            <ComposeFeature />
+          </Code>
+        }
+      />
+      {/*
       <div className="grid grid-cols-1 md:grid-cols-2 container !max-w-screen-xl py-36 gap-11">
         <div>
           <h4>Compose</h4>
@@ -60,7 +74,25 @@ export const Features = () => {
           <Code />
           <Code />
         </div>
-      </div> */}
+  </div>*/}
     </section>
   );
 };
+
+const FeatureSection = ({
+  feature,
+  aside,
+  footer,
+}: {
+  feature: Feature;
+  aside: ReactElement;
+  footer?: ReactElement;
+}) => (
+  <div>
+    <div className="grid grid-cols-1 md:grid-cols-2 container !max-w-screen-xl py-36 gap-11">
+      <FeatureText {...feature} />
+      {aside}
+    </div>
+    {footer}
+  </div>
+);

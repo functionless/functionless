@@ -1,5 +1,8 @@
+import type { Feature } from "@site/src/lib/feature";
 
-import { Feature } from "./feature";
+export const tab1 = "Lambda function";
+export const tab2 = "Step function";
+export const tab3 = "Appsync resolver";
 
 export const code: Feature = {
   title: "Code",
@@ -12,5 +15,5 @@ export const code: Feature = {
       title: "Automated IAM policies",
       body: "The best security auditor is no auditor - our compiler derives minimal IAM Policies from your code.",
     },
-  ]
-}
+  ],
+};

@@ -11,12 +11,14 @@ export const Code = ({
   fileName,
   language,
   introDelayMs,
+  triggerVisibility,
 }: React.PropsWithChildren<{
-  fileName?: string;
+  fileName: string;
   language: Language;
-  introDelayMs?: number;
+  introDelayMs: number;
+  triggerVisibility: number;
 }>) => {
-  const { ref, visible } = useVisibility(0.5);
+  const { ref, visible } = useVisibility(triggerVisibility);
   return (
     <div ref={ref}>
       <div
@@ -27,9 +29,7 @@ export const Code = ({
             : "opacity-0 translate-y-10 scale-75"
         )}
         style={{
-          transitionDelay: introDelayMs
-            ? `${visible ? introDelayMs : 0}ms`
-            : undefined,
+          transitionDelay: `${visible ? introDelayMs : 0}ms`,
         }}
       >
         <MDXProvider
@@ -83,16 +83,16 @@ const VisibleCode = ({
   introDelayMs,
 }: {
   code: string;
-  fileName?: string;
+  fileName: string;
   language: Language;
-  introDelayMs?: number;
+  introDelayMs: number;
 }) => {
   return (
     <div
       key="code"
       className="round overflow-hidden p-0.5 code-gradient round shadow-light dark:shadow-dark"
     >
-      {fileName && <Header fileName={fileName} code={code} />}
+      <Header fileName={fileName} code={code} />
       <Highlight
         {...defaultProps}
         theme={{
@@ -137,7 +137,7 @@ const VisibleCode = ({
                             style: {
                               animationDelay: `${
                                 (lineIndexStart + lineIndex + k) * 10 +
-                                (introDelayMs ?? 0)
+                                introDelayMs
                               }ms`,
                             },
                           })}

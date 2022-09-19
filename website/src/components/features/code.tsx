@@ -1,9 +1,9 @@
 import { Tab } from "@headlessui/react";
-import IamPolicy from "@site/content/features/code/iam-policy.mdx";
-import Output from "@site/content/features/code/output.mdx";
-import FunctionlessTableFunction from "@site/content/features/code/table-function.mdx";
 import { Fragment, PropsWithChildren } from "react";
-import { tab1, tab2, tab3 } from "../../../content/features/code/code";
+import { tab1, tab2, tab3 } from "../../content/features/code/code";
+import IamPolicy from "../../content/features/code/iam-policy.mdx";
+import Output from "../../content/features/code/output.mdx";
+import FunctionlessTableFunction from "../../content/features/code/table-function.mdx";
 import { Code } from "../code";
 
 const ButtonTab = ({ children }: PropsWithChildren<{}>) => (
@@ -30,17 +30,28 @@ export const CodeFeature = () => (
             fileName="functionless.ts"
             language="typescript"
             introDelayMs={250}
+            triggerVisibility={0.5}
           >
             <FunctionlessTableFunction />
           </Code>
         </div>
         <div className="col-span-2 -ml-7 -mt-12">
-          <Code fileName="iam.json" language="json" introDelayMs={3000}>
+          <Code
+            fileName="iam.json"
+            language="json"
+            introDelayMs={2500}
+            triggerVisibility={0.1}
+          >
             <IamPolicy />
           </Code>
         </div>
         <div className="col-span-2 -mr-7 -mt-16">
-          <Code fileName="output.json" language="json" introDelayMs={4000}>
+          <Code
+            fileName="output.json"
+            language="json"
+            introDelayMs={3500}
+            triggerVisibility={0.1}
+          >
             <Output />
           </Code>
         </div>
