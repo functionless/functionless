@@ -26,6 +26,6 @@
     "target": "ES2019",
     "declarationMap": true
   },
-  "include": ["src/**/*", "test/**/*"],
+  "include": ["content/**/*", "src/**/*", "test/**/*"],
   "exclude": ["**/node_modules"]
 }

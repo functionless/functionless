@@ -1,9 +1,10 @@
 import { Tab } from "@headlessui/react";
+import IamPolicy from "@site/content/features/code/iam-policy.mdx";
+import Output from "@site/content/features/code/output.mdx";
+import FunctionlessTableFunction from "@site/content/features/code/table-function.mdx";
 import { Fragment, PropsWithChildren } from "react";
-import { Code } from "../../code";
-import IamPolicy from "./iam-policy.mdx";
-import Output from "./output.mdx";
-import FunctionlessTableFunction from "./table-function.mdx";
+import { tab1, tab2, tab3 } from "../../../content/features/code/code";
+import { Code } from "../code";
 
 const ButtonTab = ({ children }: PropsWithChildren<{}>) => (
   <Tab as={Fragment}>
@@ -18,9 +19,9 @@ const ButtonTab = ({ children }: PropsWithChildren<{}>) => (
 export const CodeFeature = () => (
   <Tab.Group as={"div"}>
     <Tab.List>
-      <ButtonTab>Lambda function</ButtonTab>
-      <ButtonTab>Step function</ButtonTab>
-      <ButtonTab>Appsync resolver</ButtonTab>
+      <ButtonTab>{tab1}</ButtonTab>
+      <ButtonTab>{tab2}</ButtonTab>
+      <ButtonTab>{tab3}</ButtonTab>
     </Tab.List>
     <Tab.Panels className="mt-8">
       <Tab.Panel className="grid grid-cols-4 gap-8">

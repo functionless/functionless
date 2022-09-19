@@ -1,6 +1,6 @@
 import { code } from "../lib/features";
 import { FeatureText } from "./feature";
-import { CodeFeature } from "./features/code/code";
+import { CodeFeature } from "./features/code";
 
 export const Features = () => {
   return (
