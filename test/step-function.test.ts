@@ -19,6 +19,7 @@ import {
   SynthError,
 } from "../src";
 import { StateMachine, States, Task } from "../src/asl";
+import { ASLOptions } from "../src/asl/synth";
 import { Function } from "../src/function";
 import { initStepFunctionApp, normalizeCDKJson, Person } from "./util";
 /**
@@ -295,13 +296,13 @@ test("let empty", () => {
 test("shadow", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", () => {
-    const a = ""; // a
-    const a__2 = ""; // take a future updated name, a__2
+    const a = "1"; // a
+    const a__2 = "2"; // take a future updated name, a__2
     for (const b in [1, 2, 3]) {
-      const a = ""; // take a future real name, a__1
-      const a__1 = ""; // name already exists, will use a__1__1
-      if (a === "") {
-        const a = ""; // a__3
+      const a = "3"; // take a future real name, a__1
+      const a__1 = "4"; // name already exists, will use a__1__1
+      if (a === "3") {
+        const a = "6"; // a__3
         return `${a}${b}${a__1}`;
       }
     }
@@ -599,6 +600,88 @@ test("boolean logic", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test.each([
+  ["with", undefined],
+  [
+    "without",
+    {
+      optimization: {
+        joinConsecutiveChoices: false,
+        optimizeVariableAssignments: false,
+        removeNoOpStates: false,
+        removeUnreachableStates: false,
+      },
+    } as ASLOptions,
+  ],
+])("%s optimizer", (_, opt) => {
+  const { stack } = initStepFunctionApp();
+
+  const definition = new StepFunction<
+    {
+      obj: { a: string };
+      arr: number[];
+      x: boolean;
+    },
+    any
+  >(stack, "sfn2", { asl: opt }, async (input) => {
+    const obj = { 1: "a" };
+    const arr = [1];
+    const obj2 = input.obj;
+    const arr2 = input.arr;
+    let a;
+    if (input.x) {
+      a = "a";
+    } else {
+      a = "b";
+    }
+    const z = a;
+    // does not optimize
+    let b = { c: "" };
+    if (input.x) {
+      b.c = "a";
+    } else {
+      b.c = "b";
+    }
+    const y = b;
+    let c = { c: "" };
+    if (input.x) {
+      c.c = "a";
+    } else {
+      c.c = "b";
+    }
+    const x = c.c;
+    let d = { c: { c: "" } };
+    const xx = { c: "1" };
+    const yy = { c: "2" };
+    if (input.x) {
+      d.c = xx;
+    } else {
+      d.c = yy;
+    }
+    const w = d.c;
+    const e = { d: "d" };
+    const v = e.d;
+    const f = { e: { f: "e" } };
+    const u = f.e;
+    const g = { e: "f" };
+    return {
+      a: obj2.a,
+      b: arr2[0],
+      c: obj["1"],
+      d: arr[0],
+      z,
+      y,
+      x,
+      w,
+      v,
+      u,
+      t: `this ${g.e}`,
+    };
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("binary and unary unsupported", () => {
   const { stack } = initStepFunctionApp();
   expect(
@@ -836,6 +919,26 @@ test("if if", () => {
       if (input.val !== "a") {
         if (input.val === "b") {
           return "hullo";
+        }
+      }
+      return "woop";
+    }
+  ).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("if ifelse", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(
+    stack,
+    "fn",
+    (input: { val: string }) => {
+      if (input.val !== "a") {
+        if (input.val === "b") {
+          return "hullo";
+        } else {
+          return "wat";
         }
       }
       return "woop";
@@ -2351,6 +2454,27 @@ test("[1,2,3,4].filter(item => item > 2)", () => {
   expect(normalizeDefinition(definition)).toMatchSnapshot();
 });
 
+test("[1,2,3,4].filter(item => item > 2) assign", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    const a = [1, 2, 3, 4].filter((item) => item > 2);
+    return a;
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("[1,2,3,4].filter(item => item > 2) assign obj", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    return {
+      a: [1, 2, 3, 4].filter((item) => item > 2),
+    };
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("[1,2,3,4].filter(item => item > 1 + 2)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
@@ -2799,6 +2923,16 @@ test("$SFN.map([1, 2, 3], (item) => nitem)", () => {
   const { stack } = initStepFunctionApp();
   const definition = new ExpressStepFunction(stack, "fn", async () => {
     return $SFN.map([1, 2, 3], (item) => `n${item}`);
+  }).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("$SFN.map([1, 2, 3], (item) => naitem)", () => {
+  const { stack } = initStepFunctionApp();
+  const definition = new ExpressStepFunction(stack, "fn", async () => {
+    const a = "a";
+    return $SFN.map([1, 2, 3], (item) => `n${a}${item}`);
   }).definition;
 
   expect(normalizeDefinition(definition)).toMatchSnapshot();
@@ -4223,6 +4357,37 @@ describe("binding", () => {
         return a;
       }
     ).definition;
+
+    expect(normalizeDefinition(definition)).toMatchSnapshot();
+  });
+
+  // TODO: https://github.com/functionless/functionless/issues/420
+  // https://mathiasbynens.be/notes/javascript-properties
+  test.skip("unicode variable names", () => {
+    const { stack } = initStepFunctionApp();
+    const definition = new StepFunction(stack, "machine1", async () => {
+      var H̹̙̦̮͉̩̗̗ͧ̇̏̊̾Eͨ͆͒̆ͮ̃͏̷̮̣̫̤̣Cͯ̂͐͏̨̛͔̦̟͈̻O̜͎͍͙͚̬̝̣̽ͮ͐͗̀ͤ̍̀͢M̴̡̲̭͍͇̼̟̯̦̉̒͠Ḛ̛̙̞̪̗ͥͤͩ̾͑̔͐ͅṮ̴̷̷̗̼͍̿̿̓̽͐H̙̙̔̄͜ = 42;
+      const _ = "___";
+      const $ = "$$";
+      const ƒ = {
+        π: Math.PI,
+        ø: [],
+        Ø: NaN,
+        e: 2.7182818284590452353602874713527,
+        root2: 2.7182818284590452353602874713527,
+        α: 2.5029,
+        δ: 4.6692,
+        ζ: 1.2020569,
+        φ: 1.61803398874,
+        γ: 1.30357,
+        K: 2.685452001,
+        oo: 9999999999e999 * 9999999999e9999,
+        A: 1.2824271291,
+        C10: 0.12345678910111213141516171819202122232425252728293031323334353637,
+        c: 299792458,
+      };
+      return { ƒ, out: `${H̹̙̦̮͉̩̗̗ͧ̇̏̊̾Eͨ͆͒̆ͮ̃͏̷̮̣̫̤̣Cͯ̂͐͏̨̛͔̦̟͈̻O̜͎͍͙͚̬̝̣̽ͮ͐͗̀ͤ̍̀͢M̴̡̲̭͍͇̼̟̯̦̉̒͠Ḛ̛̙̞̪̗ͥͤͩ̾͑̔͐ͅṮ̴̷̷̗̼͍̿̿̓̽͐H̙̙̔̄͜}${_}${$}` };
+    }).definition;
 
     expect(normalizeDefinition(definition)).toMatchSnapshot();
   });

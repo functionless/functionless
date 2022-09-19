@@ -11,6 +11,7 @@ import { Construct } from "constructs";
 import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph, Retry, StateMachine, States } from "./asl";
+import { ASLOptions } from "./asl/synth";
 import { assertDefined } from "./assert";
 import { FunctionLike } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
@@ -1482,7 +1483,9 @@ export interface StepFunctionProps
   extends Omit<
     aws_stepfunctions.StateMachineProps,
     "definition" | "stateMachineType"
-  > {}
+  > {
+  asl?: ASLOptions;
+}
 
 /**
  * An {@link ExpressStepFunction} is a callable Function which executes on the managed
@@ -2016,6 +2019,7 @@ function getStepFunctionArgs<
     isFunctionLike(args[0]) || isErr(args[0]) || typeof args[0] === "function"
       ? {}
       : args[0];
+
   const func = validateFunctionLike(
     args.length > 1 ? args[1] : args[0],
     "StepFunction"
@@ -2032,13 +2036,14 @@ function synthesizeStateMachine(
     stateMachineType: aws_stepfunctions.StateMachineType;
   }
 ): [StateMachine<States>, aws_stepfunctions.StateMachine] {
+  const { asl, ..._props } = props;
   const machine = new aws_stepfunctions.StateMachine(scope, id, {
-    ...props,
+    ..._props,
     definition: new aws_stepfunctions.Pass(scope, "dummy"),
   });
 
   try {
-    const definition = new ASL(scope, machine.role, decl).definition;
+    const definition = new ASL(scope, machine.role, decl, asl).definition;
 
     const resource = machine.node.findChild(
       "Resource"

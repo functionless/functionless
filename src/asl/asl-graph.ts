@@ -2,7 +2,8 @@ import { assertNever } from "../assert";
 import { SynthError, ErrorCodes } from "../error-code";
 import type { Expr } from "../expression";
 import { FunctionlessNode } from "../node";
-import { anyOf, invertBinaryOperator } from "../util";
+import { anyOf, formatJsonPath, invertBinaryOperator } from "../util";
+import { ASLOptimizer } from "./optimizer";
 import {
   isState,
   isChoiceState,
@@ -31,6 +32,15 @@ import { ASL } from "./synth";
  * ASL Graph is completely stateless.
  */
 export namespace ASLGraph {
+  export interface ASLOptions {
+    /**
+     * Options for the ASL Optimizer.
+     *
+     * Default: Suggested
+     */
+    optimization?: ASLOptimizer.OptimizeOptions;
+  }
+
   /**
    * Used by integrations as a placeholder for the "Next" property of a task.
    *
@@ -523,30 +533,15 @@ export namespace ASLGraph {
     getStateNames: (
       parentName: string,
       states: ASLGraph.SubState
-    ) => Record<string, string>
+    ) => Record<string, string>,
+    options?: ASLOptions
   ): States {
     const namedStates = internal(startState, states, { localNames: {} });
 
-    /**
-     * Find any choice states that can be joined with their target state.
-     * TODO: generalize the optimization statements.
-     */
-    const updatedStates = joinChainedChoices(
+    return ASLOptimizer.optimizeGraph(
       startState,
-      /**
-       * Remove any states with no effect (Pass, generally)
-       * The incoming states to the empty states are re-wired to the outgoing transition of the empty state.
-       */
-      removeEmptyStates(startState, namedStates)
-    );
-
-    const reachableStates = findReachableStates(startState, updatedStates);
-
-    // only take the reachable states
-    return Object.fromEntries(
-      Object.entries(updatedStates).filter(([name]) =>
-        reachableStates.has(name)
-      )
+      Object.fromEntries(namedStates),
+      options?.optimization
     );
 
     function internal(
@@ -582,243 +577,6 @@ export namespace ASLGraph {
           return internal(parentName, state, nameMap);
         });
       }
-    }
-  }
-
-  /**
-   * Given a directed adjacency matrix, return a `Set` of all reachable states from the start state.
-   */
-  function findReachableStates(
-    startState: string,
-    states: Record<string, State>
-  ) {
-    const visited = new Set<string>();
-
-    // starting from the start state, find all reachable states
-    depthFirst(startState);
-
-    return visited;
-
-    function depthFirst(stateName: string) {
-      if (visited.has(stateName)) return;
-      visited.add(stateName);
-      const state = states[stateName]!;
-      visitTransition(state, depthFirst);
-    }
-  }
-
-  function removeEmptyStates(
-    startState: string,
-    stateEntries: [string, State][]
-  ): [string, State][] {
-    /**
-     * Find all {@link Pass} states that do not do anything.
-     */
-    const emptyStates = Object.fromEntries(
-      stateEntries.filter((entry): entry is [string, Pass] => {
-        const [name, state] = entry;
-        return (
-          name !== startState &&
-          isPassState(state) &&
-          !!state.Next &&
-          !(
-            state.End ||
-            state.InputPath ||
-            state.OutputPath ||
-            state.Parameters ||
-            state.Result ||
-            state.ResultPath
-          )
-        );
-      })
-    );
-
-    const emptyTransitions = computeEmptyStateToUpdatedTransition(emptyStates);
-
-    // return the updated set of name to state.
-    return stateEntries.flatMap(([name, state]) => {
-      if (name in emptyTransitions) {
-        return [];
-      }
-
-      return [
-        [
-          name,
-          visitTransition(state, (transition) =>
-            transition in emptyTransitions
-              ? emptyTransitions[transition]!
-              : transition
-          ),
-        ],
-      ];
-    });
-
-    /**
-     * Find the updated next value for all of the empty states.
-     * If the updated Next cannot be determined, do not remove the state.
-     */
-    function computeEmptyStateToUpdatedTransition(
-      emptyStates: Record<string, Pass>
-    ) {
-      return Object.fromEntries(
-        Object.entries(emptyStates).flatMap(([name, { Next }]) => {
-          const newNext = Next ? getNext(Next, []) : Next;
-
-          /**
-           * If the updated Next value for this state cannot be determined,
-           * do not remove the state.
-           *
-           * This can because the state has no Next value (Functionless bug)
-           * or because all of the states in a cycle are empty.
-           */
-          if (!newNext) {
-            return [];
-          }
-
-          return [[name, newNext]];
-
-          /**
-           * When all states in a cycle are empty, the cycle will be impossible to exit.
-           *
-           * Note: This should be a rare case and is not an attempt to find any non-terminating logic.
-           *       ex: `for(;;){}`
-           *       Adding most conditions, incrementors, or bodies will not run into this issue.
-           *
-           * ```ts
-           * {
-           *   1: { Type: "???", Next: 2 },
-           *   2: { Type: "Pass", Next: 3 },
-           *   3: { Type: "Pass", Next: 4 },
-           *   4: { Type: "Pass", Next: 2 }
-           * }
-           * ```
-           *
-           * State 1 is any state that transitions to state 2.
-           * State 2 transitions to empty state 3
-           * State 3 transitions to empty state 4
-           * State 4 transitions back to empty state 2.
-           *
-           * Empty Pass states provide no value and will be removed.
-           * Empty Pass states can never fail and no factor can change where it goes.
-           *
-           * This is not an issue for other states which may fail or inject other logic to change the next state.
-           * Even the Wait stat could be used in an infinite loop if the machine is terminated from external source.
-           *
-           * If this happens, return undefined.
-           */
-          function getNext(
-            transition: string,
-            seen: string[] = []
-          ): string | undefined {
-            if (seen?.includes(transition)) {
-              return undefined;
-            }
-            return transition in emptyStates
-              ? getNext(
-                  emptyStates[transition]!.Next!,
-                  seen ? [...seen, transition] : [transition]
-                )
-              : transition;
-          }
-        })
-      );
-    }
-  }
-
-  /**
-   * A {@link Choice} state that points to another {@link Choice} state can adopt the target state's
-   * choices and Next without adding an additional transition.
-   *
-   * 1
-   *    if a -> 2
-   *    if b -> 3
-   *    else -> 4
-   * 2
-   *    if c -> 3
-   *    else -> 4
-   * 3       - Task
-   * 4
-   *    if e -> 5
-   *    else -> 6
-   * 5       - Task
-   * 6       - Task
-   *
-   * =>
-   *
-   * 1
-   *    if a && c -> 3 (1 and 2)
-   *    if a && e -> 5 (1 and 4)
-   *    if b      -> 3
-   *    if e      -> 5 (4)
-   *    else      -> 6 (4's else)
-   * 2            - remove (if nothing else points to it)
-   * 3            - Task
-   * 4            - remove (if nothing else points to it)
-   * 5            - Task
-   * 6            - Task
-   */
-  function joinChainedChoices(
-    startState: string,
-    stateEntries: [string, State][]
-  ) {
-    const stateMap = Object.fromEntries(stateEntries);
-
-    const updatedStates: Record<string, State | null> = {};
-
-    depthFirst(startState);
-
-    // we can assume that all null states have been updated by here.
-    return updatedStates as Record<string, State>;
-
-    function depthFirst(state: string): State | null {
-      if (state in updatedStates) return updatedStates[state]!;
-      const stateObj = stateMap[state]!;
-      if (!isChoiceState(stateObj)) {
-        updatedStates[state] = stateObj;
-        visitTransition(stateObj, (next) => {
-          depthFirst(next);
-        });
-        // no change
-        return stateObj;
-      }
-      // set self to null to 1) halt circular references 2) avoid circular merges between choices.
-      // if #2 happens, that choice will always fail as state cannot change between transitions.
-      updatedStates[state] = null;
-      const branches = stateObj.Choices.flatMap((branch) => {
-        const { Next: branchNext, ...branchCondition } = branch;
-        const nextState = depthFirst(branchNext);
-        // next state should only by null when there is a circular reference between choices
-        if (!nextState || !isChoiceState(nextState)) {
-          return [branch];
-        } else {
-          const nextBranches = nextState.Choices.map(
-            ({ Next, ...condition }) => {
-              // for each branch in the next state, AND with the current branch and assign the next state's Next.
-              return { ...ASL.and(branchCondition, condition), Next };
-            }
-          );
-          return nextState.Default
-            ? [...nextBranches, { ...branchCondition, Next: nextState.Default }]
-            : nextBranches;
-        }
-      });
-      const defaultState = stateObj.Default
-        ? depthFirst(stateObj.Default)
-        : undefined;
-
-      const [defaultValue, defaultBranches] =
-        !defaultState || !isChoiceState(defaultState)
-          ? [stateObj.Default, []]
-          : [defaultState.Default, defaultState.Choices];
-
-      const mergedChoice = {
-        ...stateObj,
-        Choices: [...branches, ...defaultBranches],
-        Default: defaultValue,
-      };
-
-      updatedStates[state] = mergedChoice;
-      return mergedChoice;
     }
   }
 
@@ -1593,7 +1351,7 @@ export namespace ASLGraph {
     element: ASLGraph.LiteralValue<string> | ASLGraph.LiteralValue<number>,
     targetJsonPath: ASLGraph.JsonPath
   ): Condition {
-    const accessed = ASLGraph.accessConstant(targetJsonPath, element, true);
+    const accessed = ASLGraph.accessConstant(targetJsonPath, element);
 
     if (ASLGraph.isLiteralValue(accessed)) {
       return accessed.value === undefined
@@ -1610,15 +1368,10 @@ export namespace ASLGraph {
    */
   export function accessConstant(
     value: ASLGraph.Output,
-    field: ASLGraph.LiteralValue<string> | ASLGraph.LiteralValue<number>,
-    element: boolean
+    field: ASLGraph.LiteralValue<string> | ASLGraph.LiteralValue<number>
   ): ASLGraph.JsonPath | ASLGraph.LiteralValue {
     if (ASLGraph.isJsonPath(value)) {
-      return ASLGraph.isLiteralNumber(field)
-        ? { jsonPath: `${value.jsonPath}[${field.value}]` }
-        : element
-        ? { jsonPath: `${value.jsonPath}['${field.value}']` }
-        : { jsonPath: `${value.jsonPath}.${field.value}` };
+      return { jsonPath: formatJsonPath([field.value], value.jsonPath) };
     }
 
     if (ASLGraph.isLiteralValue(value) && value.value) {

@@ -129,30 +129,33 @@ import {
 } from "../statement";
 import { StepFunctionError } from "../step-function";
 import {
-  UniqueNameGenerator,
-  DeterministicNameGenerator,
   anyOf,
+  DeterministicNameGenerator,
   evalToConstant,
+  formatJsonPath,
   isPromiseAll,
+  UniqueNameGenerator,
 } from "../util";
 import { visitEachChild } from "../visit";
 import { ASLGraph } from "./asl-graph";
+import { ASLOptimizer } from "./optimizer";
 import {
-  States,
+  Parameters,
+  Choice,
   CommonFields,
-  isTaskState,
+  Condition,
+  Fail,
+  isChoiceState,
   isMapTaskState,
   isParallelTaskState,
+  isTaskState,
   MapTask,
-  StateMachine,
   Pass,
-  Choice,
-  Fail,
+  State,
+  StateMachine,
+  States,
   Succeed,
   Wait,
-  Parameters,
-  Condition,
-  State,
 } from "./states";
 
 /**
@@ -297,6 +300,15 @@ const FUNCTIONLESS_CONTEXT_NAME = "fnl_context";
  */
 const FUNCTIONLESS_CONTEXT_JSON_PATH = `$.${FUNCTIONLESS_CONTEXT_NAME}`;
 
+export interface ASLOptions {
+  /**
+   * Options for the ASL Optimizer.
+   *
+   * @default ASLOptimizer.DefaultOptimizeOptions
+   */
+  optimization?: ASLOptimizer.OptimizeOptions;
+}
+
 /**
  * Amazon States Language (ASL) Generator.
  */
@@ -348,7 +360,8 @@ export class ASL {
   constructor(
     readonly scope: Construct,
     readonly role: aws_iam.IRole,
-    decl: FunctionLike
+    decl: FunctionLike,
+    private options?: ASLOptions
   ) {
     this.decl = decl = visitEachChild(decl, function normalizeAST(node):
       | FunctionlessNode
@@ -551,7 +564,8 @@ export class ASL {
                 : this.createUniqueStateName(`${name}__${parentName}`),
             ])
           );
-        }
+        },
+        this.options
       ),
     };
   }
@@ -646,7 +660,7 @@ export class ASL {
 
         const initializer: ASLGraph.SubState | ASLGraph.NodeState = (() => {
           /**ForInStmt
-           * Assign the value to $.0__[variableName].
+           * Assign the value to $.fnls__0__[variableName].
            * Assign the index to the variable decl. If the variable decl is an identifier, it may be carried beyond the ForIn.
            */
           if (isForInStmt(stmt)) {
@@ -681,7 +695,7 @@ export class ASL {
                 assignValue: {
                   Type: "Pass",
                   InputPath: `${tempArrayPath}[0].item`,
-                  ResultPath: `$.0__${initializerName}`,
+                  ResultPath: `$.fnls__0__${initializerName}`,
                   Next: ASLGraph.DeferNext,
                 },
               },
@@ -2045,8 +2059,7 @@ export class ASL {
             }
             return ASLGraph.accessConstant(
               output,
-              ASLGraph.literalValue(expr.name.name),
-              false
+              ASLGraph.literalValue(expr.name.name)
             );
           });
         } else {
@@ -2251,7 +2264,6 @@ export class ASL {
             Exclude<ASLGraph.LiteralValueType, Record<string, any> | any[]>
           >;
         });
-
         return this.assignJsonPathOrIntrinsic(
           ASLGraph.intrinsicArray(...items),
           undefined,
@@ -3870,14 +3882,17 @@ export class ASL {
               ? ref.name.name
               : undefined;
 
-            if (!propName) {
+            if (
+              !propName ||
+              !(typeof propName === "string" || typeof propName === "number")
+            ) {
               // step function does not support variable property accessors
               // this will probably fail in the filter to ASLGraph implementation too
               // however, lets let ASLGraph try and fail if needed.
               return undefined;
             }
 
-            return `${value}['${propName}']`;
+            return formatJsonPath([propName], value);
           }
         }
       } else if (isPropAccessExpr(expr)) {
@@ -4626,8 +4641,11 @@ export class ASL {
           return false;
         })
       ) {
-        // the array element is assigned to $.0__[name]
-        return { jsonPath: `$.0__${this.getIdentifierName(access.element)}` };
+        // the array element is assigned to $.fnls__0__[name]
+        // https://twitter.com/sussmansa/status/1542777348616990720?s=20&t=p5GiGf58znNQmhj1zEOIqg
+        return {
+          jsonPath: `$.fnls__0__${this.getIdentifierName(access.element)}`,
+        };
       }
     }
 
@@ -4660,7 +4678,7 @@ export class ASL {
             ASLGraph.isLiteralString(elementOutput) ||
             ASLGraph.isLiteralNumber(elementOutput)
           ) {
-            return ASLGraph.accessConstant(arrayOutput, elementOutput, true);
+            return ASLGraph.accessConstant(arrayOutput, elementOutput);
           }
           throw new SynthError(
             ErrorCodes.StepFunctions_Invalid_collection_access,
@@ -5054,7 +5072,13 @@ export class ASL {
               ? propertyNameExpr.value
               : undefined;
 
-            if (!propertyName || typeof propertyName !== "string") {
+            if (
+              !propertyName ||
+              !(
+                typeof propertyName === "string" ||
+                typeof propertyName === "number"
+              )
+            ) {
               throw new SynthError(
                 ErrorCodes.StepFunctions_property_names_must_be_constant
               );
@@ -5062,7 +5086,7 @@ export class ASL {
 
             if (ASLGraph.isJsonPath(value)) {
               return {
-                jsonPath: `${value.jsonPath}['${propertyName}']`,
+                jsonPath: formatJsonPath([propertyName], value.jsonPath),
               };
             } else if (ASLGraph.isLiteralObject(value)) {
               return {
@@ -5937,6 +5961,45 @@ function toStateName(node?: FunctionlessNode): string {
     );
   }
   return assertNever(node);
+}
+
+/**
+ * Visit each transition in each state.
+ * Use the callback to update the transition name.
+ */
+export function visitTransition(
+  state: State,
+  cb: (next: string) => string | undefined | void
+): State {
+  const cbOrNext = (next: string) => cb(next) ?? next;
+  if ("End" in state && state.End !== undefined) {
+    return state;
+  }
+  if (isChoiceState(state)) {
+    return {
+      ...state,
+      Choices: state.Choices.map((choice) => ({
+        ...choice,
+        Next: cbOrNext(choice.Next),
+      })),
+      Default: state.Default ? cbOrNext(state.Default) : undefined,
+    };
+  } else if ("Catch" in state) {
+    return {
+      ...state,
+      Catch: state.Catch?.map((_catch) => ({
+        ..._catch,
+        Next: _catch.Next ? cbOrNext(_catch.Next) : _catch.Next,
+      })),
+      Next: state.Next ? cbOrNext(state.Next) : state.Next,
+    };
+  } else if (!("Next" in state)) {
+    return state;
+  }
+  return {
+    ...state,
+    Next: state.Next ? cbOrNext(state.Next) : state.Next,
+  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

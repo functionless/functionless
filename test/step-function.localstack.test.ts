@@ -72,6 +72,8 @@ runtimeTestSuite<
         funcRes.resource.grantStartExecution(role);
         funcRes.resource.grantRead(role);
 
+        console.log(JSON.stringify(funcRes.definition, null, 2));
+
         return {
           outputs: {
             function: funcRes.resource.stateMachineArn,
@@ -1515,6 +1517,8 @@ runtimeTestSuite<
           a = null;
           const c = a;
           a = 1;
+          const j = a;
+          const jj = j;
           const d = a;
           a = [1, 2];
           const e = a;
@@ -1531,10 +1535,11 @@ runtimeTestSuite<
             o: { z },
           };
           let y = "";
-          const h = [y, (y = "a"), ((y = "b"), y), y];
+          z = "c";
+          const h = [z, y, (y = "a"), ((y = "b"), y), y];
           let x = "0";
           const i = `hello ${x} ${(x = "1")} ${((x = "3"), "2")} ${x}`;
-          return { a, b, c, d, e, f, g, h, i };
+          return { a, b, c, d, e, f, g, h, i, jj };
         }
       );
     },
@@ -1546,8 +1551,9 @@ runtimeTestSuite<
       e: [1, 2],
       f: { x: "val" },
       g: { a: "", b: "a", c: "b", z: "b", t: true, o: { z: "b" } },
-      h: ["", "a", "b", "b"],
+      h: ["c", "", "a", "b", "b"],
       i: "hello 0 1 2 3",
+      jj: 1,
     }
   );
 
@@ -1587,6 +1593,88 @@ runtimeTestSuite<
       //  f: 1,
       g: "c",
       h: "d",
+    }
+  );
+
+  /**
+   * Some test cases that exercise the optimization logic.
+   */
+  test(
+    "optimize cases",
+    (parent) => {
+      return new StepFunction(parent, "sfn2", async (input) => {
+        const obj = { 1: "a" };
+        const arr = [1];
+        const obj2 = input.obj;
+        const arr2 = input.arr;
+        let a;
+        if (input.x) {
+          a = "a";
+        } else {
+          a = "b";
+        }
+        const z = a;
+        // does not optimize
+        let b = { c: "" };
+        if (input.x) {
+          b.c = "a";
+        } else {
+          b.c = "b";
+        }
+        const y = b;
+        let c = { c: "" };
+        if (input.x) {
+          c.c = "a";
+        } else {
+          c.c = "b";
+        }
+        const x = c.c;
+        let d = { c: { c: "" } };
+        const xx = { c: "1" };
+        const yy = { c: "2" };
+        if (input.x) {
+          d.c = xx;
+        } else {
+          d.c = yy;
+        }
+        const w = d.c;
+        const e = { d: "d" };
+        const v = e.d;
+        const f = { e: { f: "e" } };
+        const u = f.e;
+        const g = { e: "f" };
+        return {
+          a: obj2.a,
+          b: arr2[0],
+          c: obj["1"],
+          d: arr[0],
+          z,
+          y,
+          x,
+          w,
+          v,
+          u,
+          t: `this ${g.e}`,
+        };
+      });
+    },
+    {
+      a: "1",
+      b: 0,
+      c: "a",
+      d: 1,
+      z: "a",
+      y: { c: "a" },
+      x: "a",
+      w: { c: "1" },
+      v: "d",
+      u: { f: "e" },
+      t: "this f",
+    },
+    {
+      obj: { a: "1" },
+      arr: [0],
+      x: true,
     }
   );
 
