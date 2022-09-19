@@ -1977,12 +1977,7 @@ export class ASL {
       } else if (isSplit(expr)) {
         const [splitter, limit] = expr.args;
 
-        if (limit) {
-          throw new SynthError(
-            ErrorCodes.Unsupported_Feature,
-            "Step Functions does not support the limit parameter on String.split"
-          );
-        } else if (!splitter) {
+        if (!splitter) {
           throw new SynthError(
             ErrorCodes.Invalid_Input,
             "Step Functions String Split splitter argument is required"
@@ -1993,30 +1988,49 @@ export class ASL {
           const valueOut = evalExprToJsonPathOrLiteral(expr.expr.expr);
           const splitterOut = evalExprToJsonPathOrLiteral(splitter.expr);
 
-          if (ASLGraph.isLiteralValue(valueOut)) {
-            if (!ASLGraph.isLiteralString(valueOut)) {
-              throw new SynthError(
-                ErrorCodes.Invalid_Input,
-                "Step Functions String Split must be on a reference or string literal."
-              );
-            }
+          if (
+            ASLGraph.isLiteralValue(valueOut) &&
+            !ASLGraph.isLiteralString(valueOut)
+          ) {
+            throw new SynthError(
+              ErrorCodes.Invalid_Input,
+              "Step Functions String Split must be on a reference or string literal."
+            );
           }
 
-          if (ASLGraph.isLiteralValue(splitterOut)) {
-            if (!ASLGraph.isLiteralString(splitterOut)) {
-              throw new SynthError(
-                ErrorCodes.Invalid_Input,
-                "Step Functions String Split splitter argument must be a reference or string literal."
-              );
-            }
+          if (
+            ASLGraph.isLiteralValue(splitterOut) &&
+            !ASLGraph.isLiteralString(splitterOut)
+          ) {
+            throw new SynthError(
+              ErrorCodes.Invalid_Input,
+              "Step Functions String Split splitter argument must be a reference or string literal."
+            );
           }
 
           if (
             ASLGraph.isLiteralString(valueOut) &&
             ASLGraph.isLiteralString(splitterOut)
           ) {
+            const limitOut = limit
+              ? evalExprToJsonPathOrLiteral(limit.expr)
+              : undefined;
+            if (limitOut && !ASLGraph.isLiteralNumber(limitOut)) {
+              throw new SynthError(
+                ErrorCodes.Unsupported_Feature,
+                "Step Function String Split limit must be a constant number"
+              );
+            }
+
+            if (limit) {
+              throw new SynthError(
+                ErrorCodes.Unsupported_Feature,
+                "String Split limit argument is not supported Step Functions"
+              );
+            }
+
             return ASLGraph.literalValue(
-              valueOut.value.split(splitterOut.value)
+              valueOut.value.split(splitterOut.value, limitOut?.value)
             );
           }
 
@@ -2053,7 +2067,7 @@ export class ASL {
       }
       throw new Error(
         `call must be an integration call, list(.slice, .map, .forEach, .filter, or ` +
-          `.join), Number(), Boolean, String(), JSON.parse, JSON.stringify, or Promise.all, found: ${toStateName(
+          `.join), String.split, Number(), Boolean, String(), JSON.parse, JSON.stringify, or Promise.all, found: ${toStateName(
             expr
           )}`
       );

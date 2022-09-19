@@ -286,9 +286,6 @@ export const evalToConstant = (expr: Expr): Constant | undefined => {
     }
   } else if (isPropAccessExpr(expr)) {
     const obj = evalToConstant(expr.expr)?.constant as any;
-    if (typeof obj !== "object") {
-      return undefined;
-    }
     if (obj && isIdentifier(expr.name) && expr.name.name in obj) {
       return { constant: obj[expr.name.name] };
     }
