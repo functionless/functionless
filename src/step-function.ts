@@ -2255,7 +2255,7 @@ ${[
       if (!taskToken) {
         throw new SynthError(
           ErrorCodes.Invalid_Input,
-          "StepFunction.sendTaskSuccess taskToken argument is required"
+          "StepFunction.sendTaskFailure taskToken argument is required"
         );
       }
 
