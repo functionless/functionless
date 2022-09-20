@@ -1,13 +1,8 @@
-import { ReactElement } from "react";
 import { code } from "../content/features/code/code";
-import { compose } from "../content/features/compose/compose";
 import { title, subtitle } from "../content/features/features";
-import { Feature } from "../lib/feature";
-import { Code } from "./code";
-import { FeatureText } from "./feature";
-import { CodeFeature } from "./features/code";
-import { ComposeCode } from "./features/compose/composeCode";
-import { Diagram } from "./features/compose/diagram";
+import { CodeTabs } from "./features/codeTabs";
+import { ComposeFeature } from "./features/compose/composeFeature";
+import { FeatureSection } from "./features/featureSection";
 
 export const Features = () => {
   return (
@@ -18,12 +13,8 @@ export const Features = () => {
       <div className="!max-w-screen-md container flex flex-col items-center">
         <h3 className="text-center mt-2">{subtitle}</h3>
       </div>
-      <FeatureSection feature={code} aside={<CodeFeature />} />
-      <FeatureSection
-        feature={compose}
-        aside={<ComposeCode />}
-        footer={<Diagram />}
-      />
+      <FeatureSection feature={code} aside={<CodeTabs />} />
+      <ComposeFeature />
       {/*
       <div className="grid grid-cols-1 md:grid-cols-2 container !max-w-screen-xl py-36 gap-11">
         <div>
@@ -71,19 +62,3 @@ export const Features = () => {
     </section>
   );
 };
-
-const FeatureSection = ({
-  feature,
-  aside,
-  footer,
-}: {
-  feature: Feature;
-  aside: ReactElement;
-  footer?: ReactElement;
-}) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 container !max-w-screen-xl my-36 gap-11 snap-start scroll-m-28">
-    <FeatureText {...feature} />
-    {aside}
-    <div className="col-span-2">{footer}</div>
-  </div>
-);

@@ -4,7 +4,8 @@ import { tab1, tab2, tab3 } from "../../content/features/code/code";
 import IamPolicy from "../../content/features/code/iam-policy.mdx";
 import Output from "../../content/features/code/output.mdx";
 import FunctionlessTableFunction from "../../content/features/code/table-function.mdx";
-import { Code, VisibilityWindow } from "../code";
+import { Code } from "../code";
+import { VisibilityWindow } from "../visibilityWindow";
 
 const ButtonTab = ({ children }: PropsWithChildren<{}>) => (
   <Tab as={Fragment}>
@@ -16,7 +17,7 @@ const ButtonTab = ({ children }: PropsWithChildren<{}>) => (
   </Tab>
 );
 
-export const CodeFeature = () => (
+export const CodeTabs = () => (
   <Tab.Group as="div">
     <Tab.List>
       <ButtonTab>{tab1}</ButtonTab>
@@ -27,7 +28,7 @@ export const CodeFeature = () => (
       <Tab.Panel as="div" className="grid grid-cols-4 gap-8">
         <div className="col-span-4">
           <VisibilityWindow visibiltyThreshold={0.5} delayMs={250}>
-            {(visible) => (
+            {(visible: boolean) => (
               <Code
                 animate={visible}
                 fileName="functionless.ts"
@@ -41,7 +42,7 @@ export const CodeFeature = () => (
         </div>
         <div className="col-span-2 -ml-7 -mt-12 mb-12">
           <VisibilityWindow visibiltyThreshold={0.1} delayMs={2500}>
-            {(visible) => (
+            {(visible: boolean) => (
               <Code
                 animate={visible}
                 fileName="iam.json"
@@ -55,7 +56,7 @@ export const CodeFeature = () => (
         </div>
         <div className="col-span-2 -mr-7 -mt-16 mb-16">
           <VisibilityWindow visibiltyThreshold={0.1} delayMs={3500}>
-            {(visible) => (
+            {(visible: boolean) => (
               <Code
                 animate={visible}
                 fileName="output.json"

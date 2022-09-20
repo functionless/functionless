@@ -2,38 +2,8 @@ import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import { MDXProvider } from "@mdx-js/react";
 import clsx from "clsx";
 import Highlight, { defaultProps, Language } from "prism-react-renderer";
-import React, { ReactElement } from "react";
+import React, { ReactElement, useMemo } from "react";
 import { Timeline } from "../lib/useTimeline";
-import { useVisibility } from "../lib/useVisibility";
-
-export const VisibilityWindow = ({
-  children,
-  visibiltyThreshold,
-  delayMs,
-}: {
-  visibiltyThreshold: number;
-  delayMs: number;
-  children: (visible: boolean) => ReactElement;
-}) => {
-  const { ref, visible } = useVisibility(visibiltyThreshold);
-  return (
-    <div ref={ref}>
-      <div
-        className={clsx(
-          "transition duration-300",
-          visible
-            ? "opacity-100 translate-x-0 scale-100"
-            : "opacity-0 translate-y-10 scale-75"
-        )}
-        style={{
-          transitionDelay: `${visible ? delayMs : 0}ms`,
-        }}
-      >
-        {children(visible)}
-      </div>
-    </div>
-  );
-};
 
 const CodeWindow = ({
   fileName,
@@ -49,6 +19,9 @@ const CodeWindow = ({
   </div>
 );
 
+/**
+ * A component for displaying code loaded from mdx
+ */
 export const Code = ({
   children,
   animate,
@@ -60,28 +33,36 @@ export const Code = ({
   fileName: string;
   language: Language;
   introDelayMs: number;
-}>) => (
-  <MDXProvider
-    components={{
-      pre: ({ children }: { children: ReactElement }) => (
-        <pre className="p-0 overflow-unset">{children}</pre>
-      ),
-      code: ({ children: code }: { children: string }) => (
-        <CodeWindow fileName={fileName} code={code}>
-          <HighlightedCode
-            code={code}
-            language={language}
-            introDelayMs={introDelayMs}
-            animate={animate}
-          />
-        </CodeWindow>
-      ),
-    }}
-  >
-    {children}
-  </MDXProvider>
-);
+}>) =>
+  //Needs to be memod otherwise the animation will reset when its re-rendered, even if props doesn't change
+  useMemo(
+    () => (
+      <MDXProvider
+        components={{
+          pre: ({ children }: { children: ReactElement }) => (
+            <pre className="p-0 overflow-unset">{children}</pre>
+          ),
+          code: ({ children: code }: { children: string }) => (
+            <CodeWindow fileName={fileName} code={code}>
+              <HighlightedCode
+                code={code}
+                language={language}
+                introDelayMs={introDelayMs}
+                animate={animate}
+              />
+            </CodeWindow>
+          ),
+        }}
+      >
+        {children}
+      </MDXProvider>
+    ),
+    [animate, fileName, language, introDelayMs]
+  );
 
+/**
+ * A component for displaying code loaded from mdx, animated according to a given timeline. Source code is split into timeline segments by '$$' symbol
+ */
 export function TimelineCode<K extends string>({
   children,
   animate,
@@ -94,35 +75,38 @@ export function TimelineCode<K extends string>({
   language: Language;
   timeline: Timeline<K>;
 }>) {
-  return (
-    <MDXProvider
-      components={{
-        pre: ({ children }: { children: ReactElement }) => (
-          <pre className="p-0 overflow-unset">{children}</pre>
-        ),
-        code: ({ children: code }: { children: string }) => {
-          const splitCode = code.split("$$;");
-          return (
-            <CodeWindow fileName={fileName} code={code}>
-              {splitCode.map((chunk, i) => (
-                <HighlightedCode
-                  key={i}
-                  code={chunk.trimEnd()}
-                  language={language}
-                  introDelayMs={timeline[Object.keys(timeline)[i] as K]}
-                  animate={animate}
-                  lineNumberStart={splitCode
-                    .slice(0, i)
-                    .reduce((count, ch) => count + ch.split("\n").length, 1)}
-                />
-              ))}
-            </CodeWindow>
-          );
-        },
-      }}
-    >
-      {children}
-    </MDXProvider>
+  return useMemo(
+    () => (
+      <MDXProvider
+        components={{
+          pre: ({ children }: { children: ReactElement }) => (
+            <pre className="p-0 overflow-unset">{children}</pre>
+          ),
+          code: ({ children: code }: { children: string }) => {
+            const splitCode = code.split("$$;");
+            return (
+              <CodeWindow fileName={fileName} code={code}>
+                {splitCode.map((chunk, i) => (
+                  <HighlightedCode
+                    key={i}
+                    code={chunk.trimEnd()}
+                    language={language}
+                    introDelayMs={timeline[Object.keys(timeline)[i] as K]}
+                    animate={animate}
+                    lineNumberStart={splitCode
+                      .slice(0, i)
+                      .reduce((count, ch) => count + ch.split("\n").length, 1)}
+                  />
+                ))}
+              </CodeWindow>
+            );
+          },
+        }}
+      >
+        {children}
+      </MDXProvider>
+    ),
+    [children, animate, fileName, language, timeline]
   );
 }
 
