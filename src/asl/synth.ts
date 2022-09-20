@@ -1869,7 +1869,7 @@ export class ASL {
               .map((output) =>
                 ASLGraph.isJsonPath(output)
                   ? "{}"
-                  : ASLGraph.escapeFormatString(output)
+                  : ASLGraph.escapeFormatLiteral(output)
               )
               .join(""),
             ...jsonPaths.map(([, jp]) => jp)
@@ -2269,7 +2269,11 @@ export class ASL {
             prop: PropAssignExpr | SpreadAssignExpr
           ): ASLGraph.LiteralValue | ASLGraph.JsonPath {
             const output = evalExprToJsonPathOrLiteral(prop.expr);
-            return ASLGraph.isJsonPath(output) ? assignValue(output) : output;
+            return ASLGraph.isJsonPath(output) &&
+              // paths at $$ are immutable
+              !output.jsonPath.startsWith("$$.")
+              ? assignValue(output)
+              : output;
           }
         }
       );

@@ -5,6 +5,7 @@ import {
   aws_stepfunctions,
   Stack,
 } from "aws-cdk-lib";
+import { IPrincipal } from "aws-cdk-lib/aws-iam";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
@@ -1223,31 +1224,33 @@ abstract class BaseStepFunction<
 
   constructor(readonly resource: aws_stepfunctions.StateMachine) {
     // Integration object for appsync vtl
-    this.appSyncVtl = this.appSyncIntegration({
-      request: (call, context) => {
-        const { name, input, traceHeader } = retrieveMachineArgs(call);
+    this.appSyncVtl = this.appSyncIntegration(
+      {
+        request: (call, context) => {
+          const { name, input, traceHeader } = retrieveMachineArgs(call);
 
-        const inputObj = context.var("{}");
-        input &&
+          const inputObj = context.var("{}");
+          input &&
+            context.put(
+              inputObj,
+              context.str("input"),
+              `$util.toJson(${context.eval(input)})`
+            );
+          name &&
+            context.put(inputObj, context.str("name"), context.eval(name));
+          traceHeader &&
+            context.put(
+              inputObj,
+              context.str("traceHeader"),
+              context.eval(traceHeader)
+            );
           context.put(
             inputObj,
-            context.str("input"),
-            `$util.toJson(${context.eval(input)})`
+            context.str("stateMachineArn"),
+            context.str(resource.stateMachineArn)
           );
-        name && context.put(inputObj, context.str("name"), context.eval(name));
-        traceHeader &&
-          context.put(
-            inputObj,
-            context.str("traceHeader"),
-            context.eval(traceHeader)
-          );
-        context.put(
-          inputObj,
-          context.str("stateMachineArn"),
-          context.str(resource.stateMachineArn)
-        );
 
-        return `{
+          return `{
   "version": "2018-05-29",
   "method": "POST",
   "resourcePath": "/",
@@ -1264,8 +1267,14 @@ abstract class BaseStepFunction<
     "body": $util.toJson(${inputObj})
   }
 }`;
+        },
       },
-    });
+      (resource, principal) =>
+        resource.stateMachineType ===
+        aws_stepfunctions.StateMachineType.STANDARD
+          ? resource.grantStartExecution(principal)
+          : resource.grantStartSyncExecution(principal)
+    );
   }
 
   readonly apiGWVtl: ApiGatewayVtlIntegration = {
@@ -1321,7 +1330,11 @@ abstract class BaseStepFunction<
   };
 
   public appSyncIntegration(
-    integration: Pick<AppSyncVtlIntegration, "request">
+    integration: Pick<AppSyncVtlIntegration, "request">,
+    grant: (
+      resource: aws_stepfunctions.StateMachine,
+      principal: IPrincipal
+    ) => void
   ): AppSyncVtlIntegration {
     return {
       ...integration,
@@ -1341,15 +1354,7 @@ abstract class BaseStepFunction<
           },
         });
 
-        this.resource.grantRead(ds.grantPrincipal);
-        if (
-          this.resource.stateMachineType ===
-          aws_stepfunctions.StateMachineType.EXPRESS
-        ) {
-          this.resource.grantStartSyncExecution(ds.grantPrincipal);
-        } else {
-          this.resource.grantStartExecution(ds.grantPrincipal);
-        }
+        grant(this.resource, ds.grantPrincipal);
         return ds;
       },
       result: (resultVariable) => {
@@ -1947,11 +1952,6 @@ export interface IStepFunction<
       input: StepFunctionRequest<Payload>
     ) => Promise<AWS.StepFunctions.StartExecutionOutput>
   > {
-  describeExecution: IntegrationCall<
-    "StepFunction.describeExecution",
-    (executionArn: string) => Promise<AWS.StepFunctions.DescribeExecutionOutput>
-  >;
-
   (
     input: StepFunctionRequest<Payload>
   ): Promise<AWS.StepFunctions.StartExecutionOutput>;
@@ -2014,25 +2014,34 @@ class BaseStandardStepFunction<
     (executionArn: string) => Promise<AWS.StepFunctions.DescribeExecutionOutput>
   >({
     kind: "StepFunction.describeExecution",
-    appSyncVtl: this.appSyncIntegration({
-      request(call, context) {
-        const executionArn = getArgs(call);
-        return `{
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": ${context.json(context.eval(executionArn))}
-    }
+    appSyncVtl: this.appSyncIntegration(
+      {
+        request(call, context) {
+          const [executionArn] = call.args;
+          if (!executionArn) {
+            throw new SynthError(
+              ErrorCodes.Invalid_Input,
+              "StepFunction.describeExecution executionArn argument is required"
+            );
+          }
+          return `{
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": ${context.json(context.eval(executionArn))}
   }
+}
 }`;
+        },
       },
-    }),
+      (resource, principal) => resource.grantRead(principal)
+    ),
     asl: (call, context) => {
       // need DescribeExecution
       this.resource.grantRead(context.role);
@@ -2071,6 +2080,311 @@ class BaseStandardStepFunction<
       },
     },
   });
+
+  public sendTaskSuccess = makeIntegration<
+    "StepFunction.sendTaskSuccess",
+    <Payload>(
+      taskToken: AWS.StepFunctions.TaskToken,
+      output: Payload
+    ) => Promise<AWS.StepFunctions.SendTaskSuccessOutput>
+  >({
+    kind: "StepFunction.sendTaskSuccess",
+    appSyncVtl: this.appSyncIntegration(
+      {
+        request(call, context) {
+          const [taskToken, output] = call.args;
+          if (!taskToken) {
+            throw new SynthError(
+              ErrorCodes.Invalid_Input,
+              "StepFunction.sendTaskSuccess taskToken argument is required"
+            );
+          }
+          if (!output) {
+            throw new SynthError(
+              ErrorCodes.Invalid_Input,
+              "StepFunction.sendTaskSuccess output argument is required"
+            );
+          }
+          return `{
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+"headers": {
+  "content-type": "application/x-amz-json-1.0",
+  "x-amz-target": "AWSStepFunctions.SendTaskSuccess"
+},
+"body": {
+  "taskToken": ${context.json(context.eval(taskToken))},
+  "output": ${context.eval(output)}
+}
+}
+}`;
+        },
+      },
+      (resource, principal) => resource.grantTaskResponse(principal)
+    ),
+    asl: (call, context) => {
+      // need DescribeExecution
+      this.resource.grantTaskResponse(context.role);
+
+      const [taskToken, output] = call.args;
+      if (!taskToken) {
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "StepFunction.sendTaskSuccess taskToken argument is required"
+        );
+      }
+      if (!output) {
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "StepFunction.sendTaskSuccess output argument is required"
+        );
+      }
+
+      return context.evalContext(
+        call,
+        ({ evalExprToJsonPathOrLiteral, addState }) => {
+          const tokenOut = evalExprToJsonPathOrLiteral(taskToken.expr);
+          const outputOut = evalExprToJsonPathOrLiteral(output.expr);
+
+          // output must be stringified.
+          const stringify = ASLGraph.isJsonPath(outputOut)
+            ? ASLGraph.intrinsicJsonToString(outputOut)
+            : ASLGraph.stringifyLiteral(outputOut);
+
+          // render the intrinsic function if possible, we may be able to use it inline.
+          const { rendered: stringifyValue, states: stringifyStates } =
+            ASLGraph.isIntrinsicFunction(stringify)
+              ? ASLGraph.safeRenderIntrinsicFunction(
+                  stringify,
+                  context.newHeapVariable()
+                )
+              : { rendered: stringify, states: undefined };
+
+          if (stringifyStates) {
+            // if the intrinsic function requires extra states.
+            addState(stringifyStates);
+          }
+
+          return context.stateWithHeapOutput(
+            ASLGraph.taskWithInput(
+              {
+                Type: "Task",
+                Resource: "arn:aws:states:::aws-sdk:sfn:sendTaskSuccess",
+                Next: ASLGraph.DeferNext,
+              },
+              ASLGraph.literalValue({
+                ...ASLGraph.jsonAssignment("TaskToken", tokenOut),
+                ...(typeof stringifyValue === "string"
+                  ? { "Output.$": stringifyValue }
+                  : { Output: stringifyValue.value }),
+              })
+            )
+          );
+        }
+      );
+    },
+    native: {
+      bind: (context) => this.resource.grantTaskResponse(context.resource),
+      preWarm(prewarmContext) {
+        prewarmContext.getOrInit(PrewarmClients.StepFunctions);
+      },
+      call: async (args, prewarmContext) => {
+        const stepFunctionClient = prewarmContext.getOrInit<StepFunctions>(
+          PrewarmClients.StepFunctions
+        );
+
+        const [taskToken, output] = args;
+
+        return stepFunctionClient
+          .sendTaskSuccess({ taskToken, output: JSON.stringify(output) })
+          .promise();
+      },
+    },
+  });
+
+  public sendTaskFailure = makeIntegration<
+    "StepFunction.sendTaskFailure",
+    (
+      taskToken: AWS.StepFunctions.TaskToken,
+      error?: string,
+      cause?: string
+    ) => Promise<AWS.StepFunctions.SendTaskFailureOutput>
+  >({
+    kind: "StepFunction.sendTaskFailure",
+    appSyncVtl: this.appSyncIntegration(
+      {
+        request(call, context) {
+          const [taskToken, error, cause] = call.args;
+          if (!taskToken) {
+            throw new SynthError(
+              ErrorCodes.Invalid_Input,
+              "StepFunction.sendTaskFailure taskToken argument is required"
+            );
+          }
+          return `{
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+"headers": {
+"content-type": "application/x-amz-json-1.0",
+"x-amz-target": "AWSStepFunctions.SendTaskFailure"
+},
+"body": {
+${[
+  ["taskToken", taskToken] as const,
+  ["error", error] as const,
+  ["cause", cause] as const,
+]
+  .filter(([_, v]) => !!v)
+  .map(([key, value]) => `${key}: ${context.json(context.eval(value))}`)
+  .join(",")}
+}
+}
+}`;
+        },
+      },
+      (resource, principal) => resource.grantTaskResponse(principal)
+    ),
+    asl: (call, context) => {
+      this.resource.grantTaskResponse(context.role);
+
+      const [taskToken, error, cause] = call.args;
+      if (!taskToken) {
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "StepFunction.sendTaskSuccess taskToken argument is required"
+        );
+      }
+
+      return context.evalContext(call, ({ evalExprToJsonPathOrLiteral }) => {
+        const tokenOut = evalExprToJsonPathOrLiteral(taskToken.expr);
+        const errorOut = error
+          ? evalExprToJsonPathOrLiteral(error.expr)
+          : undefined;
+        const causeOut = cause
+          ? evalExprToJsonPathOrLiteral(cause.expr)
+          : undefined;
+
+        return context.stateWithHeapOutput(
+          ASLGraph.taskWithInput(
+            {
+              Type: "Task",
+              Resource: "arn:aws:states:::aws-sdk:sfn:sendTaskFailure",
+              Next: ASLGraph.DeferNext,
+            },
+            ASLGraph.literalValue({
+              ...ASLGraph.jsonAssignment("TaskToken", tokenOut),
+              ...(errorOut ? ASLGraph.jsonAssignment("Error", errorOut) : {}),
+              ...(causeOut ? ASLGraph.jsonAssignment("Cause", causeOut) : {}),
+            })
+          )
+        );
+      });
+    },
+    native: {
+      bind: (context) => this.resource.grantTaskResponse(context.resource),
+      preWarm(prewarmContext) {
+        prewarmContext.getOrInit(PrewarmClients.StepFunctions);
+      },
+      call: async (args, prewarmContext) => {
+        const stepFunctionClient = prewarmContext.getOrInit<StepFunctions>(
+          PrewarmClients.StepFunctions
+        );
+
+        const [taskToken, error, cause] = args;
+
+        return stepFunctionClient
+          .sendTaskFailure({ taskToken, error, cause })
+          .promise();
+      },
+    },
+  });
+
+  public sendTaskHeartbeat = makeIntegration<
+    "StepFunction.sendTaskHeartbeat",
+    (
+      taskToken: AWS.StepFunctions.TaskToken
+    ) => Promise<AWS.StepFunctions.SendTaskHeartbeatOutput>
+  >({
+    kind: "StepFunction.sendTaskHeartbeat",
+    appSyncVtl: this.appSyncIntegration(
+      {
+        request(call, context) {
+          const [taskToken] = call.args;
+          if (!taskToken) {
+            throw new SynthError(
+              ErrorCodes.Invalid_Input,
+              "StepFunction.sendTaskHeartbeat taskToken argument is required"
+            );
+          }
+          return `{
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+"headers": {
+"content-type": "application/x-amz-json-1.0",
+"x-amz-target": "AWSStepFunctions.SendTaskHeartbeat"
+},
+"body": {
+"taskToken": ${context.json(context.eval(taskToken))}
+}
+}
+}`;
+        },
+      },
+      (resource, principal) => resource.grantTaskResponse(principal)
+    ),
+    asl: (call, context) => {
+      // need DescribeExecution
+      this.resource.grantTaskResponse(context.role);
+
+      const [taskToken] = call.args;
+      if (!taskToken) {
+        throw new SynthError(
+          ErrorCodes.Invalid_Input,
+          "StepFunction.sendTaskHeartbeat taskToken argument is required"
+        );
+      }
+
+      return context.evalContext(call, ({ evalExprToJsonPathOrLiteral }) => {
+        const tokenOut = evalExprToJsonPathOrLiteral(taskToken.expr);
+
+        return context.stateWithHeapOutput(
+          ASLGraph.taskWithInput(
+            {
+              Type: "Task",
+              Resource: "arn:aws:states:::aws-sdk:sfn:sendTaskHeartbeat",
+              Next: ASLGraph.DeferNext,
+            },
+            ASLGraph.literalValue(
+              ASLGraph.jsonAssignment("TaskToken", tokenOut)
+            )
+          )
+        );
+      });
+    },
+    native: {
+      bind: (context) => this.resource.grantTaskResponse(context.resource),
+      preWarm(prewarmContext) {
+        prewarmContext.getOrInit(PrewarmClients.StepFunctions);
+      },
+      call: async (args, prewarmContext) => {
+        const stepFunctionClient = prewarmContext.getOrInit<StepFunctions>(
+          PrewarmClients.StepFunctions
+        );
+
+        const [token] = args;
+
+        return stepFunctionClient
+          .sendTaskHeartbeat({ taskToken: token })
+          .promise();
+      },
+    },
+  });
 }
 
 interface BaseStandardStepFunction<
@@ -2080,6 +2394,33 @@ interface BaseStandardStepFunction<
   (
     input: StepFunctionRequest<Payload>
   ): Promise<AWS.StepFunctions.StartExecutionOutput>;
+
+  describeExecution: IntegrationCall<
+    "StepFunction.describeExecution",
+    (executionArn: string) => Promise<AWS.StepFunctions.DescribeExecutionOutput>
+  >;
+
+  sendTaskSuccess: IntegrationCall<
+    "StepFunction.sendTaskSuccess",
+    <Payload>(
+      taskToken: AWS.StepFunctions.TaskToken,
+      output: Payload
+    ) => Promise<AWS.StepFunctions.SendTaskSuccessOutput>
+  >;
+  sendTaskFailure: IntegrationCall<
+    "StepFunction.sendTaskFailure",
+    (
+      taskToken: AWS.StepFunctions.TaskToken,
+      error?: string,
+      cause?: string
+    ) => Promise<AWS.StepFunctions.SendTaskFailureOutput>
+  >;
+  sendTaskHeartbeat: IntegrationCall<
+    "StepFunction.sendTaskHeartbeat",
+    (
+      taskToken: AWS.StepFunctions.TaskToken
+    ) => Promise<AWS.StepFunctions.SendTaskHeartbeatOutput>
+  >;
 }
 
 /**
@@ -2234,14 +2575,6 @@ class ImportedStepFunction<
 
     super(machine);
   }
-}
-
-function getArgs(call: CallExpr) {
-  const executionArn = call.args[0];
-  if (executionArn === undefined) {
-    throw new Error("missing argument 'executionArn'");
-  }
-  return executionArn;
 }
 
 function assertLiteralStringOrJsonPath<S extends string = string>(
