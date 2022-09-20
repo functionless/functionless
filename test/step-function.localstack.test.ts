@@ -330,9 +330,18 @@ runtimeTestSuite<
         }
       );
 
-      const functionName = Token.asString(
-        `awaitFunctionTest${runtimeTestExecutionContext.stackSuffix ?? ""}`
-      );
+      const functionName = `awaitFunctionTest${
+        runtimeTestExecutionContext.stackSuffix ?? ""
+      }`;
+      // arns get replaced in the sfn snapshot definition, so lets use an arn.
+      const functionArn = stack.formatArn({
+        service: "lambda",
+        account: stack.account,
+        region: stack.region,
+        resource: "function",
+        arnFormat: ArnFormat.COLON_RESOURCE_NAME,
+        resourceName: functionName,
+      });
       const machineName = `awaitMachineTest${
         runtimeTestExecutionContext.stackSuffix ?? ""
       }`;
@@ -356,7 +365,7 @@ runtimeTestSuite<
             $SFN.task({
               Resource: "arn:aws:states:::lambda:invoke.waitForTaskToken",
               Parameters: {
-                FunctionName: functionName,
+                FunctionName: functionArn,
                 Payload: { value: 1, token: context.Task.Token, fail: true },
               },
               Comment: "hullo again",
@@ -411,7 +420,7 @@ runtimeTestSuite<
             g: $SFN.task({
               Resource: "arn:aws:states:::lambda:invoke.waitForTaskToken",
               Parameters: {
-                FunctionName: functionName,
+                FunctionName: functionArn,
                 Payload: { value: 1, token: context.Task.Token },
               },
               Comment: "hullo again",
