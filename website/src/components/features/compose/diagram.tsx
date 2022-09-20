@@ -5,20 +5,24 @@ import clsx from "clsx";
 import { Window } from "../../window";
 import { composeTimeline } from "./timeline";
 
-export const Diagram = ({ showContents }: { showContents: boolean }) => (
-  <div className="flex justify-center">
+export const Diagram = ({ visible }: { visible: boolean }) => (
+  <div
+    className={clsx(
+      "flex justify-center transition duration-300",
+      visible
+        ? "opacity-100 translate-x-0 scale-100"
+        : "opacity-0 translate-y-10 scale-75"
+    )}
+  >
     <Window>
       <div className="flex justify-center items-end py-4 px-8">
-        <TimelineImage visible={showContents} introMs={composeTimeline.events}>
+        <TimelineImage visible={visible} introMs={composeTimeline.events}>
           <Events />
         </TimelineImage>
-        <TimelineImage visible={showContents} introMs={composeTimeline.orders}>
+        <TimelineImage visible={visible} introMs={composeTimeline.orders}>
           <Orders />
         </TimelineImage>
-        <TimelineImage
-          visible={showContents}
-          introMs={composeTimeline.processOrder}
-        >
+        <TimelineImage visible={visible} introMs={composeTimeline.processOrder}>
           <Process />
         </TimelineImage>
       </div>

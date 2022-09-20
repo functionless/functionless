@@ -10,7 +10,7 @@ export const ComposeFeature = () => {
     <FeatureSection
       feature={compose}
       aside={<ComposeCode onVisibilityChanged={setCodeVisible} />}
-      footer={<Diagram showContents={codeVisible} />}
+      footer={<Diagram visible={codeVisible} />}
     />
   );
 };

@@ -1,11 +1,11 @@
 import { Tab } from "@headlessui/react";
+import { tab1, tab2, tab3 } from "@site/src/content/features/code/code";
+import IamPolicy from "@site/src/content/features/code/iam-policy.mdx";
+import Output from "@site/src/content/features/code/output.mdx";
+import FunctionlessTableFunction from "@site/src/content/features/code/table-function.mdx";
 import { Fragment, PropsWithChildren } from "react";
-import { tab1, tab2, tab3 } from "../../content/features/code/code";
-import IamPolicy from "../../content/features/code/iam-policy.mdx";
-import Output from "../../content/features/code/output.mdx";
-import FunctionlessTableFunction from "../../content/features/code/table-function.mdx";
-import { Code } from "../code";
-import { VisibilityWindow } from "../visibilityWindow";
+import { Code } from "../../code";
+import { VisibilityWindow } from "../../visibilityWindow";
 
 const ButtonTab = ({ children }: PropsWithChildren<{}>) => (
   <Tab as={Fragment}>

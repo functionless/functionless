@@ -1,6 +1,6 @@
 import { Feature } from "@site/src/lib/feature";
 import { ReactElement } from "react";
-import { FeatureText } from "../feature";
+import { FeatureText } from "./featureText";
 
 export const FeatureSection = ({
   feature,
