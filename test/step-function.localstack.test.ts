@@ -5,7 +5,6 @@ import {
   RemovalPolicy,
   ArnFormat,
   aws_iam,
-  Token,
 } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 import {

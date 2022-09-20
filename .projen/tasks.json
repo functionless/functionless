@@ -195,7 +195,7 @@
       },
       "steps": [
         {
-          "exec": "tsc -p ./tsconfig.dev.json --noEmit"
+          "spawn": "typecheck"
         },
         {
           "spawn": "test:fast"
@@ -250,6 +250,14 @@
       "steps": [
         {
           "exec": "jest --watch"
+        }
+      ]
+    },
+    "typecheck": {
+      "name": "typecheck",
+      "steps": [
+        {
+          "exec": "tsc -p ./tsconfig.dev.json --noEmit"
         }
       ]
     },
