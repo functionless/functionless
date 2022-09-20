@@ -8,18 +8,18 @@ exports[`deconstruct integration response 1`] = `
 #end
 #set($context.stash.exec = 'exec1')
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson($context.stash.exec)
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson($context.stash.exec)
   }
+}
 }",
   "#if($context.result.statusCode == 200)
     #set($sfn__result = $util.parseJson($context.result.body))
@@ -106,18 +106,18 @@ exports[`machine describe exec return 1`] = `
 #end
 #set($context.stash.exec = 'exec1')
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson($context.stash.exec)
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson($context.stash.exec)
   }
+}
 }",
   "#if($context.result.statusCode == 200)
     #set($sfn__result = $util.parseJson($context.result.body))
@@ -158,18 +158,18 @@ exports[`machine describe exec var 1`] = `
 #end
 #set($context.stash.exec = 'exec1')
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson($context.stash.exec)
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson($context.stash.exec)
   }
+}
 }",
   "#if($context.result.statusCode == 200)
     #set($sfn__result = $util.parseJson($context.result.body))
@@ -209,72 +209,72 @@ exports[`multiple isolated integrations 1`] = `
   #return($context.stash.return__val)
 #end
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson('exec1')
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson('exec1')
   }
+}
 }",
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson('exec2')
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson('exec2')
   }
+}
 }",
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson('exec3')
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson('exec3')
   }
+}
 }",
   "{}",
   "#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson('exec4')
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson('exec4')
   }
+}
 }",
   "{}",
   "#if($context.stash.return__flag)
@@ -607,18 +607,18 @@ exports[`multiple linked integrations with mutation 1`] = `
   #return($context.stash.return__val)
 #end
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson('exec1')
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson('exec1')
   }
+}
 }",
   "#if($context.result.statusCode == 200)
     #set($sfn__result = $util.parseJson($context.result.body))
@@ -679,18 +679,18 @@ exports[`multiple linked integrations with props 1`] = `
   #return($context.stash.return__val)
 #end
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson('exec1')
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson('exec1')
   }
+}
 }",
   "#if($context.result.statusCode == 200)
     #set($sfn__result = $util.parseJson($context.result.body))
@@ -703,18 +703,18 @@ exports[`multiple linked integrations with props 1`] = `
   #return($context.stash.return__val)
 #end
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson($context.stash.res1.executionArn)
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson($context.stash.res1.executionArn)
   }
+}
 }",
   "#if($context.result.statusCode == 200)
     #set($sfn__result = $util.parseJson($context.result.body))
@@ -727,18 +727,18 @@ exports[`multiple linked integrations with props 1`] = `
   #return($context.stash.return__val)
 #end
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson($context.stash.res2.executionArn)
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson($context.stash.res2.executionArn)
   }
+}
 }",
   "{}",
   "#if($context.stash.return__flag)
@@ -868,18 +868,18 @@ exports[`multiple nested integrations prop access 1`] = `
   #return($context.stash.return__val)
 #end
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson('exec1')
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson('exec1')
   }
+}
 }",
   "#if($context.result.statusCode == 200)
     #set($sfn__result = $util.parseJson($context.result.body))
@@ -892,18 +892,18 @@ exports[`multiple nested integrations prop access 1`] = `
   #return($context.stash.return__val)
 #end
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson($context.stash.fnl_tmp_0.executionArn)
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson($context.stash.fnl_tmp_0.executionArn)
   }
+}
 }",
   "#if($context.result.statusCode == 200)
     #set($sfn__result = $util.parseJson($context.result.body))
@@ -916,18 +916,18 @@ exports[`multiple nested integrations prop access 1`] = `
   #return($context.stash.return__val)
 #end
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson($context.stash.fnl_tmp_1.executionArn)
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson($context.stash.fnl_tmp_1.executionArn)
   }
+}
 }",
   "{}",
   "#if($context.stash.return__flag)
@@ -960,18 +960,18 @@ exports[`step function describe execution machine describe exec string 1`] = `
   #return($context.stash.return__val)
 #end
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson('exec1')
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson('exec1')
   }
+}
 }",
   "{}",
   "#if($context.stash.return__flag)
@@ -1005,18 +1005,18 @@ exports[`step function integration machine describe exec 1`] = `
 #end
 #set($context.stash.exec = 'exec1')
 {
-  "version": "2018-05-29",
-  "method": "POST",
-  "resourcePath": "/",
-  "params": {
-    "headers": {
-      "content-type": "application/x-amz-json-1.0",
-      "x-amz-target": "AWSStepFunctions.DescribeExecution"
-    },
-    "body": {
-      "executionArn": $util.toJson($context.stash.exec)
-    }
+"version": "2018-05-29",
+"method": "POST",
+"resourcePath": "/",
+"params": {
+  "headers": {
+    "content-type": "application/x-amz-json-1.0",
+    "x-amz-target": "AWSStepFunctions.DescribeExecution"
+  },
+  "body": {
+    "executionArn": $util.toJson($context.stash.exec)
   }
+}
 }",
   "{}",
   "#if($context.stash.return__flag)

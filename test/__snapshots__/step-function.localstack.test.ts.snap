@@ -19801,7 +19801,7 @@ exports[`call $SFN map, foreach, parallel, task 1`] = `
       "HeartbeatSecondsPath": "$.heap3",
       "Next": "try 1",
       "Parameters": {
-        "FunctionName": "awaitFunctionTest",
+        "FunctionName": "awaitFunctionTest-refs-pull-518-merge",
         "Payload": {
           "fail": true,
           "token.$": "$$.Task.Token",
@@ -19844,7 +19844,7 @@ exports[`call $SFN map, foreach, parallel, task 1`] = `
       "HeartbeatSecondsPath": "$.heap23",
       "Next": "13__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(i",
       "Parameters": {
-        "FunctionName": "awaitFunctionTest",
+        "FunctionName": "awaitFunctionTest-refs-pull-518-merge",
         "Payload": {
           "token.$": "$$.Task.Token",
           "value": 1,
