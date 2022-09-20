@@ -27,27 +27,44 @@ export const CodeFeature = () => (
       <Tab.Panel as="div" className="grid grid-cols-4 gap-8">
         <div className="col-span-4">
           <VisibilityWindow visibiltyThreshold={0.5} delayMs={250}>
-            <Code
-              fileName="functionless.ts"
-              language="typescript"
-              introDelayMs={250}
-            >
-              <FunctionlessTableFunction />
-            </Code>
+            {(visible) => (
+              <Code
+                animate={visible}
+                fileName="functionless.ts"
+                language="typescript"
+                introDelayMs={250}
+              >
+                <FunctionlessTableFunction />
+              </Code>
+            )}
           </VisibilityWindow>
         </div>
         <div className="col-span-2 -ml-7 -mt-12 mb-12">
           <VisibilityWindow visibiltyThreshold={0.1} delayMs={2500}>
-            <Code fileName="iam.json" language="json" introDelayMs={2500}>
-              <IamPolicy />
-            </Code>
+            {(visible) => (
+              <Code
+                animate={visible}
+                fileName="iam.json"
+                language="json"
+                introDelayMs={2500}
+              >
+                <IamPolicy />
+              </Code>
+            )}
           </VisibilityWindow>
         </div>
         <div className="col-span-2 -mr-7 -mt-16 mb-16">
           <VisibilityWindow visibiltyThreshold={0.1} delayMs={3500}>
-            <Code fileName="output.json" language="json" introDelayMs={3500}>
-              <Output />
-            </Code>
+            {(visible) => (
+              <Code
+                animate={visible}
+                fileName="output.json"
+                language="json"
+                introDelayMs={3500}
+              >
+                <Output />
+              </Code>
+            )}
           </VisibilityWindow>
         </div>
       </Tab.Panel>

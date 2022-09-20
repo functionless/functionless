@@ -183,6 +183,10 @@
     overflow: unset;
   }
 
+  .window {
+    @apply round p-0.5 code-gradient shadow-light dark:shadow-dark;
+  }
+
   :root .home-features {
     --ifm-pre-background: none;
   }

@@ -1,4 +1,3 @@
-import ArchDiagram from "@site/static/img/Arch diagram 1.svg";
 import { ReactElement } from "react";
 import { code } from "../content/features/code/code";
 import { compose } from "../content/features/compose/compose";
@@ -7,7 +6,8 @@ import { Feature } from "../lib/feature";
 import { Code } from "./code";
 import { FeatureText } from "./feature";
 import { CodeFeature } from "./features/code";
-import { ComposeFeature } from "./features/compose";
+import { ComposeCode } from "./features/compose/composeCode";
+import { Diagram } from "./features/compose/diagram";
 
 export const Features = () => {
   return (
@@ -21,20 +21,8 @@ export const Features = () => {
       <FeatureSection feature={code} aside={<CodeFeature />} />
       <FeatureSection
         feature={compose}
-        aside={
-          <Code
-            fileName="functionless.ts"
-            language="typescript"
-            introDelayMs={250}
-          >
-            <ComposeFeature />
-          </Code>
-        }
-        footer={
-          <div className="flex justify-center">
-            <ArchDiagram />
-          </div>
-        }
+        aside={<ComposeCode />}
+        footer={<Diagram />}
       />
       {/*
       <div className="grid grid-cols-1 md:grid-cols-2 container !max-w-screen-xl py-36 gap-11">

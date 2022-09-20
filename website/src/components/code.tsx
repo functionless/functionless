@@ -10,10 +10,11 @@ export const VisibilityWindow = ({
   children,
   visibiltyThreshold,
   delayMs,
-}: React.PropsWithChildren<{
+}: {
   visibiltyThreshold: number;
   delayMs: number;
-}>) => {
+  children: (visible: boolean) => ReactElement;
+}) => {
   const { ref, visible } = useVisibility(visibiltyThreshold);
   return (
     <div ref={ref}>
@@ -28,7 +29,7 @@ export const VisibilityWindow = ({
           transitionDelay: `${visible ? delayMs : 0}ms`,
         }}
       >
-        {children}
+        {children(visible)}
       </div>
     </div>
   );
@@ -42,10 +43,7 @@ const CodeWindow = ({
   fileName: string;
   code: string;
 }>) => (
-  <div
-    key="code"
-    className="round p-0.5 code-gradient round shadow-light dark:shadow-dark"
-  >
+  <div className="window">
     <Header fileName={fileName} code={code} />
     <div className="py-4 bg-functionless-code">{children}</div>
   </div>
@@ -53,10 +51,12 @@ const CodeWindow = ({
 
 export const Code = ({
   children,
+  animate,
   fileName,
   language,
   introDelayMs,
 }: React.PropsWithChildren<{
+  animate: boolean;
   fileName: string;
   language: Language;
   introDelayMs: number;
@@ -72,7 +72,7 @@ export const Code = ({
             code={code}
             language={language}
             introDelayMs={introDelayMs}
-            animate={true}
+            animate={animate}
           />
         </CodeWindow>
       ),
@@ -84,10 +84,12 @@ export const Code = ({
 
 export function TimelineCode<K extends string>({
   children,
+  animate,
   fileName,
   language,
   timeline,
 }: React.PropsWithChildren<{
+  animate: boolean;
   fileName: string;
   language: Language;
   timeline: Timeline<K>;
@@ -108,7 +110,7 @@ export function TimelineCode<K extends string>({
                   code={chunk.trimEnd()}
                   language={language}
                   introDelayMs={timeline[Object.keys(timeline)[i] as K]}
-                  animate={true}
+                  animate={animate}
                   lineNumberStart={splitCode
                     .slice(0, i)
                     .reduce((count, ch) => count + ch.split("\n").length, 1)}
@@ -201,7 +203,7 @@ const HighlightedCode = ({
                           token: { ...token, content: char },
                           key: k,
                           className: animate
-                            ? "animate-fade-in-text opacity-0"
+                            ? "animate-fade-in opacity-0"
                             : undefined,
                           style: {
                             animationDelay: `${

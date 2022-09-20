@@ -15,7 +15,7 @@ module.exports = {
         light: "0px 0px 24px 8px rgba(0,0,0,0.12)",
       },
       animation: {
-        "fade-in-text": "fadeIn 0.05s linear 0s 1 normal forwards",
+        "fade-in": "fadeIn 0.05s linear 0s 1 normal forwards",
       },
       keyframes: {
         fadeIn: {
