@@ -5,6 +5,7 @@ import {
   RemovalPolicy,
   ArnFormat,
   aws_iam,
+  Token,
 } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 import {
@@ -329,9 +330,9 @@ runtimeTestSuite<
         }
       );
 
-      const functionName = `awaitFunctionTest${
-        runtimeTestExecutionContext.stackSuffix ?? ""
-      }`;
+      const functionName = Token.asString(
+        `awaitFunctionTest${runtimeTestExecutionContext.stackSuffix ?? ""}`
+      );
       const machineName = `awaitMachineTest${
         runtimeTestExecutionContext.stackSuffix ?? ""
       }`;

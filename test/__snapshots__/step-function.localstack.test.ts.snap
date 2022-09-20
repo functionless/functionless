@@ -21014,7 +21014,7 @@ exports[`call lambda 1`] = `
                 "FunctionName": "__REPLACED_TOKEN",
                 "Payload.$": "$.obj",
               },
-              "Resource": "__REPLACED_ARN",
+              "Resource": "arn:aws:states:::lambda:invoke",
               "ResultPath": "$.heap12",
               "Type": "Task",
             },
