@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-require-imports */
-import "jest";
 import fs from "fs";
 import path from "path";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
@@ -80,6 +78,43 @@ test("all observers of a free variable share the same reference", async () => {
   });
 
   expect(closure()).toEqual(1);
+});
+
+test("globals", async () => {
+  process.env.Something = "hi";
+  const closure = await expectClosure(() => {
+    console.log(process.env.Something);
+
+    console.warn = () => console.log("woops");
+
+    console.warn("??");
+
+    // @ts-ignore
+    console = {
+      log: console.log,
+      warn: () => console.log("try again"),
+    };
+
+    console.warn("?????????");
+
+    return {
+      env: process.env.Something,
+    };
+  });
+
+  expect(closure()).toEqual({ env: "hi" });
+});
+
+test("mutate", async () => {
+  let x = 1;
+  const closure = await expectClosure(() => {
+    x = 2;
+    return {
+      x,
+    };
+  });
+
+  expect(closure()).toEqual({ x: 2 });
 });
 
 test("all observers of a free variable share the same reference even when two instances", async () => {
