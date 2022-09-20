@@ -58,6 +58,7 @@ import type { NodeCtor } from "./node-ctor";
 import { NodeKind, NodeKindName, getNodeKindName } from "./node-kind";
 import type { Span } from "./span";
 import type { BlockStmt, CatchClause, Stmt } from "./statement";
+import { anyOf } from "./util";
 
 export type FunctionlessNode =
   | Decl
@@ -87,6 +88,8 @@ export type BindingDecl =
   | ClassExpr
   | FunctionDecl
   | FunctionExpr;
+
+const functionClassOrMethod = anyOf(isFunctionLike, isClassLike, isMethodDecl);
 
 export abstract class BaseNode<
   Kind extends NodeKind,
@@ -160,10 +163,7 @@ export abstract class BaseNode<
    * @returns the name of the file this node originates from.
    */
   public getFileName(): string {
-    if (
-      (isFunctionLike(this) || isClassLike(this) || isMethodDecl(this)) &&
-      this.filename
-    ) {
+    if (functionClassOrMethod(this) && this.filename) {
       return this.filename;
     } else if (this.parent === undefined) {
       throw new Error(`cannot get filename of orphaned node`);
@@ -242,8 +242,8 @@ export abstract class BaseNode<
    * Finds the {@link CatchClause} that this Node should throw to.
    */
   public findCatchClause(): CatchClause | undefined {
-    if (isBlockStmt(this) && (this as unknown as BlockStmt).isFinallyBlock()) {
-      return this.parent.findCatchClause();
+    if (isBlockStmt(this) && (<BlockStmt>this).isFinallyBlock()) {
+      return (<BlockStmt>this).parent.findCatchClause();
     }
     const scope = this.parent;
     if (scope === undefined) {
