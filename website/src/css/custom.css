@@ -214,6 +214,7 @@
   .search-bar > div,
   .search-bar .DocSearch {
     width: 100%;
+    position: relative;
   }
 
   .search-bar .DocSearch {
@@ -227,5 +228,9 @@
   .search-bar .DocSearch-Search-Icon {
     transform: scale(0.7);
     filter: brightness(0.6);
+  }
+
+  #__docusaurus svg {
+    overflow: unset;
   }
 }

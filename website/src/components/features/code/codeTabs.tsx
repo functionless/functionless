@@ -24,7 +24,7 @@ export const CodeTabs = () => (
       <ButtonTab>{tab2}</ButtonTab>
       <ButtonTab>{tab3}</ButtonTab>
     </Tab.List>
-    <Tab.Panels className={"mt-8 [&>*]:!overflow-unset"}>
+    <Tab.Panels className={"mt-8"}>
       <Tab.Panel as="div" className="grid grid-cols-4 gap-8">
         <div className="col-span-4">
           <VisibilityWindow visibiltyThreshold={0.5} delayMs={250}>
