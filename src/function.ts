@@ -1221,10 +1221,12 @@ export async function serialize(
        * https://github.com/functionless/functionless/issues/239
        */
       function transformResource(integ: unknown): any {
-        if (
+        if (isTable(integ)) {
+          const { resource, appsync, ...rest } = integ;
+          return rest;
+        } else if (
           integ &&
           (isFunction(integ) ||
-            isTable(integ) ||
             isStepFunction(integ) ||
             isEventBus(integ) ||
             isSecret(integ))
