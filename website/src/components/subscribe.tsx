@@ -2,9 +2,9 @@ export const Subscribe = () => {
   return (
     <div className="code-gradient p-0.5 round shadow-light dark:shadow-dark">
       <div className="round bg-functionless-white dark:bg-functionless-code">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-28 items-center p-10">
+        <div className="grid grid-cols-1 md:grid-cols-2  gap-12 md:gap-28 items-center p-10">
           <div>
-            <h4>Subscribe for updates</h4>
+            <h4 className="mb-4">Subscribe for updates</h4>
             <p className="body1 text-functionless-medium dark:text-functionless-dark-medium">
               Get weekly articles in your inbox on tips and tricks to apply
               Functionless in your engineering pipeline.

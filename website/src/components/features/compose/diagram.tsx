@@ -8,7 +8,7 @@ import { composeTimeline } from "./timeline";
 export const Diagram = ({ visible }: { visible: boolean }) => (
   <div
     className={clsx(
-      "flex justify-center transition duration-300",
+      "flex justify-center transition duration-300 scale-[0.4] sm:scale-50 md:scale-[0.65] lg:scale-75 xl:scale-100",
       visible
         ? "opacity-100 translate-x-0 scale-100"
         : "opacity-0 translate-y-10 scale-75"

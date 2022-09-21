@@ -11,9 +11,12 @@ export const FeatureSection = ({
   aside: ReactElement;
   footer?: ReactElement;
 }) => (
-  <div className="grid grid-cols-1 md:grid-cols-2 container !max-w-screen-xl my-36 gap-11 snap-start scroll-m-28">
-    <FeatureText {...feature} />
-    {aside}
+  <div className="grid grid-cols-2 container md:mt-36 gap-11 snap-start scroll-m-28">
+    <div className="col-span-2 lg:col-span-1">
+      <FeatureText {...feature} />
+    </div>
+
+    <div className="col-span-2 lg:col-span-1">{aside}</div>
     <div className="col-span-2">{footer}</div>
   </div>
 );

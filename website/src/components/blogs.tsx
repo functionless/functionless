@@ -10,12 +10,12 @@ export const Blogs = (props: Props) => {
         <span className="over">BLOG</span>
         <h4 className="text-center mt-2">Read Our Latest Updates</h4>
       </div>
-      <div className="mt-24 grid grid-cols-3 gap-7 container !max-w-screen-xl">
+      <div className="mt-24 grid grid-cols-3 gap-7 container">
         <Blog chipColor={ChipColor.purple} />
         <Blog chipColor={ChipColor.green} />
         <Blog chipColor={ChipColor.yellow} />
       </div>
-      <div className="container !max-w-screen-xl mt-36">
+      <div className="container mt-36">
         <Subscribe />
       </div>
     </section>

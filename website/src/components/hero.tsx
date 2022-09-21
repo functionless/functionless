@@ -18,8 +18,8 @@ export const Hero = () => {
             {versionRelease}
             <ChevronLeftIcon className="icon ml-2" />
           </span>
-          <h2 className="mt-3">{title}</h2>
-          <p className="body1 text-functionless-medium dark:text-functionless-dark-medium">
+          <h2 className="my-4">{title}</h2>
+          <p className="body1 text-functionless-medium dark:text-functionless-dark-medium my-6">
             {body}
           </p>
           <div className="space-x-7 pt-5 flex items-center">

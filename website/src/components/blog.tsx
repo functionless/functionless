@@ -27,29 +27,27 @@ export const Blog = ({
   readTime = 12,
 }: Props) => {
   return (
-    <div className="">
-      <div className="">
-        <span className={chipColor}>{chip}</span>
-        <h6 className="m-0 mt-4">{title}</h6>
-        <p className="mt-2 body1 text-functionless-medium dark:text-functionless-dark-medium">
-          {desc}
-        </p>
-        <div className="flex space-x-4">
-          <img
-            className="inline-block h-10 w-10 rounded-full"
-            src={avatar}
-            alt={name}
-          />
-          <div className="">
-            <div className="subtitle1">{name}</div>
-            <div className="body2 text-functionless-medium dark:text-functionless-dark-medium">
-              {date.toLocaleDateString("en-US", {
-                year: "numeric",
-                month: "short",
-                day: "numeric",
-              })}{" "}
-              · {readTime} min read
-            </div>
+    <div className="col-span-3 md:col-span-1 my-4">
+      <span className={chipColor}>{chip}</span>
+      <h6 className="m-0 mt-4">{title}</h6>
+      <p className="my-4 body1 text-functionless-medium dark:text-functionless-dark-medium">
+        {desc}
+      </p>
+      <div className="flex space-x-4">
+        <img
+          className="inline-block h-10 w-10 rounded-full"
+          src={avatar}
+          alt={name}
+        />
+        <div className="">
+          <div className="subtitle1">{name}</div>
+          <div className="body2 text-functionless-medium dark:text-functionless-dark-medium">
+            {date.toLocaleDateString("en-US", {
+              year: "numeric",
+              month: "short",
+              day: "numeric",
+            })}{" "}
+            · {readTime} min read
           </div>
         </div>
       </div>

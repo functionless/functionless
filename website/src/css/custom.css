@@ -50,9 +50,16 @@
   textarea {
     @apply block w-full appearance-none border border-functionless-border dark:border-functionless-dark-border hover:border-gray-400 dark:hover:border-gray-500 bg-functionless-bg dark:bg-functionless-dark-bg px-4 py-2.5 text-functionless-high dark:text-functionless-dark-high placeholder-functionless-medium dark:placeholder-functionless-dark-medium focus:outline-none focus:ring-0 ring-0 outline-none text-sm font-body;
   }
+
+  a:hover {
+    @apply text-functionless-blue no-underline;
+  }
 }
 
 @layer components {
+  .over {
+    @apply text-functionless-dark-medium font-semibold;
+  }
   .subtitle1 {
     @apply text-base tracking-[0.15px] leading-[24px] font-medium font-body;
   }

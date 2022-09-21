@@ -40,7 +40,7 @@ export const CodeTabs = () => (
             )}
           </VisibilityWindow>
         </div>
-        <div className="col-span-2 -ml-7 -mt-12 mb-12">
+        <div className="col-span-2 -ml-7 -mt-12">
           <VisibilityWindow visibiltyThreshold={0.1} delayMs={2500}>
             {(visible: boolean) => (
               <Code
@@ -54,7 +54,7 @@ export const CodeTabs = () => (
             )}
           </VisibilityWindow>
         </div>
-        <div className="col-span-2 -mr-7 -mt-16 mb-16">
+        <div className="col-span-2 mr-4 lg:-mr-7 -mt-16">
           <VisibilityWindow visibiltyThreshold={0.1} delayMs={3500}>
             {(visible: boolean) => (
               <Code
