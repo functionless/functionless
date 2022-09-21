@@ -2062,6 +2062,7 @@ export namespace ASLGraph {
    * literalValue(1) // => "1"
    * literalValue({ a: 1 }) // => "{ \"a\": "1" }""
    * literalValue({ "a.$": "$.var" }) => intrinsicFormat('{ "a": {} }', JsonToString("$.var"))
+   * literalValue([1]) // => "[1]"
    * literalValue(["$.var"]) => intrinsicFormat('[{}]', JsonToString("$.var"))
    * ```
    */
@@ -2079,6 +2080,12 @@ export namespace ASLGraph {
       ? value
       : ASLGraph.literalValue(String(value.value));
 
+    /**
+     * Handles stringifying a literal object using javascript during synth or intrinsic functions during runtime.
+     *
+     * literalValue({ a: 1 }) // => "{ \"a\": "1" }""
+     * literalValue({ "a.$": "$.var" }) => intrinsicFormat('{ "a": {} }', JsonToString("$.var"))
+     */
     function stringifyLiteralObject(
       value: ASLGraph.LiteralValue<Record<string, ASLGraph.LiteralValueType>>
     ): ASLGraph.IntrinsicFunction | ASLGraph.LiteralValue<string> {
@@ -2087,7 +2094,7 @@ export namespace ASLGraph {
       }
       const entries = Object.entries(value.value).map(([key, value]) => {
         if (key.endsWith(".$")) {
-          // assuming the these values are
+          // assuming that these values json path and not intrinsic
           return [
             key.substring(0, key.length - 2),
             ASLGraph.intrinsicJsonToString(ASLGraph.jsonPath(value as string)),
@@ -2096,6 +2103,8 @@ export namespace ASLGraph {
         return [key, stringifyLiteral(ASLGraph.literalValue(value))] as const;
       });
 
+      // stringify only returns literal values for nested values when
+      // all nested values can be stringified
       if (entries.every(([_, value]) => ASLGraph.isLiteralValue(value))) {
         // just stringify the original value.
         return ASLGraph.literalValue(JSON.stringify(value.value));
@@ -2119,6 +2128,12 @@ export namespace ASLGraph {
       );
     }
 
+    /**
+     * Handles stringifying a literal object using javascript during synth or intrinsic functions during runtime.
+     *
+     * literalValue([1]) // => "[1]"
+     * literalValue(["$.var"]) => intrinsicFormat('[{}]', JsonToString("$.var"))
+     */
     function stringifyLiteralArray(
       value: ASLGraph.LiteralValue<ASLGraph.LiteralValueType[]>
     ): ASLGraph.IntrinsicFunction | ASLGraph.LiteralValue<string> {

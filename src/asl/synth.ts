@@ -2270,7 +2270,7 @@ export class ASL {
           ): ASLGraph.LiteralValue | ASLGraph.JsonPath {
             const output = evalExprToJsonPathOrLiteral(prop.expr);
             return ASLGraph.isJsonPath(output) &&
-              // paths at $$ are immutable
+              // paths at $$ are immutable, it is not necessary to reference their value because it will not change.
               !output.jsonPath.startsWith("$$.")
               ? assignValue(output)
               : output;
