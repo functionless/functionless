@@ -137,7 +137,7 @@ interface SuccessfulRuntimeTestCase<
 /**
  * The callable test interface used by the test suites.
  */
-interface TestInterface<
+export interface TestInterface<
   BaseOutputs extends Record<string, string> = Record<string, string>,
   TestExtras extends Record<string, any> = Record<string, any>
 > {

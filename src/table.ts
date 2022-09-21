@@ -1,31 +1,20 @@
-import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { aws_dynamodb } from "aws-cdk-lib";
+import AWS from "aws-sdk";
+import { PromiseResult } from "aws-sdk/lib/request";
 import { Construct } from "constructs";
 import { JsonFormat } from "typesafe-dynamodb";
-import {
-  NativeBinaryAttribute,
-  ToAttributeMap,
-} from "typesafe-dynamodb/lib/attribute-value";
 import {
   ExpressionAttributeNames,
   ExpressionAttributeValues,
 } from "typesafe-dynamodb/lib/expression-attributes";
+import { FormatObject } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import {
-  AppsyncResolver,
-  AppsyncField,
-  AppSyncVtlIntegration,
-} from "./appsync";
-import { assertNodeKind } from "./assert";
-import {
-  IntegrationCall,
-  IntegrationInput,
-  makeIntegration,
-} from "./integration";
-import { NodeKind } from "./node-kind";
+import { AppsyncResolver, AppsyncField } from "./appsync";
+import { DocumentDBClient } from "./function-prewarm";
+import { IntegrationCall, makeIntegration } from "./integration";
+import { ITableAppsyncApi, TableAppsyncApi } from "./table-appsync-api";
 import { AnyAsyncFunction } from "./util";
-import { VTL } from "./vtl";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -141,126 +130,56 @@ export interface ITable<
    *
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html
    */
-  readonly appsync: {
-    /**
-     * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
-     */
-    getItem: DynamoAppSyncIntegrationCall<
-      "getItem",
-      <
-        Key extends TableKey<
-          Item,
-          PartitionKey,
-          RangeKey,
-          JsonFormat.AttributeValue
-        >
-      >(input: {
-        key: Key;
-        consistentRead?: boolean;
-      }) => Promise<
-        Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
-      >
-    >;
+  readonly appsync: ITableAppsyncApi<Item, PartitionKey, RangeKey>;
 
-    /**
-     * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-putitem
-     */
-    putItem: DynamoAppSyncIntegrationCall<
-      "putItem",
-      <
-        Key extends TableKey<
-          Item,
-          PartitionKey,
-          RangeKey,
-          JsonFormat.AttributeValue
-        >,
-        ConditionExpression extends string | undefined = undefined
-      >(input: {
-        key: Key;
-        attributeValues: ToAttributeMap<
-          Omit<
-            Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
-            Exclude<PartitionKey | RangeKey, undefined>
-          >
-        >;
-        condition?: DynamoExpression<ConditionExpression>;
-        _version?: number;
-      }) => Promise<
-        Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
-      >
-    >;
+  /**
+   * Get Item
+   * @param key
+   * @param props
+   */
+  getItem<
+    Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>
+  >(
+    key: Key,
+    props?: Omit<AWS.DynamoDB.GetItemInput, "TableName" | "Key">
+  ): Promise<GetItemOutput<Item, PartitionKey, RangeKey, Key>>;
 
-    /**
-     * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-updateitem
-     *
-     * @returns the updated the item
-     */
-    updateItem: DynamoAppSyncIntegrationCall<
-      "updateItem",
-      <
-        Key extends TableKey<
-          Item,
-          PartitionKey,
-          RangeKey,
-          JsonFormat.AttributeValue
-        >,
-        UpdateExpression extends string,
-        ConditionExpression extends string | undefined
-      >(input: {
-        key: Key;
-        update: DynamoExpression<UpdateExpression>;
-        condition?: DynamoExpression<ConditionExpression>;
-        _version?: number;
-      }) => Promise<
-        Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
-      >
-    >;
+  batchGetItems(
+    keys: readonly TableKey<
+      Item,
+      PartitionKey,
+      RangeKey,
+      JsonFormat.Document
+    >[],
+    props?: Omit<AWS.DynamoDB.KeysAndAttributes, "Keys">
+  ): Promise<BatchGetItemOutput<Item>>;
 
-    /**
-     * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-deleteitem
-     *
-     * @returns the previous item.
-     */
-    deleteItem: DynamoAppSyncIntegrationCall<
-      "deleteItem",
-      <
-        Key extends TableKey<
-          Item,
-          PartitionKey,
-          RangeKey,
-          JsonFormat.AttributeValue
-        >,
-        ConditionExpression extends string | undefined
-      >(input: {
-        key: Key;
-        condition?: DynamoExpression<ConditionExpression>;
-        _version?: number;
-      }) => Promise<
-        Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>
-      >
-    >;
+  putItem<I extends Item>(
+    item: I,
+    props?: Omit<AWS.DynamoDB.PutItemInput, "TableName" | "Item">
+  ): Promise<PutItemOutput<I>>;
 
-    /**
-     * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-query
-     */
-    query: DynamoAppSyncIntegrationCall<
-      "query",
-      <Query extends string, Filter extends string | undefined>(input: {
-        query: DynamoExpression<Query>;
-        filter?: DynamoExpression<Filter>;
-        index?: string;
-        nextToken?: string;
-        limit?: number;
-        scanIndexForward?: boolean;
-        consistentRead?: boolean;
-        select?: "ALL_ATTRIBUTES" | "ALL_PROJECTED_ATTRIBUTES";
-      }) => Promise<{
-        items: Item[];
-        nextToken: string;
-        scannedCount: number;
-      }>
-    >;
-  };
+  updateItem<
+    Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>,
+    Return extends ReturnValues | undefined = undefined
+  >(
+    input: UpdateItemInput<Key, Return>
+  ): Promise<UpdateItemOutput<Item, Key, Return>>;
+
+  deleteItem<
+    Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>,
+    Return extends ReturnValues | undefined = undefined
+  >(
+    input: DeleteItemInput<Key, Return>
+  ): Promise<DeleteItemOutput<Item, Return, Key>>;
+
+  query<I extends Item = Item>(
+    input: Omit<AWS.DynamoDB.DocumentClient.QueryInput, "TableName">
+  ): Promise<QueryOutput<I>>;
+
+  scan(
+    input?: Omit<AWS.DynamoDB.DocumentClient.ScanInput, "TableName">
+  ): Promise<ScanOutput<Item>>;
 }
 
 class BaseTable<
@@ -281,141 +200,248 @@ class BaseTable<
     RangeKey: RangeKey;
   };
 
-  public readonly appsync: ITable<Item, PartitionKey, RangeKey>["appsync"];
+  public readonly appsync: ITableAppsyncApi<Item, PartitionKey, RangeKey>;
+
+  public readonly getItem: ITable<Item, PartitionKey, RangeKey>["getItem"];
+
+  public readonly batchGetItems: ITable<
+    Item,
+    PartitionKey,
+    RangeKey
+  >["batchGetItems"];
+
+  public readonly updateItem: ITable<
+    Item,
+    PartitionKey,
+    RangeKey
+  >["updateItem"];
+
+  public readonly deleteItem: ITable<
+    Item,
+    PartitionKey,
+    RangeKey
+  >["deleteItem"];
+
+  public readonly putItem: ITable<Item, PartitionKey, RangeKey>["putItem"];
+
+  public readonly query: ITable<Item, PartitionKey, RangeKey>["query"];
+
+  public readonly scan: ITable<Item, PartitionKey, RangeKey>["scan"];
 
   constructor(readonly resource: aws_dynamodb.ITable) {
     this.tableName = resource.tableName;
     this.tableArn = resource.tableArn;
 
-    this.appsync = {
-      getItem: this.makeAppSyncTableIntegration("getItem", {
-        appSyncVtl: {
-          request(call, vtl) {
-            const input = vtl.eval(
-              assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
-            );
-            const request = vtl.var(
-              '{"operation": "GetItem", "version": "2018-05-29"}'
-            );
-            vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-            addIfDefined(vtl, input, request, "consistentRead");
+    const tableName = resource.tableName;
 
-            return vtl.json(request);
-          },
-        },
-      }),
+    this.appsync = new TableAppsyncApi(this);
 
-      putItem: this.makeAppSyncTableIntegration("putItem", {
-        appSyncVtl: {
-          request: (call, vtl) => {
-            const input = vtl.eval(
-              assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
-            );
-            const request = vtl.var(
-              '{"operation": "PutItem", "version": "2018-05-29"}'
-            );
-            vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-            vtl.qr(
-              `${request}.put('attributeValues', ${input}.get('attributeValues'))`
-            );
-            addIfDefined(vtl, input, request, "condition");
-            addIfDefined(vtl, input, request, "_version");
-
-            return vtl.json(request);
-          },
-        },
-      }),
-
-      updateItem: this.makeAppSyncTableIntegration("updateItem", {
-        appSyncVtl: {
-          request: (call, vtl) => {
-            const input = vtl.eval(
-              assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
-            );
-            const request = vtl.var(
-              '{"operation": "UpdateItem", "version": "2018-05-29"}'
-            );
-            vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-            vtl.qr(`${request}.put('update', ${input}.get('update'))`);
-            addIfDefined(vtl, input, request, "condition");
-            addIfDefined(vtl, input, request, "_version");
-
-            return vtl.json(request);
-          },
-        },
-      }),
-
-      deleteItem: this.makeAppSyncTableIntegration("deleteItem", {
-        appSyncVtl: {
-          request: (call, vtl) => {
-            const input = vtl.eval(
-              assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
-            );
-            const request = vtl.var(
-              '{"operation": "DeleteItem", "version": "2018-05-29"}'
-            );
-            vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-            addIfDefined(vtl, input, request, "condition");
-            addIfDefined(vtl, input, request, "_version");
-
-            return vtl.json(request);
-          },
-        },
-      }),
-
-      query: this.makeAppSyncTableIntegration("query", {
-        appSyncVtl: {
-          request: (call, vtl) => {
-            const input = vtl.eval(
-              assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
-            );
-            const request = vtl.var(
-              '{"operation": "Query", "version": "2018-05-29"}'
-            );
-            vtl.qr(`${request}.put('query', ${input}.get('query'))`);
-            addIfDefined(vtl, input, request, "index");
-            addIfDefined(vtl, input, request, "nextToken");
-            addIfDefined(vtl, input, request, "limit");
-            addIfDefined(vtl, input, request, "scanIndexForward");
-            addIfDefined(vtl, input, request, "consistentRead");
-            addIfDefined(vtl, input, request, "select");
-
-            return vtl.json(request);
-          },
-        },
-      }),
-    } as const;
-  }
-
-  private makeAppSyncTableIntegration<
-    K extends keyof ITable<Item, PartitionKey, RangeKey>["appsync"]
-  >(
-    methodName: K,
-    integration: Omit<
-      IntegrationInput<K, ITable<Item, PartitionKey, RangeKey>["appsync"][K]>,
-      "kind" | "appSyncVtl"
-    > & {
-      appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
-    }
-  ): DynamoAppSyncIntegrationCall<
-    K,
-    ITable<Item, PartitionKey, RangeKey>["appsync"][K]
-  > {
-    return makeIntegration<
-      `Table.AppSync.${K}`,
-      ITable<Item, PartitionKey, RangeKey>["appsync"][K]
+    this.getItem = makeIntegration<
+      "Table.getItem",
+      ITable<Item, PartitionKey, RangeKey>["getItem"]
     >({
-      ...integration,
-      kind: `Table.AppSync.${methodName}`,
-      appSyncVtl: {
-        dataSourceId: () => this.resource.node.addr,
-        dataSource: (api, dataSourceId) => {
-          return new appsync.DynamoDbDataSource(api, dataSourceId, {
-            api,
-            table: this.resource,
-          });
+      kind: "Table.getItem",
+      native: {
+        bind: (context) => {
+          this.resource.grantReadData(context.resource);
         },
-        ...integration.appSyncVtl,
+        preWarm: (context) => {
+          context.getOrInit(DocumentDBClient);
+        },
+        call: async ([key, props], context) => {
+          const ddb =
+            context.getOrInit<AWS.DynamoDB.DocumentClient>(DocumentDBClient);
+
+          const response = await ddb
+            .get({
+              ...(props ?? {}),
+              TableName: tableName,
+              Key: key as any,
+            })
+            .promise();
+
+          return response as any;
+        },
+      },
+    });
+
+    this.batchGetItems = makeIntegration<
+      "Table.batchGetItems",
+      ITable<Item, PartitionKey, RangeKey>["batchGetItems"]
+    >({
+      kind: "Table.batchGetItems",
+      native: {
+        bind: (context) => {
+          this.resource.grantWriteData(context.resource);
+        },
+        preWarm: (context) => {
+          context.getOrInit(DocumentDBClient);
+        },
+        call: async ([keys, props], context) => {
+          const ddb =
+            context.getOrInit<AWS.DynamoDB.DocumentClient>(DocumentDBClient);
+
+          const response: PromiseResult<
+            AWS.DynamoDB.DocumentClient.BatchGetItemOutput,
+            any
+          > = await ddb
+            .batchGet({
+              ...(props ?? {}),
+              RequestItems: {
+                [tableName]: {
+                  Keys: keys,
+                  ...props,
+                },
+              } as any,
+            })
+            .promise();
+
+          return {
+            ...response,
+            Items: response.Responses?.[tableName] as Item[],
+          };
+        },
+      },
+    });
+
+    this.putItem = makeIntegration<
+      "Table.putItem",
+      ITable<Item, PartitionKey, RangeKey>["putItem"]
+    >({
+      kind: "Table.putItem",
+      native: {
+        bind: (context) => {
+          this.resource.grantWriteData(context.resource);
+        },
+        preWarm: (context) => {
+          context.getOrInit(DocumentDBClient);
+        },
+        call: async ([item, props], context) => {
+          const ddb: AWS.DynamoDB.DocumentClient =
+            context.getOrInit<AWS.DynamoDB.DocumentClient>(DocumentDBClient);
+
+          const response = await ddb
+            .put({
+              ...(props ?? {}),
+              Item: item,
+              TableName: tableName,
+            })
+            .promise();
+
+          return response as any;
+        },
+      },
+    });
+
+    this.updateItem = makeIntegration<
+      "Table.updateItem",
+      ITable<Item, PartitionKey, RangeKey>["updateItem"]
+    >({
+      kind: "Table.updateItem",
+      native: {
+        bind: (context) => {
+          this.resource.grantWriteData(context.resource);
+        },
+        preWarm: (context) => {
+          context.getOrInit(DocumentDBClient);
+        },
+        call: async ([request], context) => {
+          const ddb: AWS.DynamoDB.DocumentClient =
+            context.getOrInit<AWS.DynamoDB.DocumentClient>(DocumentDBClient);
+
+          const response = await ddb
+            .update({
+              ...request,
+              TableName: tableName,
+            })
+            .promise();
+
+          return response as any;
+        },
+      },
+    });
+
+    this.deleteItem = makeIntegration<
+      "Table.deleteItem",
+      ITable<Item, PartitionKey, RangeKey>["deleteItem"]
+    >({
+      kind: "Table.deleteItem",
+      native: {
+        bind: (context) => {
+          this.resource.grantWriteData(context.resource);
+        },
+        preWarm: (context) => {
+          context.getOrInit(DocumentDBClient);
+        },
+        call: async ([request], context) => {
+          const ddb: AWS.DynamoDB.DocumentClient =
+            context.getOrInit<AWS.DynamoDB.DocumentClient>(DocumentDBClient);
+
+          const response = await ddb
+            .delete({
+              ...request,
+              TableName: tableName,
+            })
+            .promise();
+
+          return response as any;
+        },
+      },
+    });
+
+    this.query = makeIntegration<
+      "Table.query",
+      ITable<Item, PartitionKey, RangeKey>["query"]
+    >({
+      kind: "Table.query",
+      native: {
+        bind: (context) => {
+          this.resource.grantReadData(context.resource);
+        },
+        preWarm: (context) => {
+          context.getOrInit(DocumentDBClient);
+        },
+        call: async ([request], context) => {
+          const ddb =
+            context.getOrInit<AWS.DynamoDB.DocumentClient>(DocumentDBClient);
+
+          const response = await ddb
+            .query({
+              ...(request ?? {}),
+              TableName: tableName,
+            })
+            .promise();
+
+          return response as any;
+        },
+      },
+    });
+
+    this.scan = makeIntegration<
+      "Table.scan",
+      ITable<Item, PartitionKey, RangeKey>["scan"]
+    >({
+      kind: "Table.scan",
+      native: {
+        bind: (context) => {
+          this.resource.grantReadData(context.resource);
+        },
+        preWarm: (context) => {
+          context.getOrInit(DocumentDBClient);
+        },
+        call: async ([request], context) => {
+          const ddb =
+            context.getOrInit<AWS.DynamoDB.DocumentClient>(DocumentDBClient);
+
+          const response = await ddb
+            .scan({
+              ...(request ?? {}),
+              TableName: tableName,
+            })
+            .promise();
+
+          return response as any;
+        },
       },
     });
   }
@@ -493,26 +519,14 @@ export class Table<
       Exclude<RangeKey, number | Symbol>
     >
   ) {
-    super(new aws_dynamodb.Table(scope, id, props as aws_dynamodb.TableProps));
+    super(
+      new aws_dynamodb.Table(scope, id, {
+        ...props,
+        billingMode:
+          props.billingMode ?? aws_dynamodb.BillingMode.PAY_PER_REQUEST,
+      } as aws_dynamodb.TableProps)
+    );
   }
-}
-
-type AttributeKeyToObject<T> = {
-  [k in keyof T]: T[k] extends { S: infer S }
-    ? S
-    : T[k] extends { N: `${infer N}` }
-    ? N
-    : T[k] extends { B: any }
-    ? NativeBinaryAttribute
-    : never;
-};
-
-function addIfDefined(vtl: VTL, from: string, to: string, key: string) {
-  vtl.add(
-    `#if(${from}.containsKey('${key}'))`,
-    `$util.qr(${to}.put('${key}', ${from}.get('${key}')))`,
-    "#end"
-  );
 }
 
 export type DynamoExpression<Expression extends string | undefined> =
@@ -533,3 +547,92 @@ type RenameKeys<
 > = {
   [k in keyof T as k extends keyof Substitutions ? Substitutions[k] : k]: T[k];
 };
+
+export interface GetItemInput<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined,
+  Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
+  Format extends JsonFormat = JsonFormat.Document
+> extends Omit<AWS.DynamoDB.GetItemInput, "Key"> {
+  Key: Key;
+}
+
+export interface GetItemOutput<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined,
+  Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
+  Format extends JsonFormat = JsonFormat.Document
+> extends Omit<AWS.DynamoDB.DocumentClient.GetItemOutput, "Item"> {
+  Item?: FormatObject<Narrow<Item, Key, Format>, Format>;
+}
+
+type ReturnValues =
+  | "NONE"
+  | "ALL_OLD"
+  | "UPDATED_OLD"
+  | "ALL_NEW"
+  | "UPDATED_NEW";
+
+export interface UpdateItemInput<
+  Key extends TableKey<any, any, any, JsonFormat.Document>,
+  ReturnValue extends ReturnValues | undefined
+> extends Omit<
+    AWS.DynamoDB.DocumentClient.UpdateItemInput,
+    "TableName" | "Key" | "ReturnValues"
+  > {
+  Key: Key;
+  ReturnValues?: ReturnValue;
+}
+
+export interface UpdateItemOutput<
+  Item extends object,
+  Key extends TableKey<any, any, any, JsonFormat.Document>,
+  ReturnValue extends ReturnValues | undefined
+> extends Omit<AWS.DynamoDB.DocumentClient.UpdateItemOutput, "TableName"> {
+  Attributes?: ReturnValue extends undefined | "NONE"
+    ? undefined
+    : ReturnValue extends "ALL_OLD" | "ALL_NEW"
+    ? Narrow<Item, Key, JsonFormat.Document>
+    : Partial<Narrow<Item, Key, JsonFormat.Document>>;
+}
+
+export interface DeleteItemInput<
+  Key extends TableKey<any, any, any, JsonFormat.Document>,
+  ReturnValue extends ReturnValues | undefined
+> extends Omit<AWS.DynamoDB.DocumentClient.DeleteItemInput, "TableName"> {
+  Key: Key;
+  ReturnValues?: ReturnValue;
+}
+
+export interface DeleteItemOutput<
+  Item extends object,
+  ReturnValue extends ReturnValues | undefined,
+  Key extends TableKey<any, any, any, JsonFormat.Document>
+> extends Omit<AWS.DynamoDB.DocumentClient.DeleteItemOutput, "TableName"> {
+  Attributes?: ReturnValue extends undefined | "NONE"
+    ? undefined
+    : ReturnValue extends "ALL_OLD" | "ALL_NEW"
+    ? Narrow<Item, Key, JsonFormat.Document>
+    : Partial<Narrow<Item, Key, JsonFormat.Document>>;
+}
+
+export interface BatchGetItemOutput<Item extends object>
+  extends Omit<AWS.DynamoDB.BatchGetItemOutput, "Item" | "Responses"> {
+  Items?: Item[];
+}
+
+export interface PutItemOutput<Item extends object>
+  extends Omit<AWS.DynamoDB.PutItemOutput, "Attributes"> {
+  Attributes?: FormatObject<Item, JsonFormat.Document>;
+}
+
+export interface QueryOutput<Item extends object>
+  extends Omit<AWS.DynamoDB.QueryOutput, "Items"> {
+  Items?: FormatObject<Item, JsonFormat.Document>[];
+}
+export interface ScanOutput<Item extends object>
+  extends Omit<AWS.DynamoDB.ScanOutput, "Items"> {
+  Items?: FormatObject<Item, JsonFormat.Document>[];
+}

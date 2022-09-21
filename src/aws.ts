@@ -24,7 +24,11 @@ import { SDK as _SDK } from "./aws-sdk";
 import { ErrorCodes, SynthError } from "./error-code";
 import { Argument, Expr } from "./expression";
 import { Function, isFunction, NativeIntegration } from "./function";
-import { NativePreWarmContext, PrewarmClients } from "./function-prewarm";
+import {
+  DynamoDBClient,
+  NativePreWarmContext,
+  PrewarmClients,
+} from "./function-prewarm";
 import {
   isArgument,
   isIdentifier,
@@ -94,7 +98,7 @@ export namespace $AWS {
         call: async (args, preWarmContext) => {
           const dynamo = preWarmContext.getOrInit<
             TypeSafeDynamoDBv2<object, keyof object, any>
-          >(PrewarmClients.DynamoDB);
+          >(DynamoDBClient as any);
 
           const [input] = args;
 
@@ -167,7 +171,7 @@ export namespace $AWS {
         ) => {
           const dynamo = preWarmContext.getOrInit<
             TypeSafeDynamoDBv2<object, keyof object, any>
-          >(PrewarmClients.DynamoDB);
+          >(DynamoDBClient as any);
 
           const [input] = args;
 
@@ -235,7 +239,7 @@ export namespace $AWS {
         call: async (args, preWarmContext) => {
           const dynamo = preWarmContext.getOrInit<
             TypeSafeDynamoDBv2<object, keyof object, any>
-          >(PrewarmClients.DynamoDB);
+          >(DynamoDBClient as any);
 
           const [input] = args;
 
@@ -281,7 +285,7 @@ export namespace $AWS {
         call: async (args, preWarmContext) => {
           const dynamo = preWarmContext.getOrInit<
             TypeSafeDynamoDBv2<object, keyof object, any>
-          >(PrewarmClients.DynamoDB);
+          >(DynamoDBClient as any);
 
           const [input] = args;
 
@@ -331,7 +335,7 @@ export namespace $AWS {
         call: async (args, preWarmContext) => {
           const dynamo = preWarmContext.getOrInit<
             TypeSafeDynamoDBv2<object, keyof object, any>
-          >(PrewarmClients.DynamoDB);
+          >(DynamoDBClient as any);
 
           const [input] = args;
 
@@ -377,7 +381,7 @@ export namespace $AWS {
         call: async (args, preWarmContext) => {
           const dynamo = preWarmContext.getOrInit<
             TypeSafeDynamoDBv2<object, keyof object, any>
-          >(PrewarmClients.DynamoDB);
+          >(DynamoDBClient as any);
 
           const [input] = args;
 
@@ -636,7 +640,7 @@ function makeDynamoIntegration<
         integration.native.bind(context, table);
       },
       preWarm(prewarmContext) {
-        prewarmContext.getOrInit(PrewarmClients.DynamoDB);
+        prewarmContext.getOrInit(DynamoDBClient as any);
       },
     },
   });
