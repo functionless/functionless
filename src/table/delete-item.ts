@@ -16,25 +16,25 @@ import { ReturnValues } from "./return-value";
 import { ITable } from "./table";
 import { AttributeKeyToObject } from "./util";
 
-export interface UpdateItemInput<
+export interface DeleteItemInput<
   Key,
   ReturnValue extends ReturnValues | undefined
 > extends Omit<
-    AWS.DynamoDB.DocumentClient.UpdateItemInput,
+    AWS.DynamoDB.DocumentClient.DeleteItemInput,
     "TableName" | "Key" | "ReturnValues"
   > {
   Key: Key;
   ReturnValues?: ReturnValue;
 }
 
-export interface UpdateItemOutput<
+export interface DeleteItemOutput<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined,
   Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
   ReturnValue extends ReturnValues | undefined,
   Format extends JsonFormat = JsonFormat.Document
-> extends Omit<AWS.DynamoDB.DocumentClient.UpdateItemOutput, "TableName"> {
+> extends Omit<AWS.DynamoDB.DocumentClient.DeleteItemOutput, "TableName"> {
   Attributes?: ReturnValue extends undefined | "NONE"
     ? undefined
     : ReturnValue extends "ALL_OLD" | "ALL_NEW"
@@ -42,7 +42,7 @@ export interface UpdateItemOutput<
     : Partial<Narrow<Item, Key, Format>>;
 }
 
-export interface UpdateItem<
+export interface DeleteItem<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined
@@ -51,9 +51,9 @@ export interface UpdateItem<
     Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>,
     Return extends ReturnValues | undefined = undefined
   >(
-    input: UpdateItemInput<Key, Return>
+    input: DeleteItemInput<Key, Return>
   ): Promise<
-    UpdateItemOutput<
+    DeleteItemOutput<
       Item,
       PartitionKey,
       RangeKey,
@@ -72,9 +72,9 @@ export interface UpdateItem<
     >,
     Return extends ReturnValues | undefined = undefined
   >(
-    input: UpdateItemInput<Key, Return>
+    input: DeleteItemInput<Key, Return>
   ): Promise<
-    UpdateItemOutput<
+    DeleteItemOutput<
       Item,
       PartitionKey,
       RangeKey,
@@ -93,27 +93,26 @@ export interface UpdateItem<
     >
   >(input: {
     key: Key;
-    update: DynamoDBAppsyncExpression;
     condition?: DynamoDBAppsyncExpression;
     _version?: number;
   }): Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
 }
 
-export function createUpdateItemIntegration<
+export function createDeleteItemIntegration<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined
 >(
   table: ITable<Item, PartitionKey, RangeKey>
-): UpdateItem<Item, PartitionKey, RangeKey> {
-  const updateItem: UpdateItem<Item, PartitionKey, RangeKey> =
-    createDynamoDocumentIntegration<UpdateItem<Item, PartitionKey, RangeKey>>(
+): DeleteItem<Item, PartitionKey, RangeKey> {
+  const deleteItem: DeleteItem<Item, PartitionKey, RangeKey> =
+    createDynamoDocumentIntegration<DeleteItem<Item, PartitionKey, RangeKey>>(
       table,
-      "Table.updateItem",
+      "Table.deleteItem",
       "write",
       (client, [request]) => {
         return client
-          .update({
+          .delete({
             ...(request ?? {}),
             TableName: table.tableName,
             Key: request as any,
@@ -122,30 +121,29 @@ export function createUpdateItemIntegration<
       }
     );
 
-  updateItem.attributes = createDynamoAttributesIntegration<
-    UpdateItem<Item, PartitionKey, RangeKey>["attributes"]
-  >(table, "Table.updateItem.attributes", "write", (client, [request]) => {
+  deleteItem.attributes = createDynamoAttributesIntegration<
+    DeleteItem<Item, PartitionKey, RangeKey>["attributes"]
+  >(table, "Table.deleteItem.attributes", "write", (client, [request]) => {
     return client
-      .updateItem({
+      .deleteItem({
         ...(request ?? {}),
         TableName: table.tableName,
       } as any)
       .promise() as any;
   });
 
-  updateItem.appsync = makeAppSyncTableIntegration<
-    UpdateItem<Item, PartitionKey, RangeKey>["appsync"]
-  >(table, "Table.updateItem.appsync", {
+  deleteItem.appsync = makeAppSyncTableIntegration<
+    DeleteItem<Item, PartitionKey, RangeKey>["appsync"]
+  >(table, "Table.deleteItem.appsync", {
     appSyncVtl: {
       request: (call, vtl) => {
         const input = vtl.eval(
           assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
         );
         const request = vtl.var(
-          '{"operation": "UpdateItem", "version": "2018-05-29"}'
+          '{"operation": "DeleteItem", "version": "2018-05-29"}'
         );
         vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-        vtl.qr(`${request}.put('update', ${input}.get('update'))`);
         addIfDefined(vtl, input, request, "condition");
         addIfDefined(vtl, input, request, "_version");
 
@@ -154,5 +152,5 @@ export function createUpdateItemIntegration<
     },
   });
 
-  return updateItem;
+  return deleteItem;
 }

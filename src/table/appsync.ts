@@ -1,7 +1,14 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
+import { JsonFormat } from "typesafe-dynamodb";
+import { AttributeValue } from "typesafe-dynamodb/lib/attribute-value";
+import {
+  ExpressionAttributeNames,
+  ExpressionAttributeValues,
+} from "typesafe-dynamodb/lib/expression-attributes";
 import { AppSyncVtlIntegration } from "../appsync";
 import { IntegrationInput, makeIntegration } from "../integration";
 import { AnyFunction } from "../util";
+import { VTL } from "../vtl";
 import { Table } from "./table";
 
 export function makeAppSyncTableIntegration<F extends AnyFunction>(
@@ -34,3 +41,35 @@ export function addIfDefined(vtl: VTL, from: string, to: string, key: string) {
     "#end"
   );
 }
+
+export interface DynamoDBAppsyncExpression {
+  expression?: string;
+  expressionNames?: {
+    [name: string]: string;
+  };
+  expressionValues?: {
+    /**
+     * :val
+     */
+    [value: string]: AttributeValue;
+  };
+}
+
+export type DynamoExpression<Expression extends string | undefined> =
+  {} & RenameKeys<
+    ExpressionAttributeNames<Expression> &
+      ExpressionAttributeValues<Expression, JsonFormat.AttributeValue> & {
+        expression?: Expression;
+      },
+    {
+      ExpressionAttributeValues: "expressionValues";
+      ExpressionAttributeNames: "expressionNames";
+    }
+  >;
+
+type RenameKeys<
+  T extends object,
+  Substitutions extends Record<string, string>
+> = {
+  [k in keyof T as k extends keyof Substitutions ? Substitutions[k] : k]: T[k];
+};

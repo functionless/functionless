@@ -1,9 +1,14 @@
+import { ToAttributeMap } from "typesafe-dynamodb/lib/attribute-value";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import { assertNodeKind } from "../assert";
 import { NodeKind } from "../node-kind";
-import { addIfDefined, makeAppSyncTableIntegration } from "./appsync";
+import {
+  addIfDefined,
+  DynamoDBAppsyncExpression,
+  makeAppSyncTableIntegration,
+} from "./appsync";
 import {
   createDynamoAttributesIntegration,
   createDynamoDocumentIntegration,
@@ -11,37 +16,20 @@ import {
 import { ITable } from "./table";
 import { AttributeKeyToObject } from "./util";
 
-export interface GetItemInput<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined,
-  Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
-  Format extends JsonFormat = JsonFormat.Document
-> extends Omit<AWS.DynamoDB.GetItemInput, "Key"> {
-  Key: Key;
+export interface PutItemOutput<Item extends object, Format extends JsonFormat>
+  extends Omit<AWS.DynamoDB.PutItemOutput, "Attributes"> {
+  Attributes?: FormatObject<Item, Format>;
 }
 
-export interface GetItemOutput<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined,
-  Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
-  Format extends JsonFormat = JsonFormat.Document
-> extends Omit<AWS.DynamoDB.DocumentClient.GetItemOutput, "Item"> {
-  Item?: FormatObject<Narrow<Item, Key, Format>, Format>;
-}
-
-export interface GetItem<
+export interface PutItem<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined
 > {
   <Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>>(
     key: Key,
-    input?: Omit<AWS.DynamoDB.DocumentClient.GetItemInput, "Key">
-  ): Promise<
-    GetItemOutput<Item, PartitionKey, RangeKey, Key, JsonFormat.Document>
-  >;
+    input?: Omit<AWS.DynamoDB.DocumentClient.PutItemInput, "Key">
+  ): Promise<PutItemOutput<Item, JsonFormat.Document>>;
 
   attributes<
     Key extends TableKey<
@@ -52,10 +40,9 @@ export interface GetItem<
     >
   >(
     key: Key,
-    input: Omit<AWS.DynamoDB.GetItemInput, "Key">
-  ): Promise<
-    GetItemOutput<Item, PartitionKey, RangeKey, Key, JsonFormat.AttributeValue>
-  >;
+    input: Omit<AWS.DynamoDB.PutItemInput, "Key">
+  ): Promise<PutItemOutput<Item, JsonFormat.AttributeValue>>;
+
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
    */
@@ -68,62 +55,74 @@ export interface GetItem<
     >
   >(input: {
     key: Key;
-    consistentRead?: boolean;
+    attributeValues: ToAttributeMap<
+      Omit<
+        Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+        Exclude<PartitionKey | RangeKey, undefined>
+      >
+    >;
+    condition?: DynamoDBAppsyncExpression;
+    _version?: number;
   }): Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
 }
 
-export function createGetItemIntegration<
+export function createPutItemIntegration<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined
 >(
   table: ITable<Item, PartitionKey, RangeKey>
-): GetItem<Item, PartitionKey, RangeKey> {
-  const getItem: GetItem<Item, PartitionKey, RangeKey> =
-    createDynamoDocumentIntegration<GetItem<Item, PartitionKey, RangeKey>>(
+): PutItem<Item, PartitionKey, RangeKey> {
+  const putItem: PutItem<Item, PartitionKey, RangeKey> =
+    createDynamoDocumentIntegration<PutItem<Item, PartitionKey, RangeKey>>(
       table,
-      "Table.getItem",
-      "read",
-      (client, [key, props]) => {
+      "Table.putItem",
+      "write",
+      (client, [item, props]) => {
         return client
-          .get({
+          .put({
             ...(props ?? {}),
             TableName: table.tableName,
-            Key: key as any,
+            Item: item,
           })
           .promise() as any;
       }
     );
 
-  getItem.attributes = createDynamoAttributesIntegration<
-    GetItem<Item, PartitionKey, RangeKey>["attributes"]
-  >(table, "Table.getItem.attributes", "read", (client, [key, props]) => {
+  putItem.attributes = createDynamoAttributesIntegration<
+    PutItem<Item, PartitionKey, RangeKey>["attributes"]
+  >(table, "Table.putItem.attributes", "write", (client, [item, props]) => {
     return client
-      .getItem({
+      .putItem({
         ...(props ?? {}),
         TableName: table.tableName,
-        Key: key as any,
+        Item: item as any,
       })
       .promise() as any;
   });
 
-  getItem.appsync = makeAppSyncTableIntegration<
-    GetItem<Item, PartitionKey, RangeKey>["appsync"]
-  >(table, "Table.getItem.appsync", {
+  putItem.appsync = makeAppSyncTableIntegration<
+    PutItem<Item, PartitionKey, RangeKey>["appsync"]
+  >(table, "Table.putItem.appsync", {
     appSyncVtl: {
       request(call, vtl) {
         const input = vtl.eval(
           assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
         );
         const request = vtl.var(
-          '{"operation": "GetItem", "version": "2018-05-29"}'
+          '{"operation": "PutItem", "version": "2018-05-29"}'
         );
         vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-        addIfDefined(vtl, input, request, "consistentRead");
+        vtl.qr(
+          `${request}.put('attributeValues', ${input}.get('attributeValues'))`
+        );
+        addIfDefined(vtl, input, request, "condition");
+        addIfDefined(vtl, input, request, "_version");
+
         return vtl.json(request);
       },
     },
   });
 
-  return getItem;
+  return putItem;
 }

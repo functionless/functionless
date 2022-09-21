@@ -76,9 +76,9 @@ runtimeTestSuite("tableStack", (t: any) => {
           ...localstackClientConfig,
         },
         async (item: Item1) => {
-          await table.putItem(item);
+          await table.put(item);
 
-          const gotItem = await table.getItem({
+          const gotItem = await table.get({
             pk: item.pk,
             sk: item.sk,
           });
@@ -95,14 +95,14 @@ runtimeTestSuite("tableStack", (t: any) => {
             ConsistentRead: true,
           });
 
-          const batch = await table.batchGetItems([
+          const batch = await table.batchGet([
             {
               pk: item.pk,
               sk: item.sk,
             },
           ]);
 
-          const updated = await table.updateItem({
+          const updated = await table.update({
             Key: {
               pk: item.pk,
               sk: item.sk,
@@ -116,7 +116,7 @@ runtimeTestSuite("tableStack", (t: any) => {
             ReturnValues: "ALL_OLD",
           });
 
-          const deleted = await table.deleteItem({
+          const deleted = await table.delete({
             Key: {
               pk: item.pk,
               sk: item.sk,
