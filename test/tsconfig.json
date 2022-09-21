@@ -12,6 +12,7 @@
     "paths": {
       "@fnls": ["../lib/index"]
     },
+    "sourceMap": true,
     "baseUrl": "."
   },
   "exclude": ["node_modules"]

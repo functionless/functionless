@@ -108,7 +108,7 @@ test("globals", async () => {
 test("mutate", async () => {
   let x = 1;
   const closure = await expectClosure(() => {
-    x = 2;
+    x += 2;
     return {
       x,
     };

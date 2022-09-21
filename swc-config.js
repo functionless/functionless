@@ -18,6 +18,7 @@ exports.config = {
   },
   minify: true,
   sourceMaps: "inline",
+  inlineSourcesContent: false,
   module: {
     type: "commonjs",
   },
