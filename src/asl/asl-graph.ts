@@ -1798,7 +1798,10 @@ export namespace ASLGraph {
     value:
       | ASLGraph.IntrinsicFunction
       | ASLGraph.JsonPath
-      | ASLGraph.LiteralValue
+      | ASLGraph.LiteralValue<number>
+      | ASLGraph.LiteralValue<string>
+      | ASLGraph.LiteralValue<boolean>
+      | ASLGraph.LiteralValue<null>
   ) {
     return intrinsicFunction("States.JsonToString", value);
   }
@@ -2028,6 +2031,12 @@ export namespace ASLGraph {
     );
   }
 
+  export function escapeFormatLiteralString(
+    literal: ASLGraph.LiteralValue<string>
+  ) {
+    return literal.value.replace(/[\}\{\'}]/g, "\\$&");
+  }
+
   /**
    * Escape special characters in Step Functions intrinsics.
    *
@@ -2037,11 +2046,115 @@ export namespace ASLGraph {
    *
    * https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-intrinsic-functions.html#amazon-states-language-intrinsic-functions-escapes
    */
-  export function escapeFormatString(literal: ASLGraph.LiteralValue) {
-    if (typeof literal.value === "string") {
-      return literal.value.replace(/[\}\{\'}]/g, "\\$&");
+  export function escapeFormatLiteral(literal: ASLGraph.LiteralValue) {
+    if (ASLGraph.isLiteralString(literal)) {
+      return escapeFormatLiteralString(literal);
     } else {
       return literal.value;
+    }
+  }
+
+  /**
+   * Turns any literal value in a string or intrinsic functions that can generate a string representation.
+   *
+   * ```ts
+   * literalValue("value") // => "value"
+   * literalValue(1) // => "1"
+   * literalValue({ a: 1 }) // => "{ \"a\": "1" }""
+   * literalValue({ "a.$": "$.var" }) => intrinsicFormat('{ "a": {} }', JsonToString("$.var"))
+   * literalValue([1]) // => "[1]"
+   * literalValue(["$.var"]) => intrinsicFormat('[{}]', JsonToString("$.var"))
+   * ```
+   */
+  export function stringifyLiteral(
+    value: ASLGraph.LiteralValue
+  ): ASLGraph.IntrinsicFunction | ASLGraph.LiteralValue<string> {
+    if (ASLGraph.isLiteralNull(value)) {
+      return ASLGraph.literalValue("null");
+    } else if (ASLGraph.isLiteralArray(value)) {
+      return stringifyLiteralArray(value);
+    } else if (ASLGraph.isLiteralObject(value)) {
+      return stringifyLiteralObject(value);
+    }
+    return ASLGraph.isLiteralString(value)
+      ? value
+      : ASLGraph.literalValue(String(value.value));
+
+    /**
+     * Handles stringifying a literal object using javascript during synth or intrinsic functions during runtime.
+     *
+     * literalValue({ a: 1 }) // => "{ \"a\": "1" }""
+     * literalValue({ "a.$": "$.var" }) => intrinsicFormat('{ "a": {} }', JsonToString("$.var"))
+     */
+    function stringifyLiteralObject(
+      value: ASLGraph.LiteralValue<Record<string, ASLGraph.LiteralValueType>>
+    ): ASLGraph.IntrinsicFunction | ASLGraph.LiteralValue<string> {
+      if (!value.containsJsonPath) {
+        return ASLGraph.literalValue(JSON.stringify(value.value), false);
+      }
+      const entries = Object.entries(value.value).map(([key, value]) => {
+        if (key.endsWith(".$")) {
+          // assuming that these values json path and not intrinsic
+          return [
+            key.substring(0, key.length - 2),
+            ASLGraph.intrinsicJsonToString(ASLGraph.jsonPath(value as string)),
+          ] as const;
+        }
+        return [key, stringifyLiteral(ASLGraph.literalValue(value))] as const;
+      });
+
+      // stringify only returns literal values for nested values when
+      // all nested values can be stringified
+      if (entries.every(([_, value]) => ASLGraph.isLiteralValue(value))) {
+        // just stringify the original value.
+        return ASLGraph.literalValue(JSON.stringify(value.value));
+      }
+      return ASLGraph.intrinsicFormat(
+        ASLGraph.literalValue(
+          `\\{${entries
+            .map(
+              ([key, value]) =>
+                `"${key}": ${
+                  ASLGraph.isIntrinsicFunction(value)
+                    ? "{}"
+                    : `'${ASLGraph.escapeFormatLiteralString(value)}'`
+                }`
+            )
+            .join(",")}\\}`
+        ),
+        ...entries
+          .map(([_, value]) => value)
+          .filter(ASLGraph.isIntrinsicFunction)
+      );
+    }
+
+    /**
+     * Handles stringifying a literal object using javascript during synth or intrinsic functions during runtime.
+     *
+     * literalValue([1]) // => "[1]"
+     * literalValue(["$.var"]) => intrinsicFormat('[{}]', JsonToString("$.var"))
+     */
+    function stringifyLiteralArray(
+      value: ASLGraph.LiteralValue<ASLGraph.LiteralValueType[]>
+    ): ASLGraph.IntrinsicFunction | ASLGraph.LiteralValue<string> {
+      const stringifyElements = value.value
+        .map((v) => ASLGraph.literalValue(v))
+        .map(stringifyLiteral);
+      if (stringifyElements.every(ASLGraph.isLiteralString)) {
+        return ASLGraph.literalValue(JSON.stringify(value.value));
+      }
+      // ["a", 1, var1, var2]
+      // States.Format('["a", 1, {}{}]', $.var1, $.var2)
+      return ASLGraph.intrinsicFormat(
+        stringifyElements
+          .map((s) =>
+            ASLGraph.isLiteralValue(s)
+              ? `'${escapeFormatLiteralString(s)}'`
+              : "{}"
+          )
+          .join(","),
+        ...stringifyElements.filter(ASLGraph.isIntrinsicFunction)
+      );
     }
   }
 }

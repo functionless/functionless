@@ -5,7 +5,7 @@ import {
 } from "./declaration";
 import { Expr, Identifier } from "./expression";
 import { isNode } from "./guards";
-import { FunctionlessNode } from "./node";
+import type { FunctionlessNode } from "./node";
 import { getCtor } from "./node-ctor";
 
 import { BlockStmt, Stmt, VariableStmt } from "./statement";
@@ -27,11 +27,9 @@ export function visitEachChild<T extends FunctionlessNode>(
   ) => FunctionlessNode | FunctionlessNode[] | undefined
 ): T {
   const ctor = getCtor(node.kind);
-  const args = node._arguments.map((argument, index) => {
-    if (index === 0) {
-      // first argument is always a Span, so simply return it
-      return argument;
-    } else if (argument === null || typeof argument !== "object") {
+  const [span, ...rest] = node._arguments;
+  const args = rest.map((argument) => {
+    if (argument === null || typeof argument !== "object") {
       // all primitives are simply returned as-is
       return argument;
     } else if (isNode(argument)) {
@@ -62,7 +60,7 @@ export function visitEachChild<T extends FunctionlessNode>(
     }
   });
 
-  return new ctor(...args) as T;
+  return new ctor(span, ...args) as T;
 }
 
 /**

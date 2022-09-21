@@ -1,5 +1,11 @@
 import crypto from "crypto";
-import { Duration, aws_dynamodb, RemovalPolicy } from "aws-cdk-lib";
+import {
+  Duration,
+  aws_dynamodb,
+  RemovalPolicy,
+  ArnFormat,
+  aws_iam,
+} from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 import {
   CompositePrincipal,
@@ -313,7 +319,7 @@ runtimeTestSuite<
   );
 
   test(
-    "call $SFN map, foreach, and parallel",
+    "call $SFN map, foreach, parallel, task",
     (parent) => {
       const func = sfnTestLambda<number, void>(
         parent,
@@ -323,25 +329,167 @@ runtimeTestSuite<
         }
       );
 
-      return new StepFunction(parent, "sfn2", async (input) => {
-        await $SFN.forEach(input.arr, (n) => $SFN.retry(async () => func(n)));
-
-        return {
-          a: await $SFN.map([1, 2, 3], (n) => {
-            return `n${n}`;
-          }),
-          b: await $SFN.map(input.arr, (n) => {
-            return n;
-          }),
-          c: await $SFN.parallel(
-            () => 1,
-            () => 2
-          ),
-        };
+      const functionName = `awaitFunctionTest${
+        runtimeTestExecutionContext.stackSuffix ?? ""
+      }`;
+      // arns get replaced in the sfn snapshot definition, so lets use an arn.
+      const functionArn = stack.formatArn({
+        service: "lambda",
+        account: stack.account,
+        region: stack.region,
+        resource: "function",
+        arnFormat: ArnFormat.COLON_RESOURCE_NAME,
+        resourceName: functionName,
       });
+      const machineName = `awaitMachineTest${
+        runtimeTestExecutionContext.stackSuffix ?? ""
+      }`;
+      const machineArn = stack.formatArn({
+        service: "states",
+        account: stack.account,
+        region: stack.region,
+        resource: "stateMachine",
+        arnFormat: ArnFormat.COLON_RESOURCE_NAME,
+        resourceName: machineName,
+      });
+
+      const sfn = new StepFunction(
+        parent,
+        "sfn2",
+        async (input: { arr: number[]; n: number }, context) => {
+          await $SFN.forEach(input.arr, (n) => $SFN.retry(async () => func(n)));
+
+          let h;
+          try {
+            $SFN.task({
+              Resource: "arn:aws:states:::lambda:invoke.waitForTaskToken",
+              Parameters: {
+                FunctionName: functionArn,
+                Payload: { value: 1, token: context.Task.Token, fail: true },
+              },
+              Comment: "hullo again",
+              HeartbeatSeconds: input.n,
+              TimeoutSeconds: input.n,
+            });
+          } catch (err) {
+            h = err;
+          }
+
+          let j;
+          try {
+            $SFN.task({
+              Resource:
+                "arn:aws:states:::states:startExecution.waitForTaskToken",
+              Parameters: {
+                StateMachineArn: machineArn,
+                Input: { value: 1, token: context.Task.Token, fail: true },
+              },
+              Comment: "hullo again",
+              HeartbeatSeconds: input.n,
+              TimeoutSeconds: input.n,
+            });
+          } catch (err) {
+            j = err;
+          }
+
+          return {
+            a: await $SFN.map([1, 2, 3], (n) => {
+              return `n${n}`;
+            }),
+            b: await $SFN.map(input.arr, (n) => {
+              return n;
+            }),
+            c: await $SFN.parallel(
+              () => 1,
+              () => 2
+            ),
+            d: $SFN.task({ Resource: trueFunc.resource.functionArn }),
+            e: $SFN.task({
+              Resource: trueFunc.resource.functionArn,
+              Parameters: { arr: input.arr },
+            }),
+            f: $SFN.task({
+              Resource: trueFunc.resource.functionArn,
+              Parameters: input,
+              Comment: "hullo",
+              Retry: [{ ErrorEquals: ["SomeError"] }],
+              HeartbeatSeconds: 10,
+              TimeoutSeconds: 10,
+            }),
+            g: $SFN.task({
+              Resource: "arn:aws:states:::lambda:invoke.waitForTaskToken",
+              Parameters: {
+                FunctionName: functionArn,
+                Payload: { value: 1, token: context.Task.Token },
+              },
+              Comment: "hullo again",
+              HeartbeatSeconds: input.n,
+              TimeoutSeconds: input.n,
+            }),
+            h,
+            i: $SFN.task({
+              Resource:
+                "arn:aws:states:::states:startExecution.waitForTaskToken",
+              Parameters: {
+                StateMachineArn: machineArn,
+                Input: { value: 1, token: context.Task.Token },
+              },
+              Comment: "hullo again",
+              HeartbeatSeconds: input.n,
+              TimeoutSeconds: input.n,
+            }),
+            j,
+          };
+        }
+      );
+
+      const respondFunction = new Function(
+        parent,
+        "respondFunction",
+        { functionName },
+        async (input: { value: number; token: string; fail?: boolean }) => {
+          if (input.fail) {
+            await sfn.sendTaskFailure(input.token, "because", "loser");
+          }
+          await sfn.sendTaskSuccess(input.token, { value: input.value });
+        }
+      );
+
+      new StepFunction(
+        parent,
+        "respondMachine",
+        { stateMachineName: machineName },
+        async (input: { value: number; token: string; fail?: boolean }) => {
+          if (input.fail) {
+            await sfn.sendTaskFailure(input.token, "because", "loser");
+          }
+          await sfn.sendTaskSuccess(input.token, { value: input.value });
+        }
+      );
+
+      sfn.resource.role.addToPrincipalPolicy(
+        new aws_iam.PolicyStatement({
+          actions: ["states:StartExecution"],
+          resources: [machineArn],
+        })
+      );
+      respondFunction.resource.grantInvoke(sfn.resource);
+      trueFunc.resource.grantInvoke(sfn.resource);
+      return sfn;
     },
-    { a: ["n1", "n2", "n3"], b: [1, 2], c: [1, 2] },
-    { arr: [1, 2] }
+    {
+      a: ["n1", "n2", "n3"],
+      b: [1, 2],
+      c: [1, 2],
+      d: true,
+      e: true,
+      f: true,
+      g: { value: 1 },
+      h: { Error: "because", Cause: "loser" },
+      i: { value: 1 },
+      j: { Error: "because", Cause: "loser" },
+    },
+    { arr: [1, 2], n: 30 }
   );
 
   const shasum = crypto.createHash("sha1");

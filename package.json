@@ -26,6 +26,7 @@
     "test:runtime": "npx projen test:runtime",
     "test:update": "npx projen test:update",
     "test:watch": "npx projen test:watch",
+    "typecheck": "npx projen typecheck",
     "unbump": "npx projen unbump",
     "upgrade": "npx projen upgrade",
     "watch": "npx projen watch",

@@ -9,6 +9,7 @@
         "name": "@functionless/language-service"
       }
     ],
+    "skipLibCheck": true,
     "paths": {
       "@fnls": ["../lib/index"]
     },

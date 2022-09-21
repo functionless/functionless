@@ -139,6 +139,10 @@ export type CommonTaskFields = CommonFields & {
 export type Task = CommonTaskFields & {
   Type: "Task";
   Resource: string;
+  TimeoutSeconds?: number;
+  TimeoutSecondsPath?: string;
+  HeartbeatSeconds?: number;
+  HeartbeatSecondsPath?: string;
 };
 
 /**
