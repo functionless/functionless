@@ -8,7 +8,7 @@ import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import { AppSyncVtlIntegration } from "./appsync";
 import { assertNodeKind } from "./assert";
-import { IntegrationInput, makeIntegration } from "./integration";
+import { IntegrationInput, makeIntegration } from "./appsync";
 import { NodeKind } from "./node-kind";
 import {
   DynamoAppSyncIntegrationCall,
@@ -28,24 +28,6 @@ export interface ITableAppsyncApi<
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined
 > {
-  /**
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
-   */
-  getItem: DynamoAppSyncIntegrationCall<
-    "getItem",
-    <
-      Key extends TableKey<
-        Item,
-        PartitionKey,
-        RangeKey,
-        JsonFormat.AttributeValue
-      >
-    >(input: {
-      key: Key;
-      consistentRead?: boolean;
-    }) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>
-  >;
-
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-putitem
    */
@@ -138,24 +120,6 @@ export interface ITableAppsyncApi<
       scannedCount: number;
     }>
   >;
-}
-
-type AttributeKeyToObject<T> = {
-  [k in keyof T]: T[k] extends { S: infer S }
-    ? S
-    : T[k] extends { N: `${infer N}` }
-    ? N
-    : T[k] extends { B: any }
-    ? NativeBinaryAttribute
-    : never;
-};
-
-function addIfDefined(vtl: VTL, from: string, to: string, key: string) {
-  vtl.add(
-    `#if(${from}.containsKey('${key}'))`,
-    `$util.qr(${to}.put('${key}', ${from}.get('${key}')))`,
-    "#end"
-  );
 }
 
 export class TableAppsyncApi<
@@ -271,26 +235,4 @@ export class TableAppsyncApi<
       },
     },
   });
-
-  private makeAppSyncTableIntegration<F extends AnyFunction>(
-    methodName: string,
-    integration: Omit<IntegrationInput<string, F>, "kind" | "appSyncVtl"> & {
-      appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
-    }
-  ): F {
-    return makeIntegration<`Table.AppSync.${string}`, F>({
-      ...integration,
-      kind: `Table.AppSync.${methodName}`,
-      appSyncVtl: {
-        dataSourceId: () => this.table.resource.node.addr,
-        dataSource: (api, dataSourceId) => {
-          return new appsync.DynamoDbDataSource(api, dataSourceId, {
-            api,
-            table: this.table.resource,
-          });
-        },
-        ...integration.appSyncVtl,
-      },
-    });
-  }
 }

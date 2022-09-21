@@ -7,14 +7,21 @@ import {
   ExpressionAttributeNames,
   ExpressionAttributeValues,
 } from "typesafe-dynamodb/lib/expression-attributes";
-import { FormatObject } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
-import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import { AppsyncResolver, AppsyncField } from "./appsync";
-import { DocumentDBClient } from "./function-prewarm";
-import { IntegrationCall, makeIntegration } from "./integration";
-import { ITableAppsyncApi, TableAppsyncApi } from "./table-appsync-api";
-import { AnyAsyncFunction } from "./util";
+import { AppsyncResolver } from "../appsync";
+import { makeIntegration } from "../integration";
+import { createGetItemIntegration, GetItem } from "./get-item";
+import { DocumentDBClient } from "./integration";
+import { ReturnValues } from "./return-value";
+import {
+  BatchGetItemOutput,
+  DeleteItemInput,
+  DeleteItemOutput,
+  PutItemOutput,
+  QueryOutput,
+  ScanOutput,
+} from "./table-api";
+import { UpdateItem } from "./update-item";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -123,26 +130,9 @@ export interface ITable<
     RangeKey: RangeKey;
   };
 
-  /**
-   * Contains Integration implementations specific to the AWS Appsync service.
-   *
-   * These integrations should only be called from within the {@link AppsyncResolver} and {@link AppsyncField} Integration Contexts.
-   *
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html
-   */
-  readonly appsync: ITableAppsyncApi<Item, PartitionKey, RangeKey>;
+  getItem: GetItem<Item, PartitionKey, RangeKey>;
 
-  /**
-   * Get Item
-   * @param key
-   * @param props
-   */
-  getItem<
-    Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>
-  >(
-    key: Key,
-    props?: Omit<AWS.DynamoDB.GetItemInput, "TableName" | "Key">
-  ): Promise<GetItemOutput<Item, PartitionKey, RangeKey, Key>>;
+  updateItem: UpdateItem<Item, PartitionKey, RangeKey>;
 
   batchGetItems(
     keys: readonly TableKey<
@@ -158,13 +148,6 @@ export interface ITable<
     item: I,
     props?: Omit<AWS.DynamoDB.PutItemInput, "TableName" | "Item">
   ): Promise<PutItemOutput<I>>;
-
-  updateItem<
-    Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>,
-    Return extends ReturnValues | undefined = undefined
-  >(
-    input: UpdateItemInput<Key, Return>
-  ): Promise<UpdateItemOutput<Item, Key, Return>>;
 
   deleteItem<
     Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>,
@@ -200,9 +183,7 @@ class BaseTable<
     RangeKey: RangeKey;
   };
 
-  public readonly appsync: ITableAppsyncApi<Item, PartitionKey, RangeKey>;
-
-  public readonly getItem: ITable<Item, PartitionKey, RangeKey>["getItem"];
+  public readonly getItem: GetItem<Item, PartitionKey, RangeKey>;
 
   public readonly batchGetItems: ITable<
     Item,
@@ -234,36 +215,7 @@ class BaseTable<
 
     const tableName = resource.tableName;
 
-    this.appsync = new TableAppsyncApi(this);
-
-    this.getItem = makeIntegration<
-      "Table.getItem",
-      ITable<Item, PartitionKey, RangeKey>["getItem"]
-    >({
-      kind: "Table.getItem",
-      native: {
-        bind: (context) => {
-          this.resource.grantReadData(context.resource);
-        },
-        preWarm: (context) => {
-          context.getOrInit(DocumentDBClient);
-        },
-        call: async ([key, props], context) => {
-          const ddb =
-            context.getOrInit<AWS.DynamoDB.DocumentClient>(DocumentDBClient);
-
-          const response = await ddb
-            .get({
-              ...(props ?? {}),
-              TableName: tableName,
-              Key: key as any,
-            })
-            .promise();
-
-          return response as any;
-        },
-      },
-    });
+    this.getItem = createGetItemIntegration(this);
 
     this.batchGetItems = makeIntegration<
       "Table.batchGetItems",
@@ -447,11 +399,6 @@ class BaseTable<
   }
 }
 
-export type DynamoAppSyncIntegrationCall<
-  Kind extends string,
-  F extends AnyAsyncFunction
-> = IntegrationCall<`Table.AppSync.${Kind}`, F>;
-
 /**
  * Wraps an {@link aws_dynamodb.Table} with a type-safe interface that can be
  * called from within an {@link AppsyncResolver}.
@@ -547,92 +494,3 @@ type RenameKeys<
 > = {
   [k in keyof T as k extends keyof Substitutions ? Substitutions[k] : k]: T[k];
 };
-
-export interface GetItemInput<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined,
-  Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
-  Format extends JsonFormat = JsonFormat.Document
-> extends Omit<AWS.DynamoDB.GetItemInput, "Key"> {
-  Key: Key;
-}
-
-export interface GetItemOutput<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined,
-  Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
-  Format extends JsonFormat = JsonFormat.Document
-> extends Omit<AWS.DynamoDB.DocumentClient.GetItemOutput, "Item"> {
-  Item?: FormatObject<Narrow<Item, Key, Format>, Format>;
-}
-
-type ReturnValues =
-  | "NONE"
-  | "ALL_OLD"
-  | "UPDATED_OLD"
-  | "ALL_NEW"
-  | "UPDATED_NEW";
-
-export interface UpdateItemInput<
-  Key extends TableKey<any, any, any, JsonFormat.Document>,
-  ReturnValue extends ReturnValues | undefined
-> extends Omit<
-    AWS.DynamoDB.DocumentClient.UpdateItemInput,
-    "TableName" | "Key" | "ReturnValues"
-  > {
-  Key: Key;
-  ReturnValues?: ReturnValue;
-}
-
-export interface UpdateItemOutput<
-  Item extends object,
-  Key extends TableKey<any, any, any, JsonFormat.Document>,
-  ReturnValue extends ReturnValues | undefined
-> extends Omit<AWS.DynamoDB.DocumentClient.UpdateItemOutput, "TableName"> {
-  Attributes?: ReturnValue extends undefined | "NONE"
-    ? undefined
-    : ReturnValue extends "ALL_OLD" | "ALL_NEW"
-    ? Narrow<Item, Key, JsonFormat.Document>
-    : Partial<Narrow<Item, Key, JsonFormat.Document>>;
-}
-
-export interface DeleteItemInput<
-  Key extends TableKey<any, any, any, JsonFormat.Document>,
-  ReturnValue extends ReturnValues | undefined
-> extends Omit<AWS.DynamoDB.DocumentClient.DeleteItemInput, "TableName"> {
-  Key: Key;
-  ReturnValues?: ReturnValue;
-}
-
-export interface DeleteItemOutput<
-  Item extends object,
-  ReturnValue extends ReturnValues | undefined,
-  Key extends TableKey<any, any, any, JsonFormat.Document>
-> extends Omit<AWS.DynamoDB.DocumentClient.DeleteItemOutput, "TableName"> {
-  Attributes?: ReturnValue extends undefined | "NONE"
-    ? undefined
-    : ReturnValue extends "ALL_OLD" | "ALL_NEW"
-    ? Narrow<Item, Key, JsonFormat.Document>
-    : Partial<Narrow<Item, Key, JsonFormat.Document>>;
-}
-
-export interface BatchGetItemOutput<Item extends object>
-  extends Omit<AWS.DynamoDB.BatchGetItemOutput, "Item" | "Responses"> {
-  Items?: Item[];
-}
-
-export interface PutItemOutput<Item extends object>
-  extends Omit<AWS.DynamoDB.PutItemOutput, "Attributes"> {
-  Attributes?: FormatObject<Item, JsonFormat.Document>;
-}
-
-export interface QueryOutput<Item extends object>
-  extends Omit<AWS.DynamoDB.QueryOutput, "Items"> {
-  Items?: FormatObject<Item, JsonFormat.Document>[];
-}
-export interface ScanOutput<Item extends object>
-  extends Omit<AWS.DynamoDB.ScanOutput, "Items"> {
-  Items?: FormatObject<Item, JsonFormat.Document>[];
-}

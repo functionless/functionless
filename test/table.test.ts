@@ -290,7 +290,7 @@ test.each([fromTable, newTable])("get item", (table) => {
     async (
       context: AppsyncContext<{ id: string }>
     ): Promise<Item | undefined> => {
-      return table.appsync.getItem({
+      return table.getItem.appsync({
         key: {
           id: {
             S: context.arguments.id,
@@ -303,7 +303,7 @@ test.each([fromTable, newTable])("get item", (table) => {
 
 test.each([fromTableSortKey, newTableSortKey])("get item", (table) => {
   appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
-    return table.appsync.getItem({
+    return table.getItem.appsync({
       key: {
         id: {
           S: context.arguments.id,
@@ -323,7 +323,7 @@ test.each([fromTable, newTable])(
       async (
         context: AppsyncContext<{ id: string }>
       ): Promise<Item | undefined> => {
-        return table.appsync.getItem({
+        return table.getItem.appsync({
           key: {
             id: {
               S: context.arguments.id,
@@ -340,7 +340,7 @@ test.each([fromTableSortKey, newTableSortKey])(
   "get item and set consistentRead:true",
   (table) => {
     appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
-      return table.appsync.getItem({
+      return table.getItem.appsync({
         key: {
           id: {
             S: context.arguments.id,
@@ -360,7 +360,7 @@ test.each([fromTable, newTable])("put item", (table) => {
     async (
       context: AppsyncContext<{ id: string; name: number }>
     ): Promise<Item | undefined> => {
-      return table.appsync.putItem({
+      return table.putItem.appsync({
         key: {
           id: {
             S: context.arguments.id,
@@ -390,7 +390,7 @@ test.each([fromTable, newTable])("put item", (table) => {
 test.each([fromTableSortKey, newTableSortKey])("put item", (table) => {
   appsyncTestCase(
     async (context: AppsyncContext<{ id: string; name: number }>) => {
-      return table.appsync.putItem({
+      return table.putItem.appsync({
         key: {
           id: {
             S: context.arguments.id,
@@ -421,7 +421,7 @@ test.each([fromTable, newTable])("update item", (table) => {
     async (
       context: AppsyncContext<{ id: string }>
     ): Promise<Item | undefined> => {
-      return table.appsync.updateItem({
+      return table.updateItem.appsync({
         key: {
           id: {
             S: context.arguments.id,
@@ -440,7 +440,7 @@ test.each([fromTable, newTable])("update item", (table) => {
 
 test.each([fromTableSortKey, newTableSortKey])("update item", (table) => {
   appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
-    return table.appsync.updateItem({
+    return table.updateItem.appsync({
       key: {
         id: {
           S: context.arguments.id,
@@ -464,7 +464,7 @@ test.each([fromTableSortKey, newTableSortKey])("update item", (table) => {
     async (
       context: AppsyncContext<{ id: string }>
     ): Promise<Item | undefined> => {
-      return table.appsync.updateItem({
+      return table.updateItem.appsync({
         key: {
           id: {
             S: context.arguments.id,
@@ -489,7 +489,7 @@ test.each([fromTable, newTable])("delete item", (table) => {
     async (
       context: AppsyncContext<{ id: string }>
     ): Promise<Item | undefined> => {
-      return table.appsync.deleteItem({
+      return table.deleteItem.appsync({
         key: {
           id: {
             S: context.arguments.id,
@@ -508,7 +508,7 @@ test.each([fromTable, newTable])("delete item", (table) => {
 
 test.each([fromTableSortKey, newTableSortKey])("delete item", (table) => {
   appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
-    return table.appsync.deleteItem({
+    return table.deleteItem.appsync({
       key: {
         id: {
           S: context.arguments.id,
@@ -533,7 +533,7 @@ test.each([fromTable, newTable])("query", (table) => {
       context: AppsyncContext<{ id: string; sort: number }>
     ): Promise<Item[]> => {
       return (
-        await table.appsync.query({
+        await table.query.appsync({
           query: {
             expression: "id = :id and #name = :val",
             expressionNames: {
@@ -554,7 +554,7 @@ test.each([fromTableSortKey, newTableSortKey])("query", (table) => {
   appsyncTestCase(
     async (context: AppsyncContext<{ id: string; sort: number }>) => {
       return (
-        await table.appsync.query({
+        await table.query.appsync({
           query: {
             expression: "id = :id and #name = :val",
             expressionNames: {

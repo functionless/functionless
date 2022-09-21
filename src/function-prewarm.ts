@@ -61,28 +61,6 @@ export const PrewarmClients: Record<
   },
 };
 
-export const DynamoDBClient: PrewarmClientInitializer<
-  "DynamoDB",
-  AWS.DynamoDB
-> = {
-  key: "DynamoDB",
-  init: (key, props) =>
-    new (require("aws-sdk/clients/dynamodb"))(
-      props?.clientConfigRetriever?.(key)
-    ),
-};
-
-export const DocumentDBClient: PrewarmClientInitializer<
-  "DynamoDB",
-  AWS.DynamoDB.DocumentClient
-> = {
-  key: "DynamoDB",
-  init: (key, props) =>
-    new (require("aws-sdk/clients/dynamodb").DocumentClient)(
-      props?.clientConfigRetriever?.(key)
-    ),
-};
-
 export const SQSClient: PrewarmClientInitializer<"SQS", AWS.SQS> = {
   key: "SQS",
   init: (key, props) => {
