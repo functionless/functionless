@@ -13,7 +13,7 @@ export const MainNavItem = ({ item }: { item: MainItem }) => (
   </Link>
 );
 export const SocialNavItem = ({ item }: { item: SocialItem }) => (
-  <Link href={item.href} title={item.title}>
+  <Link href={item.href} title={item.title} className="shrink-0">
     <img src={item.icon} />
   </Link>
 );
@@ -22,7 +22,7 @@ export default function NavbarContent(): JSX.Element {
   const mobileSidebar = useNavbarMobileSidebar();
 
   return (
-    <div className="grid grid-cols-3 justify-between w-full">
+    <div className="flex xl:grid xl:grid-cols-3 justify-between w-full">
       <div className="flex col-span-1 items-center gap-4">
         <div className="block md:hidden">
           <NavbarMobileSidebarToggle />
@@ -35,18 +35,16 @@ export default function NavbarContent(): JSX.Element {
         </div>
       </div>
 
-      <div className="col-span-2 md:col-span-1 px-4 ml-8 md:ml-0">
-        <div className="hidden lg:flex search-bar">
-          <NavbarSearch>
-            <SearchBar />
-          </NavbarSearch>
-        </div>
+      <div className="col-span-1 px-4 ml-16 lg:ml-0 search-bar hidden lg:flex lg:w-96">
+        <NavbarSearch>
+          <SearchBar />
+        </NavbarSearch>
       </div>
-      <div className="col-span-1 gap-4 hidden md:flex items-center justify-end">
+      <div className="col-span-1 gap-4 items-center justify-end flex">
         {social.map((item) => (
           <SocialNavItem key={item.title} item={item} />
         ))}
-        <div className="pt-1.5 hidden md:block">
+        <div className="pt-1.5">
           <GitHubButton
             href="https://github.com/functionless/functionless"
             data-color-scheme="no-preference: dark; light: light; dark: dark;"
