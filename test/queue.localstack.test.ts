@@ -12,7 +12,6 @@ import { SQSBatchResponse } from "aws-lambda";
 import { Construct } from "constructs";
 import { v4 } from "uuid";
 import {
-  $AWS,
   EventBus,
   Event,
   Function,
@@ -142,15 +141,12 @@ runtimeTestSuite<{
         await Promise.all(
           event.Records.map(async (record) => {
             const json = JSON.parse(record.body);
-            await $AWS.DynamoDB.PutItem({
-              Table: table,
-              Item: {
-                id: {
-                  S: json.id,
-                },
-                data: {
-                  S: json.data,
-                },
+            await table.put.attributes({
+              id: {
+                S: json.id,
+              },
+              data: {
+                S: json.data,
               },
             });
           })
@@ -174,15 +170,12 @@ runtimeTestSuite<{
         await Promise.all(
           event.Records.map(async (record) => {
             const json = JSON.parse(record.body);
-            await $AWS.DynamoDB.PutItem({
-              Table: table,
-              Item: {
-                id: {
-                  S: json.id,
-                },
-                data: {
-                  S: json.data,
-                },
+            await table.put.attributes({
+              id: {
+                S: json.id,
+              },
+              data: {
+                S: json.data,
               },
             });
           })
@@ -205,7 +198,7 @@ runtimeTestSuite<{
         data: string;
       }
 
-      const queue = new Queue(scope, "queue", {
+      const queue = new Queue<Message>(scope, "queue", {
         ...localstackQueueConfig,
         serializer: new JsonSerializer<Message>(),
       });
@@ -213,17 +206,7 @@ runtimeTestSuite<{
       queue.onEvent(localstackClientConfig, async (event) => {
         await Promise.all(
           event.Records.map(async (record) => {
-            await $AWS.DynamoDB.PutItem({
-              Table: table,
-              Item: {
-                id: {
-                  S: record.message.id,
-                },
-                data: {
-                  S: record.message.data,
-                },
-              },
-            });
+            await table.put(record.message);
           })
         );
 
@@ -250,17 +233,7 @@ runtimeTestSuite<{
       });
 
       queue.messages().forEach(localstackClientConfig, async (message) => {
-        await $AWS.DynamoDB.PutItem({
-          Table: table,
-          Item: {
-            id: {
-              S: message.id,
-            },
-            data: {
-              S: message.data,
-            },
-          },
-        });
+        await table.put(message);
       });
       return queue;
     },
@@ -293,17 +266,7 @@ runtimeTestSuite<{
         .pipe(queue);
 
       queue.messages().forEach(localstackClientConfig, async (message) => {
-        await $AWS.DynamoDB.PutItem({
-          Table: table,
-          Item: {
-            id: {
-              S: message.id,
-            },
-            data: {
-              S: message.data,
-            },
-          },
-        });
+        await table.put(message);
       });
       return {
         queue,
@@ -353,17 +316,14 @@ runtimeTestSuite<{
         .forEach(
           localstackClientConfig,
           async (message, { attributes: { MessageGroupId } }) => {
-            await $AWS.DynamoDB.PutItem({
-              Table: table,
-              Item: {
-                id: {
-                  S: message.id,
-                },
-                data: {
-                  S: message.data,
-                },
-                messageGroupId: { S: MessageGroupId ?? "" },
+            await table.put({
+              id: {
+                S: message.id,
               },
+              data: {
+                S: message.data,
+              },
+              messageGroupId: { S: MessageGroupId ?? "" },
             });
           }
         );
@@ -400,17 +360,7 @@ runtimeTestSuite<{
         .flatMap((message) => [message])
         .flatMap(async (message) => [message])
         .forEach(localstackClientConfig, async (message) => {
-          await $AWS.DynamoDB.PutItem({
-            Table: table,
-            Item: {
-              id: {
-                S: message.id,
-              },
-              data: {
-                S: message.data,
-              },
-            },
-          });
+          await table.put(message);
         });
       return queue;
     },
@@ -441,17 +391,7 @@ runtimeTestSuite<{
         .forEachBatch(localstackClientConfig, async (messages) => {
           await Promise.all(
             messages.map(async (message) => {
-              await $AWS.DynamoDB.PutItem({
-                Table: table,
-                Item: {
-                  id: {
-                    S: message.id,
-                  },
-                  data: {
-                    S: message.data,
-                  },
-                },
-              });
+              await table.put(message);
             })
           );
         });

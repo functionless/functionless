@@ -126,9 +126,9 @@ export interface ITable<
 
   delete: DeleteItem<Item, PartitionKey, RangeKey>;
 
-  query: Query<Item, PartitionKey, RangeKey>;
+  query: Query<Item>;
 
-  scan: Scan<Item, PartitionKey, RangeKey>;
+  scan: Scan<Item>;
 }
 
 class BaseTable<
@@ -159,9 +159,9 @@ class BaseTable<
 
   readonly delete: DeleteItem<Item, PartitionKey, RangeKey>;
 
-  readonly query: Query<Item, PartitionKey, RangeKey>;
+  readonly query: Query<Item>;
 
-  readonly scan: Scan<Item, PartitionKey, RangeKey>;
+  readonly scan: Scan<Item>;
 
   constructor(readonly resource: aws_dynamodb.ITable) {
     this.tableName = resource.tableName;

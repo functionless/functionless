@@ -98,15 +98,12 @@ describe("serialize", () => {
       expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
     });
 
-    const { GetItem } = $AWS.DynamoDB;
+    const { get } = table;
 
     test("get referenced", async () => {
       const [srlz] = await serialize(async () => {
-        return GetItem({
-          Table: table,
-          Key: {
-            id: { S: "id" },
-          },
+        return get({
+          id: { S: "id" },
         });
       }, []);
       expect(srlz).toMatchSnapshot();

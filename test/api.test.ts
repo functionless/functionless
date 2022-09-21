@@ -6,7 +6,6 @@ import {
   Function,
   ExpressStepFunction,
   Table,
-  $AWS,
   ApiGatewayInput,
   StepFunction,
   EventBus,
@@ -296,12 +295,9 @@ test("AWS integration with DynamoDB Table", () => {
         };
       }>
     ) =>
-      $AWS.DynamoDB.GetItem({
-        Table: table,
-        Key: {
-          pk: {
-            S: $input.data.id,
-          },
+      table.get.attributes({
+        pk: {
+          S: $input.data.id,
         },
       }),
     ($input, $context) => {
@@ -357,12 +353,9 @@ test("return $input.data", () => {
         };
       }>
     ) =>
-      $AWS.DynamoDB.GetItem({
-        Table: table,
-        Key: {
-          pk: {
-            S: $input.data.id,
-          },
+      table.get.attributes({
+        pk: {
+          S: $input.data.id,
         },
       }),
     ($input) => $input.data
@@ -394,12 +387,9 @@ test("return $input.data.list[0]", () => {
         };
       }>
     ) =>
-      $AWS.DynamoDB.GetItem({
-        Table: table,
-        Key: {
-          pk: {
-            S: $input.data.list[0],
-          },
+      table.get.attributes({
+        pk: {
+          S: $input.data.list[0],
         },
       }),
     ($input) => $input.data

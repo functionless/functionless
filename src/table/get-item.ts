@@ -38,7 +38,7 @@ export interface GetItem<
 > {
   <Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>>(
     key: Key,
-    input?: Omit<AWS.DynamoDB.DocumentClient.GetItemInput, "Key">
+    input?: Omit<AWS.DynamoDB.DocumentClient.GetItemInput, "Key" | "TableName">
   ): Promise<
     GetItemOutput<Item, PartitionKey, RangeKey, Key, JsonFormat.Document>
   >;
@@ -52,7 +52,7 @@ export interface GetItem<
     >
   >(
     key: Key,
-    input: Omit<AWS.DynamoDB.GetItemInput, "Key">
+    input?: Omit<AWS.DynamoDB.GetItemInput, "Key" | "TableName">
   ): Promise<
     GetItemOutput<Item, PartitionKey, RangeKey, Key, JsonFormat.AttributeValue>
   >;

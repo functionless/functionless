@@ -1267,12 +1267,9 @@ test("return AWS.DynamoDB.GetItem", () => {
     { id: string },
     Person | undefined
   >(stack, "fn", async (input) => {
-    const person = await $AWS.DynamoDB.GetItem({
-      Table: personTable,
-      Key: {
-        id: {
-          S: input.id,
-        },
+    const person = await personTable.get.attributes({
+      id: {
+        S: input.id,
       },
     });
 
@@ -1295,12 +1292,9 @@ test("return AWS.DynamoDB.GetItem dynamic parameters", () => {
     { id: string | undefined },
     Person | undefined
   >(stack, "fn", async (input) => {
-    const person = await $AWS.DynamoDB.GetItem({
-      Table: personTable,
-      Key: {
-        id: {
-          S: input.id ?? "default",
-        },
+    const person = await personTable.get.attributes({
+      id: {
+        S: input.id ?? "default",
       },
     });
 
@@ -1342,12 +1336,9 @@ test("call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr", () => {
     { id: string },
     (Person & { score: number }) | undefined
   >(stack, "fn", async (input) => {
-    const person = await $AWS.DynamoDB.GetItem({
-      Table: personTable,
-      Key: {
-        id: {
-          S: input.id,
-        },
+    const person = await personTable.get.attributes({
+      id: {
+        S: input.id,
       },
     });
 
@@ -1586,12 +1577,9 @@ test("conditionally call DynamoDB and then void", () => {
     "fn",
     async (input): Promise<void> => {
       if (input.id === "hello") {
-        await $AWS.DynamoDB.GetItem({
-          Table: personTable,
-          Key: {
-            id: {
-              S: input.id,
-            },
+        await personTable.get.attributes({
+          id: {
+            S: input.id,
           },
         });
       }

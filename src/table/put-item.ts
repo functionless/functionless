@@ -26,22 +26,15 @@ export interface PutItem<
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined
 > {
-  <Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>>(
-    key: Key,
+  <I extends Item>(
+    item: I,
     input?: Omit<AWS.DynamoDB.DocumentClient.PutItemInput, "Key">
   ): Promise<PutItemOutput<Item, JsonFormat.Document>>;
 
-  attributes<
-    Key extends TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >
-  >(
-    key: Key,
-    input: Omit<AWS.DynamoDB.PutItemInput, "Key">
-  ): Promise<PutItemOutput<Item, JsonFormat.AttributeValue>>;
+  attributes<I extends FormatObject<Item, JsonFormat.AttributeValue>>(
+    item: I,
+    input?: Omit<AWS.DynamoDB.PutItemInput, "Item">
+  ): Promise<PutItemOutput<I, JsonFormat.AttributeValue>>;
 
   /**
    * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem

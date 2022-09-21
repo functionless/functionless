@@ -394,7 +394,7 @@ test("return error", () => {
 
         if (identity && "resolverContext" in identity) {
           const { accountId } = identity.resolverContext;
-          return table.getItem.appsync({
+          return table.get.appsync({
             key: {
               pk: { S: `ACCOUNT#${accountId}` },
               sk: { S: `ACCOUNT#${accountId}` },
