@@ -1,3 +1,6 @@
+import Link from "@docusaurus/Link";
+import { Testimonial } from "../../content/testimonials";
+
 type Props = {
   avatar?: string;
   name?: string;
@@ -7,20 +10,16 @@ type Props = {
   icon?: string;
 };
 
-export const Testimonial = ({
-  avatar = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-  name = "Jani M",
-  handle = "@jani.m",
-  href = "https://twitter.com/jani.m/123",
-  body = "Nullam risus blandit ac aliquam justo ipsum. Quam mauris volutpat massa dictumst amet. Sapien tortor lacus arcu.",
-  icon = "/img/social/twitter.svg",
-}: Props) => {
+export const TestimonialBlock = ({
+  avatar,
+  name,
+  handle,
+  href,
+  body,
+  icon,
+}: Testimonial) => {
   return (
-    <a
-      href={href}
-      rel="noopener noreferrer"
-      className="no-underline hover:no-underline"
-    >
+    <Link href={href} rel="noopener noreferrer">
       <div className="w-full code-gradient p-0.5 round">
         <div className="round bg-functionless-white dark:bg-functionless-black px-6 py-8 text-functionless-black dark:text-functionless-white">
           <div className="flex space-x-4 items-center">
@@ -40,6 +39,6 @@ export const Testimonial = ({
           <p className="body1 mt-6">{body}</p>
         </div>
       </div>
-    </a>
+    </Link>
   );
 };

@@ -1,6 +1,6 @@
 import clsx from "clsx";
-import { ReactElement, useEffect, useRef } from "react";
-import { useVisibility } from "../lib/useVisibility";
+import { ReactElement, useEffect } from "react";
+import { useVisibility } from "../../lib/useVisibility";
 
 export const VisibilityWindow = ({
   children,

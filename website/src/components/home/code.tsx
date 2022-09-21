@@ -1,9 +1,11 @@
 import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import { MDXProvider } from "@mdx-js/react";
+import theme from "@site/src/lib/code-theme";
 import clsx from "clsx";
 import Highlight, { defaultProps, Language } from "prism-react-renderer";
 import React, { ReactElement, useMemo } from "react";
-import { Timeline } from "../lib/useTimeline";
+import { Timeline } from "../../lib/useTimeline";
+import { functionlessTokenReplacement } from "../highlighter";
 
 const CodeWindow = ({
   fileName,
@@ -146,18 +148,10 @@ const HighlightedCode = ({
   lineNumberStart?: number;
 }) => {
   return (
-    <Highlight
-      {...defaultProps}
-      theme={{
-        plain: { backgroundColor: "none" },
-        styles: defaultProps.theme.styles,
-      }}
-      code={code}
-      language={language}
-    >
+    <Highlight {...defaultProps} theme={theme} code={code} language={language}>
       {({ className, style, tokens, getLineProps, getTokenProps }) => (
         <div
-          className={clsx(className, "text-xs bg-functionless-code px-4")}
+          className={clsx(className, "text-xs px-4 font-semibold font-mono")}
           style={style}
         >
           {tokens.map((line, i) => {
@@ -184,7 +178,10 @@ const HighlightedCode = ({
                       <span
                         key={k}
                         {...getTokenProps({
-                          token: { ...token, content: char },
+                          token: {
+                            ...functionlessTokenReplacement(token),
+                            content: char,
+                          },
                           key: k,
                           className: animate
                             ? "animate-fade-in opacity-0"

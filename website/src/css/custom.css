@@ -203,15 +203,16 @@
   }
 
   body {
-    overflow: hidden !important;
-    height: 100vh !important;
+    /* overflow: hidden !important; */
+    /* height: 100vh !important; */
+    scroll-snap-type: y proximity;
   }
 
   body #__docusaurus {
-    min-height: 100vh;
-    height: 100vh;
-    overflow: auto;
-    scroll-snap-type: y proximity;
+    /* min-height: 100vh; */
+    /* height: 100vh; */
+    /* overflow: auto; */
+    /* scroll-snap-type: y proximity; */
   }
 
   .search-bar .DocSearch-Button-Key {

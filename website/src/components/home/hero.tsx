@@ -6,12 +6,12 @@ import {
   githubLink,
   title,
   versionRelease,
-} from "../content/hero";
-import { githubUrl } from "../content/site";
+} from "../../content/hero";
+import { githubUrl } from "../../content/site";
 
 export const Hero = () => {
   return (
-    <section className="relative pb-24">
+    <section className="relative pb-24 bg-functionless-dark-bg">
       <div className="bg-[url('/img/lines.svg')] bg-no-repeat w-full h-full bg-bottom">
         <div className="container !max-w-screen-sm pt-28 pb-16 z-20">
           <span className="blue-chip">

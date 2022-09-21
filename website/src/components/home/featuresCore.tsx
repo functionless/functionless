@@ -1,4 +1,4 @@
-import { features, subtitle, title } from "../content/featuresCore";
+import { features, subtitle, title } from "../../content/featuresCore";
 
 export const FeaturesCore = () => {
   return (
@@ -9,7 +9,10 @@ export const FeaturesCore = () => {
       </div>
       <div className="container grid grid-cols-1 md:grid-cols-3 gap-11 mt-16 mb-6 md:mt-40 md:mb-12">
         {features.map(({ icon, title, body }) => (
-          <div className="flex flex-col items-center col-span-1 my-6">
+          <div
+            key={title}
+            className="flex flex-col items-center col-span-1 my-6"
+          >
             <img src={icon} className="w-16" />
             <h6 className="mt-6 mb-4 text-center">{title}</h6>
             <p className="text-center">{body}</p>

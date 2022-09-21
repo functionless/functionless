@@ -112,6 +112,7 @@ module.exports = {
       fontFamily: {
         display: ["Public Sans"],
         body: ["Inter"],
+        mono: ["Roboto Mono"],
       },
     },
   },

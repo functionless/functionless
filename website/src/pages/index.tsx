@@ -1,22 +1,20 @@
 import Layout from "@theme/Layout";
-import { Blogs } from "../components/blogs";
-import { CTA } from "../components/cta";
-import { Features } from "../components/features/features";
-import { FeaturesCore } from "../components/featuresCore";
-import { Hero } from "../components/hero";
-import { Testimonials } from "../components/testimonials";
+import { Blogs } from "../components/home/blogs";
+import { CTA } from "../components/home/cta";
+import { Features } from "../components/home/features/features";
+import { FeaturesCore } from "../components/home/featuresCore";
+import { Hero } from "../components/home/hero";
+import { Testimonials } from "../components/home/testimonials";
 
 const Home = () => (
-  <div className="snap-start">
-    <Layout title="Home" description="Functionless">
-      <Hero />
-      <Features />
-      <FeaturesCore />
-      <Testimonials />
-      <Blogs />
-      <CTA />
-    </Layout>
-  </div>
+  <Layout title="Home" description="Functionless">
+    <Hero />
+    <Features />
+    <FeaturesCore />
+    <Testimonials />
+    <Blogs />
+    <CTA />
+  </Layout>
 );
 
 export default Home;

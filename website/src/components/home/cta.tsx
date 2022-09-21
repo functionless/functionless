@@ -1,6 +1,6 @@
 import Link from "@docusaurus/Link";
 import { ChevronLeftIcon } from "@heroicons/react/24/outline";
-import { body, docsButton, title } from "../content/cta";
+import { body, docsButton, title } from "../../content/cta";
 import { Social } from "./social";
 
 export const CTA = () => {

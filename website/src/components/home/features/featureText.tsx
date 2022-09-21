@@ -1,4 +1,4 @@
-import type { Feature } from "../../lib/feature";
+import type { Feature } from "../../../lib/feature";
 
 export const FeatureText = ({ title, points }: Feature) => (
   <div>
