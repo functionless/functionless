@@ -1,4 +1,4 @@
-import { discordUrl, githubUrl, twitterUrl } from "./site";
+import { discordUrl, githubUrl, twitterUrl } from "../site";
 
 export interface MainItem {
   to: string;

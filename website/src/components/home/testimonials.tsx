@@ -1,4 +1,8 @@
-import { subtitle, testimonials, title } from "../../content/testimonials";
+import {
+  subtitle,
+  testimonials,
+  title,
+} from "@site/src/content/home/testimonials";
 import { TestimonialBlock } from "./testimonial";
 
 export const Testimonials = () => {

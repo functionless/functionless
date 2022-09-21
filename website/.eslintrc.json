@@ -1,4 +1,9 @@
 {
+  "settings": {
+    "import/parsers": {
+      "@typescript-eslint/parser": [".ts", ".tsx", ".js", ".jsx"]
+    }
+  },
   "rules": {
     "import/no-unresolved": [
       "error",

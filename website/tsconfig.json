@@ -26,7 +26,8 @@
     "target": "ES2019",
     "declarationMap": true,
     "baseUrl": ".",
-    "types": ["mdx"]
+    "types": ["mdx"],
+    "allowJs": true
   },
   "include": ["src/**/*", "test/**/*"],
   "exclude": ["**/node_modules"]

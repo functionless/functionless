@@ -1,6 +1,6 @@
 import { DocumentDuplicateIcon } from "@heroicons/react/24/outline";
 import { MDXProvider } from "@mdx-js/react";
-import theme from "@site/src/lib/code-theme";
+import theme from "@site/src/theme/code-theme";
 import clsx from "clsx";
 import Highlight, { defaultProps, Language } from "prism-react-renderer";
 import React, { ReactElement, useMemo } from "react";

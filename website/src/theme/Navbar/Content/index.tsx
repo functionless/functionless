@@ -1,6 +1,6 @@
 import Link from "@docusaurus/Link";
 import { useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
-import { main, MainItem, social, SocialItem } from "@site/src/content/nav";
+import { main, MainItem, social, SocialItem } from "@site/src/content/home/nav";
 import NavbarLogo from "@theme/Navbar/Logo";
 import NavbarMobileSidebarToggle from "@theme/Navbar/MobileSidebar/Toggle";
 import NavbarSearch from "@theme/Navbar/Search";
@@ -13,14 +13,16 @@ export const MainNavItem = ({ item }: { item: MainItem }) => (
   </Link>
 );
 export const SocialNavItem = ({ item }: { item: SocialItem }) => (
-  <Link href={item.href} title={item.title} className="shrink-0">
+  <Link
+    href={item.href}
+    title={item.title}
+    className="shrink-0 hover:bg-functionless-blue p-2 transition rounded-full"
+  >
     <img src={item.icon} />
   </Link>
 );
 
 export default function NavbarContent(): JSX.Element {
-  const mobileSidebar = useNavbarMobileSidebar();
-
   return (
     <div className="flex xl:grid xl:grid-cols-3 justify-between w-full">
       <div className="flex col-span-1 items-center gap-4">
@@ -40,11 +42,11 @@ export default function NavbarContent(): JSX.Element {
           <SearchBar />
         </NavbarSearch>
       </div>
-      <div className="col-span-1 gap-4 items-center justify-end flex">
+      <div className="col-span-1 gap-2 items-center justify-end flex">
         {social.map((item) => (
           <SocialNavItem key={item.title} item={item} />
         ))}
-        <div className="pt-1.5">
+        <div className="pt-1.5 ml-2">
           <GitHubButton
             href="https://github.com/functionless/functionless"
             data-color-scheme="no-preference: dark; light: light; dark: dark;"

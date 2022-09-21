@@ -4,11 +4,11 @@
 
 @layer base {
   html {
-    @apply h-full scroll-smooth antialiased;
+    height: unset !important;
   }
-
   body {
-    @apply font-body text-functionless-high dark:text-functionless-dark-high bg-functionless-white dark:bg-functionless-black;
+    height: unset !important;
+    @apply font-body text-functionless-high dark:text-functionless-dark-high bg-functionless-white dark:bg-functionless-dark-bg;
   }
 
   h1 {
@@ -202,17 +202,8 @@
     --ifm-navbar-height: auto;
   }
 
-  body {
-    /* overflow: hidden !important; */
-    /* height: 100vh !important; */
+  html {
     scroll-snap-type: y proximity;
-  }
-
-  body #__docusaurus {
-    /* min-height: 100vh; */
-    /* height: 100vh; */
-    /* overflow: auto; */
-    /* scroll-snap-type: y proximity; */
   }
 
   .search-bar .DocSearch-Button-Key {

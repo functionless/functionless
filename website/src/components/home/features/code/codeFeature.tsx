@@ -1,4 +1,4 @@
-import { code } from "@site/src/content/features/code/code";
+import { code } from "@site/src/content/home/features/code/code";
 import { FeatureSection } from "../featureSection";
 import { CodeTabs } from "./codeTabs";
 

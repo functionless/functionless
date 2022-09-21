@@ -1,4 +1,4 @@
-import { compose } from "@site/src/content/features/compose/compose";
+import { compose } from "@site/src/content/home/features/compose/compose";
 import { useState } from "react";
 import { FeatureSection } from "../featureSection";
 import { ComposeCode } from "./composeCode";

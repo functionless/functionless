@@ -1,4 +1,4 @@
-import { iterate } from "@site/src/content/features/iterate/iterate";
+import { iterate } from "@site/src/content/home/features/iterate/iterate";
 import { FeatureSection } from "../featureSection";
 import { IterateCode } from "./iterateCode";
 

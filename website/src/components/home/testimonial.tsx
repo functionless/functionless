@@ -1,14 +1,5 @@
 import Link from "@docusaurus/Link";
-import { Testimonial } from "../../content/testimonials";
-
-type Props = {
-  avatar?: string;
-  name?: string;
-  handle?: string;
-  href?: string;
-  body?: string;
-  icon?: string;
-};
+import type { Testimonial } from "@site/src/content/home/testimonials";
 
 export const TestimonialBlock = ({
   avatar,

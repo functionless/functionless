@@ -1,5 +1,5 @@
-import StepFunction1 from "@site/src/content/features/iterate/step-function-1.mdx";
-import StepFunction2 from "@site/src/content/features/iterate/step-function-2.mdx";
+import StepFunction1 from "@site/src/content/home/features/iterate/step-function-1.mdx";
+import StepFunction2 from "@site/src/content/home/features/iterate/step-function-2.mdx";
 import { Code } from "../../code";
 import { VisibilityWindow } from "../../visibilityWindow";
 
@@ -19,7 +19,7 @@ export const IterateCode = () => (
           animate={visible}
           fileName="step-function-2.ts"
           language="typescript"
-          introDelayMs={250}
+          introDelayMs={2000}
         >
           <StepFunction2 />
         </Code>

@@ -1,8 +1,7 @@
 // @ts-check
 // Note: type annotations allow type checking and IDEs autocompletion
 
-const lightCodeTheme = require("prism-react-renderer/themes/github");
-const darkCodeTheme = require("prism-react-renderer/themes/okaidia");
+const codeTheme = require("./src/theme/code-theme");
 const path = require("path");
 
 const url =
@@ -27,6 +26,22 @@ const config = {
   // see: https://www.npmjs.com/package/docusaurus-plugin-typedoc
   // options: https://github.com/tgreyuk/typedoc-plugin-markdown/blob/master/packages/docusaurus-plugin-typedoc/src/options.ts#L3-L26
   plugins: [
+    [
+      "./src/plugins/blog-plugin-global",
+      {
+        // path: "./blog",
+        // authorsMapPath: "./blog/authors.yml",
+        // postsPerPage: 5,
+        // routeBasePath: "/blog",
+        // tagsBasePath: "/tags",
+        // blogDescription: "Functionless Blog",
+        // blogTitle: "Blog",
+        // blogSidebarTitle: "Blog",
+        showReadingTime: true,
+        editUrl:
+          "https://github.com/functionless/functionless/edit/main/website/",
+      },
+    ],
     async function myPlugin(context, options) {
       return {
         name: "docusaurus-tailwindcss",
@@ -67,7 +82,7 @@ const config = {
   stylesheets: [
     "https://fonts.googleapis.com/css2?family=Public+Sans:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap",
     "https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap",
-    "https://fonts.googleapis.com/css2?family=Roboto:wght@100;200;300;400;500;600;700;800;900&display=swap",
+    "https://fonts.googleapis.com/css2?family=Roboto+Mono:wght@100;200;300;400;500;600;700;800;900&display=swap",
   ],
   presets: [
     [
@@ -80,11 +95,7 @@ const config = {
             "https://github.com/functionless/functionless/edit/main/website/",
           remarkPlugins: [require("mdx-mermaid")],
         },
-        blog: {
-          showReadingTime: true,
-          editUrl:
-            "https://github.com/functionless/functionless/edit/main/website/",
-        },
+        blog: false,
         theme: {
           customCss: require.resolve("./src/css/custom.css"),
         },
@@ -110,8 +121,7 @@ const config = {
       },
       prism: {
         additionalLanguages: ["graphql"],
-        theme: lightCodeTheme,
-        darkTheme: darkCodeTheme,
+        theme: codeTheme,
       },
       navbar: {
         title: "Functionless",

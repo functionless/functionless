@@ -1,4 +1,4 @@
-import Compose from "@site/src/content/features/compose/compose.mdx";
+import Compose from "@site/src/content/home/features/compose/compose.mdx";
 import { TimelineCode } from "../../code";
 import { VisibilityWindow } from "../../visibilityWindow";
 import { composeTimeline } from "./timeline";

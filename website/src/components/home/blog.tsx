@@ -1,3 +1,6 @@
+import Link from "@docusaurus/Link";
+import { BlogPost } from "@docusaurus/plugin-content-blog";
+
 export enum ChipColor {
   blue = "blue-chip",
   green = "green-chip",
@@ -5,49 +8,64 @@ export enum ChipColor {
   purple = "purple-chip",
 }
 
-type Props = {
-  chip?: string;
-  chipColor?: ChipColor;
-  title?: string;
-  desc?: string;
-  avatar?: string;
-  name?: string;
-  date?: Date;
-  readTime?: number;
+const ChipColors: Record<string, string> = {
+  Serverless: ChipColor.purple,
+  functionless: ChipColor.blue,
 };
 
 export const Blog = ({
-  chip = "Serverless",
-  chipColor = ChipColor.blue,
-  title = "Functionless > Serverless",
-  desc = "Catch bugs before they occur and enjoy Intellisense in your IDE with type-safety that works across service boundaries.",
-  avatar = "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80",
-  name = "Sam Sussman",
-  date = new Date(),
-  readTime = 12,
-}: Props) => {
+  post: {
+    metadata: {
+      tags,
+      title,
+      description,
+      authors,
+      date,
+      readingTime,
+      permalink,
+    },
+  },
+}: {
+  post: BlogPost;
+}) => {
   return (
     <div className="col-span-3 md:col-span-1 my-4">
-      <span className={chipColor}>{chip}</span>
-      <h6 className="m-0 mt-4">{title}</h6>
+      <div className="flex gap-2">
+        {tags.map(({ label, permalink }) => (
+          <Link
+            to={permalink}
+            key={label}
+            className={ChipColors[label] ?? ChipColor.purple}
+          >
+            {label}
+          </Link>
+        ))}
+      </div>
+      <h6 className="m-0 mt-4">
+        <Link to={permalink}>{title}</Link>
+      </h6>
       <p className="my-4 body1 text-functionless-medium dark:text-functionless-dark-medium">
-        {desc}
+        {description}
       </p>
       <div className="flex space-x-4">
-        <img
-          className="inline-block h-10 w-10 rounded-full"
-          src={avatar}
-          alt={name}
-        />
+        <Link href={authors[0].url}>
+          <img
+            className="inline-block h-10 w-10 rounded-full"
+            src={authors[0].imageURL}
+            alt={authors[0].name}
+          />
+        </Link>
         <div className="">
-          <div className="subtitle1">{name}</div>
+          <Link href={authors[0].url}>
+            <div className="subtitle1">{authors[0].name}</div>
+          </Link>
           <div className="body2 text-functionless-medium dark:text-functionless-dark-medium">
-            {date.toLocaleDateString("en-US", {
+            {new Date(date).toLocaleDateString("en-US", {
               year: "numeric",
               month: "short",
               day: "numeric",
             })}{" "}
-            · {readTime} min read
+            · {readingTime} min read
           </div>
         </div>
       </div>

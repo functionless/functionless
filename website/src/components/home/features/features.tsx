@@ -1,4 +1,4 @@
-import { title, subtitle } from "../../../content/features/features";
+import { title, subtitle } from "../../../content/home/features/features";
 import { CodeFeature } from "./code/codeFeature";
 import { ComposeFeature } from "./compose/composeFeature";
 import { IterateFeature } from "./iterate/iterateFeature";
