@@ -1,3 +1,4 @@
+import useIsBrowser from "@docusaurus/useIsBrowser";
 import {
   button,
   description,
@@ -25,8 +26,7 @@ enum LoadingState {
 export const Subscribe = () => {
   const emailField = useRef<HTMLInputElement>(null);
   const [state, setState] = useState<LoadingState>(LoadingState.idle);
-  const pageUri =
-    typeof window === undefined ? "http://localhost" : location.href;
+  const pageUri = useIsBrowser() ? location.href : "http://localhost";
 
   const subscribe = useCallback(async () => {
     setState(LoadingState.loading);
@@ -81,7 +81,7 @@ export const Subscribe = () => {
             <div className="relative mt-4">
               <input
                 ref={emailField}
-                type="text"
+                type="email"
                 placeholder={emailPlaceholder}
                 className="px-6 py-18 h-14 rounded-full"
                 disabled={state === LoadingState.loading}

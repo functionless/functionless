@@ -11,6 +11,10 @@
     @apply font-body text-functionless-high dark:text-functionless-dark-high bg-functionless-white dark:bg-functionless-dark-bg;
   }
 
+  body a {
+    @apply no-underline hover:no-underline;
+  }
+
   h1 {
     @apply font-display font-semibold text-8xl tracking-[-1.5px] leading-[116px];
   }
@@ -192,10 +196,6 @@
 
   .window {
     @apply round p-0.5 code-gradient shadow-light dark:shadow-dark;
-  }
-
-  :root .home-features {
-    --ifm-pre-background: none;
   }
 
   :root {
