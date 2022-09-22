@@ -1,6 +1,10 @@
 import { aws_dynamodb } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb";
 import { BatchGetItem, createBatchGetItemIntegration } from "./batch-get-item";
+import {
+  BatchWriteItem,
+  createBatchWriteItemIntegration,
+} from "./batch-write-item";
 import { createDeleteItemIntegration, DeleteItem } from "./delete-item";
 import { GetItem, createGetItemIntegration } from "./get-item";
 import { createPutItemIntegration, PutItem } from "./put-item";
@@ -18,9 +22,11 @@ export class TableRuntimeApi<
 
   readonly batchGet: BatchGetItem<Item, PartitionKey, RangeKey, Format>;
 
+  readonly put: PutItem<Item, Format>;
+
   readonly update: UpdateItem<Item, PartitionKey, RangeKey, Format>;
 
-  readonly put: PutItem<Item, Format>;
+  readonly batchWrite: BatchWriteItem<Item, PartitionKey, RangeKey, Format>;
 
   readonly delete: DeleteItem<Item, PartitionKey, RangeKey, Format>;
 
@@ -31,8 +37,9 @@ export class TableRuntimeApi<
   constructor(readonly resource: aws_dynamodb.ITable, readonly format: Format) {
     this.get = createGetItemIntegration(resource, format);
     this.batchGet = createBatchGetItemIntegration(resource, format);
-    this.update = createUpdateItemIntegration(resource, format);
     this.put = createPutItemIntegration(resource, format);
+    this.update = createUpdateItemIntegration(resource, format);
+    this.batchWrite = createBatchWriteItemIntegration(resource, format);
     this.delete = createDeleteItemIntegration(resource, format);
     this.query = createQueryIntegration(resource, format);
     this.scan = createScanIntegration(resource, format);

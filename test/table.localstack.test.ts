@@ -137,6 +137,30 @@ runtimeTestSuite("tableStack", (t: any) => {
             ReturnValues: "UPDATED_NEW",
           });
 
+          const put2 = await table.put({
+            Item: item,
+            ReturnValues: "ALL_OLD",
+          });
+
+          let batchWrite = await table.batchWrite({
+            RequestItems: [
+              {
+                DeleteRequest: {
+                  Key: {
+                    pk: item.pk,
+                    sk: item.sk,
+                  },
+                },
+              },
+            ],
+          });
+
+          while (batchWrite.UnprocessedItems) {
+            batchWrite = await table.batchWrite({
+              RequestItems: batchWrite.UnprocessedItems,
+            });
+          }
+
           return [
             gotItem.Item ?? null,
             ...(scan.Items ?? []),

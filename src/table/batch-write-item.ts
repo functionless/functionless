@@ -12,45 +12,66 @@ import {
 import { ITable } from "./table";
 import { AttributeKeyToObject } from "./util";
 
-export interface BatchGetItemInput<
+export interface BatchWriteItemInput<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined,
-  Keys extends TableKey<Item, PartitionKey, RangeKey, Format>,
+  Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
   Format extends JsonFormat = JsonFormat.Document
-> extends Omit<AWS.DynamoDB.BatchGetItemInput, "RequestItems">,
-    KeysAndAttributes<Item, PartitionKey, RangeKey, Keys, Format> {}
+> extends Omit<AWS.DynamoDB.BatchWriteItemInput, "RequestItems"> {
+  RequestItems: WriteRequest<Item, PartitionKey, RangeKey, Key, Format>[];
+}
 
-export interface KeysAndAttributes<
+export type WriteRequest<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined,
-  Keys extends TableKey<Item, PartitionKey, RangeKey, Format>,
+  Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
   Format extends JsonFormat
-> extends Omit<AWS.DynamoDB.KeysAndAttributes, "Keys"> {
-  Keys: Keys[];
-}
+> =
+  | {
+      PutRequest: PutRequest<Item, Format>;
+      DeleteRequest?: never;
+    }
+  | {
+      PutRequest?: never;
+      DeleteRequest: DeleteRequest<Item, PartitionKey, RangeKey, Key, Format>;
+    };
 
-export interface BatchGetItemOutput<
+export interface DeleteRequest<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined,
-  Keys extends TableKey<Item, PartitionKey, RangeKey, Format>,
+  Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
   Format extends JsonFormat
-> extends Omit<AWS.DynamoDB.BatchGetItemOutput, "Item" | "Responses"> {
-  Items?: FormatObject<Narrow<Item, Keys, Format>, Format>[];
+> {
+  Key: Key;
 }
 
-export type BatchGetItem<
+export interface PutRequest<Item extends object, Format extends JsonFormat> {
+  Item: FormatObject<Item, Format>;
+}
+
+export interface BatchWriteItemOutput<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined,
+  Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
+  Format extends JsonFormat
+> extends Omit<AWS.DynamoDB.BatchWriteItemOutput, "UnprocessedItems"> {
+  UnprocessedItems: WriteRequest<Item, PartitionKey, RangeKey, Key, Format>[];
+}
+
+export type BatchWriteItem<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined,
   Format extends JsonFormat
 > = <Keys extends TableKey<Item, PartitionKey, RangeKey, Format>>(
-  request: BatchGetItemInput<Item, PartitionKey, RangeKey, Keys, Format>
-) => Promise<BatchGetItemOutput<Item, PartitionKey, RangeKey, Keys, Format>>;
+  request: BatchWriteItemInput<Item, PartitionKey, RangeKey, Keys, Format>
+) => Promise<BatchWriteItemOutput<Item, PartitionKey, RangeKey, Keys, Format>>;
 
-export function createBatchGetItemIntegration<
+export function createBatchWriteItemIntegration<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined,
@@ -58,34 +79,32 @@ export function createBatchGetItemIntegration<
 >(
   table: aws_dynamodb.ITable,
   format: Format
-): BatchGetItem<Item, PartitionKey, RangeKey, Format> {
+): BatchWriteItem<Item, PartitionKey, RangeKey, Format> {
   const tableName = table.tableName;
 
   return createDynamoIntegration<
-    BatchGetItem<Item, PartitionKey, RangeKey, Format>,
+    BatchWriteItem<Item, PartitionKey, RangeKey, Format>,
     Format
   >(
     table,
     "batchGetItem",
     format,
     "read",
-    async (client, [{ Keys, ReturnConsumedCapacity }]) => {
+    async (client, [{ RequestItems, ...props }]) => {
       const input: any = {
-        ReturnConsumedCapacity,
+        ...props,
         RequestItems: {
-          [tableName]: {
-            Keys: Keys,
-          },
+          [tableName]: RequestItems,
         },
       };
       const response = await (format === JsonFormat.Document
-        ? (client as AWS.DynamoDB.DocumentClient).batchGet(input)
-        : (client as AWS.DynamoDB).batchGetItem(input)
+        ? (client as AWS.DynamoDB.DocumentClient).batchWrite(input)
+        : (client as AWS.DynamoDB).batchWriteItem(input)
       ).promise();
 
       return {
         ...response,
-        Items: response.Responses?.[tableName] as any,
+        UnprocessedItems: response.UnprocessedItems?.[tableName] as any,
       };
     }
   );
@@ -94,7 +113,7 @@ export function createBatchGetItemIntegration<
 /**
  * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
  */
-export type BatchGetItemAppsync<
+export type BatchWriteItemAppsync<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined
@@ -105,15 +124,15 @@ export type BatchGetItemAppsync<
   consistentRead?: boolean;
 }) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
 
-export function createBatchGetItemAppsyncIntegration<
+export function createBatchWriteItemAppsyncIntegration<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined
 >(
   table: ITable<Item, PartitionKey, RangeKey>
-): BatchGetItemAppsync<Item, PartitionKey, RangeKey> {
+): BatchWriteItemAppsync<Item, PartitionKey, RangeKey> {
   return makeAppSyncTableIntegration<
-    BatchGetItemAppsync<Item, PartitionKey, RangeKey>
+    BatchWriteItemAppsync<Item, PartitionKey, RangeKey>
   >(table, "Table.getItem.appsync", {
     appSyncVtl: {
       request(call, vtl) {

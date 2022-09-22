@@ -14,21 +14,33 @@ import {
 import { ITable } from "./table";
 import { AttributeKeyToObject } from "./util";
 
-export interface PutItemInput<Item extends object, Format extends JsonFormat>
-  extends Omit<AWS.DynamoDB.PutItemOutput, "Attributes"> {
+export type PutItemReturnValues = "NONE" | "ALL_OLD";
+
+export interface PutItemInput<
+  Item extends object,
+  ReturnValue extends PutItemReturnValues | undefined,
+  Format extends JsonFormat
+> extends Omit<AWS.DynamoDB.PutItemInput, "Item" | "TableName"> {
   Item: FormatObject<Item, Format>;
+  ReturnValues?: ReturnValue;
 }
 
-export interface PutItemOutput<Item extends object, Format extends JsonFormat>
-  extends Omit<AWS.DynamoDB.PutItemOutput, "Attributes"> {
-  Attributes?: FormatObject<Item, Format>;
+export interface PutItemOutput<
+  Item extends object,
+  ReturnValue extends PutItemReturnValues | undefined,
+  Format extends JsonFormat
+> extends Omit<AWS.DynamoDB.PutItemOutput, "Attributes"> {
+  Attributes?: ReturnValue extends undefined | "NONE"
+    ? undefined
+    : FormatObject<Item, Format>;
 }
 
 export type PutItem<Item extends object, Format extends JsonFormat> = <
-  I extends Item
+  I extends Item,
+  ReturnValue extends PutItemReturnValues | undefined
 >(
-  input: PutItemInput<I, JsonFormat.Document>
-) => Promise<PutItemOutput<Item, Format>>;
+  input: PutItemInput<I, ReturnValue, JsonFormat.Document>
+) => Promise<PutItemOutput<I, ReturnValue, Format>>;
 
 export function createPutItemIntegration<
   Item extends object,

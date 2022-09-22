@@ -1,6 +1,6 @@
 export type ReturnValues =
-  | "NONE"
-  | "ALL_OLD"
-  | "UPDATED_OLD"
   | "ALL_NEW"
-  | "UPDATED_NEW";
+  | "ALL_OLD"
+  | "NONE"
+  | "UPDATED_NEW"
+  | "UPDATED_OLD";
