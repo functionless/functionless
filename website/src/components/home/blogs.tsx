@@ -5,11 +5,11 @@ import { Blog, ChipColor } from "./blog";
 import { Subscribe } from "./subscribe";
 
 export const Blogs = () => {
-  const { blogPosts } = usePluginData("plugin-content-blog-global") as {
+  const { blogPosts } = usePluginData("docusaurus-plugin-content-blog") as {
     blogPosts: BlogPost[];
   };
   return (
-    <section className="pt-36 bg-functionless-bg dark:bg-functionless-dark-bg snap-start">
+    <section className="pt-36 bg-functionless-bg dark:bg-functionless-dark-bg scroll-snap-point">
       <div className="container !max-w-screen-sm flex flex-col items-center">
         <span className="over">{title}</span>
         <h4 className="text-center mt-2">{subtitle}</h4>

@@ -11,7 +11,7 @@ export const FeatureSection = ({
   aside: ReactElement;
   footer?: ReactElement;
 }) => (
-  <div className="grid grid-cols-2 container md:mt-36 gap-11 snap-start scroll-m-28">
+  <div className="grid grid-cols-2 container md:mt-36 gap-11 scroll-snap-point">
     <div className="col-span-2 lg:col-span-1">
       <FeatureText {...feature} />
     </div>

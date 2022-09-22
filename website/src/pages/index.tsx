@@ -8,17 +8,15 @@ import { Subscribe } from "../components/home/subscribe";
 import { Testimonials } from "../components/home/testimonials";
 
 const Home = () => (
-  <div className="snap-start">
-    <Layout title="Home" description="Functionless">
-      <Hero />
-      <Features />
-      <FeaturesCore />
-      <Testimonials />
-      <Blogs />
-      <Subscribe />
-      <CTA />
-    </Layout>
-  </div>
+  <Layout title="Home" description="Functionless">
+    <Hero />
+    <Features />
+    <FeaturesCore />
+    <Testimonials />
+    <Blogs />
+    <Subscribe />
+    <CTA />
+  </Layout>
 );
 
 export default Home;

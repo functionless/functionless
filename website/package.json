@@ -22,6 +22,7 @@
     "@mdx-js/react": "^1.6.22",
     "@mui/material": "^5.8.2",
     "clsx": "^1.2.1",
+    "ky": "^0.31.3",
     "mdx-mermaid": "^1.2.2",
     "mermaid": "^9.1.2",
     "prism-react-renderer": "^1.3.3",

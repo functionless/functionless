@@ -27,16 +27,8 @@ const config = {
   // options: https://github.com/tgreyuk/typedoc-plugin-markdown/blob/master/packages/docusaurus-plugin-typedoc/src/options.ts#L3-L26
   plugins: [
     [
-      "./src/plugins/blog-plugin-global",
+      "./src/plugins/docusaurus-plugin-content-blog",
       {
-        // path: "./blog",
-        // authorsMapPath: "./blog/authors.yml",
-        // postsPerPage: 5,
-        // routeBasePath: "/blog",
-        // tagsBasePath: "/tags",
-        // blogDescription: "Functionless Blog",
-        // blogTitle: "Blog",
-        // blogSidebarTitle: "Blog",
         showReadingTime: true,
         editUrl:
           "https://github.com/functionless/functionless/edit/main/website/",

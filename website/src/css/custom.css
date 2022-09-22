@@ -206,6 +206,10 @@
     scroll-snap-type: y proximity;
   }
 
+  .scroll-snap-point {
+    @apply snap-start scroll-m-28;
+  }
+
   .search-bar .DocSearch-Button-Key {
     filter: grayscale(100%) contrast(200%);
   }

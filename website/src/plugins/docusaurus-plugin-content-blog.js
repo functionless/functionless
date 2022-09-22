@@ -12,7 +12,8 @@ async function pluginContentBlogGlobalExported(context, options) {
 
   return {
     ...blogPluginInstance,
-    name: "plugin-content-blog-global",
+    //Name needs to match the original plugins, or mdx loading will fail
+    name: "docusaurus-plugin-content-blog",
     async contentLoaded(...contentLoadedArgs) {
       await blogPluginInstance.contentLoaded?.(...contentLoadedArgs);
       const { actions, content } = contentLoadedArgs[0];
