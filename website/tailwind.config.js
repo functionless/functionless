@@ -14,6 +14,10 @@ module.exports = {
     ".pagination-nav__sublabel",
     ".pagination-nav__label",
     ".pagination-nav__link--next",
+    ".breadcrumbs",
+    ".breadcrumbs__item",
+    "breadcrumbs__item--active",
+    ".breadcrumbs__link",
   ],
   corePlugins: {
     // preflight: false, // TODO: Added to style default docusaurus components

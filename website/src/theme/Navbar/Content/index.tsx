@@ -24,10 +24,11 @@ export const SocialNavItem = ({ item }: { item: SocialItem }) => (
 );
 
 export default function NavbarContent(): JSX.Element {
+  const mobileSidebar = useNavbarMobileSidebar();
   return (
     <div className="flex xl:grid xl:grid-cols-3 justify-between w-full">
       <div className="flex col-span-1 items-center gap-4">
-        <div className="block md:hidden">
+        <div className={mobileSidebar ? "block" : "hidden"}>
           <NavbarMobileSidebarToggle />
         </div>
         <NavbarLogo />

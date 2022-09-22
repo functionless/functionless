@@ -157,6 +157,28 @@
     @apply border-functionless-dark-border px-6 py-3 my-4 border rounded-full;
   }
 
+  .breadcrumbs {
+    @apply flex items-center -ml-3;
+  }
+
+  .breadcrumbs .breadcrumbs__item {
+    @apply flex items-center;
+    display: flex;
+    align-items: center;
+  }
+
+  .breadcrumbs .breadcrumbs__item--active .breadcrumbs__link {
+    @apply bg-transparent text-functionless-blue;
+  }
+
+  .breadcrumbs .breadcrumbs__link {
+    @apply bg-transparent text-functionless-dark-medium;
+  }
+
+  .breadcrumbs .breadcrumbs__link[href="/"] {
+    @apply mb-1;
+  }
+
   .over {
     @apply text-functionless-dark-medium font-semibold;
   }
@@ -333,18 +355,3 @@ html {
 #__docusaurus svg {
   overflow: unset;
 }
-
-.breadcrumbs {
-  display: none;
-  /* display: flex;
-  align-items: center; */
-}
-
-/* .breadcrumbs__item {
-  display: flex;
-  align-items: center;
-}
-
-.breadcrumbs__link[href="/"] {
-  margin-bottom: 4px;
-} */
