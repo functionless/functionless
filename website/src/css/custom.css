@@ -168,11 +168,11 @@
   }
 
   .breadcrumbs .breadcrumbs__item--active .breadcrumbs__link {
-    @apply bg-transparent text-functionless-blue;
+    @apply bg-transparent text-blue-600;
   }
 
   .breadcrumbs .breadcrumbs__link {
-    @apply bg-transparent text-functionless-dark-medium;
+    @apply bg-transparent text-functionless-dark-medium font-semibold;
   }
 
   .breadcrumbs .breadcrumbs__link[href="/"] {
