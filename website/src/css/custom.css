@@ -15,27 +15,28 @@
     @apply no-underline hover:no-underline;
   }
 
-  h1 {
+  body h1,
+  body .markdown h1 {
     @apply font-display font-semibold text-8xl tracking-[-1.5px] leading-[116px];
   }
 
-  h2 {
+  body h2 {
     @apply font-display font-semibold text-6xl tracking-[-0.5px] leading-[70px];
   }
 
-  h3 {
+  body h3 {
     @apply font-display font-semibold text-5xl tracking-[0px] leading-[57px];
   }
 
-  h4 {
+  body h4 {
     @apply font-display font-semibold text-4xl tracking-[0.25px] leading-[41px];
   }
 
-  h5 {
+  body h5 {
     @apply font-display font-semibold text-3xl tracking-[0px] leading-[30px];
   }
 
-  h6 {
+  body h6 {
     @apply font-display font-semibold text-2xl tracking-[0.15px] leading-[24px];
   }
 
@@ -190,50 +191,65 @@
     @apply py-12;
   }
 
-  .overflow-unset {
-    overflow: unset;
-  }
-
   .window {
     @apply round p-0.5 code-gradient shadow-light dark:shadow-dark;
-  }
-
-  :root {
-    --ifm-navbar-height: auto;
-  }
-
-  html {
-    scroll-snap-type: y proximity;
   }
 
   .scroll-snap-point {
     @apply snap-start scroll-m-28;
   }
-
-  .search-bar .DocSearch-Button-Key {
-    filter: grayscale(100%) contrast(200%);
-  }
-
-  .search-bar > div,
-  .search-bar .DocSearch {
-    width: 100%;
-    position: relative;
-  }
-
-  .search-bar .DocSearch {
-    border: 1px solid #18394d;
-  }
-
-  .search-bar .DocSearch-Button-Placeholder {
-    font-size: 0.9rem;
-  }
-
-  .search-bar .DocSearch-Search-Icon {
-    transform: scale(0.7);
-    filter: brightness(0.6);
-  }
-
-  #__docusaurus svg {
-    overflow: unset;
-  }
 }
+
+.overflow-unset {
+  overflow: unset;
+}
+
+:root {
+  --ifm-navbar-height: auto;
+}
+
+html {
+  scroll-snap-type: y proximity;
+}
+
+.search-bar .DocSearch-Button-Key {
+  filter: grayscale(100%) contrast(200%);
+}
+
+.search-bar > div,
+.search-bar .DocSearch {
+  width: 100%;
+  position: relative;
+}
+
+.search-bar .DocSearch {
+  border: 1px solid #18394d;
+}
+
+.search-bar .DocSearch-Button-Placeholder {
+  font-size: 0.9rem;
+}
+
+.search-bar .DocSearch-Search-Icon {
+  transform: scale(0.7);
+  filter: brightness(0.6);
+}
+
+#__docusaurus svg {
+  overflow: unset;
+}
+
+.breadcrumbs {
+  display: none;
+  /* display: flex;
+  align-items: center; */
+}
+
+/* .breadcrumbs__item {
+  display: flex;
+  align-items: center;
+}
+
+.breadcrumbs__link[href="/"] {
+  margin-bottom: 4px;
+} */
