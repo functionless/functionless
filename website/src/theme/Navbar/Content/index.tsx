@@ -26,7 +26,7 @@ export const SocialNavItem = ({ item }: { item: SocialItem }) => (
 export default function NavbarContent(): JSX.Element {
   const mobileSidebar = useNavbarMobileSidebar();
   return (
-    <div className="flex xl:grid xl:grid-cols-3 justify-between w-full">
+    <div className="flex 2xl:grid 2xl:grid-cols-3 justify-between w-full">
       <div className="flex col-span-1 items-center gap-4">
         <div className={mobileSidebar ? "block" : "hidden"}>
           <NavbarMobileSidebarToggle />
@@ -39,7 +39,7 @@ export default function NavbarContent(): JSX.Element {
         </div>
       </div>
 
-      <div className="col-span-1 px-4 ml-16 lg:ml-0 search-bar hidden lg:flex lg:w-96">
+      <div className="col-span-1 px-4 ml-16 lg:ml-0 search-bar hidden lg:flex lg:w-96 xl:justify-self-center">
         <NavbarSearch>
           <SearchBar />
         </NavbarSearch>
