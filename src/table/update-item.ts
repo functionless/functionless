@@ -1,3 +1,4 @@
+import { aws_dynamodb } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
@@ -6,8 +7,7 @@ import { NodeKind } from "../node-kind";
 import { DynamoDBAppsyncExpression } from "./appsync";
 import {
   addIfDefined,
-  createDynamoAttributesIntegration,
-  createDynamoDocumentIntegration,
+  createDynamoIntegration,
   makeAppSyncTableIntegration,
 } from "./integration";
 import { ReturnValues } from "./return-value";
@@ -15,8 +15,12 @@ import { ITable } from "./table";
 import { AttributeKeyToObject } from "./util";
 
 export interface UpdateItemInput<
-  Key,
-  ReturnValue extends ReturnValues | undefined
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined,
+  Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
+  ReturnValue extends ReturnValues | undefined,
+  Format extends JsonFormat
 > extends Omit<
     AWS.DynamoDB.DocumentClient.UpdateItemInput,
     "TableName" | "Key" | "ReturnValues"
@@ -40,82 +44,45 @@ export interface UpdateItemOutput<
     : Partial<Narrow<Item, Key, Format>>;
 }
 
-export type UpdateItemDocument<
+export type UpdateItem<
   Item extends object,
   PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
+  RangeKey extends keyof Item | undefined,
+  Format extends JsonFormat
 > = <
-  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>,
+  Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
   Return extends ReturnValues | undefined = undefined
 >(
-  input: UpdateItemInput<Key, Return>
+  input: UpdateItemInput<Item, PartitionKey, RangeKey, Key, Return, Format>
 ) => Promise<
-  UpdateItemOutput<
-    Item,
-    PartitionKey,
-    RangeKey,
-    Key,
-    Return,
-    JsonFormat.Document
-  >
+  UpdateItemOutput<Item, PartitionKey, RangeKey, Key, Return, Format>
 >;
 
-export function createUpdateItemDocumentIntegration<
+export function createUpdateItemIntegration<
   Item extends object,
   PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
+  RangeKey extends keyof Item | undefined,
+  Format extends JsonFormat
 >(
-  table: ITable<Item, PartitionKey, RangeKey>
-): UpdateItemDocument<Item, PartitionKey, RangeKey> {
-  return createDynamoDocumentIntegration<
-    UpdateItemDocument<Item, PartitionKey, RangeKey>
-  >(table, "updateItem", "write", (client, [request]) => {
-    return client
-      .update({
-        ...(request ?? {}),
-        TableName: table.tableName,
-        Key: request as any,
-      })
-      .promise() as any;
-  });
-}
-
-export type UpdateItemAttributes<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
-> = <
-  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>,
-  Return extends ReturnValues | undefined = undefined
->(
-  input: UpdateItemInput<Key, Return>
-) => Promise<
-  UpdateItemOutput<
-    Item,
-    PartitionKey,
-    RangeKey,
-    Key,
-    Return,
-    JsonFormat.AttributeValue
-  >
->;
-
-export function createUpdateItemAttributesIntegration<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
->(
-  table: ITable<Item, PartitionKey, RangeKey>
-): UpdateItemAttributes<Item, PartitionKey, RangeKey> {
-  return createDynamoAttributesIntegration<
-    UpdateItemAttributes<Item, PartitionKey, RangeKey>
-  >(table, "updateItem", "write", (client, [request]) => {
-    return client
-      .updateItem({
-        ...(request ?? {}),
-        TableName: table.tableName,
-      } as any)
-      .promise() as any;
+  table: aws_dynamodb.ITable,
+  format: Format
+): UpdateItem<Item, PartitionKey, RangeKey, Format> {
+  return createDynamoIntegration<
+    UpdateItem<Item, PartitionKey, RangeKey, Format>,
+    Format
+  >(table, "updateItem", format, "write", (client, [request]) => {
+    const input: any = {
+      ...(request ?? {}),
+      TableName: table.tableName,
+      Key: request as any,
+    };
+    if (format === JsonFormat.AttributeValue) {
+      return (client as AWS.DynamoDB).updateItem(input).promise() as any;
+    } else {
+      return (client as AWS.DynamoDB.DocumentClient)
+        .update(input)
+        .promise() as any;
+    }
   });
 }
 

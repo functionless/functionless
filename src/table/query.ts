@@ -1,56 +1,37 @@
+import { aws_dynamodb } from "aws-cdk-lib";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { assertNodeKind } from "../assert";
 import { NodeKind } from "../node-kind";
 import { DynamoDBAppsyncExpression } from "./appsync";
 import {
   addIfDefined,
-  createDynamoAttributesIntegration,
-  createDynamoDocumentIntegration,
+  createDynamoIntegration,
   makeAppSyncTableIntegration,
 } from "./integration";
 import { ITable } from "./table";
+
+export interface QueryInput
+  extends Omit<AWS.DynamoDB.QueryInput, "TableName"> {}
 
 export interface QueryOutput<Item extends object, Format extends JsonFormat>
   extends Omit<AWS.DynamoDB.QueryOutput, "Items"> {
   Items?: FormatObject<Item, Format>[];
 }
 
-export type QueryDocument<Item extends object> = <I extends Item = Item>(
-  input: Omit<AWS.DynamoDB.DocumentClient.QueryInput, "TableName">
-) => Promise<QueryOutput<I, JsonFormat.Document>>;
+export type Query<Item extends object, Format extends JsonFormat> = <
+  I extends Item = Item
+>(
+  input: QueryInput
+) => Promise<QueryOutput<I, Format>>;
 
-export function createQueryDocumentIntegration<
+export function createQueryIntegration<
   Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
->(table: ITable<Item, PartitionKey, RangeKey>): QueryDocument<Item> {
-  return createDynamoDocumentIntegration<QueryDocument<Item>>(
+  Format extends JsonFormat
+>(table: aws_dynamodb.ITable, format: Format): Query<Item, Format> {
+  return createDynamoIntegration<Query<Item, Format>, Format>(
     table,
     "query",
-    "read",
-    (client, [request]) => {
-      return client
-        .query({
-          ...(request ?? {}),
-          TableName: table.tableName,
-        })
-        .promise() as any;
-    }
-  );
-}
-
-export type QueryAttributes<Item extends object> = <I extends Item = Item>(
-  input: Omit<AWS.DynamoDB.QueryInput, "TableName">
-) => Promise<QueryOutput<I, JsonFormat.AttributeValue>>;
-
-export function createQueryAttributesIntegration<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
->(table: ITable<Item, PartitionKey, RangeKey>): QueryAttributes<Item> {
-  return createDynamoAttributesIntegration<QueryAttributes<Item>>(
-    table,
-    "query",
+    format,
     "read",
     (client, [request]) => {
       return client

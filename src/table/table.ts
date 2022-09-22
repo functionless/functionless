@@ -1,24 +1,9 @@
 import { aws_dynamodb } from "aws-cdk-lib";
 import { Construct } from "constructs";
+import { JsonFormat } from "typesafe-dynamodb";
 import { AppsyncResolver } from "../appsync";
-import { TableAppsyncInterface } from "./appsync";
-import { TableAttributesInterface } from "./attributes";
-import {
-  BatchGetItemDocument,
-  createBatchGetItemDocumentIntegration,
-} from "./batch-get-item";
-import {
-  createDeleteItemDocumentIntegration,
-  DeleteItemDocument,
-} from "./delete-item";
-import { createGetItemDocumentIntegration, GetItemDocument } from "./get-item";
-import { createPutItemDocumentIntegration, PutItemDocument } from "./put-item";
-import { createQueryDocumentIntegration, QueryDocument } from "./query";
-import { createScanDocumentIntegration, ScanDocument } from "./scan";
-import {
-  createUpdateItemDocumentIntegration,
-  UpdateItemDocument,
-} from "./update-item";
+import { TableAppsyncApi } from "./appsync";
+import { TableRuntimeApi } from "./runtime";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -101,7 +86,7 @@ export interface ITable<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined = undefined
-> {
+> extends TableRuntimeApi<Item, PartitionKey, RangeKey, JsonFormat.Document> {
   readonly kind: "Table";
   /**
    * This static property identifies this class as an EventBus to the TypeScript plugin.
@@ -113,7 +98,14 @@ export interface ITable<
    */
   readonly resource: aws_dynamodb.ITable;
 
+  /**
+   * Name of this table.
+   */
   readonly tableName: string;
+
+  /**
+   * The ARN of this table.
+   */
   readonly tableArn: string;
 
   /**
@@ -127,30 +119,23 @@ export interface ITable<
     RangeKey: RangeKey;
   };
 
-  readonly appsync: TableAppsyncInterface<Item, PartitionKey, RangeKey>;
+  readonly appsync: TableAppsyncApi<Item, PartitionKey, RangeKey>;
 
-  readonly attributes: TableAttributesInterface<Item, PartitionKey, RangeKey>;
-
-  get: GetItemDocument<Item, PartitionKey, RangeKey>;
-
-  batchGet: BatchGetItemDocument<Item, PartitionKey, RangeKey>;
-
-  update: UpdateItemDocument<Item, PartitionKey, RangeKey>;
-
-  put: PutItemDocument<Item>;
-
-  delete: DeleteItemDocument<Item, PartitionKey, RangeKey>;
-
-  query: QueryDocument<Item>;
-
-  scan: ScanDocument<Item>;
+  readonly attributes: TableRuntimeApi<
+    Item,
+    PartitionKey,
+    RangeKey,
+    JsonFormat.AttributeValue
+  >;
 }
 
 class BaseTable<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined = undefined
-> implements ITable<Item, PartitionKey, RangeKey>
+    Item extends object,
+    PartitionKey extends keyof Item,
+    RangeKey extends keyof Item | undefined = undefined
+  >
+  extends TableRuntimeApi<Item, PartitionKey, RangeKey, JsonFormat.Document>
+  implements ITable<Item, PartitionKey, RangeKey>
 {
   public static readonly FunctionlessType = "Table";
   readonly functionlessKind = "Table";
@@ -164,38 +149,23 @@ class BaseTable<
     RangeKey: RangeKey;
   };
 
-  readonly appsync: TableAppsyncInterface<Item, PartitionKey, RangeKey>;
+  readonly appsync: TableAppsyncApi<Item, PartitionKey, RangeKey>;
 
-  readonly attributes: TableAttributesInterface<Item, PartitionKey, RangeKey>;
-
-  readonly get: GetItemDocument<Item, PartitionKey, RangeKey>;
-
-  readonly batchGet: BatchGetItemDocument<Item, PartitionKey, RangeKey>;
-
-  readonly update: UpdateItemDocument<Item, PartitionKey, RangeKey>;
-
-  readonly put: PutItemDocument<Item>;
-
-  readonly delete: DeleteItemDocument<Item, PartitionKey, RangeKey>;
-
-  readonly query: QueryDocument<Item>;
-
-  readonly scan: ScanDocument<Item>;
+  readonly attributes: TableRuntimeApi<
+    Item,
+    PartitionKey,
+    RangeKey,
+    JsonFormat.AttributeValue
+  >;
 
   constructor(readonly resource: aws_dynamodb.ITable) {
+    super(resource, JsonFormat.Document);
+
     this.tableName = resource.tableName;
     this.tableArn = resource.tableArn;
 
-    this.appsync = new TableAppsyncInterface(this);
-    this.attributes = new TableAttributesInterface(this);
-
-    this.get = createGetItemDocumentIntegration(this);
-    this.batchGet = createBatchGetItemDocumentIntegration(this);
-    this.delete = createDeleteItemDocumentIntegration(this);
-    this.put = createPutItemDocumentIntegration(this);
-    this.query = createQueryDocumentIntegration(this);
-    this.scan = createScanDocumentIntegration(this);
-    this.update = createUpdateItemDocumentIntegration(this);
+    this.appsync = new TableAppsyncApi(this);
+    this.attributes = new TableRuntimeApi(resource, JsonFormat.AttributeValue);
   }
 }
 

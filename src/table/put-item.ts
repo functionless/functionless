@@ -1,3 +1,4 @@
+import { aws_dynamodb } from "aws-cdk-lib";
 import { ToAttributeMap } from "typesafe-dynamodb/lib/attribute-value";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
@@ -7,8 +8,7 @@ import { NodeKind } from "../node-kind";
 import { DynamoDBAppsyncExpression } from "./appsync";
 import {
   addIfDefined,
-  createDynamoAttributesIntegration,
-  createDynamoDocumentIntegration,
+  createDynamoIntegration,
   makeAppSyncTableIntegration,
 } from "./integration";
 import { ITable } from "./table";
@@ -24,52 +24,31 @@ export interface PutItemOutput<Item extends object, Format extends JsonFormat>
   Attributes?: FormatObject<Item, Format>;
 }
 
-export type PutItemDocument<Item extends object> = <I extends Item>(
+export type PutItem<Item extends object, Format extends JsonFormat> = <
+  I extends Item
+>(
   input: PutItemInput<I, JsonFormat.Document>
-) => Promise<PutItemOutput<Item, JsonFormat.Document>>;
+) => Promise<PutItemOutput<Item, Format>>;
 
-export function createPutItemDocumentIntegration<
+export function createPutItemIntegration<
   Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
->(table: ITable<Item, PartitionKey, RangeKey>): PutItemDocument<Item> {
-  return createDynamoDocumentIntegration<PutItemDocument<Item>>(
+  Format extends JsonFormat
+>(table: aws_dynamodb.ITable, format: Format): PutItem<Item, Format> {
+  return createDynamoIntegration<PutItem<Item, Format>, Format>(
     table,
     "putItem",
+    format,
     "write",
     (client, [request]) => {
-      return client
-        .put({
-          ...request,
-          TableName: table.tableName,
-        })
-        .promise() as any;
-    }
-  );
-}
-
-export type PutItemAttributes<Item extends object> = <
-  I extends FormatObject<Item, JsonFormat.AttributeValue>
->(
-  input: PutItemInput<I, JsonFormat.AttributeValue>
-) => Promise<PutItemOutput<Item, JsonFormat.AttributeValue>>;
-
-export function createPutItemAttributesIntegration<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
->(table: ITable<Item, PartitionKey, RangeKey>): PutItemAttributes<Item> {
-  return createDynamoAttributesIntegration<PutItemAttributes<Item>>(
-    table,
-    "putItem",
-    "write",
-    (client, [input]) => {
-      return client
-        .putItem({
-          ...(input as any),
-          TableName: table.tableName,
-        })
-        .promise() as any;
+      const input: any = {
+        ...request,
+        TableName: table.tableName,
+      };
+      if (format === JsonFormat.AttributeValue) {
+        return (client as AWS.DynamoDB).putItem(input).promise() as any;
+      } else {
+        return (client as AWS.DynamoDB.DocumentClient).put(input).promise();
+      }
     }
   );
 }

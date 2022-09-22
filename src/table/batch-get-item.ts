@@ -1,4 +1,4 @@
-import { PromiseResult } from "aws-sdk/lib/request";
+import { aws_dynamodb } from "aws-cdk-lib";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
@@ -6,115 +6,87 @@ import { assertNodeKind } from "../assert";
 import { NodeKind } from "../node-kind";
 import {
   addIfDefined,
-  createDynamoAttributesIntegration,
-  createDynamoDocumentIntegration,
+  createDynamoIntegration,
   makeAppSyncTableIntegration,
 } from "./integration";
 import { ITable } from "./table";
 import { AttributeKeyToObject } from "./util";
 
-export interface GetItemInput<
+export interface BatchGetItemInput<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined,
-  Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
+  Keys extends TableKey<Item, PartitionKey, RangeKey, Format>,
   Format extends JsonFormat = JsonFormat.Document
-> extends Omit<AWS.DynamoDB.GetItemInput, "Key"> {
-  Key: Key;
+> extends Omit<AWS.DynamoDB.BatchGetItemInput, "RequestItems">,
+    KeysAndAttributes<Item, PartitionKey, RangeKey, Keys, Format> {}
+
+export interface KeysAndAttributes<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined,
+  Keys extends TableKey<Item, PartitionKey, RangeKey, Format>,
+  Format extends JsonFormat
+> extends Omit<AWS.DynamoDB.KeysAndAttributes, "Keys"> {
+  Keys: Keys[];
 }
+
 export interface BatchGetItemOutput<
   Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined,
+  Keys extends TableKey<Item, PartitionKey, RangeKey, Format>,
   Format extends JsonFormat
 > extends Omit<AWS.DynamoDB.BatchGetItemOutput, "Item" | "Responses"> {
-  Items?: FormatObject<Item, Format>[];
+  Items?: FormatObject<Narrow<Item, Keys, Format>, Format>[];
 }
 
-export type BatchGetItemDocument<
+export type BatchGetItem<
   Item extends object,
   PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
-> = (
-  keys: readonly TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>[],
-  props?: Omit<AWS.DynamoDB.KeysAndAttributes, "Keys">
-) => Promise<BatchGetItemOutput<Item, JsonFormat.Document>>;
+  RangeKey extends keyof Item | undefined,
+  Format extends JsonFormat
+> = <Keys extends TableKey<Item, PartitionKey, RangeKey, Format>>(
+  request: BatchGetItemInput<Item, PartitionKey, RangeKey, Keys, Format>
+) => Promise<BatchGetItemOutput<Item, PartitionKey, RangeKey, Keys, Format>>;
 
-export function createBatchGetItemDocumentIntegration<
+export function createBatchGetItemIntegration<
   Item extends object,
   PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
+  RangeKey extends keyof Item | undefined,
+  Format extends JsonFormat
 >(
-  table: ITable<Item, PartitionKey, RangeKey>
-): BatchGetItemDocument<Item, PartitionKey, RangeKey> {
-  return createDynamoDocumentIntegration<
-    BatchGetItemDocument<Item, PartitionKey, RangeKey>
-  >(table, "batchGetItem", "read", async (client, [keys, props]) => {
-    const response: PromiseResult<
-      AWS.DynamoDB.DocumentClient.BatchGetItemOutput,
-      any
-    > = await client
-      .batchGet({
-        ...(props ?? {}),
+  table: aws_dynamodb.ITable,
+  format: Format
+): BatchGetItem<Item, PartitionKey, RangeKey, Format> {
+  const tableName = table.tableName;
+
+  return createDynamoIntegration<
+    BatchGetItem<Item, PartitionKey, RangeKey, Format>,
+    Format
+  >(
+    table,
+    "batchGetItem",
+    format,
+    "read",
+    async (client, [{ Keys, ReturnConsumedCapacity }]) => {
+      const response = await (format === JsonFormat.Document
+        ? (client as AWS.DynamoDB.DocumentClient).batchGet
+        : (client as AWS.DynamoDB).batchGetItem)({
+        ReturnConsumedCapacity,
         RequestItems: {
-          [table.tableName]: {
-            Keys: keys,
-            ...props,
+          [tableName]: {
+            Keys: Keys,
           },
         } as any,
-      })
-      .promise();
+      }).promise();
 
-    return {
-      ...response,
-      Items: response.Responses?.[table.tableName] as Item[],
-    };
-  });
-}
-
-export type BatchGetItemAttributes<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
-> = (
-  keys: readonly TableKey<
-    Item,
-    PartitionKey,
-    RangeKey,
-    JsonFormat.AttributeValue
-  >[],
-  props?: Omit<AWS.DynamoDB.KeysAndAttributes, "Keys">
-) => Promise<BatchGetItemOutput<Item, JsonFormat.AttributeValue>>;
-
-export function createBatchGetItemAttributesIntegration<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
->(
-  table: ITable<Item, PartitionKey, RangeKey>
-): BatchGetItemAttributes<Item, PartitionKey, RangeKey> {
-  return createDynamoAttributesIntegration<
-    BatchGetItemAttributes<Item, PartitionKey, RangeKey>
-  >(table, "batchGetItem", "read", async (client, [keys, props]) => {
-    const response: PromiseResult<AWS.DynamoDB.BatchGetItemOutput, any> =
-      await client
-        .batchGetItem({
-          ...(props ?? {}),
-          RequestItems: {
-            [table.tableName]: {
-              Keys: keys,
-              ...props,
-            },
-          } as any,
-        })
-        .promise();
-
-    return {
-      ...response,
-      Items: response.Responses?.[table.tableName] as FormatObject<
-        Item,
-        JsonFormat.AttributeValue
-      >[],
-    };
-  });
+      return {
+        ...response,
+        Items: response.Responses?.[tableName] as any,
+      };
+    }
+  );
 }
 
 /**

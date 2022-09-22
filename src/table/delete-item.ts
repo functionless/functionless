@@ -1,3 +1,4 @@
+import { aws_dynamodb } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
@@ -6,8 +7,7 @@ import { NodeKind } from "../node-kind";
 import { DynamoDBAppsyncExpression } from "./appsync";
 import {
   addIfDefined,
-  createDynamoAttributesIntegration,
-  createDynamoDocumentIntegration,
+  createDynamoIntegration,
   makeAppSyncTableIntegration,
 } from "./integration";
 import { ReturnValues } from "./return-value";
@@ -40,82 +40,43 @@ export interface DeleteItemOutput<
     : Partial<Narrow<Item, Key, Format>>;
 }
 
-export type DeleteItemDocument<
+export type DeleteItem<
   Item extends object,
   PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
+  RangeKey extends keyof Item | undefined,
+  Format extends JsonFormat
 > = <
-  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>,
+  Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
   Return extends ReturnValues | undefined = undefined
 >(
   input: DeleteItemInput<Key, Return>
 ) => Promise<
-  DeleteItemOutput<
-    Item,
-    PartitionKey,
-    RangeKey,
-    Key,
-    Return,
-    JsonFormat.Document
-  >
+  DeleteItemOutput<Item, PartitionKey, RangeKey, Key, Return, Format>
 >;
 
-export function createDeleteItemDocumentIntegration<
+export function createDeleteItemIntegration<
   Item extends object,
   PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
+  RangeKey extends keyof Item | undefined,
+  Format extends JsonFormat
 >(
-  table: ITable<Item, PartitionKey, RangeKey>
-): DeleteItemDocument<Item, PartitionKey, RangeKey> {
-  return createDynamoDocumentIntegration<
-    DeleteItemDocument<Item, PartitionKey, RangeKey>
-  >(table, "deleteItem", "write", (client, [request]) => {
-    return client
-      .delete({
-        ...(request ?? {}),
-        TableName: table.tableName,
-        Key: request as any,
-      })
-      .promise() as any;
-  });
-}
-
-export type DeleteItemAttributes<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
-> = <
-  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>,
-  Return extends ReturnValues | undefined = undefined
->(
-  input: DeleteItemInput<Key, Return>
-) => Promise<
-  DeleteItemOutput<
-    Item,
-    PartitionKey,
-    RangeKey,
-    Key,
-    Return,
-    JsonFormat.AttributeValue
-  >
->;
-
-export function createDeleteItemAttributesIntegration<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
->(
-  table: ITable<Item, PartitionKey, RangeKey>
-): DeleteItemAttributes<Item, PartitionKey, RangeKey> {
-  return createDynamoAttributesIntegration<
-    DeleteItemAttributes<Item, PartitionKey, RangeKey>
-  >(table, "deleteItem", "write", (client, [request]) => {
-    return client
-      .deleteItem({
-        ...(request ?? {}),
-        TableName: table.tableName,
-      } as any)
-      .promise() as any;
+  table: aws_dynamodb.ITable,
+  format: Format
+): DeleteItem<Item, PartitionKey, RangeKey, Format> {
+  return createDynamoIntegration<
+    DeleteItem<Item, PartitionKey, RangeKey, Format>,
+    Format
+  >(table, "deleteItem", format, "write", (client, [request]) => {
+    const input: any = {
+      ...(request ?? {}),
+      TableName: table.tableName,
+      Key: request as any,
+    };
+    if (format === JsonFormat.AttributeValue) {
+      return (client as AWS.DynamoDB).deleteItem(input).promise() as any;
+    } else {
+      return (client as AWS.DynamoDB.DocumentClient).delete(input).promise();
+    }
   });
 }
 

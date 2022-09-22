@@ -1,3 +1,4 @@
+import { aws_dynamodb } from "aws-cdk-lib";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
@@ -5,8 +6,7 @@ import { assertNodeKind } from "../assert";
 import { NodeKind } from "../node-kind";
 import {
   addIfDefined,
-  createDynamoAttributesIntegration,
-  createDynamoDocumentIntegration,
+  createDynamoIntegration,
   makeAppSyncTableIntegration,
 } from "./integration";
 import { ITable } from "./table";
@@ -18,7 +18,7 @@ export interface GetItemInput<
   RangeKey extends keyof Item | undefined,
   Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
   Format extends JsonFormat = JsonFormat.Document
-> extends Omit<AWS.DynamoDB.GetItemInput, "Key"> {
+> extends Omit<AWS.DynamoDB.GetItemInput, "Key" | "TableName"> {
   Key: Key;
 }
 
@@ -32,70 +32,38 @@ export interface GetItemOutput<
   Item?: FormatObject<Narrow<Item, Key, Format>, Format>;
 }
 
-export type GetItemDocument<
+export type GetItem<
   Item extends object,
   PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
-> = <Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>>(
-  input: GetItemInput<Item, PartitionKey, RangeKey, Key, JsonFormat.Document>
-) => Promise<
-  GetItemOutput<Item, PartitionKey, RangeKey, Key, JsonFormat.Document>
->;
+  RangeKey extends keyof Item | undefined,
+  Format extends JsonFormat
+> = <Key extends TableKey<Item, PartitionKey, RangeKey, Format>>(
+  input: GetItemInput<Item, PartitionKey, RangeKey, Key, Format>
+) => Promise<GetItemOutput<Item, PartitionKey, RangeKey, Key, Format>>;
 
-export function createGetItemDocumentIntegration<
+export function createGetItemIntegration<
   Item extends object,
   PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
+  RangeKey extends keyof Item | undefined,
+  Format extends JsonFormat
 >(
-  table: ITable<Item, PartitionKey, RangeKey>
-): GetItemDocument<Item, PartitionKey, RangeKey> {
-  const getItem: GetItemDocument<Item, PartitionKey, RangeKey> =
-    createDynamoDocumentIntegration<
-      GetItemDocument<Item, PartitionKey, RangeKey>
-    >(table, "getItem", "read", (client, [input]) => {
-      return client
-        .get({
-          ...input,
-          TableName: table.tableName,
-        })
-        .promise() as any;
-    });
+  table: aws_dynamodb.ITable,
+  format: Format
+): GetItem<Item, PartitionKey, RangeKey, Format> {
+  return createDynamoIntegration<
+    GetItem<Item, PartitionKey, RangeKey, Format>,
+    Format
+  >(table, "getItem", format, "read", (client, [request]) => {
+    const input = {
+      ...(request as any),
+      TableName: table.tableName,
+    };
 
-  return getItem;
-}
-
-export type GetItemAttributes<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
-> = <
-  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
->(
-  input: GetItemInput<
-    Item,
-    PartitionKey,
-    RangeKey,
-    Key,
-    JsonFormat.AttributeValue
-  >
-) => Promise<
-  GetItemOutput<Item, PartitionKey, RangeKey, Key, JsonFormat.AttributeValue>
->;
-
-export function createGetItemAttributesIntegration<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
->(table: ITable<Item, PartitionKey, RangeKey>) {
-  return createDynamoAttributesIntegration<
-    GetItemAttributes<Item, PartitionKey, RangeKey>
-  >(table, "getItem", "read", (client, [request]) => {
-    return client
-      .getItem({
-        ...(request as any),
-        TableName: table.tableName,
-      })
-      .promise() as any;
+    if (format === JsonFormat.AttributeValue) {
+      return (client as AWS.DynamoDB).getItem(input).promise() as any;
+    } else {
+      return (client as AWS.DynamoDB.DocumentClient).get(input).promise();
+    }
   });
 }
 

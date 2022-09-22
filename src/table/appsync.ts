@@ -17,7 +17,7 @@ import {
   UpdateItemAppsync,
 } from "./update-item";
 
-export class TableAppsyncInterface<
+export class TableAppsyncApi<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined = undefined

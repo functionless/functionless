@@ -1,11 +1,11 @@
+import { aws_dynamodb } from "aws-cdk-lib";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { assertNodeKind } from "../assert";
 import { NodeKind } from "../node-kind";
 import { DynamoDBAppsyncExpression } from "./appsync";
 import {
   addIfDefined,
-  createDynamoAttributesIntegration,
-  createDynamoDocumentIntegration,
+  createDynamoIntegration,
   makeAppSyncTableIntegration,
 } from "./integration";
 import { ITable } from "./table";
@@ -18,42 +18,18 @@ export interface ScanOutput<Item extends object, Format extends JsonFormat>
   Items?: FormatObject<Item, Format>[];
 }
 
-export type ScanDocument<Item extends object> = (
+export type Scan<Item extends object, Format extends JsonFormat> = (
   input: ScanInput
-) => Promise<ScanOutput<Item, JsonFormat.Document>>;
+) => Promise<ScanOutput<Item, Format>>;
 
-export function createScanDocumentIntegration<
+export function createScanIntegration<
   Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
->(table: ITable<Item, PartitionKey, RangeKey>): ScanDocument<Item> {
-  return createDynamoDocumentIntegration<ScanDocument<Item>>(
+  Format extends JsonFormat
+>(table: aws_dynamodb.ITable, format: Format): Scan<Item, Format> {
+  return createDynamoIntegration<Scan<Item, Format>, Format>(
     table,
     "scan",
-    "read",
-    (client, [request]) => {
-      return client
-        .scan({
-          ...(request ?? {}),
-          TableName: table.tableName,
-        })
-        .promise() as any;
-    }
-  );
-}
-
-export type ScanAttributes<Item extends object> = (
-  input: ScanInput
-) => Promise<ScanOutput<Item, JsonFormat.AttributeValue>>;
-
-export function createScanAttributesIntegration<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
->(table: ITable<Item, PartitionKey, RangeKey>): ScanAttributes<Item> {
-  return createDynamoAttributesIntegration<ScanAttributes<Item>>(
-    table,
-    "scan",
+    format,
     "read",
     (client, [request]) => {
       return client

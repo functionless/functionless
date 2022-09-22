@@ -1,6 +1,6 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { aws_apigateway, aws_iam } from "aws-cdk-lib";
+import { aws_apigateway, aws_dynamodb, aws_iam } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { AppSyncVtlIntegration } from "../appsync";
 import { ASL, ASLGraph } from "../asl";
@@ -42,44 +42,11 @@ export const DynamoDBClient: PrewarmClientInitializer<
 
 export type DynamoDBAccess = "read" | "write" | "read-write" | "full";
 
-export function createDynamoDocumentIntegration<F extends AnyFunction>(
-  table: ITable<any, any, any>,
-  kind: keyof AWS.DynamoDB,
-  access: DynamoDBAccess,
-  native: (
-    client: AWS.DynamoDB.DocumentClient,
-    params: Parameters<F>
-  ) => ReturnType<F>
-): F {
-  return createDynamoIntegration(
-    table,
-    kind,
-    JsonFormat.Document,
-    access,
-    native as any
-  );
-}
-
-export function createDynamoAttributesIntegration<F extends AnyFunction>(
-  table: ITable<any, any, any>,
-  kind: keyof AWS.DynamoDB,
-  access: DynamoDBAccess,
-  body: (client: AWS.DynamoDB, params: Parameters<F>) => ReturnType<F>
-): F {
-  return createDynamoIntegration(
-    table,
-    kind,
-    JsonFormat.AttributeValue,
-    access,
-    body as any
-  );
-}
-
 export function createDynamoIntegration<
   F extends AnyFunction,
   Format extends JsonFormat
 >(
-  table: ITable<any, any, any>,
+  table: aws_dynamodb.ITable,
   operationName: keyof AWS.DynamoDB,
   format: JsonFormat,
   access: DynamoDBAccess,
@@ -179,7 +146,7 @@ export function createDynamoIntegration<
         grantPermissions(context.role);
 
         return `{
-  "TableName":"${table.resource.tableName}",
+  "TableName":"${table.tableName}",
   ${input.properties
     .flatMap((prop) => {
       if (isPropAssignExpr(prop)) {
@@ -212,14 +179,14 @@ export function createDynamoIntegration<
 
   function grantPermissions(principal: aws_iam.IGrantable) {
     if (access === "read") {
-      table.resource.grantReadData(principal);
+      table.grantReadData(principal);
     } else if (access === "write") {
-      table.resource.grantWriteData(principal);
+      table.grantWriteData(principal);
     } else if (access === "read-write") {
-      table.resource.grantReadData(principal);
-      table.resource.grantWriteData(principal);
+      table.grantReadData(principal);
+      table.grantWriteData(principal);
     } else if (access === "full") {
-      table.resource.grantFullAccess(principal);
+      table.grantFullAccess(principal);
     }
   }
 }
