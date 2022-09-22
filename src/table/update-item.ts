@@ -23,7 +23,7 @@ export interface UpdateItemInput<
   Format extends JsonFormat
 > extends Omit<
     AWS.DynamoDB.DocumentClient.UpdateItemInput,
-    "TableName" | "Key" | "ReturnValues"
+    "TableName" | "Key"
   > {
   Key: Key;
   ReturnValues?: ReturnValue;
@@ -74,7 +74,6 @@ export function createUpdateItemIntegration<
     const input: any = {
       ...(request ?? {}),
       TableName: table.tableName,
-      Key: request as any,
     };
     if (format === JsonFormat.AttributeValue) {
       return (client as AWS.DynamoDB).updateItem(input).promise() as any;

@@ -82,22 +82,43 @@ runtimeTestSuite("tableStack", (t: any) => {
         {
           ...localstackClientConfig,
         },
-        async (item: Item1v1) => {
+        async ([item1, item2]: [Item1v1, Item2]) => {
+          // clean the table
+          while (true) {
+            const items = await table.scan({
+              ConsistentRead: true,
+            });
+            if (items.Items?.length) {
+              await table.batchWrite({
+                RequestItems: items.Items.map((item) => ({
+                  DeleteRequest: {
+                    Key: {
+                      pk: item.pk,
+                      sk: item.sk,
+                    },
+                  },
+                })),
+              });
+            } else {
+              break;
+            }
+          }
+
           await table.put({
-            Item: item,
+            Item: item1,
           });
 
           const gotItem = await table.get({
             Key: {
-              pk: item.pk,
-              sk: item.sk,
+              pk: item1.pk,
+              sk: item1.sk,
             },
           });
 
           const query = await table.query({
             KeyConditionExpression: "pk = :pk",
             ExpressionAttributeValues: {
-              ":pk": item.pk,
+              ":pk": item1.pk,
             },
             ConsistentRead: true,
           });
@@ -109,16 +130,16 @@ runtimeTestSuite("tableStack", (t: any) => {
           const batch = await table.batchGet({
             Keys: [
               {
-                pk: item.pk,
-                sk: item.sk,
+                pk: item1.pk,
+                sk: item1.sk,
               },
             ],
           });
 
           const updated = await table.update({
             Key: {
-              pk: item.pk,
-              sk: item.sk,
+              pk: item1.pk,
+              sk: item1.sk,
             },
             UpdateExpression: "SET data1 = :data",
             ExpressionAttributeValues: {
@@ -131,15 +152,14 @@ runtimeTestSuite("tableStack", (t: any) => {
 
           const deleted = await table.delete({
             Key: {
-              pk: item.pk,
-              sk: item.sk,
+              pk: item1.pk,
+              sk: item1.sk,
             },
-            ReturnValues: "UPDATED_NEW",
+            ReturnValues: "ALL_OLD",
           });
 
-          const put2 = await table.put({
-            Item: item,
-            ReturnValues: "ALL_OLD",
+          await table.put({
+            Item: item2,
           });
 
           let batchWrite = await table.batchWrite({
@@ -147,8 +167,16 @@ runtimeTestSuite("tableStack", (t: any) => {
               {
                 DeleteRequest: {
                   Key: {
-                    pk: item.pk,
-                    sk: item.sk,
+                    pk: item2.pk,
+                    sk: item2.sk,
+                  },
+                },
+              },
+              {
+                PutRequest: {
+                  Item: {
+                    ...item2,
+                    pk: "Item2|1|pk2-modified",
                   },
                 },
               },
@@ -161,6 +189,13 @@ runtimeTestSuite("tableStack", (t: any) => {
             });
           }
 
+          const item2Modified = await table.get({
+            Key: {
+              pk: "Item2|1|pk2-modified",
+              sk: item2.sk,
+            },
+          });
+
           return [
             gotItem.Item ?? null,
             ...(scan.Items ?? []),
@@ -168,6 +203,7 @@ runtimeTestSuite("tableStack", (t: any) => {
             ...(batch.Items ?? []),
             updated.Attributes ?? null,
             deleted.Attributes ?? null,
+            item2Modified.Item,
           ];
         }
       );
@@ -181,7 +217,7 @@ runtimeTestSuite("tableStack", (t: any) => {
       };
     },
     async (context: any, clients: RuntimeTestClients) => {
-      const item: Item1v1 = {
+      const item1: Item1v1 = {
         type: "Item1",
         version: 1,
         pk: "Item1|1|pk1",
@@ -191,24 +227,38 @@ runtimeTestSuite("tableStack", (t: any) => {
         },
       };
 
+      const item2: Item2 = {
+        type: "Item2",
+        version: 1,
+        pk: "Item2|1|pk2",
+        sk: "sk2",
+        data2: {
+          key: "value2",
+        },
+      };
+
       const response = await clients.lambda
         .invoke({
           FunctionName: context.functionArn,
-          Payload: JSON.stringify(item),
+          Payload: JSON.stringify([item1, item2]),
         })
         .promise();
 
       expect(JSON.parse(response.Payload as string)).toEqual([
-        item,
-        item,
-        item,
-        item,
-        item,
+        item1,
+        item1,
+        item1,
+        item1,
+        item1,
         {
-          ...item,
+          ...item1,
           data1: {
             key: "value2",
           },
+        },
+        {
+          ...item2,
+          pk: "Item2|1|pk2-modified",
         },
       ]);
     }

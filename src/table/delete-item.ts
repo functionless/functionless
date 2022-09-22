@@ -14,12 +14,14 @@ import { ReturnValues } from "./return-value";
 import { ITable } from "./table";
 import { AttributeKeyToObject } from "./util";
 
+export type DeleteItemReturnValues = "NONE" | "ALL_OLD";
+
 export interface DeleteItemInput<
   Key,
-  ReturnValue extends ReturnValues | undefined
+  ReturnValue extends DeleteItemReturnValues | undefined
 > extends Omit<
     AWS.DynamoDB.DocumentClient.DeleteItemInput,
-    "TableName" | "Key" | "ReturnValues"
+    "TableName" | "Key"
   > {
   Key: Key;
   ReturnValues?: ReturnValue;
@@ -47,7 +49,7 @@ export type DeleteItem<
   Format extends JsonFormat
 > = <
   Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
-  Return extends ReturnValues | undefined = undefined
+  Return extends DeleteItemReturnValues | undefined = undefined
 >(
   input: DeleteItemInput<Key, Return>
 ) => Promise<
@@ -70,7 +72,6 @@ export function createDeleteItemIntegration<
     const input: any = {
       ...(request ?? {}),
       TableName: table.tableName,
-      Key: request as any,
     };
     if (format === JsonFormat.AttributeValue) {
       return (client as AWS.DynamoDB).deleteItem(input).promise() as any;
