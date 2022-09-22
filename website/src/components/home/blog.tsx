@@ -41,16 +41,16 @@ export const Blog = ({
           </Link>
         ))}
       </div>
-      <h6 className="m-0 mt-4">
+      <h5 className="my-4">
         <Link to={permalink}>{title}</Link>
-      </h6>
+      </h5>
       <p className="my-4 body1 text-functionless-medium dark:text-functionless-dark-medium">
         {description}
       </p>
       <div className="flex space-x-4">
         <Link href={authors[0].url}>
           <img
-            className="inline-block h-10 w-10 rounded-full"
+            className="inline-block h-10 w-10 rounded-full bg-functionless-dark-border"
             src={authors[0].imageURL}
             alt={authors[0].name}
           />

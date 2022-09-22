@@ -11,37 +11,76 @@
     @apply font-body text-functionless-high dark:text-functionless-dark-high bg-functionless-white dark:bg-functionless-dark-bg;
   }
 
-  body a {
+  a {
     @apply no-underline hover:no-underline;
   }
 
-  body h1,
-  body .markdown h1 {
-    @apply font-display font-semibold text-8xl tracking-[-1.5px] leading-[116px];
+  h1 {
+    @apply font-display font-semibold text-6xl;
   }
 
-  body h2 {
-    @apply font-display font-semibold text-6xl tracking-[-0.5px] leading-[70px];
+  h2 {
+    @apply font-display font-semibold text-5xl;
   }
 
-  body h3 {
-    @apply font-display font-semibold text-5xl tracking-[0px] leading-[57px];
+  h3 {
+    @apply font-display font-semibold text-4xl;
   }
 
-  body h4 {
-    @apply font-display font-semibold text-4xl tracking-[0.25px] leading-[41px];
+  h4 {
+    @apply font-display font-semibold text-3xl;
   }
 
-  body h5 {
-    @apply font-display font-semibold text-3xl tracking-[0px] leading-[30px];
+  h5 {
+    @apply font-display font-semibold text-2xl;
   }
 
-  body h6 {
-    @apply font-display font-semibold text-2xl tracking-[0.15px] leading-[24px];
+  h6 {
+    @apply font-display font-semibold text-xl;
+  }
+
+  .markdown h1 {
+    @apply text-3xl mb-4;
+  }
+
+  .markdown h1:not(:first-child) {
+    @apply text-3xl mt-16;
+  }
+
+  .markdown h2 {
+    @apply text-2xl mt-12 mb-4;
+  }
+
+  .markdown h3 {
+    @apply text-xl mt-10 mb-2;
+  }
+
+  .markdown h4 {
+    @apply text-lg mt-8 mb-2;
+  }
+
+  .markdown h5 {
+    @apply text-base mt-6 mb-2;
+  }
+
+  .markdown h6 {
+    @apply text-sm mt-4 mb-2;
+  }
+
+  .markdown a {
+    @apply text-functionless-blue;
+  }
+
+  .markdown p {
+    @apply text-functionless-dark-medium;
+  }
+
+  .markdown pre {
+    @apply rounded-md;
   }
 
   label {
-    @apply font-body font-medium text-xs leading-5 tracking-[0.1px];
+    @apply font-body font-medium text-xs;
   }
 
   input[type="text"],
@@ -62,6 +101,62 @@
 }
 
 @layer components {
+  .theme-edit-this-page {
+    @apply inline-flex bg-slate-700 rounded-md p-3 items-center;
+  }
+
+  .theme-admonition {
+    @apply border-l-0 rounded-md !my-12 text-functionless-dark-high;
+  }
+
+  .theme-admonition p {
+    @apply text-functionless-dark-high my-4;
+  }
+
+  .theme-admonition svg {
+    @apply !fill-functionless-dark-high;
+  }
+
+  .theme-admonition-note {
+    @apply bg-slate-500;
+  }
+
+  .theme-admonition-note a {
+    @apply text-blue-300 hover:text-blue-100;
+  }
+
+  .theme-admonition-caution {
+    @apply bg-orange-900;
+  }
+
+  .theme-admonition-caution a {
+    @apply text-blue-300 hover:text-blue-100;
+  }
+
+  .theme-admonition-tip {
+    @apply bg-blue-800;
+  }
+
+  .theme-admonition-tip a {
+    @apply text-functionless-yellow hover:text-yellow-100;
+  }
+
+  .pagination-nav__link {
+    @apply border-0;
+  }
+
+  .pagination-nav__sublabel {
+    @apply text-functionless-dark-medium;
+  }
+
+  .pagination-nav__link--next {
+    @apply justify-self-end;
+  }
+
+  .pagination-nav__label {
+    @apply border-functionless-dark-border px-6 py-3 my-4 border rounded-full;
+  }
+
   .over {
     @apply text-functionless-dark-medium font-semibold;
   }
@@ -110,7 +205,7 @@
   }
 
   .social-button {
-    @apply w-full button px-6 py-3.5 text-functionless-white focus:outline-none focus:ring-0 border-none justify-center transition hover:bg-functionless-green hover:text-white;
+    @apply w-full button px-6 py-3.5 text-functionless-white focus:outline-none focus:ring-0 border-none justify-center transition hover:bg-blue-300 hover:text-functionless-high [&_img]:hover:brightness-[0.1];
   }
 
   .solid-button {

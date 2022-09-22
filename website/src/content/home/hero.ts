@@ -1,4 +1,7 @@
-export const versionRelease = "v1.02.5 Released";
+export const announcement = {
+  title: "v0.22.28 Released!",
+  href: "https://github.com/functionless/functionless/releases",
+};
 
 export const title = "Code the Cloud";
 

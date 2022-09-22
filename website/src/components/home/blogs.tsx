@@ -12,7 +12,7 @@ export const Blogs = () => {
     <section className="pt-36 bg-functionless-bg dark:bg-functionless-dark-bg scroll-snap-point">
       <div className="container !max-w-screen-sm flex flex-col items-center">
         <span className="over">{title}</span>
-        <h4 className="text-center mt-2">{subtitle}</h4>
+        <h3 className="text-center mt-2">{subtitle}</h3>
       </div>
       <div className="mt-24 grid grid-cols-3 gap-7 container">
         {blogPosts.map((post: BlogPost) => (

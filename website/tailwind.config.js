@@ -1,12 +1,83 @@
+const plugin = require("tailwindcss/plugin");
+
 /** @type {import('tailwindcss').Config} */
 module.exports = {
   content: ["./src/**/*.{js,jsx,ts,tsx}"],
+  safelist: [
+    ".markdown",
+    ".theme-edit-this-page",
+    ".theme-admonition",
+    ".theme-admonition-note",
+    ".theme-admonition-caution",
+    ".theme-admonition-tip",
+    ".pagination-nav__link",
+    ".pagination-nav__sublabel",
+    ".pagination-nav__label",
+    ".pagination-nav__link--next",
+  ],
   corePlugins: {
     // preflight: false, // TODO: Added to style default docusaurus components
   },
   darkMode: ["class", '[data-theme="dark"]'],
   theme: {
     extend: {
+      fontSize: {
+        //h1
+        "6xl": [
+          "6.1875rem",
+          {
+            letterSpacing: "-0.015em",
+            lineHeight: "7.25rem",
+          },
+        ],
+        //h2
+        "5xl": [
+          "3.75rem",
+          {
+            letterSpacing: "-0.008em",
+            lineHeight: "4.375rem",
+          },
+        ],
+        //h3
+        "4xl": [
+          "3.0625rem",
+          {
+            letterSpacing: "0em",
+            lineHeight: "3.625rem",
+          },
+        ],
+        //h4
+        "3xl": [
+          "2.1875rem",
+          {
+            letterSpacing: "0.007em",
+            lineHeight: "2.5625rem",
+          },
+        ],
+        //h5
+        "2xl": [
+          "1.5625rem",
+          {
+            letterSpacing: "0em",
+            lineHeight: "1.8125rem",
+          },
+        ],
+        //h6
+        xl: [
+          "1.3125rem",
+          {
+            letterSpacing: "0.007em",
+            lineHeight: "1.5625rem",
+          },
+        ],
+        xs: [
+          "0.75rem",
+          {
+            letterSpacing: "0.008em",
+            lineHeight: "1.25rem",
+          },
+        ],
+      },
       padding: {
         4.5: "18px",
       },
@@ -122,5 +193,13 @@ module.exports = {
     require("@tailwindcss/typography"),
     require("@tailwindcss/line-clamp"),
     require("tailwind-children"),
+    plugin(function ({ addVariant }) {
+      addVariant("menu-link-active", "& .menu__link.menu__link--active");
+      addVariant("menu-link", "& .menu__link");
+      addVariant("menu-item-collapsible", "& .menu__list-item-collapsible");
+      addVariant("menu-link-caret", "& .menu__link--sublist-caret");
+      addVariant("caret-button", "& + .menu__caret");
+      addVariant("expanded", '&[aria-expanded="true"]');
+    }),
   ],
 };

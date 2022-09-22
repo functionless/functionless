@@ -35,7 +35,8 @@ export default function DocPageLayoutSidebar({
       className={clsx(
         ThemeClassNames.docs.docSidebarContainer,
         styles.docSidebarContainer,
-        hiddenSidebarContainer && styles.docSidebarContainerHidden
+        hiddenSidebarContainer && styles.docSidebarContainerHidden,
+        "[&_.theme-doc-sidebar-menu]:pl-2 [&_.theme-doc-sidebar-menu]:border-l [&_.theme-doc-sidebar-menu]:border-functionless-dark-border ml-8"
       )}
       onTransitionEnd={(e) => {
         if (!e.currentTarget.classList.contains(styles.docSidebarContainer)) {

@@ -6,7 +6,7 @@ export const FeaturesCore = () => {
     <section className="py-36 bg-functionless-bg dark:bg-functionless-dark-bg scroll-snap-point">
       <div className="container !max-w-screen-md flex flex-col items-center">
         <span className="over">{title}</span>
-        <h4 className="text-center mt-2">{subtitle}</h4>
+        <h3 className="text-center mt-2">{subtitle}</h3>
       </div>
       <div className="container grid grid-cols-1 md:grid-cols-3 gap-11 mt-16 mb-6 md:mt-40 md:mb-12">
         {features.map(({ icon, title, body }, i) => (
