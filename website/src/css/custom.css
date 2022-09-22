@@ -11,7 +11,7 @@
     @apply font-body text-functionless-high dark:text-functionless-dark-high bg-functionless-white dark:bg-functionless-dark-bg;
   }
 
-  a {
+  body a {
     @apply no-underline hover:no-underline;
   }
 
