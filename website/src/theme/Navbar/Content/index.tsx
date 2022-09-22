@@ -1,6 +1,7 @@
 import Link from "@docusaurus/Link";
 import { useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
 import { main, MainItem, social, SocialItem } from "@site/src/content/home/nav";
+import { githubUrl } from "@site/src/content/site";
 import NavbarLogo from "@theme/Navbar/Logo";
 import NavbarMobileSidebarToggle from "@theme/Navbar/MobileSidebar/Toggle";
 import NavbarSearch from "@theme/Navbar/Search";
@@ -16,7 +17,7 @@ export const SocialNavItem = ({ item }: { item: SocialItem }) => (
   <Link
     href={item.href}
     title={item.title}
-    className="shrink-0 hover:bg-functionless-blue p-2 transition rounded-full"
+    className="shrink-0 hover:bg-functionless-blue p-2 transition rounded-full hidden md:block"
   >
     <img src={item.icon} />
   </Link>
@@ -48,12 +49,12 @@ export default function NavbarContent(): JSX.Element {
         ))}
         <div className="pt-1.5 ml-2">
           <GitHubButton
-            href="https://github.com/functionless/functionless"
+            href={githubUrl}
             data-color-scheme="no-preference: dark; light: light; dark: dark;"
             data-icon="octicon-star"
             data-size="small"
             data-show-count="true"
-            aria-label="Star functionless/functionless on GitHub"
+            aria-label="Star functionless on GitHub"
           >
             Star
           </GitHubButton>

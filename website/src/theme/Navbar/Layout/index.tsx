@@ -30,12 +30,7 @@ export default function NavbarLayout({ children }: Props): JSX.Element {
     <nav
       ref={navbarRef}
       className={clsx(
-        "dark:bg-functionless-dark-bg-tinted light:bg-functionless-bg-tinted",
-        "px-8",
-        "py-6",
-        "navbar",
-        "navbar--fixed-top",
-        "height-auto",
+        "dark:bg-functionless-dark-bg-tinted light:bg-functionless-bg-tinted px-8  py-2 md:py-6 navbar navbar--fixed-top height-auto",
         hideOnScroll && [
           styles.navbarHideable,
           !isNavbarVisible && styles.navbarHidden,

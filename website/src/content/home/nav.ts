@@ -34,9 +34,9 @@ export const social = [
     href: twitterUrl,
     icon: "/img/social/twitter.svg",
   },
-  {
-    title: "Github",
-    href: githubUrl,
-    icon: "/img/social/github.svg",
-  },
+  // {
+  //   title: "Github",
+  //   href: githubUrl,
+  //   icon: "/img/social/github.svg",
+  // },
 ];

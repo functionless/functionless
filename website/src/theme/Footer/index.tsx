@@ -1,32 +1,10 @@
 import Link from "@docusaurus/Link";
+import { main, social } from "@site/src/content/home/nav";
+import { githubUrl } from "@site/src/content/site";
+import GitHubButton from "react-github-btn";
 import NavbarLogo from "../Navbar/Logo";
 
 /* This example requires Tailwind CSS v2.0+ */
-const navigation = {
-  main: [
-    { name: "Docs", to: "/docs/what-is-functionless" },
-    { name: "Blog", to: "/blog" },
-    { name: "Team", to: "/team" },
-  ],
-  social: [
-    {
-      name: "Discord",
-      href: "/",
-      icon: "/img/social/discord.svg",
-    },
-    {
-      name: "Twitter",
-      href: "/",
-      icon: "/img/social/twitter.svg",
-    },
-    {
-      name: "Github",
-      href: "/",
-      icon: "/img/social/github.svg",
-    },
-  ],
-};
-
 const Footer = () => {
   return (
     <footer className="bg-functionless-bg dark:bg-functionless-dark-bg">
@@ -36,36 +14,36 @@ const Footer = () => {
           aria-label="Footer"
         >
           <NavbarLogo />
-          <div className="flex justify-start md:justify-center space-x-4">
-            {navigation.main.map((item) => (
-              <div key={item.name} className="">
-                <Link
-                  to={item.to}
-                  className="dark:text-functionless-white text-functionless-black hover:no-underline hover:text-functionless-blue"
-                >
-                  {item.name}
-                </Link>
-              </div>
+          <div className="flex md:justify-start justify-center gap-x-12">
+            {main.map((item) => (
+              <Link
+                key={item.title}
+                to={item.to}
+                className="dark:text-functionless-white text-functionless-black hover:no-underline hover:text-functionless-blue"
+              >
+                {item.title}
+              </Link>
             ))}
           </div>
-          <div className="flex justify-start md:justify-end space-x-6">
-            {navigation.social.map((item) => (
-              <Link key={item.name} href={item.href}>
-                <span className="sr-only">{item.name}</span>
+          <div className="flex justify-center md:justify-end space-x-6">
+            {social.map((item) => (
+              <Link key={item.title} href={item.href} className="shrink-0">
                 <img src={item.icon} className="icon" />
               </Link>
             ))}
-            <iframe
-              src="https://ghbtns.com/github-btn.html?user=functionless&repo=functionless&type=star&count=true&size=small"
-              frameBorder={0}
-              scrolling="0"
-              width="150"
-              height="20"
-              title="GitHub"
-            ></iframe>
+            <GitHubButton
+              href={githubUrl}
+              data-color-scheme="no-preference: dark; light: light; dark: dark;"
+              data-icon="octicon-star"
+              data-size="small"
+              data-show-count="true"
+              aria-label="Star functionless on GitHub"
+            >
+              Star
+            </GitHubButton>
           </div>
         </nav>
-        <p className="mt-8 md:text-center text-base text-gray-400">
+        <p className="mt-8 text-center text-base text-gray-400">
           &copy; {new Date().getFullYear()} Functionless Corp. All rights
           reserved.
         </p>
