@@ -1,45 +1,44 @@
-import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { JsonFormat } from "typesafe-dynamodb";
 import { AttributeValue } from "typesafe-dynamodb/lib/attribute-value";
 import {
-  ExpressionAttributeNames,
-  ExpressionAttributeValues,
-} from "typesafe-dynamodb/lib/expression-attributes";
-import { AppSyncVtlIntegration } from "../appsync";
-import { IntegrationInput, makeIntegration } from "../integration";
-import { AnyFunction } from "../util";
-import { VTL } from "../vtl";
-import { Table } from "./table";
+  BatchGetItemAppsync,
+  createBatchGetItemAppsyncIntegration,
+} from "./batch-get-item";
+import {
+  createDeleteItemAppsyncIntegration,
+  DeleteItemAppsync,
+} from "./delete-item";
+import { createGetItemAppsyncIntegration, GetItemAppsync } from "./get-item";
+import { createPutItemAppsyncIntegration, PutItemAppsync } from "./put-item";
+import { createQueryAppsyncIntegration, QueryAppsync } from "./query";
+import { createScanAppsyncIntegration, ScanAppsync } from "./scan";
+import { ITable } from "./table";
+import {
+  createUpdateItemAppsyncIntegration,
+  UpdateItemAppsync,
+} from "./update-item";
 
-export function makeAppSyncTableIntegration<F extends AnyFunction>(
-  table: Table<any, any, any>,
-  methodName: string,
-  integration: Omit<IntegrationInput<string, F>, "kind" | "appSyncVtl"> & {
-    appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
+export class TableAppsyncInterface<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined = undefined
+> {
+  readonly get: GetItemAppsync<Item, PartitionKey, RangeKey>;
+  readonly batchGet: BatchGetItemAppsync<Item, PartitionKey, RangeKey>;
+  readonly put: PutItemAppsync<Item, PartitionKey, RangeKey>;
+  readonly delete: DeleteItemAppsync<Item, PartitionKey, RangeKey>;
+  readonly update: UpdateItemAppsync<Item, PartitionKey, RangeKey>;
+  readonly query: QueryAppsync<Item>;
+  readonly scan: ScanAppsync<Item>;
+
+  constructor(readonly table: ITable<Item, PartitionKey, RangeKey>) {
+    this.get = createGetItemAppsyncIntegration(this.table);
+    this.batchGet = createBatchGetItemAppsyncIntegration(this.table);
+    this.put = createPutItemAppsyncIntegration(this.table);
+    this.delete = createDeleteItemAppsyncIntegration(this.table);
+    this.update = createUpdateItemAppsyncIntegration(this.table);
+    this.query = createQueryAppsyncIntegration(this.table);
+    this.scan = createScanAppsyncIntegration(this.table);
   }
-): F {
-  return makeIntegration<`Table.AppSync.${string}`, F>({
-    ...integration,
-    kind: `Table.AppSync.${methodName}`,
-    appSyncVtl: {
-      dataSourceId: () => table.resource.node.addr,
-      dataSource: (api, dataSourceId) => {
-        return new appsync.DynamoDbDataSource(api, dataSourceId, {
-          api,
-          table: table.resource,
-        });
-      },
-      ...integration.appSyncVtl,
-    },
-  });
-}
-
-export function addIfDefined(vtl: VTL, from: string, to: string, key: string) {
-  vtl.add(
-    `#if(${from}.containsKey('${key}'))`,
-    `$util.qr(${to}.put('${key}', ${from}.get('${key}')))`,
-    "#end"
-  );
 }
 
 export interface DynamoDBAppsyncExpression {
@@ -54,22 +53,3 @@ export interface DynamoDBAppsyncExpression {
     [value: string]: AttributeValue;
   };
 }
-
-export type DynamoExpression<Expression extends string | undefined> =
-  {} & RenameKeys<
-    ExpressionAttributeNames<Expression> &
-      ExpressionAttributeValues<Expression, JsonFormat.AttributeValue> & {
-        expression?: Expression;
-      },
-    {
-      ExpressionAttributeValues: "expressionValues";
-      ExpressionAttributeNames: "expressionNames";
-    }
-  >;
-
-type RenameKeys<
-  T extends object,
-  Substitutions extends Record<string, string>
-> = {
-  [k in keyof T as k extends keyof Substitutions ? Substitutions[k] : k]: T[k];
-};

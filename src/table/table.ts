@@ -1,13 +1,24 @@
 import { aws_dynamodb } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { AppsyncResolver } from "../appsync";
-import { BatchGetItem, createBatchGetItemIntegration } from "./batch-get-item";
-import { createDeleteItemIntegration, DeleteItem } from "./delete-item";
-import { createGetItemIntegration, GetItem } from "./get-item";
-import { createPutItemIntegration, PutItem } from "./put-item";
-import { createQueryIntegration, Query } from "./query";
-import { createScanIntegration, Scan } from "./scan";
-import { createUpdateItemIntegration, UpdateItem } from "./update-item";
+import { TableAppsyncInterface } from "./appsync";
+import { TableAttributesInterface } from "./attributes";
+import {
+  BatchGetItemDocument,
+  createBatchGetItemDocumentIntegration,
+} from "./batch-get-item";
+import {
+  createDeleteItemDocumentIntegration,
+  DeleteItemDocument,
+} from "./delete-item";
+import { createGetItemDocumentIntegration, GetItemDocument } from "./get-item";
+import { createPutItemDocumentIntegration, PutItemDocument } from "./put-item";
+import { createQueryDocumentIntegration, QueryDocument } from "./query";
+import { createScanDocumentIntegration, ScanDocument } from "./scan";
+import {
+  createUpdateItemDocumentIntegration,
+  UpdateItemDocument,
+} from "./update-item";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -116,19 +127,23 @@ export interface ITable<
     RangeKey: RangeKey;
   };
 
-  get: GetItem<Item, PartitionKey, RangeKey>;
+  readonly appsync: TableAppsyncInterface<Item, PartitionKey, RangeKey>;
 
-  batchGet: BatchGetItem<Item, PartitionKey, RangeKey>;
+  readonly attributes: TableAttributesInterface<Item, PartitionKey, RangeKey>;
 
-  update: UpdateItem<Item, PartitionKey, RangeKey>;
+  get: GetItemDocument<Item, PartitionKey, RangeKey>;
 
-  put: PutItem<Item, PartitionKey, RangeKey>;
+  batchGet: BatchGetItemDocument<Item, PartitionKey, RangeKey>;
 
-  delete: DeleteItem<Item, PartitionKey, RangeKey>;
+  update: UpdateItemDocument<Item, PartitionKey, RangeKey>;
 
-  query: Query<Item>;
+  put: PutItemDocument<Item>;
 
-  scan: Scan<Item>;
+  delete: DeleteItemDocument<Item, PartitionKey, RangeKey>;
+
+  query: QueryDocument<Item>;
+
+  scan: ScanDocument<Item>;
 }
 
 class BaseTable<
@@ -149,32 +164,38 @@ class BaseTable<
     RangeKey: RangeKey;
   };
 
-  readonly get: GetItem<Item, PartitionKey, RangeKey>;
+  readonly appsync: TableAppsyncInterface<Item, PartitionKey, RangeKey>;
 
-  readonly batchGet: BatchGetItem<Item, PartitionKey, RangeKey>;
+  readonly attributes: TableAttributesInterface<Item, PartitionKey, RangeKey>;
 
-  readonly update: UpdateItem<Item, PartitionKey, RangeKey>;
+  readonly get: GetItemDocument<Item, PartitionKey, RangeKey>;
 
-  readonly put: PutItem<Item, PartitionKey, RangeKey>;
+  readonly batchGet: BatchGetItemDocument<Item, PartitionKey, RangeKey>;
 
-  readonly delete: DeleteItem<Item, PartitionKey, RangeKey>;
+  readonly update: UpdateItemDocument<Item, PartitionKey, RangeKey>;
 
-  readonly query: Query<Item>;
+  readonly put: PutItemDocument<Item>;
 
-  readonly scan: Scan<Item>;
+  readonly delete: DeleteItemDocument<Item, PartitionKey, RangeKey>;
+
+  readonly query: QueryDocument<Item>;
+
+  readonly scan: ScanDocument<Item>;
 
   constructor(readonly resource: aws_dynamodb.ITable) {
     this.tableName = resource.tableName;
     this.tableArn = resource.tableArn;
 
-    this.get = createGetItemIntegration(this);
-    this.update = createUpdateItemIntegration(this);
-    this.batchGet = createBatchGetItemIntegration(this);
-    this.put = createPutItemIntegration(this);
-    this.update = createUpdateItemIntegration(this);
-    this.delete = createDeleteItemIntegration(this);
-    this.query = createQueryIntegration(this);
-    this.scan = createScanIntegration(this);
+    this.appsync = new TableAppsyncInterface(this);
+    this.attributes = new TableAttributesInterface(this);
+
+    this.get = createGetItemDocumentIntegration(this);
+    this.batchGet = createBatchGetItemDocumentIntegration(this);
+    this.delete = createDeleteItemDocumentIntegration(this);
+    this.put = createPutItemDocumentIntegration(this);
+    this.query = createQueryDocumentIntegration(this);
+    this.scan = createScanDocumentIntegration(this);
+    this.update = createUpdateItemDocumentIntegration(this);
   }
 }
 

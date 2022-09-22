@@ -18,20 +18,27 @@ const localstackClientConfig: FunctionProps = {
         }),
 };
 
-interface BaseItem<Type extends string> {
-  pk: `${Type}|${string}`;
+interface BaseItem<Type extends string, Version extends number> {
+  type: Type;
+  version: Version;
+  pk: `${Type}|${Version}|${string}`;
   sk: string;
 }
 
-type Item = Item1 | Item2;
+type Item = Item1v1 | Item1v2 | Item2;
 
-interface Item1 extends BaseItem<"Item1"> {
+interface Item1v1 extends BaseItem<"Item1", 1> {
   data1: {
     key: string;
   };
 }
+interface Item1v2 extends BaseItem<"Item1", 2> {
+  data: {
+    key: string;
+  };
+}
 
-interface Item2 extends BaseItem<"Item2"> {
+interface Item2 extends BaseItem<"Item2", 1> {
   data2: {
     key: string;
   };
@@ -75,12 +82,14 @@ runtimeTestSuite("tableStack", (t: any) => {
         {
           ...localstackClientConfig,
         },
-        async (item: Item1) => {
+        async (item: Item1v1) => {
           await table.put(item);
 
           const gotItem = await table.get({
-            pk: item.pk,
-            sk: item.sk,
+            Key: {
+              pk: item.pk,
+              sk: item.sk,
+            },
           });
 
           const query = await table.query({
@@ -121,7 +130,7 @@ runtimeTestSuite("tableStack", (t: any) => {
               pk: item.pk,
               sk: item.sk,
             },
-            ReturnValues: "ALL_OLD",
+            ReturnValues: "UPDATED_NEW",
           });
 
           return [
@@ -145,6 +154,7 @@ runtimeTestSuite("tableStack", (t: any) => {
     },
     async (context: any, clients: RuntimeTestClients) => {
       const item: Item1 = {
+        type: "Item1",
         pk: "Item1|pk1",
         sk: "sk2",
         data1: {

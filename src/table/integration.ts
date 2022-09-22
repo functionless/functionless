@@ -1,6 +1,8 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { aws_apigateway, aws_iam } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb/lib/json-format";
+import { AppSyncVtlIntegration } from "../appsync";
 import { ASL, ASLGraph } from "../asl";
 import { ErrorCodes, SynthError } from "../error-code";
 import { CallExpr } from "../expression";
@@ -11,15 +13,38 @@ import {
   isPropAssignExpr,
   isStringLiteralExpr,
 } from "../guards";
-import { makeIntegration } from "../integration";
+import { IntegrationInput, makeIntegration } from "../integration";
 import { AnyFunction } from "../util";
+import { VTL } from "../vtl";
 import { ITable } from "./table";
+
+export const DocumentDBClient: PrewarmClientInitializer<
+  "DynamoDB",
+  AWS.DynamoDB.DocumentClient
+> = {
+  key: "DynamoDB",
+  init: (key, props) =>
+    new (require("aws-sdk/clients/dynamodb").DocumentClient)(
+      props?.clientConfigRetriever?.(key)
+    ),
+};
+
+export const DynamoDBClient: PrewarmClientInitializer<
+  "DynamoDBDocument",
+  AWS.DynamoDB
+> = {
+  key: "DynamoDBDocument",
+  init: (key, props) =>
+    new (require("aws-sdk/clients/dynamodb"))(
+      props?.clientConfigRetriever?.(key)
+    ),
+};
 
 export type DynamoDBAccess = "read" | "write" | "read-write" | "full";
 
 export function createDynamoDocumentIntegration<F extends AnyFunction>(
   table: ITable<any, any, any>,
-  kind: string,
+  kind: keyof AWS.DynamoDB,
   access: DynamoDBAccess,
   native: (
     client: AWS.DynamoDB.DocumentClient,
@@ -37,7 +62,7 @@ export function createDynamoDocumentIntegration<F extends AnyFunction>(
 
 export function createDynamoAttributesIntegration<F extends AnyFunction>(
   table: ITable<any, any, any>,
-  kind: string,
+  kind: keyof AWS.DynamoDB,
   access: DynamoDBAccess,
   body: (client: AWS.DynamoDB, params: Parameters<F>) => ReturnType<F>
 ): F {
@@ -55,7 +80,7 @@ export function createDynamoIntegration<
   Format extends JsonFormat
 >(
   table: ITable<any, any, any>,
-  operationName: string,
+  operationName: keyof AWS.DynamoDB,
   format: JsonFormat,
   access: DynamoDBAccess,
   body: (
@@ -199,24 +224,33 @@ export function createDynamoIntegration<
   }
 }
 
-export const DocumentDBClient: PrewarmClientInitializer<
-  "DynamoDB",
-  AWS.DynamoDB.DocumentClient
-> = {
-  key: "DynamoDB",
-  init: (key, props) =>
-    new (require("aws-sdk/clients/dynamodb").DocumentClient)(
-      props?.clientConfigRetriever?.(key)
-    ),
-};
+export function makeAppSyncTableIntegration<F extends AnyFunction>(
+  table: ITable<any, any, any>,
+  methodName: string,
+  integration: Omit<IntegrationInput<string, F>, "kind" | "appSyncVtl"> & {
+    appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
+  }
+): F {
+  return makeIntegration<`Table.AppSync.${string}`, F>({
+    ...integration,
+    kind: `Table.AppSync.${methodName}`,
+    appSyncVtl: {
+      dataSourceId: () => table.resource.node.addr,
+      dataSource: (api, dataSourceId) => {
+        return new appsync.DynamoDbDataSource(api, dataSourceId, {
+          api,
+          table: table.resource,
+        });
+      },
+      ...integration.appSyncVtl,
+    },
+  });
+}
 
-export const DynamoDBClient: PrewarmClientInitializer<
-  "DynamoDBDocument",
-  AWS.DynamoDB
-> = {
-  key: "DynamoDBDocument",
-  init: (key, props) =>
-    new (require("aws-sdk/clients/dynamodb"))(
-      props?.clientConfigRetriever?.(key)
-    ),
-};
+export function addIfDefined(vtl: VTL, from: string, to: string, key: string) {
+  vtl.add(
+    `#if(${from}.containsKey('${key}'))`,
+    `$util.qr(${to}.put('${key}', ${from}.get('${key}')))`,
+    "#end"
+  );
+}

@@ -3,10 +3,11 @@ import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import { assertNodeKind } from "../assert";
 import { NodeKind } from "../node-kind";
-import { addIfDefined, makeAppSyncTableIntegration } from "./appsync";
 import {
+  addIfDefined,
   createDynamoAttributesIntegration,
   createDynamoDocumentIntegration,
+  makeAppSyncTableIntegration,
 } from "./integration";
 import { ITable } from "./table";
 import { AttributeKeyToObject } from "./util";
@@ -31,84 +32,96 @@ export interface GetItemOutput<
   Item?: FormatObject<Narrow<Item, Key, Format>, Format>;
 }
 
-export interface GetItem<
+export type GetItemDocument<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined
-> {
-  <Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>>(
-    key: Key,
-    input?: Omit<AWS.DynamoDB.DocumentClient.GetItemInput, "Key" | "TableName">
-  ): Promise<
-    GetItemOutput<Item, PartitionKey, RangeKey, Key, JsonFormat.Document>
-  >;
+> = <Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>>(
+  input: GetItemInput<Item, PartitionKey, RangeKey, Key, JsonFormat.Document>
+) => Promise<
+  GetItemOutput<Item, PartitionKey, RangeKey, Key, JsonFormat.Document>
+>;
 
-  attributes<
-    Key extends TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >
-  >(
-    key: Key,
-    input?: Omit<AWS.DynamoDB.GetItemInput, "Key" | "TableName">
-  ): Promise<
-    GetItemOutput<Item, PartitionKey, RangeKey, Key, JsonFormat.AttributeValue>
-  >;
-  /**
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
-   */
-  appsync<
-    Key extends TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >
-  >(input: {
-    key: Key;
-    consistentRead?: boolean;
-  }): Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
-}
-
-export function createGetItemIntegration<
+export function createGetItemDocumentIntegration<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined
 >(
   table: ITable<Item, PartitionKey, RangeKey>
-): GetItem<Item, PartitionKey, RangeKey> {
-  const getItem: GetItem<Item, PartitionKey, RangeKey> =
-    createDynamoDocumentIntegration<GetItem<Item, PartitionKey, RangeKey>>(
-      table,
-      "Table.getItem",
-      "read",
-      (client, [key, props]) => {
-        return client
-          .get({
-            ...(props ?? {}),
-            TableName: table.tableName,
-            Key: key as any,
-          })
-          .promise() as any;
-      }
-    );
+): GetItemDocument<Item, PartitionKey, RangeKey> {
+  const getItem: GetItemDocument<Item, PartitionKey, RangeKey> =
+    createDynamoDocumentIntegration<
+      GetItemDocument<Item, PartitionKey, RangeKey>
+    >(table, "getItem", "read", (client, [input]) => {
+      return client
+        .get({
+          ...input,
+          TableName: table.tableName,
+        })
+        .promise() as any;
+    });
 
-  getItem.attributes = createDynamoAttributesIntegration<
-    GetItem<Item, PartitionKey, RangeKey>["attributes"]
-  >(table, "Table.getItem.attributes", "read", (client, [key, props]) => {
+  return getItem;
+}
+
+export type GetItemAttributes<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+> = <
+  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
+>(
+  input: GetItemInput<
+    Item,
+    PartitionKey,
+    RangeKey,
+    Key,
+    JsonFormat.AttributeValue
+  >
+) => Promise<
+  GetItemOutput<Item, PartitionKey, RangeKey, Key, JsonFormat.AttributeValue>
+>;
+
+export function createGetItemAttributesIntegration<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+>(table: ITable<Item, PartitionKey, RangeKey>) {
+  return createDynamoAttributesIntegration<
+    GetItemAttributes<Item, PartitionKey, RangeKey>
+  >(table, "getItem", "read", (client, [request]) => {
     return client
       .getItem({
-        ...(props ?? {}),
+        ...(request as any),
         TableName: table.tableName,
-        Key: key as any,
       })
       .promise() as any;
   });
+}
 
-  getItem.appsync = makeAppSyncTableIntegration<
-    GetItem<Item, PartitionKey, RangeKey>["appsync"]
+/**
+ * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
+ */
+export type GetItemAppsync<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+> = <
+  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
+>(input: {
+  key: Key;
+  consistentRead?: boolean;
+}) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
+
+export function createGetItemAppsyncIntegration<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+>(
+  table: ITable<Item, PartitionKey, RangeKey>
+): GetItemAppsync<Item, PartitionKey, RangeKey> {
+  return makeAppSyncTableIntegration<
+    GetItemAppsync<Item, PartitionKey, RangeKey>
   >(table, "Table.getItem.appsync", {
     appSyncVtl: {
       request(call, vtl) {
@@ -124,6 +137,4 @@ export function createGetItemIntegration<
       },
     },
   });
-
-  return getItem;
 }

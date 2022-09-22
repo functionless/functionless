@@ -4,10 +4,11 @@ import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import { assertNodeKind } from "../assert";
 import { NodeKind } from "../node-kind";
-import { addIfDefined, makeAppSyncTableIntegration } from "./appsync";
 import {
+  addIfDefined,
   createDynamoAttributesIntegration,
   createDynamoDocumentIntegration,
+  makeAppSyncTableIntegration,
 } from "./integration";
 import { ITable } from "./table";
 import { AttributeKeyToObject } from "./util";
@@ -28,118 +29,117 @@ export interface BatchGetItemOutput<
   Items?: FormatObject<Item, Format>[];
 }
 
-type BatchGetItemSignature<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined,
-  Format extends JsonFormat
-> = (
-  keys: readonly TableKey<Item, PartitionKey, RangeKey, Format>[],
-  props?: Omit<AWS.DynamoDB.KeysAndAttributes, "Keys">
-) => Promise<BatchGetItemOutput<Item, Format>>;
-
-export interface BatchGetItem<
+export type BatchGetItemDocument<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined
-> extends BatchGetItemSignature<
-    Item,
-    PartitionKey,
-    RangeKey,
-    JsonFormat.Document
-  > {
-  attributes(
-    keys: readonly TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >[],
-    props?: Omit<AWS.DynamoDB.KeysAndAttributes, "Keys">
-  ): Promise<BatchGetItemOutput<Item, JsonFormat.AttributeValue>>;
-  /**
-   * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
-   */
-  appsync<
-    Key extends TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >
-  >(input: {
-    key: Key;
-    consistentRead?: boolean;
-  }): Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
-}
+> = (
+  keys: readonly TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>[],
+  props?: Omit<AWS.DynamoDB.KeysAndAttributes, "Keys">
+) => Promise<BatchGetItemOutput<Item, JsonFormat.Document>>;
 
-export function createBatchGetItemIntegration<
+export function createBatchGetItemDocumentIntegration<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined
 >(
   table: ITable<Item, PartitionKey, RangeKey>
-): BatchGetItem<Item, PartitionKey, RangeKey> {
-  const batchGetItem: BatchGetItem<Item, PartitionKey, RangeKey> =
-    createDynamoDocumentIntegration<BatchGetItem<Item, PartitionKey, RangeKey>>(
-      table,
-      "Table.getItem",
-      "read",
-      async (client, [keys, props]) => {
-        const response: PromiseResult<
-          AWS.DynamoDB.DocumentClient.BatchGetItemOutput,
-          any
-        > = await client
-          .batchGet({
-            ...(props ?? {}),
-            RequestItems: {
-              [table.tableName]: {
-                Keys: keys,
-                ...props,
-              },
-            } as any,
-          })
-          .promise();
+): BatchGetItemDocument<Item, PartitionKey, RangeKey> {
+  return createDynamoDocumentIntegration<
+    BatchGetItemDocument<Item, PartitionKey, RangeKey>
+  >(table, "batchGetItem", "read", async (client, [keys, props]) => {
+    const response: PromiseResult<
+      AWS.DynamoDB.DocumentClient.BatchGetItemOutput,
+      any
+    > = await client
+      .batchGet({
+        ...(props ?? {}),
+        RequestItems: {
+          [table.tableName]: {
+            Keys: keys,
+            ...props,
+          },
+        } as any,
+      })
+      .promise();
 
-        return {
-          ...response,
-          Items: response.Responses?.[table.tableName] as Item[],
-        };
-      }
-    );
+    return {
+      ...response,
+      Items: response.Responses?.[table.tableName] as Item[],
+    };
+  });
+}
 
-  batchGetItem.attributes = createDynamoAttributesIntegration<
-    BatchGetItem<Item, PartitionKey, RangeKey>["attributes"]
-  >(
-    table,
-    "Table.getItem.attributes",
-    "read",
-    async (client, [keys, props]) => {
-      const response: PromiseResult<AWS.DynamoDB.BatchGetItemOutput, any> =
-        await client
-          .batchGetItem({
-            ...(props ?? {}),
-            RequestItems: {
-              [table.tableName]: {
-                Keys: keys,
-                ...props,
-              },
-            } as any,
-          })
-          .promise();
+export type BatchGetItemAttributes<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+> = (
+  keys: readonly TableKey<
+    Item,
+    PartitionKey,
+    RangeKey,
+    JsonFormat.AttributeValue
+  >[],
+  props?: Omit<AWS.DynamoDB.KeysAndAttributes, "Keys">
+) => Promise<BatchGetItemOutput<Item, JsonFormat.AttributeValue>>;
 
-      return {
-        ...response,
-        Items: response.Responses?.[table.tableName] as FormatObject<
-          Item,
-          JsonFormat.AttributeValue
-        >[],
-      };
-    }
-  );
+export function createBatchGetItemAttributesIntegration<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+>(
+  table: ITable<Item, PartitionKey, RangeKey>
+): BatchGetItemAttributes<Item, PartitionKey, RangeKey> {
+  return createDynamoAttributesIntegration<
+    BatchGetItemAttributes<Item, PartitionKey, RangeKey>
+  >(table, "batchGetItem", "read", async (client, [keys, props]) => {
+    const response: PromiseResult<AWS.DynamoDB.BatchGetItemOutput, any> =
+      await client
+        .batchGetItem({
+          ...(props ?? {}),
+          RequestItems: {
+            [table.tableName]: {
+              Keys: keys,
+              ...props,
+            },
+          } as any,
+        })
+        .promise();
 
-  batchGetItem.appsync = makeAppSyncTableIntegration<
-    BatchGetItem<Item, PartitionKey, RangeKey>["appsync"]
+    return {
+      ...response,
+      Items: response.Responses?.[table.tableName] as FormatObject<
+        Item,
+        JsonFormat.AttributeValue
+      >[],
+    };
+  });
+}
+
+/**
+ * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
+ */
+export type BatchGetItemAppsync<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+> = <
+  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
+>(input: {
+  key: Key;
+  consistentRead?: boolean;
+}) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
+
+export function createBatchGetItemAppsyncIntegration<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+>(
+  table: ITable<Item, PartitionKey, RangeKey>
+): BatchGetItemAppsync<Item, PartitionKey, RangeKey> {
+  return makeAppSyncTableIntegration<
+    BatchGetItemAppsync<Item, PartitionKey, RangeKey>
   >(table, "Table.getItem.appsync", {
     appSyncVtl: {
       request(call, vtl) {
@@ -155,6 +155,4 @@ export function createBatchGetItemIntegration<
       },
     },
   });
-
-  return batchGetItem;
 }

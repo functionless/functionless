@@ -3,14 +3,12 @@ import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import { assertNodeKind } from "../assert";
 import { NodeKind } from "../node-kind";
+import { DynamoDBAppsyncExpression } from "./appsync";
 import {
   addIfDefined,
-  DynamoDBAppsyncExpression,
-  makeAppSyncTableIntegration,
-} from "./appsync";
-import {
   createDynamoAttributesIntegration,
   createDynamoDocumentIntegration,
+  makeAppSyncTableIntegration,
 } from "./integration";
 import { ReturnValues } from "./return-value";
 import { ITable } from "./table";
@@ -42,89 +40,76 @@ export interface UpdateItemOutput<
     : Partial<Narrow<Item, Key, Format>>;
 }
 
-export interface UpdateItem<
+export type UpdateItemDocument<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined
-> {
-  <
-    Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>,
-    Return extends ReturnValues | undefined = undefined
-  >(
-    input: UpdateItemInput<Key, Return>
-  ): Promise<
-    UpdateItemOutput<
-      Item,
-      PartitionKey,
-      RangeKey,
-      Key,
-      Return,
-      JsonFormat.Document
-    >
-  >;
+> = <
+  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.Document>,
+  Return extends ReturnValues | undefined = undefined
+>(
+  input: UpdateItemInput<Key, Return>
+) => Promise<
+  UpdateItemOutput<
+    Item,
+    PartitionKey,
+    RangeKey,
+    Key,
+    Return,
+    JsonFormat.Document
+  >
+>;
 
-  attributes<
-    Key extends TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >,
-    Return extends ReturnValues | undefined = undefined
-  >(
-    input: UpdateItemInput<Key, Return>
-  ): Promise<
-    UpdateItemOutput<
-      Item,
-      PartitionKey,
-      RangeKey,
-      Key,
-      Return,
-      JsonFormat.AttributeValue
-    >
-  >;
-
-  appsync<
-    Key extends TableKey<
-      Item,
-      PartitionKey,
-      RangeKey,
-      JsonFormat.AttributeValue
-    >
-  >(input: {
-    key: Key;
-    update: DynamoDBAppsyncExpression;
-    condition?: DynamoDBAppsyncExpression;
-    _version?: number;
-  }): Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
-}
-
-export function createUpdateItemIntegration<
+export function createUpdateItemDocumentIntegration<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined
 >(
   table: ITable<Item, PartitionKey, RangeKey>
-): UpdateItem<Item, PartitionKey, RangeKey> {
-  const updateItem: UpdateItem<Item, PartitionKey, RangeKey> =
-    createDynamoDocumentIntegration<UpdateItem<Item, PartitionKey, RangeKey>>(
-      table,
-      "Table.updateItem",
-      "write",
-      (client, [request]) => {
-        return client
-          .update({
-            ...(request ?? {}),
-            TableName: table.tableName,
-            Key: request as any,
-          })
-          .promise() as any;
-      }
-    );
+): UpdateItemDocument<Item, PartitionKey, RangeKey> {
+  return createDynamoDocumentIntegration<
+    UpdateItemDocument<Item, PartitionKey, RangeKey>
+  >(table, "updateItem", "write", (client, [request]) => {
+    return client
+      .update({
+        ...(request ?? {}),
+        TableName: table.tableName,
+        Key: request as any,
+      })
+      .promise() as any;
+  });
+}
 
-  updateItem.attributes = createDynamoAttributesIntegration<
-    UpdateItem<Item, PartitionKey, RangeKey>["attributes"]
-  >(table, "Table.updateItem.attributes", "write", (client, [request]) => {
+export type UpdateItemAttributes<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+> = <
+  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>,
+  Return extends ReturnValues | undefined = undefined
+>(
+  input: UpdateItemInput<Key, Return>
+) => Promise<
+  UpdateItemOutput<
+    Item,
+    PartitionKey,
+    RangeKey,
+    Key,
+    Return,
+    JsonFormat.AttributeValue
+  >
+>;
+
+export function createUpdateItemAttributesIntegration<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+>(
+  table: ITable<Item, PartitionKey, RangeKey>
+): UpdateItemAttributes<Item, PartitionKey, RangeKey> {
+  return createDynamoAttributesIntegration<
+    UpdateItemAttributes<Item, PartitionKey, RangeKey>
+  >(table, "updateItem", "write", (client, [request]) => {
     return client
       .updateItem({
         ...(request ?? {}),
@@ -132,9 +117,30 @@ export function createUpdateItemIntegration<
       } as any)
       .promise() as any;
   });
+}
 
-  updateItem.appsync = makeAppSyncTableIntegration<
-    UpdateItem<Item, PartitionKey, RangeKey>["appsync"]
+export type UpdateItemAppsync<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+> = <
+  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
+>(input: {
+  key: Key;
+  update: DynamoDBAppsyncExpression;
+  condition?: DynamoDBAppsyncExpression;
+  _version?: number;
+}) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
+
+export function createUpdateItemAppsyncIntegration<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+>(
+  table: ITable<Item, PartitionKey, RangeKey>
+): UpdateItemAppsync<Item, PartitionKey, RangeKey> {
+  return makeAppSyncTableIntegration<
+    UpdateItemAppsync<Item, PartitionKey, RangeKey>
   >(table, "Table.updateItem.appsync", {
     appSyncVtl: {
       request: (call, vtl) => {
@@ -153,6 +159,4 @@ export function createUpdateItemIntegration<
       },
     },
   });
-
-  return updateItem;
 }
