@@ -6,3 +6,7 @@ export const description =
 export const emailPlaceholder = "Enter email address";
 
 export const button = "Subscribe";
+
+export const errorMessage = "There was an error subscribing";
+
+export const successMessage = "Thanks for signing up!";

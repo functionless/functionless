@@ -44,7 +44,7 @@
   input[type="email"],
   input[type="password"],
   input[type="datetime-local"] {
-    @apply block w-full appearance-none border border-functionless-border dark:border-functionless-dark-border hover:border-gray-400 dark:hover:border-gray-500 bg-functionless-bg dark:bg-functionless-dark-bg  text-functionless-high dark:text-functionless-dark-high placeholder-functionless-medium dark:placeholder-functionless-dark-medium focus:outline-none focus:ring-0 ring-0 outline-none text-sm font-body;
+    @apply block w-full appearance-none border border-functionless-border dark:border-functionless-dark-border hover:border-gray-400 dark:hover:border-gray-500 enabled:bg-functionless-bg dark:enabled:bg-functionless-dark-bg  enabled:text-functionless-high dark:enabled:text-functionless-dark-high placeholder-functionless-medium dark:placeholder-functionless-dark-medium focus:outline-none focus:ring-0 ring-0 outline-none text-sm font-body dark:disabled:bg-functionless-dark-bg-tinted dark:disabled:text-functionless-medium transition;
   }
 
   textarea {
@@ -105,11 +105,11 @@
   }
 
   .social-button {
-    @apply w-full button px-6 py-3.5 text-functionless-white focus:outline-none focus:ring-0 border-none justify-center;
+    @apply w-full button px-6 py-3.5 text-functionless-white focus:outline-none focus:ring-0 border-none justify-center transition hover:bg-functionless-green hover:text-white;
   }
 
   .solid-button {
-    @apply button px-6 py-3.5 text-functionless-black bg-functionless-blue hover:bg-blue-300 focus:outline-none focus:ring-0 border-none;
+    @apply button px-6 py-3.5 text-functionless-black bg-functionless-blue hover:bg-blue-300 focus:outline-none focus:ring-0 border-none disabled:bg-functionless-medium;
   }
 
   .solid-button-large {
