@@ -7,7 +7,7 @@ import { TestimonialBlock } from "./testimonial";
 
 export const Testimonials = () => {
   return (
-    <section className="bg-functionless-bg-alternate dark:bg-functionless-dark-bg-alternate py-36 scroll-snap-point">
+    <section className="bg-functionless-bg-alternate dark:bg-functionless-dark-bg-alternate py-36">
       <div className="container !max-w-screen-md flex flex-col items-center">
         <span className="over">{title}</span>
         <h3 className="text-center mt-2">{subtitle}</h3>

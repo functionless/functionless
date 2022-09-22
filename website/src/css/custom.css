@@ -311,10 +311,6 @@
   .window {
     @apply round p-0.5 code-gradient shadow-light dark:shadow-dark;
   }
-
-  .scroll-snap-point {
-    @apply snap-start scroll-m-28;
-  }
 }
 
 .overflow-unset {
@@ -323,10 +319,6 @@
 
 :root {
   --ifm-navbar-height: auto;
-}
-
-html {
-  scroll-snap-type: y proximity;
 }
 
 .search-bar .DocSearch-Button-Key {

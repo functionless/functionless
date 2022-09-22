@@ -5,7 +5,7 @@ import { IterateFeature } from "./iterate/iterateFeature";
 
 export const Features = () => {
   return (
-    <section className="py-36 bg-functionless-bg-alternate dark:bg-functionless-dark-bg-alternate home-features scroll-snap-point">
+    <section className="py-36 bg-functionless-bg-alternate dark:bg-functionless-dark-bg-alternate home-features">
       <div className="!max-w-screen-md container text-center">
         <span className="over">{title}</span>
       </div>

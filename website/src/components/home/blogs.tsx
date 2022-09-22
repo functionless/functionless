@@ -9,7 +9,7 @@ export const Blogs = () => {
     blogPosts: BlogPost[];
   };
   return (
-    <section className="pt-36 bg-functionless-bg dark:bg-functionless-dark-bg scroll-snap-point">
+    <section className="pt-36 bg-functionless-bg dark:bg-functionless-dark-bg">
       <div className="container !max-w-screen-sm flex flex-col items-center">
         <span className="over">{title}</span>
         <h3 className="text-center mt-2">{subtitle}</h3>
