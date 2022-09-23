@@ -3,7 +3,7 @@ import { tab1, tab2, tab3 } from "@site/src/content/home/features/code/code";
 import IamPolicy from "@site/src/content/home/features/code/iam-policy.mdx";
 import Output from "@site/src/content/home/features/code/output.mdx";
 import FunctionlessTableFunction from "@site/src/content/home/features/code/table-function.mdx";
-import { Fragment, PropsWithChildren } from "react";
+import { Fragment, PropsWithChildren, ReactElement } from "react";
 import { Code } from "../../code";
 import { VisibilityWindow } from "../../visibilityWindow";
 
@@ -17,15 +17,24 @@ const ButtonTab = ({ children }: PropsWithChildren<{}>) => (
   </Tab>
 );
 
-export const CodeTabs = () => (
+export interface Tab {
+  title: string;
+  panel: ReactElement;
+}
+
+export const AsideTabs = ({ children: tabs }: { children: Tab[] }) => (
   <Tab.Group as="div">
     <Tab.List>
-      <ButtonTab>{tab1}</ButtonTab>
-      <ButtonTab>{tab2}</ButtonTab>
-      <ButtonTab>{tab3}</ButtonTab>
+      {tabs.map(({ title }) => (
+        <ButtonTab key={title}>{title}</ButtonTab>
+      ))}
     </Tab.List>
     <Tab.Panels className={"mt-8"}>
-      <Tab.Panel as="div" className="grid grid-cols-4 gap-8">
+      {tabs.map(({ title, panel }) => (
+        <Tab.Panel key={title}>{panel}</Tab.Panel>
+      ))}
+    </Tab.Panels>
+    {/* <Tab.Panel as="div" className="grid grid-cols-4 gap-8">
         <div className="col-span-4">
           <VisibilityWindow visibiltyThreshold={0.5} delayMs={250}>
             {(visible: boolean) => (
@@ -71,6 +80,6 @@ export const CodeTabs = () => (
       </Tab.Panel>
       <Tab.Panel></Tab.Panel>
       <Tab.Panel></Tab.Panel>
-    </Tab.Panels>
+    </Tab.Panels> */}
   </Tab.Group>
 );

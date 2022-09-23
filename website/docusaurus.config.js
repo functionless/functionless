@@ -99,12 +99,15 @@ const config = {
     ({
       // default page image, override using frontMatter `image`
       // https://docusaurus.io/docs/api/plugins/@docusaurus/plugin-content-docs#markdown-front-matter
-      image: "img/logo.png",
+      image: "img/logo/logo_dark_icon.svg",
       metadata: [
         { property: "og:type", content: "article" },
-        { property: "og:image:width", content: "233" },
-        { property: "og:image:height", content: "200" },
-        { property: "og:image:secure_url", content: `${url}/img/logo.png` },
+        { property: "og:image:width", content: "180" },
+        { property: "og:image:height", content: "192" },
+        {
+          property: "og:image:secure_url",
+          content: `${url}/img/logo/logo_dark_icon.svg`,
+        },
       ],
       // light color mode disabled for now
       colorMode: {
@@ -116,12 +119,6 @@ const config = {
         theme: codeTheme,
       },
       navbar: {
-        title: "Functionless",
-        logo: {
-          alt: "λ<",
-          src: "img/Logo.svg",
-          srcDark: "img/Logo-dark.svg",
-        },
         items: [
           {
             type: "doc",

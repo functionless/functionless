@@ -1,6 +1,4 @@
 export const title = "TWEETS";
-export const subtitle =
-  "Hear from other developers why they’re excited about Functionless.";
 
 export interface Testimonial {
   avatar: string;

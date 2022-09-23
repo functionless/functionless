@@ -3,14 +3,14 @@ export const announcement = {
   href: "https://github.com/functionless/functionless/releases",
 };
 
-export const title = "Code the Cloud";
+export const title = "Code-first, Cloud-native";
 
 export const body =
-  "Develop APIs, Functions, Workflows and Event-Driven Architectures with “Smart Cloud Resources” that have best practices built-in.  Least-privilege IAM Policies, environment variables, SDK clients and Domain Specific Languages are automatically configured.";
+  "Build cloud applications with batteries-included Components and easy-to-follow Conventions. Perform operational tasks with an extensible CLI and UI that understands your application.";
 
 export const docsLink = {
   title: "Read Docs",
   to: "/docs/what-is-functionless",
 };
 
-export const githubLink = "Star us on GitUb";
+export const githubLink = "Github";

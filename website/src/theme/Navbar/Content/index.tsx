@@ -40,9 +40,9 @@ export default function NavbarContent(): JSX.Element {
       </div>
 
       <div className="col-span-1 px-4 ml-16 lg:ml-0 search-bar hidden lg:flex lg:w-96 xl:justify-self-center">
-        <NavbarSearch>
+        {/* <NavbarSearch>
           <SearchBar />
-        </NavbarSearch>
+        </NavbarSearch> */}
       </div>
       <div className="col-span-1 gap-2 items-center justify-end flex">
         {social.map((item) => (

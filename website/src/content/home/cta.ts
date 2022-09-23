@@ -1,4 +1,4 @@
-export const title = "Experience Functionless";
+export const title = "Get Started";
 
 export const body =
   "Functionless is an open source framework. Build your first cloud application today - all you need is an AWS account.";

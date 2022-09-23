@@ -1,6 +1,9 @@
 import type { Feature } from "../../../lib/feature";
 
-export const FeatureText = ({ title, points }: Feature) => (
+export const FeatureText = ({
+  title,
+  points,
+}: Pick<Feature, "title" | "points">) => (
   <div>
     <h4>{title}</h4>
     {points.map(({ title, body }) => (

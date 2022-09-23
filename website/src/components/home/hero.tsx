@@ -29,7 +29,7 @@ export const Hero = () => {
             </button>
           </Link>
           <Link href={githubUrl}>
-            <button className="social-button w-auto bg-transparent">
+            <button className="social-button w-auto bg-functionless-github border-functionless-dark-border border">
               <img src="/img/social/github.svg" className="icon mr-2" />
               {githubLink}
             </button>

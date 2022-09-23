@@ -227,11 +227,11 @@
   }
 
   .social-button {
-    @apply w-full button px-6 py-3.5 text-functionless-white focus:outline-none focus:ring-0 border-none justify-center transition hover:bg-blue-300 hover:text-functionless-high [&_img]:hover:brightness-[0.1];
+    @apply w-full button px-6 py-3.5 text-functionless-white focus:outline-none focus:ring-0 justify-center transition hover:bg-blue-300 hover:text-functionless-high [&_img]:hover:brightness-[0.1];
   }
 
   .solid-button {
-    @apply button px-6 py-3.5 text-functionless-black bg-functionless-blue hover:bg-blue-300 focus:outline-none focus:ring-0 border-none disabled:bg-functionless-medium;
+    @apply button px-6 py-3.5 text-functionless-black bg-functionless-blue hover:bg-blue-300 focus:outline-none focus:ring-0 disabled:bg-functionless-medium;
   }
 
   .solid-button-large {
@@ -255,7 +255,7 @@
   }
 
   .text-button {
-    @apply button px-6 py-3.5 text-functionless-black dark:text-functionless-white bg-transparent outline-none focus:ring-0 border-none hover:text-functionless-blue;
+    @apply button px-6 py-3.5 text-functionless-black dark:text-functionless-white bg-transparent outline-none focus:ring-0 hover:text-functionless-blue;
   }
 
   .text-button-large {

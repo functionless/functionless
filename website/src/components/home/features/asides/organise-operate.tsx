@@ -1,27 +1,27 @@
-import StepFunction1 from "@site/src/content/home/features/iterate/step-function-1.mdx";
-import StepFunction2 from "@site/src/content/home/features/iterate/step-function-2.mdx";
+import Hello from "@site/src/content/home/features/snippets/hello.mdx";
+import InvokeHello from "@site/src/content/home/features/snippets/invoke-hello.mdx";
 import { Code } from "../../code";
 import { VisibilityWindow } from "../../visibilityWindow";
 
-export const IterateCode = () => (
+export const Aside = () => (
   <VisibilityWindow visibiltyThreshold={0.5} delayMs={250}>
     {(visible: boolean) => (
       <div className="flex flex-col gap-8">
         <Code
           animate={visible}
-          fileName="step-function-1.ts"
+          fileName="src/my-stack/hello.ts"
           language="typescript"
           introDelayMs={250}
         >
-          <StepFunction1 />
+          <Hello />
         </Code>
         <Code
           animate={visible}
-          fileName="step-function-2.ts"
-          language="typescript"
+          fileName="zsh"
+          language="bash"
           introDelayMs={2000}
         >
-          <StepFunction2 />
+          <InvokeHello />
         </Code>
       </div>
     )}

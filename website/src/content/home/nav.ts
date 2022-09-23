@@ -16,7 +16,7 @@ export const main = [
     to: "/docs/what-is-functionless",
     title: "Docs",
   },
-  { to: "/blog", title: "Blog" },
+  // { to: "/blog", title: "Blog" },
   {
     to: "/team",
     title: "Team",
