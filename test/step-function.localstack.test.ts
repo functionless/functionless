@@ -589,7 +589,7 @@ runtimeTestSuite<
       return new StepFunction(parent, "sfn2", async ({ id }) => {
         // retry and then succeed - 3
         const a = await $SFN.retry(async () => {
-          const result = await table.update.attributes({
+          const result = await table.attributes.update({
             Key: {
               a: { S: id },
             },
@@ -675,7 +675,7 @@ runtimeTestSuite<
               },
             ],
             async () => {
-              const result = await table.update.attributes({
+              const result = await table.attributes.update({
                 Key: {
                   a: { S: id },
                 },

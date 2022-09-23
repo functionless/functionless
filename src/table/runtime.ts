@@ -51,7 +51,7 @@ export class TableRuntimeApi<
 
   readonly scan: Scan<Item, Format>;
 
-  constructor(readonly resource: aws_dynamodb.ITable, readonly format: Format) {
+  constructor(resource: aws_dynamodb.ITable, format: Format) {
     this.get = createGetItemIntegration(resource, format);
     this.batchGet = createBatchGetItemIntegration(resource, format);
     this.transactGet = createTransactGetItemsIntegration(resource, format);

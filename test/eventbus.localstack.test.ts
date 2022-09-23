@@ -1,6 +1,6 @@
 import { aws_dynamodb, CfnOutput, RemovalPolicy } from "aws-cdk-lib";
 // eslint-disable-next-line import/no-extraneous-dependencies
-import { $AWS, EventBus, Event, StepFunction, Table } from "../src";
+import { EventBus, Event, StepFunction, Table } from "../src";
 import { runtimeTestSuite } from "./runtime";
 import { retry } from "./runtime-util";
 
@@ -56,11 +56,10 @@ runtimeTestSuite("eventBusStack", (testResource) => {
         parent,
         "machine",
         async (event) => {
-          await $AWS.DynamoDB.PutItem({
+          await table.attributes.put({
             Item: {
               id: { S: event.id },
             },
-            Table: table,
           });
         }
       );

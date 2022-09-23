@@ -653,8 +653,10 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
       const flTable = Table.fromTable(table);
 
       return functionWithOwnRole(parent, async () => {
-        await flTable.get({
-          key: { S: "hi" },
+        await flTable.attributes.get({
+          Key: {
+            key: { S: "hi" },
+          },
         });
       });
     },
@@ -757,29 +759,22 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
   test(
     "dynamo integration aws dynamo functions",
     (parent) => {
-      const {
-        get: { attributes: get },
-        delete: { attributes: del },
-        put: { attributes: put },
-        query: { attributes: query },
-        scan: { attributes: scan },
-        update: { attributes: update },
-      } = table;
+      const { get, delete: del, put, query, scan, update } = table.attributes;
       return functionWithOwnRole(parent, async () => {
         await put({
-          key: { S: "key" },
-          value: { S: "wee" },
+          Item: {
+            key: { S: "key" },
+            value: { S: "wee" },
+          },
         });
-        const item = await get(
-          {
+        const item = await get({
+          Key: {
             key: {
               S: "key",
             },
           },
-          {
-            ConsistentRead: true,
-          }
-        );
+          ConsistentRead: true,
+        });
         await update({
           Key: { key: { S: "key" } },
           UpdateExpression: "set #value = :value",

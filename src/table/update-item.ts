@@ -1,5 +1,6 @@
 import { aws_dynamodb } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb";
+import { FormatObject } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import { assertNodeKind } from "../assert";
@@ -42,8 +43,8 @@ export interface UpdateItemOutput<
   Attributes?: ReturnValue extends undefined | "NONE"
     ? undefined
     : ReturnValue extends "ALL_OLD" | "ALL_NEW"
-    ? Narrow<Item, Key, Format>
-    : Partial<Narrow<Item, Key, Format>>;
+    ? FormatObject<Narrow<Item, Key, Format>, Format>
+    : Partial<FormatObject<Narrow<Item, Key, Format>, Format>>;
 }
 
 export type UpdateItem<

@@ -39,15 +39,15 @@ export class TableAppsyncApi<
     RangeKey
   >;
 
-  constructor(readonly table: ITable<Item, PartitionKey, RangeKey>) {
-    this.get = createGetItemAppsyncIntegration(this.table);
-    this.batchGet = createBatchGetItemAppsyncIntegration(this.table);
-    this.put = createPutItemAppsyncIntegration(this.table);
-    this.delete = createDeleteItemAppsyncIntegration(this.table);
-    this.update = createUpdateItemAppsyncIntegration(this.table);
-    this.query = createQueryAppsyncIntegration(this.table);
-    this.scan = createScanAppsyncIntegration(this.table);
-    this.transactWrite = createTransactWriteItemsAppsyncIntegration(this.table);
+  constructor(table: ITable<Item, PartitionKey, RangeKey>) {
+    this.get = createGetItemAppsyncIntegration(table);
+    this.batchGet = createBatchGetItemAppsyncIntegration(table);
+    this.put = createPutItemAppsyncIntegration(table);
+    this.delete = createDeleteItemAppsyncIntegration(table);
+    this.update = createUpdateItemAppsyncIntegration(table);
+    this.query = createQueryAppsyncIntegration(table);
+    this.scan = createScanAppsyncIntegration(table);
+    this.transactWrite = createTransactWriteItemsAppsyncIntegration(table);
   }
 }
 

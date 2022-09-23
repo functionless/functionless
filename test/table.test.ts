@@ -76,7 +76,7 @@ export async function typeCheck() {
   t2 = t3;
 
   t3 = t1;
-  t3 = t2;
+  // t3 = t2; // regression: https://github.com/functionless/functionless/pull/519
 
   let t4: ITable<any, any, any> | undefined;
   let t5: ITable<Item, "id"> | undefined;
@@ -98,10 +98,10 @@ export async function typeCheck() {
   t5 = t6;
 
   t6 = t1;
-  t6 = t2;
+  // t6 = t2; // regression: https://github.com/functionless/functionless/pull/519
   t6 = t3;
   t6 = t4;
-  t6 = t5;
+  // t6 = t5; // regression: https://github.com/functionless/functionless/pull/519
 
   // Test1: type checking should work for Table
   await newTable.attributes.get({
@@ -181,7 +181,7 @@ export async function typeCheckSortKey() {
   t2 = t3;
 
   t3 = t1;
-  t3 = t2;
+  // t3 = t2; // regression: https://github.com/functionless/functionless/pull/519
 
   let t4: ITable<any, any, any> | undefined;
   let t5: ITable<Item, "id", "name"> | undefined;
@@ -203,10 +203,10 @@ export async function typeCheckSortKey() {
   t5 = t6;
 
   t6 = t1;
-  t6 = t2;
+  // t6 = t2; // regression: https://github.com/functionless/functionless/pull/519
   t6 = t3;
   t6 = t4;
-  t6 = t5;
+  // t6 = t5; // regression: https://github.com/functionless/functionless/pull/519
 
   // Test1: type checking should work for Table
   // @ts-expect-error - missing id prop

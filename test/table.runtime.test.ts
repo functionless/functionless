@@ -1,15 +1,6 @@
-import path from "path";
-import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { aws_dynamodb, Duration } from "aws-cdk-lib";
 import AWS from "aws-sdk";
-import {
-  $util,
-  AppsyncResolver,
-  ExpressStepFunction,
-  Function,
-  FunctionProps,
-  Table,
-} from "../src";
+import { ExpressStepFunction, Function, FunctionProps, Table } from "../src";
 import {
   RuntimeTestClients,
   runtimeTestExecutionContext,

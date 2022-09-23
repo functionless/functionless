@@ -141,12 +141,14 @@ runtimeTestSuite<{
         await Promise.all(
           event.Records.map(async (record) => {
             const json = JSON.parse(record.body);
-            await table.put.attributes({
-              id: {
-                S: json.id,
-              },
-              data: {
-                S: json.data,
+            await table.attributes.put({
+              Item: {
+                id: {
+                  S: json.id,
+                },
+                data: {
+                  S: json.data,
+                },
               },
             });
           })
@@ -170,12 +172,14 @@ runtimeTestSuite<{
         await Promise.all(
           event.Records.map(async (record) => {
             const json = JSON.parse(record.body);
-            await table.put.attributes({
-              id: {
-                S: json.id,
-              },
-              data: {
-                S: json.data,
+            await table.attributes.put({
+              Item: {
+                id: {
+                  S: json.id,
+                },
+                data: {
+                  S: json.data,
+                },
               },
             });
           })
@@ -206,7 +210,9 @@ runtimeTestSuite<{
       queue.onEvent(localstackClientConfig, async (event) => {
         await Promise.all(
           event.Records.map(async (record) => {
-            await table.put(record.message);
+            await table.put({
+              Item: record.message,
+            });
           })
         );
 
@@ -266,7 +272,9 @@ runtimeTestSuite<{
         .pipe(queue);
 
       queue.messages().forEach(localstackClientConfig, async (message) => {
-        await table.put(message);
+        await table.put({
+          Item: message,
+        });
       });
       return {
         queue,
@@ -316,14 +324,16 @@ runtimeTestSuite<{
         .forEach(
           localstackClientConfig,
           async (message, { attributes: { MessageGroupId } }) => {
-            await table.put({
-              id: {
-                S: message.id,
+            await table.attributes.put({
+              Item: {
+                id: {
+                  S: message.id,
+                },
+                data: {
+                  S: message.data,
+                },
+                messageGroupId: { S: MessageGroupId ?? "" },
               },
-              data: {
-                S: message.data,
-              },
-              messageGroupId: { S: MessageGroupId ?? "" },
             });
           }
         );
