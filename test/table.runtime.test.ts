@@ -1,7 +1,20 @@
-import { aws_dynamodb, Duration } from "aws-cdk-lib";
+import path from "path";
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
+import AWSAppSyncClient from "aws-appsync";
+import { aws_dynamodb, aws_iam, Duration } from "aws-cdk-lib";
 import AWS from "aws-sdk";
-import { ExpressStepFunction, Function, FunctionProps, Table } from "../src";
+import "cross-fetch/polyfill";
+import gql from "graphql-tag";
 import {
+  $util,
+  AppsyncResolver,
+  ExpressStepFunction,
+  Function,
+  FunctionProps,
+  Table,
+} from "../src";
+import {
+  getTestRole,
   RuntimeTestClients,
   runtimeTestExecutionContext,
   runtimeTestSuite,
@@ -650,58 +663,263 @@ runtimeTestSuite("tableStack", (t: any) => {
     }
   );
 
-  // test("appsync resolvers", (scope: any, role: any) => {
-  //   const table = new Table<Item, "pk", "sk">(scope, "JsonSecret", {
-  //     partitionKey: {
-  //       name: "pk",
-  //       type: aws_dynamodb.AttributeType.STRING,
-  //     },
-  //     sortKey: {
-  //       name: "sk",
-  //       type: aws_dynamodb.AttributeType.STRING,
-  //     },
-  //   });
+  test(
+    "GraphQL Appsync Resolvers",
+    (scope: any, role: aws_iam.IRole) => {
+      type Item = Person;
+      interface TableItem<Type extends string> {
+        pk: `${Type}|${string}`;
+      }
+      interface Person extends TableItem<"Person"> {
+        id: string;
+        name: string;
+      }
 
-  //   const api = new appsync.GraphqlApi(scope, "Api", {
-  //     schema: appsync.Schema.fromAsset(
-  //       path.join(__dirname, "table.runtime.gql")
-  //     ),
-  //     name: "test-api",
-  //   });
+      const table = new Table<Item, "pk">(scope, "JsonSecret", {
+        partitionKey: {
+          name: "pk",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
 
-  //   new AppsyncResolver<
-  //     {
-  //       items: Item[];
-  //     },
-  //     Item[]
-  //   >(
-  //     api,
-  //     "update",
-  //     {
-  //       typeName: "Mutation",
-  //       fieldName: "update",
-  //     },
-  //     async ($context) => {
-  //       await table.appsync.transactWrite(
-  //         $context.arguments.items.map((item) => {
-  //           const { pk, sk, ...attributes } = item;
-  //           return {
-  //             operation: "PutItem",
-  //             key: {
-  //               pk: {
-  //                 S: pk,
-  //               },
-  //               sk: {
-  //                 S: sk,
-  //               },
-  //             },
-  //             attributeValues: $util.dynamodb.toMapValues(attributes),
-  //           };
-  //         })
-  //       );
+      const api = new appsync.GraphqlApi(scope, "Api", {
+        schema: appsync.Schema.fromAsset(
+          path.join(__dirname, "table.runtime.gql")
+        ),
+        name: "test-api",
+        authorizationConfig: {
+          defaultAuthorization: {
+            authorizationType: appsync.AuthorizationType.IAM,
+          },
+        },
+      });
 
-  //       return $context.arguments.items;
-  //     }
-  //   );
-  // });
+      api.grantQuery(role);
+      api.grantMutation(role);
+
+      new AppsyncResolver<
+        {
+          name: string;
+        },
+        Person
+      >(
+        api,
+        "addPerson",
+        {
+          typeName: "Mutation",
+          fieldName: "addPerson",
+        },
+        async ($context) => {
+          const id = $util.autoId();
+          return table.appsync.put({
+            key: {
+              pk: {
+                S: `Person|${id}`,
+              },
+            },
+            attributeValues: {
+              id: {
+                S: id,
+              },
+              name: {
+                S: $context.arguments.name,
+              },
+            },
+          });
+        }
+      );
+
+      new AppsyncResolver<
+        {
+          names: string[];
+        },
+        Person[] | null
+      >(
+        api,
+        "addPeopleAtomic",
+        {
+          typeName: "Mutation",
+          fieldName: "addPeopleAtomic",
+        },
+        async ($context) => {
+          const response = await table.appsync.transactWrite(
+            $context.arguments.names.map((name) => {
+              const id = $util.autoId();
+              return {
+                operation: "PutItem",
+                key: {
+                  pk: {
+                    S: `Person|${id}`,
+                  },
+                },
+                attributeValues: {
+                  id: {
+                    S: id,
+                  },
+                  name: {
+                    S: name,
+                  },
+                },
+              };
+            })
+          );
+
+          return response.items;
+        }
+      );
+
+      new AppsyncResolver<
+        {
+          names: string[];
+        },
+        Person[] | null
+      >(
+        api,
+        "addPeopleBatch",
+        {
+          typeName: "Mutation",
+          fieldName: "addPeopleBatch",
+        },
+        async ($context) => {
+          const response = await table.appsync.batchPut(
+            $context.arguments.names.map((name) => {
+              const id = $util.autoId();
+              return {
+                pk: {
+                  S: `Person|${id}`,
+                },
+                id: {
+                  S: id,
+                },
+                name: {
+                  S: name,
+                },
+              };
+            })
+          );
+
+          return response.items;
+        }
+      );
+
+      new AppsyncResolver<
+        {
+          id: string;
+        },
+        Person | undefined
+      >(
+        api,
+        "deletePerson",
+        {
+          typeName: "Mutation",
+          fieldName: "deletePerson",
+        },
+        async ($context) => {
+          return table.appsync.delete({
+            key: {
+              pk: {
+                S: `Person|${$context.arguments.id}`,
+              },
+            },
+          });
+        }
+      );
+
+      new AppsyncResolver<
+        {
+          id: string[];
+        },
+        Person[] | null
+      >(
+        api,
+        "deletePeopleAtomic",
+        {
+          typeName: "Mutation",
+          fieldName: "deletePeopleAtomic",
+        },
+        async ($context) => {
+          const response = await table.appsync.transactWrite(
+            $context.arguments.id.map((id) => ({
+              operation: "DeleteItem",
+              key: {
+                pk: {
+                  S: `Person|${id}`,
+                },
+              },
+            }))
+          );
+
+          return response.items;
+        }
+      );
+
+      new AppsyncResolver<
+        {
+          id: string[];
+        },
+        null
+      >(
+        api,
+        "deletePeopleBatch",
+        {
+          typeName: "Mutation",
+          fieldName: "deletePeopleBatch",
+        },
+        async ($context) => {
+          await table.appsync.batchDelete(
+            $context.arguments.id.map((id) => ({
+              pk: {
+                S: `Person|${id}`,
+              },
+            }))
+          );
+          return null;
+        }
+      );
+
+      return {
+        outputs: {
+          graphqlUrl: api.graphqlUrl,
+          roleArn: role.roleArn,
+        },
+      };
+    },
+    async ({
+      graphqlUrl,
+      roleArn,
+    }: {
+      graphqlUrl: string;
+      roleArn: string;
+    }) => {
+      const role = await getTestRole(roleArn);
+
+      const client = new AWSAppSyncClient({
+        url: graphqlUrl,
+        region: "us-east-1",
+        auth: {
+          type: "AWS_IAM",
+          credentials: {
+            accessKeyId: role?.Credentials?.AccessKeyId!,
+            secretAccessKey: role?.Credentials?.SecretAccessKey!,
+            sessionToken: role?.Credentials?.SessionToken!,
+          },
+        },
+        disableOffline: true,
+      });
+
+      const addPerson = gql`
+        mutation {
+          addPerson(name: "sam") {
+            id
+            name
+          }
+        }
+      `;
+      const addPersonResponse = await client.mutate({
+        mutation: addPerson,
+      });
+
+      console.log(addPersonResponse);
+    }
+  );
 });

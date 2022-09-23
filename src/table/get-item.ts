@@ -2,8 +2,6 @@ import { aws_dynamodb } from "aws-cdk-lib";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import { assertNodeKind } from "../assert";
-import { NodeKind } from "../node-kind";
 import {
   addIfDefined,
   createDynamoIntegration,
@@ -93,9 +91,7 @@ export function createGetItemAppsyncIntegration<
   >(table, "Table.getItem.appsync", {
     appSyncVtl: {
       request(call, vtl) {
-        const input = vtl.eval(
-          assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
-        );
+        const input = vtl.eval(call.args[0]?.expr);
         const request = vtl.var(
           '{"operation": "GetItem", "version": "2018-05-29"}'
         );

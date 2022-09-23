@@ -1,7 +1,13 @@
 import { aws_dynamodb } from "aws-cdk-lib";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
-import { createDynamoIntegration } from "./integration";
+import { Narrow } from "typesafe-dynamodb/lib/narrow";
+import {
+  createDynamoIntegration,
+  makeAppSyncTableIntegration,
+} from "./integration";
+import { ITable } from "./table";
+import { AttributeKeyToObject } from "./util";
 
 export interface BatchWriteItemInput<
   Item extends object,
@@ -88,7 +94,7 @@ export function createBatchWriteItemIntegration<
           [tableName]: RequestItems,
         },
       };
-      const response = await (format === JsonFormat.Document
+      const response: any = await (format === JsonFormat.Document
         ? (client as AWS.DynamoDB.DocumentClient).batchWrite(input)
         : (client as AWS.DynamoDB).batchWriteItem(input)
       ).promise();
@@ -123,43 +129,104 @@ export function createBatchWriteItemIntegration<
   );
 }
 
-// TODO: batchWriteItem is not supported, instead there are batchDelete and batchPut
-// https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-batch-delete-item
 // https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-batch-put-item
 
-// export type BatchWriteItemAppsync<
-//   Item extends object,
-//   PartitionKey extends keyof Item,
-//   RangeKey extends keyof Item | undefined
-// > = <
-//   Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
-// >(input: {
-//   key: Key;
-//   consistentRead?: boolean;
-// }) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
+/**
+ * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-batch-delete-item
+ */
+export type BatchDeleteItemAppsync<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+> = <
+  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
+>(
+  keys: Key[]
+) => Promise<{
+  data: TableKey<
+    Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
+    PartitionKey,
+    RangeKey,
+    JsonFormat.Document
+  >[];
+  unprocessedKeys: AttributeKeyToObject<Key>[];
+}>;
 
-// export function createBatchWriteItemAppsyncIntegration<
-//   Item extends object,
-//   PartitionKey extends keyof Item,
-//   RangeKey extends keyof Item | undefined
-// >(
-//   table: ITable<Item, PartitionKey, RangeKey>
-// ): BatchWriteItemAppsync<Item, PartitionKey, RangeKey> {
-//   return makeAppSyncTableIntegration<
-//     BatchWriteItemAppsync<Item, PartitionKey, RangeKey>
-//   >(table, "Table.getItem.appsync", {
-//     appSyncVtl: {
-//       request(call, vtl) {
-//         const input = vtl.eval(
-//           assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
-//         );
-//         const request = vtl.var(
-//           '{"operation": "BatchWriteItem", "version": "2018-05-29"}'
-//         );
-//         vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-//         addIfDefined(vtl, input, request, "consistentRead");
-//         return vtl.json(request);
-//       },
-//     },
-//   });
-// }
+export function createBatchDeleteItemAppsyncIntegration<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+>(
+  table: ITable<Item, PartitionKey, RangeKey>
+): BatchDeleteItemAppsync<Item, PartitionKey, RangeKey> {
+  return makeAppSyncTableIntegration<
+    BatchDeleteItemAppsync<Item, PartitionKey, RangeKey>
+  >(table, "Table.batchDelete.appsync", {
+    appSyncVtl: {
+      request(call, vtl) {
+        const keys = vtl.eval(call.args[0]?.expr);
+        const request = vtl.var(
+          '{"operation": "BatchDeleteItem", "version": "2018-05-29", "tables": {}}'
+        );
+        vtl.qr(`${request}.tables.put('${table.tableName}', ${keys})`);
+        return vtl.json(request);
+      },
+      result: (result) => ({
+        returnVariable: "$batch_delete_item_response",
+        template: `#set($batch_delete_item_response = {})
+#set($batch_delete_item_response.data = ${result}.get('${table.tableName}')
+#set($batch_delete_item_response.unprocessedKeys = ${result}.unprocessedKeys')
+`,
+      }),
+    },
+  });
+}
+
+/**
+ * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-batch-delete-item
+ */
+export type BatchPutItemAppsync<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+> = <
+  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
+>(
+  items: FormatObject<Item, JsonFormat.AttributeValue>[]
+) => Promise<{
+  items: Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>[];
+  unprocessedItems: Narrow<
+    Item,
+    AttributeKeyToObject<Key>,
+    JsonFormat.Document
+  >[];
+}>;
+
+export function createBatchPutItemAppsyncIntegration<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+>(
+  table: ITable<Item, PartitionKey, RangeKey>
+): BatchPutItemAppsync<Item, PartitionKey, RangeKey> {
+  return makeAppSyncTableIntegration<
+    BatchPutItemAppsync<Item, PartitionKey, RangeKey>
+  >(table, "Table.batchPut.appsync", {
+    appSyncVtl: {
+      request(call, vtl) {
+        const keys = vtl.eval(call.args[0]?.expr);
+        const request = vtl.var(
+          '{"operation": "BatchPutItem", "version": "2018-05-29", "tables": {}}'
+        );
+        vtl.qr(`${request}.tables.put('${table.tableName}', ${keys})`);
+        return vtl.json(request);
+      },
+      result: (result) => ({
+        returnVariable: "$batch_put_item_response",
+        template: `#set($batch_put_item_response = {})
+#set($batch_put_item_response.items = ${result}.data.get('${table.tableName}')
+#set($batch_put_item_response.unprocessedItems = ${result}.unprocessedItems.get('${table.tableName}')`,
+      }),
+    },
+  });
+}

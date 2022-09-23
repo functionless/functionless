@@ -4,8 +4,6 @@ import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import { ASLGraph } from "../asl";
-import { assertNodeKind } from "../assert";
-import { NodeKind } from "../node-kind";
 import { DynamoDBAppsyncExpression } from "./appsync";
 import {
   createDynamoIntegration,
@@ -327,9 +325,7 @@ export function createTransactWriteItemsAppsyncIntegration<
   >(table, "Table.transactWriteItems.appsync", {
     appSyncVtl: {
       request(call, vtl) {
-        const transactItems = vtl.eval(
-          assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
-        );
+        const transactItems = vtl.eval(call.args[0]?.expr);
         const request = vtl.var(
           '{"operation": "TransactWriteItems", "version": "2018-05-29"}'
         );

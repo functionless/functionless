@@ -3,8 +3,6 @@ import { PromiseResult } from "aws-sdk/lib/request";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import { assertNodeKind } from "../assert";
-import { NodeKind } from "../node-kind";
 import {
   createDynamoIntegration,
   makeAppSyncTableIntegration,
@@ -119,7 +117,10 @@ export type BatchGetItemAppsync<
     key: Key;
     consistentRead?: boolean;
   }[]
-) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
+) => Promise<{
+  items: Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>[];
+  unprocessedKeys: Key[];
+}>;
 
 export function createBatchGetItemAppsyncIntegration<
   Item extends object,
@@ -133,9 +134,7 @@ export function createBatchGetItemAppsyncIntegration<
   >(table, "Table.getItem.appsync", {
     appSyncVtl: {
       request(call, vtl) {
-        const input = vtl.eval(
-          assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
-        );
+        const input = vtl.eval(call.args[0]?.expr);
         const request = vtl.var(
           '{"operation": "BatchGetItem", "version": "2018-05-29", "tables": {}}'
         );
@@ -145,6 +144,10 @@ export function createBatchGetItemAppsyncIntegration<
 
         return vtl.json(request);
       },
+      result: (result) => ({
+        returnVariable: "items",
+        template: `#set($items = ${result}.get('${table.tableName}')`,
+      }),
     },
   });
 }

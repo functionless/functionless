@@ -3,8 +3,6 @@ import { ToAttributeMap } from "typesafe-dynamodb/lib/attribute-value";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import { assertNodeKind } from "../assert";
-import { NodeKind } from "../node-kind";
 import { DynamoDBAppsyncExpression } from "./appsync";
 import {
   addIfDefined,
@@ -98,9 +96,7 @@ export function createPutItemAppsyncIntegration<
   >(table, "Table.putItem.appsync", {
     appSyncVtl: {
       request(call, vtl) {
-        const input = vtl.eval(
-          assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
-        );
+        const input = vtl.eval(call.args[0]?.expr);
         const request = vtl.var(
           '{"operation": "PutItem", "version": "2018-05-29"}'
         );

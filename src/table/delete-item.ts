@@ -2,8 +2,6 @@ import { aws_dynamodb } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import { assertNodeKind } from "../assert";
-import { NodeKind } from "../node-kind";
 import { DynamoDBAppsyncExpression } from "./appsync";
 import {
   addIfDefined,
@@ -105,16 +103,13 @@ export function createDeleteItemAppsyncIntegration<
   >(table, "Table.deleteItem.appsync", {
     appSyncVtl: {
       request: (call, vtl) => {
-        const input = vtl.eval(
-          assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
-        );
+        const input = vtl.eval(call.args[0]?.expr);
         const request = vtl.var(
           '{"operation": "DeleteItem", "version": "2018-05-29"}'
         );
         vtl.qr(`${request}.put('key', ${input}.get('key'))`);
         addIfDefined(vtl, input, request, "condition");
         addIfDefined(vtl, input, request, "_version");
-
         return vtl.json(request);
       },
     },
