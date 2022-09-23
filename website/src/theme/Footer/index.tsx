@@ -8,12 +8,14 @@ import NavbarLogo from "../Navbar/Logo";
 const Footer = () => {
   return (
     <footer className="bg-functionless-bg dark:bg-functionless-dark-bg">
-      <div className="mx-auto !max-w-7xl overflow-hidden py-12 px-4 sm:px-6 lg:px-8">
+      <div className="tw-container overflow-hidden py-12 px-4 sm:px-6 lg:px-8">
         <nav
           className="grid grid-cols-1 md:grid-cols-3 gap-7 items-center"
           aria-label="Footer"
         >
-          <NavbarLogo />
+          <div className="justify-self-start">
+            <NavbarLogo />
+          </div>
           <div className="flex md:justify-start justify-center gap-x-12">
             {main.map((item) => (
               <Link

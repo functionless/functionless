@@ -4,7 +4,7 @@ import { VisibilityWindow } from "./visibilityWindow";
 export const FeaturesCore = () => {
   return (
     <section className="py-36 bg-functionless-bg dark:bg-functionless-dark-bg">
-      <div className="tw-container md:max-w-screen-md flex flex-col items-center">
+      <div className="max-w-screen-md px-4 mx-auto flex flex-col items-center">
         <span className="over">{title}</span>
         <h3 className="text-center mt-2">{subtitle}</h3>
       </div>

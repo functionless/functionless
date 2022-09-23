@@ -9,7 +9,7 @@ export const FeatureSection = ({
   aside,
   footer,
 }: Feature) => (
-  <div className="grid grid-cols-1 lg:grid-cols-2 tw-container xl:max-w-screen-xl lg:mt-24 lg:gap-11 gap-y-8">
+  <div className="grid grid-cols-1 lg:grid-cols-2 tw-container lg:mt-24 lg:gap-11 gap-y-8">
     <div
       className={clsx(
         "col-span-2 lg:col-span-1 lg:row-start-1",

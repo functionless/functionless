@@ -67,7 +67,7 @@ export const Subscribe = () => {
   }, [pageUri, emailField]);
 
   return (
-    <section className="tw-container xl:max-w-screen-xl my-24 md:my-36">
+    <section className="tw-container my-24 md:my-36">
       <div className="code-gradient p-0.5 round shadow-light dark:shadow-dark">
         <div className="round bg-functionless-white dark:bg-functionless-code">
           <div className="grid grid-cols-1 md:grid-cols-2  gap-12 lg:gap-28 items-start p-10">

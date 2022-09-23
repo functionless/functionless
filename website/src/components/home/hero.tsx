@@ -12,7 +12,7 @@ import { githubUrl } from "../../content/site";
 export const Hero = () => {
   return (
     <section className="relative pb-2 bg-[url('/img/lines.svg')] bg-no-repeat bg-bottom mb-24">
-      <div className="tw-container sm:max-w-screen-sm pt-28 pb-16 z-20">
+      <div className="px-4 mx-auto max-w-screen-sm pt-28 pb-16 z-20">
         <Link className="blue-chip" href={announcement.href}>
           {announcement.title}
           <ChevronLeftIcon className="icon ml-2" />
