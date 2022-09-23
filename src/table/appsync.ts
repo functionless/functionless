@@ -13,6 +13,10 @@ import { createQueryAppsyncIntegration, QueryAppsync } from "./query";
 import { createScanAppsyncIntegration, ScanAppsync } from "./scan";
 import { ITable } from "./table";
 import {
+  createTransactWriteItemsAppsyncIntegration,
+  TransactWriteItemsAppsync,
+} from "./transact-write-item";
+import {
   createUpdateItemAppsyncIntegration,
   UpdateItemAppsync,
 } from "./update-item";
@@ -29,6 +33,11 @@ export class TableAppsyncApi<
   readonly update: UpdateItemAppsync<Item, PartitionKey, RangeKey>;
   readonly query: QueryAppsync<Item>;
   readonly scan: ScanAppsync<Item>;
+  readonly transactWrite: TransactWriteItemsAppsync<
+    Item,
+    PartitionKey,
+    RangeKey
+  >;
 
   constructor(readonly table: ITable<Item, PartitionKey, RangeKey>) {
     this.get = createGetItemAppsyncIntegration(this.table);
@@ -38,6 +47,7 @@ export class TableAppsyncApi<
     this.update = createUpdateItemAppsyncIntegration(this.table);
     this.query = createQueryAppsyncIntegration(this.table);
     this.scan = createScanAppsyncIntegration(this.table);
+    this.transactWrite = createTransactWriteItemsAppsyncIntegration(this.table);
   }
 }
 

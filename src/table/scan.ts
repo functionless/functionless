@@ -28,7 +28,7 @@ export interface ScanOutput<Item extends object, Format extends JsonFormat>
 }
 
 export type Scan<Item extends object, Format extends JsonFormat> = (
-  input: ScanInput<Format>
+  input?: ScanInput<Format>
 ) => Promise<ScanOutput<Item, Format>>;
 
 export function createScanIntegration<

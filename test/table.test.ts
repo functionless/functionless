@@ -104,27 +104,29 @@ export async function typeCheck() {
   t6 = t5;
 
   // Test1: type checking should work for Table
-  await newTable.get.attributes({
+  await newTable.attributes.get({
     // @ts-expect-error - missing id prop
     Key: {},
   });
-  await newTable.put.attributes({
-    id: {
-      S: "",
-    },
-    name: {
-      N: `1`,
-    },
-    // // @ts-expect-error - this test broke because `PutItem.attributes<I extends FormatObject<Item, JsonFormat.AttributeValue>>`
-    nonExistent: {
-      S: "",
+  await newTable.attributes.put({
+    Item: {
+      id: {
+        S: "",
+      },
+      name: {
+        N: `1`,
+      },
+      // @ts-expect-error
+      nonExistent: {
+        S: "",
+      },
     },
   });
-  await newTable.delete.attributes({
+  await newTable.attributes.delete({
     // @ts-expect-error - missing id prop
     Key: {},
   });
-  await newTable.update.attributes({
+  await newTable.attributes.update({
     // @ts-expect-error - missing id prop
     Key: {},
     UpdateExpression: "",
@@ -132,17 +134,19 @@ export async function typeCheck() {
 
   // Test2: type checking should work for ITable
   // @ts-expect-error - missing id prop
-  await fromTable.get({});
-  await fromTable.put.attributes({
-    id: {
-      S: "",
-    },
-    name: {
-      N: `1`,
-    },
-    // // @ts-expect-error - this test broke because `PutItem.attributes<I extends FormatObject<Item, JsonFormat.AttributeValue>>`
-    nonExistent: {
-      S: "",
+  await fromTable.attributes.get({});
+  await fromTable.attributes.put({
+    Item: {
+      id: {
+        S: "",
+      },
+      name: {
+        N: `1`,
+      },
+      // @ts-expect-error
+      nonExistent: {
+        S: "",
+      },
     },
   });
   await fromTable.delete({
@@ -206,25 +210,27 @@ export async function typeCheckSortKey() {
 
   // Test1: type checking should work for Table
   // @ts-expect-error - missing id prop
-  await newTable.get.attributes({});
-  await newTable.put.attributes({
-    id: {
-      S: "",
-    },
-    name: {
-      N: `1`,
-    },
-    // // @ts-expect-error - this test broke because `PutItem.attributes<I extends FormatObject<Item, JsonFormat.AttributeValue>>`
-    nonExistent: {
-      S: "",
+  await newTable.attributes.get({});
+  await newTable.attributes.put({
+    Item: {
+      id: {
+        S: "",
+      },
+      name: {
+        N: `1`,
+      },
+      // @ts-expect-error
+      nonExistent: {
+        S: "",
+      },
     },
   });
 
-  await newTable.delete.attributes({
+  await newTable.attributes.delete({
     // @ts-expect-error - missing id prop
     Key: {},
   });
-  await newTable.delete.attributes({
+  await newTable.attributes.delete({
     Table: newTable,
     // @ts-expect-error - missing id prop
     Key: {},
@@ -233,25 +239,27 @@ export async function typeCheckSortKey() {
 
   // Test2: type checking should work for ITable
   // @ts-expect-error - missing id prop
-  await fromTable.get.attributes({});
+  await fromTable.attributes.get({});
 
-  await fromTable.put.attributes({
-    id: {
-      S: "",
-    },
-    name: {
-      N: `1`,
-    },
-    // // @ts-expect-error - this test broke because `PutItem.attributes<I extends FormatObject<Item, JsonFormat.AttributeValue>>`
-    nonExistent: {
-      S: "",
+  await fromTable.attributes.put({
+    Item: {
+      id: {
+        S: "",
+      },
+      name: {
+        N: `1`,
+      },
+      // @ts-expect-error
+      nonExistent: {
+        S: "",
+      },
     },
   });
-  await fromTable.delete.attributes({
+  await fromTable.attributes.delete({
     // @ts-expect-error - missing id prop
     Key: {},
   });
-  await fromTable.delete.attributes({
+  await fromTable.attributes.delete({
     // @ts-expect-error - missing id prop
     Key: {},
     UpdateExpression: "",
@@ -263,7 +271,7 @@ test.each([fromTable, newTable])("get item", (table) => {
     async (
       context: AppsyncContext<{ id: string }>
     ): Promise<Item | undefined> => {
-      return table.get.appsync({
+      return table.appsync.get({
         key: {
           id: {
             S: context.arguments.id,
@@ -276,7 +284,7 @@ test.each([fromTable, newTable])("get item", (table) => {
 
 test.each([fromTableSortKey, newTableSortKey])("get item", (table) => {
   appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
-    return table.get.appsync({
+    return table.appsync.get({
       key: {
         id: {
           S: context.arguments.id,
@@ -296,7 +304,7 @@ test.each([fromTable, newTable])(
       async (
         context: AppsyncContext<{ id: string }>
       ): Promise<Item | undefined> => {
-        return table.get.appsync({
+        return table.appsync.get({
           key: {
             id: {
               S: context.arguments.id,
@@ -313,7 +321,7 @@ test.each([fromTableSortKey, newTableSortKey])(
   "get item and set consistentRead:true",
   (table) => {
     appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
-      return table.get.appsync({
+      return table.appsync.get({
         key: {
           id: {
             S: context.arguments.id,
@@ -333,7 +341,7 @@ test.each([fromTable, newTable])("put item", (table) => {
     async (
       context: AppsyncContext<{ id: string; name: number }>
     ): Promise<Item | undefined> => {
-      return table.put.appsync({
+      return table.appsync.put({
         key: {
           id: {
             S: context.arguments.id,
@@ -363,7 +371,7 @@ test.each([fromTable, newTable])("put item", (table) => {
 test.each([fromTableSortKey, newTableSortKey])("put item", (table) => {
   appsyncTestCase(
     async (context: AppsyncContext<{ id: string; name: number }>) => {
-      return table.put.appsync({
+      return table.appsync.put({
         key: {
           id: {
             S: context.arguments.id,
@@ -394,7 +402,7 @@ test.each([fromTable, newTable])("update item", (table) => {
     async (
       context: AppsyncContext<{ id: string }>
     ): Promise<Item | undefined> => {
-      return table.update.appsync({
+      return table.appsync.update({
         key: {
           id: {
             S: context.arguments.id,
@@ -413,7 +421,7 @@ test.each([fromTable, newTable])("update item", (table) => {
 
 test.each([fromTableSortKey, newTableSortKey])("update item", (table) => {
   appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
-    return table.update.appsync({
+    return table.appsync.update({
       key: {
         id: {
           S: context.arguments.id,
@@ -437,7 +445,7 @@ test.each([fromTableSortKey, newTableSortKey])("update item", (table) => {
     async (
       context: AppsyncContext<{ id: string }>
     ): Promise<Item | undefined> => {
-      return table.update.appsync({
+      return table.appsync.update({
         key: {
           id: {
             S: context.arguments.id,
@@ -462,7 +470,7 @@ test.each([fromTable, newTable])("delete item", (table) => {
     async (
       context: AppsyncContext<{ id: string }>
     ): Promise<Item | undefined> => {
-      return table.delete.appsync({
+      return table.appsync.delete({
         key: {
           id: {
             S: context.arguments.id,
@@ -481,7 +489,7 @@ test.each([fromTable, newTable])("delete item", (table) => {
 
 test.each([fromTableSortKey, newTableSortKey])("delete item", (table) => {
   appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
-    return table.delete.appsync({
+    return table.appsync.delete({
       key: {
         id: {
           S: context.arguments.id,
@@ -506,7 +514,7 @@ test.each([fromTable, newTable])("query", (table) => {
       context: AppsyncContext<{ id: string; sort: number }>
     ): Promise<Item[]> => {
       return (
-        await table.query.appsync({
+        await table.appsync.query({
           query: {
             expression: "id = :id and #name = :val",
             expressionNames: {
@@ -527,7 +535,7 @@ test.each([fromTableSortKey, newTableSortKey])("query", (table) => {
   appsyncTestCase(
     async (context: AppsyncContext<{ id: string; sort: number }>) => {
       return (
-        await table.query.appsync({
+        await table.appsync.query({
           query: {
             expression: "id = :id and #name = :val",
             expressionNames: {

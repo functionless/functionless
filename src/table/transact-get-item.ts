@@ -186,7 +186,7 @@ export function createTransactGetItemsAppsyncIntegration<
 ): TransactGetItemsAppsync<Item, PartitionKey, RangeKey> {
   return makeAppSyncTableIntegration<
     TransactGetItemsAppsync<Item, PartitionKey, RangeKey>
-  >(table, "Table.getItem.appsync", {
+  >(table, "Table.transactGetItems.appsync", {
     appSyncVtl: {
       request(call, vtl) {
         const input = vtl.eval(

@@ -295,9 +295,11 @@ test("AWS integration with DynamoDB Table", () => {
         };
       }>
     ) =>
-      table.get.attributes({
-        pk: {
-          S: $input.data.id,
+      table.attributes.get({
+        Key: {
+          pk: {
+            S: $input.data.id,
+          },
         },
       }),
     ($input, $context) => {
@@ -353,9 +355,11 @@ test("return $input.data", () => {
         };
       }>
     ) =>
-      table.get.attributes({
-        pk: {
-          S: $input.data.id,
+      table.attributes.get({
+        Key: {
+          pk: {
+            S: $input.data.id,
+          },
         },
       }),
     ($input) => $input.data
@@ -387,9 +391,11 @@ test("return $input.data.list[0]", () => {
         };
       }>
     ) =>
-      table.get.attributes({
-        pk: {
-          S: $input.data.list[0],
+      table.attributes.get({
+        Key: {
+          pk: {
+            S: $input.data.list[0],
+          },
         },
       }),
     ($input) => $input.data

@@ -20,7 +20,7 @@ $util.qr($context.responseOverride.status)
   "requestTemplates": {
     "application/json": "{
   "TableName":"__REPLACED_TOKEN",
-  "pk":{"S":$input.json('$.id')}
+  "Key":{"pk":{"S":$input.json('$.id')}}
 }",
   },
 }
@@ -193,7 +193,7 @@ exports[`return $input.data 1`] = `
   "requestTemplates": {
     "application/json": "{
   "TableName":"__REPLACED_TOKEN",
-  "pk":{"S":$input.json('$.id')}
+  "Key":{"pk":{"S":$input.json('$.id')}}
 }",
   },
 }
@@ -212,7 +212,7 @@ exports[`return $input.data.list[0] 1`] = `
   "requestTemplates": {
     "application/json": "{
   "TableName":"__REPLACED_TOKEN",
-  "pk":{"S":$input.json('$.list[0]')}
+  "Key":{"pk":{"S":$input.json('$.list[0]')}}
 }",
   },
 }

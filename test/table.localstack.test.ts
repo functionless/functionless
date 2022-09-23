@@ -1,6 +1,15 @@
+import path from "path";
+import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { aws_dynamodb, Duration } from "aws-cdk-lib";
 import AWS from "aws-sdk";
-import { ExpressStepFunction, Function, FunctionProps, Table } from "../src";
+import {
+  $util,
+  AppsyncResolver,
+  ExpressStepFunction,
+  Function,
+  FunctionProps,
+  Table,
+} from "../src";
 import {
   RuntimeTestClients,
   runtimeTestExecutionContext,
@@ -649,4 +658,59 @@ runtimeTestSuite("tableStack", (t: any) => {
       ]);
     }
   );
+
+  // test("appsync resolvers", (scope: any, role: any) => {
+  //   const table = new Table<Item, "pk", "sk">(scope, "JsonSecret", {
+  //     partitionKey: {
+  //       name: "pk",
+  //       type: aws_dynamodb.AttributeType.STRING,
+  //     },
+  //     sortKey: {
+  //       name: "sk",
+  //       type: aws_dynamodb.AttributeType.STRING,
+  //     },
+  //   });
+
+  //   const api = new appsync.GraphqlApi(scope, "Api", {
+  //     schema: appsync.Schema.fromAsset(
+  //       path.join(__dirname, "table.runtime.gql")
+  //     ),
+  //     name: "test-api",
+  //   });
+
+  //   new AppsyncResolver<
+  //     {
+  //       items: Item[];
+  //     },
+  //     Item[]
+  //   >(
+  //     api,
+  //     "update",
+  //     {
+  //       typeName: "Mutation",
+  //       fieldName: "update",
+  //     },
+  //     async ($context) => {
+  //       await table.appsync.transactWrite(
+  //         $context.arguments.items.map((item) => {
+  //           const { pk, sk, ...attributes } = item;
+  //           return {
+  //             operation: "PutItem",
+  //             key: {
+  //               pk: {
+  //                 S: pk,
+  //               },
+  //               sk: {
+  //                 S: sk,
+  //               },
+  //             },
+  //             attributeValues: $util.dynamodb.toMapValues(attributes),
+  //           };
+  //         })
+  //       );
+
+  //       return $context.arguments.items;
+  //     }
+  //   );
+  // });
 });

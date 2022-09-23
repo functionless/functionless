@@ -1,0 +1,11 @@
+schema {
+  mutation: Mutation
+}
+
+type Person {
+  name: String!
+}
+
+type Mutation {
+  update(items: [Person!]!): [Person!]
+}
