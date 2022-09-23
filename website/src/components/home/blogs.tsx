@@ -10,11 +10,11 @@ export const Blogs = () => {
   };
   return (
     <section className="pt-36 bg-functionless-bg dark:bg-functionless-dark-bg">
-      <div className="container !max-w-screen-sm flex flex-col items-center">
+      <div className="tw-container sm:max-w-screen-sm flex flex-col items-center">
         <span className="over">{title}</span>
         <h3 className="text-center mt-2">{subtitle}</h3>
       </div>
-      <div className="mt-24 grid grid-cols-3 gap-7 container">
+      <div className="mt-24 grid grid-cols-3 gap-7 tw-container">
         {blogPosts.map((post: BlogPost) => (
           <Blog key={post.id} post={post} />
         ))}

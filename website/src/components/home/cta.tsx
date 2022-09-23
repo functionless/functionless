@@ -6,7 +6,7 @@ import { Social } from "./social";
 export const CTA = () => {
   return (
     <section className="bg-functionless-bg-alternate dark:bg-functionless-dark-bg-alternate py-36">
-      <div className="grid grid-cols-1 md:grid-cols-2 container gap-16 items-center">
+      <div className="grid grid-cols-1 md:grid-cols-2 tw-container xl:max-w-screen-xl gap-16 items-center">
         <div>
           <h3 className="m-0">{title}</h3>
           <p className="body1 my-4">{body}</p>

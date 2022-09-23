@@ -24,6 +24,10 @@ module.exports = {
   },
   darkMode: ["class", '[data-theme="dark"]'],
   theme: {
+    container: {
+      center: true,
+      padding: "1rem",
+    },
     extend: {
       fontSize: {
         //h1
@@ -90,12 +94,17 @@ module.exports = {
         light: "0px 0px 24px 8px rgba(0,0,0,0.12)",
       },
       animation: {
-        "fade-in": "fadeIn 0.05s linear 0s 1 normal forwards",
+        "fade-in": "fadeIn 0.05s ease-in 0s 1 normal forwards",
+        "pop-up": "popup 0.3s ease-in 0s 1 normal forwards",
       },
       keyframes: {
         fadeIn: {
           "0%": { opacity: 0 },
           "100%": { opacity: 1 },
+        },
+        popup: {
+          "0%": { opacity: 0, transform: "scale(0.75) translateY(2.5rem)" },
+          "100%": { opacity: 1, transform: "scale(1) translateY(0)" },
         },
       },
       colors: {

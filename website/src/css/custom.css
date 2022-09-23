@@ -98,6 +98,10 @@
   a:hover {
     @apply text-functionless-blue no-underline;
   }
+
+  .tw-container {
+    @apply container;
+  }
 }
 
 @layer components {

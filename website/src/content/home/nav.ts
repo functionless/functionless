@@ -17,10 +17,10 @@ export const main = [
     title: "Docs",
   },
   // { to: "/blog", title: "Blog" },
-  {
-    to: "/team",
-    title: "Team",
-  },
+  // {
+  //   to: "/team",
+  //   title: "Team",
+  // },
 ];
 
 export const social = [
@@ -34,9 +34,4 @@ export const social = [
     href: twitterUrl,
     icon: "/img/social/twitter.svg",
   },
-  // {
-  //   title: "Github",
-  //   href: githubUrl,
-  //   icon: "/img/social/github.svg",
-  // },
 ];

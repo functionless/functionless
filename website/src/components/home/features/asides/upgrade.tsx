@@ -3,7 +3,7 @@ import GetUserQuery from "@site/src/content/home/features/snippets/get-user-quer
 import GetUserResolver from "@site/src/content/home/features/snippets/get-user-resolver.mdx";
 import StateMachine from "@site/src/content/home/features/snippets/state-machine.mdx";
 import StepFunction from "@site/src/content/home/features/snippets/step-function.mdx";
-import { Code } from "../../code";
+import { Code, Terminal } from "../../code";
 import { VisibilityWindow } from "../../visibilityWindow";
 import { AsideTabs } from "./tabs";
 
@@ -27,14 +27,14 @@ export const Aside = () => (
                   </Code>
                 </div>
                 <div className="col-span-4 ml-7 -mr-7 -mt-16">
-                  <Code
-                    fileName="state-machine.json"
+                  <Terminal
+                    title="cat state-machine.json"
                     language="json"
-                    introDelayMs={2500}
+                    introDelayMs={1500}
                     animate={visible}
                   >
                     <StateMachine />
-                  </Code>
+                  </Terminal>
                 </div>
               </div>
             )}
@@ -58,24 +58,24 @@ export const Aside = () => (
                   </Code>
                 </div>
                 <div className="col-span-2 -ml-7 -mt-16">
-                  <Code
-                    fileName="get-user-resolver.vtl"
+                  <Terminal
+                    title="cat get-user-resolver.vtl"
                     language="json"
                     introDelayMs={2500}
                     animate={visible}
                   >
                     <GetUserResolver />
-                  </Code>
+                  </Terminal>
                 </div>
                 <div className="col-span-2 ml-7 -mr-7 -mt-16">
-                  <Code
-                    fileName="get-user-query.gql"
+                  <Terminal
+                    title="cat get-user-query.gql"
                     language="json"
                     introDelayMs={3500}
                     animate={visible}
                   >
                     <GetUserQuery />
-                  </Code>
+                  </Terminal>
                 </div>
               </div>
             )}
@@ -99,24 +99,24 @@ export const Aside = () => (
                   </Code>
                 </div>
                 <div className="col-span-2 -ml-7 -mt-16">
-                  <Code
-                    fileName="get-user-resolver.vtl"
+                  <Terminal
+                    title="cat get-user-resolver.vtl"
                     language="json"
                     introDelayMs={2500}
                     animate={visible}
                   >
                     <GetUserResolver />
-                  </Code>
+                  </Terminal>
                 </div>
                 <div className="col-span-2 ml-7 -mr-7 -mt-16">
-                  <Code
-                    fileName="get-user-query.gql"
+                  <Terminal
+                    title="cat get-user-query.gql"
                     language="json"
                     introDelayMs={3500}
                     animate={visible}
                   >
                     <GetUserQuery />
-                  </Code>
+                  </Terminal>
                 </div>
               </div>
             )}
