@@ -3,9 +3,9 @@ import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { aws_apigateway, aws_dynamodb, aws_iam } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { AppSyncVtlIntegration } from "../appsync";
-import { ASL, ASLGraph } from "../asl";
+import { ASL, ASLGraph, Task } from "../asl";
 import { ErrorCodes, SynthError } from "../error-code";
-import { CallExpr } from "../expression";
+import { CallExpr, Expr } from "../expression";
 import { PrewarmClientInitializer } from "../function-prewarm";
 import {
   isIdentifier,
@@ -56,12 +56,17 @@ export function createDynamoIntegration<
       : AWS.DynamoDB,
     params: Parameters<F>
   ) => ReturnType<F>,
-  asl?: (
-    input: ASLGraph.LiteralValue<{
-      [key: string]: ASLGraph.LiteralValueType;
-    }>,
-    context: ASL
-  ) => ASLGraph.NodeResults
+  asl?:
+    | {
+        prepareParams?: (params: any) => any;
+        resultSelector?: Task["ResultSelector"];
+        override?: never;
+      }
+    | {
+        prepareParams?: never;
+        resultSelector?: never;
+        override: (input: Expr, context: ASL) => ASLGraph.NodeResults;
+      }
 ): F {
   return makeIntegration({
     kind: operationName,
@@ -110,6 +115,8 @@ export function createDynamoIntegration<
           },
           Next: ASLGraph.DeferNext,
         });
+      } else if (asl?.override) {
+        return asl.override(input, context);
       } else {
         return context.evalExpr(input, (output) => {
           if (
@@ -121,17 +128,14 @@ export function createDynamoIntegration<
             throw new Error("TODO");
           }
 
-          if (asl) {
-            return asl(output as any, context);
-          }
-
           return context.stateWithHeapOutput({
             Type: "Task",
             Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,
-            Parameters: {
+            Parameters: asl?.prepareParams?.(output.value) ?? {
               ...output.value,
               TableName: table.tableName,
             },
+            ResultSelector: asl?.resultSelector,
             Next: ASLGraph.DeferNext,
           });
         });

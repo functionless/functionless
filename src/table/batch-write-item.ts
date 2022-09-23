@@ -2,7 +2,6 @@ import { aws_dynamodb } from "aws-cdk-lib";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import { ASLGraph } from "../asl";
 import { assertNodeKind } from "../assert";
 import { NodeKind } from "../node-kind";
 import {
@@ -59,7 +58,7 @@ export interface BatchWriteItemOutput<
   RangeKey extends keyof Item | undefined,
   Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
   Format extends JsonFormat
-> extends Omit<AWS.DynamoDB.BatchWriteItemOutput, "UnprocessedItems"> {
+> {
   UnprocessedItems: WriteRequest<Item, PartitionKey, RangeKey, Key, Format>[];
 }
 
@@ -108,60 +107,27 @@ export function createBatchWriteItemIntegration<
         UnprocessedItems: response.UnprocessedItems?.[tableName] as any,
       };
     },
-    (input, context) => {
-      const heapVar = context.newHeapVariable();
-
-      const requestItems$ = input.value["RequestItems.$"];
-      const requestItems = input.value.RequestItems;
-      return <ASLGraph.OutputSubState>{
-        output: {
-          jsonPath: heapVar,
-        },
-        startState: "batchGetItem",
-        states: {
-          batchGetItem: {
-            Type: "Task",
-            Resource: `arn:aws:states:::aws-sdk:dynamodb:batchWriteItem`,
-            Parameters: {
-              RequestItems: requestItems$
-                ? {
-                    [`${table.tableName}.$`]: requestItems$,
-                  }
-                : {
-                    [table.tableName]: requestItems,
-                  },
-              ReturnConsumedCapacity: input.value.ReturnConsumedCapacity,
-              ReturnItemCollectionMetrics:
-                input.value.ReturnItemCollectionMetrics,
-            },
-            Next: "ifUnprocessedItems",
-            ResultPath: heapVar,
-          },
-          ifUnprocessedItems: {
-            Type: "Choice",
-            Choices: [
-              {
-                IsPresent: true,
-                Variable: `${heapVar}.UnprocessedItems['${tableName}']`,
-                Next: "extractUnprocessedItems",
+    {
+      prepareParams: (input) => {
+        const requestItems$ = input["RequestItems.$"];
+        const requestItems = input.RequestItems;
+        return <AWS.DynamoDB.BatchWriteItemInput>{
+          RequestItems: requestItems$
+            ? {
+                [`${table.tableName}.$`]: requestItems$,
+              }
+            : {
+                [table.tableName]: requestItems,
               },
-            ],
-            Default: "setUnprocessedItemsNull",
-          },
-          extractUnprocessedItems: {
-            Type: "Pass",
-            InputPath: `${heapVar}.UnprocessedItems['${tableName}']`,
-            ResultPath: `${heapVar}.UnprocessedItems`,
-            Next: ASLGraph.DeferNext,
-          },
-          setUnprocessedItemsNull: {
-            Type: "Pass",
-            InputPath: `$.fnl_context.null`,
-            ResultPath: `${heapVar}.UnprocessedItems`,
-            Next: ASLGraph.DeferNext,
-          },
-        },
-      };
+        };
+      },
+      resultSelector: {
+        // [*][0] is a hack for performing a safe nullish coalesce on arrays
+        // when there are no UnprocessedItems[tableName], then an empty array is returned
+        // when it does exist, then the single UnprocessedItems[tableName] array is returned
+        // this only works because we know that there is only one table being interacted with at a time
+        "UnprocessedItems.$": `$.UnprocessedItems[*][0]`,
+      },
     }
   );
 }

@@ -3,7 +3,6 @@ import { PromiseResult } from "aws-sdk/lib/request";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import { ASLGraph } from "../asl";
 import { assertNodeKind } from "../assert";
 import { NodeKind } from "../node-kind";
 import {
@@ -20,16 +19,7 @@ export interface BatchGetItemInput<
   RangeKey extends keyof Item | undefined,
   Keys extends TableKey<Item, PartitionKey, RangeKey, Format>,
   Format extends JsonFormat = JsonFormat.Document
-> extends Omit<AWS.DynamoDB.BatchGetItemInput, "RequestItems">,
-    KeysAndAttributes<Item, PartitionKey, RangeKey, Keys, Format> {}
-
-export interface KeysAndAttributes<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined,
-  Keys extends TableKey<Item, PartitionKey, RangeKey, Format>,
-  Format extends JsonFormat
-> extends Omit<AWS.DynamoDB.KeysAndAttributes, "Keys"> {
+> {
   Keys: Keys[];
 }
 
@@ -39,7 +29,10 @@ export interface BatchGetItemOutput<
   RangeKey extends keyof Item | undefined,
   Keys extends TableKey<Item, PartitionKey, RangeKey, Format>,
   Format extends JsonFormat
-> extends Omit<AWS.DynamoDB.BatchGetItemOutput, "Item" | "Responses"> {
+> extends Omit<
+    AWS.DynamoDB.BatchGetItemOutput,
+    "Responses" | "ConsumedCapacity"
+  > {
   Items?: FormatObject<Narrow<Item, Keys, Format>, Format>[];
 }
 
@@ -71,12 +64,11 @@ export function createBatchGetItemIntegration<
     "batchGetItem",
     format,
     "read",
-    async (client, [{ Keys, ReturnConsumedCapacity }]) => {
+    async (client, [{ Keys }]) => {
       const input: any = {
-        ReturnConsumedCapacity,
         RequestItems: {
           [tableName]: {
-            Keys: Keys,
+            Keys,
           },
         },
       };
@@ -94,69 +86,22 @@ export function createBatchGetItemIntegration<
         Items: response.Responses?.[tableName] as any,
       };
     },
-    (input, context) => {
-      const heapVar = context.newHeapVariable();
-
-      return <ASLGraph.OutputSubState>{
-        output: {
-          jsonPath: heapVar,
-        },
-        startState: "batchGetItem",
-        states: {
-          batchGetItem: {
-            Type: "Task",
-            Resource: `arn:aws:states:::aws-sdk:dynamodb:batchGetItem`,
-            Parameters: {
-              RequestItems: {
-                [table.tableName]: input.value,
-              },
-              ReturnConsumedCapacity: input.value.ReturnConsumedCapacity,
-            },
-            Next: "ifUnprocessedKeys",
-            ResultPath: heapVar,
+    {
+      prepareParams: (input) => {
+        return <AWS.DynamoDB.BatchGetItemInput>{
+          RequestItems: {
+            [table.tableName]: input,
           },
-          ifUnprocessedKeys: {
-            Type: "Choice",
-            Choices: [
-              {
-                IsPresent: true,
-                Variable: `${heapVar}.UnprocessedKeys['${tableName}']`,
-                Next: "extractUnprocessedKeys",
-              },
-            ],
-            Default: "setUnprocessedKeysNull",
-          },
-          extractUnprocessedKeys: {
-            Type: "Pass",
-            InputPath: `${heapVar}.UnprocessedKeys['${tableName}']`,
-            ResultPath: `${heapVar}.UnprocessedKeys`,
-            Next: "ifItems",
-          },
-          setUnprocessedKeysNull: {
-            Type: "Pass",
-            InputPath: `$.fnl_context.null`,
-            ResultPath: `${heapVar}.UnprocessedKeys`,
-            Next: "ifItems",
-          },
-          ifItems: {
-            Type: "Choice",
-            Choices: [
-              {
-                IsPresent: true,
-                Variable: `${heapVar}.Responses['${tableName}']`,
-                Next: "setItems",
-              },
-            ],
-            Default: ASLGraph.DeferNext,
-          },
-          setItems: {
-            Type: "Pass",
-            InputPath: `${heapVar}.Responses['${tableName}']`,
-            ResultPath: `${heapVar}.Items`,
-            Next: ASLGraph.DeferNext,
-          },
-        },
-      };
+        };
+      },
+      resultSelector: {
+        // [*][0] is a hack for performing a safe nullish coalesce on arrays
+        // when there are no Responses[tableName], then an empty array is returned
+        // when it does exist, then the single Responses[tableName] array is returned
+        // this only works because we know that there is only one table being interacted with at a time
+        "Items.$": "$.Responses[*][0]",
+        "UnprocessedKeys.$": "$.UnprocessedKeys[*][0]",
+      },
     }
   );
 }
@@ -191,7 +136,7 @@ export function createBatchGetItemAppsyncIntegration<
           assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
         );
         const request = vtl.var(
-          '{"operation": "GetItem", "version": "2018-05-29"}'
+          '{"operation": "BatchGetItem", "version": "2018-05-29", "tables": {}}'
         );
         vtl.qr(`${request}.put('key', ${input}.get('key'))`);
         addIfDefined(vtl, input, request, "consistentRead");

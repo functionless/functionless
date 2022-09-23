@@ -10,6 +10,10 @@ import { GetItem, createGetItemIntegration } from "./get-item";
 import { createPutItemIntegration, PutItem } from "./put-item";
 import { createQueryIntegration, Query } from "./query";
 import { createScanIntegration, Scan } from "./scan";
+import {
+  createTransactGetItemsIntegration,
+  TransactGetItems,
+} from "./transact-get-item";
 import { UpdateItem, createUpdateItemIntegration } from "./update-item";
 
 export class TableRuntimeApi<
@@ -21,6 +25,8 @@ export class TableRuntimeApi<
   readonly get: GetItem<Item, PartitionKey, RangeKey, Format>;
 
   readonly batchGet: BatchGetItem<Item, PartitionKey, RangeKey, Format>;
+
+  readonly transactGet: TransactGetItems<Item, PartitionKey, RangeKey, Format>;
 
   readonly put: PutItem<Item, Format>;
 
@@ -37,6 +43,7 @@ export class TableRuntimeApi<
   constructor(readonly resource: aws_dynamodb.ITable, readonly format: Format) {
     this.get = createGetItemIntegration(resource, format);
     this.batchGet = createBatchGetItemIntegration(resource, format);
+    this.transactGet = createTransactGetItemsIntegration(resource, format);
     this.put = createPutItemIntegration(resource, format);
     this.update = createUpdateItemIntegration(resource, format);
     this.batchWrite = createBatchWriteItemIntegration(resource, format);

@@ -197,6 +197,35 @@ runtimeTestSuite("tableStack", (t: any) => {
             },
           });
 
+          await table.put({
+            Item: item1,
+          });
+
+          await table.put({
+            Item: item2,
+          });
+
+          const transactGet = await table.transactGet({
+            TransactItems: [
+              {
+                Get: {
+                  Key: {
+                    pk: item1.pk,
+                    sk: item1.sk,
+                  },
+                },
+              },
+              {
+                Get: {
+                  Key: {
+                    pk: item2.pk,
+                    sk: item2.sk,
+                  },
+                },
+              },
+            ],
+          });
+
           return [
             gotItem.Item ?? null,
             ...(scan.Items ?? []),
@@ -205,6 +234,7 @@ runtimeTestSuite("tableStack", (t: any) => {
             updated.Attributes ?? null,
             deleted.Attributes ?? null,
             item2Modified.Item,
+            ...(transactGet.Items ?? []),
           ];
         }
       );
@@ -261,6 +291,8 @@ runtimeTestSuite("tableStack", (t: any) => {
           ...item2,
           pk: "Item2|1|pk2-modified",
         },
+        item1,
+        item2,
       ]);
     }
   );
@@ -307,28 +339,30 @@ runtimeTestSuite("tableStack", (t: any) => {
             }
           }
 
-          await table.attributes.put({
-            Item: {
-              type: {
-                S: item1.type,
-              },
-              pk: {
-                S: item1.pk,
-              },
-              sk: {
-                S: item1.sk,
-              },
-              version: {
-                N: `1`,
-              },
-              data1: {
-                M: {
-                  key: {
-                    S: item1.data1.key,
-                  },
+          const item1Attributes = {
+            type: {
+              S: item1.type,
+            },
+            pk: {
+              S: item1.pk,
+            },
+            sk: {
+              S: item1.sk,
+            },
+            version: {
+              N: `1`,
+            },
+            data1: {
+              M: {
+                key: {
+                  S: item1.data1.key,
                 },
               },
             },
+          } as const;
+
+          await table.attributes.put({
+            Item: item1Attributes,
           });
 
           const gotItem = await table.attributes.get({
@@ -403,28 +437,30 @@ runtimeTestSuite("tableStack", (t: any) => {
             ReturnValues: "ALL_OLD",
           });
 
-          await table.attributes.put({
-            Item: {
-              type: {
-                S: item2.type,
-              },
-              pk: {
-                S: item2.pk,
-              },
-              sk: {
-                S: item2.sk,
-              },
-              data2: {
-                M: {
-                  key: {
-                    S: item2.data2.key,
-                  },
+          const item2Attributes = {
+            type: {
+              S: item2.type,
+            },
+            pk: {
+              S: item2.pk,
+            },
+            sk: {
+              S: item2.sk,
+            },
+            data2: {
+              M: {
+                key: {
+                  S: item2.data2.key,
                 },
               },
-              version: {
-                N: `${item2.version}`,
-              },
             },
+            version: {
+              N: `${item2.version}`,
+            },
+          } as const;
+
+          await table.attributes.put({
+            Item: item2Attributes,
           });
 
           let batchWrite = await table.attributes.batchWrite({
@@ -469,7 +505,10 @@ runtimeTestSuite("tableStack", (t: any) => {
             ],
           });
 
-          while (batchWrite.UnprocessedItems) {
+          while (
+            batchWrite.UnprocessedItems &&
+            batchWrite.UnprocessedItems.length > 0
+          ) {
             batchWrite = await table.attributes.batchWrite({
               RequestItems: batchWrite.UnprocessedItems,
             });
@@ -486,6 +525,35 @@ runtimeTestSuite("tableStack", (t: any) => {
             },
           });
 
+          await table.attributes.put({
+            Item: item1Attributes,
+          });
+
+          await table.attributes.put({
+            Item: item2Attributes,
+          });
+
+          const transactGet = await table.attributes.transactGet({
+            TransactItems: [
+              {
+                Get: {
+                  Key: {
+                    pk: item1Attributes.pk,
+                    sk: item1Attributes.sk,
+                  },
+                },
+              },
+              {
+                Get: {
+                  Key: {
+                    pk: item2Attributes.pk,
+                    sk: item2Attributes.sk,
+                  },
+                },
+              },
+            ],
+          });
+
           return [
             gotItem.Item ?? null,
             scan.Items?.[0] ?? null,
@@ -494,6 +562,8 @@ runtimeTestSuite("tableStack", (t: any) => {
             updated.Attributes ?? null,
             deleted.Attributes ?? null,
             item2Modified.Item ?? null,
+            transactGet.Items[0] ?? null,
+            transactGet.Items[1] ?? null,
           ];
         }
       );
@@ -534,7 +604,11 @@ runtimeTestSuite("tableStack", (t: any) => {
         })
         .promise();
 
-      expect(JSON.parse(response.output!)).toEqual([
+      if (!response.output) {
+        throw new Error("response.output is undefined");
+      }
+
+      expect(JSON.parse(response.output)).toEqual([
         AWS.DynamoDB.Converter.marshall(item1),
         AWS.DynamoDB.Converter.marshall(item1),
         AWS.DynamoDB.Converter.marshall(item1),
@@ -556,6 +630,8 @@ runtimeTestSuite("tableStack", (t: any) => {
             S: "Item2|1|pk2-modified",
           },
         },
+        AWS.DynamoDB.Converter.marshall(item1),
+        AWS.DynamoDB.Converter.marshall(item2),
       ]);
     }
   );
