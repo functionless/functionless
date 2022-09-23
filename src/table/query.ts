@@ -1,4 +1,5 @@
 import { aws_dynamodb } from "aws-cdk-lib";
+import { AttributeValue } from "typesafe-dynamodb/lib/attribute-value";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { assertNodeKind } from "../assert";
 import { NodeKind } from "../node-kind";
@@ -10,8 +11,18 @@ import {
 } from "./integration";
 import { ITable } from "./table";
 
-export interface QueryInput
-  extends Omit<AWS.DynamoDB.QueryInput, "TableName"> {}
+export type QueryInput<Format extends JsonFormat> = Omit<
+  Format extends JsonFormat.AttributeValue
+    ? AWS.DynamoDB.QueryInput
+    : AWS.DynamoDB.DocumentClient.QueryInput,
+  "TableName" | "ExpressionAttributeValues"
+> & {
+  ExpressionAttributeValues?: Format extends JsonFormat.AttributeValue
+    ? {
+        [attrName: string]: AttributeValue;
+      }
+    : AWS.DynamoDB.DocumentClient.QueryInput["ExpressionAttributeValues"];
+};
 
 export interface QueryOutput<Item extends object, Format extends JsonFormat>
   extends Omit<AWS.DynamoDB.QueryOutput, "Items"> {
@@ -21,7 +32,7 @@ export interface QueryOutput<Item extends object, Format extends JsonFormat>
 export type Query<Item extends object, Format extends JsonFormat> = <
   I extends Item = Item
 >(
-  input: QueryInput
+  input: QueryInput<Format>
 ) => Promise<QueryOutput<I, Format>>;
 
 export function createQueryIntegration<
@@ -36,7 +47,7 @@ export function createQueryIntegration<
     (client, [request]) => {
       return client
         .query({
-          ...(request ?? {}),
+          ...((request as any) ?? {}),
           TableName: table.tableName,
         })
         .promise() as any;

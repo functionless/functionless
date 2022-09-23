@@ -14,20 +14,22 @@ import { ReturnValues } from "./return-value";
 import { ITable } from "./table";
 import { AttributeKeyToObject } from "./util";
 
-export interface UpdateItemInput<
+export type UpdateItemInput<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined,
   Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
   ReturnValue extends ReturnValues | undefined,
   Format extends JsonFormat
-> extends Omit<
-    AWS.DynamoDB.DocumentClient.UpdateItemInput,
-    "TableName" | "Key"
-  > {
+> = Omit<
+  Format extends JsonFormat.Document
+    ? AWS.DynamoDB.DocumentClient.UpdateItemInput
+    : AWS.DynamoDB.UpdateItemInput,
+  "TableName" | "Key"
+> & {
   Key: Key;
   ReturnValues?: ReturnValue;
-}
+};
 
 export interface UpdateItemOutput<
   Item extends object,

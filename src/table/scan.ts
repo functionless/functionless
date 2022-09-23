@@ -1,4 +1,5 @@
 import { aws_dynamodb } from "aws-cdk-lib";
+import { AttributeValue } from "typesafe-dynamodb/lib/attribute-value";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { assertNodeKind } from "../assert";
 import { NodeKind } from "../node-kind";
@@ -10,8 +11,16 @@ import {
 } from "./integration";
 import { ITable } from "./table";
 
-export interface ScanInput
-  extends Omit<AWS.DynamoDB.DocumentClient.ScanInput, "TableName"> {}
+export type ScanInput<Format extends JsonFormat> = Omit<
+  Format extends JsonFormat.AttributeValue
+    ? AWS.DynamoDB.QueryInput
+    : AWS.DynamoDB.DocumentClient.QueryInput,
+  "TableName" | "ExpressionAttributeValues"
+> & {
+  ExpressionAttributeValues?: {
+    [attrName: string]: AttributeValue;
+  };
+};
 
 export interface ScanOutput<Item extends object, Format extends JsonFormat>
   extends Omit<AWS.DynamoDB.ScanOutput, "Items"> {
@@ -19,7 +28,7 @@ export interface ScanOutput<Item extends object, Format extends JsonFormat>
 }
 
 export type Scan<Item extends object, Format extends JsonFormat> = (
-  input: ScanInput
+  input: ScanInput<Format>
 ) => Promise<ScanOutput<Item, Format>>;
 
 export function createScanIntegration<
@@ -34,7 +43,7 @@ export function createScanIntegration<
     (client, [request]) => {
       return client
         .scan({
-          ...(request ?? {}),
+          ...((request as any) ?? {}),
           TableName: table.tableName,
         })
         .promise() as any;

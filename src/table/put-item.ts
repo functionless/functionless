@@ -39,7 +39,7 @@ export type PutItem<Item extends object, Format extends JsonFormat> = <
   I extends Item,
   ReturnValue extends PutItemReturnValues | undefined
 >(
-  input: PutItemInput<I, ReturnValue, JsonFormat.Document>
+  input: PutItemInput<I, ReturnValue, Format>
 ) => Promise<PutItemOutput<I, ReturnValue, Format>>;
 
 export function createPutItemIntegration<

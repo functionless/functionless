@@ -55,7 +55,13 @@ export function createDynamoIntegration<
       ? AWS.DynamoDB.DocumentClient
       : AWS.DynamoDB,
     params: Parameters<F>
-  ) => ReturnType<F>
+  ) => ReturnType<F>,
+  asl?: (
+    input: ASLGraph.LiteralValue<{
+      [key: string]: ASLGraph.LiteralValueType;
+    }>,
+    context: ASL
+  ) => ASLGraph.NodeResults
 ): F {
   return makeIntegration({
     kind: operationName,
@@ -106,6 +112,19 @@ export function createDynamoIntegration<
         });
       } else {
         return context.evalExpr(input, (output) => {
+          if (
+            !ASLGraph.isLiteralValue(output) ||
+            typeof output.value !== "object" ||
+            output.value === null ||
+            Array.isArray(output.value)
+          ) {
+            throw new Error("TODO");
+          }
+
+          if (asl) {
+            return asl(output as any, context);
+          }
+
           return context.stateWithHeapOutput({
             Type: "Task",
             Resource: `arn:aws:states:::aws-sdk:dynamodb:${operationName}`,

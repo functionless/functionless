@@ -1,7 +1,9 @@
 import { aws_dynamodb } from "aws-cdk-lib";
+import { PromiseResult } from "aws-sdk/lib/request";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
+import { ASLGraph } from "../asl";
 import { assertNodeKind } from "../assert";
 import { NodeKind } from "../node-kind";
 import {
@@ -78,7 +80,11 @@ export function createBatchGetItemIntegration<
           },
         },
       };
-      const response = await (format === JsonFormat.Document
+      const response: PromiseResult<
+        | AWS.DynamoDB.DocumentClient.BatchGetItemOutput
+        | AWS.DynamoDB.BatchGetItemOutput,
+        any
+      > = await (format === JsonFormat.Document
         ? (client as AWS.DynamoDB.DocumentClient).batchGet(input)
         : (client as AWS.DynamoDB).batchGetItem(input)
       ).promise();
@@ -86,6 +92,70 @@ export function createBatchGetItemIntegration<
       return {
         ...response,
         Items: response.Responses?.[tableName] as any,
+      };
+    },
+    (input, context) => {
+      const heapVar = context.newHeapVariable();
+
+      return <ASLGraph.OutputSubState>{
+        output: {
+          jsonPath: heapVar,
+        },
+        startState: "batchGetItem",
+        states: {
+          batchGetItem: {
+            Type: "Task",
+            Resource: `arn:aws:states:::aws-sdk:dynamodb:batchGetItem`,
+            Parameters: {
+              RequestItems: {
+                [table.tableName]: input.value,
+              },
+              ReturnConsumedCapacity: input.value.ReturnConsumedCapacity,
+            },
+            Next: "ifUnprocessedKeys",
+            ResultPath: heapVar,
+          },
+          ifUnprocessedKeys: {
+            Type: "Choice",
+            Choices: [
+              {
+                IsPresent: true,
+                Variable: `${heapVar}.UnprocessedKeys['${tableName}']`,
+                Next: "extractUnprocessedKeys",
+              },
+            ],
+            Default: "setUnprocessedKeysNull",
+          },
+          extractUnprocessedKeys: {
+            Type: "Pass",
+            InputPath: `${heapVar}.UnprocessedKeys['${tableName}']`,
+            ResultPath: `${heapVar}.UnprocessedKeys`,
+            Next: "ifItems",
+          },
+          setUnprocessedKeysNull: {
+            Type: "Pass",
+            InputPath: `$.fnl_context.null`,
+            ResultPath: `${heapVar}.UnprocessedKeys`,
+            Next: "ifItems",
+          },
+          ifItems: {
+            Type: "Choice",
+            Choices: [
+              {
+                IsPresent: true,
+                Variable: `${heapVar}.Responses['${tableName}']`,
+                Next: "setItems",
+              },
+            ],
+            Default: ASLGraph.DeferNext,
+          },
+          setItems: {
+            Type: "Pass",
+            InputPath: `${heapVar}.Responses['${tableName}']`,
+            ResultPath: `${heapVar}.Items`,
+            Next: ASLGraph.DeferNext,
+          },
+        },
       };
     }
   );
