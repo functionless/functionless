@@ -91,6 +91,11 @@ export const RegisterFunctionName = `register_${FunctionlessSalt}`;
  */
 export const BindFunctionName = `bind_${FunctionlessSalt}`;
 
+export const RegisterCommand = `REGISTER_${FunctionlessSalt}`;
+export const RegisterRefCommand = `REGISTER_REF_${FunctionlessSalt}`;
+export const BindCommand = `BIND_${FunctionlessSalt}`;
+export const ProxyCommand = `PROXY_${FunctionlessSalt}`;
+
 /**
  * TypeScript Transformer which transforms functionless functions, such as `AppsyncResolver`,
  * into an AST that can be interpreted at CDK synth time to produce VTL templates and AppSync
