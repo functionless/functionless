@@ -1222,7 +1222,7 @@ export async function serialize(
        */
       function transformResource(integ: unknown): any {
         if (isTable(integ)) {
-          const { resource, ...rest } = integ;
+          const { resource, appsync, ...rest } = integ;
           return rest;
         } else if (
           integ &&

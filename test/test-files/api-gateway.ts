@@ -5,14 +5,7 @@ import {
   aws_events,
   Stack,
 } from "aws-cdk-lib";
-import {
-  $AWS,
-  AwsMethod,
-  EventBus,
-  Function,
-  StepFunction,
-  Table,
-} from "../../src";
+import { AwsMethod, EventBus, Function, StepFunction, Table } from "../../src";
 
 const app = new App({
   autoSynth: false,
@@ -55,8 +48,7 @@ new AwsMethod(
     resource: api.root,
   },
   ($input) =>
-    $AWS.DynamoDB.GetItem({
-      Table: table,
+    table.attributes.get({
       Key: {
         id: {
           S: $input.params("id") as string,
@@ -85,8 +77,7 @@ new AwsMethod(
     resource: api.root,
   },
   ($input) => {
-    return $AWS.DynamoDB.GetItem({
-      Table: table,
+    return table.attributes.get({
       ...$input.data,
       [$input.params("param")]: null,
     });
@@ -101,8 +92,7 @@ new AwsMethod(
     resource: api.root,
   },
   ($input) =>
-    $AWS.DynamoDB.GetItem({
-      Table: table,
+    table.attributes.get({
       Key: {
         id: {
           S: $input.params("id") as string,
@@ -111,8 +101,7 @@ new AwsMethod(
     }),
   ($input) => {
     // this is not allowed
-    return $AWS.DynamoDB.GetItem({
-      Table: table,
+    return table.attributes.get({
       Key: {
         id: {
           S: $input.params("id") as string,
@@ -174,13 +163,12 @@ new AwsMethod(
   { httpMethod: "ANY", resource: api.root },
   async () => {
     const event = {
-      Table: table,
       Key: {
         id: { S: "sas" },
       },
     };
 
-    await $AWS.DynamoDB.GetItem(event);
+    await table.attributes.get(event);
   },
   () => {
     return "";
@@ -192,8 +180,7 @@ new AwsMethod(
 new AwsMethod(
   { httpMethod: "ANY", resource: api.root },
   async () => {
-    await $AWS.DynamoDB.GetItem({
-      Table: table,
+    await table.attributes.get({
       Key: {
         id: { S: "sas" },
       },
@@ -229,8 +216,7 @@ const a = "x";
 new AwsMethod(
   { httpMethod: "ANY", resource: api.root },
   async () => {
-    await $AWS.DynamoDB.GetItem({
-      Table: table,
+    await table.attributes.get({
       Key: {
         id: { S: a },
       },
@@ -244,8 +230,7 @@ new AwsMethod(
 new AwsMethod(
   { httpMethod: "ANY", resource: api.root },
   async () => {
-    return $AWS.DynamoDB.GetItem({
-      Table: table,
+    return table.attributes.get({
       Key: {
         id: { S: "sas" },
       },
@@ -263,8 +248,7 @@ new AwsMethod(
   { httpMethod: "ANY", resource: api.root },
   async () => {
     const a = Number("1");
-    await $AWS.DynamoDB.GetItem({
-      Table: table,
+    await table.attributes.get({
       Key: {
         id: { S: `${a}` },
       },
