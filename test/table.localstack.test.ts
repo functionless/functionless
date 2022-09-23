@@ -197,12 +197,19 @@ runtimeTestSuite("tableStack", (t: any) => {
             },
           });
 
-          await table.put({
-            Item: item1,
-          });
-
-          await table.put({
-            Item: item2,
+          await table.transactWrite({
+            TransactItems: [
+              {
+                Put: {
+                  Item: item1,
+                },
+              },
+              {
+                Put: {
+                  Item: item2,
+                },
+              },
+            ],
           });
 
           const transactGet = await table.transactGet({
@@ -525,12 +532,19 @@ runtimeTestSuite("tableStack", (t: any) => {
             },
           });
 
-          await table.attributes.put({
-            Item: item1Attributes,
-          });
-
-          await table.attributes.put({
-            Item: item2Attributes,
+          await table.attributes.transactWrite({
+            TransactItems: [
+              {
+                Put: {
+                  Item: item1Attributes,
+                },
+              },
+              {
+                Put: {
+                  Item: item2Attributes,
+                },
+              },
+            ],
           });
 
           const transactGet = await table.attributes.transactGet({

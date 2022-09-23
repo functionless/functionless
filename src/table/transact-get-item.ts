@@ -84,7 +84,7 @@ export function createTransactGetItemsIntegration<
     table,
     "transactGetItems",
     format,
-    "write",
+    "read",
     async (client, [{ TransactItems }]) => {
       const input: any = {
         TransactItems: TransactItems.map((item) => ({
@@ -197,7 +197,7 @@ export function createTransactGetItemsAppsyncIntegration<
         );
         vtl.add(
           `#foreach($item in ${input})`,
-          `#set($item.table = "${table.tableName}")`,
+          `#set($item.table = '${table.tableName}')`,
           "#end"
         );
         vtl.qr(`${request}.put('transactItems', ${input})`);

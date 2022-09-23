@@ -1,16 +1,7 @@
 import { aws_dynamodb } from "aws-cdk-lib";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
-import { Narrow } from "typesafe-dynamodb/lib/narrow";
-import { assertNodeKind } from "../assert";
-import { NodeKind } from "../node-kind";
-import {
-  addIfDefined,
-  createDynamoIntegration,
-  makeAppSyncTableIntegration,
-} from "./integration";
-import { ITable } from "./table";
-import { AttributeKeyToObject } from "./util";
+import { createDynamoIntegration } from "./integration";
 
 export interface BatchWriteItemInput<
   Item extends object,
@@ -89,7 +80,7 @@ export function createBatchWriteItemIntegration<
     table,
     "batchWriteItem",
     format,
-    "read",
+    "write",
     async (client, [{ RequestItems, ...props }]) => {
       const input: any = {
         ...props,
@@ -132,42 +123,43 @@ export function createBatchWriteItemIntegration<
   );
 }
 
-/**
- * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
- */
-export type BatchWriteItemAppsync<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
-> = <
-  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
->(input: {
-  key: Key;
-  consistentRead?: boolean;
-}) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
+// TODO: batchWriteItem is not supported, instead there are batchDelete and batchPut
+// https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-batch-delete-item
+// https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-batch-put-item
 
-export function createBatchWriteItemAppsyncIntegration<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
->(
-  table: ITable<Item, PartitionKey, RangeKey>
-): BatchWriteItemAppsync<Item, PartitionKey, RangeKey> {
-  return makeAppSyncTableIntegration<
-    BatchWriteItemAppsync<Item, PartitionKey, RangeKey>
-  >(table, "Table.getItem.appsync", {
-    appSyncVtl: {
-      request(call, vtl) {
-        const input = vtl.eval(
-          assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
-        );
-        const request = vtl.var(
-          '{"operation": "GetItem", "version": "2018-05-29"}'
-        );
-        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-        addIfDefined(vtl, input, request, "consistentRead");
-        return vtl.json(request);
-      },
-    },
-  });
-}
+// export type BatchWriteItemAppsync<
+//   Item extends object,
+//   PartitionKey extends keyof Item,
+//   RangeKey extends keyof Item | undefined
+// > = <
+//   Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
+// >(input: {
+//   key: Key;
+//   consistentRead?: boolean;
+// }) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
+
+// export function createBatchWriteItemAppsyncIntegration<
+//   Item extends object,
+//   PartitionKey extends keyof Item,
+//   RangeKey extends keyof Item | undefined
+// >(
+//   table: ITable<Item, PartitionKey, RangeKey>
+// ): BatchWriteItemAppsync<Item, PartitionKey, RangeKey> {
+//   return makeAppSyncTableIntegration<
+//     BatchWriteItemAppsync<Item, PartitionKey, RangeKey>
+//   >(table, "Table.getItem.appsync", {
+//     appSyncVtl: {
+//       request(call, vtl) {
+//         const input = vtl.eval(
+//           assertNodeKind(call.args[0]?.expr, NodeKind.ObjectLiteralExpr)
+//         );
+//         const request = vtl.var(
+//           '{"operation": "BatchWriteItem", "version": "2018-05-29"}'
+//         );
+//         vtl.qr(`${request}.put('key', ${input}.get('key'))`);
+//         addIfDefined(vtl, input, request, "consistentRead");
+//         return vtl.json(request);
+//       },
+//     },
+//   });
+// }

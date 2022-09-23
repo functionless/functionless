@@ -6,7 +6,6 @@ import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import { assertNodeKind } from "../assert";
 import { NodeKind } from "../node-kind";
 import {
-  addIfDefined,
   createDynamoIntegration,
   makeAppSyncTableIntegration,
 } from "./integration";
@@ -115,10 +114,12 @@ export type BatchGetItemAppsync<
   RangeKey extends keyof Item | undefined
 > = <
   Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
->(input: {
-  key: Key;
-  consistentRead?: boolean;
-}) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
+>(
+  input: {
+    key: Key;
+    consistentRead?: boolean;
+  }[]
+) => Promise<Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>>;
 
 export function createBatchGetItemAppsyncIntegration<
   Item extends object,
@@ -138,8 +139,10 @@ export function createBatchGetItemAppsyncIntegration<
         const request = vtl.var(
           '{"operation": "BatchGetItem", "version": "2018-05-29", "tables": {}}'
         );
-        vtl.qr(`${request}.put('key', ${input}.get('key'))`);
-        addIfDefined(vtl, input, request, "consistentRead");
+        vtl.qr(
+          `${request}.tables.put('${table.tableName}', { "keys": ${input} })`
+        );
+
         return vtl.json(request);
       },
     },

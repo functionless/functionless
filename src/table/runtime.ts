@@ -14,6 +14,10 @@ import {
   createTransactGetItemsIntegration,
   TransactGetItems,
 } from "./transact-get-item";
+import {
+  createTransactWriteItemsIntegration,
+  TransactWriteItems,
+} from "./transact-write-item";
 import { UpdateItem, createUpdateItemIntegration } from "./update-item";
 
 export class TableRuntimeApi<
@@ -27,6 +31,13 @@ export class TableRuntimeApi<
   readonly batchGet: BatchGetItem<Item, PartitionKey, RangeKey, Format>;
 
   readonly transactGet: TransactGetItems<Item, PartitionKey, RangeKey, Format>;
+
+  readonly transactWrite: TransactWriteItems<
+    Item,
+    PartitionKey,
+    RangeKey,
+    Format
+  >;
 
   readonly put: PutItem<Item, Format>;
 
@@ -47,6 +58,7 @@ export class TableRuntimeApi<
     this.put = createPutItemIntegration(resource, format);
     this.update = createUpdateItemIntegration(resource, format);
     this.batchWrite = createBatchWriteItemIntegration(resource, format);
+    this.transactWrite = createTransactWriteItemsIntegration(resource, format);
     this.delete = createDeleteItemIntegration(resource, format);
     this.query = createQueryIntegration(resource, format);
     this.scan = createScanIntegration(resource, format);
