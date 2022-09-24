@@ -12,7 +12,7 @@ import { Job, JobPermission } from "projen/lib/github/workflows-model";
 class GitHooksPreCommitComponent extends TextFile {
   constructor(project: Project) {
     super(project, ".git/hooks/pre-commit", {
-      lines: ["#!/bin/sh", "npx -y lint-staged"],
+      lines: ["#!/bin/sh", "yarn run typecheck", "npx -y lint-staged"],
     });
   }
 
@@ -270,7 +270,9 @@ project.testTask.reset();
 project.testTask.env("TEST_DEPLOY_TARGET", "AWS");
 project.testTask.env("NODE_OPTIONS", "--max-old-space-size=6144");
 
-project.testTask.exec("tsc -p ./tsconfig.dev.json --noEmit");
+const typeCheck = project.addTask("typecheck", {
+  exec: "tsc -p ./tsconfig.dev.json --noEmit",
+});
 
 const testFast = project.addTask("test:fast", {
   exec: "jest --passWithNoTests --all --updateSnapshot --testPathIgnorePatterns '(localstack|runtime)'",
@@ -284,6 +286,7 @@ const testApp = project.addTask("test:app", {
   exec: "cd ./test-app && yarn && yarn build && yarn synth --quiet",
 });
 
+project.testTask.spawn(typeCheck);
 project.testTask.spawn(testFast);
 project.testTask.spawn(testRuntime);
 project.testTask.spawn(testApp);

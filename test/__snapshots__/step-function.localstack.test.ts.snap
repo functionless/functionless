@@ -19674,33 +19674,33 @@ exports[`binaryOps logic with calls 1`] = `
 }
 `;
 
-exports[`call $SFN map, foreach, and parallel 1`] = `
+exports[`call $SFN map, foreach, parallel, task 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
   "States": {
     "$SFN.map([1, 2, 3], function (n))": {
-      "ItemsPath": "$.heap5",
+      "ItemsPath": "$.heap9",
       "Iterator": {
         "StartAt": "return nn",
         "States": {
           "1__return nn": {
             "End": true,
-            "InputPath": "$.heap4.string",
+            "InputPath": "$.heap8.string",
             "ResultPath": "$",
             "Type": "Pass",
           },
           "nn": {
             "Next": "1__return nn",
             "Parameters": {
-              "string.$": "States.Format('n{}',$.heap3)",
+              "string.$": "States.Format('n{}',$.heap7)",
             },
-            "ResultPath": "$.heap4",
+            "ResultPath": "$.heap8",
             "Type": "Pass",
           },
           "return nn": {
             "InputPath": "$.n__1",
             "Next": "nn",
-            "ResultPath": "$.heap3",
+            "ResultPath": "$.heap7",
             "Type": "Pass",
           },
         },
@@ -19708,10 +19708,12 @@ exports[`call $SFN map, foreach, and parallel 1`] = `
       "Next": "1__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in 1",
       "Parameters": {
         "fnl_context.$": "$.fnl_context",
+        "h.$": "$.h",
         "input.$": "$.input",
+        "j.$": "$.j",
         "n__1.$": "$$.Map.Item.Value",
       },
-      "ResultPath": "$.heap6",
+      "ResultPath": "$.heap10",
       "Type": "Map",
     },
     "$SFN.map(input.arr, function (n))": {
@@ -19730,32 +19732,166 @@ exports[`call $SFN map, foreach, and parallel 1`] = `
       "Next": "3__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
       "Parameters": {
         "fnl_context.$": "$.fnl_context",
+        "h.$": "$.h",
         "input.$": "$.input",
+        "j.$": "$.j",
         "n__2.$": "$$.Map.Item.Value",
       },
-      "ResultPath": "$.heap8",
+      "ResultPath": "$.heap12",
       "Type": "Map",
+    },
+    "11__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(i": {
+      "InputPath": "$.heap21",
+      "Next": "{Resource: "arn:aws:states:::lambda:invoke.waitForTaskToken", Parameters: {",
+      "ResultPath": "$.heap22",
+      "Type": "Pass",
+    },
+    "13__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(i": {
+      "InputPath": "$.heap24",
+      "Next": "14__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(i",
+      "ResultPath": "$.heap25",
+      "Type": "Pass",
+    },
+    "14__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(i": {
+      "InputPath": "$.h",
+      "Next": "{Resource: "arn:aws:states:::states:startExecution.waitForTaskToken", Param",
+      "ResultPath": "$.heap26",
+      "Type": "Pass",
+    },
+    "16__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(i": {
+      "InputPath": "$.heap28",
+      "Next": "1__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
+      "ResultPath": "$.heap29",
+      "Type": "Pass",
     },
     "1__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
       "End": true,
       "Parameters": {
-        "a.$": "$.heap7",
-        "b.$": "$.heap9",
-        "c.$": "$.heap10",
+        "a.$": "$.heap11",
+        "b.$": "$.heap13",
+        "c.$": "$.heap15",
+        "d.$": "$.heap17",
+        "e.$": "$.heap19",
+        "f.$": "$.heap22",
+        "g.$": "$.heap25",
+        "h.$": "$.heap26",
+        "i.$": "$.heap29",
+        "j.$": "$.j",
       },
       "ResultPath": "$",
       "Type": "Pass",
     },
     "1__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in 1": {
-      "InputPath": "$.heap6",
+      "InputPath": "$.heap10",
       "Next": "$SFN.map(input.arr, function (n))",
-      "ResultPath": "$.heap7",
+      "ResultPath": "$.heap11",
       "Type": "Pass",
     },
+    "1__try": {
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL",
+          ],
+          "Next": "catch__try",
+          "ResultPath": "$.fnl_tmp_0",
+        },
+      ],
+      "Comment": "hullo again",
+      "HeartbeatSecondsPath": "$.heap3",
+      "Next": "try 1",
+      "Parameters": {
+        "FunctionName": "__REPLACED_ARN",
+        "Payload": {
+          "fail": true,
+          "token.$": "$$.Task.Token",
+          "value": 1,
+        },
+      },
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "ResultPath": "$.heap4",
+      "TimeoutSecondsPath": "$.input.n",
+      "Type": "Task",
+    },
+    "1__try 1": {
+      "Catch": [
+        {
+          "ErrorEquals": [
+            "States.ALL",
+          ],
+          "Next": "catch__try 1",
+          "ResultPath": "$.fnl_tmp_1",
+        },
+      ],
+      "Comment": "hullo again",
+      "HeartbeatSecondsPath": "$.heap5",
+      "Next": "return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(input",
+      "Parameters": {
+        "Input": {
+          "fail": true,
+          "token.$": "$$.Task.Token",
+          "value": 1,
+        },
+        "StateMachineArn": "__REPLACED_ARN",
+      },
+      "Resource": "arn:aws:states:::states:startExecution.waitForTaskToken",
+      "ResultPath": "$.heap6",
+      "TimeoutSecondsPath": "$.input.n",
+      "Type": "Task",
+    },
+    "1__{Resource: "arn:aws:states:::lambda:invoke.waitForTaskToken", Parameters": {
+      "Comment": "hullo again",
+      "HeartbeatSecondsPath": "$.heap23",
+      "Next": "13__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(i",
+      "Parameters": {
+        "FunctionName": "__REPLACED_ARN",
+        "Payload": {
+          "token.$": "$$.Task.Token",
+          "value": 1,
+        },
+      },
+      "Resource": "arn:aws:states:::lambda:invoke.waitForTaskToken",
+      "ResultPath": "$.heap24",
+      "TimeoutSecondsPath": "$.input.n",
+      "Type": "Task",
+    },
+    "1__{Resource: "arn:aws:states:::states:startExecution.waitForTaskToken", Pa": {
+      "Comment": "hullo again",
+      "HeartbeatSecondsPath": "$.heap27",
+      "Next": "16__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(i",
+      "Parameters": {
+        "Input": {
+          "token.$": "$$.Task.Token",
+          "value": 1,
+        },
+        "StateMachineArn": "__REPLACED_ARN",
+      },
+      "Resource": "arn:aws:states:::states:startExecution.waitForTaskToken",
+      "ResultPath": "$.heap28",
+      "TimeoutSecondsPath": "$.input.n",
+      "Type": "Task",
+    },
+    "1__{Resource: trueFunc.resource.functionArn, Parameters: input, Comment: "h": {
+      "Comment": "hullo",
+      "HeartbeatSeconds": 10,
+      "InputPath": "$.heap20",
+      "Next": "11__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(i",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap21",
+      "Retry": [
+        {
+          "ErrorEquals": [
+            "SomeError",
+          ],
+        },
+      ],
+      "TimeoutSeconds": 10,
+      "Type": "Task",
+    },
     "3__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
-      "InputPath": "$.heap8",
+      "InputPath": "$.heap12",
       "Next": "4__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
-      "ResultPath": "$.heap9",
+      "ResultPath": "$.heap13",
       "Type": "Pass",
     },
     "4__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
@@ -19783,9 +19919,43 @@ exports[`call $SFN map, foreach, and parallel 1`] = `
           },
         },
       ],
-      "Next": "1__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
-      "ResultPath": "$.heap10",
+      "Next": "5__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
+      "ResultPath": "$.heap14",
       "Type": "Parallel",
+    },
+    "5__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
+      "InputPath": "$.heap14",
+      "Next": "6__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
+      "ResultPath": "$.heap15",
+      "Type": "Pass",
+    },
+    "6__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
+      "Next": "7__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
+      "Parameters": {},
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap16",
+      "Type": "Task",
+    },
+    "7__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
+      "InputPath": "$.heap16",
+      "Next": "8__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
+      "ResultPath": "$.heap17",
+      "Type": "Pass",
+    },
+    "8__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
+      "Next": "9__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in",
+      "Parameters": {
+        "arr.$": "$.input.arr",
+      },
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap18",
+      "Type": "Task",
+    },
+    "9__return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(in": {
+      "InputPath": "$.heap18",
+      "Next": "{Resource: trueFunc.resource.functionArn, Parameters: input, Comment: "hull",
+      "ResultPath": "$.heap19",
+      "Type": "Pass",
     },
     "Initialize Functionless Context": {
       "Next": "await $SFN.forEach(input.arr, function (n))",
@@ -19848,7 +20018,7 @@ exports[`call $SFN map, foreach, and parallel 1`] = `
           },
         },
       },
-      "Next": "return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(input",
+      "Next": "try",
       "Parameters": {
         "fnl_context.$": "$.fnl_context",
         "input.$": "$.input",
@@ -19857,6 +20027,30 @@ exports[`call $SFN map, foreach, and parallel 1`] = `
       "ResultPath": "$.heap2",
       "Type": "Map",
     },
+    "catch__try": {
+      "InputPath": "$.fnl_tmp_0",
+      "Next": "h = err",
+      "ResultPath": "$.err",
+      "Type": "Pass",
+    },
+    "catch__try 1": {
+      "InputPath": "$.fnl_tmp_1",
+      "Next": "j = err",
+      "ResultPath": "$.err__1",
+      "Type": "Pass",
+    },
+    "h = err": {
+      "InputPath": "$.err",
+      "Next": "try 1",
+      "ResultPath": "$.h",
+      "Type": "Pass",
+    },
+    "j = err": {
+      "InputPath": "$.err__1",
+      "Next": "return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(input",
+      "ResultPath": "$.j",
+      "Type": "Pass",
+    },
     "return {a: await $SFN.map([1, 2, 3], function (n)), b: await $SFN.map(input": {
       "Next": "$SFN.map([1, 2, 3], function (n))",
       "Result": [
@@ -19864,7 +20058,37 @@ exports[`call $SFN map, foreach, and parallel 1`] = `
         2,
         3,
       ],
+      "ResultPath": "$.heap9",
+      "Type": "Pass",
+    },
+    "try": {
+      "InputPath": "$.input.n",
+      "Next": "1__try",
+      "ResultPath": "$.heap3",
+      "Type": "Pass",
+    },
+    "try 1": {
+      "InputPath": "$.input.n",
+      "Next": "1__try 1",
       "ResultPath": "$.heap5",
+      "Type": "Pass",
+    },
+    "{Resource: "arn:aws:states:::lambda:invoke.waitForTaskToken", Parameters: {": {
+      "InputPath": "$.input.n",
+      "Next": "1__{Resource: "arn:aws:states:::lambda:invoke.waitForTaskToken", Parameters",
+      "ResultPath": "$.heap23",
+      "Type": "Pass",
+    },
+    "{Resource: "arn:aws:states:::states:startExecution.waitForTaskToken", Param": {
+      "InputPath": "$.input.n",
+      "Next": "1__{Resource: "arn:aws:states:::states:startExecution.waitForTaskToken", Pa",
+      "ResultPath": "$.heap27",
+      "Type": "Pass",
+    },
+    "{Resource: trueFunc.resource.functionArn, Parameters: input, Comment: "hull": {
+      "InputPath": "$.input",
+      "Next": "1__{Resource: trueFunc.resource.functionArn, Parameters: input, Comment: "h",
+      "ResultPath": "$.heap20",
       "Type": "Pass",
     },
   },
@@ -20790,7 +21014,7 @@ exports[`call lambda 1`] = `
                 "FunctionName": "__REPLACED_TOKEN",
                 "Payload.$": "$.obj",
               },
-              "Resource": "__REPLACED_ARN",
+              "Resource": "arn:aws:states:::lambda:invoke",
               "ResultPath": "$.heap12",
               "Type": "Task",
             },

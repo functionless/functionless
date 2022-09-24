@@ -345,6 +345,8 @@ export class ASL {
    */
   private static readonly CatchState: string = "__catch";
 
+  private readonly contextParameter: undefined | ParameterDecl;
+
   constructor(
     readonly scope: Construct,
     readonly role: aws_iam.IRole,
@@ -394,6 +396,8 @@ export class ASL {
     });
 
     const [inputParam, contextParam] = this.decl.parameters;
+
+    this.contextParameter = contextParam;
 
     // get the State Parameters and ASLGraph states to initialize any provided parameters (assignment and binding).
     const [paramInitializer, paramStates] =
@@ -1865,7 +1869,7 @@ export class ASL {
               .map((output) =>
                 ASLGraph.isJsonPath(output)
                   ? "{}"
-                  : ASLGraph.escapeFormatString(output)
+                  : ASLGraph.escapeFormatLiteral(output)
               )
               .join(""),
             ...jsonPaths.map(([, jp]) => jp)
@@ -2265,7 +2269,11 @@ export class ASL {
             prop: PropAssignExpr | SpreadAssignExpr
           ): ASLGraph.LiteralValue | ASLGraph.JsonPath {
             const output = evalExprToJsonPathOrLiteral(prop.expr);
-            return ASLGraph.isJsonPath(output) ? assignValue(output) : output;
+            return ASLGraph.isJsonPath(output) &&
+              // paths at $$ are immutable, it is not necessary to reference their value because it will not change.
+              !output.jsonPath.startsWith("$$.")
+              ? assignValue(output)
+              : output;
           }
         }
       );
@@ -2899,6 +2907,8 @@ export class ASL {
       [`${FUNCTIONLESS_CONTEXT_NAME}.$`]: FUNCTIONLESS_CONTEXT_JSON_PATH,
       ...Object.fromEntries(
         Array.from(variableReferences.values())
+          // the context parameter is resolved by using `$$.*` anywhere in the machine, it never needs to be passed in.
+          .filter((decl) => decl !== this.contextParameter)
           .map((decl) =>
             // assume there is an identifier name if it is in the lexical scope
             this.getDeclarationName(decl as BindingDecl & { name: Identifier })

@@ -13459,6 +13459,12 @@ __f1.kind = "StepFunction";
 __f1.functionlessKind = "StepFunction";
 __f7.kind = "StepFunction.describeExecution";
 __f1.describeExecution = __f7;
+__f9.kind = "StepFunction.sendTaskSuccess";
+__f1.sendTaskSuccess = __f9;
+__f11.kind = "StepFunction.sendTaskFailure";
+__f1.sendTaskFailure = __f11;
+__f13.kind = "StepFunction.sendTaskHeartbeat";
+__f1.sendTaskHeartbeat = __f13;
 var __f1_definition = {};
 __f1_definition.StartAt = "Initialize Functionless Context";
 var __f1_definition_States = {};
@@ -13522,6 +13528,45 @@ function __f3(__0, __1) {
 
     return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
+}function __f10(__0, __1) {
+  return (function() {
+    let function_prewarm_1 = __function_prewarm_1;
+
+    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions); const [taskToken, output] = args; return stepFunctionClient.sendTaskSuccess({ taskToken, output: JSON.stringify(output) }).promise(); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f9() {
+  return (function() {
+    let c = __f10;
+    let preWarmContext = __preWarmContext;
+
+    return (function __computed(...args) { return c(args, preWarmContext); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f12(__0, __1) {
+  return (function() {
+    let function_prewarm_1 = __function_prewarm_1;
+
+    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions); const [taskToken, error, cause] = args; return stepFunctionClient.sendTaskFailure({ taskToken, error, cause }).promise(); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f11() {
+  return (function() {
+    let c = __f12;
+    let preWarmContext = __preWarmContext;
+
+    return (function __computed(...args) { return c(args, preWarmContext); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f14(__0, __1) {
+  return (function() {
+    let function_prewarm_1 = __function_prewarm_1;
+
+    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions); const [token] = args; return stepFunctionClient.sendTaskHeartbeat({ taskToken: token }).promise(); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f13() {
+  return (function() {
+    let c = __f14;
+    let preWarmContext = __preWarmContext;
+
+    return (function __computed(...args) { return c(args, preWarmContext); });;
+  }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
     let sfn = __f1;
@@ -13552,6 +13597,12 @@ __f1.kind = "StepFunction";
 __f1.functionlessKind = "StepFunction";
 __f7.kind = "StepFunction.describeExecution";
 __f1.describeExecution = __f7;
+__f9.kind = "StepFunction.sendTaskSuccess";
+__f1.sendTaskSuccess = __f9;
+__f11.kind = "StepFunction.sendTaskFailure";
+__f1.sendTaskFailure = __f11;
+__f13.kind = "StepFunction.sendTaskHeartbeat";
+__f1.sendTaskHeartbeat = __f13;
 var __f1_definition = {};
 __f1_definition.StartAt = "Initialize Functionless Context";
 var __f1_definition_States = {};
@@ -13644,6 +13695,69 @@ function __f8(__0, __1) {
 function __f7() {
   return function() {
     let c = __f8;
+    let preWarmContext = __preWarmContext;
+    return function __computed(...args) {
+      return c(args, preWarmContext);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f10(__0, __1) {
+  return function() {
+    let function_prewarm_1 = __function_prewarm_1;
+    return async (args, prewarmContext) => {
+      const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions);
+      const [taskToken, output] = args;
+      return stepFunctionClient.sendTaskSuccess({ taskToken, output: JSON.stringify(output) }).promise();
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f9() {
+  return function() {
+    let c = __f10;
+    let preWarmContext = __preWarmContext;
+    return function __computed(...args) {
+      return c(args, preWarmContext);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f12(__0, __1) {
+  return function() {
+    let function_prewarm_1 = __function_prewarm_1;
+    return async (args, prewarmContext) => {
+      const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions);
+      const [taskToken, error, cause] = args;
+      return stepFunctionClient.sendTaskFailure({ taskToken, error, cause }).promise();
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f11() {
+  return function() {
+    let c = __f12;
+    let preWarmContext = __preWarmContext;
+    return function __computed(...args) {
+      return c(args, preWarmContext);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f14(__0, __1) {
+  return function() {
+    let function_prewarm_1 = __function_prewarm_1;
+    return async (args, prewarmContext) => {
+      const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions);
+      const [token] = args;
+      return stepFunctionClient.sendTaskHeartbeat({ taskToken: token }).promise();
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f13() {
+  return function() {
+    let c = __f14;
     let preWarmContext = __preWarmContext;
     return function __computed(...args) {
       return c(args, preWarmContext);
