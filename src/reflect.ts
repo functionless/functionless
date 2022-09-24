@@ -6,12 +6,13 @@ import {
 } from "./declaration";
 import { Err } from "./error";
 import { ErrorCodes, SynthError } from "./error-code";
-import { isFunctionLike, isErr, isNewExpr } from "./guards";
+import { ReferenceExpr } from "./expression";
+import { isFunctionLike, isErr, isNewExpr, isReferenceExpr } from "./guards";
 import { tryResolveReferences } from "./integration";
 import type { FunctionlessNode } from "./node";
 import { parseSExpr } from "./s-expression";
 import { AnyAsyncFunction, AnyFunction } from "./util";
-import { forEachChild } from "./visit";
+import { forEachChild, visitEachChild } from "./visit";
 
 const Global: any = global;
 
@@ -67,12 +68,41 @@ export function reflect<F extends AnyFunction | AnyAsyncFunction>(
     if (!reflectCache.has(astCallback)) {
       reflectCache.set(
         astCallback,
-        parseSExpr(astCallback()) as FunctionLike<F> | Err
+        parseAst(astCallback()) as FunctionLike<F> | Err
       );
     }
     return reflectCache.get(astCallback) as FunctionLike<F> | Err | undefined;
   }
   return undefined;
+}
+
+function parseAst(expr: any): any {
+  const decl = parseSExpr(expr);
+  return visitEachChild(decl, function visit(node): any {
+    if (isReferenceExpr(node)) {
+      return new ReferenceExpr(
+        node.span,
+        node.name,
+        () => resolveSubstitution(node.ref()),
+        node.id,
+        node.referenceId
+      );
+    } else {
+      return visitEachChild(node, visit);
+    }
+  });
+}
+
+const substitutions: WeakMap<any, any> = (Global[
+  Symbol.for("functionless::subs")
+] = Global[Symbol.for("functionless::subs")] ?? new WeakMap());
+
+export function substitute(from: any, to: any) {
+  substitutions.set(from, to);
+}
+
+export function resolveSubstitution(from: any): any {
+  return substitutions.has(from) ? substitutions.get(from) : from;
 }
 
 export interface BoundFunctionComponents<F extends AnyFunction = AnyFunction> {
