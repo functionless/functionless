@@ -663,19 +663,19 @@ runtimeTestSuite("tableStack", (t: any) => {
     }
   );
 
+  type GraphItem = Person;
+  interface TableItem<Type extends string> {
+    pk: `${Type}|${string}`;
+  }
+  interface Person extends TableItem<"Person"> {
+    id: string;
+    name: string;
+  }
+
   test(
     "GraphQL Appsync Resolvers",
     (scope: any, role: aws_iam.IRole) => {
-      type Item = Person;
-      interface TableItem<Type extends string> {
-        pk: `${Type}|${string}`;
-      }
-      interface Person extends TableItem<"Person"> {
-        id: string;
-        name: string;
-      }
-
-      const table = new Table<Item, "pk">(scope, "JsonSecret", {
+      const table = new Table<GraphItem, "pk">(scope, "JsonSecret", {
         partitionKey: {
           name: "pk",
           type: aws_dynamodb.AttributeType.STRING,
@@ -692,10 +692,70 @@ runtimeTestSuite("tableStack", (t: any) => {
             authorizationType: appsync.AuthorizationType.IAM,
           },
         },
+        logConfig: {
+          fieldLogLevel: appsync.FieldLogLevel.ALL,
+        },
       });
 
       api.grantQuery(role);
       api.grantMutation(role);
+      table.resource.grantReadWriteData(role);
+
+      new AppsyncResolver<{ id: string }, Person | undefined>(
+        api,
+        "getPerson",
+        {
+          typeName: "Query",
+          fieldName: "getPerson",
+        },
+        async ($context) =>
+          table.appsync.get({
+            key: {
+              pk: {
+                S: `Person|${$context.arguments.id}`,
+              },
+            },
+          })
+      );
+      new AppsyncResolver<{ ids: string[] }, Person[]>(
+        api,
+        "getPeopleBatch",
+        {
+          typeName: "Query",
+          fieldName: "getPeopleBatch",
+        },
+        async ($context) => {
+          const response = await table.appsync.batchGet({
+            keys: $context.arguments.ids.map((id) => ({
+              pk: {
+                S: `Person|${id}`,
+              },
+            })),
+          });
+          return response.items;
+        }
+      );
+
+      new AppsyncResolver<{ ids: string[] }, Person[]>(
+        api,
+        "getPeopleAtomic",
+        {
+          typeName: "Query",
+          fieldName: "getPeopleAtomic",
+        },
+        async ($context) => {
+          const response = await table.appsync.transactGet(
+            $context.arguments.ids.map((id) => ({
+              key: {
+                pk: {
+                  S: `Person|${id}`,
+                },
+              },
+            }))
+          );
+          return response.items ?? [];
+        }
+      );
 
       new AppsyncResolver<
         {
@@ -764,7 +824,13 @@ runtimeTestSuite("tableStack", (t: any) => {
             })
           );
 
-          return response.items;
+          const get = await table.appsync.transactGet(
+            response.keys!.map((key) => ({
+              key: $util.dynamodb.toMapValues(key),
+            }))
+          );
+
+          return get.items;
         }
       );
 
@@ -827,7 +893,7 @@ runtimeTestSuite("tableStack", (t: any) => {
 
       new AppsyncResolver<
         {
-          id: string[];
+          ids: string[];
         },
         Person[] | null
       >(
@@ -838,8 +904,18 @@ runtimeTestSuite("tableStack", (t: any) => {
           fieldName: "deletePeopleAtomic",
         },
         async ($context) => {
-          const response = await table.appsync.transactWrite(
-            $context.arguments.id.map((id) => ({
+          const get = await table.appsync.transactGet(
+            $context.arguments.ids.map((id) => ({
+              key: {
+                pk: {
+                  S: `Person|${id}`,
+                },
+              },
+            })) ?? []
+          );
+
+          await table.appsync.transactWrite(
+            $context.arguments.ids.map((id) => ({
               operation: "DeleteItem",
               key: {
                 pk: {
@@ -849,15 +925,15 @@ runtimeTestSuite("tableStack", (t: any) => {
             }))
           );
 
-          return response.items;
+          return get.items;
         }
       );
 
       new AppsyncResolver<
         {
-          id: string[];
+          ids: string[];
         },
-        null
+        (Person | null)[]
       >(
         api,
         "deletePeopleBatch",
@@ -866,14 +942,23 @@ runtimeTestSuite("tableStack", (t: any) => {
           fieldName: "deletePeopleBatch",
         },
         async ($context) => {
+          const get = await table.appsync.batchGet({
+            keys: $context.arguments.ids.map((id) => ({
+              pk: {
+                S: `Person|${id}`,
+              },
+            })),
+          });
+
           await table.appsync.batchDelete(
-            $context.arguments.id.map((id) => ({
+            $context.arguments.ids.map((id) => ({
               pk: {
                 S: `Person|${id}`,
               },
             }))
           );
-          return null;
+
+          return get.items;
         }
       );
 
@@ -881,16 +966,47 @@ runtimeTestSuite("tableStack", (t: any) => {
         outputs: {
           graphqlUrl: api.graphqlUrl,
           roleArn: role.roleArn,
+          tableName: table.tableName,
         },
       };
     },
-    async ({
-      graphqlUrl,
-      roleArn,
-    }: {
-      graphqlUrl: string;
-      roleArn: string;
-    }) => {
+    async (
+      {
+        graphqlUrl,
+        roleArn,
+        tableName,
+      }: {
+        graphqlUrl: string;
+        roleArn: string;
+        tableName: string;
+      },
+      clients: RuntimeTestClients
+    ) => {
+      await (async function clearTable() {
+        let response: AWS.DynamoDB.ScanOutput;
+        do {
+          response = await clients.dynamoDB
+            .scan({
+              TableName: tableName,
+              AttributesToGet: ["pk"],
+            })
+            .promise();
+          if (response.Items?.length) {
+            await clients.dynamoDB
+              .batchWriteItem({
+                RequestItems: {
+                  [tableName]: response.Items.map((item) => ({
+                    DeleteRequest: {
+                      Key: item,
+                    },
+                  })),
+                },
+              })
+              .promise();
+          }
+        } while (response.Items?.length);
+      })();
+
       const role = await getTestRole(roleArn);
 
       const client = new AWSAppSyncClient({
@@ -910,16 +1026,202 @@ runtimeTestSuite("tableStack", (t: any) => {
       const addPerson = gql`
         mutation {
           addPerson(name: "sam") {
+            pk
             id
             name
           }
         }
       `;
-      const addPersonResponse = await client.mutate({
-        mutation: addPerson,
+      const addPersonResponse: { data: { addPerson: Person } } =
+        await client.mutate({
+          mutation: addPerson,
+        });
+
+      expect(addPersonResponse.data.addPerson.pk).toEqual(
+        `Person|${addPersonResponse.data.addPerson.id}`
+      );
+      expect(addPersonResponse.data.addPerson.name).toEqual("sam");
+
+      const addPeopleBatch = gql`
+        mutation {
+          addPeopleBatch(names: ["sam1", "sam2"]) {
+            pk
+            id
+            name
+          }
+        }
+      `;
+
+      const addPeopleBatchResponse: { data: { addPeopleBatch: Person[] } } =
+        await client.mutate({
+          mutation: addPeopleBatch,
+        });
+      addPeopleBatchResponse.data.addPeopleBatch.forEach((person, i) => {
+        expect(person.pk).toEqual(`Person|${person.id}`);
+        expect(person.name).toEqual(`sam${i + 1}`);
       });
 
-      console.log(addPersonResponse);
+      const addPeopleAtomic = gql`
+        mutation {
+          addPeopleAtomic(names: ["tyler1", "tyler2"]) {
+            pk
+            id
+            name
+          }
+        }
+      `;
+
+      const addPeopleAtomicResponse: { data: { addPeopleAtomic: Person[] } } =
+        await client.mutate({
+          mutation: addPeopleAtomic,
+        });
+      addPeopleAtomicResponse.data.addPeopleAtomic.forEach((person, i) => {
+        expect(person.pk).toEqual(`Person|${person.id}`);
+        expect(person.name).toEqual(`tyler${i + 1}`);
+      });
+
+      const getPerson = gql`
+        query getPerson($id: ID!) {
+          getPerson(id: $id) {
+            pk
+            id
+            name
+          }
+        }
+      `;
+
+      const getPersonResponse: { data: { getPerson: Person } } =
+        await client.query({
+          query: getPerson,
+          variables: {
+            id: addPersonResponse.data.addPerson.id,
+          },
+        });
+      expect(getPersonResponse.data.getPerson).toEqual(
+        addPersonResponse.data.addPerson
+      );
+
+      const getPeopleAtomic = gql`
+        query getPeopleAtomic($ids: [ID!]!) {
+          getPeopleAtomic(ids: $ids) {
+            pk
+            id
+            name
+          }
+        }
+      `;
+
+      const getPeopleAtomicResponse: { data: { getPeopleAtomic: Person[] } } =
+        await client.query({
+          query: getPeopleAtomic,
+          variables: {
+            ids: [
+              addPeopleAtomicResponse.data.addPeopleAtomic[0]?.id,
+              addPeopleAtomicResponse.data.addPeopleAtomic[1]?.id,
+            ],
+          },
+        });
+      expect(getPeopleAtomicResponse.data.getPeopleAtomic).toEqual(
+        addPeopleAtomicResponse.data.addPeopleAtomic
+      );
+
+      const getPeopleBatch = gql`
+        query getPeopleBatch($ids: [ID!]!) {
+          getPeopleBatch(ids: $ids) {
+            pk
+            id
+            name
+          }
+        }
+      `;
+
+      const getPeopleBatchResponse: { data: { getPeopleBatch: Person[] } } =
+        await client.query({
+          query: getPeopleBatch,
+          variables: {
+            ids: [
+              addPeopleBatchResponse.data.addPeopleBatch[0]?.id,
+              addPeopleBatchResponse.data.addPeopleBatch[1]?.id,
+            ],
+          },
+        });
+      expect(getPeopleBatchResponse.data.getPeopleBatch).toEqual(
+        addPeopleBatchResponse.data.addPeopleBatch
+      );
+
+      const deletePerson = gql`
+        mutation deletePerson($id: ID!) {
+          deletePerson(id: $id) {
+            pk
+            id
+            name
+          }
+        }
+      `;
+
+      const deletePersonResponse: { data: { deletePerson: Person } } =
+        await client.mutate({
+          mutation: deletePerson,
+          variables: {
+            id: getPersonResponse.data.getPerson.id,
+          },
+        });
+
+      expect(deletePersonResponse.data.deletePerson).toEqual(
+        getPersonResponse.data.getPerson
+      );
+
+      const deletePeopleAtomic = gql`
+        mutation deletePeopleAtomic($ids: [ID!]!) {
+          deletePeopleAtomic(ids: $ids) {
+            pk
+            id
+            name
+          }
+        }
+      `;
+
+      const deletePeopleAtomicResponse: {
+        data: { deletePeopleAtomic: Person[] };
+      } = await client.mutate({
+        mutation: deletePeopleAtomic,
+        variables: {
+          ids: [
+            getPeopleAtomicResponse.data.getPeopleAtomic[0]?.id,
+            getPeopleAtomicResponse.data.getPeopleAtomic[1]?.id,
+          ],
+        },
+      });
+
+      expect(deletePeopleAtomicResponse.data.deletePeopleAtomic).toEqual(
+        getPeopleAtomicResponse.data.getPeopleAtomic
+      );
+
+      const deletePeopleBatch = gql`
+        mutation deletePeopleBatch($ids: [ID!]!) {
+          deletePeopleBatch(ids: $ids) {
+            pk
+            id
+            name
+          }
+        }
+      `;
+
+      const deletePeopleBatchResponse: {
+        data: { deletePeopleBatch: Person[] };
+      } = await client.mutate({
+        mutation: deletePeopleBatch,
+        variables: {
+          ids: [
+            getPeopleBatchResponse.data.getPeopleBatch[0]?.id,
+            getPeopleBatchResponse.data.getPeopleBatch[1]?.id,
+          ],
+        },
+      });
+
+      expect(deletePeopleBatchResponse.data.deletePeopleBatch).toEqual(
+        getPeopleBatchResponse.data.getPeopleBatch
+      );
     }
   );
 });

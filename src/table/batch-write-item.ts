@@ -143,12 +143,12 @@ export type BatchDeleteItemAppsync<
 >(
   keys: Key[]
 ) => Promise<{
-  data: TableKey<
+  data: (TableKey<
     Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>,
     PartitionKey,
     RangeKey,
     JsonFormat.Document
-  >[];
+  > | null)[];
   unprocessedKeys: AttributeKeyToObject<Key>[];
 }>;
 
@@ -168,15 +168,14 @@ export function createBatchDeleteItemAppsyncIntegration<
         const request = vtl.var(
           '{"operation": "BatchDeleteItem", "version": "2018-05-29", "tables": {}}'
         );
-        vtl.qr(`${request}.tables.put('${table.tableName}', ${keys})`);
+        vtl.qr(`${request}.tables.put("${table.tableName}", ${keys})`);
         return vtl.json(request);
       },
       result: (result) => ({
         returnVariable: "$batch_delete_item_response",
         template: `#set($batch_delete_item_response = {})
-#set($batch_delete_item_response.data = ${result}.get('${table.tableName}')
-#set($batch_delete_item_response.unprocessedKeys = ${result}.unprocessedKeys')
-`,
+#set($batch_delete_item_response.data = ${result}.data.get("${table.tableName}"))
+#set($batch_delete_item_response.unprocessedKeys = ${result}.unprocessedKeys)`,
       }),
     },
   });
@@ -224,8 +223,8 @@ export function createBatchPutItemAppsyncIntegration<
       result: (result) => ({
         returnVariable: "$batch_put_item_response",
         template: `#set($batch_put_item_response = {})
-#set($batch_put_item_response.items = ${result}.data.get('${table.tableName}')
-#set($batch_put_item_response.unprocessedItems = ${result}.unprocessedItems.get('${table.tableName}')`,
+#set($batch_put_item_response.items = ${result}.data.get('${table.tableName}'))
+#set($batch_put_item_response.unprocessedItems = ${result}.unprocessedItems.get('${table.tableName}'))`,
       }),
     },
   });

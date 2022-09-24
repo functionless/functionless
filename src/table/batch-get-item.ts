@@ -4,6 +4,7 @@ import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
 import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import {
+  addIfDefined,
   createDynamoIntegration,
   makeAppSyncTableIntegration,
 } from "./integration";
@@ -112,12 +113,10 @@ export type BatchGetItemAppsync<
   RangeKey extends keyof Item | undefined
 > = <
   Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
->(
-  input: {
-    key: Key;
-    consistentRead?: boolean;
-  }[]
-) => Promise<{
+>(input: {
+  keys: Key[];
+  consistentRead?: boolean;
+}) => Promise<{
   items: Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>[];
   unprocessedKeys: Key[];
 }>;
@@ -131,22 +130,27 @@ export function createBatchGetItemAppsyncIntegration<
 ): BatchGetItemAppsync<Item, PartitionKey, RangeKey> {
   return makeAppSyncTableIntegration<
     BatchGetItemAppsync<Item, PartitionKey, RangeKey>
-  >(table, "Table.getItem.appsync", {
+  >(table, "Table.batchGetItem.appsync", {
     appSyncVtl: {
       request(call, vtl) {
         const input = vtl.eval(call.args[0]?.expr);
         const request = vtl.var(
           '{"operation": "BatchGetItem", "version": "2018-05-29", "tables": {}}'
         );
-        vtl.qr(
-          `${request}.tables.put('${table.tableName}', { "keys": ${input} })`
-        );
+        const tableRequest = vtl.var("{}");
+        vtl.qr(`${tableRequest}.put("keys", ${input}.keys)`);
+        addIfDefined(vtl, input, tableRequest, "consistentRead");
+
+        vtl.qr(`${request}.tables.put('${table.tableName}', ${tableRequest})`);
+        addIfDefined(vtl, input, tableRequest, "consistentRead");
 
         return vtl.json(request);
       },
       result: (result) => ({
-        returnVariable: "items",
-        template: `#set($items = ${result}.get('${table.tableName}')`,
+        returnVariable: "$batch_get_items_response",
+        template: `#set($batch_get_items_response = {})
+#set($batch_get_items_response.items = ${result}.data.get("${table.tableName}"))
+#set($batch_get_items_response.unprocessedKeys = ${result}.unprocessedKeys)`,
       }),
     },
   });

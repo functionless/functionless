@@ -4,6 +4,7 @@ schema {
 }
 
 type Person {
+  pk: ID!
   id: ID!
   name: String!
 }

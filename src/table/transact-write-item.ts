@@ -2,7 +2,6 @@ import { aws_dynamodb } from "aws-cdk-lib";
 import { PromiseResult } from "aws-sdk/lib/request";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { TableKey } from "typesafe-dynamodb/lib/key";
-import { Narrow } from "typesafe-dynamodb/lib/narrow";
 import { ASLGraph } from "../asl";
 import { DynamoDBAppsyncExpression } from "./appsync";
 import {
@@ -237,22 +236,6 @@ export function createTransactWriteItemsIntegration<
   );
 }
 
-/**
- * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
- */
-export type TransactWriteItemsAppsync<
-  Item extends object,
-  PartitionKey extends keyof Item,
-  RangeKey extends keyof Item | undefined
-> = <
-  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
->(
-  transactItems: TransactWriteItemAppsync<Item, PartitionKey, RangeKey, Key>[]
-) => Promise<{
-  items: Narrow<Item, AttributeKeyToObject<Key>, JsonFormat.Document>[] | null;
-  cancellationReasons: { type: string; message: string }[] | null;
-}>;
-
 export type TransactWriteItemAppsync<
   Item extends object,
   PartitionKey extends keyof Item,
@@ -313,6 +296,22 @@ export interface TransactConditionCheckAppsync<
   condition?: DynamoDBAppsyncExpression;
 }
 
+/**
+ * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
+ */
+export type TransactWriteItemsAppsync<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined
+> = <
+  Key extends TableKey<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>
+>(
+  transactItems: TransactWriteItemAppsync<Item, PartitionKey, RangeKey, Key>[]
+) => Promise<{
+  keys: AttributeKeyToObject<Key>[] | null;
+  cancellationReasons: { type: string; message: string }[] | null;
+}>;
+
 export function createTransactWriteItemsAppsyncIntegration<
   Item extends object,
   PartitionKey extends keyof Item,
@@ -331,7 +330,7 @@ export function createTransactWriteItemsAppsyncIntegration<
         );
         vtl.add(
           `#foreach($item in ${transactItems})`,
-          `#set($item.table = '${table.tableName}')`,
+          `#set($item.table = "${table.tableName}")`,
           "#end"
         );
         vtl.qr(`${request}.put('transactItems', ${transactItems})`);
