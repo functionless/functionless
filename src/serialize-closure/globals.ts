@@ -1,3 +1,5 @@
+// @ts-nocheck
+
 // sourced from the lib.*.d.ts files
 import module from "module";
 import globals from "./globals.json";
@@ -5,11 +7,11 @@ import { callExpr, idExpr, propAccessExpr, stringExpr } from "./util";
 
 export const Globals = new Map<any, () => string>();
 
-for (const valueName of globals) {
-  if (valueName in global) {
-    registerValue(global[valueName as keyof typeof global], idExpr(valueName));
-  }
-}
+// for (const valueName of globals) {
+//   if (valueName in global) {
+//     registerValue(global[valueName as keyof typeof global], idExpr(valueName));
+//   }
+// }
 
 const ignore = [
   "_http_agent",
@@ -79,23 +81,23 @@ const ignore = [
   // "zlib",
 ];
 
-for (const moduleName of module.builtinModules) {
-  if (ignore.includes(moduleName) || moduleName.startsWith("_")) {
-    continue;
-  }
-  // eslint-disable-next-line @typescript-eslint/no-require-imports
-  const module = require(moduleName);
-  const requireModule = callExpr(idExpr("require"), [stringExpr(moduleName)]);
-  registerValue(module, requireModule);
-  registerOwnProperties(
-    module,
-    requireModule,
-    true,
-    // skip crypto.DEFAULT_ENCODING to avoid complaints about deprecated APIs
-    // TODO: is this a good tenet? Only support non-deprecated APIs?
-    moduleName === "crypto" ? ["DEFAULT_ENCODING"] : []
-  );
-}
+// for (const moduleName of module.builtinModules) {
+//   if (ignore.includes(moduleName) || moduleName.startsWith("_")) {
+//     continue;
+//   }
+//   // eslint-disable-next-line @typescript-eslint/no-require-imports
+//   const module = require(moduleName);
+//   const requireModule = callExpr(idExpr("require"), [stringExpr(moduleName)]);
+//   registerValue(module, requireModule);
+//   registerOwnProperties(
+//     module,
+//     requireModule,
+//     true,
+//     // skip crypto.DEFAULT_ENCODING to avoid complaints about deprecated APIs
+//     // TODO: is this a good tenet? Only support non-deprecated APIs?
+//     moduleName === "crypto" ? ["DEFAULT_ENCODING"] : []
+//   );
+// }
 
 function registerValue(value: any, expr: string) {
   if (Globals.has(value)) {

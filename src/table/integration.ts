@@ -71,7 +71,7 @@ export function createDynamoIntegration<
   return makeIntegration({
     kind: operationName,
     native: {
-      bind: (func) => grantPermissions(func.resource),
+      bind: (func) => grantPermissions(func),
       preWarm: (context) => {
         context.getOrInit(
           (format === JsonFormat.Document
