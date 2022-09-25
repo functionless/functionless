@@ -11,6 +11,9 @@ import {
 import { ITable } from "./table";
 import { AttributeKeyToObject } from "./util";
 
+/**
+ *
+ */
 export interface BatchGetItemInput<
   Item extends object,
   PartitionKey extends keyof Item,
@@ -34,6 +37,16 @@ export interface BatchGetItemOutput<
   Items?: FormatObject<Narrow<Item, Keys, Format>, Format>[];
 }
 
+/**
+ * The signature of the {@link BatchGetItem} API.
+ *
+ * @param request the input {@link BatchGetItemInput} request payload
+ * @returns a {@link BatchGetItemOutput} response Promise
+ * @tparam {@link Item} - the type of data in the DynamoDB Table
+ * @tparam {@link PartitionKey} - the name of the Partition Key field
+ * @tparam {@link RangeKey} - the name of the Range Key field if specified, otherwise undefined
+ * @tparam {@link Format} - the data format of the values ({@link JsonFormat.AttributeValue} or {@link JsonFormat.Document})
+ */
 export type BatchGetItem<
   Item extends object,
   PartitionKey extends keyof Item,
@@ -43,6 +56,16 @@ export type BatchGetItem<
   request: BatchGetItemInput<Item, PartitionKey, RangeKey, Keys, Format>
 ) => Promise<BatchGetItemOutput<Item, PartitionKey, RangeKey, Keys, Format>>;
 
+/**
+ * Creates an Integration for the BatchGetItem DynamoDB API.
+ *
+ * @param table DynamoDB Table the integration will interact with
+ * @param format the data format of the values ({@link JsonFormat.AttributeValue} or {@link JsonFormat.Document})
+ * @tparam {@link Item} - the type of data in the DynamoDB Table
+ * @tparam {@link PartitionKey} - the name of the Partition Key field
+ * @tparam {@link RangeKey} - the name of the Range Key field if specified, otherwise undefined
+ * @tparam {@link Format} - the data format of the values ({@link JsonFormat.AttributeValue} or {@link JsonFormat.Document})
+ */
 export function createBatchGetItemIntegration<
   Item extends object,
   PartitionKey extends keyof Item,
@@ -106,6 +129,11 @@ export function createBatchGetItemIntegration<
 
 /**
  * @see https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html#aws-appsync-resolver-mapping-template-reference-dynamodb-getitem
+ *
+ * @tparam {@link Item} - the type of data in the DynamoDB Table
+ * @tparam {@link PartitionKey} - the name of the Partition Key field
+ * @tparam {@link RangeKey} - the name of the Range Key field if specified, otherwise undefined
+ * @tparam {@link Format} - the data format of the values ({@link JsonFormat.AttributeValue} or {@link JsonFormat.Document})
  */
 export type BatchGetItemAppsync<
   Item extends object,
@@ -121,6 +149,14 @@ export type BatchGetItemAppsync<
   unprocessedKeys: Key[];
 }>;
 
+/**
+ * Creates an Integration for the BatchGetItem DynamoDB API within an AWS Appsync Resolver.
+ *
+ * @param table DynamoDB Table the integration will interact with.
+ * @tparam {@link Item} - the type of data in the DynamoDB Table
+ * @tparam {@link PartitionKey} - the name of the Partition Key field
+ * @tparam {@link RangeKey} - the name of the Range Key field if specified, otherwise undefined
+ */
 export function createBatchGetItemAppsyncIntegration<
   Item extends object,
   PartitionKey extends keyof Item,
