@@ -58,6 +58,8 @@ const FunctionlessSalt = "8269d1a8";
  *
  * All Function Declarations, Expressions and Arrow Expressions are decorated with
  * the `register` function which attaches its AST as a property.
+ *
+ * @deprecated - ast-reflection now uses the sequence commands below.
  */
 export const RegisterFunctionName = `register_${FunctionlessSalt}`;
 
@@ -88,13 +90,45 @@ export const RegisterFunctionName = `register_${FunctionlessSalt}`;
  * are added to the bound Function.
  *
  * If `<expr>` is not a Function, then the call is proxied without modification.
+ *
+ * @deprecated - ast-reflection now uses the sequence commands below.
  */
 export const BindFunctionName = `bind_${FunctionlessSalt}`;
 
-export const RegisterCommand = `REGISTER_${FunctionlessSalt}`;
-export const RegisterRefCommand = `REGISTER_REF_${FunctionlessSalt}`;
-export const BindCommand = `BIND_${FunctionlessSalt}`;
-export const ProxyCommand = `PROXY_${FunctionlessSalt}`;
+/**
+ * AST-Reflection injected s-expression commands.
+ *
+ * (stash=[COMMAND], arguments...)
+ */
+// (stash=REGISTER,stash=func,stash[]=ast,stash)
+export const RegisterCommand = "REGISTER";
+// (stash=REGISTER_REF,stash[]=ast)
+export const RegisterRefCommand = "REGISTER_REF";
+/**
+ * (stash="BIND",
+ *    stash={ args: args, self: this, func: func },
+ *    stash={ f: stash.func.bind(stash.self, ...stash.args), ...stash },
+ *    typeof stash.f === "function" && (
+ *        stash.f[Symbol.for("functionless:BoundThis")] = stash.self,
+ *        stash.f[Symbol.for("functionless:BoundArgs")] = stash.args,
+ *        stash.f[Symbol.for("functionless:TargetFunction")] = stash.func
+ *    ),
+ *    stash
+ * )
+ */
+export const BindCommand = "BIND";
+/**
+ * (stash="PROXY",
+ *    stash={ args }, // ensure the args are only evaluated once
+ *    stash={ proxy: new clss(...stash.args), ...stash }, // create the proxy
+ *    (globalThis.util.types.isProxy(stash.proxy) &&
+ *       (globalThis.proxies = globalThis.proxies ?? new globalThis.WeakMap())
+ *          .set(stash.proxy, stash.args)
+ *    ),
+ *    stash.proxy
+ * )
+ */
+export const ProxyCommand = "PROXY";
 
 /**
  * TypeScript Transformer which transforms functionless functions, such as `AppsyncResolver`,

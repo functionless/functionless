@@ -1068,7 +1068,7 @@ export async function serialize(
                           : undefined;
 
                       // Register - retrieve the value from the second position's assignment.
-                      // ("REGISTER", stash=value, stash[Symbol.AST]=ast, stash)
+                      // (stash="REGISTER", stash=value, stash[Symbol.AST]=ast, stash)
                       // => value
                       if (commandFlag === RegisterCommand) {
                         if (
@@ -1085,22 +1085,22 @@ export async function serialize(
                         return eraseBindAndRegister(entry1.right);
                       } else if (commandFlag === RegisterRefCommand) {
                         // Register Ref - remove
-                        // ("REGISTER_REF", ref[Symbol.AST]=ast)
+                        // (stash="REGISTER_REF", ref[Symbol.AST]=ast)
                         // => undefined
                         // TODO support returning no node.
                         return ts.factory.createIdentifier("undefined");
                       } else if (commandFlag === BindCommand) {
                         /**
                          * Bind -
-                         * ("BIND",
-                         *    stash={ args: args, this: this, func: func },
+                         * (stash="BIND",
+                         *    stash={ args: args, self: this, func: func },
                          *    stash={ f: stash.func.bind(stash.self, ...stash.args), ...stash },
                          *    typeof stash.f === "function" && (
                          *        stash.f[Symbol.for("functionless:BoundThis")] = stash.self,
                          *        stash.f[Symbol.for("functionless:BoundArgs")] = stash.args,
                          *        stash.f[Symbol.for("functionless:TargetFunction")] = stash.func
                          *    ),
-                         *    stash.func
+                         *    stash
                          * )
                          * => func.bind(this, ...args)
                          */
@@ -1151,13 +1151,14 @@ export async function serialize(
                         );
                       } else if (commandFlag === ProxyCommand) {
                         /**
-                         * ("PROXY",
+                         * (stash="PROXY",
                          *    stash={ args }, // ensure the args are only evaluated once
                          *    stash={ proxy: new clss(...stash.args), ...stash }, // create the proxy
-                         *      (globalThis.util.types.isProxy(stash.proxy) &&
-                         *          (globalThis.proxies = globalThis.proxies ?? new globalThis.WeakMap()).set(stash.proxy, stash.args))
+                         *    (globalThis.util.types.isProxy(stash.proxy) &&
+                         *       (globalThis.proxies = globalThis.proxies ?? new globalThis.WeakMap())
+                         *          .set(stash.proxy, stash.args)
                          *    ),
-                         *    stash.proxy
+                         *    proxy
                          * )
                          * TODO - rebuild proxy
                          */
