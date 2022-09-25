@@ -1,28 +1,62 @@
 import { aws_dynamodb } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb";
-import { BatchGetItem, createBatchGetItemIntegration } from "./batch-get-item";
+import {
+  BatchGetItem,
+  BatchGetItemInput,
+  BatchGetItemOutput,
+  createBatchGetItemIntegration,
+} from "./batch-get-item";
 import {
   BatchWriteItem,
   createBatchWriteItemIntegration,
 } from "./batch-write-item";
-import { createDeleteItemIntegration, DeleteItem } from "./delete-item";
-import { createGetItemIntegration, GetItem } from "./get-item";
-import { createPutItemIntegration, PutItem } from "./put-item";
+import {
+  createDeleteItemIntegration,
+  DeleteItem,
+  DeleteItemReturnValues,
+  DeleteItemInput,
+  DeleteItemOutput,
+} from "./delete-item";
+import {
+  createGetItemIntegration,
+  GetItem,
+  GetItemInput,
+  GetItemOutput,
+} from "./get-item";
+import {
+  createPutItemIntegration,
+  PutItem,
+  PutItemInput,
+  PutItemOutput,
+} from "./put-item";
 import { createQueryIntegration, Query } from "./query";
+import { ReturnValues } from "./return-value";
 import { createScanIntegration, Scan } from "./scan";
 import type { Table } from "./table";
 import {
   createTransactGetItemsIntegration,
   TransactGetItems,
+  TransactGetItem,
+  Get,
 } from "./transact-get-item";
 import {
   createTransactWriteItemsIntegration,
   TransactWriteItems,
+  TransactWriteItemsInput,
+  TransactWriteItemsOutput,
+  ConditionCheck,
+  Update,
+  Put,
+  Delete,
 } from "./transact-write-item";
-import { createUpdateItemIntegration, UpdateItem } from "./update-item";
+import {
+  createUpdateItemIntegration,
+  UpdateItem,
+  UpdateItemInput,
+  UpdateItemOutput,
+} from "./update-item";
 
 declare const a: AWS.DynamoDB;
-
 /**
  * The Runtime API for a DynamoDB {@link Table}.
  *
@@ -126,9 +160,218 @@ export interface TableDocumentApi<
    * });
    * ```
    *
-   * @see https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html
+   * @see {@link GetItem}
+   * @see {@link GetItemInput}
+   * @see {@link GetItemOutput}
+   * @see [AWS API Reference](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_GetItem.html)
    */
   readonly get: GetItem<Item, PartitionKey, RangeKey, JsonFormat.Document>;
+
+  /**
+   * Creates a new item, or replaces an old item with a new item. If an item that
+   * has the same primary key as the new item already exists in the specified table,
+   * the new item completely replaces the existing item.
+   *
+   * ```ts
+   * await table.put({
+   *   Item: newItem
+   * });
+   * ```
+   *
+   * You can perform a conditional put operation (add a new item if one with the
+   * specified primary key doesn't exist), or replace an existing item if it has certain
+   * attribute values.
+   *
+   * ```ts
+   * await table.put({
+   *   Item: newItem,
+   *   ConditionExpression: "attribute = value"
+   * });
+   * ```
+   *
+   * You can return the item's attribute values in the same operation, using the
+   * {@link ReturnValues} parameter.
+   * ```ts
+   * await table.put({
+   *   Item: newItem,
+   *   ReturnValues: "ALL_OLD"
+   * });
+   * ```
+   *
+   * When you add an item, the primary key attributes are the only required attributes.
+   * Attribute values cannot be `null`. Empty String and Binary attribute values are
+   * allowed. Attribute values of type String and Binary must have a length greater than
+   * zero if the attribute is used as a key attribute for a table or index. Set type
+   * attributes cannot be empty. Invalid Requests with empty values will be rejected with
+   * a `ValidationException` exception.
+   *
+   * To prevent a new item from replacing an existing item, use a conditional expression
+   * that contains the `attribute_not_exists` function with the name of the attribute being
+   * used as the partition key for the table. Since every record must contain that attribute,
+   * the attribute_not_exists function will only succeed if no matching item exists.
+   *
+   * ```ts
+   * await table.put({
+   *   Item: newItem,
+   *   // ensure the item doesn't already exist
+   *   ConditionExpression: "attribute_not_exists(pk)"
+   * });
+   * ```
+   *
+   * @see {@link PutItem}
+   * @see {@link PutItemInput}
+   * @see {@link PutItemOutput}
+   * @see [PutItem API Reference](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_PutItem.html)
+   * @see [Condition Expressions Documentation](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
+   */
+  readonly put: PutItem<Item, JsonFormat.Document>;
+
+  /**
+   * Edits an existing item's attributes, or adds a new item to the table if it does not
+   * already exist. You can put, delete, or add attribute values.
+   * ```ts
+   * await table.update({
+   *   Key: key,
+   *   UpdateExpression: "SET attribute = <val>"
+   * })
+   * ```
+   *
+   * Not all names and values are supported in an `UpdateExpression`, such as reserved
+   * words, keys with complex names and complex values. To alias names, specify it in the
+   * `ExpressionAttributeNames` map with a name prefixed by a `#`. Then, use the alias
+   * in your `UpdateExpression`
+   * ```ts
+   * await table.update({
+   *   Key: key,
+   *   UpdateExpression: "SET #attribute = <val>",
+   *   ExpressionAttributeNames: {
+   *     "#attribute": "special name"
+   *   }
+   * })
+   * ```
+   *
+   * Similarly, to alias a value for use in an `UpdateExpression`, provide  value in the
+   * `ExpressionAttributeValues` map prefixed with `:`. Then, use the alias in your
+   * `UpdateExpression`.
+   * ```ts
+   * await table.update({
+   *   Key: key,
+   *   UpdateExpression: "SET attribute = :val",
+   *   ExpressionAttributeValues: {
+   *     ":val": "my value"
+   *   }
+   * })
+   * ```
+   *
+   * You can also perform a conditional update on an existing item (insert a new attribute
+   * name-value pair if it doesn't exist, or replace an existing name-value pair if it has
+   * certain expected attribute values).
+   *
+   * ```ts
+   * await table.update({
+   *   Key: key,
+   *   UpdateExpression: "SET attribute = <new-val>",
+   *   ConditionExpression: "attribute = <old-val>"
+   * })
+   * ```
+   *
+   * You can also return the item's attribute values in the same `update` operation using
+   * the {@link ReturnValues} parameter.
+   * ```ts
+   * const response = await table.update({
+   *   Key: key,
+   *   UpdateExpression: "SET attribute = <new-val>",
+   *   ReturnValues: "ALL_OLD"
+   * });
+   *
+   * response.Attributes; // attributes of the old item (its state prior to this `update` request).
+   * ```
+   *
+   * @see {@link UpdateItem}
+   * @see {@link UpdateItemInput}
+   * @see {@link UpdateItemOutput}
+   * @see [Update Expressions Documentation](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.UpdateExpressions.html)
+   * @see [Condition Expressions Documentation](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
+   * @see [UpdateItem API Reference](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_UpdateItem.html)
+   */
+  readonly update: UpdateItem<
+    Item,
+    PartitionKey,
+    RangeKey,
+    JsonFormat.Document
+  >;
+
+  /**
+   * Deletes a single item in a table by primary key.
+   *
+   * ```ts
+   * await table.delete({
+   *   Key: {
+   *     pk: "partition key"
+   *   }
+   * });
+   * ```
+   *
+   * You can perform a conditional delete operation that deletes the item if it has an expected
+   * attribute value.
+   * ```ts
+   * await table.delete({
+   *   Key: key,
+   *   ConditionExpression: "attribute = <val>"
+   * });
+   * ```
+   *
+   * Not all names and values are supported in a `ConditionExpression`, such as reserved
+   * words, keys with complex names and complex values. To alias names, specify it in the
+   * `ExpressionAttributeNames` map with a name prefixed by a `#`. Then, use the alias
+   * in your `ConditionExpression`
+   * ```ts
+   * await table.delete({
+   *   Key: key,
+   *   ConditionExpression: "$attribute = <val>",
+   *   ExpressionAttributeNames: {
+   *     "#attribute": "special name"
+   *   }
+   * })
+   * ```
+   *
+   * Similarly, to alias a value for use in an `ConditionExpression`, provide  value in the
+   * `ExpressionAttributeValues` map prefixed with `:`. Then, use the alias in your
+   * `ConditionExpression`.
+   * ```ts
+   * await table.delete({
+   *   Key: key,
+   *   ConditionExpression: "attribute = :val",
+   *   ExpressionAttributeValues: {
+   *     ":val": "my value"
+   *   }
+   * })
+   * ```
+   *
+   * In addition to deleting an item, you can also return the item's attribute values in the same
+   * operation, using the `ReturnValues` parameter. Unless you specify conditions, the DeleteItem is
+   * an idempotent operation; running it multiple times on the same item or attribute does not
+   * result in an error response. Conditional deletes are useful for deleting items only if specific
+   * conditions are met. If those conditions are met, DynamoDB performs the delete. Otherwise, the
+   * item is not deleted.
+   *
+   * @see {@link DeleteItem}
+   * @see {@link DeleteItemInput}
+   * @see {@link DeleteItemOutput}
+   * @see {@link DeleteItemReturnValues}
+   * @see [Condition Expressions Documentation](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
+   * @see [DeleteItem API Reference](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_DeleteItem.html)
+   */
+  readonly delete: DeleteItem<
+    Item,
+    PartitionKey,
+    RangeKey,
+    JsonFormat.Document
+  >;
+
+  readonly query: Query<Item, JsonFormat.Document>;
+
+  readonly scan: Scan<Item, JsonFormat.Document>;
 
   /**
    * The `batchGet` operation returns a list of items for each of the given primary
@@ -166,32 +409,12 @@ export interface TableDocumentApi<
    * }
    * ```
    *
-   * @see https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html
+   * @see {@link BatchGetItem}
+   * @see {@link BatchGetItemInput}
+   * @see {@link BatchGetItemOutput}
+   * @see [BatchGetItem API Reference](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_BatchGetItem.html)
    */
   readonly batchGet: BatchGetItem<
-    Item,
-    PartitionKey,
-    RangeKey,
-    JsonFormat.Document
-  >;
-
-  readonly transactGet: TransactGetItems<
-    Item,
-    PartitionKey,
-    RangeKey,
-    JsonFormat.Document
-  >;
-
-  readonly transactWrite: TransactWriteItems<
-    Item,
-    PartitionKey,
-    RangeKey,
-    JsonFormat.Document
-  >;
-
-  readonly put: PutItem<Item, JsonFormat.Document>;
-
-  readonly update: UpdateItem<
     Item,
     PartitionKey,
     RangeKey,
@@ -205,16 +428,133 @@ export interface TableDocumentApi<
     JsonFormat.Document
   >;
 
-  readonly delete: DeleteItem<
+  /**
+   * `transactGet` is a synchronous operation that atomically retrieves multiple items
+   * from a table. A `transactGet` call can contain up to `25` {@link TransactGetItem} objects,
+   * each of which contains a {@link Get} structure that specifies an item to retrieve from the
+   * table.
+   *
+   * ```ts
+   * const response = await table.transactGet({
+   *   TransactItems: [
+   *     {
+   *       Get: {
+   *         Key: {
+   *           pk: "partition key",
+   *           sk: "sort key",
+   *         },
+   *       },
+   *     },
+   *     ...
+   *   ],
+   * });
+   * ```
+   *
+   * Unlike the {@link batchGet} operation where some requested keys can fail, `transactGet`
+   * ensures that all (or none) {@link Get} requests are successfully retrieved - i.e. the
+   * whole operation happens within a single transaction. This comes with the added cost of
+   * each {@link Get} request consuming 2 Read Capacity Units.
+   *
+   * The aggregate size of the items in the transaction cannot exceed **4 MB**. DynamoDB rejects
+   * the entire `transactGet` request if any of the following is true:
+   * * A conflicting operation is in the process of updating an item to be read.
+   * * There is insufficient provisioned capacity for the transaction to be completed.
+   * * There is a user error, such as an invalid data format.
+   * * The aggregate size of the items in the transaction cannot exceed 4 MB.
+   *
+   * @see {@link TransactGetItems}
+   * @see {@link TransactGetItemsInput}
+   * @see {@link TransactGetItemsOutput}
+   * @see {@link Get}
+   * @see [TransactGetItems API Reference](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TransactGetItems.html)
+   */
+  readonly transactGet: TransactGetItems<
     Item,
     PartitionKey,
     RangeKey,
     JsonFormat.Document
   >;
 
-  readonly query: Query<Item, JsonFormat.Document>;
-
-  readonly scan: Scan<Item, JsonFormat.Document>;
+  /**
+   * TransactWriteItems is a synchronous write operation that groups up to **25** action
+   * requests. No two actions can target the same item. For example, you cannot both
+   * {@link ConditionCheck} and {@link Update} the same item.
+   *
+   * ```ts
+   * await table.transactWrite({
+   *   TransactItems: [
+   *     {
+   *       Put: {
+   *         Item: item1,
+   *       },
+   *     },
+   *     {
+   *       Update: {
+   *         Key: key1,
+   *         UpdateExpression: "SET .."
+   *       },
+   *     },
+   *     {
+   *       Delete: {
+   *         Key: key2
+   *       }
+   *     },
+   *     {
+   *       ConditionCheck: {
+   *         Key: key3,
+   *         ConditionExpression: ".."
+   *       }
+   *     }
+   *   ],
+   * });
+   * ```
+   *
+   * Unlike {@link batchWrite}, the actions are completed atomically so that either all
+   * of them succeed, or all of them fail. Supported actions include:
+   * * {@link Put} — Initiates a `PutItem` operation to write a new item. This structure
+   * specifies the primary key of the item to be written, an optional condition expression
+   * that must be satisfied for the write to succeed, a list of the item's attributes, and
+   * a field indicating whether to retrieve the item's attributes if the condition is not met.
+   * * {@link Update} — Initiates an UpdateItem operation to update an existing item. This
+   * structure specifies the primary key of the item to be updated, an optional condition
+   * expression that must be satisfied for the update to succeed, an expression that defines
+   * one or more attributes to be updated, and a field indicating whether to retrieve the
+   * item's attributes if the condition is not met.
+   * * {@link Delete} — Initiates a DeleteItem operation to delete an existing item. This
+   * structure specifies the primary key of the item to be deleted, an optional condition
+   * expression that must be satisfied for the deletion to succeed, and a field indicating
+   * whether to retrieve the item's attributes if the condition is not met.
+   * {@link ConditionCheck} — Applies a condition to an item that is not being modified by
+   * the transaction. This structure specifies the primary key of the item to be checked
+   * a condition expression that must be satisfied for the transaction to succeed, and a
+   * field indicating whether to retrieve the item's attributes if the condition is not met.
+   *
+   * DynamoDB rejects the entire TransactWriteItems request if any of the following is true:
+   * * A condition in one of the condition expressions is not met.
+   * * An ongoing operation is in the process of updating the same item.
+   * * There is insufficient provisioned capacity for the transaction to be completed.
+   * * An item size becomes too large (bigger than **400 KB**), a local secondary index
+   * (LSI) becomes too large, or a similar validation error occurs because of changes made
+   * by the transaction.   T
+   * * The aggregate size of the items in the transaction exceeds **4 MB**.
+   * * There is a user error, such as an invalid data format.
+   *
+   * @see {@link TransactWriteItems}
+   * @see {@link TransactWriteItemsInput}
+   * @see {@link TransactWriteItemsOutput}
+   * @see {@link Put}
+   * @see {@link Update}
+   * @see {@link Delete}
+   * @see {@link ConditionCheck}
+   * @see [Condition Expressions Documentation](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/Expressions.ConditionExpressions.html)
+   * @see [TransactWriteItems API Reference](https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_TransactWriteItems.html)
+   */
+  readonly transactWrite: TransactWriteItems<
+    Item,
+    PartitionKey,
+    RangeKey,
+    JsonFormat.Document
+  >;
 }
 
 export class TableAttributesApi<

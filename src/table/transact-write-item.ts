@@ -70,6 +70,12 @@ export type Delete<
   Key: Key;
 };
 
+/**
+ * Initiates a `PutItem` operation to write a new item. This structure
+ * specifies the primary key of the item to be written, an optional condition expression
+ * that must be satisfied for the write to succeed, a list of the item's attributes, and
+ * a field indicating whether to retrieve the item's attributes if the condition is not met.
+ */
 export type Put<
   Item extends object,
   Format extends JsonFormat = JsonFormat.Document
