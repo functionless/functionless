@@ -57,6 +57,7 @@ import {
 } from "./update-item";
 
 declare const a: AWS.DynamoDB;
+
 /**
  * The Runtime API for a DynamoDB {@link Table}.
  *
@@ -92,7 +93,7 @@ class TableRuntimeApi<
 
   readonly delete: DeleteItem<Item, PartitionKey, RangeKey, Format>;
 
-  readonly query: Query<Item, Format>;
+  readonly query: Query<Item, PartitionKey, RangeKey, Format>;
 
   readonly scan: Scan<Item, Format>;
 
@@ -105,7 +106,10 @@ class TableRuntimeApi<
     this.batchWrite = createBatchWriteItemIntegration(resource, format);
     this.transactWrite = createTransactWriteItemsIntegration(resource, format);
     this.delete = createDeleteItemIntegration(resource, format);
-    this.query = createQueryIntegration(resource, format);
+    this.query = createQueryIntegration<Item, PartitionKey, RangeKey, Format>(
+      resource,
+      format
+    );
     this.scan = createScanIntegration(resource, format);
   }
 }
@@ -369,7 +373,110 @@ export interface TableDocumentApi<
     JsonFormat.Document
   >;
 
-  readonly query: Query<Item, JsonFormat.Document>;
+  /**
+   * `query` returns all items that contain a partition key value. Use the `KeyConditionExpression`
+   * parameter to provide a specific value for the partition key. The `query` operation will return
+   * all of the items from the table or index with that partition key value.
+   *
+   * ```ts
+   * await table.query({
+   *   KeyConditionExpression: "pk = :pk",
+   *   ExpressionAttributeValues: {
+   *     ":pk": "partition key"
+   *   }
+   * })
+   * ```
+   *
+   * You can optionally narrow the scope of the `query` operation by specifying a sort key value
+   * and a comparison operator in `KeyConditionExpression`.
+   * ```ts
+   * await table.query({
+   *   KeyConditionExpression: "pk = :pk AND starts_with(sk, :prefix)",
+   *   ExpressionAttributeValues: {
+   *     ":pk": "partition key",
+   *     ":prefix": "prefix"
+   *   }
+   * })
+   * ```
+   *
+   * To further refine the `query` results, you can optionally provide a `FilterExpression`. A `FilterExpression`
+   * determines which items within the results should be returned to you. All of the other results are
+   * discarded.
+   *
+   * ```ts
+   * await table.query({
+   *   KeyConditionExpression: "pk = :pk AND starts_with(sk, :prefix)",
+   *   FilterExpression: "field < 0"
+   *   ..
+   * });
+   * ```
+   *
+   * `Query` results are always sorted by the sort key value. If the data type of the sort key is `Number`, the
+   * results are returned in numeric order; otherwise, the results are returned in order of UTF-8 bytes. By
+   * default, the sort order is ascending. To reverse the order, set the `ScanIndexForward` parameter to false.
+   *
+   * ```ts
+   * await table.query({
+   *   KeyConditionExpression: "pk = :pk",
+   *   // query in reverse-order
+   *   ScanIndexForward: false
+   * });
+   * ```
+   *
+   * A single `Query` operation will read up to the maximum number of items set (if using the `Limit` parameter)
+   * or a maximum of **1 MB** of data and then apply any filtering to the results using `FilterExpression`.
+   *
+   * ```ts
+   * await table.query({
+   *   ..,
+   *   Limit: 10
+   * });
+   * ```
+   *
+   * If `LastEvaluatedKey` is present in the response, you will need to paginate the result set by
+   * setting the `ExclusiveStartKey` in subsequent requests.
+   * ```ts
+   * const KeyConditionExpression: string = ..
+   * const response = await table.query({
+   *   KeyConditionExpression
+   * });
+   * if (response.LastEvaluatedKey) {
+   *   await table.query({
+   *     // the KeyConditionExpression must be the same across query requests
+   *     KeyConditionExpression,
+   *     // use the LastEvaluatedKey as the starting point
+   *     ExclusiveStartKey: response.LastEvaluatedKey
+   *   });
+   * }
+   * ```
+   *
+   * `FilterExpression` is applied after a `Query` finishes, but before the results are returned. A `FilterExpression`
+   * cannot contain partition key or sort key attributes. You need to specify those attributes in the
+   * `KeyConditionExpression`.
+   * ```ts
+   * const response = await table.query({
+   *   KeyConditionExpression: ..,
+   *   FilterExpression: "#field = :val"
+   * });
+   * ```
+   *
+   * A `Query` operation can return an empty result set and a `LastEvaluatedKey` if all the items read for the page
+   * of results are filtered out.
+   *
+   * You can query a table, a local secondary index, or a global secondary index. For a query on a table or on
+   * a local secondary index, you can set the `ConsistentRead` parameter to true and obtain a strongly consistent
+   * result. Global secondary indexes support eventually consistent reads only, so do not specify `ConsistentRead`
+   * when querying a global secondary index.
+   *
+   * A `query` operation always returns a result set. If no matching items are found, the result set will be
+   * empty. Queries that do not return results consume the minimum number of read capacity units for that
+   * type of read operation. DynamoDB calculates the number of read capacity units consumed based on item
+   * size, not on the amount of data that is returned to an application. The number of capacity units consumed
+   * will be the same whether you request all of the attributes (the default behavior) or just some of
+   * them (using a projection expression). The number will also be the same whether or not you use a
+   * `FilterExpression`.
+   */
+  readonly query: Query<Item, PartitionKey, RangeKey, JsonFormat.Document>;
 
   readonly scan: Scan<Item, JsonFormat.Document>;
 
@@ -707,7 +814,12 @@ export interface TableAttributesApi<
     JsonFormat.AttributeValue
   >;
 
-  readonly query: Query<Item, JsonFormat.AttributeValue>;
+  readonly query: Query<
+    Item,
+    PartitionKey,
+    RangeKey,
+    JsonFormat.AttributeValue
+  >;
 
   readonly scan: Scan<Item, JsonFormat.AttributeValue>;
 }
