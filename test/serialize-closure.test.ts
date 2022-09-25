@@ -105,16 +105,16 @@ test("globals", async () => {
   expect(closure()).toEqual({ env: "hi" });
 });
 
-test.skip("mutate", async () => {
-  let x = 1;
+test("mutate", async () => {
+  let x_12 = 1;
   const closure = await expectClosure(() => {
-    x = 2;
+    x_12 = 2;
     return {
-      x,
+      x_12,
     };
   });
 
-  expect(closure()).toEqual({ x: 2 });
+  expect(closure()).toEqual({ x_12: 2 });
 });
 
 test("all observers of a free variable share the same reference even when two instances", async () => {
