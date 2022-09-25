@@ -12470,13 +12470,32 @@ function __f0() {
 
 exports[`serialize bind and proxy 1`] = `
 "exports.handler = __f0;
-function __f0() {
+function __proxy_8269d1a8(__0) {
   return (function() {
+    let util_8269d1a8 = require("util");
+    let global_8269d1a8 = global.global;
+    let proxy_8269d1a8 = __proxy_8269d1a8;
+
+    return (function proxy_8269d1a8(clss, ...args) {
+    const proxy = new clss(...args);
+    if (util_8269d1a8.types.isProxy(proxy)) {
+        const proxyMap = global_8269d1a8[global_8269d1a8.Symbol.for("functionless:Proxies")] = global_8269d1a8[global_8269d1a8.Symbol.for("functionless:Proxies")] ?? new global_8269d1a8.WeakMap;
+        proxyMap.set(proxy, args);
+    }
+    return proxy;
+});;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f0() {
+  return (function() {
+    let proxy_8269d1a8 = __proxy_8269d1a8;
+
     return (async () => {
-    const b = ((() => { }).bind(void 0, ...[
-        "value"
-    ]));
-    const p = (undefined);
+    const b = (() => { })(() => { }, void 0, "value");
+    const p = proxy_8269d1a8(Proxy, {}, {
+        get: () => {
+            return 1;
+        }
+    });
     return [
         b,
         p
@@ -12489,14 +12508,34 @@ function __f0() {
 exports[`serialize bind and proxy 2`] = `
 "// <stdin>
 exports.handler = __f0;
+function __proxy_8269d1a8(__0) {
+  return function() {
+    let util_8269d1a8 = require("util");
+    let global_8269d1a8 = global.global;
+    let proxy_8269d1a8 = __proxy_8269d1a8;
+    return function proxy_8269d1a82(clss, ...args) {
+      const proxy = new clss(...args);
+      if (util_8269d1a8.types.isProxy(proxy)) {
+        const proxyMap = global_8269d1a8[global_8269d1a8.Symbol.for("functionless:Proxies")] = global_8269d1a8[global_8269d1a8.Symbol.for("functionless:Proxies")] ?? new global_8269d1a8.WeakMap();
+        proxyMap.set(proxy, args);
+      }
+      return proxy;
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
 function __f0() {
   return function() {
+    let proxy_8269d1a8 = __proxy_8269d1a8;
     return async () => {
       const b = (() => {
-      }).bind(void 0, ...[
-        "value"
-      ]);
-      const p = void 0;
+      })(() => {
+      }, void 0, "value");
+      const p = proxy_8269d1a8(Proxy, {}, {
+        get: () => {
+          return 1;
+        }
+      });
       return [
         b,
         p
@@ -12743,9 +12782,9 @@ function __f3(__0, __1) {
     return (async ([request], preWarmContext) => {
     const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge);
     return eventBridge.putEvents({
-        Entries: request.Entries.map(((e) => ({
+        Entries: request.Entries.map((e) => ({
             ...e
-        })))
+        }))
     }).promise();
 });;
   }).apply(undefined, undefined).apply(this, arguments);
@@ -13124,14 +13163,14 @@ function __f3(__0, __1) {
     return (async (args, preWarmContext) => {
     const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge);
     await eventBridge.putEvents({
-        Entries: args.map(((event) => ({
+        Entries: args.map((event) => ({
             Detail: JSON.stringify(event.detail),
             EventBusName: eventBusName,
             DetailType: event["detail-type"],
             Resources: event.resources,
             Source: event.source,
             Time: typeof event.time === "number" ? new Date(event.time) : undefined
-        })))
+        }))
     }).promise();
 });;
   }).apply(undefined, undefined).apply(this, arguments);
@@ -13711,9 +13750,9 @@ function __f3(__0, __1) {
     return (async ([request], preWarmContext) => {
     const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge);
     return eventBridge.putEvents({
-        Entries: request.Entries.map(((e) => ({
+        Entries: request.Entries.map((e) => ({
             ...e
-        })))
+        }))
     }).promise();
 });;
   }).apply(undefined, undefined).apply(this, arguments);
@@ -14354,9 +14393,9 @@ function __f3(__0, __1) {
     return (async ([request], preWarmContext) => {
     const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge);
     return eventBridge.putEvents({
-        Entries: request.Entries.map(((e) => ({
+        Entries: request.Entries.map((e) => ({
             ...e
-        })))
+        }))
     }).promise();
 });;
   }).apply(undefined, undefined).apply(this, arguments);
@@ -15235,9 +15274,9 @@ function __f3(__0, __1) {
     return (async ([request], preWarmContext) => {
     const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge);
     return eventBridge.putEvents({
-        Entries: request.Entries.map(((e) => ({
+        Entries: request.Entries.map((e) => ({
             ...e
-        })))
+        }))
     }).promise();
 });;
   }).apply(undefined, undefined).apply(this, arguments);
@@ -15923,9 +15962,9 @@ function __f3(__0, __1) {
     return (async ([request], preWarmContext) => {
     const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge);
     return eventBridge.putEvents({
-        Entries: request.Entries.map(((e) => ({
+        Entries: request.Entries.map((e) => ({
             ...e
-        })))
+        }))
     }).promise();
 });;
   }).apply(undefined, undefined).apply(this, arguments);
@@ -16910,9 +16949,9 @@ function __f3(__0, __1) {
     return (async ([request], preWarmContext) => {
     const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge);
     return eventBridge.putEvents({
-        Entries: request.Entries.map(((e) => ({
+        Entries: request.Entries.map((e) => ({
             ...e
-        })))
+        }))
     }).promise();
 });;
   }).apply(undefined, undefined).apply(this, arguments);
@@ -17598,9 +17637,9 @@ function __f3(__0, __1) {
     return (async ([request], preWarmContext) => {
     const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge);
     return eventBridge.putEvents({
-        Entries: request.Entries.map(((e) => ({
+        Entries: request.Entries.map((e) => ({
             ...e
-        })))
+        }))
     }).promise();
 });;
   }).apply(undefined, undefined).apply(this, arguments);
@@ -18304,9 +18343,9 @@ function __f3(__0, __1) {
     return (async ([request], preWarmContext) => {
     const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge);
     return eventBridge.putEvents({
-        Entries: request.Entries.map(((e) => ({
+        Entries: request.Entries.map((e) => ({
             ...e
-        })))
+        }))
     }).promise();
 });;
   }).apply(undefined, undefined).apply(this, arguments);
@@ -19000,9 +19039,9 @@ function __f3(__0, __1) {
     return (async ([request], preWarmContext) => {
     const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge);
     return eventBridge.putEvents({
-        Entries: request.Entries.map(((e) => ({
+        Entries: request.Entries.map((e) => ({
             ...e
-        })))
+        }))
     }).promise();
 });;
   }).apply(undefined, undefined).apply(this, arguments);
