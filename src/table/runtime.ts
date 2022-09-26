@@ -56,8 +56,6 @@ import {
   UpdateItemOutput,
 } from "./update-item";
 
-declare const a: AWS.DynamoDB;
-
 /**
  * The Runtime API for a DynamoDB {@link Table}.
  *
@@ -72,45 +70,31 @@ class TableRuntimeApi<
   RangeKey extends keyof Item | undefined,
   Format extends JsonFormat
 > {
-  readonly get: GetItem<Item, PartitionKey, RangeKey, Format>;
-
-  readonly batchGet: BatchGetItem<Item, PartitionKey, RangeKey, Format>;
-
-  readonly transactGet: TransactGetItems<Item, PartitionKey, RangeKey, Format>;
-
-  readonly transactWrite: TransactWriteItems<
-    Item,
-    PartitionKey,
-    RangeKey,
-    Format
-  >;
-
-  readonly put: PutItem<Item, Format>;
-
-  readonly update: UpdateItem<Item, PartitionKey, RangeKey, Format>;
-
-  readonly batchWrite: BatchWriteItem<Item, PartitionKey, RangeKey, Format>;
-
-  readonly delete: DeleteItem<Item, PartitionKey, RangeKey, Format>;
-
-  readonly query: Query<Item, PartitionKey, RangeKey, Format>;
-
-  readonly scan: Scan<Item, Format>;
+  batchGet: BatchGetItem<Item, PartitionKey, RangeKey, Format>;
+  batchWrite: BatchWriteItem<Item, PartitionKey, RangeKey, Format>;
+  delete: DeleteItem<Item, PartitionKey, RangeKey, Format>;
+  get: GetItem<Item, PartitionKey, RangeKey, Format>;
+  put: PutItem<Item, Format>;
+  query: Query<Item, PartitionKey, RangeKey, Format>;
+  scan: Scan<Item, PartitionKey, RangeKey, Format>;
+  transactGet: TransactGetItems<Item, PartitionKey, RangeKey, Format>;
+  transactWrite: TransactWriteItems<Item, PartitionKey, RangeKey, Format>;
+  update: UpdateItem<Item, PartitionKey, RangeKey, Format>;
 
   constructor(resource: aws_dynamodb.ITable, format: Format) {
     this.get = createGetItemIntegration(resource, format);
     this.batchGet = createBatchGetItemIntegration(resource, format);
-    this.transactGet = createTransactGetItemsIntegration(resource, format);
-    this.put = createPutItemIntegration(resource, format);
-    this.update = createUpdateItemIntegration(resource, format);
     this.batchWrite = createBatchWriteItemIntegration(resource, format);
-    this.transactWrite = createTransactWriteItemsIntegration(resource, format);
     this.delete = createDeleteItemIntegration(resource, format);
+    this.put = createPutItemIntegration(resource, format);
     this.query = createQueryIntegration<Item, PartitionKey, RangeKey, Format>(
       resource,
       format
     );
     this.scan = createScanIntegration(resource, format);
+    this.transactGet = createTransactGetItemsIntegration(resource, format);
+    this.transactWrite = createTransactWriteItemsIntegration(resource, format);
+    this.update = createUpdateItemIntegration(resource, format);
   }
 }
 
@@ -450,9 +434,9 @@ export interface TableDocumentApi<
    * }
    * ```
    *
-   * `FilterExpression` is applied after a `Query` finishes, but before the results are returned. A `FilterExpression`
-   * cannot contain partition key or sort key attributes. You need to specify those attributes in the
-   * `KeyConditionExpression`.
+   * `FilterExpression` is applied after a `Query` finishes, but before the results are returned.
+   * A `FilterExpression` cannot contain partition key or sort key attributes. You need to specify
+   * those attributes in the `KeyConditionExpression`.
    * ```ts
    * const response = await table.query({
    *   KeyConditionExpression: ..,
@@ -460,8 +444,8 @@ export interface TableDocumentApi<
    * });
    * ```
    *
-   * A `Query` operation can return an empty result set and a `LastEvaluatedKey` if all the items read for the page
-   * of results are filtered out.
+   * A `Query` operation can return an empty result set and a `LastEvaluatedKey` if all the items
+   * read for the page of results are filtered out.
    *
    * You can query a table, a local secondary index, or a global secondary index. For a query on a table or on
    * a local secondary index, you can set the `ConsistentRead` parameter to true and obtain a strongly consistent
@@ -478,7 +462,52 @@ export interface TableDocumentApi<
    */
   readonly query: Query<Item, PartitionKey, RangeKey, JsonFormat.Document>;
 
-  readonly scan: Scan<Item, JsonFormat.Document>;
+  /**
+   * The `scan` operation returns one or more items and item attributes by accessing every item in
+   * table or a secondary index.
+   * ```ts
+   * const response = await table.scan();
+   *
+   * response.Items // Item[] | undefined;
+   * ```
+   *
+   * To have DynamoDB return fewer items, you can provide a `FilterExpression` operation.
+   * ```ts
+   * await table.scan({
+   *   FilterExpression: "#field = :val"
+   * });
+   * ```
+   *
+   * If the total number of scanned items exceeds the maximum dataset size limit of **1 MB**,
+   * the scan stops and results are returned to the user along with a `LastEvaluatedKey` value to
+   * continue the scan in a subsequent operation. The results also include the number of
+   * items exceeding the limit.
+   *
+   * ```ts
+   * const response = await table.scan();
+   *
+   * if (response.LastEvaluatedKey) {
+   *   await table.scan({
+   *     ExclusiveStartKey: response.LastEvaluatedKey
+   *   });
+   * }
+   * ```
+   *
+   * A single `scan` operation reads up to the maximum number of items set (if using the Limit
+   * parameter) or a maximum of 1 MB of data and then apply any filtering to the results using
+   * `FilterExpression`. If `LastEvaluatedKey` is present in the response, you need to paginate the
+   * result set.
+   *
+   * `scan` operations proceed sequentially; however, for faster performance on a large table or
+   * secondary index, applications can request a parallel `scan` operation by providing the `Segment`
+   * and `TotalSegments` parameters.
+   *
+   * `scan` uses eventually consistent reads when accessing the data in a table; therefore, the result
+   * set might not include the changes to data in the table immediately before the operation began.
+   * If you need a consistent copy of the data, as of the time that the `scan` begins, you can set the
+   * `ConsistentRead` parameter to true.
+   */
+  readonly scan: Scan<Item, PartitionKey, RangeKey, JsonFormat.Document>;
 
   /**
    * The `batchGet` operation returns a list of items for each of the given primary
@@ -821,5 +850,5 @@ export interface TableAttributesApi<
     JsonFormat.AttributeValue
   >;
 
-  readonly scan: Scan<Item, JsonFormat.AttributeValue>;
+  readonly scan: Scan<Item, PartitionKey, RangeKey, JsonFormat.AttributeValue>;
 }
