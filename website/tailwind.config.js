@@ -200,9 +200,9 @@ module.exports = {
         },
       },
       fontFamily: {
-        display: ["Public Sans"],
-        body: ["Inter"],
-        mono: ["Roboto Mono"],
+        display: ["Public Sans", "sans"],
+        body: ["Inter", "sans"],
+        mono: ["Roboto Mono", "monospace"],
       },
     },
   },
