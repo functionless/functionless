@@ -1,8 +1,11 @@
 import { Feature } from "@site/src/lib/feature";
-import { useVisibleScrollCallback } from "@site/src/lib/useVisibility";
+import { Observable } from "@site/src/lib/observable";
+import {
+  ScrollParams,
+  useVisibleScrollCallback,
+} from "@site/src/lib/useVisibility";
 import clsx from "clsx";
-import { useRef } from "react";
-import { FeatureText } from "./featureText";
+import { useEffect, useRef, useState } from "react";
 
 export const FeatureSection = ({
   side,
@@ -10,78 +13,80 @@ export const FeatureSection = ({
   points,
   aside,
   footer,
-}: Feature) => {
-  const childGrid = useRef<HTMLDivElement>(null);
-  let lastCentering = useRef(-999);
-  const lastScroll = useRef(new Date().getTime());
+  height,
+  scrollObservable,
+}: Feature & {
+  height: number;
+  scrollObservable: Observable<ScrollParams>;
+}) => {
+  const titleRef = useRef<HTMLHeadingElement>(null);
+  const bodyRef = useRef<HTMLDivElement>(null);
   const ref = useVisibleScrollCallback<HTMLDivElement>(
-    0.0,
-    ({ y, boundingRect }) => {
-      const centering = (y - boundingRect.top) / 192;
-      // const direction = lastCentering.current < centering ? 1 : -1;
-      // const recentlyScrolled = new Date().getTime() - lastScroll.current < 2000;
-      // console.log({ centering, lastCentering, direction });
-      // if (
-      //   (centering > -1 && centering < 0 && direction === 1) ||
-      //   (centering > 0 && centering < 1 && direction === -1)
-      // ) {
-      //   if (!recentlyScrolled) {
-      //     // lastCentering.current = centering;
-      //     // lastScroll.current = new Date().getTime();
-      //     // window.scrollTo({ top: boundingRect.top, behavior: "smooth" });
-      //   }
-      // } else {
-      //   lastCentering.current = centering;
-      // }
-      console.log(centering);
+    0,
+    ({ y: scrollY, boundingRect }) => {
       requestAnimationFrame(() => {
-        if (ref.current) {
-          const opacity = Math.pow(1 - Math.min(1, Math.abs(centering)), 2);
-          ref.current!.style.setProperty(
-            "opacity",
-            (opacity < 0.5 ? 0 : 1).toString()
-          );
-          // if (childGrid.current) {
-          //   const offset = y - boundingRect.top;
-          //   childGrid.current.style.transform = `translateY(${offset}px)`;
-          // }
+        if (titleRef.current && bodyRef.current) {
+          const baseFactor = boundingRect.y - scrollY;
+          const transform = baseFactor / (boundingRect.height / 50);
+          const titleOpacity =
+            1 - Math.min(1, baseFactor / (boundingRect.height / 4));
+          const bodyOpacity =
+            1 - Math.min(1, baseFactor / (boundingRect.height / 10));
+          titleRef.current.style.transform = `translateY(${Math.max(
+            transform,
+            0
+          )}px)`;
+          titleRef.current.style.opacity = titleOpacity.toString();
+          bodyRef.current.style.opacity = bodyOpacity.toString();
         }
       });
-    }
+    },
+    []
   );
-  // const { ref, visible } = useVisibility<HTMLDivElement>(0.9, {
-  //   singleShot: false,
-  // });
+  // useEffect(() => {
+  //   const key = scrollObservable.subscribe(
+  //     ({ y: scrollY, boundingRect }) => {}
+  //   );
+  //   return () => {
+  //     scrollObservable.unsubscribe(key);
+  //   };
+  // }, [titleRef.current, bodyRef.current]);
   return (
-    <div
-      ref={ref}
-      className={clsx(
-        "transition duration-500 opacity-0 ease-in-out lg:h-48 lg:width-screen"
-      )}
-    >
-      <div className=" lg:bg-functionless-code lg:fixed lg:top-0 lg:left-0 lg:width-full lg:height-screen lg:flex lg:items-center lg:justify-center">
-        <div
-          ref={childGrid}
-          className="container grid grid-cols-1 lg:grid-cols-2  gap-y-8 lg:gap-x-11"
-        >
-          <div
-            className={clsx(
-              "col-span-2 lg:col-span-1 lg:row-start-1",
-              side === "left" ? "lg:col-start-1" : "lg:col-start-2"
-            )}
-          >
-            <FeatureText title={title} points={points} />
-          </div>
+    <div style={{ height: `${height}px` }}>
+      <div className="sticky top-20 h-screen overflow-hidden">
+        <div ref={ref} className="h-full flex justify-center items-center">
+          <div className="container grid grid-cols-1 lg:grid-cols-2  gap-y-8 lg:gap-x-11">
+            <div
+              className={clsx(
+                "col-span-2 lg:col-span-1 lg:row-start-1",
+                side === "left" ? "lg:col-start-1" : "lg:col-start-2"
+              )}
+            >
+              <div>
+                <h4 ref={titleRef}>{title}</h4>
+                <div ref={bodyRef}>
+                  {points.map(({ title, body }) => (
+                    <div className="mt-10" key={title}>
+                      <h5 className="m-0">{title}</h5>
+                      <p className="body1 text-functionless-medium dark:text-functionless-dark-medium mt-2">
+                        {body}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
 
-          <div
-            className={clsx(
-              "hidden md:block col-span-2 lg:col-span-1 lg:row-start-1 my-8 lg:mt-0",
-              side === "left" ? "lg:col-start-2" : "lg:col-start-1"
-            )}
-          >
-            {aside()}
+            <div
+              className={clsx(
+                "hidden md:block col-span-2 lg:col-span-1 lg:row-start-1 my-8 lg:mt-0",
+                side === "left" ? "lg:col-start-2" : "lg:col-start-1"
+              )}
+            >
+              {aside()}
+            </div>
+            <div className="col-span-2">{footer?.()}</div>
           </div>
-          <div className="col-span-2">{footer?.()}</div>
         </div>
       </div>
     </div>
