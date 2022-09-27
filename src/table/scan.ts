@@ -1,6 +1,6 @@
 import { aws_dynamodb } from "aws-cdk-lib";
-import { AttributeValue } from "typesafe-dynamodb/lib/attribute-value";
 import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
+import { TableKey } from "typesafe-dynamodb/lib/key";
 import { DynamoDBAppsyncExpression } from "./appsync";
 import {
   addIfDefined,
@@ -9,44 +9,62 @@ import {
 } from "./integration";
 import { ITable } from "./table";
 
-export type ScanInput<Format extends JsonFormat> = Omit<
+export type ScanInput<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined,
+  Format extends JsonFormat
+> = Omit<
   Format extends JsonFormat.AttributeValue
     ? AWS.DynamoDB.QueryInput
     : AWS.DynamoDB.DocumentClient.QueryInput,
-  "TableName" | "ExpressionAttributeValues"
+  "TableName" | "ExpressionAttributeValues" | "ExclusiveStartKey"
 > & {
-  ExpressionAttributeValues?: {
-    [attrName: string]: AttributeValue;
-  };
+  ExclusiveStartKey?: TableKey<Item, PartitionKey, RangeKey, Format>;
+  ExpressionAttributeValues?: Format extends JsonFormat.AttributeValue
+    ? AWS.DynamoDB.QueryInput["ExpressionAttributeValues"]
+    : AWS.DynamoDB.DocumentClient.QueryInput["ExpressionAttributeValues"];
 };
 
-export interface ScanOutput<Item extends object, Format extends JsonFormat>
-  extends Omit<AWS.DynamoDB.ScanOutput, "Items"> {
+export interface ScanOutput<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined,
+  Format extends JsonFormat
+> extends Omit<AWS.DynamoDB.ScanOutput, "Items" | "LastEvaluatedKey"> {
   Items?: FormatObject<Item, Format>[];
+  LastEvaluatedKey?: TableKey<Item, PartitionKey, RangeKey, Format>;
 }
 
-export type Scan<Item extends object, Format extends JsonFormat> = (
-  input?: ScanInput<Format>
-) => Promise<ScanOutput<Item, Format>>;
+export type Scan<
+  Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined,
+  Format extends JsonFormat
+> = (
+  input?: ScanInput<Item, PartitionKey, RangeKey, Format>
+) => Promise<ScanOutput<Item, PartitionKey, RangeKey, Format>>;
 
 export function createScanIntegration<
   Item extends object,
+  PartitionKey extends keyof Item,
+  RangeKey extends keyof Item | undefined,
   Format extends JsonFormat
->(table: aws_dynamodb.ITable, format: Format): Scan<Item, Format> {
-  return createDynamoIntegration<Scan<Item, Format>, Format>(
-    table,
-    "scan",
-    format,
-    "read",
-    (client, [request]) => {
-      return client
-        .scan({
-          ...((request as any) ?? {}),
-          TableName: table.tableName,
-        })
-        .promise() as any;
-    }
-  );
+>(
+  table: aws_dynamodb.ITable,
+  format: Format
+): Scan<Item, PartitionKey, RangeKey, Format> {
+  return createDynamoIntegration<
+    Scan<Item, PartitionKey, RangeKey, Format>,
+    Format
+  >(table, "scan", format, "read", (client, [request]) => {
+    return client
+      .scan({
+        ...((request as any) ?? {}),
+        TableName: table.tableName,
+      })
+      .promise() as any;
+  });
 }
 
 export interface ScanAppsyncInput {

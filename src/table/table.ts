@@ -3,7 +3,7 @@ import { Construct } from "constructs";
 import { JsonFormat } from "typesafe-dynamodb";
 import { AppsyncResolver } from "../appsync";
 import { TableAppsyncApi } from "./appsync";
-import { TableRuntimeApi } from "./runtime";
+import { TableAttributesApi, TableDocumentApi } from "./runtime";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -86,7 +86,7 @@ export interface ITable<
   Item extends object,
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined = undefined
-> extends TableRuntimeApi<Item, PartitionKey, RangeKey, JsonFormat.Document> {
+> extends TableDocumentApi<Item, PartitionKey, RangeKey> {
   readonly kind: "Table";
   /**
    * This static property identifies this class as an EventBus to the TypeScript plugin.
@@ -121,12 +121,7 @@ export interface ITable<
 
   readonly appsync: TableAppsyncApi<Item, PartitionKey, RangeKey>;
 
-  readonly attributes: TableRuntimeApi<
-    Item,
-    PartitionKey,
-    RangeKey,
-    JsonFormat.AttributeValue
-  >;
+  readonly attributes: TableAttributesApi<Item, PartitionKey, RangeKey>;
 }
 
 class BaseTable<
@@ -134,7 +129,7 @@ class BaseTable<
     PartitionKey extends keyof Item,
     RangeKey extends keyof Item | undefined = undefined
   >
-  extends TableRuntimeApi<Item, PartitionKey, RangeKey, JsonFormat.Document>
+  extends TableDocumentApi<Item, PartitionKey, RangeKey>
   implements ITable<Item, PartitionKey, RangeKey>
 {
   public static readonly FunctionlessType = "Table";
@@ -151,12 +146,7 @@ class BaseTable<
 
   readonly appsync: TableAppsyncApi<Item, PartitionKey, RangeKey>;
 
-  readonly attributes: TableRuntimeApi<
-    Item,
-    PartitionKey,
-    RangeKey,
-    JsonFormat.AttributeValue
-  >;
+  readonly attributes: TableAttributesApi<Item, PartitionKey, RangeKey>;
 
   constructor(readonly resource: aws_dynamodb.ITable) {
     super(resource, JsonFormat.Document);
@@ -165,50 +155,105 @@ class BaseTable<
     this.tableArn = resource.tableArn;
 
     this.appsync = new TableAppsyncApi(this);
-    this.attributes = new TableRuntimeApi(resource, JsonFormat.AttributeValue);
+    this.attributes = new TableAttributesApi(
+      resource,
+      JsonFormat.AttributeValue
+    );
   }
 }
 
 /**
- * Wraps an {@link aws_dynamodb.Table} with a type-safe interface that can be
- * called from within an {@link AppsyncResolver}.
+ * A DynamoDB Table.
  *
- * Its interface, e.g. `getItem`, `putItem`, is in 1:1 correspondence with the
- * AWS Appsync Resolver API https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html
+ * To create a Table, first define the type of data that will be stored in the Table.
  *
- * For example:
  * ```ts
  * interface Person {
- *   id: string;
+ *   pk: string;
+ *   sk: string;
  *   name: string;
  *   age: number;
  * }
+ * ```
  *
- * const personTable = Table.fromTable<Person, "id">(
- *   new aws_dynamodb.Table(..)
- * );
+ * Then, create the Table and specify the `partitionKey` and (optional) `sortKey`.
  *
- * const getPerson = new AppsyncResolver<
- *   (personId: string) => Person | undefined
- * >(async ($context, personId: string) => {
- *   const person = await personTable.appsync.get({
- *     key: {
- *       id: $util.toDynamoDB(personId)
- *     }
- *   });
- *
- *   return person;
+ * ```ts
+ * const personTable = new Table<Person, "pk", "sk">(scope, id, {
+ *   partitionKey: {
+ *     name: "pk",
+ *     type: aws_dynamodb.AttributeType.STRING
+ *   },
+ *   sortKey: {
+ *     name: "sk",
+ *     type: aws_dynamodb.AttributeType.STRING
+ *   }}
  * });
  * ```
  *
- * Note the type-signature of `Table<Person, "id">`. This declares a table whose contents
- * are of the shape, `Person`, and that the PartitionKey is the `id` field.
+ * Table provides three interfaces that can be interacted with at Runtime:
+ * * Document API (available only in Lambda) provides a friendly JSON format where all values are plain JS objects.
  *
- * You can also specify the RangeKey:
  * ```ts
- * Table.fromTable<Person, "id", "age">(..)
+ * new Function(scope, id, async (): Promise<Person> => {
+ *   const response = await table.get({
+ *     Key: {
+ *       pk: "partition key"
+ *     }
+ *   });
+ *
+ *   response.Item; // Person | undefined - a vanilla JS object
+ * });
  * ```
- * @see https://github.com/sam-goodwin/typesafe-dynamodb - for more information on how to model your DynamoDB table with TypeScript
+ * * Attribute Value API (available in Lambda, Step Functions and API Gateway)
+ *
+ * The {@link TableAttributesApi} is available on `table.attributes`.
+ *
+ * ```ts
+ * new StepFunction(scope, id, async (): Promise<Person> => {
+ *   const response = await table.attributes.get({
+ *     Key: {
+ *       pk: {
+ *         // Step Functions only supports data formatted as Attribute Values
+ *         S: "partition key"
+ *       }
+ *     }
+ *   });
+ *
+ *   response.Item; // Person | undefined - a vanilla JS object
+ * });
+ * ```
+ *
+ * * Appsync API (available only in an Appsync Resolver) provides an interface to the
+ *    optimized DynamoDB interface provided by the AWS Appsync service.
+ *
+ * The {@link TableAppsyncApi} is available on `table.appsync`.
+ *
+ * ```ts
+ * new AppsyncResolver(
+ *   scope,
+ *   id,
+ *   {
+ *     typeName: "Query",
+ *     fieldName: "get"
+ *   },
+ *   async () => {
+ *     return table.appsync.get({
+ *       key: {
+ *         pk: {
+ *           S: "partition key",
+ *         },
+ *       },
+ *     });
+ *  });
+ * ```
+ *
+ * @see {@link TableAppsyncApi}
+ * @see {@link TableAttributesApi}
+ * @see {@link TableDocumentApi}
+ * @see https://docs.aws.amazon.com/AWSJavaScriptSDK/latest/AWS/DynamoDB/DocumentClient.html
+ * @see https://docs.aws.amazon.com/amazondynamodb/latest/APIReference/API_AttributeValue.html
+ * @see https://aws.amazon.com/dynamodb/
  */
 export class Table<
   Item extends object = any,

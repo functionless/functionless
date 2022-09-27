@@ -137,6 +137,13 @@ runtimeTestSuite("tableStack", (t: any) => {
             ConsistentRead: true,
           });
 
+          // no-op for type-level checking
+          () => {
+            query.LastEvaluatedKey?.pk;
+            // @ts-expect-error
+            query.LastEvaluatedKey?.pk.S;
+          };
+
           const scan = await table.scan({
             ConsistentRead: true,
           });
@@ -196,6 +203,7 @@ runtimeTestSuite("tableStack", (t: any) => {
               },
             ],
           });
+          batchWrite.UnprocessedItems;
 
           while (batchWrite.UnprocessedItems) {
             batchWrite = await table.batchWrite({

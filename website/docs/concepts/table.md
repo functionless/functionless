@@ -45,13 +45,13 @@ type EcommerceDatabase = User | Cart | Order;
 Finally, create the `Table` and specify the data type, the name of the Partition Key and (optionally) the name of the Range Key.
 
 ```ts
-Table.fromTable<Item, "itemId">(..)
+new Table<Item, "itemId">(..)
 ```
 
 The Range Key is an optional, third type argument.
 
 ```ts
-Table.fromTable<Item, "itemId", "timestamp">(..)
+new Table<Item, "itemId", "timestamp">(..)
 ```
 
 See the [`typesafe-dynamodb`](https://github.com/sam-goodwin/typesafe-dynamodb) documentation for more information on how to use types to safely model data in a DynamoDB Table using TypeScript types.
@@ -76,37 +76,83 @@ The Range Key is an optional, third type argument.
 Table.fromTable<Item, "itemId", "timestamp">(itemTable);
 ```
 
-## Call from an Integration
+## Runtime API
 
-Use the [`$AWS`](./aws.md) SDK's DynamoDB APIs to access the Table from within a Lambda [Function](./function) or [Step Function](./step-function/index.md).
+Table provides three interfaces that can be interacted with at Runtime:
+
+### Document JSON Format
+
+The Document APIs provide a friendly JSON format where all values are plain JS objects.
+
+All of the Runtime APIs that use the Document JSON format are available directly on the `table.*` methods, e.g. `table.get`, `table.put`, and so on.
 
 ```ts
-new StepFunction(scope, "Function", (itemId: string) => {
-  return $AWS.DynamoDB.GetItem({
-    Table: items,
+new Function(scope, id, async (): Promise<Person> => {
+  const response = await table.get({
     Key: {
-      itemId: {
-        S: itemId,
-      },
+      pk: "partition key",
     },
   });
+
+  response.Item; // Person | undefined - a vanilla JS object
 });
 ```
 
-Remember: plumbing such as IAM Policies and Environment Variables are automatically inferred from the API calls. See [Integration](./integration) for more information.
+::: caution
+The Document are available only in Lambda because direct integrations from Step Functions or AppSync Resolvers do not support the Document JSON format.
+:::
 
-## Call from an Appsync Resolver
+### Attribute Value JSON Format
+
+A `Table` can also be interacted with using the "Attribute Value" APIs, available on `table.attributes`. These APIs expose the low-level DynamoDB API that receives and returns data in the "Attribute Value" JSON Format. See the [Data Types documentation](https://docs.aws.amazon.com/amazondynamodb/latest/developerguide/HowItWorks.NamingRulesDataTypes.html#HowItWorks.DataTypes) for more information.
+)
+
+```ts
+new StepFunction(scope, id, async (): Promise<Person> => {
+  const response = await table.attributes.get({
+    Key: {
+      pk: {
+        // Step Functions only supports data formatted as Attribute Values
+        S: "partition key",
+      },
+    },
+  });
+
+  response.Item; // Person | undefined - a vanilla JS object
+});
+```
+
+::: note
+We recommend using the Document APIs from with AWS Lambda and only using the `table.attributes` API from within a Step Function as AWS Step Functions does not offer a direct DynamoDB Integration for the Document API .
+:::
+
+### Appsync Resolver API
+
+Appsync API (available only in an Appsync Resolver) provides an interface to the
+optimized DynamoDB interface provided by the AWS Appsync service.
 
 AWS Appsync has a purpose-built integration for DynamoDB that takes care of un-marshalling the Attribute Value JSON format to standard JSON for GraphQL compatibility. These integration methods are exposed as methods on the `Table.appsync` property.
 
+The TableAppsyncApi is available on `table.appsync`.
+
 ```ts
-new AppsyncResolver(($context) => {
-  return table.appsync.get({
-    itemId: {
-      S: $context.itemId,
-    },
-  });
-});
+new AppsyncResolver(
+  scope,
+  id,
+  {
+    typeName: "Query",
+    fieldName: "get",
+  },
+  async () => {
+    return table.appsync.get({
+      key: {
+        pk: {
+          S: "partition key",
+        },
+      },
+    });
+  }
+);
 ```
 
 ## Pipe Events from Event Bus

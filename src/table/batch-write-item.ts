@@ -14,7 +14,7 @@ export interface BatchWriteItemInput<
   PartitionKey extends keyof Item,
   RangeKey extends keyof Item | undefined,
   Key extends TableKey<Item, PartitionKey, RangeKey, Format>,
-  Format extends JsonFormat
+  Format extends JsonFormat = JsonFormat.Document
 > extends Omit<AWS.DynamoDB.BatchWriteItemInput, "RequestItems"> {
   RequestItems: WriteRequest<Item, PartitionKey, RangeKey, Key, Format>[];
 }
