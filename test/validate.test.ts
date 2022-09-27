@@ -57,6 +57,7 @@ const skipErrorCodes: ErrorCode[] = [
   ErrorCodes.Step_Function_Retry_Invalid_Input,
   // regression in https://github.com/functionless/functionless/pull/519 - API GW VTL is not worth validating
   ErrorCodes.API_gateway_response_mapping_template_cannot_call_integration,
+  ErrorCodes.AwsMethod_request_must_have_exactly_one_integration_call,
 ];
 
 /**

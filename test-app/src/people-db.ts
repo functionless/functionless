@@ -7,7 +7,6 @@ import {
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import {
-  $AWS,
   Table,
   Function,
   $util,
@@ -89,12 +88,9 @@ export class PeopleDatabase extends Construct {
         },
       },
       async (input) => {
-        const person = await $AWS.DynamoDB.GetItem({
-          Table: this.personTable,
+        const person = await this.personTable.get({
           Key: {
-            id: {
-              S: input.id,
-            },
+            id: input.id,
           },
         });
 
@@ -103,13 +99,13 @@ export class PeopleDatabase extends Construct {
         }
 
         const score = await this.computeScore({
-          id: person.Item.id.S,
-          name: person.Item.name.S,
+          id: person.Item.id,
+          name: person.Item.name,
         });
 
         return {
-          id: person.Item.id.S,
-          name: person.Item.name.S,
+          id: person.Item.id,
+          name: person.Item.name,
           score,
         };
       }
@@ -153,7 +149,7 @@ export class PeopleDatabase extends Construct {
         fieldName: "addPerson",
       },
       async ($context) => {
-        const person = await this.personTable.appsync.putItem({
+        const person = await this.personTable.appsync.put({
           key: {
             id: {
               S: $util.autoId(),
@@ -180,7 +176,7 @@ export class PeopleDatabase extends Construct {
         fieldName: "updateName",
       },
       ($context: AppsyncContext<MutationResolvers["updateName"]["args"]>) =>
-        this.personTable.appsync.updateItem({
+        this.personTable.appsync.update({
           key: {
             id: $util.dynamodb.toDynamoDB($context.arguments.id),
           },
@@ -209,7 +205,7 @@ export class PeopleDatabase extends Construct {
         fieldName: "deletePerson",
       },
       ($context) =>
-        this.personTable.appsync.deleteItem({
+        this.personTable.appsync.delete({
           key: {
             id: $util.dynamodb.toDynamoDB($context.arguments.id),
           },

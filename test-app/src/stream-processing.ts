@@ -1,5 +1,5 @@
 import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
-import { Table, Queue, JsonSerializer, $AWS } from "functionless";
+import { Table, Queue, JsonSerializer } from "functionless";
 
 const app = new App();
 const stack = new Stack(app, "StreamProcessing");
@@ -21,15 +21,10 @@ const queue = new Queue(stack, "queue", {
 });
 
 queue.messages().forEach(async (message) => {
-  await $AWS.DynamoDB.PutItem({
-    Table: table,
+  await table.put({
     Item: {
-      id: {
-        S: message.id,
-      },
-      data: {
-        S: message.data,
-      },
+      id: message.id,
+      data: message.data,
     },
   });
 });
