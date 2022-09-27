@@ -1,32 +1,7 @@
 // Jest Snapshot v1, https://goo.gl/fbAQLP
 
 exports[`api-gateway.ts 1`] = `
-"[96mtest/test-files/api-gateway.ts[0m:[93m49[0m:[93m5[0m - [91merror[0m[90m Functionless(10003): [0mAwsMethod request must have exactly one integration call
-
-https://functionless.org/docs/error-codes#awsmethod-request-must-have-exactly-one-integration-call
-
-[7m 49[0m   },
-[7m   [0m [91m    [0m
-[7m 50[0m   ($input) =>
-[7m   [0m [91m~~~~~~~~~~~~~[0m
-[7m...[0m 
-[7m 56[0m       },
-[7m   [0m [91m~~~~~~~~[0m
-[7m 57[0m     }),
-[7m   [0m [91m~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m66[0m:[93m5[0m - [91merror[0m[90m Functionless(10003): [0mAwsMethod request must have exactly one integration call
-
-https://functionless.org/docs/error-codes#awsmethod-request-must-have-exactly-one-integration-call
-
-[7m66[0m   },
-[7m  [0m [91m    [0m
-[7m67[0m   ($input) => {
-[7m  [0m [91m~~~~~~~~~~~~~~~[0m
-[7m68[0m     return $input.data;
-[7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~[0m
-[7m69[0m   },
-[7m  [0m [91m~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m80[0m:[93m34[0m - [91merror[0m[90m Functionless(10011): [0mAPI Gateway does not support spread assignment expressions
+"[96mtest/test-files/api-gateway.ts[0m:[93m80[0m:[93m34[0m - [91merror[0m[90m Functionless(10011): [0mAPI Gateway does not support spread assignment expressions
 
 https://functionless.org/docs/error-codes#api-gateway-does-not-support-spread-assignment-expressions
 
@@ -42,38 +17,12 @@ https://functionless.org/docs/error-codes#api-gateway-does-not-supported-compute
 [7m  [0m [91m                     [0m
 [7m82[0m       [$input.params("param")]: null,
 [7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m78[0m:[93m5[0m - [91merror[0m[90m Functionless(10003): [0mAwsMethod request must have exactly one integration call
-
-https://functionless.org/docs/error-codes#awsmethod-request-must-have-exactly-one-integration-call
-
-[7m 78[0m   },
-[7m   [0m [91m    [0m
-[7m 79[0m   ($input) => {
-[7m   [0m [91m~~~~~~~~~~~~~~~[0m
-[7m...[0m 
-[7m 83[0m     });
-[7m   [0m [91m~~~~~~~[0m
-[7m 84[0m   },
-[7m   [0m [91m~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m104[0m:[93m11[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: table
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m104[0m     return table.attributes.get({
 [7m   [0m [91m          ~~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m93[0m:[93m5[0m - [91merror[0m[90m Functionless(10003): [0mAwsMethod request must have exactly one integration call
-
-https://functionless.org/docs/error-codes#awsmethod-request-must-have-exactly-one-integration-call
-
-[7m 93[0m   },
-[7m   [0m [91m    [0m
-[7m 94[0m   ($input) =>
-[7m   [0m [91m~~~~~~~~~~~~~[0m
-[7m...[0m 
-[7m100[0m       },
-[7m   [0m [91m~~~~~~~~[0m
-[7m101[0m     }),
-[7m   [0m [91m~~~~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m119[0m:[93m16[0m - [91merror[0m[90m Functionless(10008): [0mCannot initialize new resources in a runtime function, found StepFunction.
 
 https://functionless.org/docs/error-codes#unsupported-initialization-of-resources-in-a-runtime-closure
@@ -204,32 +153,6 @@ https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m156[0m     new aws_events.EventBus(stack, "");
 [7m   [0m [91m                            ~~~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m163[0m:[93m45[0m - [91merror[0m[90m Functionless(10003): [0mAwsMethod request must have exactly one integration call
-
-https://functionless.org/docs/error-codes#awsmethod-request-must-have-exactly-one-integration-call
-
-[7m163[0m   { httpMethod: "ANY", resource: api.root },
-[7m   [0m [91m                                            [0m
-[7m164[0m   async () => {
-[7m   [0m [91m~~~~~~~~~~~~~~~[0m
-[7m...[0m 
-[7m171[0m     await table.attributes.get(event);
-[7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[7m172[0m   },
-[7m   [0m [91m~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m181[0m:[93m45[0m - [91merror[0m[90m Functionless(10003): [0mAwsMethod request must have exactly one integration call
-
-https://functionless.org/docs/error-codes#awsmethod-request-must-have-exactly-one-integration-call
-
-[7m181[0m   { httpMethod: "ANY", resource: api.root },
-[7m   [0m [91m                                            [0m
-[7m182[0m   async () => {
-[7m   [0m [91m~~~~~~~~~~~~~~~[0m
-[7m...[0m 
-[7m187[0m     });
-[7m   [0m [91m~~~~~~~[0m
-[7m188[0m   },
-[7m   [0m [91m~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m203[0m:[93m10[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
 
 https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function
@@ -242,51 +165,12 @@ https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m221[0m         id: { S: a },
 [7m   [0m [91m                ~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m217[0m:[93m45[0m - [91merror[0m[90m Functionless(10003): [0mAwsMethod request must have exactly one integration call
-
-https://functionless.org/docs/error-codes#awsmethod-request-must-have-exactly-one-integration-call
-
-[7m217[0m   { httpMethod: "ANY", resource: api.root },
-[7m   [0m [91m                                            [0m
-[7m218[0m   async () => {
-[7m   [0m [91m~~~~~~~~~~~~~~~[0m
-[7m...[0m 
-[7m223[0m     });
-[7m   [0m [91m~~~~~~~[0m
-[7m224[0m   },
-[7m   [0m [91m~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m240[0m:[93m11[0m - [91merror[0m[90m Functionless(10029): [0mApiGateway Unsupported Reference: a
 
 https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m240[0m     return a;
 [7m   [0m [91m          ~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m231[0m:[93m45[0m - [91merror[0m[90m Functionless(10003): [0mAwsMethod request must have exactly one integration call
-
-https://functionless.org/docs/error-codes#awsmethod-request-must-have-exactly-one-integration-call
-
-[7m231[0m   { httpMethod: "ANY", resource: api.root },
-[7m   [0m [91m                                            [0m
-[7m232[0m   async () => {
-[7m   [0m [91m~~~~~~~~~~~~~~~[0m
-[7m...[0m 
-[7m237[0m     });
-[7m   [0m [91m~~~~~~~[0m
-[7m238[0m   },
-[7m   [0m [91m~~~[0m
-[96mtest/test-files/api-gateway.ts[0m:[93m248[0m:[93m45[0m - [91merror[0m[90m Functionless(10003): [0mAwsMethod request must have exactly one integration call
-
-https://functionless.org/docs/error-codes#awsmethod-request-must-have-exactly-one-integration-call
-
-[7m248[0m   { httpMethod: "ANY", resource: api.root },
-[7m   [0m [91m                                            [0m
-[7m249[0m   async () => {
-[7m   [0m [91m~~~~~~~~~~~~~~~[0m
-[7m...[0m 
-[7m255[0m     });
-[7m   [0m [91m~~~~~~~[0m
-[7m256[0m   },
-[7m   [0m [91m~~~[0m
 [96mtest/test-files/api-gateway.ts[0m:[93m272[0m:[93m26[0m - [91merror[0m[90m Functionless(10012): [0mAPI Gateway Integration with EventBus.putEvents expects object literals with no computed properties
 
 https://functionless.org/docs/error-codes#expected-an-object-literal
