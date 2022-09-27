@@ -4,6 +4,7 @@ const path = require("path");
 
 const src = path.resolve("src");
 const functionlessLib = path.resolve(__dirname, "lib");
+const flExpPathPart = path.join("fl-exp", "lib");
 
 register({
   ...config,
@@ -12,7 +13,7 @@ register({
       if (
         file.startsWith(src) ||
         file.startsWith(functionlessLib) ||
-        file.includes("/fl-exp/lib/")
+        file.includes(flExpPathPart)
       ) {
         return false;
       } else {
