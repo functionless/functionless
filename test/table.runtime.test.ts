@@ -203,6 +203,7 @@ runtimeTestSuite("tableStack", (t: any) => {
               },
             ],
           });
+          batchWrite.UnprocessedItems;
 
           while (batchWrite.UnprocessedItems) {
             batchWrite = await table.batchWrite({
