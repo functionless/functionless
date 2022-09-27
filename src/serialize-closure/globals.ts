@@ -81,23 +81,23 @@ const ignore = [
   // "zlib",
 ];
 
-// for (const moduleName of module.builtinModules) {
-//   if (ignore.includes(moduleName) || moduleName.startsWith("_")) {
-//     continue;
-//   }
-//   // eslint-disable-next-line @typescript-eslint/no-require-imports
-//   const module = require(moduleName);
-//   const requireModule = callExpr(idExpr("require"), [stringExpr(moduleName)]);
-//   registerValue(module, requireModule);
-//   registerOwnProperties(
-//     module,
-//     requireModule,
-//     true,
-//     // skip crypto.DEFAULT_ENCODING to avoid complaints about deprecated APIs
-//     // TODO: is this a good tenet? Only support non-deprecated APIs?
-//     moduleName === "crypto" ? ["DEFAULT_ENCODING"] : []
-//   );
-// }
+for (const moduleName of module.builtinModules) {
+  if (ignore.includes(moduleName) || moduleName.startsWith("_")) {
+    continue;
+  }
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const module = require(moduleName);
+  const requireModule = callExpr(idExpr("require"), [stringExpr(moduleName)]);
+  registerValue(module, requireModule);
+  registerOwnProperties(
+    module,
+    requireModule,
+    true,
+    // skip crypto.DEFAULT_ENCODING to avoid complaints about deprecated APIs
+    // TODO: is this a good tenet? Only support non-deprecated APIs?
+    moduleName === "crypto" ? ["DEFAULT_ENCODING"] : []
+  );
+}
 
 function registerValue(value: any, expr: string) {
   if (Globals.has(value)) {
