@@ -7,11 +7,11 @@ import { callExpr, idExpr, propAccessExpr, stringExpr } from "./util";
 
 export const Globals = new Map<any, () => string>();
 
-// for (const valueName of globals) {
-//   if (valueName in global) {
-//     registerValue(global[valueName as keyof typeof global], idExpr(valueName));
-//   }
-// }
+for (const valueName of globals) {
+  if (valueName in global) {
+    registerValue(global[valueName as keyof typeof global], idExpr(valueName));
+  }
+}
 
 const ignore = [
   "_http_agent",
