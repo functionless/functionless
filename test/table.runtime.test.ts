@@ -1017,6 +1017,352 @@ runtimeTestSuite("tableStack", (t: any) => {
     }
   );
 
+  test(
+    "Step Function all DynamoDB AttributeValue APIs",
+    (scope: any, role: any) => {
+      const table = new Table<Item, "pk", "sk">(scope, "JsonSecret", {
+        partitionKey: {
+          name: "pk",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+        sortKey: {
+          name: "sk",
+          type: aws_dynamodb.AttributeType.STRING,
+        },
+      });
+
+      const func = new Function(
+        scope,
+        "Func",
+        {
+          ...localstackClientConfig,
+        },
+        async ([item1, item2]: [Item1v1, Item2]) => {
+          // clean the table
+          while (true) {
+            const items = await table.attributes.scan({
+              ConsistentRead: true,
+            });
+            if (items.Items?.length) {
+              await table.attributes.batchWrite({
+                RequestItems: items.Items.map((item) => ({
+                  DeleteRequest: {
+                    Key: {
+                      pk: item.pk,
+                      sk: item.sk,
+                    },
+                  },
+                })),
+              });
+            } else {
+              break;
+            }
+          }
+
+          const item1Attributes = {
+            type: {
+              S: item1.type,
+            },
+            pk: {
+              S: item1.pk,
+            },
+            sk: {
+              S: item1.sk,
+            },
+            version: {
+              N: `1`,
+            },
+            data1: {
+              M: {
+                key: {
+                  S: item1.data1.key,
+                },
+              },
+            },
+          } as const;
+
+          await table.attributes.put({
+            Item: item1Attributes,
+          });
+
+          const gotItem = await table.attributes.get({
+            Key: {
+              pk: {
+                S: item1.pk,
+              },
+              sk: {
+                S: item1.sk,
+              },
+            },
+          });
+
+          const query = await table.attributes.query({
+            KeyConditionExpression: "pk = :pk",
+            ExpressionAttributeValues: {
+              ":pk": {
+                S: item1.pk,
+              },
+            },
+            ConsistentRead: true,
+          });
+
+          const scan = await table.attributes.scan({
+            ConsistentRead: true,
+          });
+
+          const batch = await table.attributes.batchGet({
+            Keys: [
+              {
+                pk: {
+                  S: item1.pk,
+                },
+                sk: {
+                  S: item1.sk,
+                },
+              },
+            ],
+          });
+
+          const updated = await table.attributes.update({
+            Key: {
+              pk: {
+                S: item1.pk,
+              },
+              sk: {
+                S: item1.sk,
+              },
+            },
+            UpdateExpression: "SET data1 = :data",
+            ExpressionAttributeValues: {
+              ":data": {
+                M: {
+                  key: {
+                    S: "value2",
+                  },
+                },
+              },
+            },
+            ReturnValues: "ALL_OLD",
+          });
+
+          const deleted = await table.attributes.delete({
+            Key: {
+              pk: {
+                S: item1.pk,
+              },
+              sk: {
+                S: item1.sk,
+              },
+            },
+            ReturnValues: "ALL_OLD",
+          });
+
+          const item2Attributes = {
+            type: {
+              S: item2.type,
+            },
+            pk: {
+              S: item2.pk,
+            },
+            sk: {
+              S: item2.sk,
+            },
+            data2: {
+              M: {
+                key: {
+                  S: item2.data2.key,
+                },
+              },
+            },
+            version: {
+              N: `${item2.version}`,
+            },
+          } as const;
+
+          await table.attributes.put({
+            Item: item2Attributes,
+          });
+
+          let batchWrite = await table.attributes.batchWrite({
+            RequestItems: [
+              {
+                DeleteRequest: {
+                  Key: {
+                    pk: {
+                      S: item2.pk,
+                    },
+                    sk: {
+                      S: item2.sk,
+                    },
+                  },
+                },
+              },
+              {
+                PutRequest: {
+                  Item: {
+                    pk: {
+                      S: "Item2|1|pk2-modified",
+                    },
+                    sk: {
+                      S: item2.sk,
+                    },
+                    type: {
+                      S: item2.type,
+                    },
+                    version: {
+                      N: `${item2.version}`,
+                    },
+                    data2: {
+                      M: {
+                        key: {
+                          S: item2.data2.key,
+                        },
+                      },
+                    },
+                  },
+                },
+              },
+            ],
+          });
+
+          while (
+            batchWrite.UnprocessedItems &&
+            batchWrite.UnprocessedItems.length > 0
+          ) {
+            batchWrite = await table.attributes.batchWrite({
+              RequestItems: batchWrite.UnprocessedItems,
+            });
+          }
+
+          const item2Modified = await table.attributes.get({
+            Key: {
+              pk: {
+                S: "Item2|1|pk2-modified",
+              },
+              sk: {
+                S: item2.sk,
+              },
+            },
+          });
+
+          await table.attributes.transactWrite({
+            TransactItems: [
+              {
+                Put: {
+                  Item: item1Attributes,
+                },
+              },
+              {
+                Put: {
+                  Item: item2Attributes,
+                },
+              },
+            ],
+          });
+
+          const transactGet = await table.attributes.transactGet({
+            TransactItems: [
+              {
+                Get: {
+                  Key: {
+                    pk: item1Attributes.pk,
+                    sk: item1Attributes.sk,
+                  },
+                },
+              },
+              {
+                Get: {
+                  Key: {
+                    pk: item2Attributes.pk,
+                    sk: item2Attributes.sk,
+                  },
+                },
+              },
+            ],
+          });
+
+          return [
+            gotItem.Item ?? null,
+            scan.Items?.[0] ?? null,
+            query.Items?.[0] ?? null,
+            batch.Items?.[0] ?? null,
+            updated.Attributes ?? null,
+            deleted.Attributes ?? null,
+            item2Modified.Item ?? null,
+            transactGet.Items[0] ?? null,
+            transactGet.Items[1] ?? null,
+          ];
+        }
+      );
+      func.resource.grantInvoke(role);
+      table.resource.grantFullAccess(role);
+      return {
+        outputs: {
+          tableArn: table.resource.tableArn,
+          functionArn: func.resource.functionArn,
+        },
+      };
+    },
+    async (context: any, clients: RuntimeTestClients) => {
+      const item1: Item1v1 = {
+        type: "Item1",
+        version: 1,
+        pk: "Item1|1|pk1",
+        sk: "sk2",
+        data1: {
+          key: "value",
+        },
+      };
+
+      const item2: Item2 = {
+        type: "Item2",
+        version: 1,
+        pk: "Item2|1|pk2",
+        sk: "sk2",
+        data2: {
+          key: "value2",
+        },
+      };
+
+      const response = await clients.lambda
+        .invoke({
+          FunctionName: context.functionArn,
+          Payload: JSON.stringify([item1, item2]),
+        })
+        .promise();
+
+      if (!response.Payload) {
+        throw new Error("response.Payload is undefined");
+      }
+
+      expect(JSON.parse(response?.Payload as any)).toEqual([
+        AWS.DynamoDB.Converter.marshall(item1),
+        AWS.DynamoDB.Converter.marshall(item1),
+        AWS.DynamoDB.Converter.marshall(item1),
+        AWS.DynamoDB.Converter.marshall(item1),
+        AWS.DynamoDB.Converter.marshall(item1),
+        {
+          ...AWS.DynamoDB.Converter.marshall(item1),
+          data1: {
+            M: {
+              key: {
+                S: "value2",
+              },
+            },
+          },
+        },
+        {
+          ...AWS.DynamoDB.Converter.marshall(item2),
+          pk: {
+            S: "Item2|1|pk2-modified",
+          },
+        },
+        AWS.DynamoDB.Converter.marshall(item1),
+        AWS.DynamoDB.Converter.marshall(item2),
+      ]);
+    }
+  );
+
   type GraphItem = Person;
   interface TableItem<Type extends string> {
     pk: `${Type}|${string}`;
