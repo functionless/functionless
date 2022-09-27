@@ -93,14 +93,30 @@ function parseAst(expr: any): any {
   });
 }
 
-const substitutions: WeakMap<any, any> = (Global[
-  Symbol.for("functionless::subs")
-] = Global[Symbol.for("functionless::subs")] ?? new WeakMap());
+const substitutionSymbol = Symbol.for("functionless::substitutions");
 
-export function substitute(from: any, to: any) {
+/**
+ * A global WeakMap for re-directing ReferenceExpr references.
+ *
+ * This hack is to support the fl-exp inverted model.
+ */
+const substitutions: WeakMap<any, any> = (Global[substitutionSymbol] =
+  Global[substitutionSymbol] ?? new WeakMap());
+
+/**
+ * Register a substitution. Any ReferenceExpr pointing to {@link from}
+ * will be substituted with {@link to} when ReferenceExpr is resolved.
+ */
+export function registerSubstitution(from: any, to: any) {
   substitutions.set(from, to);
 }
 
+/**
+ * Resolve a value, potentially substituting it if a substitution has
+ * been registered for the {@link from} value. If no substitution
+ * has been registered, then the original value in the ReferenceExpr
+ * is returned.
+ */
 export function resolveSubstitution(from: any): any {
   return substitutions.has(from) ? substitutions.get(from) : from;
 }
