@@ -239,7 +239,9 @@ runtimeTestSuite<{
       });
 
       queue.messages().forEach(localstackClientConfig, async (message) => {
-        await table.put(message);
+        await table.put({
+          Item: message,
+        });
       });
       return queue;
     },
@@ -370,7 +372,9 @@ runtimeTestSuite<{
         .flatMap((message) => [message])
         .flatMap(async (message) => [message])
         .forEach(localstackClientConfig, async (message) => {
-          await table.put(message);
+          await table.put({
+            Item: message,
+          });
         });
       return queue;
     },
@@ -401,7 +405,9 @@ runtimeTestSuite<{
         .forEachBatch(localstackClientConfig, async (messages) => {
           await Promise.all(
             messages.map(async (message) => {
-              await table.put(message);
+              await table.put({
+                Item: message,
+              });
             })
           );
         });
@@ -449,7 +455,6 @@ runtimeTestSuite<{
             Entries: [
               {
                 Id: "1",
-
                 MessageBody: {
                   id: "id-1",
                   data: "data-1",
