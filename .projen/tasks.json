@@ -201,10 +201,10 @@
           "spawn": "test:fast"
         },
         {
-          "spawn": "test:runtime"
+          "spawn": "test:app"
         },
         {
-          "spawn": "test:app"
+          "spawn": "test:runtime"
         },
         {
           "spawn": "eslint"

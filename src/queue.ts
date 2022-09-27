@@ -381,7 +381,7 @@ abstract class BaseQueue<Message>
     >({
       kind: "AWS.SQS.SendMessage",
       native: {
-        bind: (func) => this.resource.grantSendMessages(func.resource),
+        bind: (func) => this.resource.grantSendMessages(func),
         preWarm: (context) => context.getOrInit(SQSClient),
         call: async ([input], context) => {
           const sqs = context.getOrInit(SQSClient);
@@ -529,7 +529,7 @@ abstract class BaseQueue<Message>
     >({
       kind: "AWS.SQS.SendMessageBatch",
       native: {
-        bind: (func) => this.resource.grantSendMessages(func.resource),
+        bind: (func) => this.resource.grantSendMessages(func),
         preWarm: (context) => context.getOrInit(SQSClient),
         call: async ([input], context) => {
           const sqs: AWS.SQS = context.getOrInit<AWS.SQS>(SQSClient);
@@ -661,7 +661,7 @@ abstract class BaseQueue<Message>
       kind: "AWS.SQS.ReceiveMessage",
       // asl: (call, context) => {},
       native: {
-        bind: (func) => this.resource.grantConsumeMessages(func.resource),
+        bind: (func) => this.resource.grantConsumeMessages(func),
         preWarm: (context) => context.getOrInit(SQSClient),
         call: async ([input], context) => {
           const sqs: AWS.SQS = context.getOrInit(SQSClient);
@@ -807,7 +807,7 @@ abstract class BaseQueue<Message>
     this.purge = makeIntegration<"AWS.SQS.PurgeQueue", () => Promise<{}>>({
       kind: "AWS.SQS.PurgeQueue",
       native: {
-        bind: (func) => this.resource.grantPurge(func.resource),
+        bind: (func) => this.resource.grantPurge(func),
         preWarm: (context) => context.getOrInit(SQSClient),
         call: async ([], context) => {
           const updatedQueueUrl =

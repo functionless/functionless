@@ -1713,7 +1713,7 @@ class BaseExpressStepFunction<
 
     this.native = {
       bind: (context) => {
-        this.resource.grantStartSyncExecution(context.resource);
+        this.resource.grantStartSyncExecution(context);
       },
       preWarm(preWarmContext) {
         preWarmContext.getOrInit(PrewarmClients.StepFunctions);
@@ -1986,7 +1986,7 @@ class BaseStandardStepFunction<
 
     this.native = {
       bind: (context) => {
-        this.resource.grantStartExecution(context.resource);
+        this.resource.grantStartExecution(context);
       },
       preWarm(preWarmContext) {
         preWarmContext.getOrInit(PrewarmClients.StepFunctions);
@@ -2061,7 +2061,7 @@ class BaseStandardStepFunction<
       });
     },
     native: {
-      bind: (context) => this.resource.grantRead(context.resource),
+      bind: (context) => this.resource.grantRead(context),
       preWarm(prewarmContext) {
         prewarmContext.getOrInit(PrewarmClients.StepFunctions);
       },
@@ -2186,7 +2186,7 @@ class BaseStandardStepFunction<
       );
     },
     native: {
-      bind: (context) => this.resource.grantTaskResponse(context.resource),
+      bind: (context) => this.resource.grantTaskResponse(context),
       preWarm(prewarmContext) {
         prewarmContext.getOrInit(PrewarmClients.StepFunctions);
       },
@@ -2285,7 +2285,7 @@ ${[
       });
     },
     native: {
-      bind: (context) => this.resource.grantTaskResponse(context.resource),
+      bind: (context) => this.resource.grantTaskResponse(context),
       preWarm(prewarmContext) {
         prewarmContext.getOrInit(PrewarmClients.StepFunctions);
       },
@@ -2368,7 +2368,7 @@ ${[
       });
     },
     native: {
-      bind: (context) => this.resource.grantTaskResponse(context.resource),
+      bind: (context) => this.resource.grantTaskResponse(context),
       preWarm(prewarmContext) {
         prewarmContext.getOrInit(PrewarmClients.StepFunctions);
       },

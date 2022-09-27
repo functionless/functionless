@@ -11,15 +11,7 @@ import { Role } from "aws-cdk-lib/aws-iam";
 import { SQSBatchResponse } from "aws-lambda";
 import { Construct } from "constructs";
 import { v4 } from "uuid";
-import {
-  EventBus,
-  Event,
-  Function,
-  FunctionProps,
-  Queue,
-  QueueProps,
-  Table,
-} from "../src";
+import { EventBus, Event, Function, FunctionProps, Queue, Table } from "../src";
 import { JsonSerializer } from "../src/serializer";
 import {
   RuntimeTestClients,
@@ -42,11 +34,11 @@ const localstackClientConfig: FunctionProps = {
       : undefined,
 };
 
-const localstackQueueConfig: QueueProps<any> = {
+const localstackQueueConfig = {
   lambda:
     runtimeTestExecutionContext.deployTarget === "LOCALSTACK"
       ? {
-          queueUrlRetriever: (queueUrl) =>
+          queueUrlRetriever: (queueUrl: string) =>
             process.env.LOCALSTACK_HOSTNAME
               ? queueUrl.replace("localhost", process.env.LOCALSTACK_HOSTNAME)
               : queueUrl,
@@ -455,7 +447,6 @@ runtimeTestSuite<{
             Entries: [
               {
                 Id: "1",
-
                 MessageBody: {
                   id: "id-1",
                   data: "data-1",

@@ -21,7 +21,7 @@ class GitHooksPreCommitComponent extends TextFile {
   }
 }
 
-const MIN_CDK_VERSION = "2.28.1";
+const MIN_CDK_VERSION = "2.43.1";
 
 /**
  * Projen does not currently support a way to set `*` for deerDependency versions.
@@ -288,8 +288,8 @@ const testApp = project.addTask("test:app", {
 
 project.testTask.spawn(typeCheck);
 project.testTask.spawn(testFast);
-project.testTask.spawn(testRuntime);
 project.testTask.spawn(testApp);
+project.testTask.spawn(testRuntime);
 project.testTask.spawn(project.tasks.tryFind("eslint")!);
 
 project.addPackageIgnore("/test-app");

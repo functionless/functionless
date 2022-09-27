@@ -90,7 +90,7 @@ export abstract class Secret<SecretValue = any> {
       kind: "AWS.SecretsManager.PutSecretValue",
       native: {
         bind: (context) => {
-          this.resource.grantWrite(context.resource);
+          this.resource.grantWrite(context);
         },
         preWarm: initClient,
         call: async ([input], context) =>
@@ -115,7 +115,7 @@ export abstract class Secret<SecretValue = any> {
       kind: "AWS.SecretsManager.GetSecretValue",
       native: {
         bind: (context) => {
-          this.resource.grantRead(context.resource);
+          this.resource.grantRead(context);
         },
         preWarm: initClient,
         async call([input], context) {
