@@ -288,8 +288,8 @@ const testApp = project.addTask("test:app", {
 
 project.testTask.spawn(typeCheck);
 project.testTask.spawn(testFast);
-project.testTask.spawn(testRuntime);
 project.testTask.spawn(testApp);
+project.testTask.spawn(testRuntime);
 project.testTask.spawn(project.tasks.tryFind("eslint")!);
 
 project.addPackageIgnore("/test-app");
