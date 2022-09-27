@@ -4257,6 +4257,55 @@ describe("binding", () => {
   });
 });
 
+function funcDecl() {
+  return 1;
+}
+
+test("using function decl", () => {
+  const { stack } = initStepFunctionApp();
+
+  const definition = new ExpressStepFunction(stack, "fn", funcDecl).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("using inline function decl", () => {
+  const { stack, task } = initStepFunctionApp();
+
+  function scopedFuncDecl() {
+    return task();
+  }
+
+  const definition = new ExpressStepFunction(stack, "fn", scopedFuncDecl)
+    .definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("using function expr", () => {
+  const { stack, task } = initStepFunctionApp();
+
+  const funcExpr = function x() {
+    return task();
+  };
+
+  const definition = new ExpressStepFunction(stack, "fn", funcExpr).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
+test("using arrow", () => {
+  const { stack, task } = initStepFunctionApp();
+
+  const arrowFunc = () => {
+    return task();
+  };
+
+  const definition = new ExpressStepFunction(stack, "fn", arrowFunc).definition;
+
+  expect(normalizeDefinition(definition)).toMatchSnapshot();
+});
+
 test("throw SynthError when for-await is used", () => {
   const { stack } = initStepFunctionApp();
 

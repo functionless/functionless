@@ -28,11 +28,18 @@ import type { Context } from "aws-lambda";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { Construct } from "constructs";
 import esbuild from "esbuild";
-import ts from "typescript";
+import ts, { BinaryExpression, SyntaxKind } from "typescript";
 import { ApiGatewayVtlIntegration } from "./api";
 import type { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph } from "./asl";
-import { BindFunctionName, RegisterFunctionName } from "./compile";
+import {
+  BindCommand,
+  BindFunctionName,
+  ProxyCommand,
+  RegisterCommand,
+  RegisterFunctionName,
+  RegisterRefCommand,
+} from "./compile";
 import { IntegrationInvocation } from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
@@ -1044,7 +1051,121 @@ export async function serialize(
                           )
                         );
                       }
+                    } else if (
+                      // (stash=x,stash[]=ast,stash)
+                      // => x
+                      isSequenceExpr(node)
+                    ) {
+                      // Functionless AST-Reflection commands are in the form (command, ...args)
+                      const [commandFlagPosition, entry1] =
+                        flattenSequenceExpression(node);
+
+                      const commandFlag =
+                        commandFlagPosition &&
+                        ts.isBinaryExpression(commandFlagPosition) &&
+                        ts.isStringLiteral(commandFlagPosition.right)
+                          ? commandFlagPosition.right.text
+                          : undefined;
+
+                      // Register - retrieve the value from the second position's assignment.
+                      // (stash="REGISTER", stash=value, stash[Symbol.AST]=ast, stash)
+                      // => value
+                      if (commandFlag === RegisterCommand) {
+                        if (
+                          !entry1 ||
+                          !ts.isBinaryExpression(entry1) ||
+                          entry1.operatorToken.kind !==
+                            ts.SyntaxKind.EqualsToken
+                        ) {
+                          throw new SynthError(
+                            ErrorCodes.Unexpected_Error,
+                            "Compilation Error: found an invalid register command. Check the versions of AST-Reflection and Functionless."
+                          );
+                        }
+                        return eraseBindAndRegister(entry1.right);
+                      } else if (commandFlag === RegisterRefCommand) {
+                        // Register Ref - remove
+                        // (stash="REGISTER_REF", ref[Symbol.AST]=ast)
+                        // => undefined
+                        // TODO support returning no node.
+                        return ts.factory.createIdentifier("undefined");
+                      } else if (commandFlag === BindCommand) {
+                        /**
+                         * Bind -
+                         * (stash="BIND",
+                         *    stash={ args: args, self: this, func: func },
+                         *    stash={ f: stash.func.bind(stash.self, ...stash.args), ...stash },
+                         *    typeof stash.f === "function" && (
+                         *        stash.f[Symbol.for("functionless:BoundThis")] = stash.self,
+                         *        stash.f[Symbol.for("functionless:BoundArgs")] = stash.args,
+                         *        stash.f[Symbol.for("functionless:TargetFunction")] = stash.func
+                         *    ),
+                         *    stash
+                         * )
+                         * => func.bind(this, ...args)
+                         */
+                        if (
+                          !entry1 ||
+                          !ts.isBinaryExpression(entry1) ||
+                          entry1.operatorToken.kind !==
+                            SyntaxKind.EqualsToken ||
+                          !ts.isObjectLiteralExpression(entry1.right)
+                        ) {
+                          throw new SynthError(
+                            ErrorCodes.Unexpected_Error,
+                            "Compilation Error: found an invalid register command. Check the versions of AST-Reflection and Functionless."
+                          );
+                        }
+                        const {
+                          args,
+                          this: _this,
+                          func,
+                        } = Object.fromEntries(
+                          entry1.right.properties
+                            .filter(ts.isPropertyAssignment)
+                            .map((p) => [
+                              p.name && ts.isIdentifier(p.name)
+                                ? p.name.text
+                                : "UNKNOWN",
+                              p.initializer,
+                            ])
+                        );
+                        if (!args || !_this || !func) {
+                          throw new SynthError(
+                            ErrorCodes.Unexpected_Error,
+                            "Compilation Error: found an invalid register command. Check the versions of AST-Reflection and Functionless."
+                          );
+                        }
+                        return ts.factory.createCallExpression(
+                          ts.factory.createPropertyAccessExpression(
+                            eraseBindAndRegister(func) as ts.Expression,
+                            "bind"
+                          ),
+                          undefined,
+                          [
+                            eraseBindAndRegister(_this) as ts.Expression,
+                            ts.factory.createSpreadElement(
+                              eraseBindAndRegister(args) as ts.Expression
+                            ),
+                          ]
+                        );
+                      } else if (commandFlag === ProxyCommand) {
+                        /**
+                         * (stash="PROXY",
+                         *    stash={ args }, // ensure the args are only evaluated once
+                         *    stash={ proxy: new clss(...stash.args), ...stash }, // create the proxy
+                         *    (globalThis.util.types.isProxy(stash.proxy) &&
+                         *       (globalThis.proxies = globalThis.proxies ?? new globalThis.WeakMap())
+                         *          .set(stash.proxy, stash.args)
+                         *    ),
+                         *    proxy
+                         * )
+                         * TODO - rebuild proxy
+                         */
+                        return ts.factory.createIdentifier("undefined");
+                      }
                     }
+
                     return ts.visitEachChild(node, eraseBindAndRegister, ctx);
                   },
               ],
@@ -1275,6 +1396,29 @@ export async function bundle(
 
   // a bundled output will be one file
   return bundle.outputFiles[0]!;
+}
+
+function isSequenceExpr(node: ts.Node): node is BinaryExpression & {
+  operatorToken: { kind: typeof ts.SyntaxKind.CommaToken };
+} {
+  return (
+    ts.isBinaryExpression(node) &&
+    node.operatorToken.kind === ts.SyntaxKind.CommaToken
+  );
+}
+
+function flattenSequenceExpression(
+  expr: BinaryExpression & {
+    operatorToken: { kind: typeof ts.SyntaxKind.CommaToken };
+  }
+): ts.Expression[] {
+  const left = isSequenceExpr(expr.left)
+    ? flattenSequenceExpression(expr.left)
+    : [expr.left];
+  const right = isSequenceExpr(expr.right)
+    ? flattenSequenceExpression(expr.right)
+    : [expr.right];
+  return [...left, ...right];
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

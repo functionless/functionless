@@ -350,4 +350,26 @@ describe("serialize", () => {
     expect(bundled.text).toMatchSnapshot();
     expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE * 1.5);
   });
+
+  test("bind and proxy", async () => {
+    const [srlz] = await serialize(async () => {
+      const b = (() => {}).bind(this, "value");
+      const p = new Proxy(
+        {},
+        {
+          get: () => {
+            return 1;
+          },
+        }
+      );
+      return [b, p];
+    }, []);
+
+    expect(srlz).toMatchSnapshot();
+
+    const bundled = await bundle(srlz);
+    expect(bundled.text).toMatchSnapshot();
+    // 300k after bundling
+    expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE * 30);
+  });
 });

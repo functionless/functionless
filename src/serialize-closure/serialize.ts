@@ -403,7 +403,7 @@ export function serializeClosure(
       );
     } else if (typeof value === "object") {
       if (Globals.has(value)) {
-        return emitVarDecl("const", uniqueName(), Globals.get(value)!());
+        return Globals.get(value)!();
       }
 
       const mod = requireCache.get(value);

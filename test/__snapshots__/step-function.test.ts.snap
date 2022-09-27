@@ -21896,6 +21896,123 @@ exports[`use context parameter in template 1`] = `
 }
 `;
 
+exports[`using arrow 1`] = `
+{
+  "StartAt": "Initialize Functionless Context",
+  "States": {
+    "1__return task()": {
+      "End": true,
+      "InputPath": "$.heap0",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": {
+      "Next": "return task()",
+      "Parameters": {
+        "fnl_context": {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return task()": {
+      "InputPath": "$.fnl_context.null",
+      "Next": "1__return task()",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
+exports[`using function decl 1`] = `
+{
+  "StartAt": "Initialize Functionless Context",
+  "States": {
+    "Initialize Functionless Context": {
+      "Next": "return 1",
+      "Parameters": {
+        "fnl_context": {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return 1": {
+      "End": true,
+      "Result": 1,
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+  },
+}
+`;
+
+exports[`using function expr 1`] = `
+{
+  "StartAt": "Initialize Functionless Context",
+  "States": {
+    "1__return task()": {
+      "End": true,
+      "InputPath": "$.heap0",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": {
+      "Next": "return task()",
+      "Parameters": {
+        "fnl_context": {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return task()": {
+      "InputPath": "$.fnl_context.null",
+      "Next": "1__return task()",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
+exports[`using inline function decl 1`] = `
+{
+  "StartAt": "Initialize Functionless Context",
+  "States": {
+    "1__return task()": {
+      "End": true,
+      "InputPath": "$.heap0",
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "Initialize Functionless Context": {
+      "Next": "return task()",
+      "Parameters": {
+        "fnl_context": {
+          "null": null,
+        },
+      },
+      "ResultPath": "$",
+      "Type": "Pass",
+    },
+    "return task()": {
+      "InputPath": "$.fnl_context.null",
+      "Next": "1__return task()",
+      "Resource": "__REPLACED_TOKEN",
+      "ResultPath": "$.heap0",
+      "Type": "Task",
+    },
+  },
+}
+`;
+
 exports[`waitFor literal number of seconds 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
