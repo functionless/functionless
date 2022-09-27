@@ -1,7 +1,7 @@
 import path from "path";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import AWSAppSyncClient from "aws-appsync";
-import { aws_dynamodb, aws_iam, Duration } from "aws-cdk-lib";
+import { aws_dynamodb, aws_iam, Duration, RemovalPolicy } from "aws-cdk-lib";
 import AWS from "aws-sdk";
 import "cross-fetch/polyfill";
 import gql from "graphql-tag";
@@ -88,6 +88,7 @@ runtimeTestSuite("tableStack", (t: any) => {
           name: "sk",
           type: aws_dynamodb.AttributeType.STRING,
         },
+        removalPolicy: RemovalPolicy.DESTROY,
       });
 
       const func = new Function(
@@ -337,6 +338,7 @@ runtimeTestSuite("tableStack", (t: any) => {
           name: "sk",
           type: aws_dynamodb.AttributeType.STRING,
         },
+        removalPolicy: RemovalPolicy.DESTROY,
       });
 
       const func = new ExpressStepFunction(
@@ -683,6 +685,7 @@ runtimeTestSuite("tableStack", (t: any) => {
           name: "sk",
           type: aws_dynamodb.AttributeType.STRING,
         },
+        removalPolicy: RemovalPolicy.DESTROY,
       });
 
       const func = new Function(
@@ -1034,6 +1037,7 @@ runtimeTestSuite("tableStack", (t: any) => {
           name: "pk",
           type: aws_dynamodb.AttributeType.STRING,
         },
+        removalPolicy: RemovalPolicy.DESTROY,
       });
 
       const api = new appsync.GraphqlApi(scope, "Api", {

@@ -1,5 +1,3 @@
-// @ts-nocheck
-
 // sourced from the lib.*.d.ts files
 import module from "module";
 import globals from "./globals.json";
