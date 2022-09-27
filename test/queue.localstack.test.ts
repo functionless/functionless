@@ -12,7 +12,6 @@ import { SQSBatchResponse } from "aws-lambda";
 import { Construct } from "constructs";
 import { v4 } from "uuid";
 import {
-  $AWS,
   EventBus,
   Event,
   Function,
@@ -142,8 +141,7 @@ runtimeTestSuite<{
         await Promise.all(
           event.Records.map(async (record) => {
             const json = JSON.parse(record.body);
-            await $AWS.DynamoDB.PutItem({
-              Table: table,
+            await table.attributes.put({
               Item: {
                 id: {
                   S: json.id,
@@ -174,8 +172,7 @@ runtimeTestSuite<{
         await Promise.all(
           event.Records.map(async (record) => {
             const json = JSON.parse(record.body);
-            await $AWS.DynamoDB.PutItem({
-              Table: table,
+            await table.attributes.put({
               Item: {
                 id: {
                   S: json.id,
@@ -205,7 +202,7 @@ runtimeTestSuite<{
         data: string;
       }
 
-      const queue = new Queue(scope, "queue", {
+      const queue = new Queue<Message>(scope, "queue", {
         ...localstackQueueConfig,
         serializer: new JsonSerializer<Message>(),
       });
@@ -213,16 +210,8 @@ runtimeTestSuite<{
       queue.onEvent(localstackClientConfig, async (event) => {
         await Promise.all(
           event.Records.map(async (record) => {
-            await $AWS.DynamoDB.PutItem({
-              Table: table,
-              Item: {
-                id: {
-                  S: record.message.id,
-                },
-                data: {
-                  S: record.message.data,
-                },
-              },
+            await table.put({
+              Item: record.message,
             });
           })
         );
@@ -250,16 +239,8 @@ runtimeTestSuite<{
       });
 
       queue.messages().forEach(localstackClientConfig, async (message) => {
-        await $AWS.DynamoDB.PutItem({
-          Table: table,
-          Item: {
-            id: {
-              S: message.id,
-            },
-            data: {
-              S: message.data,
-            },
-          },
+        await table.put({
+          Item: message,
         });
       });
       return queue;
@@ -293,16 +274,8 @@ runtimeTestSuite<{
         .pipe(queue);
 
       queue.messages().forEach(localstackClientConfig, async (message) => {
-        await $AWS.DynamoDB.PutItem({
-          Table: table,
-          Item: {
-            id: {
-              S: message.id,
-            },
-            data: {
-              S: message.data,
-            },
-          },
+        await table.put({
+          Item: message,
         });
       });
       return {
@@ -353,8 +326,7 @@ runtimeTestSuite<{
         .forEach(
           localstackClientConfig,
           async (message, { attributes: { MessageGroupId } }) => {
-            await $AWS.DynamoDB.PutItem({
-              Table: table,
+            await table.attributes.put({
               Item: {
                 id: {
                   S: message.id,
@@ -400,16 +372,8 @@ runtimeTestSuite<{
         .flatMap((message) => [message])
         .flatMap(async (message) => [message])
         .forEach(localstackClientConfig, async (message) => {
-          await $AWS.DynamoDB.PutItem({
-            Table: table,
-            Item: {
-              id: {
-                S: message.id,
-              },
-              data: {
-                S: message.data,
-              },
-            },
+          await table.put({
+            Item: message,
           });
         });
       return queue;
@@ -441,16 +405,8 @@ runtimeTestSuite<{
         .forEachBatch(localstackClientConfig, async (messages) => {
           await Promise.all(
             messages.map(async (message) => {
-              await $AWS.DynamoDB.PutItem({
-                Table: table,
-                Item: {
-                  id: {
-                    S: message.id,
-                  },
-                  data: {
-                    S: message.data,
-                  },
-                },
+              await table.put({
+                Item: message,
               });
             })
           );

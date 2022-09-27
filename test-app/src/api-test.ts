@@ -13,7 +13,6 @@ import {
   Function,
   Table,
   ApiGatewayInput,
-  $AWS,
   LambdaMethod,
 } from "functionless";
 
@@ -128,8 +127,7 @@ new AwsMethod(
     resource: dynamoResource,
   },
   ($input) =>
-    $AWS.DynamoDB.GetItem({
-      Table: table,
+    table.attributes.get({
       Key: {
         id: {
           S: `${$input.params("id")}`,

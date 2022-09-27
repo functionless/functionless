@@ -84,8 +84,7 @@ describe("serialize", () => {
 
     test("get", async () => {
       const [srlz] = await serialize(() => {
-        return $AWS.DynamoDB.GetItem({
-          Table: table,
+        return table.attributes.get({
           Key: {
             id: { S: "id" },
           },
@@ -98,12 +97,11 @@ describe("serialize", () => {
       expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
     });
 
-    const { GetItem } = $AWS.DynamoDB;
+    const { get } = table.attributes;
 
     test("get referenced", async () => {
       const [srlz] = await serialize(async () => {
-        return GetItem({
-          Table: table,
+        return get({
           Key: {
             id: { S: "id" },
           },
@@ -118,8 +116,7 @@ describe("serialize", () => {
 
     test("put", async () => {
       const [srlz] = await serialize(async () => {
-        return $AWS.DynamoDB.PutItem({
-          Table: table,
+        return table.attributes.put({
           Item: {
             id: { S: "key" },
           },
@@ -134,8 +131,7 @@ describe("serialize", () => {
 
     test("put", async () => {
       const [srlz] = await serialize(async () => {
-        return $AWS.DynamoDB.UpdateItem({
-          Table: table,
+        return table.attributes.update({
           Key: {
             id: { S: "key" },
           },
@@ -157,8 +153,7 @@ describe("serialize", () => {
 
     test("delete", async () => {
       const [srlz] = await serialize(async () => {
-        return $AWS.DynamoDB.DeleteItem({
-          Table: table,
+        return table.attributes.delete({
           Key: {
             id: {
               S: "key",
@@ -175,8 +170,7 @@ describe("serialize", () => {
 
     test("query", async () => {
       const [srlz] = await serialize(async () => {
-        return $AWS.DynamoDB.Query({
-          Table: table,
+        return table.query({
           KeyConditionExpression: "#key = :key",
           ExpressionAttributeValues: {
             ":key": { S: "key" },
@@ -195,9 +189,7 @@ describe("serialize", () => {
 
     test("scan", async () => {
       const [srlz] = await serialize(async () => {
-        return $AWS.DynamoDB.Scan({
-          Table: table,
-        });
+        return table.attributes.scan();
       }, []);
 
       expect(srlz).toMatchSnapshot();

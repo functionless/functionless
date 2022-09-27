@@ -642,7 +642,6 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
         },
         removalPolicy: RemovalPolicy.DESTROY,
       });
-      const get = $AWS.DynamoDB.GetItem;
       table.addGlobalSecondaryIndex({
         indexName: "testIndex",
         partitionKey: {
@@ -654,8 +653,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
       const flTable = Table.fromTable(table);
 
       return functionWithOwnRole(parent, async () => {
-        await get({
-          Table: flTable,
+        await flTable.attributes.get({
           Key: {
             key: { S: "hi" },
           },
@@ -761,18 +759,15 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
   test(
     "dynamo integration aws dynamo functions",
     (parent) => {
-      const { GetItem, DeleteItem, PutItem, Query, Scan, UpdateItem } =
-        $AWS.DynamoDB;
+      const { get, delete: del, put, query, scan, update } = table.attributes;
       return functionWithOwnRole(parent, async () => {
-        await PutItem({
-          Table: table,
+        await put({
           Item: {
             key: { S: "key" },
             value: { S: "wee" },
           },
         });
-        const item = await GetItem({
-          Table: table,
+        const item = await get({
           Key: {
             key: {
               S: "key",
@@ -780,11 +775,8 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
           },
           ConsistentRead: true,
         });
-        await UpdateItem({
-          Table: table,
-          Key: {
-            key: { S: "key" },
-          },
+        await update({
+          Key: { key: { S: "key" } },
           UpdateExpression: "set #value = :value",
           ExpressionAttributeValues: {
             ":value": { S: "value" },
@@ -793,16 +785,14 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
             "#value": "value",
           },
         });
-        await DeleteItem({
-          Table: table,
+        await del({
           Key: {
             key: {
               S: "key",
             },
           },
         });
-        await Query({
-          Table: table,
+        await query({
           KeyConditionExpression: "#key = :key",
           ExpressionAttributeValues: {
             ":key": { S: "key" },
@@ -811,9 +801,7 @@ runtimeTestSuite("functionStack", (testResource, stack, _app) => {
             "#key": "key",
           },
         });
-        await Scan({
-          Table: table,
-        });
+        await scan({});
         return item.Item?.key.S;
       });
     },

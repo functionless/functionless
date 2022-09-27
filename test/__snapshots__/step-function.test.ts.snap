@@ -6350,7 +6350,7 @@ exports[`call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr 1`] = `
       "Type": "Task",
     },
     "Initialize Functionless Context": {
-      "Next": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
+      "Next": "person = await personTable.attributes.get({Key: {id: {S: input.id}}})",
       "Parameters": {
         "fnl_context": {
           "null": null,
@@ -6401,7 +6401,7 @@ exports[`call AWS.DynamoDB.GetItem, then Lambda and return LiteralExpr 1`] = `
       "ResultPath": "$.person",
       "Type": "Pass",
     },
-    "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": {
+    "person = await personTable.attributes.get({Key: {id: {S: input.id}}})": {
       "Next": "person",
       "Parameters": {
         "Key": {
@@ -7131,7 +7131,7 @@ exports[`conditionally call DynamoDB and then void 1`] = `
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}}})": {
+    "await personTable.attributes.get({Key: {id: {S: input.id}}})": {
       "Next": "return null",
       "Parameters": {
         "Key": {
@@ -7174,7 +7174,7 @@ exports[`conditionally call DynamoDB and then void 1`] = `
               ],
             },
           ],
-          "Next": "await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: input.id}}})",
+          "Next": "await personTable.attributes.get({Key: {id: {S: input.id}}})",
         },
       ],
       "Default": "return null",
@@ -15370,7 +15370,7 @@ exports[`return AWS.DynamoDB.GetItem 1`] = `
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
-      "Next": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
+      "Next": "person = await personTable.attributes.get({Key: {id: {S: input.id}}})",
       "Parameters": {
         "fnl_context": {
           "null": null,
@@ -15421,7 +15421,7 @@ exports[`return AWS.DynamoDB.GetItem 1`] = `
       "ResultPath": "$.person",
       "Type": "Pass",
     },
-    "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": {
+    "person = await personTable.attributes.get({Key: {id: {S: input.id}}})": {
       "Next": "person",
       "Parameters": {
         "Key": {
@@ -15455,7 +15455,7 @@ exports[`return AWS.DynamoDB.GetItem dynamic parameters 1`] = `
 {
   "StartAt": "Initialize Functionless Context",
   "States": {
-    "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ": {
+    "1__person = await personTable.attributes.get({Key: {id: {S: input.id ?? "de": {
       "Next": "person",
       "Parameters": {
         "Key": {
@@ -15479,7 +15479,7 @@ exports[`return AWS.DynamoDB.GetItem dynamic parameters 1`] = `
       "Type": "Pass",
     },
     "Initialize Functionless Context": {
-      "Next": "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp",
+      "Next": "person = await personTable.attributes.get({Key: {id: {S: input.id ?? "defau",
       "Parameters": {
         "fnl_context": {
           "null": null,
@@ -15489,8 +15489,8 @@ exports[`return AWS.DynamoDB.GetItem dynamic parameters 1`] = `
       "ResultPath": "$",
       "Type": "Pass",
     },
-    "false__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: ": {
-      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
+    "false__person = await personTable.attributes.get({Key: {id: {S: input.id ??": {
+      "Next": "1__person = await personTable.attributes.get({Key: {id: {S: input.id ?? "de",
       "Result": "default",
       "ResultPath": "$.heap0",
       "Type": "Pass",
@@ -15536,7 +15536,7 @@ exports[`return AWS.DynamoDB.GetItem dynamic parameters 1`] = `
       "ResultPath": "$.person",
       "Type": "Pass",
     },
-    "person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: inp": {
+    "person = await personTable.attributes.get({Key: {id: {S: input.id ?? "defau": {
       "Choices": [
         {
           "And": [
@@ -15549,10 +15549,10 @@ exports[`return AWS.DynamoDB.GetItem dynamic parameters 1`] = `
               "Variable": "$.input.id",
             },
           ],
-          "Next": "true__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {",
+          "Next": "true__person = await personTable.attributes.get({Key: {id: {S: input.id ?? ",
         },
       ],
-      "Default": "false__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: ",
+      "Default": "false__person = await personTable.attributes.get({Key: {id: {S: input.id ??",
       "Type": "Choice",
     },
     "return": {
@@ -15567,9 +15567,9 @@ exports[`return AWS.DynamoDB.GetItem dynamic parameters 1`] = `
       "ResultPath": "$.heap2",
       "Type": "Pass",
     },
-    "true__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {": {
+    "true__person = await personTable.attributes.get({Key: {id: {S: input.id ?? ": {
       "InputPath": "$.input.id",
-      "Next": "1__person = await $AWS.DynamoDB.GetItem({Table: personTable, Key: {id: {S: ",
+      "Next": "1__person = await personTable.attributes.get({Key: {id: {S: input.id ?? "de",
       "ResultPath": "$.heap0",
       "Type": "Pass",
     },

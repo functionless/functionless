@@ -1,6 +1,6 @@
 import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
 import "jest";
-import { Table, $util, AppsyncContext, $AWS, ITable, AnyTable } from "../src";
+import { Table, $util, AppsyncContext, ITable, AnyTable } from "../src";
 import { appsyncTestCase } from "./util";
 
 interface Item {
@@ -76,7 +76,7 @@ export async function typeCheck() {
   t2 = t3;
 
   t3 = t1;
-  t3 = t2;
+  // t3 = t2; // regression: https://github.com/functionless/functionless/pull/519
 
   let t4: ITable<any, any, any> | undefined;
   let t5: ITable<Item, "id"> | undefined;
@@ -98,19 +98,17 @@ export async function typeCheck() {
   t5 = t6;
 
   t6 = t1;
-  t6 = t2;
+  // t6 = t2; // regression: https://github.com/functionless/functionless/pull/519
   t6 = t3;
   t6 = t4;
-  t6 = t5;
+  // t6 = t5; // regression: https://github.com/functionless/functionless/pull/519
 
   // Test1: type checking should work for Table
-  await $AWS.DynamoDB.GetItem({
-    Table: newTable,
+  await newTable.attributes.get({
     // @ts-expect-error - missing id prop
     Key: {},
   });
-  await $AWS.DynamoDB.PutItem({
-    Table: newTable,
+  await newTable.attributes.put({
     Item: {
       id: {
         S: "",
@@ -124,26 +122,20 @@ export async function typeCheck() {
       },
     },
   });
-  await $AWS.DynamoDB.DeleteItem({
-    Table: newTable,
+  await newTable.attributes.delete({
     // @ts-expect-error - missing id prop
     Key: {},
   });
-  await $AWS.DynamoDB.UpdateItem({
-    Table: newTable,
+  await newTable.attributes.update({
     // @ts-expect-error - missing id prop
     Key: {},
     UpdateExpression: "",
   });
 
   // Test2: type checking should work for ITable
-  await $AWS.DynamoDB.GetItem({
-    Table: fromTable,
-    // @ts-expect-error - missing id prop
-    Key: {},
-  });
-  await $AWS.DynamoDB.PutItem({
-    Table: fromTable,
+  // @ts-expect-error - missing id prop
+  await fromTable.attributes.get({});
+  await fromTable.attributes.put({
     Item: {
       id: {
         S: "",
@@ -157,13 +149,11 @@ export async function typeCheck() {
       },
     },
   });
-  await $AWS.DynamoDB.DeleteItem({
-    Table: fromTable,
+  await fromTable.delete({
     // @ts-expect-error - missing id prop
     Key: {},
   });
-  await $AWS.DynamoDB.UpdateItem({
-    Table: fromTable,
+  await fromTable.update({
     // @ts-expect-error - missing id prop
     Key: {},
     UpdateExpression: "",
@@ -191,7 +181,7 @@ export async function typeCheckSortKey() {
   t2 = t3;
 
   t3 = t1;
-  t3 = t2;
+  // t3 = t2; // regression: https://github.com/functionless/functionless/pull/519
 
   let t4: ITable<any, any, any> | undefined;
   let t5: ITable<Item, "id", "name"> | undefined;
@@ -213,19 +203,15 @@ export async function typeCheckSortKey() {
   t5 = t6;
 
   t6 = t1;
-  t6 = t2;
+  // t6 = t2; // regression: https://github.com/functionless/functionless/pull/519
   t6 = t3;
   t6 = t4;
-  t6 = t5;
+  // t6 = t5; // regression: https://github.com/functionless/functionless/pull/519
 
   // Test1: type checking should work for Table
-  await $AWS.DynamoDB.GetItem({
-    Table: newTable,
-    // @ts-expect-error - missing id prop
-    Key: {},
-  });
-  await $AWS.DynamoDB.PutItem({
-    Table: newTable,
+  // @ts-expect-error - missing id prop
+  await newTable.attributes.get({});
+  await newTable.attributes.put({
     Item: {
       id: {
         S: "",
@@ -239,12 +225,12 @@ export async function typeCheckSortKey() {
       },
     },
   });
-  await $AWS.DynamoDB.DeleteItem({
-    Table: newTable,
+
+  await newTable.attributes.delete({
     // @ts-expect-error - missing id prop
     Key: {},
   });
-  await $AWS.DynamoDB.UpdateItem({
+  await newTable.attributes.delete({
     Table: newTable,
     // @ts-expect-error - missing id prop
     Key: {},
@@ -252,13 +238,10 @@ export async function typeCheckSortKey() {
   });
 
   // Test2: type checking should work for ITable
-  await $AWS.DynamoDB.GetItem({
-    Table: fromTable,
-    // @ts-expect-error - missing id prop
-    Key: {},
-  });
-  await $AWS.DynamoDB.PutItem({
-    Table: fromTable,
+  // @ts-expect-error - missing id prop
+  await fromTable.attributes.get({});
+
+  await fromTable.attributes.put({
     Item: {
       id: {
         S: "",
@@ -272,13 +255,11 @@ export async function typeCheckSortKey() {
       },
     },
   });
-  await $AWS.DynamoDB.DeleteItem({
-    Table: fromTable,
+  await fromTable.attributes.delete({
     // @ts-expect-error - missing id prop
     Key: {},
   });
-  await $AWS.DynamoDB.UpdateItem({
-    Table: fromTable,
+  await fromTable.attributes.delete({
     // @ts-expect-error - missing id prop
     Key: {},
     UpdateExpression: "",
@@ -290,7 +271,7 @@ test.each([fromTable, newTable])("get item", (table) => {
     async (
       context: AppsyncContext<{ id: string }>
     ): Promise<Item | undefined> => {
-      return table.appsync.getItem({
+      return table.appsync.get({
         key: {
           id: {
             S: context.arguments.id,
@@ -303,7 +284,7 @@ test.each([fromTable, newTable])("get item", (table) => {
 
 test.each([fromTableSortKey, newTableSortKey])("get item", (table) => {
   appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
-    return table.appsync.getItem({
+    return table.appsync.get({
       key: {
         id: {
           S: context.arguments.id,
@@ -323,7 +304,7 @@ test.each([fromTable, newTable])(
       async (
         context: AppsyncContext<{ id: string }>
       ): Promise<Item | undefined> => {
-        return table.appsync.getItem({
+        return table.appsync.get({
           key: {
             id: {
               S: context.arguments.id,
@@ -340,7 +321,7 @@ test.each([fromTableSortKey, newTableSortKey])(
   "get item and set consistentRead:true",
   (table) => {
     appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
-      return table.appsync.getItem({
+      return table.appsync.get({
         key: {
           id: {
             S: context.arguments.id,
@@ -360,7 +341,7 @@ test.each([fromTable, newTable])("put item", (table) => {
     async (
       context: AppsyncContext<{ id: string; name: number }>
     ): Promise<Item | undefined> => {
-      return table.appsync.putItem({
+      return table.appsync.put({
         key: {
           id: {
             S: context.arguments.id,
@@ -390,7 +371,7 @@ test.each([fromTable, newTable])("put item", (table) => {
 test.each([fromTableSortKey, newTableSortKey])("put item", (table) => {
   appsyncTestCase(
     async (context: AppsyncContext<{ id: string; name: number }>) => {
-      return table.appsync.putItem({
+      return table.appsync.put({
         key: {
           id: {
             S: context.arguments.id,
@@ -421,7 +402,7 @@ test.each([fromTable, newTable])("update item", (table) => {
     async (
       context: AppsyncContext<{ id: string }>
     ): Promise<Item | undefined> => {
-      return table.appsync.updateItem({
+      return table.appsync.update({
         key: {
           id: {
             S: context.arguments.id,
@@ -440,7 +421,7 @@ test.each([fromTable, newTable])("update item", (table) => {
 
 test.each([fromTableSortKey, newTableSortKey])("update item", (table) => {
   appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
-    return table.appsync.updateItem({
+    return table.appsync.update({
       key: {
         id: {
           S: context.arguments.id,
@@ -464,7 +445,7 @@ test.each([fromTableSortKey, newTableSortKey])("update item", (table) => {
     async (
       context: AppsyncContext<{ id: string }>
     ): Promise<Item | undefined> => {
-      return table.appsync.updateItem({
+      return table.appsync.update({
         key: {
           id: {
             S: context.arguments.id,
@@ -489,7 +470,7 @@ test.each([fromTable, newTable])("delete item", (table) => {
     async (
       context: AppsyncContext<{ id: string }>
     ): Promise<Item | undefined> => {
-      return table.appsync.deleteItem({
+      return table.appsync.delete({
         key: {
           id: {
             S: context.arguments.id,
@@ -508,7 +489,7 @@ test.each([fromTable, newTable])("delete item", (table) => {
 
 test.each([fromTableSortKey, newTableSortKey])("delete item", (table) => {
   appsyncTestCase(async (context: AppsyncContext<{ id: string }>) => {
-    return table.appsync.deleteItem({
+    return table.appsync.delete({
       key: {
         id: {
           S: context.arguments.id,

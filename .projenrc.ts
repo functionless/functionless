@@ -134,6 +134,10 @@ const project = new CustomTypescriptProject({
     // for serializer testing
     "uuid",
     "@swc/jest",
+    "aws-appsync@4.0.0",
+    "cross-fetch",
+    "graphql-tag",
+    "graphql",
   ],
   jestOptions: {
     jestConfig: {

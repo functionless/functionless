@@ -6,7 +6,7 @@ import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
 import AWS from "aws-sdk";
 import { v4 } from "uuid";
-import { $AWS, AnyFunction, Table, Function } from "../src";
+import { AnyFunction, Table, Function } from "../src";
 
 import { NativePreWarmContext } from "../src/function-prewarm";
 import { isNode } from "../src/guards";
@@ -1295,8 +1295,7 @@ test("should serialize Function", async () => {
   });
 
   new Function(stack, "foo", async () => {
-    await $AWS.DynamoDB.GetItem({
-      Table: table,
+    await table.attributes.get({
       Key: {
         id: {
           S: "id",

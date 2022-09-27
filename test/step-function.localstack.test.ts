@@ -737,11 +737,10 @@ runtimeTestSuite<
       return new StepFunction(parent, "sfn2", async ({ id }) => {
         // retry and then succeed - 3
         const a = await $SFN.retry(async () => {
-          const result = await $AWS.DynamoDB.UpdateItem({
+          const result = await table.attributes.update({
             Key: {
               a: { S: id },
             },
-            Table: table,
             UpdateExpression: "SET n = if_not_exists(n, :init) + :inc",
             ReturnValues: "ALL_NEW",
             ExpressionAttributeValues: {
@@ -824,11 +823,10 @@ runtimeTestSuite<
               },
             ],
             async () => {
-              const result = await $AWS.DynamoDB.UpdateItem({
+              const result = await table.attributes.update({
                 Key: {
                   a: { S: id },
                 },
-                Table: table,
                 UpdateExpression: "SET n = if_not_exists(n, :init) + :inc",
                 ReturnValues: "ALL_NEW",
                 ExpressionAttributeValues: {
