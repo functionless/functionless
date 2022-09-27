@@ -1,0 +1,1 @@
+export const clamp=(n: number, c: number) => Math.min(1, Math.max(-1, (n + c - 1) / c))

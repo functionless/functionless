@@ -57,7 +57,7 @@ export const Terminal = ({
         {children}
       </MDXProvider>
     ),
-    [children, animate, title, language, introDelayMs]
+    [animate, title, language, introDelayMs]
   );
 
 /**

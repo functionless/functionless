@@ -5,6 +5,6 @@ export interface Feature {
   title: string;
   points: Array<{ title: string; body: string }>;
   side: "left" | "right"
-  aside: ()=>React.ReactElement
+  aside: ({scrollFactor}: {scrollFactor: number})=>React.ReactElement
   footer?: ()=>React.ReactElement
 }

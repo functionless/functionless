@@ -9,7 +9,7 @@ import React, { MutableRefObject, useEffect, useState, useRef, RefObject, useCal
  * @param singleShot If true, the callback will only fire once
  * @returns A ref to attach
  */
-export function useVisibilityCallback<Element extends HTMLElement>(threshold: number, callback: (visible: boolean, boundingRect: DOMRect)=>void, dependencies: DependencyList, {singleShot, cleanup}: {singleShot: boolean, cleanup?: ()=>void})
+export function useVisibilityCallback<Element extends HTMLElement>(threshold: number, callback: (visible: boolean)=>void, dependencies: DependencyList, {singleShot, cleanup}: {singleShot: boolean, cleanup?: ()=>void})
   : RefObject<Element> {
   const firedVisible = useRef(false);
   const ref = useRef<Element>(null);
@@ -18,7 +18,7 @@ export function useVisibilityCallback<Element extends HTMLElement>(threshold: nu
     typeof window !== 'undefined' ? new IntersectionObserver(
       (entries) => {
         const isVisible = entries[0]?.isIntersecting ?? false
-        hookedCallback(isVisible, entries[0].boundingClientRect)
+        hookedCallback(isVisible)
         // setVisible(isVisible);
         if (isVisible) {
           firedVisible.current = true
@@ -52,9 +52,13 @@ export function useVisibilityCallback<Element extends HTMLElement>(threshold: nu
  * @returns A ref to attach, and visiblity state
  */
 export function useVisibility<Element extends HTMLElement>(threshold: number, {singleShot}: {singleShot: boolean}) {
-  const [visibility, setVisibility] = useState({visible: false, boundingRect: new DOMRect()})
-  const ref = useVisibilityCallback<Element>(threshold, (visible, boundingRect)=>setVisibility({visible, boundingRect}), [], { singleShot})
-  return {ref, ...visibility}
+  const [visibility, setVisibility] = useState(false)
+  const ref = useVisibilityCallback<Element>(threshold, (visible)=>{
+    if (visibility !== visible) {
+    setVisibility(visible)
+    }
+  }, [visibility], { singleShot})
+  return {ref, visible: visibility}
 }
 
 export interface ScrollParams {x: number, y: number, boundingRect: DOMRect, ev: Event}
@@ -64,20 +68,13 @@ export function useVisibleScrollCallback<Element extends HTMLElement>(threshold:
   dependencies: DependencyList
 ) {
   let ref: React.RefObject<Element> = {current: null}
-  let scrollRelativeBoundingRect: DOMRect
-  let scrollListener = (ev: Event) => {
-    callback({x: window.scrollX, y: window.scrollY, boundingRect: scrollRelativeBoundingRect, ev})
-  }
+  let scrollListener: (ev: Event) => void
   ref = useVisibilityCallback<Element>(threshold, (visible)=>{
     if (visible) {
       if (ref.current) {
-        const clientBoundingRect = ref.current.getBoundingClientRect()
-        scrollRelativeBoundingRect = new DOMRect(
-          clientBoundingRect.x + window.scrollX,
-          clientBoundingRect.y + window.scrollY,
-          clientBoundingRect.width,
-          clientBoundingRect.height
-        )
+        scrollListener = (ev) => {
+          callback({x: window.scrollX, y: window.scrollY, boundingRect: ref.current?.getBoundingClientRect() ?? new DOMRect(), ev})
+        }
         window.addEventListener('scroll', scrollListener, {passive: true,})
       }
     } else {
@@ -90,4 +87,10 @@ export function useVisibleScrollCallback<Element extends HTMLElement>(threshold:
     }
   })
   return ref
+}
+
+export function useVisibleScroll<Element extends HTMLElement>(threshold: number) {
+  const [visibleScroll, setVisibleScroll] = useState({boundingRect: new DOMRect(), x: 0, y: 0})
+  const ref = useVisibleScrollCallback<Element>(threshold, ({boundingRect, x, y})=>setVisibleScroll({boundingRect, x, y}), [])
+  return {ref, ...visibleScroll}
 }
