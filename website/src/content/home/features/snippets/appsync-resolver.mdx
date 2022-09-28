@@ -7,7 +7,7 @@ export default AppsyncResolver<{ userId: string }, User>(
     fieldName: "getUser",
   },
   async ($context) =>
-    userTable.appsync.getItem({
+    userTable.appsync.get({
       id: $util.dynamodb.toDynamoDB($context.arguments.userId),
     })
 );

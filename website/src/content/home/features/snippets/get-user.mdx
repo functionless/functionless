@@ -2,8 +2,8 @@
 import { users } from "./user-table";
 
 export default Function(async (name: string) => {
-  return users.getItem({
-    key: {
+  return users.get({
+    Key: {
       name,
     },
   });
