@@ -10,7 +10,7 @@ import { discordUrl, githubUrl, twitterUrl } from "@site/src/content/site";
 export const Social = () => {
   return (
     <div className="code-gradient round p-0.5 shadow-light dark:shadow-dark">
-      <div className="bg-functionless-white dark:bg-functionless-code round flex flex-col items-center space-y-6 p-8 items-stretch">
+      <div className="bg-functionless-white dark:bg-functionless-code round flex flex-col space-y-6 p-8 items-stretch">
         <h5>{title}</h5>
 
         <Link to={githubUrl} className="flex">

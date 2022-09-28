@@ -19,7 +19,7 @@ const config = {
   baseUrl: "/",
   onBrokenLinks: "throw",
   onBrokenMarkdownLinks: "warn",
-  favicon: "img/Logo-fav.svg",
+  favicon: "img/logo/logo_dark_icon.svg",
   organizationName: "functionless",
   projectName: "functionless",
 

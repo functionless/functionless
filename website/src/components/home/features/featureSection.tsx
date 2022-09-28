@@ -14,7 +14,7 @@ export const FeatureSection = ({
   height: number;
 }) => {
   const { ref, boundingRect } = useVisibleScroll<HTMLDivElement>(0);
-  const _scrollFactor = boundingRect.top / boundingRect.height;
+  const _scrollFactor = boundingRect.y / boundingRect.height;
   const scrollFactor = Math.abs(
     isNaN(_scrollFactor) ? 0 : 1 - Math.abs(_scrollFactor)
   );

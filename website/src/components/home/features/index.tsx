@@ -2,6 +2,8 @@ import useIsBrowser from "@docusaurus/useIsBrowser";
 import { features } from "../../../content/home/features";
 import { FeatureSection } from "./featureSection";
 
+const scrollFactor = 0.5;
+
 export const Features = () => {
   const isBrowser = useIsBrowser();
   return (
@@ -9,7 +11,9 @@ export const Features = () => {
       {features.map((feature) => (
         <FeatureSection
           {...feature}
-          height={isBrowser ? window.innerHeight * features.length : 0}
+          height={
+            isBrowser ? window.innerHeight * features.length * scrollFactor : 0
+          }
         />
       ))}
     </section>
