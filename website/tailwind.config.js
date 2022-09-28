@@ -19,9 +19,6 @@ module.exports = {
     "breadcrumbs__item--active",
     ".breadcrumbs__link",
   ],
-  corePlugins: {
-    // preflight: false, // TODO: Added to style default docusaurus components
-  },
   darkMode: ["class", '[data-theme="dark"]'],
   theme: {
     container: {

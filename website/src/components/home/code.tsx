@@ -8,7 +8,7 @@ import Highlight, {
   Language,
   PrismTheme,
 } from "prism-react-renderer";
-import React, { ReactElement, useMemo } from "react";
+import React, { ReactElement, useMemo, useState } from "react";
 import { Timeline } from "../../lib/useTimeline";
 import { functionlessTokenReplacement } from "../highlighter";
 
@@ -195,34 +195,54 @@ const Header = ({
   code: string;
   copyButton: boolean;
   dark: boolean;
-}) => (
-  <div>
-    <div
-      className={clsx(
-        "flex items-center px-4 py-4 rounded-t-lg",
-        dark ? "bg-functionless-dark-bg" : "bg-functionless-code"
-      )}
-    >
-      <div className="flex space-x-1">
-        <div className="h-2 w-2 bg-[#4B5563] rounded-full"></div>
-        <div className="h-2 w-2 bg-[#4B5563] rounded-full"></div>
-        <div className="h-2 w-2 bg-[#4B5563] rounded-full"></div>
+}) => {
+  const [copiedTooltipVisible, setCopiedTooltipVisible] = useState(false);
+  return (
+    <div>
+      <div
+        className={clsx(
+          "flex items-center px-4 py-4 rounded-t-lg",
+          dark ? "bg-functionless-dark-bg" : "bg-functionless-code"
+        )}
+      >
+        <div className="flex space-x-1">
+          <div className="h-2 w-2 bg-[#4B5563] rounded-full"></div>
+          <div className="h-2 w-2 bg-[#4B5563] rounded-full"></div>
+          <div className="h-2 w-2 bg-[#4B5563] rounded-full"></div>
+        </div>
+        <div className="text-[#B3BABF] flex-1 text-center font-display subtitle2">
+          {title}
+        </div>
+        {copyButton && (
+          <div>
+            <DocumentDuplicateIcon
+              className="icon [overflow:unset] hover:bg-blue-800 active:bg-functionless-blue rounded-full cursor-pointer p-0.5"
+              onClick={async () => {
+                await navigator.clipboard.writeText(code);
+                setCopiedTooltipVisible(true);
+                setTimeout(() => {
+                  setCopiedTooltipVisible(false);
+                }, 1000);
+              }}
+            />
+            <div
+              role="tooltip"
+              className={clsx(
+                "absolute -top-4 -right-0 z-10 py-2 px-3 text-sm font-display font-medium text-white bg-gray-900 rounded-lg shadow-sm transition duration-150 dark:bg-gray-700",
+                copiedTooltipVisible
+                  ? "opacity-1"
+                  : "opacity-0 translate-y-2 scale-75"
+              )}
+            >
+              Code copied!
+            </div>
+          </div>
+        )}
       </div>
-      <div className="text-[#B3BABF] flex-1 text-center font-display subtitle2">
-        {title}
-      </div>
-      {copyButton && (
-        <DocumentDuplicateIcon
-          className="icon [overflow:unset] hover:bg-blue-800 active:bg-functionless-blue rounded-full cursor-pointer p-0.5"
-          onClick={() => {
-            void navigator.clipboard.writeText(code);
-          }}
-        />
-      )}
+      <div className="h-0.5 bg-functionless-dark-border" />
     </div>
-    <div className="h-0.5 bg-functionless-dark-border" />
-  </div>
-);
+  );
+};
 
 const HighlightedCode = ({
   code,
