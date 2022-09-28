@@ -1777,10 +1777,10 @@
   resolved "https://registry.yarnpkg.com/@tsconfig/node16/-/node16-1.0.3.tgz#472eaab5f15c1ffdd7f8628bd4c4f753995ec79e"
   integrity sha512-yOlFc+7UtL/89t2ZhjPvvB/DeAr3r+Dq58IgzsFkOAvVC6NMJXmCGjbptdXdR9qsX7pKcTL+s87FtYREi2dEEQ==
 
-"@types/aws-lambda@^8.10.102":
-  version "8.10.102"
-  resolved "https://registry.yarnpkg.com/@types/aws-lambda/-/aws-lambda-8.10.102.tgz#d2402224ec30cdddfb669005c25b6ee01fd6f5be"
-  integrity sha512-BT05v46n9KtSHa9SgGuOvm49eSruJ9utD8iNXpdpuUVYk8wOcqmm1LEzpNRkrXxD0CULc38sdLpk6q3Wa2WOwg==
+"@types/aws-lambda@^8.10.106":
+  version "8.10.106"
+  resolved "https://registry.yarnpkg.com/@types/aws-lambda/-/aws-lambda-8.10.106.tgz#8f64c61c978e46a592044b5a697cb80ea9a542d3"
+  integrity sha512-yzgMaql7aW1by1XuhKhovuhLyK/1A60lapFXDXXBeHmoyRGQFO2T8lkL3g8hAhHoW5PEvqPJFWPd8jvXiRnxeQ==
 
 "@types/aws-lambda@^8.10.96":
   version "8.10.101"
@@ -2805,7 +2805,7 @@ function.prototype.name@^1.1.5:
     "@swc/cli" "^0.1.57"
     "@swc/core" "1.2.245"
     "@swc/register" "^0.1.10"
-    "@types/aws-lambda" "^8.10.102"
+    "@types/aws-lambda" "^8.10.106"
     fs-extra "^10.1.0"
     minimatch "^5.1.0"
     source-map "^0.7.4"
