@@ -213,7 +213,7 @@ const Header = ({
       </div>
       {copyButton && (
         <DocumentDuplicateIcon
-          className="icon [overflow:unset]"
+          className="icon [overflow:unset] hover:bg-blue-800 active:bg-functionless-blue rounded-full cursor-pointer p-0.5"
           onClick={() => {
             void navigator.clipboard.writeText(code);
           }}
@@ -248,57 +248,60 @@ const HighlightedCode = ({
           className={clsx(className, "text-xs px-4 font-semibold font-mono")}
           style={style}
         >
-          {tokens.map((line, i) => {
-            const lineIndexStart = tokens
-              .slice(0, i)
-              .flatMap((t) => t)
-              .reduce((n, l) => n + l.content.length, 0);
-            return (
-              <div
-                key={i}
-                {...getLineProps({
-                  line,
-                  key: i,
-                  className: clsx(
-                    "py-0.5",
-                    showLineNumbers && "grid grid-cols-[2em_auto]"
-                  ),
-                })}
-              >
-                {showLineNumbers && <div>{i + lineNumberStart}</div>}
-                <div className="flex flex-wrap">
-                  {line.map((token, j) => {
-                    const lineIndex = line
-                      .slice(0, j)
-                      .reduce((n, t) => n + t.content.length, 0);
-                    return token.content.split("").map((char, k) => (
-                      <span
-                        key={k}
-                        {...getTokenProps({
-                          token: {
-                            ...functionlessTokenReplacement(token),
-                            content: char,
-                          },
-                          key: k,
-                          className: "animate-fade-in opacity-0",
-                          style: {
-                            animationDelay: `${
-                              animate === "lines"
-                                ? i * 50 + introDelayMs
-                                : animate === "characters"
-                                ? (lineIndexStart + lineIndex + k) * 10 +
-                                  introDelayMs
-                                : introDelayMs
-                            }ms`,
-                          },
-                        })}
-                      />
-                    ));
+          {tokens
+            //strip out final newlines
+            .filter((t) => (t.length == 1 && !t[0].empty) || t.length > 1)
+            .map((line, i) => {
+              const lineIndexStart = tokens
+                .slice(0, i)
+                .flatMap((t) => t)
+                .reduce((n, l) => n + l.content.length, 0);
+              return (
+                <div
+                  key={i}
+                  {...getLineProps({
+                    line,
+                    key: i,
+                    className: clsx(
+                      "py-0.5",
+                      showLineNumbers && "grid grid-cols-[2em_auto]"
+                    ),
                   })}
+                >
+                  {showLineNumbers && <div>{i + lineNumberStart}</div>}
+                  <div className="flex flex-wrap">
+                    {line.map((token, j) => {
+                      const lineIndex = line
+                        .slice(0, j)
+                        .reduce((n, t) => n + t.content.length, 0);
+                      return token.content.split("").map((char, k) => (
+                        <span
+                          key={k}
+                          {...getTokenProps({
+                            token: {
+                              ...functionlessTokenReplacement(token),
+                              content: char,
+                            },
+                            key: k,
+                            className: "animate-fade-in opacity-0",
+                            style: {
+                              animationDelay: `${
+                                animate === "lines"
+                                  ? i * 50 + introDelayMs
+                                  : animate === "characters"
+                                  ? (lineIndexStart + lineIndex + k) * 10 +
+                                    introDelayMs
+                                  : introDelayMs
+                              }ms`,
+                            },
+                          })}
+                        />
+                      ));
+                    })}
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
         </div>
       )}
     </Highlight>

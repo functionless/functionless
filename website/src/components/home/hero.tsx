@@ -41,10 +41,10 @@ export const Hero = () => {
           {latestRelease?.name} released
           <ChevronLeftIcon className="icon ml-2" />
         </Link>
-        <h2 className="my-6 flex flex-col lg:block">
+        <h1 className="text-4xl lg:text-5xl my-6 flex flex-col lg:block">
           <span className="lg:after:content-['_']">{title1}</span>
           <span>{title2}</span>
-        </h2>
+        </h1>
         <p
           className="body1 text-functionless-medium dark:text-functionless-dark-medium my-6"
           dangerouslySetInnerHTML={{ __html: body }}
