@@ -153,6 +153,7 @@ export const IAM_SERVICE_PREFIX: Record<keyof SDK, string> = {
   IoTEvents: "iotevents",
   IoTEventsData: "iotevents",
   IoTFleetHub: "iotfleethub",
+  IoTFleetWise: "iotfleetwise",
   IoTJobsDataPlane: "iotjobsdata",
   IoTSecureTunneling: "iot",
   IoTSiteWise: "iotsitewise",
