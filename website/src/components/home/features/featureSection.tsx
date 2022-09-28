@@ -14,7 +14,6 @@ export const FeatureSection = ({
   height: number;
 }) => {
   const { ref, boundingRect } = useVisibleScroll<HTMLDivElement>(0);
-  console.log(boundingRect.top);
   const _scrollFactor = boundingRect.top / boundingRect.height;
   const scrollFactor = Math.abs(
     isNaN(_scrollFactor) ? 0 : 1 - Math.abs(_scrollFactor)
@@ -23,7 +22,10 @@ export const FeatureSection = ({
   const titleOpacity = clamp(scrollFactor, 0.25);
   const bodyOpacity = clamp(scrollFactor, 0.125);
   return (
-    <div style={{ height: `${height}px` }}>
+    <div
+      style={{ height: `${height}px` }}
+      className="bg-functionless-dark-bg-alternate"
+    >
       <div ref={ref} className="sticky top-0 h-screen overflow-hidden">
         <div className="h-full mt-6 lg:mt-20 flex justify-center items-center">
           <div className="container grid grid-cols-1 lg:grid-cols-2  gap-y-8 lg:gap-x-11">

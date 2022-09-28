@@ -1,4 +1,5 @@
-import React, { MutableRefObject, useEffect, useState, useRef, RefObject, useCallback, DependencyList } from "react";
+import useIsBrowser from "@docusaurus/useIsBrowser";
+import React, { useEffect, useState, useRef, RefObject, useCallback, DependencyList } from "react";
 
 /**
  * A hook for observing when an element is in the viewport
@@ -14,12 +15,12 @@ export function useVisibilityCallback<Element extends HTMLElement>(threshold: nu
   const firedVisible = useRef(false);
   const ref = useRef<Element>(null);
   const hookedCallback = useCallback(callback, dependencies)
-  const observer = useRef(
-    typeof window !== 'undefined' ? new IntersectionObserver(
+  const observer = useRef<IntersectionObserver>()
+  useEffect(()=>{
+    observer.current = new IntersectionObserver(
       (entries) => {
         const isVisible = entries[0]?.isIntersecting ?? false
         hookedCallback(isVisible)
-        // setVisible(isVisible);
         if (isVisible) {
           firedVisible.current = true
           if (singleShot) {
@@ -29,8 +30,9 @@ export function useVisibilityCallback<Element extends HTMLElement>(threshold: nu
         }
       },
       { threshold }
-    ) : undefined
-  );
+    )
+  }, [])
+
   useEffect(() => {
     if (ref.current && !(singleShot && firedVisible.current)) {
       observer.current?.observe(ref.current);
@@ -90,7 +92,18 @@ export function useVisibleScrollCallback<Element extends HTMLElement>(threshold:
 }
 
 export function useVisibleScroll<Element extends HTMLElement>(threshold: number) {
-  const [visibleScroll, setVisibleScroll] = useState({boundingRect: new DOMRect(), x: 0, y: 0})
-  const ref = useVisibleScrollCallback<Element>(threshold, ({boundingRect, x, y})=>setVisibleScroll({boundingRect, x, y}), [])
+  const [visibleScroll, setVisibleScroll] = useState({
+    boundingRect: {
+      x: 0,
+      y: 0,
+      width: 0,
+      height: 0,
+    },
+    x: 0,
+    y: 0
+  })
+  const ref = useVisibleScrollCallback<Element>(threshold, ({boundingRect, x, y})=>
+    setVisibleScroll({boundingRect, x, y}), []
+  )
   return {ref, ...visibleScroll}
 }
