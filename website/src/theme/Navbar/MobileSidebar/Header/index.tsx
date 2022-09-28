@@ -1,6 +1,5 @@
 import { useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
 import IconClose from "@theme/Icon/Close";
-import NavbarColorModeToggle from "@theme/Navbar/ColorModeToggle";
 import NavbarLogo from "@theme/Navbar/Logo";
 
 function CloseButton() {

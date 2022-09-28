@@ -49,15 +49,15 @@ export const Hero = () => {
           className="body1 text-functionless-medium dark:text-functionless-dark-medium my-6"
           dangerouslySetInnerHTML={{ __html: body }}
         />
-        <div className="space-x-7 pt-5 flex items-center">
+        <div className="gap-4 md:gap-7 pt-5 flex flex-col md:flex-row items-stretch md:items-center">
           <Link to={docsLink.to}>
-            <button className="solid-button">
-              {docsLink.title}
+            <button className="solid-button w-full flex flex-row justify-center items-center">
+              <span>{docsLink.title}</span>
               <ChevronLeftIcon className="icon ml-2" />
             </button>
           </Link>
           <Link href={githubUrl}>
-            <button className="social-button w-auto bg-functionless-github border-functionless-dark-border border">
+            <button className="social-button bg-functionless-github border-functionless-dark-border border w-full">
               <img src="/img/social/github.svg" className="icon mr-2" />
               {githubLink}
             </button>
