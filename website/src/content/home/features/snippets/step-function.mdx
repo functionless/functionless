@@ -1,0 +1,7 @@
+```ts
+export default StepFunction(async (item) => {
+  await queue.sendMessage({
+    MessageBody: item,
+  });
+});
+```

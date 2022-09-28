@@ -2,3 +2,5 @@
 **/*.md
 **/*.mdx
 **/*.css
+website/docusaurus.config.js
+website/tailwind.config.js

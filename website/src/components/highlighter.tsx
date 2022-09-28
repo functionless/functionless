@@ -7,10 +7,20 @@ interface HighlighterProps {
   tokenReplacement?: (token: PrismToken) => PrismToken;
 }
 
-export type PrismToken = {
+export interface PrismToken {
   types: string[];
   content: string;
   empty?: boolean;
+}
+
+const tokenReplacementMap: Record<string, string> = {
+  Function: "class-name",
+  " $": "constant",
+};
+
+export const functionlessTokenReplacement = (token: PrismToken) => {
+  const replacement = tokenReplacementMap[token.content];
+  return replacement ? { ...token, types: [replacement] } : token;
 };
 
 /**
@@ -21,25 +31,10 @@ export type PrismToken = {
  */
 export function FunctionlessHighlighter({
   children,
-  tokenReplacement,
+  tokenReplacement = functionlessTokenReplacement,
 }: HighlighterProps) {
   return (
-    <Highlighter
-      tokenReplacement={(token) => {
-        const newToken = (() => {
-          if (token.content === "Function" && token.types.includes("builtin")) {
-            return {
-              ...token,
-              types: token.types.filter((x) => x !== "builtin"),
-            };
-          }
-          return token;
-        })();
-        return tokenReplacement ? tokenReplacement(newToken) : newToken;
-      }}
-    >
-      {children}
-    </Highlighter>
+    <Highlighter tokenReplacement={tokenReplacement}>{children}</Highlighter>
   );
 }
 

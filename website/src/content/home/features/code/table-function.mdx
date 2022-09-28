@@ -1,0 +1,13 @@
+```ts
+const userTable = new Table(this, "userTable");
+
+const getUser = new Function(this, "getUser", async (userId: string) => {
+  return userTable.get({
+    Key: {
+      id: {
+        S: userId,
+      },
+    },
+  });
+});
+```

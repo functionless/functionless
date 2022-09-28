@@ -1,0 +1,15 @@
+```json
+{
+  "StartsAt": "await queue.sendMesage({ Message: item })",
+  "States": {
+    "await queue.sendMesage({ Message: item })": {
+      "Type": "Task",
+      "Resource": "arn:..",
+      "Parameters": {
+        "QueueUrl": "https://..",
+        "MessageBody.$": "States.JsonToString($.item)"
+      }
+    }
+  }
+}
+```

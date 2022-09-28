@@ -1,0 +1,22 @@
+```ts
+const events = new EventBus(this, "events");
+$$;
+const orders = new Queue(this, "orders");
+
+events
+  .when("Order", (event) => event["detail-type"] === "Order")
+  .map((event) => event.detail)
+  .pipe(orders);
+$$;
+import { aws_lambda } from "aws-cdk-lib";
+
+declare const golangWorker: aws_lambda.IFunction;
+
+const processOrderWorker = Function.import(golangWorker);
+
+const processOrder = new StepFunction(stack, "processOrder", async (order) => {
+  await processOrderWorker(job);
+});
+
+orders.messages().forEach((order) => processOrder(order));
+```

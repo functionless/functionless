@@ -1,0 +1,11 @@
+```ts
+import { users } from "./user-table";
+
+export default Function(async (name: string) => {
+  return users.get({
+    Key: {
+      name,
+    },
+  });
+});
+```
