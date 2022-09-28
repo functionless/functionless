@@ -9,10 +9,7 @@ export const FeatureSection = ({
   points,
   aside,
   footer,
-  height,
-}: Feature & {
-  height: number;
-}) => {
+}: Feature) => {
   const { ref, boundingRect } = useVisibleScroll<HTMLDivElement>(0);
   const _scrollFactor = boundingRect.y / boundingRect.height;
   const scrollFactor = Math.abs(
@@ -22,10 +19,8 @@ export const FeatureSection = ({
   const titleOpacity = clamp(scrollFactor, 0.25);
   const bodyOpacity = clamp(scrollFactor, 0.125);
   return (
-    <div
-      style={{ height: `${height}px` }}
-      className="bg-functionless-dark-bg-alternate"
-    >
+    //Outer height multiple of screen height determines how much scrolling is needed per page
+    <div className="bg-functionless-dark-bg-alternate h-[200vh]">
       <div ref={ref} className="sticky top-0 h-screen overflow-hidden">
         <div className="h-full pt-6 lg:pt-28 flex justify-center items-center">
           <div className="container grid grid-cols-1 lg:grid-cols-2  gap-y-8 lg:gap-x-11 max-h-full">

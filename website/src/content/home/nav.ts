@@ -1,4 +1,4 @@
-import { discordUrl, githubUrl, twitterUrl } from "../site";
+import { discordUrl, twitterUrl } from "../site";
 
 export interface MainItem {
   to: string;
@@ -16,11 +16,6 @@ export const main = [
     to: "/docs/what-is-functionless",
     title: "Docs",
   },
-  // { to: "/blog", title: "Blog" },
-  // {
-  //   to: "/team",
-  //   title: "Team",
-  // },
 ];
 
 export const social = [

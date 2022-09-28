@@ -12,7 +12,7 @@
   }
 
   body a {
-    @apply no-underline hover:no-underline;
+    @apply no-underline hover:no-underline !overflow-hidden;
   }
 
   h1 {
