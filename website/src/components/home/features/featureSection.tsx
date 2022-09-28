@@ -27,8 +27,8 @@ export const FeatureSection = ({
       className="bg-functionless-dark-bg-alternate"
     >
       <div ref={ref} className="sticky top-0 h-screen overflow-hidden">
-        <div className="h-full mt-6 lg:mt-20 flex justify-center items-center">
-          <div className="container grid grid-cols-1 lg:grid-cols-2  gap-y-8 lg:gap-x-11">
+        <div className="h-full pt-6 lg:pt-28 flex justify-center items-center">
+          <div className="container grid grid-cols-1 lg:grid-cols-2  gap-y-8 lg:gap-x-11 max-h-full">
             <div
               className={clsx(
                 "col-span-2 lg:col-span-1 lg:row-start-1",

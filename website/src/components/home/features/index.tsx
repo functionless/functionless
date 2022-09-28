@@ -2,7 +2,7 @@ import useIsBrowser from "@docusaurus/useIsBrowser";
 import { features } from "../../../content/home/features";
 import { FeatureSection } from "./featureSection";
 
-const scrollFactor = 0.5;
+const scrollFactor = 0.55;
 
 export const Features = () => {
   const isBrowser = useIsBrowser();
