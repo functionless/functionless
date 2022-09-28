@@ -99,14 +99,14 @@ const config = {
     ({
       // default page image, override using frontMatter `image`
       // https://docusaurus.io/docs/api/plugins/@docusaurus/plugin-content-docs#markdown-front-matter
-      image: "img/logo/logo_dark_icon.svg",
+      image: "img/logo/logo_dark_icon.png",
       metadata: [
         { property: "og:type", content: "article" },
         { property: "og:image:width", content: "180" },
         { property: "og:image:height", content: "192" },
         {
           property: "og:image:secure_url",
-          content: `${url}/img/logo/logo_dark_icon.svg`,
+          content: `${url}/img/logo/logo_dark_icon.png`,
         },
       ],
       // light color mode disabled for now
