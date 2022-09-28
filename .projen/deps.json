@@ -21,7 +21,19 @@
       "type": "build"
     },
     {
+      "name": "@aws-sdk/client-cloudcontrol",
+      "type": "build"
+    },
+    {
       "name": "@aws-sdk/client-dynamodb",
+      "type": "build"
+    },
+    {
+      "name": "@aws-sdk/client-eventbridge",
+      "type": "build"
+    },
+    {
+      "name": "@aws-sdk/client-ssm",
       "type": "build"
     },
     {
@@ -143,6 +155,10 @@
     },
     {
       "name": "json-schema",
+      "type": "build"
+    },
+    {
+      "name": "node-cfn",
       "type": "build"
     },
     {

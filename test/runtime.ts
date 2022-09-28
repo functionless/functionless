@@ -1,8 +1,10 @@
 import * as cxapi from "@aws-cdk/cx-api";
+import * as control from "@aws-sdk/client-cloudcontrol";
+import * as ssm from "@aws-sdk/client-ssm";
 import { App, CfnOutput, Stack } from "aws-cdk-lib";
 import { ArnPrincipal, Role } from "aws-cdk-lib/aws-iam";
-import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
-import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
+// import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
+// import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import AWS, {
   DynamoDB,
@@ -14,6 +16,7 @@ import AWS, {
 } from "aws-sdk";
 import { ServiceConfigurationOptions } from "aws-sdk/lib/service";
 import { Construct } from "constructs";
+import * as node_cfn from "node-cfn";
 import { asyncSynth } from "../src/async-synth";
 import { Function } from "../src/function";
 import { SelfDestructor, SelfDestructorProps } from "./self-destructor";
@@ -328,18 +331,22 @@ export function runtimeTestSuite<
 
       // Inspiration for the current approach: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
       // Writeup on performance improvements: https://github.com/functionless/functionless/pull/184#issuecomment-1144767427
-      const deployOut = await getCfnClient().then((client) =>
-        client.deployStack({
-          stack: stackArtifact!,
-          tags: Object.entries(stack.tags.tagValues()).map(([k, v]) => ({
-            Key: k,
-            Value: v,
-          })),
-          // hotswap uses the current user's role and not the bootstrapped role.
-          // the CI user does not have all of the right permissions.
-          hotswap: !process.env.CI,
-        })
-      );
+      // const deployOut = await getCfnClient().then((client) =>
+      //   client.deployStack({
+      //     stack: stackArtifact!,
+      //     tags: Object.entries(stack.tags.tagValues()).map(([k, v]) => ({
+      //       Key: k,
+      //       Value: v,
+      //     })),
+      //     // hotswap uses the current user's role and not the bootstrapped role.
+      //     // the CI user does not have all of the right permissions.
+      //     hotswap: !process.env.CI,
+      //   })
+      // );
+
+      const deployOut = await nodeCfnDeploy(stackArtifact);
+
+      console.log(deployOut.outputs);
 
       const testRoleArn =
         deployOut.outputs[stack.resolve(testArnOutput.logicalId)];
@@ -385,6 +392,31 @@ export function runtimeTestSuite<
         deployOutputs: s,
       }));
     }
+
+    async function nodeCfnDeploy(
+      stackArtifact: cxapi.CloudFormationStackArtifact
+    ) {
+      const caller = await sts.getCallerIdentity().promise();
+      console.log(JSON.stringify(stackArtifact.template, null, 2));
+      const stack = new node_cfn.Stack({
+        account: caller.Account!,
+        region: clientConfig.region!,
+        stackName: stackArtifact.stackName,
+        controlClient: new control.CloudControlClient({
+          credentials: clientConfig.credentials!,
+          region: clientConfig.region!,
+        }),
+        ssmClient: new ssm.SSMClient({
+          credentials: clientConfig.credentials!,
+          region: clientConfig.region!,
+        }),
+        sdkConfig: clientConfig,
+      });
+
+      const result = await stack.updateStack(stackArtifact.template);
+
+      return result;
+    }
   });
 
   afterAll(async () => {
@@ -392,11 +424,11 @@ export function runtimeTestSuite<
       stackArtifact &&
       runtimeTestExecutionContext.stackRetentionPolicy === "DELETE"
     ) {
-      await getCfnClient().then((client) =>
-        client.destroyStack({
-          stack: stackArtifact!,
-        })
-      );
+      // await getCfnClient().then((client) =>
+      //   client.destroyStack({
+      //     stack: stackArtifact!,
+      //   })
+      // );
     }
   });
 
@@ -458,35 +490,35 @@ export function runtimeTestSuite<
   });
 }
 
-async function getCfnClient() {
-  const sdkProvider = await SdkProvider.withAwsCliCompatibleDefaults(
-    runtimeTestExecutionContext.deployTarget === "LOCALSTACK"
-      ? {
-          httpOptions: clientConfig as any,
-        }
-      : undefined
-  );
+// async function getCfnClient() {
+//   const sdkProvider = await SdkProvider.withAwsCliCompatibleDefaults(
+//     runtimeTestExecutionContext.deployTarget === "LOCALSTACK"
+//       ? {
+//           httpOptions: clientConfig as any,
+//         }
+//       : undefined
+//   );
 
-  if (runtimeTestExecutionContext.deployTarget === "LOCALSTACK") {
-    const credentials = clientConfig.credentialProvider
-      ? await clientConfig.credentialProvider.resolvePromise()
-      : clientConfig.credentials;
-    // @ts-ignore - assigning to private members
-    sdkProvider.sdkOptions = {
-      // @ts-ignore - using private members
-      ...sdkProvider.sdkOptions,
-      endpoint: clientConfig.endpoint,
-      s3ForcePathStyle: clientConfig.s3ForcePathStyle,
-      accessKeyId: credentials!.accessKeyId,
-      secretAccessKey: credentials!.secretAccessKey,
-      credentials: credentials,
-    };
-  }
+//   if (runtimeTestExecutionContext.deployTarget === "LOCALSTACK") {
+//     const credentials = clientConfig.credentialProvider
+//       ? await clientConfig.credentialProvider.resolvePromise()
+//       : clientConfig.credentials;
+//     // @ts-ignore - assigning to private members
+//     sdkProvider.sdkOptions = {
+//       // @ts-ignore - using private members
+//       ...sdkProvider.sdkOptions,
+//       endpoint: clientConfig.endpoint,
+//       s3ForcePathStyle: clientConfig.s3ForcePathStyle,
+//       accessKeyId: credentials!.accessKeyId,
+//       secretAccessKey: credentials!.secretAccessKey,
+//       credentials: credentials,
+//     };
+//   }
 
-  return new CloudFormationDeployments({
-    sdkProvider,
-  });
-}
+//   return new CloudFormationDeployments({
+//     sdkProvider,
+//   });
+// }
 
 /**
  * Given a test, collect the constructs it needs and register any outputs it needs and return.

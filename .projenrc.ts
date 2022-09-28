@@ -134,6 +134,10 @@ const project = new CustomTypescriptProject({
     // for serializer testing
     "uuid",
     "@swc/jest",
+    "node-cfn",
+    "@aws-sdk/client-cloudcontrol",
+    "@aws-sdk/client-ssm",
+    "@aws-sdk/client-eventbridge",
   ],
   jestOptions: {
     jestConfig: {
