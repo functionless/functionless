@@ -20156,7 +20156,7 @@ exports[`call $SFN retry 1`] = `
     "a = await $SFN.retry(function ())": {
       "Branches": [
         {
-          "StartAt": "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U",
+          "StartAt": "result = await table.attributes.update({Key: {a: {S: id}}, UpdateExpression",
           "States": {
             "1__return Number(result.Attributes.n.N)": {
               "End": true,
@@ -20533,7 +20533,7 @@ exports[`call $SFN retry 1`] = `
               "ResultPath": "$.result",
               "Type": "Pass",
             },
-            "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U": {
+            "result = await table.attributes.update({Key: {a: {S: id}}, UpdateExpression": {
               "Next": "result",
               "Parameters": {
                 "ExpressionAttributeValues": {
@@ -20799,7 +20799,7 @@ exports[`call $SFN retry 1`] = `
     "try 3": {
       "Branches": [
         {
-          "StartAt": "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U 1",
+          "StartAt": "result = await table.attributes.update({Key: {a: {S: id}}, UpdateExpression 1",
           "States": {
             "if(result.Attributes.n.N === "6")": {
               "Choices": [
@@ -20871,7 +20871,7 @@ exports[`call $SFN retry 1`] = `
               "ResultPath": "$.result__1",
               "Type": "Pass",
             },
-            "result = await $AWS.DynamoDB.UpdateItem({Key: {a: {S: id}}, Table: table, U 1": {
+            "result = await table.attributes.update({Key: {a: {S: id}}, UpdateExpression 1": {
               "Next": "result 1",
               "Parameters": {
                 "ExpressionAttributeValues": {

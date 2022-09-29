@@ -1,5 +1,5 @@
 import type { AwsMethod } from "./api";
-import { ExpressStepFunction } from "./step-function";
+import type { ExpressStepFunction } from "./step-function";
 
 const BASE_URL = process.env.FUNCTIONLESS_LOCAL
   ? `http://localhost:3000`

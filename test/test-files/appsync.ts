@@ -395,7 +395,7 @@ new AppsyncResolver(
       },
     };
 
-    await table.appsync.getItem(event);
+    await table.appsync.get(event);
   }
 );
 
@@ -409,7 +409,7 @@ new AppsyncResolver(
     typeName: "type",
   },
   async () => {
-    await table.appsync.getItem({
+    await table.appsync.get({
       key: {
         id: { S: "sas" },
       },

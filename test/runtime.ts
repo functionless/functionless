@@ -78,7 +78,7 @@ export const clientConfig: ServiceConfigurationOptions =
       };
 
 // the env (OIDC) role can describe stack and assume roles
-const sts = new STS(clientConfig);
+export const sts = new STS(clientConfig);
 
 export interface RuntimeTestClients {
   stepFunctions: StepFunctions;
@@ -140,7 +140,7 @@ interface SuccessfulRuntimeTestCase<
 /**
  * The callable test interface used by the test suites.
  */
-interface TestInterface<
+export interface TestInterface<
   BaseOutputs extends Record<string, string> = Record<string, string>,
   TestExtras extends Record<string, any> = Record<string, any>
 > {
@@ -595,14 +595,9 @@ function combineTestAndDeploymentOutput<
   };
 }
 
-/**
- * Build the clients needed by the test cases using the test role built up by the test resources.
- */
-async function getRuntimeClients(
-  testRoleArn: string | undefined
-): Promise<RuntimeTestClients> {
-  const testRole = testRoleArn
-    ? await sts
+export function getTestRole(testRoleArn: string | undefined) {
+  return testRoleArn
+    ? sts
         .assumeRole({
           RoleArn: testRoleArn,
           RoleSessionName: "testSession",
@@ -610,6 +605,15 @@ async function getRuntimeClients(
         })
         .promise()
     : undefined;
+}
+
+/**
+ * Build the clients needed by the test cases using the test role built up by the test resources.
+ */
+async function getRuntimeClients(
+  testRoleArn: string | undefined
+): Promise<RuntimeTestClients> {
+  const testRole = await getTestRole(testRoleArn);
 
   // update client config with the assumed role
   const testClientConfig = testRole?.Credentials

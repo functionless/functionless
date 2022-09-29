@@ -99,7 +99,11 @@ export async function tsc(
     formatDiagnosticsWithColorAndContext(semanticDiagnostics, compilerHost)
   );
 
-  if (semanticDiagnostics.length > 0) {
+  if (
+    semanticDiagnostics.filter(
+      (d) => d.category === ts.DiagnosticCategory.Error
+    ).length > 0
+  ) {
     throw new Error(
       `Compilation Failed with ${semanticDiagnostics.length} diagnostic errors`
     );

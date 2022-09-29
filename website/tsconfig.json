@@ -24,7 +24,10 @@
     "strictPropertyInitialization": true,
     "stripInternal": true,
     "target": "ES2019",
-    "declarationMap": true
+    "declarationMap": true,
+    "baseUrl": ".",
+    "types": ["mdx"],
+    "allowJs": true
   },
   "include": ["src/**/*", "test/**/*"],
   "exclude": ["**/node_modules"]

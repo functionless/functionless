@@ -8,7 +8,6 @@ import {
   AsyncResponseSuccess,
   AsyncResponseFailure,
   asyncSynth,
-  $AWS,
   Table,
 } from "../src";
 import { appsyncTestCase } from "./util";
@@ -414,8 +413,7 @@ test("$AWS.DynamoDB.* with non-ReferenceExpr Table property", () => {
     stack,
     "$AWS.DynamoDB.* with non-ReferenceExpr Table property",
     async () => {
-      await $AWS.DynamoDB.PutItem({
-        Table: obj.table,
+      await obj.table.attributes.put({
         Item: {
           id: {
             S: "key",
@@ -434,11 +432,8 @@ test("$AWS.DynamoDB.* with PropAccessExpr reference to constructor parameter", (
   class Foo {
     constructor(props: { bookingsTable: typeof table }) {
       new Function<any, any>(stack, "Foo", async (event) => {
-        await $AWS.DynamoDB.PutItem({
-          Table: props.bookingsTable,
-          Item: {
-            pk: { S: event.reservation.trip_id },
-          },
+        await props.bookingsTable.attributes.put({
+          Item: { pk: { S: event.reservation.trip_id } },
         });
       });
     }
@@ -447,13 +442,11 @@ test("$AWS.DynamoDB.* with PropAccessExpr reference to constructor parameter", (
 });
 
 test("$AWS.DynamoDB.* with ShorthandPropAssign", () => {
-  const Table = table;
   new Function(
     stack,
     "$AWS.DynamoDB.* with non-ReferenceExpr Table property",
     async () => {
-      await $AWS.DynamoDB.PutItem({
-        Table,
+      await table.attributes.put({
         Item: {
           id: {
             S: "key",

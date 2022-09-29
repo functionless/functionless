@@ -286,13 +286,12 @@ new StepFunction(stack, "error", async () => {
 
 new StepFunction(stack, "obj ref", async () => {
   const event = {
-    Table: table,
     Key: {
       id: { S: "sas" },
     },
   };
 
-  await $AWS.DynamoDB.GetItem(event);
+  await table.attributes.get(event);
 });
 
 new StepFunction(stack, "obj ref", async () => {
@@ -306,8 +305,7 @@ new StepFunction(stack, "obj ref", async () => {
 // supported - object literal in $AWS calls
 
 new StepFunction(stack, "obj ref", async () => {
-  await $AWS.DynamoDB.GetItem({
-    Table: table,
+  await table.attributes.get({
     Key: {
       id: { S: "sas" },
     },
@@ -414,8 +412,7 @@ new StepFunction(stack, "obj ref", async () => {
 new StepFunction(stack, "obj ref", async () => {
   const x =
     (
-      await $AWS.DynamoDB.GetItem({
-        Table: table,
+      await table.attributes.get({
         Key: {
           id: { S: "" },
         },

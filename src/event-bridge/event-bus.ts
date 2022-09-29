@@ -14,7 +14,6 @@ import {
   PropAssignExpr,
   StringLiteralExpr,
 } from "../expression";
-import { Function } from "../function";
 import { NativePreWarmContext, PrewarmClients } from "../function-prewarm";
 import {
   isArrayLiteralExpr,
@@ -445,8 +444,8 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
         },
       },
       native: {
-        bind: (context: Function<any, any>) => {
-          this.resource.grantPutEventsTo(context.resource);
+        bind: (context) => {
+          this.resource.grantPutEventsTo(context);
         },
         preWarm: (prewarmContext: NativePreWarmContext) => {
           prewarmContext.getOrInit(PrewarmClients.EventBridge);

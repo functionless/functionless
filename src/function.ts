@@ -30,10 +30,10 @@ import { Construct } from "constructs";
 import esbuild from "esbuild";
 import ts from "typescript";
 import { ApiGatewayVtlIntegration } from "./api";
-import type { AppSyncVtlIntegration } from "./appsync";
+import { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph } from "./asl";
 import { BindFunctionName, RegisterFunctionName } from "./compile";
-import { IntegrationInvocation } from "./declaration";
+import { FunctionLike, IntegrationInvocation } from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
@@ -309,8 +309,8 @@ abstract class FunctionBase<in Payload, Out>
       /**
        * Wire up permissions for this function to be called by the calling function
        */
-      bind: (context: Function<any, any>) => {
-        this.resource.grantInvoke(context.resource);
+      bind: (context) => {
+        this.resource.grantInvoke(context);
       },
       /**
        * Code that runs once per lambda invocation
@@ -706,10 +706,7 @@ export class Function<
           : {}),
         functionless_infer: Lazy.string({
           produce: () => {
-            // retrieve and bind all found native integrations. Will fail if the integration does not support native integration.
-            findAllIntegrations().forEach(({ integration, args }) => {
-              new IntegrationImpl(integration).native.bind(this, args);
-            });
+            inferIamPolicies(ast, _resource);
 
             return "DONE";
           },
@@ -721,7 +718,7 @@ export class Function<
 
     // retrieve all found native integrations. Will fail if the integration does not support native integration.
     // TODO: move this logic into the synthesis phase, see https://github.com/functionless/functionless/issues/476
-    const nativeIntegrationsPrewarm = findAllIntegrations().flatMap(
+    const nativeIntegrationsPrewarm = findAllIntegrations(ast).flatMap(
       ({ integration }) => {
         const native = new IntegrationImpl(integration).native;
         if (native.preWarm) {
@@ -785,17 +782,27 @@ export class Function<
               ),
             ],
     });
-
-    function findAllIntegrations() {
-      return findDeepIntegrations(ast).map(
-        (i) =>
-          <IntegrationInvocation>{
-            args: i.args,
-            integration: i.expr.ref(),
-          }
-      );
-    }
   }
+}
+
+export function inferIamPolicies(
+  decl: FunctionLike<AnyFunction>,
+  func: aws_lambda.IFunction
+) {
+  findAllIntegrations(decl).forEach(({ integration, args }) => {
+    const native = new IntegrationImpl(integration).native;
+    native.bind(func, args);
+  });
+}
+
+export function findAllIntegrations(decl: FunctionLike<AnyFunction>) {
+  return findDeepIntegrations(decl).map(
+    (i) =>
+      <IntegrationInvocation>{
+        args: i.args,
+        integration: i.expr.ref(),
+      }
+  );
 }
 
 /**
@@ -947,7 +954,7 @@ export interface NativeIntegration<Func extends AnyFunction> {
    * @param context - The function invoking this function.
    * @param args - The functionless encoded AST form of the arguments passed to the integration.
    */
-  bind: (context: Function<any, any>, args: Expr[]) => void;
+  bind: (context: aws_lambda.IFunction, args: Expr[]) => void;
   /**
    * @param args The arguments passed to the integration function by the user.
    * @param preWarmContext contains singleton instances of client and other objects initialized outside of the native
@@ -1221,10 +1228,12 @@ export async function serialize(
        * https://github.com/functionless/functionless/issues/239
        */
       function transformResource(integ: unknown): any {
-        if (
+        if (isTable(integ)) {
+          const { resource, appsync, ...rest } = integ;
+          return rest;
+        } else if (
           integ &&
           (isFunction(integ) ||
-            isTable(integ) ||
             isStepFunction(integ) ||
             isEventBus(integ) ||
             isSecret(integ))

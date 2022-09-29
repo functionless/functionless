@@ -18,7 +18,7 @@ import {
   isVariableDecl,
 } from "./guards";
 import { FunctionlessNode } from "./node";
-import { reflect } from "./reflect";
+import { reflect, resolveSubstitution } from "./reflect";
 import { AnyFunction, evalToConstant, isAnyFunction } from "./util";
 import { forEachChild } from "./visit";
 import { VTL } from "./vtl";
@@ -389,7 +389,9 @@ export function tryFindIntegration(
  * @returns a list of all the {@link Integration}s that the {@link node} could evaluate to.
  */
 export function tryFindIntegrations(node: FunctionlessNode): Integration[] {
-  return tryResolveReferences(node, undefined).filter(isIntegration);
+  return tryResolveReferences(node, undefined).filter((i) => {
+    return isIntegration(i);
+  });
 }
 
 /**
@@ -420,7 +422,7 @@ export function tryResolveReferences(
     return tryResolveReferences(node.parent, node.initializer).flatMap(
       (value) => {
         if (isIdentifier(node.name)) {
-          return [value?.[node.name.name]];
+          return [resolveSubstitution(value?.[node.name.name])];
         } else {
           throw new Error("should be impossible");
         }
@@ -438,7 +440,7 @@ export function tryResolveReferences(
         ? node.name.name
         : evalToConstant(node.element)?.constant;
       if (key !== undefined) {
-        return [(<any>expr)?.[key]];
+        return [resolveSubstitution((<any>expr)?.[key])];
       }
       return [];
     });

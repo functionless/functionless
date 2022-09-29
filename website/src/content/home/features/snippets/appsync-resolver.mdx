@@ -1,0 +1,14 @@
+```ts
+import { userTable } from "./user-table";
+
+export default AppsyncResolver<{ userId: string }, User>(
+  {
+    typeName: "Query",
+    fieldName: "getUser",
+  },
+  async ($context) =>
+    userTable.appsync.get({
+      id: $util.dynamodb.toDynamoDB($context.arguments.userId),
+    })
+);
+```

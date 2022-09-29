@@ -9,7 +9,6 @@ export interface PrewarmClientInitializer<T, O> {
 }
 
 export type ClientName =
-  | "DynamoDB"
   | "EventBridge"
   | "Lambda"
   | "SecretsManager"
@@ -52,13 +51,7 @@ export const PrewarmClients: Record<
         props?.clientConfigRetriever?.(key)
       ),
   },
-  DynamoDB: {
-    key: "DynamoDB",
-    init: (key, props) =>
-      new (require("aws-sdk/clients/dynamodb"))(
-        props?.clientConfigRetriever?.(key)
-      ),
-  },
+
   SecretsManager: {
     key: "SecretsManager",
     init: (key, props) =>

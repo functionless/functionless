@@ -712,13 +712,16 @@ export function validate(
       ) {
         const numIntegrations = countIntegrationCalls(request);
         if (numIntegrations === 0 || numIntegrations > 1) {
-          return [
-            ...diagnostics,
-            newError(
-              request,
-              ErrorCodes.AwsMethod_request_must_have_exactly_one_integration_call
-            ),
-          ];
+          // regression: we no longer have types to identify these for DynamODB
+          // see: https://github.com/functionless/functionless/pull/519
+          // reason: favoring simpler types over tagging
+          // return [
+          //   ...diagnostics,
+          //   newWarning(
+          //     request,
+          //     ErrorCodes.AwsMethod_request_must_have_exactly_one_integration_call
+          //   ),
+          // ];
         }
       } else {
         return [

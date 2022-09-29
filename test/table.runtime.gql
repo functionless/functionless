@@ -1,0 +1,25 @@
+schema {
+  mutation: Mutation
+  query: Query
+}
+
+type Person {
+  pk: ID!
+  id: ID!
+  name: String!
+}
+
+type Query {
+  getPerson(id: ID!): Person @aws_iam
+  getPeopleAtomic(ids: [ID!]!): [Person!]! @aws_iam
+  getPeopleBatch(ids: [ID!]!): [Person!]! @aws_iam
+}
+
+type Mutation {
+  addPerson(name: String!): Person! @aws_iam
+  addPeopleBatch(names: [String!]!): [Person!]! @aws_iam
+  addPeopleAtomic(names: [String!]!): [Person!]! @aws_iam
+  deletePerson(id: ID!): Person @aws_iam
+  deletePeopleAtomic(ids: [ID!]!): [Person]! @aws_iam
+  deletePeopleBatch(ids: [ID!]!): [Person]! @aws_iam
+}

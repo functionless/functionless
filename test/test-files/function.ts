@@ -6,7 +6,6 @@ import {
   LambdaDestination,
 } from "aws-cdk-lib/aws-lambda-destinations";
 import {
-  $AWS,
   AppsyncResolver,
   EventBus,
   Function,
@@ -124,20 +123,18 @@ new Function(stack, "cdk resource", async () => {
 
 new Function(stack, "obj ref", async () => {
   const event = {
-    Table: table,
     Key: {
       id: { S: "sas" },
     },
   };
 
-  await $AWS.DynamoDB.GetItem(event);
+  await table.attributes.get(event);
 });
 
 // supported - object literal in $AWS calls
 
 new Function(stack, "obj ref", async () => {
-  await $AWS.DynamoDB.GetItem({
-    Table: table,
+  await table.attributes.get({
     Key: {
       id: { S: "sas" },
     },

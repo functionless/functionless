@@ -90,7 +90,7 @@ export interface AppsyncContext<
  * they must be receivable in a GraphQL request.
  */
 export interface ResolverArguments {
-  [key: string]: Literal;
+  [key: string]: any;
 }
 
 /**
