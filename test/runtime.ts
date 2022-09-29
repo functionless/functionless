@@ -325,6 +325,10 @@ export function runtimeTestSuite<
     );
     if (!allErrored) {
       const cloudAssembly = await asyncSynth(app);
+      console.log(cloudAssembly.artifacts.map(({ id }) => id));
+      const assetManifestArtifact = cloudAssembly.tryGetArtifact(
+        `${stack.artifactId}.assets`
+      ) as unknown as cxapi.AssetManifestArtifact;
       stackArtifact = cloudAssembly.getStackArtifact(
         stack.artifactId
       ) as unknown as cxapi.CloudFormationStackArtifact;
@@ -344,7 +348,10 @@ export function runtimeTestSuite<
       //   })
       // );
 
-      const deployOut = await nodeCfnDeploy(stackArtifact);
+      const deployOut = await nodeCfnDeploy(
+        stackArtifact,
+        assetManifestArtifact
+      );
 
       console.log(deployOut.outputs);
 
@@ -394,7 +401,8 @@ export function runtimeTestSuite<
     }
 
     async function nodeCfnDeploy(
-      stackArtifact: cxapi.CloudFormationStackArtifact
+      stackArtifact: cxapi.CloudFormationStackArtifact,
+      assetManifest: cxapi.AssetManifestArtifact
     ) {
       const caller = await sts.getCallerIdentity().promise();
       console.log(JSON.stringify(stackArtifact.template, null, 2));
@@ -413,7 +421,11 @@ export function runtimeTestSuite<
         sdkConfig: clientConfig,
       });
 
-      const result = await stack.updateStack(stackArtifact.template);
+      const result = await stack.updateStack(
+        stackArtifact.template,
+        undefined,
+        assetManifest.file
+      );
 
       return result;
     }

@@ -142,6 +142,7 @@ const project = new CustomTypescriptProject({
     "cross-fetch",
     "graphql-tag",
     "graphql",
+    "cdk-assets",
   ],
   jestOptions: {
     jestConfig: {
