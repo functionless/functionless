@@ -35,7 +35,8 @@ module.exports = {
     "register.js",
     "jest.js",
     "swc-config.js",
-    ".eslintrc.js"
+    ".eslintrc.js",
+    "package.json",
   ],
   rules: {
     "prettier/prettier": ["error"],
@@ -91,10 +92,7 @@ module.exports = {
       plugins: ["no-only-tests"],
       parserOptions: {
         tsconfigRootDir: __dirname,
-        project: [
-          "./tsconfig.dev.json",
-          "./test/tsconfig.json",
-        ],
+        project: ["./tsconfig.dev.json", "./test/tsconfig.json"],
       },
       rules: {
         "@typescript-eslint/explicit-member-accessibility": [
