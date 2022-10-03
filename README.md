@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://functionless.org">
-    <img src="./img/logo.svg" />
+    <img src="assets/logo-small.svg" />
   </a>
   <br />
   <h1>Functionless</h1>
@@ -8,7 +8,7 @@
   Build Code-first, Cloud-native applications<br />with serverless <b>Components</b> and easy-to-follow <b>Conventions</b>.
   </h3>
   <a href="https://badge.fury.io/js/functionless.svg">
-    <img src="https://badge.fury.io/js/functionless.svg">
+    <img src="https://badge.fury.io/js/functionless.svg" />
   </a>
   <a href="https://github.com/functionless/functionless/blob/main/LICENSE">
     <img alt="MIT License" src="https://img.shields.io/github/license/functionless/functionless" />
@@ -70,7 +70,7 @@ We provide guardrails to accelerate development of serverless applications. Use 
 
 Designed for instant feedback. Catch errors in real-time before deployment with type-safe Runtime APIs; test and debug locally; automate operational tasks with an application-aware CLI experience.
 
-![Type-safe Cloud Resources](./img/type-safe.gif)
+![Type-safe Cloud Resources](assets/type-safe.gif)
 
 ### 👮‍♀️ Secure
 

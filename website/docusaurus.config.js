@@ -48,6 +48,7 @@ const config = {
     [
       "docusaurus-plugin-typedoc",
       // Plugin / TypeDoc options
+      /** @type {import('docusaurus-plugin-typedoc').PluginOptions} */
       {
         entryPoints: ["../src/index.ts"],
         tsconfig: "../tsconfig.json",
