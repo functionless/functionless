@@ -1,4 +1,4 @@
-const { ErrorCodes, ErrorType } = require("../lib/error-code");
+const { ErrorCodes, ErrorType } = require("functionless/lib/error-code");
 
 const fs = require("fs");
 const path = require("path");
@@ -10,7 +10,6 @@ const path = require("path");
 const errorCodesAPIReference = path.join(
   __dirname,
   "..",
-  "website",
   "docs",
   "api",
   "namespaces",
@@ -20,7 +19,6 @@ const errorCodesAPIReference = path.join(
 const errorCodeDocumentationPath = path.join(
   __dirname,
   "..",
-  "website",
   "docs",
   "error-codes.md"
 );

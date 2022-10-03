@@ -50,8 +50,8 @@ const config = {
       // Plugin / TypeDoc options
       /** @type {import('docusaurus-plugin-typedoc').PluginOptions} */
       {
-        entryPoints: ["../src/index.ts"],
-        tsconfig: "../tsconfig.json",
+        entryPoints: ['../../packages/core'],
+        entryPointStrategy: 'packages',
         sidebar: {
           categoryLabel: "API Reference",
           position: 10,
@@ -63,12 +63,7 @@ const config = {
         name: "functionless-error-code-docs",
         loadContent: () =>
           // run the compile-error-code-page CLI after typedoc is run by `docusaurus-plugin-typedoc`
-          require(path.join(
-            __dirname,
-            "..",
-            "scripts",
-            "compile-error-code-page"
-          )),
+          require("./scripts/compile-error-code-page"),
       };
     },
   ],

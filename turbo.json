@@ -1,0 +1,18 @@
+{
+  "$schema": "https://turborepo.org/schema.json",
+  "pipeline": {
+    "release": {},
+    "build": {
+      "dependsOn": ["^compile"]
+    },
+    "compile": {
+      "dependsOn": ["^compile"]
+    },
+    "typecheck": {
+      "dependsOn": ["compile"]
+    },
+    "synth": {
+      "dependsOn": ["compile"]
+    }
+  }
+}
