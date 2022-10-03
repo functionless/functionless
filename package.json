@@ -4,7 +4,7 @@
   "private": true,
   "repository": "git@github.com:functionless/functionless",
   "author": "Functionless Team",
-  "license": "MIT",
+  "license": "Apache-2.0",
   "scripts": {
     "synth": "turbo run synth",
     "typecheck": "turbo run typecheck",
