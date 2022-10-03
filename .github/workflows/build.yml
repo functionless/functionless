@@ -9,8 +9,6 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    outputs:
-      self_mutation_happened: ${{ steps.self_mutation.outputs.self_mutation_happened }}
     env:
       CI: "true"
       CLEAN_UP_STACK: "1"
