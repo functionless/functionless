@@ -5,7 +5,7 @@
   <br />
   <h1>Functionless</h1>
   <h3>
-  Build Code-first, Cloud-native applications<br />with serverless <b>Components</b> and easy-to-follow <b>Conventions</b>.
+  Build serverless AWS applications with type-safe <b>Components</b> and easy-to-follow <b>Conventions</b>.
   </h3>
   <a href="https://badge.fury.io/js/functionless.svg">
     <img src="https://badge.fury.io/js/functionless.svg" />
