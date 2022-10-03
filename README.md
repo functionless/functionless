@@ -41,6 +41,23 @@ Functionless is a full-stack framework that enables you to easily build type-saf
 - 🎢&nbsp; NextJS-like file system conventions for CloudFormation Stacks and APIs.
 - 🧩&nbsp; Build and share custom re-usable cloud components.
 
+## Quick Start
+
+```sh
+# create a new project
+npx create-functionless@latest
+cd <project-name>
+
+# deploy to AWS
+npx fl deploy
+
+# open my-function in the AWS console
+npx fl ./src/my-function console
+
+# run your application locally
+npx fl local
+```
+
 ## Why Functionless?
 
 Functionless re-imagines Infrastructure-as-Code (IaC) as Infrastructure-from-Code (IfC). Enjoy a streamlined developer experience for full stack developers without giving up control of your AWS infrastructure.
