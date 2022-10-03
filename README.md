@@ -1,6 +1,6 @@
 <div align="center">
   <a href="https://functionless.org">
-    <img src="./logo.svg" />
+    <img src="./img/logo.svg" />
   </a>
   <br />
   <h1>Functionless</h1>
@@ -69,6 +69,8 @@ We provide guardrails to accelerate development of serverless applications. Use 
 ### 🚀 Productive
 
 Designed for instant feedback. Catch errors in real-time before deployment with type-safe Runtime APIs; test and debug locally; automate operational tasks with an application-aware CLI experience.
+
+![Type-safe Cloud Resources](./img/type-safe.gif)
 
 ### 👮‍♀️ Secure
 
