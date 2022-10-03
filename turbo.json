@@ -6,6 +6,9 @@
     },
     "typecheck": {
       "dependsOn": ["compile"]
+    },
+    "synth": {
+      "dependsOn": ["compile"]
     }
   }
 }

@@ -6,6 +6,7 @@
   "author": "Functionless Team",
   "license": "MIT",
   "scripts": {
+    "synth": "turbo run synth",
     "typecheck": "turbo run typecheck",
     "prepare": "husky install"
   },
