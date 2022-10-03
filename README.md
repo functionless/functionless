@@ -35,7 +35,7 @@ Functionless is a full-stack framework that enables you to easily build type-saf
 
 - 🪂&nbsp; Type-safe AWS cloud resources such as Rest APIs, GraphQL APIs, Lambda Functions, DynamoDB Tables, Step Functions, Event Bridge, and more.
 - 👨‍💻&nbsp; Local development experience for AWS serverless.
-- 🐞&nbsp; Instant feedback and step-through debugger.
+- 🐞&nbsp; Instant feedback with step-through debugger.
 - 🧙&nbsp; Architecture-aware CLI for operating, maintaining and testing cloud resources.
 - 🔐&nbsp; Guaranteed least-privilege automatically derived IAM Policies.
 - 🎢&nbsp; NextJS-like file system conventions for CloudFormation Stacks and APIs.
