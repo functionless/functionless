@@ -47,7 +47,7 @@ junit.xml
 !/tsconfig.json
 !/tsconfig.dev.json
 !/src/
-/lib
+packages/*/lib
 /dist/
 !/.eslintrc.json
 !/.git/hooks/pre-commit
