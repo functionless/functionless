@@ -29,3 +29,5 @@ jobs:
         run: yarn install --check-files
       - name: build
         run: yarn turbo run build --filter=functionless
+      - name: synth
+        run: yarn turbo run synth --filter=test-app

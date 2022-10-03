@@ -174,21 +174,10 @@
           "spawn": "test:fast"
         },
         {
-          "spawn": "test:app"
-        },
-        {
           "spawn": "test:runtime"
         },
         {
           "spawn": "eslint"
-        }
-      ]
-    },
-    "test:app": {
-      "name": "test:app",
-      "steps": [
-        {
-          "exec": "cd ./test-app && yarn && yarn build && yarn synth --quiet"
         }
       ]
     },
