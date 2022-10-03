@@ -2,7 +2,9 @@
   "$schema": "https://turborepo.org/schema.json",
   "pipeline": {
     "release": {},
-    "build": {},
+    "build": {
+      "dependsOn": ["^compile"]
+    },
     "compile": {
       "dependsOn": ["^compile"]
     },

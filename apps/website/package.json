@@ -5,7 +5,7 @@
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "FUNCTIONLESS_LOCAL=true; docusaurus start",
-    "build": "mkdir -p docs/api/assets && cp ../assets/* docs/api/assets && docusaurus build",
+    "build": "mkdir -p docs/api/assets && cp ../../assets/* docs/api/assets && docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
@@ -22,6 +22,7 @@
     "@mdx-js/react": "^1.6.22",
     "@mui/material": "^5.8.2",
     "clsx": "^1.2.1",
+    "functionless": "*",
     "ky": "^0.31.3",
     "mdx-mermaid": "^1.2.2",
     "mermaid": "^9.1.2",
