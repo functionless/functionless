@@ -7,7 +7,6 @@
   "commitHooks": false,
   "private": false,
   "createRelease": "github",
-  "registry": "https://registry.npmjs.org/",
   "command": {
     "version": {
       "exact": true
