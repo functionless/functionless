@@ -5,7 +5,8 @@
   "packages": ["packages/*"],
   "command": {
     "version": {
-      "exact": true
+      "exact": true,
+      "conventionalCommits": true
     },
     "publish": {
       "npmClient": "npm",
