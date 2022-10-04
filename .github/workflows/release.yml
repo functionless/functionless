@@ -36,9 +36,5 @@ jobs:
       - name: release
         run: yarn lerna publish prerelease --preid canary --yes
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          GITHUB_REPOSITORY: ${{ github.repository }}
-          GITHUB_REF: ${{ github.ref }}
-          NPM_DIST_TAG: latest
-          NPM_REGISTRY: registry.npmjs.org
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
