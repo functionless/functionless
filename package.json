@@ -9,7 +9,8 @@
     "build:website": "turbo run build --filter=website",
     "synth": "turbo run synth",
     "typecheck": "turbo run typecheck",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "prepack": "turbo run compile"
   },
   "workspaces": [
     "apps/**/*",
