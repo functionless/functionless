@@ -6,6 +6,7 @@
   "command": {
     "version": {
       "exact": true,
+      "private": false,
       "conventionalCommits": true
     },
     "publish": {
