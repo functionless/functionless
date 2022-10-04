@@ -3,6 +3,14 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.23.7-canary.1](https://github.com/functionless/functionless/compare/v0.23.7-canary.0...v0.23.7-canary.1) (2022-10-04)
+
+**Note:** Version bump only for package functionless
+
+
+
+
+
 ## [0.23.7-canary.0](https://github.com/functionless/functionless/compare/v0.23.6...v0.23.7-canary.0) (2022-10-04)
 
 
