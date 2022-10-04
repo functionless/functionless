@@ -29,10 +29,6 @@ jobs:
           aws-region: us-east-1
           role-duration-seconds: 3600
         if: contains(fromJson('["release", "build", "close"]'), github.workflow)
-      - name: Who am I
-        run: npm whoami
-        env:
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: Install dependencies
         run: yarn install --check-files --frozen-lockfile
       - name: release
