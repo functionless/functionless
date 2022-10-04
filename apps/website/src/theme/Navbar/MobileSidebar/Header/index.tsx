@@ -1,4 +1,5 @@
-const { useNavbarMobileSidebar } = require("@docusaurus/theme-common/internal");
+// @ts-expect-error - types are not exported for internals
+import { useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
 import IconClose from "@theme/Icon/Close";
 import NavbarLogo from "@theme/Navbar/Logo";
 

@@ -1,8 +1,9 @@
 import { useThemeConfig } from "@docusaurus/theme-common";
-const {
+import {
   useHideableNavbar,
   useNavbarMobileSidebar,
-} = require("@docusaurus/theme-common/internal");
+  // @ts-expect-error - types are not exported for internals
+} from "@docusaurus/theme-common/internal";
 import type { Props } from "@theme/Navbar/Layout";
 import NavbarMobileSidebar from "@theme/Navbar/MobileSidebar";
 import clsx from "clsx";

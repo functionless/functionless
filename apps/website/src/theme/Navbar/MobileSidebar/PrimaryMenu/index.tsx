@@ -1,5 +1,6 @@
 import Link from "@docusaurus/Link";
-const { useNavbarMobileSidebar } = require("@docusaurus/theme-common/internal");
+// @ts-expect-error - types are not exported for internals
+import { useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
 import { main, MainItem, social, SocialItem } from "@site/src/content/home/nav";
 
 export const MainNavItem = ({ item }: { item: MainItem }) => {

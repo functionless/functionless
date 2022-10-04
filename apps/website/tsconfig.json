@@ -28,7 +28,7 @@
     "declarationMap": true,
     "baseUrl": ".",
     "types": ["mdx", "@docusaurus/theme-classic"],
-    "allowJs": true,
+    "allowJs": true
   },
   "include": ["src/**/*", "test/**/*"],
   "exclude": ["**/node_modules"],
