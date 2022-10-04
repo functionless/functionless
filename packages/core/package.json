@@ -149,12 +149,8 @@
     ]
   },
   "types": "lib/index.d.ts",
-  "resolutions": {
-    "@types/responselike": "1.0.0",
-    "got": "12.3.1"
-  },
   "lint-staged": {
-    "*.{tsx,jsx,ts,js,json,md,css}": [
+    "*.{tsx,jsx,ts,js,md,css}": [
       "eslint --fix"
     ]
   }

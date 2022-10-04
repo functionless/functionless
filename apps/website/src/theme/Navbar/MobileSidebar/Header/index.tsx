@@ -1,4 +1,4 @@
-import { useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
+const { useNavbarMobileSidebar } = require("@docusaurus/theme-common/internal");
 import IconClose from "@theme/Icon/Close";
 import NavbarLogo from "@theme/Navbar/Logo";
 

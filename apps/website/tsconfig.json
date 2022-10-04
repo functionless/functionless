@@ -2,6 +2,7 @@
   "extends": "@tsconfig/docusaurus/tsconfig.json",
   "compilerOptions": {
     "alwaysStrict": true,
+    "composite": true,
     "declaration": true,
     "esModuleInterop": true,
     "experimentalDecorators": true,
@@ -26,9 +27,10 @@
     "target": "ES2019",
     "declarationMap": true,
     "baseUrl": ".",
-    "types": ["mdx"],
-    "allowJs": true
+    "types": ["mdx", "@docusaurus/theme-classic"],
+    "allowJs": true,
   },
   "include": ["src/**/*", "test/**/*"],
-  "exclude": ["**/node_modules"]
+  "exclude": ["**/node_modules"],
+  "references": [{ "path": "../../packages/core" }]
 }

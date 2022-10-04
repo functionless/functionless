@@ -3,7 +3,6 @@ import InvokeHello from "@site/src/content/home/features/snippets/invoke-hello.m
 import { clamp } from "@site/src/lib/clamp";
 import { useVisibility } from "@site/src/lib/useVisibility";
 import { Code, Terminal } from "../../code";
-import { VisibilityWindow } from "../../visibilityWindow";
 
 export const Aside = ({ scrollFactor }: { scrollFactor: number }) => {
   const { ref, visible } = useVisibility<HTMLDivElement>(0, {

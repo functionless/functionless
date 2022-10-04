@@ -1,4 +1,3 @@
-import useIsBrowser from "@docusaurus/useIsBrowser";
 import React, { useEffect, useState, useRef, RefObject, useCallback, DependencyList } from "react";
 
 /**

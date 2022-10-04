@@ -1,8 +1,6 @@
-import { isContext } from "vm";
 import Link from "@docusaurus/Link";
-import { useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
+const { useNavbarMobileSidebar } = require("@docusaurus/theme-common/internal");
 import { main, MainItem, social, SocialItem } from "@site/src/content/home/nav";
-import NavbarItem from "@theme/NavbarItem";
 
 export const MainNavItem = ({ item }: { item: MainItem }) => {
   const mobileSidebar = useNavbarMobileSidebar();

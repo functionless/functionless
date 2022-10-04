@@ -208,6 +208,7 @@ export const IAM_SERVICE_PREFIX: Record<keyof SDK, string> = {
   Mgn: "mgn", // AWS Application Migration Service
   MigrationHub: "mgh",
   MigrationHubConfig: "mgh",
+  MigrationHubOrchestrator: "migrationhub-orchestrator",
   MigrationHubRefactorSpaces: "refactor-spaces",
   MigrationHubStrategy: "migrationhub-strategy",
   Mobile: "mobilehub",

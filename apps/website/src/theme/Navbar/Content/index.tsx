@@ -1,11 +1,8 @@
 import Link from "@docusaurus/Link";
-import { useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
 import { main, MainItem, social, SocialItem } from "@site/src/content/home/nav";
 import { githubUrl } from "@site/src/content/site";
 import NavbarLogo from "@theme/Navbar/Logo";
 import NavbarMobileSidebarToggle from "@theme/Navbar/MobileSidebar/Toggle";
-import NavbarSearch from "@theme/Navbar/Search";
-import SearchBar from "@theme/SearchBar";
 import GitHubButton from "react-github-btn";
 
 export const MainNavItem = ({ item }: { item: MainItem }) => (

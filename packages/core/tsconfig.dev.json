@@ -1,47 +1,14 @@
 {
+  "extends": "../../tsconfig-base",
   "compilerOptions": {
-    "alwaysStrict": true,
-    "declaration": true,
-    "esModuleInterop": true,
-    "experimentalDecorators": true,
-    "inlineSourceMap": true,
-    "inlineSources": true,
-    "lib": [
-      "dom",
-      "ES2022"
-    ],
-    "module": "CommonJS",
-    "noEmitOnError": false,
-    "noFallthroughCasesInSwitch": true,
-    "noImplicitAny": true,
-    "noImplicitReturns": true,
-    "noImplicitThis": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "resolveJsonModule": true,
-    "strict": true,
-    "strictNullChecks": true,
-    "strictPropertyInitialization": true,
-    "stripInternal": true,
-    "target": "ES2019",
-    "declarationMap": true,
-    "noUncheckedIndexedAccess": true,
-    "skipLibCheck": true,
+    "composite": false,
+    "noEmit": true,
+    "outDir": "lib",
+    "baseUrl": ".",
     "paths": {
-      "@fnls": [
-        "lib/index"
-      ]
-    },
-    "baseUrl": "."
+      "@fnls": ["lib/index"]
+    }
   },
-  "include": [
-    ".projenrc.js",
-    "src/**/*.ts",
-    "test/**/*.ts",
-    ".projenrc.ts",
-    "projenrc/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ]
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules"]
 }

@@ -11,6 +11,7 @@ module.exports = {
     sourceType: "module",
     tsconfigRootDir: __dirname,
     project: "./tsconfig.dev.json",
+    extraFileExtensions: [".json"],
   },
   extends: [
     "plugin:import/typescript",
@@ -44,13 +45,7 @@ module.exports = {
     "import/no-extraneous-dependencies": [
       "error",
       {
-        devDependencies: [
-          "**/test/**",
-          "**/build-tools/**",
-          "**/projenrc/**",
-          ".projenrc.ts",
-          "projenrc/**/*.ts",
-        ],
+        devDependencies: ["**/test/**", "**/build-tools/**"],
         optionalDependencies: false,
         peerDependencies: true,
       },
