@@ -3,7 +3,6 @@
   "npmClient": "yarn",
   "useWorkspaces": true,
   "packages": ["packages/*"],
-  "changelog": false,
   "conventionalCommits": true,
   "commitHooks": false,
   "private": false,
