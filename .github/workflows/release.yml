@@ -2,7 +2,7 @@ name: release
 on:
   push:
     branches:
-      - main
+      - canary
   workflow_dispatch: {}
 jobs:
   release:
