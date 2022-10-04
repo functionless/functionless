@@ -7,6 +7,7 @@
   "conventionalCommits": true,
   "commitHooks": false,
   "private": false,
+  "createRelease": "github",
   "command": {
     "version": {
       "exact": true
