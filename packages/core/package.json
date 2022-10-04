@@ -1,6 +1,10 @@
 {
   "name": "functionless",
   "description": "Functionless, a TypeScript plugin and Construct library for the AWS CDK",
+  "repository": {
+    "url": "github:functionless/functionless",
+    "directory": "packages/core"
+  },
   "bin": {
     "functionless": "./bin/functionless.js",
     "functionless.js": "bin/functionless.js"

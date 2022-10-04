@@ -1,0 +1,21 @@
+{
+  "$schema": "node_modules/lerna/schemas/lerna-schema.json",
+  "npmClient": "yarn",
+  "useWorkspaces": true,
+  "packages": ["packages/*"],
+  "conventionalCommits": true,
+  "commitHooks": false,
+  "private": false,
+  "createRelease": "github",
+  "verifyAccess": false,
+  "command": {
+    "version": {
+      "exact": true
+    },
+    "publish": {
+      "npmClient": "npm",
+      "allowBranch": ["main"]
+    }
+  },
+  "version": "0.23.6"
+}
