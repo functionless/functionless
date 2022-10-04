@@ -14,7 +14,7 @@
     },
     "publish": {
       "npmClient": "npm",
-      "allowBranch": ["canary"]
+      "allowBranch": ["main"]
     }
   },
   "version": "0.23.6"
