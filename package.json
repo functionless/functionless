@@ -12,8 +12,8 @@
     "prepare": "husky install"
   },
   "workspaces": [
-    "apps/*",
-    "packages/*"
+    "apps/**/*",
+    "packages/**/*"
   ],
   "devDependencies": {
     "husky": "^8.0.1",
