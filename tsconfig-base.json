@@ -25,7 +25,8 @@
     "target": "ES2019",
     "declarationMap": true,
     "noUncheckedIndexedAccess": true,
-    "skipLibCheck": true
+    "skipLibCheck": true,
+    "types": []
   },
   "files": [],
   "include": []
