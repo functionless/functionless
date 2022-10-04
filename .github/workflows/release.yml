@@ -2,7 +2,7 @@ name: release
 on:
   push:
     branches:
-      - canary
+      - main
   workflow_dispatch: {}
 jobs:
   release:
@@ -35,6 +35,6 @@ jobs:
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: release
-        run: yarn lerna publish from-package --loglevel silly --dist-tag canary --yes
+        run: yarn lerna publish --dist-tag canary --yes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
