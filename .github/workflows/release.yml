@@ -31,14 +31,10 @@ jobs:
         if: contains(fromJson('["release", "build", "close"]'), github.workflow)
       - name: Install dependencies
         run: yarn install --check-files --frozen-lockfile
+      - run: echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc
+        env:
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
       - name: release
         run: yarn lerna publish from-package --loglevel silly --dist-tag canary --yes
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-      - name: Archive lerna logs
-        uses: actions/upload-artifact@v3
-        if: always()
-        with:
-          name: lerna-logs
-          path: lerna-debug.log
