@@ -2,23 +2,19 @@
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
   "npmClient": "yarn",
   "useWorkspaces": true,
-  "packages": [
-    "packages/*"
-  ],
+  "packages": ["packages/*"],
   "conventionalCommits": true,
   "commitHooks": false,
   "private": false,
   "createRelease": "github",
+  "registry": "https://registry.npmjs.org/",
   "command": {
     "version": {
       "exact": true
     },
     "publish": {
       "npmClient": "npm",
-      "allowBranch": [
-        "canary"
-      ],
-      "registry": "https://registry.npmjs.org/"
+      "allowBranch": ["canary"]
     }
   },
   "version": "0.23.7-canary.0"
