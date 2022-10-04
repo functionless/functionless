@@ -36,3 +36,9 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+      - name: Archive lerna logs
+        uses: actions/upload-artifact@v3
+        if: always()
+        with:
+          name: lerna-logs
+          path: lerna-debug.log
