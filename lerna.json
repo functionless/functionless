@@ -2,9 +2,7 @@
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
   "npmClient": "yarn",
   "useWorkspaces": true,
-  "packages": [
-    "packages/*"
-  ],
+  "packages": ["packages/*"],
   "conventionalCommits": true,
   "commitHooks": false,
   "private": false,
@@ -16,10 +14,8 @@
     },
     "publish": {
       "npmClient": "npm",
-      "allowBranch": [
-        "canary"
-      ]
+      "allowBranch": ["canary"]
     }
   },
-  "version": "0.23.7-canary.1"
+  "version": "0.23.6"
 }
