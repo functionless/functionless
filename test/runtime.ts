@@ -1,5 +1,4 @@
 import * as cxapi from "@aws-cdk/cx-api";
-import * as control from "@aws-sdk/client-cloudcontrol";
 import * as ssm from "@aws-sdk/client-ssm";
 import { App, CfnOutput, Stack } from "aws-cdk-lib";
 import { ArnPrincipal, Role } from "aws-cdk-lib/aws-iam";
@@ -410,10 +409,6 @@ export function runtimeTestSuite<
         account: caller.Account!,
         region: clientConfig.region!,
         stackName: stackArtifact.stackName,
-        controlClient: new control.CloudControlClient({
-          credentials: clientConfig.credentials!,
-          region: clientConfig.region!,
-        }),
         ssmClient: new ssm.SSMClient({
           credentials: clientConfig.credentials!,
           region: clientConfig.region!,
