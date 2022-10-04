@@ -10,8 +10,6 @@ jobs:
     permissions:
       contents: write
       id-token: write
-    outputs:
-      latest_commit: ${{ steps.git_remote.outputs.latest_commit }}
     env:
       CI: "true"
       TEST_STACK_RETENTION_POLICY: DELETE
@@ -31,6 +29,8 @@ jobs:
           aws-region: us-east-1
           role-duration-seconds: 3600
         if: contains(fromJson('["release", "build", "close"]'), github.workflow)
+      - name: Who am I
+        run: npm whoami
       - name: Install dependencies
         run: yarn install --check-files --frozen-lockfile
       - name: release
