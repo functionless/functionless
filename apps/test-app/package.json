@@ -3,11 +3,10 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "typecheck": "tsc --noEmit && functionless",
-    "watch": "tsc -w",
-    "synth": "cdk synth",
+    "lint": "tsc --noEmit && functionless",
+    "test": "cdk synth",
     "deploy": "cdk deploy",
-    "codegen": "graphql-codegen --config codegen.yml"
+    "build": "graphql-codegen --config codegen.yml"
   },
   "dependencies": {
     "@aws-cdk/aws-appsync-alpha": "2.43.1-alpha.0",

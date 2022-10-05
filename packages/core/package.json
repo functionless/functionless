@@ -10,8 +10,7 @@
     "functionless.js": "bin/functionless.js"
   },
   "scripts": {
-    "build": "npm run compile && npm run test",
-    "compile": "ts-node ./scripts/sdk-gen.ts && tsc --build",
+    "build": "ts-node ./scripts/sdk-gen.ts && tsc --build",
     "lint": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src test",
     "localstack": "./scripts/localstack",
     "test": "npm run test:fast && npm run test:runtime",

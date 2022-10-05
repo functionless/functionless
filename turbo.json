@@ -1,18 +1,16 @@
 {
   "$schema": "https://turborepo.org/schema.json",
   "pipeline": {
-    "release": {},
-    "build": {
-      "dependsOn": ["^compile"]
-    },
-    "compile": {
-      "dependsOn": ["^compile"]
-    },
     "typecheck": {
-      "dependsOn": ["compile"]
+      "dependsOn": ["^build"]
     },
-    "synth": {
-      "dependsOn": ["compile"]
+    "lint": {},
+    "build": {
+      "dependsOn": ["^build"],
+      "outputs": ["lib/**"]
+    },
+    "test": {
+      "dependsOn": ["^build"]
     }
   }
 }
