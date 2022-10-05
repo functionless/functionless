@@ -62,9 +62,9 @@
     "eslint-import-resolver-node": "^0.3.6",
     "eslint-import-resolver-typescript": "^2.7.1",
     "eslint-plugin-import": "^2.26.0",
+    "eslint-plugin-markdown": "^3.0.0",
     "eslint-plugin-no-only-tests": "^2.6.0",
     "eslint-plugin-prettier": "^4.2.1",
-    "eslint-plugin-markdown": "^3.0.0",
     "flatted": "^3.2.7",
     "graphql": "^16.6.0",
     "graphql-request": "^4.3.0",
@@ -107,7 +107,7 @@
   },
   "main": "lib/index.js",
   "license": "Apache-2.0",
-  "version": "0.24.1",
+  "version": "0.24.2",
   "jest": {
     "collectCoverage": false,
     "coveragePathIgnorePatterns": [
