@@ -6,6 +6,7 @@
   "author": "Functionless Team",
   "license": "Apache-2.0",
   "scripts": {
+    "build:website": "turbo run build --filter=website",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "build": "turbo run build",
