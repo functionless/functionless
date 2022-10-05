@@ -7,7 +7,7 @@
     "lint": {},
     "build": {
       "dependsOn": ["^build"],
-      "outputs": ["lib/**"]
+      "outputs": ["lib/**", "build/**"]
     },
     "test": {
       "dependsOn": ["^build"]
