@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.24.1](https://github.com/functionless/functionless/compare/v0.24.0...v0.24.1) (2022-10-05)
+
+
+### Bug Fixes
+
+* update snapshots ([#532](https://github.com/functionless/functionless/issues/532)) ([0208138](https://github.com/functionless/functionless/commit/0208138fd46ea11d9c35990cf741fa424078b65a))
+
+
+
+
+
 # [0.24.0](https://github.com/functionless/functionless/compare/v0.23.6...v0.24.0) (2022-10-04)
 
 
