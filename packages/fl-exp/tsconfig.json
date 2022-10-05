@@ -3,9 +3,10 @@
   "compilerOptions": {
     "outDir": "lib",
     "declaration": true,
-    "inlineSourceMap": true
+    "inlineSourceMap": true,
+    "rootDir": "src"
   },
-  "include": ["."],
+  "include": ["src"],
   "exclude": ["lib", "test", "node_modules"],
   "references": [
     {

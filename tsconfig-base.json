@@ -27,7 +27,5 @@
     "noUncheckedIndexedAccess": true,
     "skipLibCheck": true,
     "types": []
-  },
-  "files": [],
-  "include": []
+  }
 }

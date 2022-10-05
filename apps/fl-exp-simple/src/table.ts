@@ -4,6 +4,8 @@ import { Table } from "fl-exp";
 interface TableItem<T extends string> {
   pk: T;
   sk: string;
+  id: string;
+  type: T;
 }
 
 export interface Todo extends TableItem<"todo"> {

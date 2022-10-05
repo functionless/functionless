@@ -1,4 +1,4 @@
-import { Method, ExpressStepFunction, PathParam, LambdaFunction } from "fl-exp";
+import { Method, PathParam, LambdaFunction } from "fl-exp";
 // BUG: Uncomment this and this line and `putEvents` call bellow
 //      to trigger the function serializer error.
 // import Events from "../event-bus";
