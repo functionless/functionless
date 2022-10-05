@@ -15,7 +15,7 @@
     "build": "tsc --build",
     "deploy": "cdk deploy",
     "synth": "cdk synth",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "validate": "functionless",
     "dev": "tsc --watch"
   },
@@ -50,9 +50,6 @@
     "typescript": "^4.8.3"
   },
   "jest": {
-    "roots": [
-      "./test"
-    ],
     "transform": {
       "^.+\\.(t|j)sx?$": [
         "functionless/jest",

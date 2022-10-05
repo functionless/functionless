@@ -8,7 +8,7 @@
     "deploy": "cdk deploy",
     "local": "fl local",
     "synth": "cdk synth",
-    "test": "jest",
+    "test": "jest --passWithNoTests",
     "validate": "functionless"
   },
   "devDependencies": {
