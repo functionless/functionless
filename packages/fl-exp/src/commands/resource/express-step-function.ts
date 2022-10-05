@@ -7,7 +7,7 @@ import { openConsole } from "./open-console";
 
 registerCommand({
   resourceKind: ExpressStepFunctionKind,
-  handler(command, resource, detail) {
+  handler(command, _resource, detail) {
     command.command("invoke [payload]").action(async (maybePayload) => {
       await invokeExpressStepFunction(maybePayload, detail);
     });

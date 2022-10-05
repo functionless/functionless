@@ -65,8 +65,8 @@ export function resourceIdPlugin(
               );
             } else {
               call.node.arguments = [
-                call.node.arguments[0],
-                call.node.arguments[1],
+                call.node.arguments[0]!,
+                call.node.arguments[1]!,
                 babel.types.stringLiteral(resourceID),
                 babel.types.stringLiteral(roleArn ?? "NONE"),
               ];
@@ -84,7 +84,7 @@ export function resourceIdPlugin(
               );
             } else {
               call.node.arguments = [
-                call.node.arguments[0],
+                call.node.arguments[0]!,
                 babel.types.stringLiteral(resourceID),
                 babel.types.stringLiteral(roleArn ?? "NONE"),
               ];

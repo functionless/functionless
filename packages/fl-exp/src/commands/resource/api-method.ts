@@ -10,7 +10,7 @@ registerCommand({
     command.command("invoke [payload]").action(async (maybePayload) => {
       await invokeResource(resource);
 
-      async function invokeResource(resource: string) {
+      async function invokeResource(_resource: string) {
         if (detail.ResourceType === "AWS::StepFunctions::StateMachine") {
           await invokeExpressStepFunction(maybePayload, detail);
         } else if (detail.ResourceType === "AWS::Lambda::Function") {
@@ -21,7 +21,7 @@ registerCommand({
       }
     });
 
-    command.command("console").action(async (maybePayload) => {
+    command.command("console").action(async (_maybePayload) => {
       await openConsole(detail);
     });
   },

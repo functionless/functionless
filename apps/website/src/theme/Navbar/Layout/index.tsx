@@ -2,11 +2,12 @@ import { useThemeConfig } from "@docusaurus/theme-common";
 import {
   useHideableNavbar,
   useNavbarMobileSidebar,
+  // @ts-expect-error - types are not exported for internals
 } from "@docusaurus/theme-common/internal";
 import type { Props } from "@theme/Navbar/Layout";
 import NavbarMobileSidebar from "@theme/Navbar/MobileSidebar";
 import clsx from "clsx";
-import React, { type ComponentProps } from "react";
+import { type ComponentProps } from "react";
 
 import styles from "./styles.module.css";
 

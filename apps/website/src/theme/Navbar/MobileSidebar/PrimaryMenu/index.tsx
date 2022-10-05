@@ -1,8 +1,7 @@
-import { isContext } from "vm";
 import Link from "@docusaurus/Link";
+// @ts-expect-error - types are not exported for internals
 import { useNavbarMobileSidebar } from "@docusaurus/theme-common/internal";
 import { main, MainItem, social, SocialItem } from "@site/src/content/home/nav";
-import NavbarItem from "@theme/NavbarItem";
 
 export const MainNavItem = ({ item }: { item: MainItem }) => {
   const mobileSidebar = useNavbarMobileSidebar();

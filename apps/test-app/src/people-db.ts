@@ -68,7 +68,7 @@ export class PeopleDatabase extends Construct {
         for (const i in names) {
           await this.computeScore({
             id: "id",
-            name: names[i],
+            name: names[i]!,
           });
         }
       }

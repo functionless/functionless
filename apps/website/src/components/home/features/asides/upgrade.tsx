@@ -10,7 +10,7 @@ import { VisibilityWindow } from "../../visibilityWindow";
 import { AsideTabs } from "./tabs";
 
 export const Aside = ({ scrollFactor }: { scrollFactor: number }) => {
-  const { ref, visible } = useVisibility<HTMLDivElement>(0, {
+  const { ref } = useVisibility<HTMLDivElement>(0, {
     singleShot: false,
   });
   const translateFactor = clamp(scrollFactor, 0.5);

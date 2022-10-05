@@ -7,7 +7,7 @@ import { openConsole } from "./open-console";
 
 registerCommand({
   resourceKind: StepFunctionKind,
-  handler(command, resource, details) {
+  handler(command, _resource, details) {
     command.command("invoke [payload]").action(async (maybePayload) => {
       await invokeStandardStepFunction(maybePayload, details);
     });

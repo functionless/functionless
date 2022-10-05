@@ -124,6 +124,7 @@ async function getRoleArn(
       .promise();
     return response.roleArn;
   }
+  return undefined;
 }
 
 async function getFunctionArns(node: Tree): Promise<

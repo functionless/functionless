@@ -8,9 +8,9 @@ export const ComposeFeature = () => {
   const [codeVisible, setCodeVisible] = useState(false);
   return (
     <FeatureSection
-      feature={compose}
-      aside={<ComposeCode onVisibilityChanged={setCodeVisible} />}
-      footer={<Diagram visible={codeVisible} />}
+      {...compose}
+      aside={() => <ComposeCode onVisibilityChanged={setCodeVisible} />}
+      footer={() => <Diagram visible={codeVisible} />}
     />
   );
 };

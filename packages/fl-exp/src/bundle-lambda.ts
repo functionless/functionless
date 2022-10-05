@@ -15,7 +15,7 @@ export async function bundleLambdaFunction(
     recursive: true,
   });
 
-  const bundle = await esbuild.build({
+  await esbuild.build({
     entryPoints: [filename],
     bundle: true,
     platform: "node",

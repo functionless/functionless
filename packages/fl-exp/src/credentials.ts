@@ -1,4 +1,4 @@
-import { CredentialProviderChain, SsoCredentials } from "aws-sdk";
+import { CredentialProviderChain } from "aws-sdk";
 
 // export function getCredentials() {
 //   return new SsoCredentials({
@@ -14,8 +14,4 @@ export function getClientProps() {
 
 function getCredentialProvider() {
   return new CredentialProviderChain(CredentialProviderChain.defaultProviders);
-}
-
-function getRegion() {
-  return "us-east-1";
 }

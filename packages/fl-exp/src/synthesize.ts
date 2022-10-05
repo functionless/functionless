@@ -63,12 +63,6 @@ export async function synthesizeProject(project: Project): Promise<void> {
   });
   const rootStack = new FunctionlessStack(app, project.projectName);
 
-  const stacks: {
-    [stackName: string]: FunctionlessStack;
-  } = {
-    [project.projectName]: rootStack,
-  };
-
   await constructProject();
   connectProject(project, app);
 

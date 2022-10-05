@@ -1,4 +1,3 @@
-import path from "path";
 import { dispatch } from "../../command-provider";
 import { logicalIdForPath, resolveStackDetail } from "../../logical-id";
 
@@ -10,7 +9,7 @@ import { File } from "../../tree/file";
 
 require("functionless/register");
 
-export async function invoke(resourceFile: File, args: string[]) {
+export async function invoke(resourceFile: File, _args: string[]) {
   const absoluteResourcePath = resourceFile.filePath;
   const resourceId = resourceFile.address;
 

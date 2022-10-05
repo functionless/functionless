@@ -32,7 +32,7 @@ export async function invokeLambda(
 
 registerCommand({
   resourceKind: LambdaFunctionKind,
-  handler: async (command, resourceKind, detail) => {
+  handler: async (command, _resourceKind, detail) => {
     command.command("invoke [payload]").action(async (maybePayload) => {
       await invokeLambda(maybePayload, detail);
     });

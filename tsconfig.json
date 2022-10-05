@@ -1,0 +1,9 @@
+{
+  "references": [
+    { "path": "./packages/core" },
+    { "path": "./apps/website" },
+    { "path": "./apps/test-app" }
+  ],
+  "files": [],
+  "include": []
+}

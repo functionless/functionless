@@ -28,5 +28,5 @@ export async function dispatch(
   if (found) {
     found.handler(command, found.resourceKind, resourceDetail);
   }
-  command.parse([process.argv[0], ...process.argv.slice(2)]);
+  command.parse([process.argv[0]!, ...process.argv.slice(2)]);
 }

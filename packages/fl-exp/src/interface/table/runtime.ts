@@ -1,4 +1,3 @@
-import { aws_dynamodb } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb";
 import {
   BatchGetItem,

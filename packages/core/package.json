@@ -64,6 +64,7 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-no-only-tests": "^2.6.0",
     "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-markdown": "^3.0.0",
     "flatted": "^3.2.7",
     "graphql": "^16.6.0",
     "graphql-request": "^4.3.0",
@@ -153,12 +154,8 @@
     ]
   },
   "types": "lib/index.d.ts",
-  "resolutions": {
-    "@types/responselike": "1.0.0",
-    "got": "12.3.1"
-  },
   "lint-staged": {
-    "*.{tsx,jsx,ts,js,json,md,css}": [
+    "*.{tsx,jsx,ts,js,md,css}": [
       "eslint --fix"
     ]
   }

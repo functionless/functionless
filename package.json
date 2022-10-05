@@ -13,10 +13,15 @@
     "prepare": "husky install",
     "prepack": "turbo run compile"
   },
-  "workspaces": [
-    "apps/**/*",
-    "packages/**/*"
-  ],
+  "workspaces": {
+    "packages": [
+      "apps/**/*",
+      "packages/**/*"
+    ],
+    "nohoist": [
+      "**/@types/jest"
+    ]
+  },
   "devDependencies": {
     "husky": "^8.0.1",
     "lerna": "^5.5.4",
