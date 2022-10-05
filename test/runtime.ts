@@ -290,6 +290,9 @@ export function runtimeTestSuite<
       >)
     | undefined = undefined;
 
+  let synthTime: number = 0;
+  let deploymentTime: number = 0;
+
   beforeAll(async () => {
     // resolve account and arn of current credentials
     const caller = await sts.getCallerIdentity().promise();
@@ -323,7 +326,9 @@ export function runtimeTestSuite<
       (t) => ("error" in t && t.error) || ("skip" in t && t.skip)
     );
     if (!allErrored) {
+      const startSynth = new Date();
       const cloudAssembly = await asyncSynth(app);
+      synthTime = new Date().getTime() - startSynth.getTime();
       console.log(cloudAssembly.artifacts.map(({ id }) => id));
       const assetManifestArtifact = cloudAssembly.tryGetArtifact(
         `${stack.artifactId}.assets`
@@ -347,10 +352,12 @@ export function runtimeTestSuite<
       //   })
       // );
 
+      const startDeploy = new Date();
       const deployOut = await nodeCfnDeploy(
         stackArtifact,
         assetManifestArtifact
       );
+      deploymentTime = new Date().getTime() - startDeploy.getTime();
 
       console.log(deployOut.outputs);
 
@@ -427,6 +434,7 @@ export function runtimeTestSuite<
   });
 
   afterAll(async () => {
+    console.log("Synth Time:", synthTime, "DeployTime:", deploymentTime);
     if (
       stackArtifact &&
       runtimeTestExecutionContext.stackRetentionPolicy === "DELETE"
