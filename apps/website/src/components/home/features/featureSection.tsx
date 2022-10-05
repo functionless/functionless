@@ -61,7 +61,7 @@ export const FeatureSection = ({
                 side === "left" ? "lg:col-start-2" : "lg:col-start-1"
               )}
             >
-              {aside({ scrollFactor })}
+              {aside?.({ scrollFactor })}
             </div>
             <div className="col-span-2">{footer?.()}</div>
           </div>

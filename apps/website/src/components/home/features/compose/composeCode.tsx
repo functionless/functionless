@@ -19,6 +19,7 @@ export const ComposeCode = ({
         fileName="functionless.ts"
         language="typescript"
         timeline={composeTimeline}
+        showLineNumbers={false}
       >
         <Compose />
       </TimelineCode>

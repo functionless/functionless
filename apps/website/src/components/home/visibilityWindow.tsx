@@ -15,7 +15,7 @@ export const VisibilityWindow = ({
   children: (visible: boolean) => ReactElement;
   singleShot?: boolean;
 }) => {
-  const { ref, visible } = useVisibility(visibiltyThreshold, { singleShot });
+  const { ref, visible } = useVisibility<HTMLDivElement>(visibiltyThreshold, { singleShot });
 
   useEffect(() => {
     onVisibilityChanged?.(visible);
