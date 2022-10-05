@@ -1,6 +1,8 @@
 {
   "references": [
     { "path": "./packages/core" },
+    { "path": "./packages/fl-exp" },
+    { "path": "./apps/fl-expr-simple" },
     { "path": "./apps/website" },
     { "path": "./apps/test-app" }
   ],

@@ -1,0 +1,43 @@
+{
+  "name": "simple",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "build": "npm run synth",
+    "deploy": "cdk deploy",
+    "local": "fl local",
+    "synth": "cdk synth",
+    "test": "jest",
+    "validate": "functionless"
+  },
+  "devDependencies": {
+    "@aws-cdk/aws-appsync-alpha": "^2.41.0-alpha.0",
+    "@functionless/ast-reflection": "^0.3.1",
+    "@functionless/language-service": "^0.0.4",
+    "@types/jest": "^29.0.2",
+    "@types/node": "^18.7.18",
+    "@types/uuid": "^8.3.4",
+    "aws-cdk": "*",
+    "aws-cdk-lib": "*",
+    "aws-sdk": "^2.1216.0",
+    "constructs": "^10.1.111",
+    "esbuild": "^0.15.7",
+    "fl-exp": "*",
+    "functionless": "^0.23.1",
+    "jest": "^29.0.3",
+    "typescript": "^4.8.3"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "functionless/jest",
+        {}
+      ]
+    }
+  },
+  "dependencies": {
+    "aws-lambda": "^1.0.7",
+    "typesafe-dynamodb": "^0.2.3",
+    "uuid": "^9.0.0"
+  }
+}
