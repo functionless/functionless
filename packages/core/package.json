@@ -1,6 +1,10 @@
 {
   "name": "functionless",
   "description": "Functionless, a TypeScript plugin and Construct library for the AWS CDK",
+  "repository": {
+    "url": "github:functionless/functionless",
+    "directory": "packages/core"
+  },
   "bin": {
     "functionless": "./bin/functionless.js",
     "functionless.js": "bin/functionless.js"
@@ -60,6 +64,7 @@
     "eslint-plugin-import": "^2.26.0",
     "eslint-plugin-no-only-tests": "^2.6.0",
     "eslint-plugin-prettier": "^4.2.1",
+    "eslint-plugin-markdown": "^3.0.0",
     "flatted": "^3.2.7",
     "graphql": "^16.6.0",
     "graphql-request": "^4.3.0",
@@ -102,7 +107,7 @@
   },
   "main": "lib/index.js",
   "license": "Apache-2.0",
-  "version": "0.0.0",
+  "version": "0.24.0",
   "jest": {
     "collectCoverage": false,
     "coveragePathIgnorePatterns": [

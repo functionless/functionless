@@ -112,5 +112,9 @@ module.exports = {
         ],
       },
     },
+    {
+      files: ["*.md"],
+      extends: "plugin:markdown/recommended",
+    },
   ],
 };
