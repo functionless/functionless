@@ -8,10 +8,12 @@
   "scripts": {
     "compile": "turbo run compile",
     "build:website": "turbo run build --filter=website",
-    "synth": "turbo run synth",
+    "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
+    "build": "turbo run build",
+    "test": "turbo run test",
     "prepare": "husky install",
-    "prepack": "turbo run compile"
+    "prepack": "npm run build"
   },
   "workspaces": {
     "packages": [
