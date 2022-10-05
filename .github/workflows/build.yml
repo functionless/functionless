@@ -25,7 +25,7 @@ jobs:
           path: .turbo-cache
           key: turbo-${{ github.job }}-${{ github.ref_name }}-${{ github.sha }}
           restore-keys: |
-            turbo-${{ github.job }}-${{ github.ref_name }}-
+            turbo-${{ github.job }}-
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
