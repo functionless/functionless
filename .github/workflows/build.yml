@@ -42,3 +42,4 @@ jobs:
         run: yarn turbo run test -- --cache-dir=.turbo-cache
         env:
           TEST_DEPLOY_TARGET: AWS
+          NODE_OPTIONS: --max-old-space-size=6144
