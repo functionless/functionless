@@ -1,4 +1,4 @@
-import { StepFunction } from "fl-exp";
+import { StepFunction } from "@functionless/fl-exp";
 
 import MyDatabase from "./table";
 
