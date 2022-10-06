@@ -87,12 +87,12 @@
     "typescript": "^4.8.3"
   },
   "dependencies": {
-    "@types/aws-lambda": "^8.10.106",
     "@functionless/ast-reflection": "^0.3.1",
     "@functionless/nodejs-closure-serializer": "^0.1.2",
     "@swc/cli": "^0.1.57",
     "@swc/core": "1.2.245",
     "@swc/register": "^0.1.10",
+    "@types/aws-lambda": "^8.10.106",
     "aws-lambda": "^1.0.7",
     "fs-extra": "^10.1.0",
     "minimatch": "^5.1.0",
