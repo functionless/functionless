@@ -3,6 +3,25 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [1.0.4](https://github.com/functionless/functionless/compare/v0.24.3...v1.0.4) (2022-10-06)
+
+**Note:** Version bump only for package functionless
+
+
+
+
+
+## [0.24.3](https://github.com/functionless/functionless/compare/v0.24.2...v0.24.3) (2022-10-05)
+
+
+### Bug Fixes
+
+* use turbo repo for task orchestration ([#535](https://github.com/functionless/functionless/issues/535)) ([b34e41a](https://github.com/functionless/functionless/commit/b34e41ac95c782539bdcc65cf6a10202bf3f31fe))
+
+
+
+
+
 ## [0.24.2](https://github.com/functionless/functionless/compare/v0.24.1...v0.24.2) (2022-10-05)
 
 **Note:** Version bump only for package functionless
