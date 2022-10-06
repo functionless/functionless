@@ -17,12 +17,12 @@
   "dependencies": {
     "@docusaurus/core": "^2.1.0",
     "@docusaurus/preset-classic": "^2.1.0",
+    "@functionless/aws-constructs": "*",
     "@headlessui/react": "^1.7.1",
     "@heroicons/react": "^2.0.11",
     "@mdx-js/react": "^1.6.22",
     "@mui/material": "^5.8.2",
     "clsx": "^1.2.1",
-    "@functionless/aws-constructs": "*",
     "ky": "^0.31.3",
     "mdx-mermaid": "^1.2.2",
     "mermaid": "^9.1.2",
@@ -63,7 +63,7 @@
     "tailwindcss": "^3.1.8",
     "typedoc": "^0.23.13",
     "typedoc-plugin-markdown": "^3.12.1",
-    "typescript": "^4.8.2"
+    "typescript": "^4.8.3"
   },
   "resolutions": {
     "@types/react": "^17.0.0"

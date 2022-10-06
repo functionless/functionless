@@ -2,7 +2,6 @@
   "name": "functionless-monorepo",
   "version": "0.0.0",
   "private": true,
-  "repository": "git@github.com:functionless/functionless",
   "author": "Functionless Team",
   "license": "Apache-2.0",
   "scripts": {
@@ -12,7 +11,8 @@
     "typecheck": "turbo run typecheck",
     "build": "turbo run build",
     "test": "turbo run test",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "postinstall": "manypkg check"
   },
   "workspaces": {
     "packages": [
@@ -23,7 +23,8 @@
       "**/@types/jest"
     ]
   },
-  "devDependencies": {
+  "dependencies": {
+    "@manypkg/cli": "^0.19.2",
     "husky": "^8.0.1",
     "lerna": "^5.5.4",
     "lint-staged": "^13.0.3",
