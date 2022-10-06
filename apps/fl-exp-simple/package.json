@@ -12,20 +12,21 @@
     "validate": "functionless"
   },
   "devDependencies": {
-    "@aws-cdk/aws-appsync-alpha": "^2.41.0-alpha.0",
+    "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
     "@functionless/ast-reflection": "^0.3.1",
     "@functionless/language-service": "^0.0.4",
-    "@types/jest": "^29.0.2",
+    "@types/jest": "^29.0.3",
     "@types/node": "^18.7.18",
     "@types/uuid": "^8.3.4",
     "aws-cdk": "*",
-    "aws-cdk-lib": "*",
-    "aws-sdk": "^2.1216.0",
-    "constructs": "^10.1.111",
-    "esbuild": "^0.15.7",
     "@functionless/fl-exp": "*",
-    "functionless": "^0.23.1",
+    "aws-cdk-lib": "*",
+    "aws-sdk": "*",
+    "constructs": "10.0.0",
+    "esbuild": "0.15.9",
+    "functionless": "*",
     "jest": "^29.0.3",
+    "typesafe-dynamodb": "0.2.3",
     "typescript": "^4.8.3"
   },
   "jest": {
