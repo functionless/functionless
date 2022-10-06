@@ -10,6 +10,12 @@
   "exclude": ["lib", "test", "node_modules"],
   "references": [
     {
+      "path": "../../@functionless/ast"
+    },
+    {
+      "path": "../../@functionless/aws"
+    },
+    {
       "path": "../../@functionless/aws-constructs"
     }
   ]
