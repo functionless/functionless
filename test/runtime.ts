@@ -2,8 +2,9 @@ import * as cxapi from "@aws-cdk/cx-api";
 import * as ssm from "@aws-sdk/client-ssm";
 import { App, CfnOutput, Stack } from "aws-cdk-lib";
 import { ArnPrincipal, Role } from "aws-cdk-lib/aws-iam";
-// import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
-// import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
+import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
+import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
+import { DeployStackResult } from "aws-cdk/lib/api/deploy-stack";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import AWS, {
   DynamoDB,
@@ -29,6 +30,7 @@ export interface RuntimeTestExecutionContext {
   selfDestructProps: SelfDestructorProps;
   stackRetentionPolicy: "RETAIN" | "DELETE" | "SELF_DESTRUCT";
   deployTarget: "AWS" | "LOCALSTACK";
+  deployer: "CFN" | "NODE_CFN";
   cleanUpStack: boolean;
 }
 
@@ -54,6 +56,7 @@ export const runtimeTestExecutionContext: RuntimeTestExecutionContext = {
       : "SELF_DESTRUCT")) as RuntimeTestExecutionContext["stackRetentionPolicy"],
   // AWS | LOCALSTACK ; default: LOCALSTACK
   deployTarget: deploymentTarget as RuntimeTestExecutionContext["deployTarget"],
+  deployer: (process.env.TEST_DEPLOYER as "CFN" | "NODE_CFN") ?? "CFN",
   cleanUpStack: process.env.CLEAN_UP_STACK === "1" ? true : false,
 };
 
@@ -329,7 +332,6 @@ export function runtimeTestSuite<
       const startSynth = new Date();
       const cloudAssembly = await asyncSynth(app);
       synthTime = new Date().getTime() - startSynth.getTime();
-      console.log(cloudAssembly.artifacts.map(({ id }) => id));
       const assetManifestArtifact = cloudAssembly.tryGetArtifact(
         `${stack.artifactId}.assets`
       ) as unknown as cxapi.AssetManifestArtifact;
@@ -337,26 +339,27 @@ export function runtimeTestSuite<
         stack.artifactId
       ) as unknown as cxapi.CloudFormationStackArtifact;
 
-      // Inspiration for the current approach: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
-      // Writeup on performance improvements: https://github.com/functionless/functionless/pull/184#issuecomment-1144767427
-      // const deployOut = await getCfnClient().then((client) =>
-      //   client.deployStack({
-      //     stack: stackArtifact!,
-      //     tags: Object.entries(stack.tags.tagValues()).map(([k, v]) => ({
-      //       Key: k,
-      //       Value: v,
-      //     })),
-      //     // hotswap uses the current user's role and not the bootstrapped role.
-      //     // the CI user does not have all of the right permissions.
-      //     hotswap: !process.env.CI,
-      //   })
-      // );
-
       const startDeploy = new Date();
-      const deployOut = await nodeCfnDeploy(
-        stackArtifact,
-        assetManifestArtifact
-      );
+
+      let deployOut: DeployStackResult | node_cfn.StackState;
+      if (runtimeTestExecutionContext.deployer === "CFN") {
+        // Inspiration for the current approach: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
+        // Writeup on performance improvements: https://github.com/functionless/functionless/pull/184#issuecomment-1144767427
+        deployOut = await getCfnClient().then((client) =>
+          client.deployStack({
+            stack: stackArtifact!,
+            tags: Object.entries(stack.tags.tagValues()).map(([k, v]) => ({
+              Key: k,
+              Value: v,
+            })),
+            // hotswap uses the current user's role and not the bootstrapped role.
+            // the CI user does not have all of the right permissions.
+            hotswap: !process.env.CI,
+          })
+        );
+      } else {
+        deployOut = await nodeCfnDeploy(stackArtifact, assetManifestArtifact);
+      }
       deploymentTime = new Date().getTime() - startDeploy.getTime();
 
       console.log(deployOut.outputs);
@@ -505,35 +508,35 @@ export function runtimeTestSuite<
   });
 }
 
-// async function getCfnClient() {
-//   const sdkProvider = await SdkProvider.withAwsCliCompatibleDefaults(
-//     runtimeTestExecutionContext.deployTarget === "LOCALSTACK"
-//       ? {
-//           httpOptions: clientConfig as any,
-//         }
-//       : undefined
-//   );
+async function getCfnClient() {
+  const sdkProvider = await SdkProvider.withAwsCliCompatibleDefaults(
+    runtimeTestExecutionContext.deployTarget === "LOCALSTACK"
+      ? {
+          httpOptions: clientConfig as any,
+        }
+      : undefined
+  );
 
-//   if (runtimeTestExecutionContext.deployTarget === "LOCALSTACK") {
-//     const credentials = clientConfig.credentialProvider
-//       ? await clientConfig.credentialProvider.resolvePromise()
-//       : clientConfig.credentials;
-//     // @ts-ignore - assigning to private members
-//     sdkProvider.sdkOptions = {
-//       // @ts-ignore - using private members
-//       ...sdkProvider.sdkOptions,
-//       endpoint: clientConfig.endpoint,
-//       s3ForcePathStyle: clientConfig.s3ForcePathStyle,
-//       accessKeyId: credentials!.accessKeyId,
-//       secretAccessKey: credentials!.secretAccessKey,
-//       credentials: credentials,
-//     };
-//   }
+  if (runtimeTestExecutionContext.deployTarget === "LOCALSTACK") {
+    const credentials = clientConfig.credentialProvider
+      ? await clientConfig.credentialProvider.resolvePromise()
+      : clientConfig.credentials;
+    // @ts-ignore - assigning to private members
+    sdkProvider.sdkOptions = {
+      // @ts-ignore - using private members
+      ...sdkProvider.sdkOptions,
+      endpoint: clientConfig.endpoint,
+      s3ForcePathStyle: clientConfig.s3ForcePathStyle,
+      accessKeyId: credentials!.accessKeyId,
+      secretAccessKey: credentials!.secretAccessKey,
+      credentials: credentials,
+    };
+  }
 
-//   return new CloudFormationDeployments({
-//     sdkProvider,
-//   });
-// }
+  return new CloudFormationDeployments({
+    sdkProvider,
+  });
+}
 
 /**
  * Given a test, collect the constructs it needs and register any outputs it needs and return.
