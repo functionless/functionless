@@ -1,0 +1,55 @@
+name: pr
+on:
+  pull_request: {}
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    concurrency: ci-${{github.job}}-${{ github.ref }}
+    permissions:
+      contents: write
+      id-token: write
+    env:
+      CI: "true"
+      CLEAN_UP_STACK: "1"
+    steps:
+      - name: Build
+        uses: ./.github/workflows/build.yml
+
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          role-to-assume: arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4
+          aws-region: us-east-1
+          role-duration-seconds: 3600
+        if: contains(fromJson('["release", "build", "close"]'), github.workflow)
+
+      - name: Run tests
+        run: yarn turbo run test -- --cache-dir=.turbo-cache
+        env:
+          TEST_DEPLOY_TARGET: AWS
+          NODE_OPTIONS: --max-old-space-size=6144
+
+  website-preview:
+    runs-on: ubuntu-latest
+    concurrency: ci-${{github.job}}-${{ github.ref }}
+    permissions:
+      issues: write
+      pull-requests: write
+    env:
+      CI: "true"
+    steps:
+      - name: Build
+        uses: ./.github/workflows/build.yml
+
+      - name: Netlify Preview
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: "./apps/website/build"
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: true
+          overwrites-pull-request-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: b49248b3-07b2-49ea-bc73-86deecce6633
