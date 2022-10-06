@@ -1,4 +1,4 @@
-import { LambdaFunction, Method } from "@functionless/fl-exp";
+import { LambdaFunction, Method } from "@functionless/aws";
 import * as uuid from "uuid";
 import MyDatabase from "../../table";
 

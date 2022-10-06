@@ -1,3 +1,3 @@
-import { RestApi } from "@functionless/fl-exp";
+import { RestApi } from "@functionless/aws";
 
 export default RestApi();

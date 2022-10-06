@@ -9,7 +9,7 @@ import {
   LambdaFunction,
   Resource,
   StepFunction,
-} from "./interface";
+} from "@functionless/aws";
 import { Project } from "./project";
 import type {
   APIGatewayProxyEventQueryStringParameters,
@@ -25,8 +25,8 @@ import StepFunctions from "aws-sdk/clients/stepfunctions";
 import STS from "aws-sdk/clients/sts";
 import IAM from "aws-sdk/clients/iam";
 import { isStepFunction } from "@functionless/aws-constructs";
-import { getClientProps } from "./credentials";
-import { getEnvironmentVariableName } from "./util";
+import { getClientProps } from "@functionless/aws-util";
+import { getEnvironmentVariableName } from "@functionless/util";
 import { Tree } from "./tree/tree";
 import { isFile } from "./tree/file";
 

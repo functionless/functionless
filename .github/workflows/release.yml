@@ -10,6 +10,10 @@ jobs:
 
   release:
     needs: [build]
+    # We should only be running one release task at a time to prevent conflicts.
+    # Setting concurrency to a static key ensures we only ever have one release
+    # task running.
+    concurrency: release
     runs-on: ubuntu-latest
     permissions:
       contents: write
