@@ -19,9 +19,9 @@ var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 
-// ../../node_modules/axios/lib/helpers/bind.js
+// ../../../node_modules/axios/lib/helpers/bind.js
 var require_bind = __commonJS({
-  "../../node_modules/axios/lib/helpers/bind.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/helpers/bind.js"(exports2, module2) {
     "use strict";
     module2.exports = function bind(fn, thisArg) {
       return function wrap() {
@@ -35,9 +35,9 @@ var require_bind = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/utils.js
+// ../../../node_modules/axios/lib/utils.js
 var require_utils = __commonJS({
-  "../../node_modules/axios/lib/utils.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/utils.js"(exports2, module2) {
     "use strict";
     var bind = require_bind();
     var toString = Object.prototype.toString;
@@ -251,9 +251,9 @@ var require_utils = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/helpers/buildURL.js
+// ../../../node_modules/axios/lib/helpers/buildURL.js
 var require_buildURL = __commonJS({
-  "../../node_modules/axios/lib/helpers/buildURL.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/helpers/buildURL.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     function encode(val) {
@@ -302,9 +302,9 @@ var require_buildURL = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/core/InterceptorManager.js
+// ../../../node_modules/axios/lib/core/InterceptorManager.js
 var require_InterceptorManager = __commonJS({
-  "../../node_modules/axios/lib/core/InterceptorManager.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/core/InterceptorManager.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     function InterceptorManager() {
@@ -335,9 +335,9 @@ var require_InterceptorManager = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/helpers/normalizeHeaderName.js
+// ../../../node_modules/axios/lib/helpers/normalizeHeaderName.js
 var require_normalizeHeaderName = __commonJS({
-  "../../node_modules/axios/lib/helpers/normalizeHeaderName.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/helpers/normalizeHeaderName.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     module2.exports = function normalizeHeaderName(headers, normalizedName) {
@@ -351,9 +351,9 @@ var require_normalizeHeaderName = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/core/AxiosError.js
+// ../../../node_modules/axios/lib/core/AxiosError.js
 var require_AxiosError = __commonJS({
-  "../../node_modules/axios/lib/core/AxiosError.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/core/AxiosError.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     function AxiosError(message, code, config, request, response) {
@@ -414,9 +414,9 @@ var require_AxiosError = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/defaults/transitional.js
+// ../../../node_modules/axios/lib/defaults/transitional.js
 var require_transitional = __commonJS({
-  "../../node_modules/axios/lib/defaults/transitional.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/defaults/transitional.js"(exports2, module2) {
     "use strict";
     module2.exports = {
       silentJSONParsing: true,
@@ -426,9 +426,9 @@ var require_transitional = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/helpers/toFormData.js
+// ../../../node_modules/axios/lib/helpers/toFormData.js
 var require_toFormData = __commonJS({
-  "../../node_modules/axios/lib/helpers/toFormData.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/helpers/toFormData.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     function toFormData(obj, formData) {
@@ -480,9 +480,9 @@ var require_toFormData = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/core/settle.js
+// ../../../node_modules/axios/lib/core/settle.js
 var require_settle = __commonJS({
-  "../../node_modules/axios/lib/core/settle.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/core/settle.js"(exports2, module2) {
     "use strict";
     var AxiosError = require_AxiosError();
     module2.exports = function settle(resolve, reject, response) {
@@ -502,9 +502,9 @@ var require_settle = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/helpers/cookies.js
+// ../../../node_modules/axios/lib/helpers/cookies.js
 var require_cookies = __commonJS({
-  "../../node_modules/axios/lib/helpers/cookies.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/helpers/cookies.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     module2.exports = utils.isStandardBrowserEnv() ? function standardBrowserEnv() {
@@ -548,9 +548,9 @@ var require_cookies = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/helpers/isAbsoluteURL.js
+// ../../../node_modules/axios/lib/helpers/isAbsoluteURL.js
 var require_isAbsoluteURL = __commonJS({
-  "../../node_modules/axios/lib/helpers/isAbsoluteURL.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/helpers/isAbsoluteURL.js"(exports2, module2) {
     "use strict";
     module2.exports = function isAbsoluteURL(url) {
       return /^([a-z][a-z\\d+\\-.]*:)?\\/\\//i.test(url);
@@ -558,9 +558,9 @@ var require_isAbsoluteURL = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/helpers/combineURLs.js
+// ../../../node_modules/axios/lib/helpers/combineURLs.js
 var require_combineURLs = __commonJS({
-  "../../node_modules/axios/lib/helpers/combineURLs.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/helpers/combineURLs.js"(exports2, module2) {
     "use strict";
     module2.exports = function combineURLs(baseURL, relativeURL) {
       return relativeURL ? baseURL.replace(/\\/+$/, "") + "/" + relativeURL.replace(/^\\/+/, "") : baseURL;
@@ -568,9 +568,9 @@ var require_combineURLs = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/core/buildFullPath.js
+// ../../../node_modules/axios/lib/core/buildFullPath.js
 var require_buildFullPath = __commonJS({
-  "../../node_modules/axios/lib/core/buildFullPath.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/core/buildFullPath.js"(exports2, module2) {
     "use strict";
     var isAbsoluteURL = require_isAbsoluteURL();
     var combineURLs = require_combineURLs();
@@ -583,9 +583,9 @@ var require_buildFullPath = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/helpers/parseHeaders.js
+// ../../../node_modules/axios/lib/helpers/parseHeaders.js
 var require_parseHeaders = __commonJS({
-  "../../node_modules/axios/lib/helpers/parseHeaders.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/helpers/parseHeaders.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     var ignoreDuplicateOf = [
@@ -635,9 +635,9 @@ var require_parseHeaders = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/helpers/isURLSameOrigin.js
+// ../../../node_modules/axios/lib/helpers/isURLSameOrigin.js
 var require_isURLSameOrigin = __commonJS({
-  "../../node_modules/axios/lib/helpers/isURLSameOrigin.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/helpers/isURLSameOrigin.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     module2.exports = utils.isStandardBrowserEnv() ? function standardBrowserEnv() {
@@ -675,9 +675,9 @@ var require_isURLSameOrigin = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/cancel/CanceledError.js
+// ../../../node_modules/axios/lib/cancel/CanceledError.js
 var require_CanceledError = __commonJS({
-  "../../node_modules/axios/lib/cancel/CanceledError.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/cancel/CanceledError.js"(exports2, module2) {
     "use strict";
     var AxiosError = require_AxiosError();
     var utils = require_utils();
@@ -692,9 +692,9 @@ var require_CanceledError = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/helpers/parseProtocol.js
+// ../../../node_modules/axios/lib/helpers/parseProtocol.js
 var require_parseProtocol = __commonJS({
-  "../../node_modules/axios/lib/helpers/parseProtocol.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/helpers/parseProtocol.js"(exports2, module2) {
     "use strict";
     module2.exports = function parseProtocol(url) {
       var match = /^([-+\\w]{1,25})(:?\\/\\/|:)/.exec(url);
@@ -703,9 +703,9 @@ var require_parseProtocol = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/adapters/xhr.js
+// ../../../node_modules/axios/lib/adapters/xhr.js
 var require_xhr = __commonJS({
-  "../../node_modules/axios/lib/adapters/xhr.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/adapters/xhr.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     var settle = require_settle();
@@ -860,9 +860,9 @@ var require_xhr = __commonJS({
   }
 });
 
-// ../../node_modules/debug/node_modules/ms/index.js
+// ../../../node_modules/debug/node_modules/ms/index.js
 var require_ms = __commonJS({
-  "../../node_modules/debug/node_modules/ms/index.js"(exports2, module2) {
+  "../../../node_modules/debug/node_modules/ms/index.js"(exports2, module2) {
     var s = 1e3;
     var m = s * 60;
     var h = m * 60;
@@ -976,9 +976,9 @@ var require_ms = __commonJS({
   }
 });
 
-// ../../node_modules/debug/src/common.js
+// ../../../node_modules/debug/src/common.js
 var require_common = __commonJS({
-  "../../node_modules/debug/src/common.js"(exports2, module2) {
+  "../../../node_modules/debug/src/common.js"(exports2, module2) {
     function setup(env) {
       createDebug.debug = createDebug;
       createDebug.default = createDebug;
@@ -1139,9 +1139,9 @@ var require_common = __commonJS({
   }
 });
 
-// ../../node_modules/debug/src/browser.js
+// ../../../node_modules/debug/src/browser.js
 var require_browser = __commonJS({
-  "../../node_modules/debug/src/browser.js"(exports2, module2) {
+  "../../../node_modules/debug/src/browser.js"(exports2, module2) {
     exports2.formatArgs = formatArgs;
     exports2.save = save;
     exports2.load = load;
@@ -1304,9 +1304,9 @@ var require_browser = __commonJS({
   }
 });
 
-// ../../node_modules/has-flag/index.js
+// ../../../node_modules/has-flag/index.js
 var require_has_flag = __commonJS({
-  "../../node_modules/has-flag/index.js"(exports2, module2) {
+  "../../../node_modules/has-flag/index.js"(exports2, module2) {
     "use strict";
     module2.exports = (flag, argv = process.argv) => {
       const prefix = flag.startsWith("-") ? "" : flag.length === 1 ? "-" : "--";
@@ -1317,9 +1317,9 @@ var require_has_flag = __commonJS({
   }
 });
 
-// ../../node_modules/supports-color/index.js
+// ../../../node_modules/supports-color/index.js
 var require_supports_color = __commonJS({
-  "../../node_modules/supports-color/index.js"(exports2, module2) {
+  "../../../node_modules/supports-color/index.js"(exports2, module2) {
     "use strict";
     var os = require("os");
     var tty = require("tty");
@@ -1419,9 +1419,9 @@ var require_supports_color = __commonJS({
   }
 });
 
-// ../../node_modules/debug/src/node.js
+// ../../../node_modules/debug/src/node.js
 var require_node = __commonJS({
-  "../../node_modules/debug/src/node.js"(exports2, module2) {
+  "../../../node_modules/debug/src/node.js"(exports2, module2) {
     var tty = require("tty");
     var util = require("util");
     exports2.init = init;
@@ -1593,9 +1593,9 @@ var require_node = __commonJS({
   }
 });
 
-// ../../node_modules/debug/src/index.js
+// ../../../node_modules/debug/src/index.js
 var require_src = __commonJS({
-  "../../node_modules/debug/src/index.js"(exports2, module2) {
+  "../../../node_modules/debug/src/index.js"(exports2, module2) {
     if (typeof process === "undefined" || process.type === "renderer" || process.browser === true || process.__nwjs) {
       module2.exports = require_browser();
     } else {
@@ -1604,9 +1604,9 @@ var require_src = __commonJS({
   }
 });
 
-// ../../node_modules/follow-redirects/debug.js
+// ../../../node_modules/follow-redirects/debug.js
 var require_debug = __commonJS({
-  "../../node_modules/follow-redirects/debug.js"(exports2, module2) {
+  "../../../node_modules/follow-redirects/debug.js"(exports2, module2) {
     var debug;
     module2.exports = function() {
       if (!debug) {
@@ -1624,9 +1624,9 @@ var require_debug = __commonJS({
   }
 });
 
-// ../../node_modules/follow-redirects/index.js
+// ../../../node_modules/follow-redirects/index.js
 var require_follow_redirects = __commonJS({
-  "../../node_modules/follow-redirects/index.js"(exports2, module2) {
+  "../../../node_modules/follow-redirects/index.js"(exports2, module2) {
     var url = require("url");
     var URL = url.URL;
     var http = require("http");
@@ -2061,18 +2061,18 @@ var require_follow_redirects = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/env/data.js
+// ../../../node_modules/axios/lib/env/data.js
 var require_data = __commonJS({
-  "../../node_modules/axios/lib/env/data.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/env/data.js"(exports2, module2) {
     module2.exports = {
       "version": "0.27.2"
     };
   }
 });
 
-// ../../node_modules/axios/lib/adapters/http.js
+// ../../../node_modules/axios/lib/adapters/http.js
 var require_http = __commonJS({
-  "../../node_modules/axios/lib/adapters/http.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/adapters/http.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     var settle = require_settle();
@@ -2408,9 +2408,9 @@ var require_http = __commonJS({
   }
 });
 
-// ../../node_modules/delayed-stream/lib/delayed_stream.js
+// ../../../node_modules/delayed-stream/lib/delayed_stream.js
 var require_delayed_stream = __commonJS({
-  "../../node_modules/delayed-stream/lib/delayed_stream.js"(exports2, module2) {
+  "../../../node_modules/delayed-stream/lib/delayed_stream.js"(exports2, module2) {
     var Stream = require("stream").Stream;
     var util = require("util");
     module2.exports = DelayedStream;
@@ -2499,9 +2499,9 @@ var require_delayed_stream = __commonJS({
   }
 });
 
-// ../../node_modules/combined-stream/lib/combined_stream.js
+// ../../../node_modules/combined-stream/lib/combined_stream.js
 var require_combined_stream = __commonJS({
-  "../../node_modules/combined-stream/lib/combined_stream.js"(exports2, module2) {
+  "../../../node_modules/combined-stream/lib/combined_stream.js"(exports2, module2) {
     var util = require("util");
     var Stream = require("stream").Stream;
     var DelayedStream = require_delayed_stream();
@@ -2670,9 +2670,9 @@ var require_combined_stream = __commonJS({
   }
 });
 
-// ../../node_modules/mime-db/db.json
+// ../../../node_modules/mime-db/db.json
 var require_db = __commonJS({
-  "../../node_modules/mime-db/db.json"(exports2, module2) {
+  "../../../node_modules/mime-db/db.json"(exports2, module2) {
     module2.exports = {
       "application/1d-interleaved-parityfec": {
         source: "iana"
@@ -11195,16 +11195,16 @@ var require_db = __commonJS({
   }
 });
 
-// ../../node_modules/mime-db/index.js
+// ../../../node_modules/mime-db/index.js
 var require_mime_db = __commonJS({
-  "../../node_modules/mime-db/index.js"(exports2, module2) {
+  "../../../node_modules/mime-db/index.js"(exports2, module2) {
     module2.exports = require_db();
   }
 });
 
-// ../../node_modules/mime-types/index.js
+// ../../../node_modules/mime-types/index.js
 var require_mime_types = __commonJS({
-  "../../node_modules/mime-types/index.js"(exports2) {
+  "../../../node_modules/mime-types/index.js"(exports2) {
     "use strict";
     var db = require_mime_db();
     var extname = require("path").extname;
@@ -11293,9 +11293,9 @@ var require_mime_types = __commonJS({
   }
 });
 
-// ../../node_modules/asynckit/lib/defer.js
+// ../../../node_modules/asynckit/lib/defer.js
 var require_defer = __commonJS({
-  "../../node_modules/asynckit/lib/defer.js"(exports2, module2) {
+  "../../../node_modules/asynckit/lib/defer.js"(exports2, module2) {
     module2.exports = defer;
     function defer(fn) {
       var nextTick = typeof setImmediate == "function" ? setImmediate : typeof process == "object" && typeof process.nextTick == "function" ? process.nextTick : null;
@@ -11308,9 +11308,9 @@ var require_defer = __commonJS({
   }
 });
 
-// ../../node_modules/asynckit/lib/async.js
+// ../../../node_modules/asynckit/lib/async.js
 var require_async = __commonJS({
-  "../../node_modules/asynckit/lib/async.js"(exports2, module2) {
+  "../../../node_modules/asynckit/lib/async.js"(exports2, module2) {
     var defer = require_defer();
     module2.exports = async;
     function async(callback) {
@@ -11331,9 +11331,9 @@ var require_async = __commonJS({
   }
 });
 
-// ../../node_modules/asynckit/lib/abort.js
+// ../../../node_modules/asynckit/lib/abort.js
 var require_abort = __commonJS({
-  "../../node_modules/asynckit/lib/abort.js"(exports2, module2) {
+  "../../../node_modules/asynckit/lib/abort.js"(exports2, module2) {
     module2.exports = abort;
     function abort(state) {
       Object.keys(state.jobs).forEach(clean.bind(state));
@@ -11347,9 +11347,9 @@ var require_abort = __commonJS({
   }
 });
 
-// ../../node_modules/asynckit/lib/iterate.js
+// ../../../node_modules/asynckit/lib/iterate.js
 var require_iterate = __commonJS({
-  "../../node_modules/asynckit/lib/iterate.js"(exports2, module2) {
+  "../../../node_modules/asynckit/lib/iterate.js"(exports2, module2) {
     var async = require_async();
     var abort = require_abort();
     module2.exports = iterate;
@@ -11380,9 +11380,9 @@ var require_iterate = __commonJS({
   }
 });
 
-// ../../node_modules/asynckit/lib/state.js
+// ../../../node_modules/asynckit/lib/state.js
 var require_state = __commonJS({
-  "../../node_modules/asynckit/lib/state.js"(exports2, module2) {
+  "../../../node_modules/asynckit/lib/state.js"(exports2, module2) {
     module2.exports = state;
     function state(list, sortMethod) {
       var isNamedList = !Array.isArray(list), initState = {
@@ -11402,9 +11402,9 @@ var require_state = __commonJS({
   }
 });
 
-// ../../node_modules/asynckit/lib/terminator.js
+// ../../../node_modules/asynckit/lib/terminator.js
 var require_terminator = __commonJS({
-  "../../node_modules/asynckit/lib/terminator.js"(exports2, module2) {
+  "../../../node_modules/asynckit/lib/terminator.js"(exports2, module2) {
     var abort = require_abort();
     var async = require_async();
     module2.exports = terminator;
@@ -11419,9 +11419,9 @@ var require_terminator = __commonJS({
   }
 });
 
-// ../../node_modules/asynckit/parallel.js
+// ../../../node_modules/asynckit/parallel.js
 var require_parallel = __commonJS({
-  "../../node_modules/asynckit/parallel.js"(exports2, module2) {
+  "../../../node_modules/asynckit/parallel.js"(exports2, module2) {
     var iterate = require_iterate();
     var initState = require_state();
     var terminator = require_terminator();
@@ -11446,9 +11446,9 @@ var require_parallel = __commonJS({
   }
 });
 
-// ../../node_modules/asynckit/serialOrdered.js
+// ../../../node_modules/asynckit/serialOrdered.js
 var require_serialOrdered = __commonJS({
-  "../../node_modules/asynckit/serialOrdered.js"(exports2, module2) {
+  "../../../node_modules/asynckit/serialOrdered.js"(exports2, module2) {
     var iterate = require_iterate();
     var initState = require_state();
     var terminator = require_terminator();
@@ -11480,9 +11480,9 @@ var require_serialOrdered = __commonJS({
   }
 });
 
-// ../../node_modules/asynckit/serial.js
+// ../../../node_modules/asynckit/serial.js
 var require_serial = __commonJS({
-  "../../node_modules/asynckit/serial.js"(exports2, module2) {
+  "../../../node_modules/asynckit/serial.js"(exports2, module2) {
     var serialOrdered = require_serialOrdered();
     module2.exports = serial;
     function serial(list, iterator, callback) {
@@ -11491,9 +11491,9 @@ var require_serial = __commonJS({
   }
 });
 
-// ../../node_modules/asynckit/index.js
+// ../../../node_modules/asynckit/index.js
 var require_asynckit = __commonJS({
-  "../../node_modules/asynckit/index.js"(exports2, module2) {
+  "../../../node_modules/asynckit/index.js"(exports2, module2) {
     module2.exports = {
       parallel: require_parallel(),
       serial: require_serial(),
@@ -11502,9 +11502,9 @@ var require_asynckit = __commonJS({
   }
 });
 
-// ../../node_modules/axios/node_modules/form-data/lib/populate.js
+// ../../../node_modules/axios/node_modules/form-data/lib/populate.js
 var require_populate = __commonJS({
-  "../../node_modules/axios/node_modules/form-data/lib/populate.js"(exports2, module2) {
+  "../../../node_modules/axios/node_modules/form-data/lib/populate.js"(exports2, module2) {
     module2.exports = function(dst, src) {
       Object.keys(src).forEach(function(prop) {
         dst[prop] = dst[prop] || src[prop];
@@ -11514,9 +11514,9 @@ var require_populate = __commonJS({
   }
 });
 
-// ../../node_modules/axios/node_modules/form-data/lib/form_data.js
+// ../../../node_modules/axios/node_modules/form-data/lib/form_data.js
 var require_form_data = __commonJS({
-  "../../node_modules/axios/node_modules/form-data/lib/form_data.js"(exports2, module2) {
+  "../../../node_modules/axios/node_modules/form-data/lib/form_data.js"(exports2, module2) {
     var CombinedStream = require_combined_stream();
     var util = require("util");
     var path = require("path");
@@ -11827,16 +11827,16 @@ var require_form_data = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/defaults/env/FormData.js
+// ../../../node_modules/axios/lib/defaults/env/FormData.js
 var require_FormData = __commonJS({
-  "../../node_modules/axios/lib/defaults/env/FormData.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/defaults/env/FormData.js"(exports2, module2) {
     module2.exports = require_form_data();
   }
 });
 
-// ../../node_modules/axios/lib/defaults/index.js
+// ../../../node_modules/axios/lib/defaults/index.js
 var require_defaults = __commonJS({
-  "../../node_modules/axios/lib/defaults/index.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/defaults/index.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     var normalizeHeaderName = require_normalizeHeaderName();
@@ -11947,9 +11947,9 @@ var require_defaults = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/core/transformData.js
+// ../../../node_modules/axios/lib/core/transformData.js
 var require_transformData = __commonJS({
-  "../../node_modules/axios/lib/core/transformData.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/core/transformData.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     var defaults = require_defaults();
@@ -11963,9 +11963,9 @@ var require_transformData = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/cancel/isCancel.js
+// ../../../node_modules/axios/lib/cancel/isCancel.js
 var require_isCancel = __commonJS({
-  "../../node_modules/axios/lib/cancel/isCancel.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/cancel/isCancel.js"(exports2, module2) {
     "use strict";
     module2.exports = function isCancel(value) {
       return !!(value && value.__CANCEL__);
@@ -11973,9 +11973,9 @@ var require_isCancel = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/core/dispatchRequest.js
+// ../../../node_modules/axios/lib/core/dispatchRequest.js
 var require_dispatchRequest = __commonJS({
-  "../../node_modules/axios/lib/core/dispatchRequest.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/core/dispatchRequest.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     var transformData = require_transformData();
@@ -12038,9 +12038,9 @@ var require_dispatchRequest = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/core/mergeConfig.js
+// ../../../node_modules/axios/lib/core/mergeConfig.js
 var require_mergeConfig = __commonJS({
-  "../../node_modules/axios/lib/core/mergeConfig.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/core/mergeConfig.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     module2.exports = function mergeConfig(config1, config2) {
@@ -12121,9 +12121,9 @@ var require_mergeConfig = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/helpers/validator.js
+// ../../../node_modules/axios/lib/helpers/validator.js
 var require_validator = __commonJS({
-  "../../node_modules/axios/lib/helpers/validator.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/helpers/validator.js"(exports2, module2) {
     "use strict";
     var VERSION = require_data().version;
     var AxiosError = require_AxiosError();
@@ -12186,9 +12186,9 @@ var require_validator = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/core/Axios.js
+// ../../../node_modules/axios/lib/core/Axios.js
 var require_Axios = __commonJS({
-  "../../node_modules/axios/lib/core/Axios.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/core/Axios.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     var buildURL = require_buildURL();
@@ -12307,9 +12307,9 @@ var require_Axios = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/cancel/CancelToken.js
+// ../../../node_modules/axios/lib/cancel/CancelToken.js
 var require_CancelToken = __commonJS({
-  "../../node_modules/axios/lib/cancel/CancelToken.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/cancel/CancelToken.js"(exports2, module2) {
     "use strict";
     var CanceledError = require_CanceledError();
     function CancelToken(executor) {
@@ -12389,9 +12389,9 @@ var require_CancelToken = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/helpers/spread.js
+// ../../../node_modules/axios/lib/helpers/spread.js
 var require_spread = __commonJS({
-  "../../node_modules/axios/lib/helpers/spread.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/helpers/spread.js"(exports2, module2) {
     "use strict";
     module2.exports = function spread(callback) {
       return function wrap(arr) {
@@ -12401,9 +12401,9 @@ var require_spread = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/helpers/isAxiosError.js
+// ../../../node_modules/axios/lib/helpers/isAxiosError.js
 var require_isAxiosError = __commonJS({
-  "../../node_modules/axios/lib/helpers/isAxiosError.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/helpers/isAxiosError.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     module2.exports = function isAxiosError(payload) {
@@ -12412,9 +12412,9 @@ var require_isAxiosError = __commonJS({
   }
 });
 
-// ../../node_modules/axios/lib/axios.js
+// ../../../node_modules/axios/lib/axios.js
 var require_axios = __commonJS({
-  "../../node_modules/axios/lib/axios.js"(exports2, module2) {
+  "../../../node_modules/axios/lib/axios.js"(exports2, module2) {
     "use strict";
     var utils = require_utils();
     var bind = require_bind();
@@ -12450,9 +12450,9 @@ var require_axios = __commonJS({
   }
 });
 
-// ../../node_modules/axios/index.js
+// ../../../node_modules/axios/index.js
 var require_axios2 = __commonJS({
-  "../../node_modules/axios/index.js"(exports2, module2) {
+  "../../../node_modules/axios/index.js"(exports2, module2) {
     module2.exports = require_axios();
   }
 });
@@ -12487,35 +12487,41 @@ function __f0() {
 exports[`serialize event bridge aws put events 1`] = `
 "exports.handler = __f0;
 
-var __fnls = {};
-var __fnls_AWS = {};
+var __src = {};
+var __src_AWS = {};
 __f1.kind = "$AWS.Lambda.Invoke";
-var __fnls_AWS_Lambda = {Invoke: __f1};
-__fnls_AWS.Lambda = __fnls_AWS_Lambda;
-var __function_prewarm_1 = {};
-var __function_prewarm_1_PrewarmClients = {};
-var __function_prewarm_1_PrewarmClients_EventBridge = {key: "EventBridge", init: __f4};
-__function_prewarm_1_PrewarmClients.EventBridge = __function_prewarm_1_PrewarmClients_EventBridge;
-__function_prewarm_1.PrewarmClients = __function_prewarm_1_PrewarmClients;
+var __src_AWS_Lambda = {Invoke: __f1};
+__src_AWS.Lambda = __src_AWS_Lambda;
+var __functionPrewarm = {};
+var __functionPrewarm_PrewarmClients = {};
+var __functionPrewarm_PrewarmClients_Lambda = {key: "Lambda", init: __f4};
+__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
+var __functionPrewarm_PrewarmClients_EventBridge = {key: "EventBridge", init: __f5};
+__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
+var __functionPrewarm_PrewarmClients_StepFunctions = {key: "StepFunctions", init: __f6};
+__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
+var __functionPrewarm_PrewarmClients_SecretsManager = {key: "SecretsManager", init: __f7};
+__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
+Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f8 });
 var __preWarmContext_proto = {};
-Object.defineProperty(__f5, "prototype", { value: __preWarmContext_proto });
-Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f5 });
-Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f6 });
-Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f7 });
+Object.defineProperty(__f9, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f10 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f11 });
 var __preWarmContext = Object.create(__preWarmContext_proto);
 __preWarmContext.props = undefined;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f2.kind = "$AWS.EventBridge.putEvent";
-var __fnls_AWS_EventBridge = {putEvents: __f2};
-__fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
-var __m = Object.create(global.constructor.prototype);
-Object.defineProperty(__m, "__esModule", { value: true });
-__m["$AWS"] = __fnls_AWS;
-__m.deploymentOnlyModule = true;
-Object.defineProperty(__fnls, "$AWS", { enumerable: true, get: __f8 });
+var __src_AWS_EventBridge = {putEvents: __f2};
+__src_AWS.EventBridge = __src_AWS_EventBridge;
+var __src_AWS_SDK = {};
+__src_AWS.SDK = __src_AWS_SDK;
+var __from = Object.create(global.constructor.prototype);
+Object.defineProperty(__from, "__esModule", { value: true });
+Object.defineProperty(__from, "$AWS", { enumerable: true, get: __f13 });
+Object.defineProperty(__from, "deploymentOnlyModule", { enumerable: true, get: __f14 });
+Object.defineProperty(__src, "$AWS", { enumerable: true, get: __f12 });
 var __bus = {eventBusName: process.env.env__functionless0};
 function __f1() {
   return (function() {
@@ -12523,23 +12529,41 @@ function __f1() {
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f4(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/lambda"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f5(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/eventbridge"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f6(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/stepfunctions"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f7(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/secretsmanager"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f8() {
+  return (function() {
+    let PrewarmClients = __functionPrewarm_PrewarmClients;
+
+    return (() => PrewarmClients);;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f3(__0, __1) {
   return (function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
 
-    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
+    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(_functionPrewarm.PrewarmClients.EventBridge); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f5(__0) {
+}function __f9(__0) {
   return (function() {
     return (function constructor(props) { this.props = props; this.cache = {}; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f6(__0) {
+}function __f10(__0) {
   return (function() {
     return (function (key) { return this.cache[key]; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f7(__0) {
+}function __f11(__0) {
   return (function() {
     return (function getOrInit(client) { if (!this.cache[client.key]) {
     this.cache[client.key] = client.init(client.key, this.props);
@@ -12552,19 +12576,31 @@ function __f1() {
 
     return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f8() {
+}function __f13() {
   return (function() {
-    let m = __m;
+    let $AWS = __src_AWS;
+
+    return (() => $AWS);;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f14() {
+  return (function() {
+    let deploymentOnlyModule = true;
+
+    return (() => deploymentOnlyModule);;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f12() {
+  return (function() {
+    let from = __from;
     let k = "$AWS";
 
-    return (function __computed() { return m[k]; });;
+    return (function __computed() { return from[k]; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
-    let _fnls = __fnls;
+    let _src = __src;
     let bus = __bus;
 
-    return (() => { return _fnls["$AWS"].EventBridge.putEvents({ Entries: [{ EventBusName: bus.eventBusName },] }); });;
+    return (() => { return _src["$AWS"].EventBridge.putEvents({ Entries: [{ EventBusName: bus.eventBusName },] }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -12572,35 +12608,41 @@ function __f1() {
 exports[`serialize event bridge aws put events 2`] = `
 "// <stdin>
 exports.handler = __f0;
-var __fnls = {};
-var __fnls_AWS = {};
+var __src = {};
+var __src_AWS = {};
 __f1.kind = "$AWS.Lambda.Invoke";
-var __fnls_AWS_Lambda = { Invoke: __f1 };
-__fnls_AWS.Lambda = __fnls_AWS_Lambda;
-var __function_prewarm_1 = {};
-var __function_prewarm_1_PrewarmClients = {};
-var __function_prewarm_1_PrewarmClients_EventBridge = { key: "EventBridge", init: __f4 };
-__function_prewarm_1_PrewarmClients.EventBridge = __function_prewarm_1_PrewarmClients_EventBridge;
-__function_prewarm_1.PrewarmClients = __function_prewarm_1_PrewarmClients;
+var __src_AWS_Lambda = { Invoke: __f1 };
+__src_AWS.Lambda = __src_AWS_Lambda;
+var __functionPrewarm = {};
+var __functionPrewarm_PrewarmClients = {};
+var __functionPrewarm_PrewarmClients_Lambda = { key: "Lambda", init: __f4 };
+__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
+var __functionPrewarm_PrewarmClients_EventBridge = { key: "EventBridge", init: __f5 };
+__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
+var __functionPrewarm_PrewarmClients_StepFunctions = { key: "StepFunctions", init: __f6 };
+__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
+var __functionPrewarm_PrewarmClients_SecretsManager = { key: "SecretsManager", init: __f7 };
+__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
+Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f8 });
 var __preWarmContext_proto = {};
-Object.defineProperty(__f5, "prototype", { value: __preWarmContext_proto });
-Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f5 });
-Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f6 });
-Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f7 });
+Object.defineProperty(__f9, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f10 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f11 });
 var __preWarmContext = Object.create(__preWarmContext_proto);
 __preWarmContext.props = void 0;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f2.kind = "$AWS.EventBridge.putEvent";
-var __fnls_AWS_EventBridge = { putEvents: __f2 };
-__fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
-var __m = Object.create(global.constructor.prototype);
-Object.defineProperty(__m, "__esModule", { value: true });
-__m["$AWS"] = __fnls_AWS;
-__m.deploymentOnlyModule = true;
-Object.defineProperty(__fnls, "$AWS", { enumerable: true, get: __f8 });
+var __src_AWS_EventBridge = { putEvents: __f2 };
+__src_AWS.EventBridge = __src_AWS_EventBridge;
+var __src_AWS_SDK = {};
+__src_AWS.SDK = __src_AWS_SDK;
+var __from = Object.create(global.constructor.prototype);
+Object.defineProperty(__from, "__esModule", { value: true });
+Object.defineProperty(__from, "$AWS", { enumerable: true, get: __f13 });
+Object.defineProperty(__from, "deploymentOnlyModule", { enumerable: true, get: __f14 });
+Object.defineProperty(__src, "$AWS", { enumerable: true, get: __f12 });
 var __bus = { eventBusName: process.env.env__functionless0 };
 function __f1() {
   return function() {
@@ -12614,22 +12656,56 @@ function __f4(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/lambda"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f5(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/eventbridge"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f6(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/stepfunctions"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f7(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/secretsmanager"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f8() {
+  return function() {
+    let PrewarmClients = __functionPrewarm_PrewarmClients;
+    return () => PrewarmClients;
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f3(__0, __1) {
   return function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
     return async ([request], preWarmContext) => {
-      const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge);
+      const eventBridge = preWarmContext.getOrInit(_functionPrewarm.PrewarmClients.EventBridge);
       return eventBridge.putEvents({ Entries: request.Entries.map((e) => ({ ...e })) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f5(__0) {
+function __f9(__0) {
   return function() {
     return function constructor(props) {
       this.props = props;
@@ -12638,7 +12714,7 @@ function __f5(__0) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f6(__0) {
+function __f10(__0) {
   return function() {
     return function(key) {
       return this.cache[key];
@@ -12646,7 +12722,7 @@ function __f6(__0) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f7(__0) {
+function __f11(__0) {
   return function() {
     return function getOrInit(client) {
       if (!this.cache[client.key]) {
@@ -12667,22 +12743,36 @@ function __f2() {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f8() {
+function __f13() {
   return function() {
-    let m = __m;
+    let $AWS = __src_AWS;
+    return () => $AWS;
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f14() {
+  return function() {
+    let deploymentOnlyModule = true;
+    return () => deploymentOnlyModule;
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f12() {
+  return function() {
+    let from = __from;
     let k = "$AWS";
     return function __computed() {
-      return m[k];
+      return from[k];
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f0() {
   return function() {
-    let _fnls = __fnls;
+    let _src = __src;
     let bus = __bus;
     return () => {
-      return _fnls["$AWS"].EventBridge.putEvents({ Entries: [{ EventBusName: bus.eventBusName }] });
+      return _src["$AWS"].EventBridge.putEvents({ Entries: [{ EventBusName: bus.eventBusName }] });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -12693,16 +12783,22 @@ function __f0() {
 exports[`serialize event bridge put events 1`] = `
 "exports.handler = __f0;
 
-var __function_prewarm_1 = {};
-var __function_prewarm_1_PrewarmClients = {};
-var __function_prewarm_1_PrewarmClients_EventBridge = {key: "EventBridge", init: __f3};
-__function_prewarm_1_PrewarmClients.EventBridge = __function_prewarm_1_PrewarmClients_EventBridge;
-__function_prewarm_1.PrewarmClients = __function_prewarm_1_PrewarmClients;
+var __functionPrewarm = {};
+var __functionPrewarm_PrewarmClients = {};
+var __functionPrewarm_PrewarmClients_Lambda = {key: "Lambda", init: __f3};
+__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
+var __functionPrewarm_PrewarmClients_EventBridge = {key: "EventBridge", init: __f4};
+__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
+var __functionPrewarm_PrewarmClients_StepFunctions = {key: "StepFunctions", init: __f5};
+__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
+var __functionPrewarm_PrewarmClients_SecretsManager = {key: "SecretsManager", init: __f6};
+__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
+Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f7 });
 var __preWarmContext_proto = {};
-Object.defineProperty(__f4, "prototype", { value: __preWarmContext_proto });
-Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f4 });
-Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f5 });
-Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f6 });
+Object.defineProperty(__f8, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f8 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f10 });
 var __preWarmContext = Object.create(__preWarmContext_proto);
 __preWarmContext.props = undefined;
 var __preWarmContext_cache = {};
@@ -12711,24 +12807,42 @@ __f1.kind = "EventBus.putEvents";
 var __bus = {putEvents: __f1};
 function __f3(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/lambda"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f4(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/eventbridge"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f5(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/stepfunctions"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f6(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/secretsmanager"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f7() {
+  return (function() {
+    let PrewarmClients = __functionPrewarm_PrewarmClients;
+
+    return (() => PrewarmClients);;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f2(__0, __1) {
   return (function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
     let eventBusName = process.env.env__functionless0;
 
-    return (async (args, preWarmContext) => { const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge); await eventBridge.putEvents({ Entries: args.map(event => ({ Detail: JSON.stringify(event.detail), EventBusName: eventBusName, DetailType: event["detail-type"], Resources: event.resources, Source: event.source, Time: typeof event.time === "number" ? new Date(event.time) : undefined })) }).promise(); });;
+    return (async (args, preWarmContext) => { const eventBridge = preWarmContext.getOrInit(_functionPrewarm.PrewarmClients.EventBridge); await eventBridge.putEvents({ Entries: args.map(event => ({ Detail: JSON.stringify(event.detail), EventBusName: eventBusName, DetailType: event["detail-type"], Resources: event.resources, Source: event.source, Time: typeof event.time === "number" ? new Date(event.time) : undefined })) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f4(__0) {
+}function __f8(__0) {
   return (function() {
     return (function constructor(props) { this.props = props; this.cache = {}; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f5(__0) {
+}function __f9(__0) {
   return (function() {
     return (function (key) { return this.cache[key]; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f6(__0) {
+}function __f10(__0) {
   return (function() {
     return (function getOrInit(client) { if (!this.cache[client.key]) {
     this.cache[client.key] = client.init(client.key, this.props);
@@ -12753,16 +12867,22 @@ function __f3(__0, __1) {
 exports[`serialize event bridge put events 2`] = `
 "// <stdin>
 exports.handler = __f0;
-var __function_prewarm_1 = {};
-var __function_prewarm_1_PrewarmClients = {};
-var __function_prewarm_1_PrewarmClients_EventBridge = { key: "EventBridge", init: __f3 };
-__function_prewarm_1_PrewarmClients.EventBridge = __function_prewarm_1_PrewarmClients_EventBridge;
-__function_prewarm_1.PrewarmClients = __function_prewarm_1_PrewarmClients;
+var __functionPrewarm = {};
+var __functionPrewarm_PrewarmClients = {};
+var __functionPrewarm_PrewarmClients_Lambda = { key: "Lambda", init: __f3 };
+__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
+var __functionPrewarm_PrewarmClients_EventBridge = { key: "EventBridge", init: __f4 };
+__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
+var __functionPrewarm_PrewarmClients_StepFunctions = { key: "StepFunctions", init: __f5 };
+__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
+var __functionPrewarm_PrewarmClients_SecretsManager = { key: "SecretsManager", init: __f6 };
+__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
+Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f7 });
 var __preWarmContext_proto = {};
-Object.defineProperty(__f4, "prototype", { value: __preWarmContext_proto });
-Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f4 });
-Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f5 });
-Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f6 });
+Object.defineProperty(__f8, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f8 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f10 });
 var __preWarmContext = Object.create(__preWarmContext_proto);
 __preWarmContext.props = void 0;
 var __preWarmContext_cache = {};
@@ -12773,23 +12893,57 @@ function __f3(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/lambda"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f4(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/eventbridge"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f5(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/stepfunctions"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f6(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/secretsmanager"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f7() {
+  return function() {
+    let PrewarmClients = __functionPrewarm_PrewarmClients;
+    return () => PrewarmClients;
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f2(__0, __1) {
   return function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
     let eventBusName = process.env.env__functionless0;
     return async (args, preWarmContext) => {
-      const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge);
+      const eventBridge = preWarmContext.getOrInit(_functionPrewarm.PrewarmClients.EventBridge);
       await eventBridge.putEvents({ Entries: args.map((event) => ({ Detail: JSON.stringify(event.detail), EventBusName: eventBusName, DetailType: event["detail-type"], Resources: event.resources, Source: event.source, Time: typeof event.time === "number" ? new Date(event.time) : void 0 })) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f4(__0) {
+function __f8(__0) {
   return function() {
     return function constructor(props) {
       this.props = props;
@@ -12798,7 +12952,7 @@ function __f4(__0) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f5(__0) {
+function __f9(__0) {
   return function() {
     return function(key) {
       return this.cache[key];
@@ -12806,7 +12960,7 @@ function __f5(__0) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f6(__0) {
+function __f10(__0) {
   return function() {
     return function getOrInit(client) {
       if (!this.cache[client.key]) {
@@ -12842,16 +12996,22 @@ function __f0() {
 exports[`serialize lambda func 1`] = `
 "exports.handler = __f0;
 
-var __function_prewarm_1 = {};
-var __function_prewarm_1_PrewarmClients = {};
-var __function_prewarm_1_PrewarmClients_Lambda = {key: "Lambda", init: __f3};
-__function_prewarm_1_PrewarmClients.Lambda = __function_prewarm_1_PrewarmClients_Lambda;
-__function_prewarm_1.PrewarmClients = __function_prewarm_1_PrewarmClients;
+var __functionPrewarm = {};
+var __functionPrewarm_PrewarmClients = {};
+var __functionPrewarm_PrewarmClients_Lambda = {key: "Lambda", init: __f3};
+__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
+var __functionPrewarm_PrewarmClients_EventBridge = {key: "EventBridge", init: __f4};
+__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
+var __functionPrewarm_PrewarmClients_StepFunctions = {key: "StepFunctions", init: __f5};
+__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
+var __functionPrewarm_PrewarmClients_SecretsManager = {key: "SecretsManager", init: __f6};
+__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
+Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f7 });
 var __preWarmContext_proto = {};
-Object.defineProperty(__f4, "prototype", { value: __preWarmContext_proto });
-Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f4 });
-Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f5 });
-Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f6 });
+Object.defineProperty(__f8, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f8 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f10 });
 var __preWarmContext = Object.create(__preWarmContext_proto);
 __preWarmContext.props = undefined;
 var __preWarmContext_cache = {};
@@ -12860,24 +13020,42 @@ __f1.kind = "Function";
 __f1.functionlessKind = "Function";
 function __f3(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/lambda"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/lambda"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f4(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/eventbridge"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f5(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/stepfunctions"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f6(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/secretsmanager"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f7() {
+  return (function() {
+    let PrewarmClients = __functionPrewarm_PrewarmClients;
+
+    return (() => PrewarmClients);;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f2(__0, __1) {
   return (function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
     let functionName = process.env.env__functionless0;
 
-    return (async (args, prewarmContext) => { var _a; const [payload] = args; const lambdaClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.Lambda); const response = (_a = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : undefined }).promise()).Payload) === null || _a === void 0 ? void 0 : _a.toString(); return response ? JSON.parse(response) : undefined; });;
+    return (async (args, prewarmContext) => { const [payload] = args; const lambdaClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.Lambda); const response = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : undefined }).promise()).Payload?.toString(); return response ? JSON.parse(response) : undefined; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f4(__0) {
+}function __f8(__0) {
   return (function() {
     return (function constructor(props) { this.props = props; this.cache = {}; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f5(__0) {
+}function __f9(__0) {
   return (function() {
     return (function (key) { return this.cache[key]; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f6(__0) {
+}function __f10(__0) {
   return (function() {
     return (function getOrInit(client) { if (!this.cache[client.key]) {
     this.cache[client.key] = client.init(client.key, this.props);
@@ -12902,16 +13080,22 @@ function __f3(__0, __1) {
 exports[`serialize lambda func 2`] = `
 "// <stdin>
 exports.handler = __f0;
-var __function_prewarm_1 = {};
-var __function_prewarm_1_PrewarmClients = {};
-var __function_prewarm_1_PrewarmClients_Lambda = { key: "Lambda", init: __f3 };
-__function_prewarm_1_PrewarmClients.Lambda = __function_prewarm_1_PrewarmClients_Lambda;
-__function_prewarm_1.PrewarmClients = __function_prewarm_1_PrewarmClients;
+var __functionPrewarm = {};
+var __functionPrewarm_PrewarmClients = {};
+var __functionPrewarm_PrewarmClients_Lambda = { key: "Lambda", init: __f3 };
+__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
+var __functionPrewarm_PrewarmClients_EventBridge = { key: "EventBridge", init: __f4 };
+__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
+var __functionPrewarm_PrewarmClients_StepFunctions = { key: "StepFunctions", init: __f5 };
+__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
+var __functionPrewarm_PrewarmClients_SecretsManager = { key: "SecretsManager", init: __f6 };
+__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
+Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f7 });
 var __preWarmContext_proto = {};
-Object.defineProperty(__f4, "prototype", { value: __preWarmContext_proto });
-Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f4 });
-Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f5 });
-Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f6 });
+Object.defineProperty(__f8, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f8 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f10 });
 var __preWarmContext = Object.create(__preWarmContext_proto);
 __preWarmContext.props = void 0;
 var __preWarmContext_cache = {};
@@ -12922,26 +13106,60 @@ function __f3(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/lambda"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/lambda"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f4(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/eventbridge"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f5(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/stepfunctions"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f6(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/secretsmanager"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f7() {
+  return function() {
+    let PrewarmClients = __functionPrewarm_PrewarmClients;
+    return () => PrewarmClients;
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f2(__0, __1) {
   return function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
     let functionName = process.env.env__functionless0;
     return async (args, prewarmContext) => {
       var _a;
       const [payload] = args;
-      const lambdaClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.Lambda);
-      const response = (_a = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : void 0 }).promise()).Payload) === null || _a === void 0 ? void 0 : _a.toString();
+      const lambdaClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.Lambda);
+      const response = (_a = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : void 0 }).promise()).Payload) == null ? void 0 : _a.toString();
       return response ? JSON.parse(response) : void 0;
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f4(__0) {
+function __f8(__0) {
   return function() {
     return function constructor(props) {
       this.props = props;
@@ -12950,7 +13168,7 @@ function __f4(__0) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f5(__0) {
+function __f9(__0) {
   return function() {
     return function(key) {
       return this.cache[key];
@@ -12958,7 +13176,7 @@ function __f5(__0) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f6(__0) {
+function __f10(__0) {
   return function() {
     return function getOrInit(client) {
       if (!this.cache[client.key]) {
@@ -12994,66 +13212,84 @@ function __f0() {
 exports[`serialize lambda invoke func 1`] = `
 "exports.handler = __f0;
 
-var __fnls = {};
-var __fnls_AWS = {};
+var __src = {};
+var __src_AWS = {};
 __f1.kind = "$AWS.Lambda.Invoke";
-var __fnls_AWS_Lambda = {Invoke: __f1};
-__fnls_AWS.Lambda = __fnls_AWS_Lambda;
-var __function_prewarm_1 = {};
-var __function_prewarm_1_PrewarmClients = {};
-var __function_prewarm_1_PrewarmClients_EventBridge = {key: "EventBridge", init: __f4};
-__function_prewarm_1_PrewarmClients.EventBridge = __function_prewarm_1_PrewarmClients_EventBridge;
-var __function_prewarm_1_PrewarmClients_Lambda = {key: "Lambda", init: __f5};
-__function_prewarm_1_PrewarmClients.Lambda = __function_prewarm_1_PrewarmClients_Lambda;
-__function_prewarm_1.PrewarmClients = __function_prewarm_1_PrewarmClients;
+var __src_AWS_Lambda = {Invoke: __f1};
+__src_AWS.Lambda = __src_AWS_Lambda;
+var __functionPrewarm = {};
+var __functionPrewarm_PrewarmClients = {};
+var __functionPrewarm_PrewarmClients_Lambda = {key: "Lambda", init: __f4};
+__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
+var __functionPrewarm_PrewarmClients_EventBridge = {key: "EventBridge", init: __f5};
+__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
+var __functionPrewarm_PrewarmClients_StepFunctions = {key: "StepFunctions", init: __f6};
+__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
+var __functionPrewarm_PrewarmClients_SecretsManager = {key: "SecretsManager", init: __f7};
+__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
+Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f8 });
 var __preWarmContext_proto = {};
-Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
-Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
-Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f7 });
-Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f8 });
+Object.defineProperty(__f9, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f10 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f11 });
 var __preWarmContext = Object.create(__preWarmContext_proto);
 __preWarmContext.props = undefined;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f2.kind = "$AWS.EventBridge.putEvent";
-var __fnls_AWS_EventBridge = {putEvents: __f2};
-__fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
-var __m = Object.create(global.constructor.prototype);
-Object.defineProperty(__m, "__esModule", { value: true });
-__m["$AWS"] = __fnls_AWS;
-__m.deploymentOnlyModule = true;
-Object.defineProperty(__fnls, "$AWS", { enumerable: true, get: __f9 });
-__f10.kind = "Function";
-__f10.functionlessKind = "Function";
+var __src_AWS_EventBridge = {putEvents: __f2};
+__src_AWS.EventBridge = __src_AWS_EventBridge;
+var __src_AWS_SDK = {};
+__src_AWS.SDK = __src_AWS_SDK;
+var __from = Object.create(global.constructor.prototype);
+Object.defineProperty(__from, "__esModule", { value: true });
+Object.defineProperty(__from, "$AWS", { enumerable: true, get: __f13 });
+Object.defineProperty(__from, "deploymentOnlyModule", { enumerable: true, get: __f14 });
+Object.defineProperty(__src, "$AWS", { enumerable: true, get: __f12 });
+__f15.kind = "Function";
+__f15.functionlessKind = "Function";
 function __f1() {
   return (function() {
     return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f4(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/lambda"))(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/lambda"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/eventbridge"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f6(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/stepfunctions"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f7(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/secretsmanager"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f8() {
+  return (function() {
+    let PrewarmClients = __functionPrewarm_PrewarmClients;
+
+    return (() => PrewarmClients);;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f3(__0, __1) {
   return (function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
 
-    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
+    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(_functionPrewarm.PrewarmClients.EventBridge); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f6(__0) {
+}function __f9(__0) {
   return (function() {
     return (function constructor(props) { this.props = props; this.cache = {}; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f7(__0) {
+}function __f10(__0) {
   return (function() {
     return (function (key) { return this.cache[key]; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f8(__0) {
+}function __f11(__0) {
   return (function() {
     return (function getOrInit(client) { if (!this.cache[client.key]) {
     this.cache[client.key] = client.init(client.key, this.props);
@@ -13066,33 +13302,45 @@ function __f1() {
 
     return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f9() {
+}function __f13() {
   return (function() {
-    let m = __m;
+    let $AWS = __src_AWS;
+
+    return (() => $AWS);;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f14() {
+  return (function() {
+    let deploymentOnlyModule = true;
+
+    return (() => deploymentOnlyModule);;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f12() {
+  return (function() {
+    let from = __from;
     let k = "$AWS";
 
-    return (function __computed() { return m[k]; });;
+    return (function __computed() { return from[k]; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f11(__0, __1) {
+}function __f16(__0, __1) {
   return (function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
     let functionName = process.env.env__functionless0;
 
-    return (async (args, prewarmContext) => { var _a; const [payload] = args; const lambdaClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.Lambda); const response = (_a = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : undefined }).promise()).Payload) === null || _a === void 0 ? void 0 : _a.toString(); return response ? JSON.parse(response) : undefined; });;
+    return (async (args, prewarmContext) => { const [payload] = args; const lambdaClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.Lambda); const response = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : undefined }).promise()).Payload?.toString(); return response ? JSON.parse(response) : undefined; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f10() {
+}function __f15() {
   return (function() {
-    let c = __f11;
+    let c = __f16;
     let preWarmContext = __preWarmContext;
 
     return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
-    let _fnls = __fnls;
-    let func = __f10;
+    let _src = __src;
+    let func = __f15;
 
-    return (() => { return _fnls["$AWS"].Lambda.Invoke({ Function: func, Payload: undefined }); });;
+    return (() => { return _src["$AWS"].Lambda.Invoke({ Function: func, Payload: undefined }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -13100,39 +13348,43 @@ function __f1() {
 exports[`serialize lambda invoke func 2`] = `
 "// <stdin>
 exports.handler = __f0;
-var __fnls = {};
-var __fnls_AWS = {};
+var __src = {};
+var __src_AWS = {};
 __f1.kind = "$AWS.Lambda.Invoke";
-var __fnls_AWS_Lambda = { Invoke: __f1 };
-__fnls_AWS.Lambda = __fnls_AWS_Lambda;
-var __function_prewarm_1 = {};
-var __function_prewarm_1_PrewarmClients = {};
-var __function_prewarm_1_PrewarmClients_EventBridge = { key: "EventBridge", init: __f4 };
-__function_prewarm_1_PrewarmClients.EventBridge = __function_prewarm_1_PrewarmClients_EventBridge;
-var __function_prewarm_1_PrewarmClients_Lambda = { key: "Lambda", init: __f5 };
-__function_prewarm_1_PrewarmClients.Lambda = __function_prewarm_1_PrewarmClients_Lambda;
-__function_prewarm_1.PrewarmClients = __function_prewarm_1_PrewarmClients;
+var __src_AWS_Lambda = { Invoke: __f1 };
+__src_AWS.Lambda = __src_AWS_Lambda;
+var __functionPrewarm = {};
+var __functionPrewarm_PrewarmClients = {};
+var __functionPrewarm_PrewarmClients_Lambda = { key: "Lambda", init: __f4 };
+__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
+var __functionPrewarm_PrewarmClients_EventBridge = { key: "EventBridge", init: __f5 };
+__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
+var __functionPrewarm_PrewarmClients_StepFunctions = { key: "StepFunctions", init: __f6 };
+__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
+var __functionPrewarm_PrewarmClients_SecretsManager = { key: "SecretsManager", init: __f7 };
+__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
+Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f8 });
 var __preWarmContext_proto = {};
-Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
-Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
-Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f7 });
-Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f8 });
+Object.defineProperty(__f9, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f10 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f11 });
 var __preWarmContext = Object.create(__preWarmContext_proto);
 __preWarmContext.props = void 0;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f2.kind = "$AWS.EventBridge.putEvent";
-var __fnls_AWS_EventBridge = { putEvents: __f2 };
-__fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
-var __m = Object.create(global.constructor.prototype);
-Object.defineProperty(__m, "__esModule", { value: true });
-__m["$AWS"] = __fnls_AWS;
-__m.deploymentOnlyModule = true;
-Object.defineProperty(__fnls, "$AWS", { enumerable: true, get: __f9 });
-__f10.kind = "Function";
-__f10.functionlessKind = "Function";
+var __src_AWS_EventBridge = { putEvents: __f2 };
+__src_AWS.EventBridge = __src_AWS_EventBridge;
+var __src_AWS_SDK = {};
+__src_AWS.SDK = __src_AWS_SDK;
+var __from = Object.create(global.constructor.prototype);
+Object.defineProperty(__from, "__esModule", { value: true });
+Object.defineProperty(__from, "$AWS", { enumerable: true, get: __f13 });
+Object.defineProperty(__from, "deploymentOnlyModule", { enumerable: true, get: __f14 });
+Object.defineProperty(__src, "$AWS", { enumerable: true, get: __f12 });
+__f15.kind = "Function";
+__f15.functionlessKind = "Function";
 function __f1() {
   return function() {
     return function __computed() {
@@ -13145,7 +13397,7 @@ function __f4(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/lambda"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13154,22 +13406,47 @@ function __f5(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/lambda"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/eventbridge"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f6(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/stepfunctions"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f7(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/secretsmanager"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f8() {
+  return function() {
+    let PrewarmClients = __functionPrewarm_PrewarmClients;
+    return () => PrewarmClients;
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f3(__0, __1) {
   return function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
     return async ([request], preWarmContext) => {
-      const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge);
+      const eventBridge = preWarmContext.getOrInit(_functionPrewarm.PrewarmClients.EventBridge);
       return eventBridge.putEvents({ Entries: request.Entries.map((e) => ({ ...e })) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f6(__0) {
+function __f9(__0) {
   return function() {
     return function constructor(props) {
       this.props = props;
@@ -13178,7 +13455,7 @@ function __f6(__0) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f7(__0) {
+function __f10(__0) {
   return function() {
     return function(key) {
       return this.cache[key];
@@ -13186,7 +13463,7 @@ function __f7(__0) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f8(__0) {
+function __f11(__0) {
   return function() {
     return function getOrInit(client) {
       if (!this.cache[client.key]) {
@@ -13207,33 +13484,47 @@ function __f2() {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f9() {
+function __f13() {
   return function() {
-    let m = __m;
+    let $AWS = __src_AWS;
+    return () => $AWS;
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f14() {
+  return function() {
+    let deploymentOnlyModule = true;
+    return () => deploymentOnlyModule;
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f12() {
+  return function() {
+    let from = __from;
     let k = "$AWS";
     return function __computed() {
-      return m[k];
+      return from[k];
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f11(__0, __1) {
+function __f16(__0, __1) {
   return function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
     let functionName = process.env.env__functionless0;
     return async (args, prewarmContext) => {
       var _a;
       const [payload] = args;
-      const lambdaClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.Lambda);
-      const response = (_a = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : void 0 }).promise()).Payload) === null || _a === void 0 ? void 0 : _a.toString();
+      const lambdaClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.Lambda);
+      const response = (_a = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : void 0 }).promise()).Payload) == null ? void 0 : _a.toString();
       return response ? JSON.parse(response) : void 0;
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f10() {
+function __f15() {
   return function() {
-    let c = __f11;
+    let c = __f16;
     let preWarmContext = __preWarmContext;
     return function __computed(...args) {
       return c(args, preWarmContext);
@@ -13243,10 +13534,10 @@ function __f10() {
 }
 function __f0() {
   return function() {
-    let _fnls = __fnls;
-    let func = __f10;
+    let _src = __src;
+    let func = __f15;
     return () => {
-      return _fnls["$AWS"].Lambda.Invoke({ Function: func, Payload: void 0 });
+      return _src["$AWS"].Lambda.Invoke({ Function: func, Payload: void 0 });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13257,58 +13548,82 @@ function __f0() {
 exports[`serialize sdk SDK.CloudWatch.describeAlarms 1`] = `
 "exports.handler = __f0;
 
-var __fnls = {};
-var __fnls_AWS = {};
+var __src = {};
+var __src_AWS = {};
 __f1.kind = "$AWS.Lambda.Invoke";
-var __fnls_AWS_Lambda = {Invoke: __f1};
-__fnls_AWS.Lambda = __fnls_AWS_Lambda;
-var __function_prewarm_1 = {};
-var __function_prewarm_1_PrewarmClients = {};
-var __function_prewarm_1_PrewarmClients_EventBridge = {key: "EventBridge", init: __f4};
-__function_prewarm_1_PrewarmClients.EventBridge = __function_prewarm_1_PrewarmClients_EventBridge;
-__function_prewarm_1.PrewarmClients = __function_prewarm_1_PrewarmClients;
+var __src_AWS_Lambda = {Invoke: __f1};
+__src_AWS.Lambda = __src_AWS_Lambda;
+var __functionPrewarm = {};
+var __functionPrewarm_PrewarmClients = {};
+var __functionPrewarm_PrewarmClients_Lambda = {key: "Lambda", init: __f4};
+__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
+var __functionPrewarm_PrewarmClients_EventBridge = {key: "EventBridge", init: __f5};
+__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
+var __functionPrewarm_PrewarmClients_StepFunctions = {key: "StepFunctions", init: __f6};
+__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
+var __functionPrewarm_PrewarmClients_SecretsManager = {key: "SecretsManager", init: __f7};
+__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
+Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f8 });
 var __preWarmContext_proto = {};
-Object.defineProperty(__f5, "prototype", { value: __preWarmContext_proto });
-Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f5 });
-Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f6 });
-Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f7 });
+Object.defineProperty(__f9, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f10 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f11 });
 var __preWarmContext = Object.create(__preWarmContext_proto);
 __preWarmContext.props = undefined;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f2.kind = "$AWS.EventBridge.putEvent";
-var __fnls_AWS_EventBridge = {putEvents: __f2};
-__fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
-var __m = Object.create(global.constructor.prototype);
-Object.defineProperty(__m, "__esModule", { value: true });
-__m["$AWS"] = __fnls_AWS;
-__m.deploymentOnlyModule = true;
-Object.defineProperty(__fnls, "$AWS", { enumerable: true, get: __f8 });
+var __src_AWS_EventBridge = {putEvents: __f2};
+__src_AWS.EventBridge = __src_AWS_EventBridge;
+var __src_AWS_SDK = {};
+__src_AWS.SDK = __src_AWS_SDK;
+var __from = Object.create(global.constructor.prototype);
+Object.defineProperty(__from, "__esModule", { value: true });
+Object.defineProperty(__from, "$AWS", { enumerable: true, get: __f13 });
+Object.defineProperty(__from, "deploymentOnlyModule", { enumerable: true, get: __f14 });
+Object.defineProperty(__src, "$AWS", { enumerable: true, get: __f12 });
 function __f1() {
   return (function() {
     return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f4(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/lambda"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f5(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/eventbridge"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f6(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/stepfunctions"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f7(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/secretsmanager"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f8() {
+  return (function() {
+    let PrewarmClients = __functionPrewarm_PrewarmClients;
+
+    return (() => PrewarmClients);;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f3(__0, __1) {
   return (function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
 
-    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
+    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(_functionPrewarm.PrewarmClients.EventBridge); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f5(__0) {
+}function __f9(__0) {
   return (function() {
     return (function constructor(props) { this.props = props; this.cache = {}; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f6(__0) {
+}function __f10(__0) {
   return (function() {
     return (function (key) { return this.cache[key]; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f7(__0) {
+}function __f11(__0) {
   return (function() {
     return (function getOrInit(client) { if (!this.cache[client.key]) {
     this.cache[client.key] = client.init(client.key, this.props);
@@ -13321,18 +13636,30 @@ function __f1() {
 
     return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f8() {
+}function __f13() {
   return (function() {
-    let m = __m;
+    let $AWS = __src_AWS;
+
+    return (() => $AWS);;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f14() {
+  return (function() {
+    let deploymentOnlyModule = true;
+
+    return (() => deploymentOnlyModule);;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f12() {
+  return (function() {
+    let from = __from;
     let k = "$AWS";
 
-    return (function __computed() { return m[k]; });;
+    return (function __computed() { return from[k]; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
-    let _fnls = __fnls;
+    let _src = __src;
 
-    return (() => { return _fnls["$AWS"].SDK.CloudWatch.describeAlarms({}, { iam: { resources: ["*"] } }); });;
+    return (() => { return _src["$AWS"].SDK.CloudWatch.describeAlarms({}, { iam: { resources: ["*"] } }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -13340,35 +13667,41 @@ function __f1() {
 exports[`serialize sdk SDK.CloudWatch.describeAlarms 2`] = `
 "// <stdin>
 exports.handler = __f0;
-var __fnls = {};
-var __fnls_AWS = {};
+var __src = {};
+var __src_AWS = {};
 __f1.kind = "$AWS.Lambda.Invoke";
-var __fnls_AWS_Lambda = { Invoke: __f1 };
-__fnls_AWS.Lambda = __fnls_AWS_Lambda;
-var __function_prewarm_1 = {};
-var __function_prewarm_1_PrewarmClients = {};
-var __function_prewarm_1_PrewarmClients_EventBridge = { key: "EventBridge", init: __f4 };
-__function_prewarm_1_PrewarmClients.EventBridge = __function_prewarm_1_PrewarmClients_EventBridge;
-__function_prewarm_1.PrewarmClients = __function_prewarm_1_PrewarmClients;
+var __src_AWS_Lambda = { Invoke: __f1 };
+__src_AWS.Lambda = __src_AWS_Lambda;
+var __functionPrewarm = {};
+var __functionPrewarm_PrewarmClients = {};
+var __functionPrewarm_PrewarmClients_Lambda = { key: "Lambda", init: __f4 };
+__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
+var __functionPrewarm_PrewarmClients_EventBridge = { key: "EventBridge", init: __f5 };
+__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
+var __functionPrewarm_PrewarmClients_StepFunctions = { key: "StepFunctions", init: __f6 };
+__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
+var __functionPrewarm_PrewarmClients_SecretsManager = { key: "SecretsManager", init: __f7 };
+__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
+Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f8 });
 var __preWarmContext_proto = {};
-Object.defineProperty(__f5, "prototype", { value: __preWarmContext_proto });
-Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f5 });
-Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f6 });
-Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f7 });
+Object.defineProperty(__f9, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f10 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f11 });
 var __preWarmContext = Object.create(__preWarmContext_proto);
 __preWarmContext.props = void 0;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f2.kind = "$AWS.EventBridge.putEvent";
-var __fnls_AWS_EventBridge = { putEvents: __f2 };
-__fnls_AWS.EventBridge = __fnls_AWS_EventBridge;
-var __fnls_AWS_SDK = {};
-__fnls_AWS.SDK = __fnls_AWS_SDK;
-var __m = Object.create(global.constructor.prototype);
-Object.defineProperty(__m, "__esModule", { value: true });
-__m["$AWS"] = __fnls_AWS;
-__m.deploymentOnlyModule = true;
-Object.defineProperty(__fnls, "$AWS", { enumerable: true, get: __f8 });
+var __src_AWS_EventBridge = { putEvents: __f2 };
+__src_AWS.EventBridge = __src_AWS_EventBridge;
+var __src_AWS_SDK = {};
+__src_AWS.SDK = __src_AWS_SDK;
+var __from = Object.create(global.constructor.prototype);
+Object.defineProperty(__from, "__esModule", { value: true });
+Object.defineProperty(__from, "$AWS", { enumerable: true, get: __f13 });
+Object.defineProperty(__from, "deploymentOnlyModule", { enumerable: true, get: __f14 });
+Object.defineProperty(__src, "$AWS", { enumerable: true, get: __f12 });
 function __f1() {
   return function() {
     return function __computed() {
@@ -13381,22 +13714,56 @@ function __f4(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/lambda"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f5(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/eventbridge"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f6(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/stepfunctions"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f7(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/secretsmanager"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f8() {
+  return function() {
+    let PrewarmClients = __functionPrewarm_PrewarmClients;
+    return () => PrewarmClients;
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f3(__0, __1) {
   return function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
     return async ([request], preWarmContext) => {
-      const eventBridge = preWarmContext.getOrInit(function_prewarm_1.PrewarmClients.EventBridge);
+      const eventBridge = preWarmContext.getOrInit(_functionPrewarm.PrewarmClients.EventBridge);
       return eventBridge.putEvents({ Entries: request.Entries.map((e) => ({ ...e })) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f5(__0) {
+function __f9(__0) {
   return function() {
     return function constructor(props) {
       this.props = props;
@@ -13405,7 +13772,7 @@ function __f5(__0) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f6(__0) {
+function __f10(__0) {
   return function() {
     return function(key) {
       return this.cache[key];
@@ -13413,7 +13780,7 @@ function __f6(__0) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f7(__0) {
+function __f11(__0) {
   return function() {
     return function getOrInit(client) {
       if (!this.cache[client.key]) {
@@ -13434,21 +13801,35 @@ function __f2() {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f8() {
+function __f13() {
   return function() {
-    let m = __m;
+    let $AWS = __src_AWS;
+    return () => $AWS;
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f14() {
+  return function() {
+    let deploymentOnlyModule = true;
+    return () => deploymentOnlyModule;
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f12() {
+  return function() {
+    let from = __from;
     let k = "$AWS";
     return function __computed() {
-      return m[k];
+      return from[k];
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f0() {
   return function() {
-    let _fnls = __fnls;
+    let _src = __src;
     return () => {
-      return _fnls["$AWS"].SDK.CloudWatch.describeAlarms({}, { iam: { resources: ["*"] } });
+      return _src["$AWS"].SDK.CloudWatch.describeAlarms({}, { iam: { resources: ["*"] } });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13459,30 +13840,36 @@ function __f0() {
 exports[`serialize sfn sfn 1`] = `
 "exports.handler = __f0;
 
-var __function_prewarm_1 = {};
-var __function_prewarm_1_PrewarmClients = {};
-var __function_prewarm_1_PrewarmClients_StepFunctions = {key: "StepFunctions", init: __f3};
-__function_prewarm_1_PrewarmClients.StepFunctions = __function_prewarm_1_PrewarmClients_StepFunctions;
-__function_prewarm_1.PrewarmClients = __function_prewarm_1_PrewarmClients;
+var __functionPrewarm = {};
+var __functionPrewarm_PrewarmClients = {};
+var __functionPrewarm_PrewarmClients_Lambda = {key: "Lambda", init: __f3};
+__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
+var __functionPrewarm_PrewarmClients_EventBridge = {key: "EventBridge", init: __f4};
+__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
+var __functionPrewarm_PrewarmClients_StepFunctions = {key: "StepFunctions", init: __f5};
+__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
+var __functionPrewarm_PrewarmClients_SecretsManager = {key: "SecretsManager", init: __f6};
+__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
+Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f7 });
 var __preWarmContext_proto = {};
-Object.defineProperty(__f4, "prototype", { value: __preWarmContext_proto });
-Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f4 });
-Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f5 });
-Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f6 });
+Object.defineProperty(__f8, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f8 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f10 });
 var __preWarmContext = Object.create(__preWarmContext_proto);
 __preWarmContext.props = undefined;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f1.kind = "StepFunction";
 __f1.functionlessKind = "StepFunction";
-__f7.kind = "StepFunction.describeExecution";
-__f1.describeExecution = __f7;
-__f9.kind = "StepFunction.sendTaskSuccess";
-__f1.sendTaskSuccess = __f9;
-__f11.kind = "StepFunction.sendTaskFailure";
-__f1.sendTaskFailure = __f11;
-__f13.kind = "StepFunction.sendTaskHeartbeat";
-__f1.sendTaskHeartbeat = __f13;
+__f11.kind = "StepFunction.describeExecution";
+__f1.describeExecution = __f11;
+__f13.kind = "StepFunction.sendTaskSuccess";
+__f1.sendTaskSuccess = __f13;
+__f15.kind = "StepFunction.sendTaskFailure";
+__f1.sendTaskFailure = __f15;
+__f17.kind = "StepFunction.sendTaskHeartbeat";
+__f1.sendTaskHeartbeat = __f17;
 var __f1_definition = {};
 __f1_definition.StartAt = "Initialize Functionless Context";
 var __f1_definition_States = {};
@@ -13503,24 +13890,42 @@ __f1_definition.States = __f1_definition_States;
 __f1.definition = __f1_definition;
 function __f3(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/stepfunctions"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/lambda"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f4(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/eventbridge"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f5(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/stepfunctions"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f6(__0, __1) {
+  return (function() {
+    return ((key, props) => new (require("aws-sdk/clients/secretsmanager"))(props?.clientConfigRetriever?.(key)));;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f7() {
+  return (function() {
+    let PrewarmClients = __functionPrewarm_PrewarmClients;
+
+    return (() => PrewarmClients);;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f2(__0, __1) {
   return (function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
     let stateMachineArn = process.env.env__functionless0;
 
-    return (async (args, prewarmContext) => { const stepFunctionsClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions); const [payload] = args; const result = await stepFunctionsClient.startExecution({ ...payload, stateMachineArn: stateMachineArn, input: payload.input ? JSON.stringify(payload.input) : undefined }).promise(); return result; });;
+    return (async (args, prewarmContext) => { const stepFunctionsClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.StepFunctions); const [payload] = args; const result = await stepFunctionsClient.startExecution({ ...payload, stateMachineArn: stateMachineArn, input: payload.input ? JSON.stringify(payload.input) : undefined }).promise(); return result; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f4(__0) {
+}function __f8(__0) {
   return (function() {
     return (function constructor(props) { this.props = props; this.cache = {}; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f5(__0) {
+}function __f9(__0) {
   return (function() {
     return (function (key) { return this.cache[key]; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f6(__0) {
+}function __f10(__0) {
   return (function() {
     return (function getOrInit(client) { if (!this.cache[client.key]) {
     this.cache[client.key] = client.init(client.key, this.props);
@@ -13533,37 +13938,11 @@ function __f3(__0, __1) {
 
     return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f8(__0, __1) {
-  return (function() {
-    let function_prewarm_1 = __function_prewarm_1;
-
-    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions); const [arn] = args; return stepFunctionClient.describeExecution({ executionArn: arn }).promise(); });;
-  }).apply(undefined, undefined).apply(this, arguments);
-}function __f7() {
-  return (function() {
-    let c = __f8;
-    let preWarmContext = __preWarmContext;
-
-    return (function __computed(...args) { return c(args, preWarmContext); });;
-  }).apply(undefined, undefined).apply(this, arguments);
-}function __f10(__0, __1) {
-  return (function() {
-    let function_prewarm_1 = __function_prewarm_1;
-
-    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions); const [taskToken, output] = args; return stepFunctionClient.sendTaskSuccess({ taskToken, output: JSON.stringify(output) }).promise(); });;
-  }).apply(undefined, undefined).apply(this, arguments);
-}function __f9() {
-  return (function() {
-    let c = __f10;
-    let preWarmContext = __preWarmContext;
-
-    return (function __computed(...args) { return c(args, preWarmContext); });;
-  }).apply(undefined, undefined).apply(this, arguments);
 }function __f12(__0, __1) {
   return (function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
 
-    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions); const [taskToken, error, cause] = args; return stepFunctionClient.sendTaskFailure({ taskToken, error, cause }).promise(); });;
+    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.StepFunctions); const [arn] = args; return stepFunctionClient.describeExecution({ executionArn: arn }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f11() {
   return (function() {
@@ -13574,13 +13953,39 @@ function __f3(__0, __1) {
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f14(__0, __1) {
   return (function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
 
-    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions); const [token] = args; return stepFunctionClient.sendTaskHeartbeat({ taskToken: token }).promise(); });;
+    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.StepFunctions); const [taskToken, output] = args; return stepFunctionClient.sendTaskSuccess({ taskToken, output: JSON.stringify(output) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f13() {
   return (function() {
     let c = __f14;
+    let preWarmContext = __preWarmContext;
+
+    return (function __computed(...args) { return c(args, preWarmContext); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f16(__0, __1) {
+  return (function() {
+    let _functionPrewarm = __functionPrewarm;
+
+    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.StepFunctions); const [taskToken, error, cause] = args; return stepFunctionClient.sendTaskFailure({ taskToken, error, cause }).promise(); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f15() {
+  return (function() {
+    let c = __f16;
+    let preWarmContext = __preWarmContext;
+
+    return (function __computed(...args) { return c(args, preWarmContext); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f18(__0, __1) {
+  return (function() {
+    let _functionPrewarm = __functionPrewarm;
+
+    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.StepFunctions); const [token] = args; return stepFunctionClient.sendTaskHeartbeat({ taskToken: token }).promise(); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f17() {
+  return (function() {
+    let c = __f18;
     let preWarmContext = __preWarmContext;
 
     return (function __computed(...args) { return c(args, preWarmContext); });;
@@ -13597,30 +14002,36 @@ function __f3(__0, __1) {
 exports[`serialize sfn sfn 2`] = `
 "// <stdin>
 exports.handler = __f0;
-var __function_prewarm_1 = {};
-var __function_prewarm_1_PrewarmClients = {};
-var __function_prewarm_1_PrewarmClients_StepFunctions = { key: "StepFunctions", init: __f3 };
-__function_prewarm_1_PrewarmClients.StepFunctions = __function_prewarm_1_PrewarmClients_StepFunctions;
-__function_prewarm_1.PrewarmClients = __function_prewarm_1_PrewarmClients;
+var __functionPrewarm = {};
+var __functionPrewarm_PrewarmClients = {};
+var __functionPrewarm_PrewarmClients_Lambda = { key: "Lambda", init: __f3 };
+__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
+var __functionPrewarm_PrewarmClients_EventBridge = { key: "EventBridge", init: __f4 };
+__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
+var __functionPrewarm_PrewarmClients_StepFunctions = { key: "StepFunctions", init: __f5 };
+__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
+var __functionPrewarm_PrewarmClients_SecretsManager = { key: "SecretsManager", init: __f6 };
+__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
+Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f7 });
 var __preWarmContext_proto = {};
-Object.defineProperty(__f4, "prototype", { value: __preWarmContext_proto });
-Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f4 });
-Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f5 });
-Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f6 });
+Object.defineProperty(__f8, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f8 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f10 });
 var __preWarmContext = Object.create(__preWarmContext_proto);
 __preWarmContext.props = void 0;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f1.kind = "StepFunction";
 __f1.functionlessKind = "StepFunction";
-__f7.kind = "StepFunction.describeExecution";
-__f1.describeExecution = __f7;
-__f9.kind = "StepFunction.sendTaskSuccess";
-__f1.sendTaskSuccess = __f9;
-__f11.kind = "StepFunction.sendTaskFailure";
-__f1.sendTaskFailure = __f11;
-__f13.kind = "StepFunction.sendTaskHeartbeat";
-__f1.sendTaskHeartbeat = __f13;
+__f11.kind = "StepFunction.describeExecution";
+__f1.describeExecution = __f11;
+__f13.kind = "StepFunction.sendTaskSuccess";
+__f1.sendTaskSuccess = __f13;
+__f15.kind = "StepFunction.sendTaskFailure";
+__f1.sendTaskFailure = __f15;
+__f17.kind = "StepFunction.sendTaskHeartbeat";
+__f1.sendTaskHeartbeat = __f17;
 var __f1_definition = {};
 __f1_definition.StartAt = "Initialize Functionless Context";
 var __f1_definition_States = {};
@@ -13643,17 +14054,51 @@ function __f3(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/stepfunctions"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/lambda"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f4(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/eventbridge"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f5(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/stepfunctions"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f6(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/secretsmanager"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f7() {
+  return function() {
+    let PrewarmClients = __functionPrewarm_PrewarmClients;
+    return () => PrewarmClients;
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f2(__0, __1) {
   return function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
     let stateMachineArn = process.env.env__functionless0;
     return async (args, prewarmContext) => {
-      const stepFunctionsClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions);
+      const stepFunctionsClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.StepFunctions);
       const [payload] = args;
       const result = await stepFunctionsClient.startExecution({ ...payload, stateMachineArn, input: payload.input ? JSON.stringify(payload.input) : void 0 }).promise();
       return result;
@@ -13661,7 +14106,7 @@ function __f2(__0, __1) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f4(__0) {
+function __f8(__0) {
   return function() {
     return function constructor(props) {
       this.props = props;
@@ -13670,7 +14115,7 @@ function __f4(__0) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f5(__0) {
+function __f9(__0) {
   return function() {
     return function(key) {
       return this.cache[key];
@@ -13678,7 +14123,7 @@ function __f5(__0) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f6(__0) {
+function __f10(__0) {
   return function() {
     return function getOrInit(client) {
       if (!this.cache[client.key]) {
@@ -13699,55 +14144,13 @@ function __f1() {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f8(__0, __1) {
-  return function() {
-    let function_prewarm_1 = __function_prewarm_1;
-    return async (args, prewarmContext) => {
-      const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions);
-      const [arn] = args;
-      return stepFunctionClient.describeExecution({ executionArn: arn }).promise();
-    };
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
-function __f7() {
-  return function() {
-    let c = __f8;
-    let preWarmContext = __preWarmContext;
-    return function __computed(...args) {
-      return c(args, preWarmContext);
-    };
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
-function __f10(__0, __1) {
-  return function() {
-    let function_prewarm_1 = __function_prewarm_1;
-    return async (args, prewarmContext) => {
-      const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions);
-      const [taskToken, output] = args;
-      return stepFunctionClient.sendTaskSuccess({ taskToken, output: JSON.stringify(output) }).promise();
-    };
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
-function __f9() {
-  return function() {
-    let c = __f10;
-    let preWarmContext = __preWarmContext;
-    return function __computed(...args) {
-      return c(args, preWarmContext);
-    };
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
 function __f12(__0, __1) {
   return function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
     return async (args, prewarmContext) => {
-      const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions);
-      const [taskToken, error, cause] = args;
-      return stepFunctionClient.sendTaskFailure({ taskToken, error, cause }).promise();
+      const stepFunctionClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.StepFunctions);
+      const [arn] = args;
+      return stepFunctionClient.describeExecution({ executionArn: arn }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13764,11 +14167,11 @@ function __f11() {
 }
 function __f14(__0, __1) {
   return function() {
-    let function_prewarm_1 = __function_prewarm_1;
+    let _functionPrewarm = __functionPrewarm;
     return async (args, prewarmContext) => {
-      const stepFunctionClient = prewarmContext.getOrInit(function_prewarm_1.PrewarmClients.StepFunctions);
-      const [token] = args;
-      return stepFunctionClient.sendTaskHeartbeat({ taskToken: token }).promise();
+      const stepFunctionClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.StepFunctions);
+      const [taskToken, output] = args;
+      return stepFunctionClient.sendTaskSuccess({ taskToken, output: JSON.stringify(output) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13776,6 +14179,48 @@ function __f14(__0, __1) {
 function __f13() {
   return function() {
     let c = __f14;
+    let preWarmContext = __preWarmContext;
+    return function __computed(...args) {
+      return c(args, preWarmContext);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f16(__0, __1) {
+  return function() {
+    let _functionPrewarm = __functionPrewarm;
+    return async (args, prewarmContext) => {
+      const stepFunctionClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.StepFunctions);
+      const [taskToken, error, cause] = args;
+      return stepFunctionClient.sendTaskFailure({ taskToken, error, cause }).promise();
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f15() {
+  return function() {
+    let c = __f16;
+    let preWarmContext = __preWarmContext;
+    return function __computed(...args) {
+      return c(args, preWarmContext);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f18(__0, __1) {
+  return function() {
+    let _functionPrewarm = __functionPrewarm;
+    return async (args, prewarmContext) => {
+      const stepFunctionClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.StepFunctions);
+      const [token] = args;
+      return stepFunctionClient.sendTaskHeartbeat({ taskToken: token }).promise();
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f17() {
+  return function() {
+    let c = __f18;
     let preWarmContext = __preWarmContext;
     return function __computed(...args) {
       return c(args, preWarmContext);
@@ -13823,11 +14268,8 @@ exports[`serialize tableMethods delete 1`] = `
 
 var __table = {};
 var __0_table = {tableName: process.env.env__functionless0};
-var __exports = {};
-var __exports_DocumentDBClient = {key: "DynamoDB", init: __f4};
-__exports.DocumentDBClient = __exports_DocumentDBClient;
-var __exports_DynamoDBClient = {key: "DynamoDBDocument", init: __f5};
-__exports.DynamoDBClient = __exports_DynamoDBClient;
+var __DocumentDBClient = {key: "DynamoDB", init: __f4};
+var __DynamoDBClient = {key: "DynamoDBDocument", init: __f5};
 var __preWarmContext_proto = {};
 Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
@@ -13844,9 +14286,9 @@ function __f3(__0, __1) {
   return (function() {
     let table = __0_table;
     let format = "AttributeValue";
-    let typesafe_dynamodb_1 = require("typesafe-dynamodb/lib/index.js");
+    let _typesafeDynamodb = require("typesafe-dynamodb/lib/index.js");
 
-    return ((client, [request]) => { const input = { ...request !== null && request !== void 0 ? request : {}, TableName: table.tableName }; if (format === typesafe_dynamodb_1.JsonFormat.AttributeValue) {
+    return ((client, [request]) => { const input = { ...request ?? {}, TableName: table.tableName }; if (format === _typesafeDynamodb.JsonFormat.AttributeValue) {
     return client.deleteItem(input).promise();
 }
 else {
@@ -13855,20 +14297,21 @@ else {
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f4(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/dynamodb")).DocumentClient(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/dynamodb"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/dynamodb"))(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f2(__0, __1) {
   return (function() {
     let body = __f3;
     let format = "AttributeValue";
-    let json_format_1 = require("typesafe-dynamodb/lib/json-format.js");
-    let exports = __exports;
+    let _jsonFormat = require("typesafe-dynamodb/lib/json-format.js");
+    let DocumentDBClient = __DocumentDBClient;
+    let DynamoDBClient = __DynamoDBClient;
 
-    return ((params, context) => body(context.getOrInit(format === json_format_1.JsonFormat.Document ? exports.DocumentDBClient : exports.DynamoDBClient), params));;
+    return ((params, context) => body(context.getOrInit(format === _jsonFormat.JsonFormat.Document ? DocumentDBClient : DynamoDBClient), params));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f6(__0) {
   return (function() {
@@ -13906,9 +14349,9 @@ var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 
-// ../../node_modules/typesafe-dynamodb/lib/json-format.js
+// ../../../node_modules/typesafe-dynamodb/lib/json-format.js
 var require_json_format = __commonJS({
-  "../../node_modules/typesafe-dynamodb/lib/json-format.js"(exports2) {
+  "../../../node_modules/typesafe-dynamodb/lib/json-format.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.JsonFormat = void 0;
@@ -13921,9 +14364,9 @@ var require_json_format = __commonJS({
   }
 });
 
-// ../../node_modules/typesafe-dynamodb/lib/index.js
+// ../../../node_modules/typesafe-dynamodb/lib/index.js
 var require_lib = __commonJS({
-  "../../node_modules/typesafe-dynamodb/lib/index.js"(exports2) {
+  "../../../node_modules/typesafe-dynamodb/lib/index.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.JsonFormat = void 0;
@@ -13938,11 +14381,8 @@ var require_lib = __commonJS({
 exports.handler = __f0;
 var __table = {};
 var __0_table = { tableName: process.env.env__functionless0 };
-var __exports = {};
-var __exports_DocumentDBClient = { key: "DynamoDB", init: __f4 };
-__exports.DocumentDBClient = __exports_DocumentDBClient;
-var __exports_DynamoDBClient = { key: "DynamoDBDocument", init: __f5 };
-__exports.DynamoDBClient = __exports_DynamoDBClient;
+var __DocumentDBClient = { key: "DynamoDB", init: __f4 };
+var __DynamoDBClient = { key: "DynamoDBDocument", init: __f5 };
 var __preWarmContext_proto = {};
 Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
@@ -13959,10 +14399,10 @@ function __f3(__0, __1) {
   return function() {
     let table = __0_table;
     let format = "AttributeValue";
-    let typesafe_dynamodb_1 = require_lib();
+    let _typesafeDynamodb = require_lib();
     return (client, [request]) => {
-      const input = { ...request !== null && request !== void 0 ? request : {}, TableName: table.tableName };
-      if (format === typesafe_dynamodb_1.JsonFormat.AttributeValue) {
+      const input = { ...request ?? {}, TableName: table.tableName };
+      if (format === _typesafeDynamodb.JsonFormat.AttributeValue) {
         return client.deleteItem(input).promise();
       } else {
         return client.delete(input).promise();
@@ -13975,7 +14415,7 @@ function __f4(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13984,7 +14424,7 @@ function __f5(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/dynamodb"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/dynamodb"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -13993,9 +14433,10 @@ function __f2(__0, __1) {
   return function() {
     let body = __f3;
     let format = "AttributeValue";
-    let json_format_1 = require_json_format();
-    let exports2 = __exports;
-    return (params, context) => body(context.getOrInit(format === json_format_1.JsonFormat.Document ? exports2.DocumentDBClient : exports2.DynamoDBClient), params);
+    let _jsonFormat = require_json_format();
+    let DocumentDBClient = __DocumentDBClient;
+    let DynamoDBClient = __DynamoDBClient;
+    return (params, context) => body(context.getOrInit(format === _jsonFormat.JsonFormat.Document ? DocumentDBClient : DynamoDBClient), params);
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
@@ -14054,11 +14495,8 @@ exports[`serialize tableMethods get 1`] = `
 
 var __table = {};
 var __0_table = {tableName: process.env.env__functionless0};
-var __exports = {};
-var __exports_DocumentDBClient = {key: "DynamoDB", init: __f4};
-__exports.DocumentDBClient = __exports_DocumentDBClient;
-var __exports_DynamoDBClient = {key: "DynamoDBDocument", init: __f5};
-__exports.DynamoDBClient = __exports_DynamoDBClient;
+var __DocumentDBClient = {key: "DynamoDB", init: __f4};
+var __DynamoDBClient = {key: "DynamoDBDocument", init: __f5};
 var __preWarmContext_proto = {};
 Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
@@ -14075,9 +14513,9 @@ function __f3(__0, __1) {
   return (function() {
     let table = __0_table;
     let format = "AttributeValue";
-    let json_format_1 = require("typesafe-dynamodb/lib/json-format.js");
+    let _jsonFormat = require("typesafe-dynamodb/lib/json-format.js");
 
-    return ((client, [request]) => { const input = { ...request, TableName: table.tableName }; if (format === json_format_1.JsonFormat.AttributeValue) {
+    return ((client, [request]) => { const input = { ...request, TableName: table.tableName }; if (format === _jsonFormat.JsonFormat.AttributeValue) {
     return client.getItem(input).promise();
 }
 else {
@@ -14086,20 +14524,21 @@ else {
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f4(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/dynamodb")).DocumentClient(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/dynamodb"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/dynamodb"))(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f2(__0, __1) {
   return (function() {
     let body = __f3;
     let format = "AttributeValue";
-    let json_format_1 = require("typesafe-dynamodb/lib/json-format.js");
-    let exports = __exports;
+    let _jsonFormat = require("typesafe-dynamodb/lib/json-format.js");
+    let DocumentDBClient = __DocumentDBClient;
+    let DynamoDBClient = __DynamoDBClient;
 
-    return ((params, context) => body(context.getOrInit(format === json_format_1.JsonFormat.Document ? exports.DocumentDBClient : exports.DynamoDBClient), params));;
+    return ((params, context) => body(context.getOrInit(format === _jsonFormat.JsonFormat.Document ? DocumentDBClient : DynamoDBClient), params));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f6(__0) {
   return (function() {
@@ -14137,9 +14576,9 @@ var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 
-// ../../node_modules/typesafe-dynamodb/lib/json-format.js
+// ../../../node_modules/typesafe-dynamodb/lib/json-format.js
 var require_json_format = __commonJS({
-  "../../node_modules/typesafe-dynamodb/lib/json-format.js"(exports2) {
+  "../../../node_modules/typesafe-dynamodb/lib/json-format.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.JsonFormat = void 0;
@@ -14156,11 +14595,8 @@ var require_json_format = __commonJS({
 exports.handler = __f0;
 var __table = {};
 var __0_table = { tableName: process.env.env__functionless0 };
-var __exports = {};
-var __exports_DocumentDBClient = { key: "DynamoDB", init: __f4 };
-__exports.DocumentDBClient = __exports_DocumentDBClient;
-var __exports_DynamoDBClient = { key: "DynamoDBDocument", init: __f5 };
-__exports.DynamoDBClient = __exports_DynamoDBClient;
+var __DocumentDBClient = { key: "DynamoDB", init: __f4 };
+var __DynamoDBClient = { key: "DynamoDBDocument", init: __f5 };
 var __preWarmContext_proto = {};
 Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
@@ -14177,10 +14613,10 @@ function __f3(__0, __1) {
   return function() {
     let table = __0_table;
     let format = "AttributeValue";
-    let json_format_1 = require_json_format();
+    let _jsonFormat = require_json_format();
     return (client, [request]) => {
       const input = { ...request, TableName: table.tableName };
-      if (format === json_format_1.JsonFormat.AttributeValue) {
+      if (format === _jsonFormat.JsonFormat.AttributeValue) {
         return client.getItem(input).promise();
       } else {
         return client.get(input).promise();
@@ -14193,7 +14629,7 @@ function __f4(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14202,7 +14638,7 @@ function __f5(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/dynamodb"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/dynamodb"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14211,9 +14647,10 @@ function __f2(__0, __1) {
   return function() {
     let body = __f3;
     let format = "AttributeValue";
-    let json_format_1 = require_json_format();
-    let exports2 = __exports;
-    return (params, context) => body(context.getOrInit(format === json_format_1.JsonFormat.Document ? exports2.DocumentDBClient : exports2.DynamoDBClient), params);
+    let _jsonFormat = require_json_format();
+    let DocumentDBClient = __DocumentDBClient;
+    let DynamoDBClient = __DynamoDBClient;
+    return (params, context) => body(context.getOrInit(format === _jsonFormat.JsonFormat.Document ? DocumentDBClient : DynamoDBClient), params);
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
@@ -14271,11 +14708,8 @@ exports[`serialize tableMethods get referenced 1`] = `
 "exports.handler = __f0;
 
 var __table = {tableName: process.env.env__functionless0};
-var __exports = {};
-var __exports_DocumentDBClient = {key: "DynamoDB", init: __f4};
-__exports.DocumentDBClient = __exports_DocumentDBClient;
-var __exports_DynamoDBClient = {key: "DynamoDBDocument", init: __f5};
-__exports.DynamoDBClient = __exports_DynamoDBClient;
+var __DocumentDBClient = {key: "DynamoDB", init: __f4};
+var __DynamoDBClient = {key: "DynamoDBDocument", init: __f5};
 var __preWarmContext_proto = {};
 Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
@@ -14290,9 +14724,9 @@ function __f3(__0, __1) {
   return (function() {
     let table = __table;
     let format = "AttributeValue";
-    let json_format_1 = require("typesafe-dynamodb/lib/json-format.js");
+    let _jsonFormat = require("typesafe-dynamodb/lib/json-format.js");
 
-    return ((client, [request]) => { const input = { ...request, TableName: table.tableName }; if (format === json_format_1.JsonFormat.AttributeValue) {
+    return ((client, [request]) => { const input = { ...request, TableName: table.tableName }; if (format === _jsonFormat.JsonFormat.AttributeValue) {
     return client.getItem(input).promise();
 }
 else {
@@ -14301,20 +14735,21 @@ else {
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f4(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/dynamodb")).DocumentClient(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/dynamodb"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/dynamodb"))(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f2(__0, __1) {
   return (function() {
     let body = __f3;
     let format = "AttributeValue";
-    let json_format_1 = require("typesafe-dynamodb/lib/json-format.js");
-    let exports = __exports;
+    let _jsonFormat = require("typesafe-dynamodb/lib/json-format.js");
+    let DocumentDBClient = __DocumentDBClient;
+    let DynamoDBClient = __DynamoDBClient;
 
-    return ((params, context) => body(context.getOrInit(format === json_format_1.JsonFormat.Document ? exports.DocumentDBClient : exports.DynamoDBClient), params));;
+    return ((params, context) => body(context.getOrInit(format === _jsonFormat.JsonFormat.Document ? DocumentDBClient : DynamoDBClient), params));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f6(__0) {
   return (function() {
@@ -14352,9 +14787,9 @@ var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 
-// ../../node_modules/typesafe-dynamodb/lib/json-format.js
+// ../../../node_modules/typesafe-dynamodb/lib/json-format.js
 var require_json_format = __commonJS({
-  "../../node_modules/typesafe-dynamodb/lib/json-format.js"(exports2) {
+  "../../../node_modules/typesafe-dynamodb/lib/json-format.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.JsonFormat = void 0;
@@ -14370,11 +14805,8 @@ var require_json_format = __commonJS({
 // <stdin>
 exports.handler = __f0;
 var __table = { tableName: process.env.env__functionless0 };
-var __exports = {};
-var __exports_DocumentDBClient = { key: "DynamoDB", init: __f4 };
-__exports.DocumentDBClient = __exports_DocumentDBClient;
-var __exports_DynamoDBClient = { key: "DynamoDBDocument", init: __f5 };
-__exports.DynamoDBClient = __exports_DynamoDBClient;
+var __DocumentDBClient = { key: "DynamoDB", init: __f4 };
+var __DynamoDBClient = { key: "DynamoDBDocument", init: __f5 };
 var __preWarmContext_proto = {};
 Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
@@ -14389,10 +14821,10 @@ function __f3(__0, __1) {
   return function() {
     let table = __table;
     let format = "AttributeValue";
-    let json_format_1 = require_json_format();
+    let _jsonFormat = require_json_format();
     return (client, [request]) => {
       const input = { ...request, TableName: table.tableName };
-      if (format === json_format_1.JsonFormat.AttributeValue) {
+      if (format === _jsonFormat.JsonFormat.AttributeValue) {
         return client.getItem(input).promise();
       } else {
         return client.get(input).promise();
@@ -14405,7 +14837,7 @@ function __f4(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14414,7 +14846,7 @@ function __f5(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/dynamodb"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/dynamodb"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14423,9 +14855,10 @@ function __f2(__0, __1) {
   return function() {
     let body = __f3;
     let format = "AttributeValue";
-    let json_format_1 = require_json_format();
-    let exports2 = __exports;
-    return (params, context) => body(context.getOrInit(format === json_format_1.JsonFormat.Document ? exports2.DocumentDBClient : exports2.DynamoDBClient), params);
+    let _jsonFormat = require_json_format();
+    let DocumentDBClient = __DocumentDBClient;
+    let DynamoDBClient = __DynamoDBClient;
+    return (params, context) => body(context.getOrInit(format === _jsonFormat.JsonFormat.Document ? DocumentDBClient : DynamoDBClient), params);
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
@@ -14484,11 +14917,8 @@ exports[`serialize tableMethods put 1`] = `
 
 var __table = {};
 var __0_table = {tableName: process.env.env__functionless0};
-var __exports = {};
-var __exports_DocumentDBClient = {key: "DynamoDB", init: __f4};
-__exports.DocumentDBClient = __exports_DocumentDBClient;
-var __exports_DynamoDBClient = {key: "DynamoDBDocument", init: __f5};
-__exports.DynamoDBClient = __exports_DynamoDBClient;
+var __DocumentDBClient = {key: "DynamoDB", init: __f4};
+var __DynamoDBClient = {key: "DynamoDBDocument", init: __f5};
 var __preWarmContext_proto = {};
 Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
@@ -14505,9 +14935,9 @@ function __f3(__0, __1) {
   return (function() {
     let table = __0_table;
     let format = "AttributeValue";
-    let json_format_1 = require("typesafe-dynamodb/lib/json-format.js");
+    let _jsonFormat = require("typesafe-dynamodb/lib/json-format.js");
 
-    return ((client, [request]) => { const input = { ...request, TableName: table.tableName }; if (format === json_format_1.JsonFormat.AttributeValue) {
+    return ((client, [request]) => { const input = { ...request, TableName: table.tableName }; if (format === _jsonFormat.JsonFormat.AttributeValue) {
     return client.putItem(input).promise();
 }
 else {
@@ -14516,20 +14946,21 @@ else {
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f4(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/dynamodb")).DocumentClient(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/dynamodb"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/dynamodb"))(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f2(__0, __1) {
   return (function() {
     let body = __f3;
     let format = "AttributeValue";
-    let json_format_1 = require("typesafe-dynamodb/lib/json-format.js");
-    let exports = __exports;
+    let _jsonFormat = require("typesafe-dynamodb/lib/json-format.js");
+    let DocumentDBClient = __DocumentDBClient;
+    let DynamoDBClient = __DynamoDBClient;
 
-    return ((params, context) => body(context.getOrInit(format === json_format_1.JsonFormat.Document ? exports.DocumentDBClient : exports.DynamoDBClient), params));;
+    return ((params, context) => body(context.getOrInit(format === _jsonFormat.JsonFormat.Document ? DocumentDBClient : DynamoDBClient), params));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f6(__0) {
   return (function() {
@@ -14567,9 +14998,9 @@ var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 
-// ../../node_modules/typesafe-dynamodb/lib/json-format.js
+// ../../../node_modules/typesafe-dynamodb/lib/json-format.js
 var require_json_format = __commonJS({
-  "../../node_modules/typesafe-dynamodb/lib/json-format.js"(exports2) {
+  "../../../node_modules/typesafe-dynamodb/lib/json-format.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.JsonFormat = void 0;
@@ -14586,11 +15017,8 @@ var require_json_format = __commonJS({
 exports.handler = __f0;
 var __table = {};
 var __0_table = { tableName: process.env.env__functionless0 };
-var __exports = {};
-var __exports_DocumentDBClient = { key: "DynamoDB", init: __f4 };
-__exports.DocumentDBClient = __exports_DocumentDBClient;
-var __exports_DynamoDBClient = { key: "DynamoDBDocument", init: __f5 };
-__exports.DynamoDBClient = __exports_DynamoDBClient;
+var __DocumentDBClient = { key: "DynamoDB", init: __f4 };
+var __DynamoDBClient = { key: "DynamoDBDocument", init: __f5 };
 var __preWarmContext_proto = {};
 Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
@@ -14607,10 +15035,10 @@ function __f3(__0, __1) {
   return function() {
     let table = __0_table;
     let format = "AttributeValue";
-    let json_format_1 = require_json_format();
+    let _jsonFormat = require_json_format();
     return (client, [request]) => {
       const input = { ...request, TableName: table.tableName };
-      if (format === json_format_1.JsonFormat.AttributeValue) {
+      if (format === _jsonFormat.JsonFormat.AttributeValue) {
         return client.putItem(input).promise();
       } else {
         return client.put(input).promise();
@@ -14623,7 +15051,7 @@ function __f4(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14632,7 +15060,7 @@ function __f5(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/dynamodb"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/dynamodb"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14641,9 +15069,10 @@ function __f2(__0, __1) {
   return function() {
     let body = __f3;
     let format = "AttributeValue";
-    let json_format_1 = require_json_format();
-    let exports2 = __exports;
-    return (params, context) => body(context.getOrInit(format === json_format_1.JsonFormat.Document ? exports2.DocumentDBClient : exports2.DynamoDBClient), params);
+    let _jsonFormat = require_json_format();
+    let DocumentDBClient = __DocumentDBClient;
+    let DynamoDBClient = __DynamoDBClient;
+    return (params, context) => body(context.getOrInit(format === _jsonFormat.JsonFormat.Document ? DocumentDBClient : DynamoDBClient), params);
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
@@ -14702,11 +15131,8 @@ exports[`serialize tableMethods put 3`] = `
 
 var __table = {};
 var __0_table = {tableName: process.env.env__functionless0};
-var __exports = {};
-var __exports_DocumentDBClient = {key: "DynamoDB", init: __f4};
-__exports.DocumentDBClient = __exports_DocumentDBClient;
-var __exports_DynamoDBClient = {key: "DynamoDBDocument", init: __f5};
-__exports.DynamoDBClient = __exports_DynamoDBClient;
+var __DocumentDBClient = {key: "DynamoDB", init: __f4};
+var __DynamoDBClient = {key: "DynamoDBDocument", init: __f5};
 var __preWarmContext_proto = {};
 Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
@@ -14723,9 +15149,9 @@ function __f3(__0, __1) {
   return (function() {
     let table = __0_table;
     let format = "AttributeValue";
-    let typesafe_dynamodb_1 = require("typesafe-dynamodb/lib/index.js");
+    let _typesafeDynamodb = require("typesafe-dynamodb/lib/index.js");
 
-    return ((client, [request]) => { const input = { ...request !== null && request !== void 0 ? request : {}, TableName: table.tableName }; if (format === typesafe_dynamodb_1.JsonFormat.AttributeValue) {
+    return ((client, [request]) => { const input = { ...request ?? {}, TableName: table.tableName }; if (format === _typesafeDynamodb.JsonFormat.AttributeValue) {
     return client.updateItem(input).promise();
 }
 else {
@@ -14734,20 +15160,21 @@ else {
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f4(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/dynamodb")).DocumentClient(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/dynamodb"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/dynamodb"))(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f2(__0, __1) {
   return (function() {
     let body = __f3;
     let format = "AttributeValue";
-    let json_format_1 = require("typesafe-dynamodb/lib/json-format.js");
-    let exports = __exports;
+    let _jsonFormat = require("typesafe-dynamodb/lib/json-format.js");
+    let DocumentDBClient = __DocumentDBClient;
+    let DynamoDBClient = __DynamoDBClient;
 
-    return ((params, context) => body(context.getOrInit(format === json_format_1.JsonFormat.Document ? exports.DocumentDBClient : exports.DynamoDBClient), params));;
+    return ((params, context) => body(context.getOrInit(format === _jsonFormat.JsonFormat.Document ? DocumentDBClient : DynamoDBClient), params));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f6(__0) {
   return (function() {
@@ -14785,9 +15212,9 @@ var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 
-// ../../node_modules/typesafe-dynamodb/lib/json-format.js
+// ../../../node_modules/typesafe-dynamodb/lib/json-format.js
 var require_json_format = __commonJS({
-  "../../node_modules/typesafe-dynamodb/lib/json-format.js"(exports2) {
+  "../../../node_modules/typesafe-dynamodb/lib/json-format.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.JsonFormat = void 0;
@@ -14800,9 +15227,9 @@ var require_json_format = __commonJS({
   }
 });
 
-// ../../node_modules/typesafe-dynamodb/lib/index.js
+// ../../../node_modules/typesafe-dynamodb/lib/index.js
 var require_lib = __commonJS({
-  "../../node_modules/typesafe-dynamodb/lib/index.js"(exports2) {
+  "../../../node_modules/typesafe-dynamodb/lib/index.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.JsonFormat = void 0;
@@ -14817,11 +15244,8 @@ var require_lib = __commonJS({
 exports.handler = __f0;
 var __table = {};
 var __0_table = { tableName: process.env.env__functionless0 };
-var __exports = {};
-var __exports_DocumentDBClient = { key: "DynamoDB", init: __f4 };
-__exports.DocumentDBClient = __exports_DocumentDBClient;
-var __exports_DynamoDBClient = { key: "DynamoDBDocument", init: __f5 };
-__exports.DynamoDBClient = __exports_DynamoDBClient;
+var __DocumentDBClient = { key: "DynamoDB", init: __f4 };
+var __DynamoDBClient = { key: "DynamoDBDocument", init: __f5 };
 var __preWarmContext_proto = {};
 Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
@@ -14838,10 +15262,10 @@ function __f3(__0, __1) {
   return function() {
     let table = __0_table;
     let format = "AttributeValue";
-    let typesafe_dynamodb_1 = require_lib();
+    let _typesafeDynamodb = require_lib();
     return (client, [request]) => {
-      const input = { ...request !== null && request !== void 0 ? request : {}, TableName: table.tableName };
-      if (format === typesafe_dynamodb_1.JsonFormat.AttributeValue) {
+      const input = { ...request ?? {}, TableName: table.tableName };
+      if (format === _typesafeDynamodb.JsonFormat.AttributeValue) {
         return client.updateItem(input).promise();
       } else {
         return client.update(input).promise();
@@ -14854,7 +15278,7 @@ function __f4(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14863,7 +15287,7 @@ function __f5(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/dynamodb"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/dynamodb"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -14872,9 +15296,10 @@ function __f2(__0, __1) {
   return function() {
     let body = __f3;
     let format = "AttributeValue";
-    let json_format_1 = require_json_format();
-    let exports2 = __exports;
-    return (params, context) => body(context.getOrInit(format === json_format_1.JsonFormat.Document ? exports2.DocumentDBClient : exports2.DynamoDBClient), params);
+    let _jsonFormat = require_json_format();
+    let DocumentDBClient = __DocumentDBClient;
+    let DynamoDBClient = __DynamoDBClient;
+    return (params, context) => body(context.getOrInit(format === _jsonFormat.JsonFormat.Document ? DocumentDBClient : DynamoDBClient), params);
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
@@ -14932,11 +15357,8 @@ exports[`serialize tableMethods query 1`] = `
 "exports.handler = __f0;
 
 var __0_table = {tableName: process.env.env__functionless0};
-var __exports = {};
-var __exports_DocumentDBClient = {key: "DynamoDB", init: __f4};
-__exports.DocumentDBClient = __exports_DocumentDBClient;
-var __exports_DynamoDBClient = {key: "DynamoDBDocument", init: __f5};
-__exports.DynamoDBClient = __exports_DynamoDBClient;
+var __DocumentDBClient = {key: "DynamoDB", init: __f4};
+var __DynamoDBClient = {key: "DynamoDBDocument", init: __f5};
 var __preWarmContext_proto = {};
 Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
@@ -14952,24 +15374,25 @@ function __f3(__0, __1) {
   return (function() {
     let table = __0_table;
 
-    return ((client, [request]) => { var _a; return client.query({ ...(_a = request) !== null && _a !== void 0 ? _a : {}, TableName: table.tableName }).promise(); });;
+    return ((client, [request]) => { return client.query({ ...request ?? {}, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f4(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/dynamodb")).DocumentClient(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/dynamodb"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/dynamodb"))(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f2(__0, __1) {
   return (function() {
     let body = __f3;
     let format = "Document";
-    let json_format_1 = require("typesafe-dynamodb/lib/json-format.js");
-    let exports = __exports;
+    let _jsonFormat = require("typesafe-dynamodb/lib/json-format.js");
+    let DocumentDBClient = __DocumentDBClient;
+    let DynamoDBClient = __DynamoDBClient;
 
-    return ((params, context) => body(context.getOrInit(format === json_format_1.JsonFormat.Document ? exports.DocumentDBClient : exports.DynamoDBClient), params));;
+    return ((params, context) => body(context.getOrInit(format === _jsonFormat.JsonFormat.Document ? DocumentDBClient : DynamoDBClient), params));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f6(__0) {
   return (function() {
@@ -15007,9 +15430,9 @@ var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 
-// ../../node_modules/typesafe-dynamodb/lib/json-format.js
+// ../../../node_modules/typesafe-dynamodb/lib/json-format.js
 var require_json_format = __commonJS({
-  "../../node_modules/typesafe-dynamodb/lib/json-format.js"(exports2) {
+  "../../../node_modules/typesafe-dynamodb/lib/json-format.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.JsonFormat = void 0;
@@ -15025,11 +15448,8 @@ var require_json_format = __commonJS({
 // <stdin>
 exports.handler = __f0;
 var __0_table = { tableName: process.env.env__functionless0 };
-var __exports = {};
-var __exports_DocumentDBClient = { key: "DynamoDB", init: __f4 };
-__exports.DocumentDBClient = __exports_DocumentDBClient;
-var __exports_DynamoDBClient = { key: "DynamoDBDocument", init: __f5 };
-__exports.DynamoDBClient = __exports_DynamoDBClient;
+var __DocumentDBClient = { key: "DynamoDB", init: __f4 };
+var __DynamoDBClient = { key: "DynamoDBDocument", init: __f5 };
 var __preWarmContext_proto = {};
 Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
@@ -15045,8 +15465,7 @@ function __f3(__0, __1) {
   return function() {
     let table = __0_table;
     return (client, [request]) => {
-      var _a;
-      return client.query({ ...(_a = request) !== null && _a !== void 0 ? _a : {}, TableName: table.tableName }).promise();
+      return client.query({ ...request ?? {}, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15055,7 +15474,7 @@ function __f4(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15064,7 +15483,7 @@ function __f5(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/dynamodb"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/dynamodb"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15073,9 +15492,10 @@ function __f2(__0, __1) {
   return function() {
     let body = __f3;
     let format = "Document";
-    let json_format_1 = require_json_format();
-    let exports2 = __exports;
-    return (params, context) => body(context.getOrInit(format === json_format_1.JsonFormat.Document ? exports2.DocumentDBClient : exports2.DynamoDBClient), params);
+    let _jsonFormat = require_json_format();
+    let DocumentDBClient = __DocumentDBClient;
+    let DynamoDBClient = __DynamoDBClient;
+    return (params, context) => body(context.getOrInit(format === _jsonFormat.JsonFormat.Document ? DocumentDBClient : DynamoDBClient), params);
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
@@ -15134,11 +15554,8 @@ exports[`serialize tableMethods scan 1`] = `
 
 var __table = {};
 var __0_table = {tableName: process.env.env__functionless0};
-var __exports = {};
-var __exports_DocumentDBClient = {key: "DynamoDB", init: __f4};
-__exports.DocumentDBClient = __exports_DocumentDBClient;
-var __exports_DynamoDBClient = {key: "DynamoDBDocument", init: __f5};
-__exports.DynamoDBClient = __exports_DynamoDBClient;
+var __DocumentDBClient = {key: "DynamoDB", init: __f4};
+var __DynamoDBClient = {key: "DynamoDBDocument", init: __f5};
 var __preWarmContext_proto = {};
 Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
@@ -15155,24 +15572,25 @@ function __f3(__0, __1) {
   return (function() {
     let table = __0_table;
 
-    return ((client, [request]) => { var _a; return client.scan({ ...(_a = request) !== null && _a !== void 0 ? _a : {}, TableName: table.tableName }).promise(); });;
+    return ((client, [request]) => { return client.scan({ ...request ?? {}, TableName: table.tableName }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f4(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/dynamodb")).DocumentClient(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0, __1) {
   return (function() {
-    return ((key, props) => { var _a; return new (require("aws-sdk/clients/dynamodb"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+    return ((key, props) => new (require("aws-sdk/clients/dynamodb"))(props?.clientConfigRetriever?.(key)));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f2(__0, __1) {
   return (function() {
     let body = __f3;
     let format = "AttributeValue";
-    let json_format_1 = require("typesafe-dynamodb/lib/json-format.js");
-    let exports = __exports;
+    let _jsonFormat = require("typesafe-dynamodb/lib/json-format.js");
+    let DocumentDBClient = __DocumentDBClient;
+    let DynamoDBClient = __DynamoDBClient;
 
-    return ((params, context) => body(context.getOrInit(format === json_format_1.JsonFormat.Document ? exports.DocumentDBClient : exports.DynamoDBClient), params));;
+    return ((params, context) => body(context.getOrInit(format === _jsonFormat.JsonFormat.Document ? DocumentDBClient : DynamoDBClient), params));;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f6(__0) {
   return (function() {
@@ -15210,9 +15628,9 @@ var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 
-// ../../node_modules/typesafe-dynamodb/lib/json-format.js
+// ../../../node_modules/typesafe-dynamodb/lib/json-format.js
 var require_json_format = __commonJS({
-  "../../node_modules/typesafe-dynamodb/lib/json-format.js"(exports2) {
+  "../../../node_modules/typesafe-dynamodb/lib/json-format.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", { value: true });
     exports2.JsonFormat = void 0;
@@ -15229,11 +15647,8 @@ var require_json_format = __commonJS({
 exports.handler = __f0;
 var __table = {};
 var __0_table = { tableName: process.env.env__functionless0 };
-var __exports = {};
-var __exports_DocumentDBClient = { key: "DynamoDB", init: __f4 };
-__exports.DocumentDBClient = __exports_DocumentDBClient;
-var __exports_DynamoDBClient = { key: "DynamoDBDocument", init: __f5 };
-__exports.DynamoDBClient = __exports_DynamoDBClient;
+var __DocumentDBClient = { key: "DynamoDB", init: __f4 };
+var __DynamoDBClient = { key: "DynamoDBDocument", init: __f5 };
 var __preWarmContext_proto = {};
 Object.defineProperty(__f6, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f6 });
@@ -15250,8 +15665,7 @@ function __f3(__0, __1) {
   return function() {
     let table = __0_table;
     return (client, [request]) => {
-      var _a;
-      return client.scan({ ...(_a = request) !== null && _a !== void 0 ? _a : {}, TableName: table.tableName }).promise();
+      return client.scan({ ...request ?? {}, TableName: table.tableName }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15260,7 +15674,7 @@ function __f4(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/dynamodb")).DocumentClient((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15269,7 +15683,7 @@ function __f5(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/dynamodb"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/dynamodb"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15278,9 +15692,10 @@ function __f2(__0, __1) {
   return function() {
     let body = __f3;
     let format = "AttributeValue";
-    let json_format_1 = require_json_format();
-    let exports2 = __exports;
-    return (params, context) => body(context.getOrInit(format === json_format_1.JsonFormat.Document ? exports2.DocumentDBClient : exports2.DynamoDBClient), params);
+    let _jsonFormat = require_json_format();
+    let DocumentDBClient = __DocumentDBClient;
+    let DynamoDBClient = __DynamoDBClient;
+    return (params, context) => body(context.getOrInit(format === _jsonFormat.JsonFormat.Document ? DocumentDBClient : DynamoDBClient), params);
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
@@ -15351,9 +15766,9 @@ var __commonJS = (cb, mod) => function __require() {
   return mod || (0, cb[__getOwnPropNames(cb)[0]])((mod = { exports: {} }).exports, mod), mod.exports;
 };
 
-// ../../node_modules/uuid/dist/rng.js
+// ../../../node_modules/uuid/dist/rng.js
 var require_rng = __commonJS({
-  "../../node_modules/uuid/dist/rng.js"(exports2) {
+  "../../../node_modules/uuid/dist/rng.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
@@ -15375,9 +15790,9 @@ var require_rng = __commonJS({
   }
 });
 
-// ../../node_modules/uuid/dist/regex.js
+// ../../../node_modules/uuid/dist/regex.js
 var require_regex = __commonJS({
-  "../../node_modules/uuid/dist/regex.js"(exports2) {
+  "../../../node_modules/uuid/dist/regex.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
@@ -15388,9 +15803,9 @@ var require_regex = __commonJS({
   }
 });
 
-// ../../node_modules/uuid/dist/validate.js
+// ../../../node_modules/uuid/dist/validate.js
 var require_validate = __commonJS({
-  "../../node_modules/uuid/dist/validate.js"(exports2) {
+  "../../../node_modules/uuid/dist/validate.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
@@ -15408,9 +15823,9 @@ var require_validate = __commonJS({
   }
 });
 
-// ../../node_modules/uuid/dist/stringify.js
+// ../../../node_modules/uuid/dist/stringify.js
 var require_stringify = __commonJS({
-  "../../node_modules/uuid/dist/stringify.js"(exports2) {
+  "../../../node_modules/uuid/dist/stringify.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
@@ -15436,9 +15851,9 @@ var require_stringify = __commonJS({
   }
 });
 
-// ../../node_modules/uuid/dist/v1.js
+// ../../../node_modules/uuid/dist/v1.js
 var require_v1 = __commonJS({
-  "../../node_modules/uuid/dist/v1.js"(exports2) {
+  "../../../node_modules/uuid/dist/v1.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
@@ -15506,9 +15921,9 @@ var require_v1 = __commonJS({
   }
 });
 
-// ../../node_modules/uuid/dist/parse.js
+// ../../../node_modules/uuid/dist/parse.js
 var require_parse = __commonJS({
-  "../../node_modules/uuid/dist/parse.js"(exports2) {
+  "../../../node_modules/uuid/dist/parse.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
@@ -15547,9 +15962,9 @@ var require_parse = __commonJS({
   }
 });
 
-// ../../node_modules/uuid/dist/v35.js
+// ../../../node_modules/uuid/dist/v35.js
 var require_v35 = __commonJS({
-  "../../node_modules/uuid/dist/v35.js"(exports2) {
+  "../../../node_modules/uuid/dist/v35.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
@@ -15610,9 +16025,9 @@ var require_v35 = __commonJS({
   }
 });
 
-// ../../node_modules/uuid/dist/md5.js
+// ../../../node_modules/uuid/dist/md5.js
 var require_md5 = __commonJS({
-  "../../node_modules/uuid/dist/md5.js"(exports2) {
+  "../../../node_modules/uuid/dist/md5.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
@@ -15635,9 +16050,9 @@ var require_md5 = __commonJS({
   }
 });
 
-// ../../node_modules/uuid/dist/v3.js
+// ../../../node_modules/uuid/dist/v3.js
 var require_v3 = __commonJS({
-  "../../node_modules/uuid/dist/v3.js"(exports2) {
+  "../../../node_modules/uuid/dist/v3.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
@@ -15654,9 +16069,9 @@ var require_v3 = __commonJS({
   }
 });
 
-// ../../node_modules/uuid/dist/v4.js
+// ../../../node_modules/uuid/dist/v4.js
 var require_v4 = __commonJS({
-  "../../node_modules/uuid/dist/v4.js"(exports2) {
+  "../../../node_modules/uuid/dist/v4.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
@@ -15686,9 +16101,9 @@ var require_v4 = __commonJS({
   }
 });
 
-// ../../node_modules/uuid/dist/sha1.js
+// ../../../node_modules/uuid/dist/sha1.js
 var require_sha1 = __commonJS({
-  "../../node_modules/uuid/dist/sha1.js"(exports2) {
+  "../../../node_modules/uuid/dist/sha1.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
@@ -15711,9 +16126,9 @@ var require_sha1 = __commonJS({
   }
 });
 
-// ../../node_modules/uuid/dist/v5.js
+// ../../../node_modules/uuid/dist/v5.js
 var require_v5 = __commonJS({
-  "../../node_modules/uuid/dist/v5.js"(exports2) {
+  "../../../node_modules/uuid/dist/v5.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
@@ -15730,9 +16145,9 @@ var require_v5 = __commonJS({
   }
 });
 
-// ../../node_modules/uuid/dist/nil.js
+// ../../../node_modules/uuid/dist/nil.js
 var require_nil = __commonJS({
-  "../../node_modules/uuid/dist/nil.js"(exports2) {
+  "../../../node_modules/uuid/dist/nil.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
@@ -15743,9 +16158,9 @@ var require_nil = __commonJS({
   }
 });
 
-// ../../node_modules/uuid/dist/version.js
+// ../../../node_modules/uuid/dist/version.js
 var require_version = __commonJS({
-  "../../node_modules/uuid/dist/version.js"(exports2) {
+  "../../../node_modules/uuid/dist/version.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
@@ -15766,9 +16181,9 @@ var require_version = __commonJS({
   }
 });
 
-// ../../node_modules/uuid/dist/index.js
+// ../../../node_modules/uuid/dist/index.js
 var require_dist = __commonJS({
-  "../../node_modules/uuid/dist/index.js"(exports2) {
+  "../../../node_modules/uuid/dist/index.js"(exports2) {
     "use strict";
     Object.defineProperty(exports2, "__esModule", {
       value: true
