@@ -53,4 +53,4 @@ packages/*/lib
 !/.git/hooks/pre-commit
 !/.github/workflows/close.yml
 .turbo
-lib/
+lib
