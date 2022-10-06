@@ -1,6 +1,5 @@
 {
   "name": "@functionless/aws-util",
-  "private": true,
   "version": "0.0.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
@@ -17,5 +16,8 @@
   },
   "files": [
     "lib"
-  ]
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
 }
