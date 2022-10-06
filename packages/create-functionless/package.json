@@ -10,6 +10,7 @@
     "create-functionless": "./dist/index.js"
   },
   "scripts": {
+    "build": "esbuild --bundle src/index.ts --outfile=dist/index.js --platform=node",
     "test": "./bin/test.sh",
     "test:experimental": "./bin/test-devx.sh",
     "test:npm": "./bin/test-npm.sh",

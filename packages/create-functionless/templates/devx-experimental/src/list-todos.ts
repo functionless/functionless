@@ -1,4 +1,4 @@
-import { Function } from "@functionless/aws";
+import { LambdaFunction } from "@functionless/aws";
 
 import { AppTable } from "./table";
 
@@ -9,9 +9,7 @@ export default LambdaFunction(async (event: {}) => {
       "#pk": "pk",
     },
     ExpressionAttributeValues: {
-      ":pk": {
-        S: "todo",
-      },
+      ":pk": "todo",
     },
   });
 
