@@ -9,11 +9,6 @@ CWD=$(pwd)
 PACKAGE_NAME="create-functionless"
 PACKED_NAME="${PACKAGE_NAME}.tgz"
 
-npm run release
-npm pack
-mv ${PACKAGE_NAME}-*.tgz ${PACKED_NAME}
-npm i -g ${PACKED_NAME}
-
 mkdir -p .test
 
 function test_case() {
