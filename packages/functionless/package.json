@@ -1,6 +1,6 @@
 {
   "name": "functionless",
-  "version": "0.25.0",
+  "version": "0.24.5",
   "dependencies": {
     "@functionless/ast": "^0.0.0",
     "@functionless/ast-reflection": "^0.3.2",
@@ -8,5 +8,8 @@
     "@functionless/fl-exp": "^0.0.0",
     "@functionless/language-service": "^0.0.4",
     "@functionless/register": "^0.0.0"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

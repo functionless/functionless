@@ -10,13 +10,13 @@
   "exclude": ["lib", "test", "node_modules"],
   "references": [
     {
-      "path": "../../@functionless/ast"
+      "path": "../ast"
     },
     {
-      "path": "../../@functionless/aws"
+      "path": "../aws"
     },
     {
-      "path": "../../@functionless/aws-constructs"
+      "path": "../aws-constructs"
     }
   ]
 }

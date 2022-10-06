@@ -8,5 +8,8 @@
   "dependencies": {
     "@functionless/ast-reflection": "^0.3.1",
     "@swc/jest": "^0.2.23"
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }

@@ -6,13 +6,13 @@
   "author": "Functionless Team",
   "license": "Apache-2.0",
   "scripts": {
+    "clean:deep": "git clean -fqdx .",
     "build:website": "turbo run build --filter=website",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "build": "turbo run build",
     "test": "turbo run test",
-    "prepare": "husky install",
-    "prepack": "npm run build"
+    "prepare": "husky install"
   },
   "workspaces": {
     "packages": [
