@@ -30,9 +30,9 @@ import {
   isReferenceExpr,
   reflect,
   validateFunctionLike,
-} from "functionless";
-import * as functionless from "functionless";
-import { forEachChild } from "functionless/lib/visit";
+} from "@functionless/aws-lib-constructs";
+import * as functionless from "@functionless/aws-lib-constructs";
+import { forEachChild } from "@functionless/aws-lib-constructs/lib/visit";
 import { logicalIdForPath } from "./logical-id";
 import { bundleLambdaFunction, getBundleOutFolder } from "./bundle-lambda";
 import { getEnvironmentVariableName } from "./util";

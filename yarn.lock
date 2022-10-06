@@ -2547,7 +2547,7 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@functionless/ast-reflection@^0.3.1":
+"@functionless/ast-reflection@^0.3.1", "@functionless/ast-reflection@^0.3.2":
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.3.2.tgz#da4601ec07af11953cf8c819df684c01b59b96f9"
   integrity sha512-XMBnxPh/0hwCKo92Zq96L+Qh8WCYINsyzx5NBLTevlmgv4CKo899Y05/4fT4o78jQEaXaeb3B6XpTt4i8bGxnw==
@@ -4710,7 +4710,7 @@
     "@swc/core-win32-ia32-msvc" "1.2.245"
     "@swc/core-win32-x64-msvc" "1.2.245"
 
-"@swc/jest@^0.2.22":
+"@swc/jest@^0.2.22", "@swc/jest@^0.2.23":
   version "0.2.23"
   resolved "https://registry.yarnpkg.com/@swc/jest/-/jest-0.2.23.tgz#0b7499d5927faaa090c5b7a4a0e35122968fef30"
   integrity sha512-ZLj17XjHbPtNsgqjm83qizENw05emLkKGu3WuPUttcy9hkngl0/kcc7fDbcSBpADS0GUtsO+iKPjZFWVAtJSlA==

@@ -13,7 +13,7 @@ To create a new `Table`, instantiate the Construct and provide the `aws_dynamodb
 
 ```ts
 import { aws_dynamodb } from "aws-cdk-lib";
-import { Table } from "functionless";
+import { Table } from "@functionless/aws-lib-constructs";
 
 new Table(scope, "Table", {
   partitionKey: {

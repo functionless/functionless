@@ -1,0 +1,16 @@
+{
+  "extends": "../tsconfig.json",
+  "include": ["./**/*.ts"],
+  "compilerOptions": {
+    "rootDir": "..",
+    "noEmit": true,
+    "plugins": [
+      {
+        "name": "@functionless/language-service"
+      }
+    ],
+    "skipLibCheck": true,
+    "baseUrl": "."
+  },
+  "exclude": ["node_modules"]
+}

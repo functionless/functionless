@@ -1,4 +1,4 @@
-import type * as functionless from "functionless";
+import type * as functionless from "@functionless/aws-lib-constructs";
 import type { aws_dynamodb } from "aws-cdk-lib";
 import { TableAppsyncApi } from "./table/appsync";
 import { AttributeType } from "./table/attribute-type";

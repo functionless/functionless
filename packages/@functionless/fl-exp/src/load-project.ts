@@ -27,7 +27,7 @@ export interface LoadProjectProps {
  * @throws an error if the project is not structurally valid.
  */
 export async function loadProject(rootDir: string): Promise<Project> {
-  require("functionless/register");
+  require("@functionless/register");
 
   const pkgJsonPath = path.join(rootDir, "package.json");
   if (!(await exists(pkgJsonPath))) {

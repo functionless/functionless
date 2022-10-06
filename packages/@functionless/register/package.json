@@ -1,0 +1,12 @@
+{
+  "name": "@functionless/register",
+  "version": "0.0.0",
+  "main": "./index.js",
+  "files": [
+    "index.js"
+  ],
+  "dependencies": {
+    "@functionless/ast-reflection": "^0.3.1",
+    "@swc/register": "^0.1.10"
+  }
+}

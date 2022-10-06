@@ -1,5 +1,5 @@
 import StepFunctions from "aws-sdk/clients/stepfunctions";
-import type * as functionless from "functionless";
+import type * as functionless from "@functionless/aws-lib-constructs";
 import { getEnvironmentVariableName } from "../util";
 import { createClientFactory } from "./client";
 

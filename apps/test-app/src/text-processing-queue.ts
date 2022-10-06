@@ -6,7 +6,7 @@ import {
   Event,
   StepFunction,
   Serializer,
-} from "functionless";
+} from "@functionless/aws-lib-constructs";
 
 const app = new App();
 const stack = new Stack(app, "queue");

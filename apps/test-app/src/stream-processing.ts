@@ -1,5 +1,5 @@
 import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
-import { Table, Queue, JsonSerializer } from "functionless";
+import { Table, Queue, JsonSerializer } from "@functionless/aws-lib-constructs";
 
 const app = new App();
 const stack = new Stack(app, "StreamProcessing");

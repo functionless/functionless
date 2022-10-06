@@ -1,5 +1,5 @@
 import { App, Stack } from "aws-cdk-lib";
-import { StepFunction, EventBus, Function } from "functionless";
+import { StepFunction, EventBus, Function } from "@functionless/aws-lib-constructs";
 
 export const app = new App();
 export const stack = new Stack(app, "func-test");

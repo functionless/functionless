@@ -1,4 +1,4 @@
-import type * as functionless from "functionless";
+import type * as functionless from "@functionless/aws-lib-constructs";
 
 export type ExpressStepFunctionHandler<
   In extends Record<string, unknown> = any,

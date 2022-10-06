@@ -40,7 +40,7 @@ To achieve this, use the `Function.from` utility to wrap an existing `aws_lambda
 
 ```ts
 import { aws_lambda } from "aws-cdk-lib";
-import { Function, StepFunction } from "functionless";
+import { Function, StepFunction } from "@functionless/aws-lib-constructs";
 
 const myFunc = Function.from<{ name: string }, string>(
   new aws_lambda.Function(this, "MyFunc", {

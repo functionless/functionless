@@ -1,4 +1,7 @@
-const { ErrorCodes, ErrorType } = require("functionless/lib/error-code");
+const {
+  ErrorCodes,
+  ErrorType,
+} = require("@functionless/aws-lib-constructs/lib/error-code");
 
 const fs = require("fs");
 const path = require("path");

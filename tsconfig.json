@@ -1,6 +1,6 @@
 {
   "references": [
-    { "path": "./packages/core" },
+    { "path": "./packages/@functionless/aws-lib-constructs" },
     { "path": "./packages/@functionless/fl-exp" },
     { "path": "./apps/fl-exp-simple" },
     { "path": "./apps/website" },

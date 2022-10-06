@@ -13,7 +13,7 @@ import {
   AppsyncResolver,
   AppsyncContext,
   ExpressStepFunction,
-} from "functionless";
+} from "@functionless/aws-lib-constructs";
 
 import {
   QueryResolvers,
