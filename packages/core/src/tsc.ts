@@ -1,6 +1,5 @@
 import path from "path";
 import fs from "fs-extra";
-
 import ts from "typescript";
 import { makeFunctionlessChecker } from "./checker";
 import { compile } from "./compile";

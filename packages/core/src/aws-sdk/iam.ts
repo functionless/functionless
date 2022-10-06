@@ -73,6 +73,7 @@ export const IAM_SERVICE_PREFIX: Record<keyof SDK, string> = {
   ConfigService: "config",
   Connect: "connect",
   ConnectCampaigns: "connect-campaigns",
+  ConnectCases: "connect-cases",
   ConnectContactLens: "connect",
   ConnectParticipant: "connect",
   ControlTower: "controltower",

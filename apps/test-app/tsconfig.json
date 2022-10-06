@@ -5,9 +5,6 @@
     "outDir": "lib",
     "plugins": [
       {
-        "transform": "functionless/lib/compile"
-      },
-      {
         "name": "@functionless/language-service"
       }
     ]

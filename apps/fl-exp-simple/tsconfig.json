@@ -1,0 +1,18 @@
+{
+  "extends": "../../tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "lib",
+    "declaration": true,
+    "inlineSourceMap": true
+  },
+  "include": ["."],
+  "exclude": ["lib", "test", "node_modules"],
+  "references": [
+    {
+      "path": "../../packages/core"
+    },
+    {
+      "path": "../../packages/@functionless/fl-exp"
+    }
+  ]
+}
