@@ -7,6 +7,7 @@
   ],
   "dependencies": {
     "@functionless/ast-reflection": "^0.3.1",
+    "@functionless/swc-config": "*",
     "@swc/jest": "^0.2.23"
   },
   "publishConfig": {

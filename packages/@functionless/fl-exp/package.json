@@ -29,7 +29,7 @@
     "toposort": "^2.0.2"
   },
   "peerDependencies": {
-    "@functionless/aws-constructs": "0.0.0"
+    "@functionless/aws-constructs": "*"
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "*",
