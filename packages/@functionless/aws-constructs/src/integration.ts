@@ -1,10 +1,11 @@
-import { ApiGatewayVtlIntegration } from "./api";
-import { AppSyncVtlIntegration } from "./appsync";
-import { ASL, ASLGraph } from "./asl";
-import { EventBus, EventBusTargetIntegration } from "./event-bridge";
-import { AwaitExpr, CallExpr, ReferenceExpr } from "./expression";
-import { Function, NativeIntegration } from "./function";
 import {
+  AnyFunction,
+  AwaitExpr,
+  CallExpr,
+  evalToConstant,
+  forEachChild,
+  FunctionlessNode,
+  isAnyFunction,
   isAwaitExpr,
   isBindingElem,
   isBindingPattern,
@@ -16,11 +17,14 @@ import {
   isReferenceExpr,
   isThisExpr,
   isVariableDecl,
-} from "./guards";
-import { FunctionlessNode } from "./node";
+  ReferenceExpr,
+} from "@functionless/ast";
+import { ApiGatewayVtlIntegration } from "./api";
+import { AppSyncVtlIntegration } from "./appsync";
+import { ASL, ASLGraph } from "./asl";
+import { EventBus, EventBusTargetIntegration } from "./event-bridge";
+import { Function, NativeIntegration } from "./function";
 import { reflect, resolveSubstitution } from "./reflect";
-import { AnyFunction, evalToConstant, isAnyFunction } from "./util";
-import { forEachChild } from "./visit";
 import { VTL } from "./vtl";
 
 export const isIntegration = <I extends Integration<string, AnyFunction>>(

@@ -1,5 +1,5 @@
+import { FunctionDecl } from "@functionless/ast";
 import { aws_events } from "aws-cdk-lib";
-import { FunctionDecl } from "../declaration";
 import {
   DynamicProps,
   IEventBus,

@@ -1,8 +1,11 @@
+import {
+  anyOf,
+  Expr,
+  FunctionlessNode,
+  invertBinaryOperator,
+} from "@functionless/ast";
 import { assertNever } from "../assert";
 import { SynthError, ErrorCodes } from "../error-code";
-import type { Expr } from "../expression";
-import { FunctionlessNode } from "../node";
-import { anyOf, invertBinaryOperator } from "../util";
 import {
   isState,
   isChoiceState,

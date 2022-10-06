@@ -1,5 +1,6 @@
 import path from "path";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
+import { isErr } from "@functionless/ast";
 import {
   AmplifyAppSyncSimulator,
   AmplifyAppSyncSimulatorAuthenticationType,
@@ -25,7 +26,6 @@ import {
 } from "../src/event-bridge/event-pattern/synth";
 import { synthesizeEventBridgeTargets } from "../src/event-bridge/target-input";
 import { EventTransformFunction } from "../src/event-bridge/transform";
-import { isErr } from "../src/guards";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
 export function returnExpr(varName: string) {

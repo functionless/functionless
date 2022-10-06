@@ -9,9 +9,9 @@ import type { FunctionlessNode } from "./node";
 import { getCtor } from "./node-ctor";
 
 import { BlockStmt, Stmt, VariableStmt } from "./statement";
-import { DeterministicNameGenerator } from "./util";
 
 import "./node-clone";
+import { DeterministicNameGenerator } from "./util";
 
 /**
  * Visits each child of a Node using the supplied visitor, possibly returning a new Node of the same kind in its place.
@@ -153,6 +153,3 @@ export function visitSpecificChildren<T extends FunctionlessNode>(
       : visitEachChild(expr, dive);
   });
 }
-
-// to prevent the closure serializer from trying to import all of functionless.
-export const deploymentOnlyModule = true;

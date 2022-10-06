@@ -1,48 +1,47 @@
+import {
+  AnyFunction,
+  CallExpr,
+  Expr,
+  FunctionDecl,
+  Identifier,
+  isArgument,
+  isArrayLiteralExpr,
+  isAwaitExpr,
+  isBooleanLiteralExpr,
+  isCallExpr,
+  isElementAccessExpr,
+  isFunctionLike,
+  isIdentifier,
+  isNullLiteralExpr,
+  isNumberLiteralExpr,
+  isObjectLiteralExpr,
+  isParameterDecl,
+  isParenthesizedExpr,
+  isPropAccessExpr,
+  isPropAssignExpr,
+  isReferenceExpr,
+  isReturnStmt,
+  isSpreadAssignExpr,
+  isStringLiteralExpr,
+  isThisExpr,
+  isUndefinedLiteralExpr,
+  isVariableDecl,
+  ReferenceExpr,
+  Stmt,
+  ThisExpr,
+  UndefinedLiteralExpr,
+} from "@functionless/ast";
 import { aws_apigateway, aws_iam } from "aws-cdk-lib";
 import {
   APIGatewayProxyEvent,
   APIGatewayProxyResult,
   APIGatewayEventRequestContext,
 } from "aws-lambda";
-import { FunctionDecl } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
-import {
-  CallExpr,
-  Expr,
-  Identifier,
-  ReferenceExpr,
-  ThisExpr,
-  UndefinedLiteralExpr,
-} from "./expression";
 import { Function } from "./function";
-import {
-  isReturnStmt,
-  isPropAccessExpr,
-  isNullLiteralExpr,
-  isUndefinedLiteralExpr,
-  isBooleanLiteralExpr,
-  isNumberLiteralExpr,
-  isStringLiteralExpr,
-  isArrayLiteralExpr,
-  isArgument,
-  isCallExpr,
-  isParameterDecl,
-  isElementAccessExpr,
-  isObjectLiteralExpr,
-  isPropAssignExpr,
-  isIdentifier,
-  isReferenceExpr,
-  isAwaitExpr,
-  isThisExpr,
-  isVariableDecl,
-  isParenthesizedExpr,
-  isSpreadAssignExpr,
-  isFunctionLike,
-} from "./guards";
 import { IntegrationImpl, tryFindIntegration } from "./integration";
 import { validateFunctionLike } from "./reflect";
-import { Stmt } from "./statement";
-import { AnyFunction, singletonConstruct } from "./util";
+import { singletonConstruct } from "./util";
 import { VTL } from "./vtl";
 
 /**

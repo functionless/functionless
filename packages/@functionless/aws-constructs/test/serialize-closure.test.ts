@@ -3,13 +3,13 @@ import "jest";
 import fs from "fs";
 import path from "path";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
+import { isNode } from "@functionless/ast";
 import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
 import AWS from "aws-sdk";
 import { v4 } from "uuid";
 import { AnyFunction, Table, Function } from "../src";
 
 import { NativePreWarmContext } from "../src/function-prewarm";
-import { isNode } from "../src/guards";
 import {
   serializeClosure,
   SerializeClosureProps,

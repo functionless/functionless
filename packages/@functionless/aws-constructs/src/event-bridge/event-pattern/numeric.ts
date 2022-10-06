@@ -1,4 +1,4 @@
-import { BinaryOp } from "../../expression";
+import { BinaryOp } from "@functionless/ast";
 import {
   NumericRangePattern,
   NumericRangeLimit,

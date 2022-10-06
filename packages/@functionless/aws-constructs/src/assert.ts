@@ -1,8 +1,13 @@
+import {
+  ConstantValue,
+  FunctionlessNode,
+  getNodeKindName,
+  isPrimitive,
+  NodeInstance,
+  NodeKind,
+  PrimitiveValue,
+} from "@functionless/ast";
 import { ErrorCodes, SynthError } from "./error-code";
-import { FunctionlessNode } from "./node";
-import { NodeInstance } from "./node-ctor";
-import { getNodeKindName, NodeKind } from "./node-kind";
-import { ConstantValue, PrimitiveValue, isPrimitive } from "./util";
 
 export function assertNever(value: never): never {
   throw new SynthError(

@@ -1,25 +1,23 @@
 /* eslint-disable no-bitwise */
 import path from "path";
+import {
+  ArrowFunctionExpr,
+  BinaryOp,
+  ConstructorDecl,
+  FunctionDecl,
+  FunctionExpr,
+  MethodDecl,
+  NodeKind,
+  PostfixUnaryOp,
+  UnaryOp,
+  VariableDeclKind,
+} from "@functionless/ast";
 import minimatch from "minimatch";
 import type { PluginConfig, TransformerExtras } from "ts-patch";
 import ts from "typescript";
 import { assertDefined } from "./assert";
 import { makeFunctionlessChecker } from "./checker";
-import {
-  ConstructorDecl,
-  FunctionDecl,
-  MethodDecl,
-  VariableDeclKind,
-} from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
-import type {
-  FunctionExpr,
-  BinaryOp,
-  UnaryOp,
-  PostfixUnaryOp,
-  ArrowFunctionExpr,
-} from "./expression";
-import { NodeKind } from "./node-kind";
 import { ReflectionSymbolNames } from "./reflect";
 
 export default compile;

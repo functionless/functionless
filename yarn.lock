@@ -291,7 +291,7 @@
     "@aws-sdk/types" "3.186.0"
     tslib "^2.3.1"
 
-"@aws-sdk/client-dynamodb@*", "@aws-sdk/client-dynamodb@^3.100.0", "@aws-sdk/client-dynamodb@^3.180.0":
+"@aws-sdk/client-dynamodb@^3.100.0", "@aws-sdk/client-dynamodb@^3.180.0":
   version "3.186.0"
   resolved "https://registry.yarnpkg.com/@aws-sdk/client-dynamodb/-/client-dynamodb-3.186.0.tgz#f6c84e6fa8215bc361f3c233c3928f33518017b8"
   integrity sha512-3Vq4UxqVUSRSIUbx83yfgiZezhOFYDG9ZazFjB4oDLIfqUSkH83IRCcJxJrANfw2xc3qdjzkBiQKyZu4Q9Xf4A==
@@ -5282,7 +5282,7 @@
   resolved "https://registry.yarnpkg.com/@types/mustache/-/mustache-4.2.1.tgz#724a2fca5763117dee626aa4ca3e3f6e546e7434"
   integrity sha512-gFAlWL9Ik21nJioqjlGCnNYbf9zHi0sVbaZ/1hQEBcCEuxfLJDvz4bVJSV6v6CUaoLOz0XEIoP7mSrhJ6o237w==
 
-"@types/node@*":
+"@types/node@*", "@types/node@^18.0.0":
   version "18.8.3"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.8.3.tgz#ce750ab4017effa51aed6a7230651778d54e327c"
   integrity sha512-0os9vz6BpGwxGe9LOhgP/ncvYN5Tx1fNcd2TM3rD/aCGBkysb+ZWpXEocG24h6ZzOi13+VB8HndAQFezsSOw1w==

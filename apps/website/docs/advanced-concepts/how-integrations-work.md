@@ -83,7 +83,7 @@ It contains the following hooks that will be called either during CDK synthesis 
 
 ## Functionless AST
 
-When you compile your application with `tsc`, the [`functionless/lib/compile`](../../../../packages/@functionless/aws-constructs/src/compile.ts) transformer will replace the function declaration, `F`, in `new AppsyncResolver(F)` with its corresponding [Abstract Syntax Tree](../../../../packages/@functionless/aws-constructs/src/expression.ts) representation. This representation is then synthesized to Velocity Templates and AWS AppSync Resolver configurations, using the `@aws-cdk/aws-appsync-alpha` CDK Construct Library.
+When you compile your application with `tsc`, the [`functionless/lib/compile`](../../../../packages/@functionless/aws-constructs/src/compile.ts) transformer will replace the function declaration, `F`, in `new AppsyncResolver(F)` with its corresponding [Abstract Syntax Tree](../../../../packages/@functionless/ast/src/expression.ts) representation. This representation is then synthesized to Velocity Templates and AWS AppSync Resolver configurations, using the `@aws-cdk/aws-appsync-alpha` CDK Construct Library.
 
 For example, this function declaration:
 

@@ -1,3 +1,8 @@
+import {
+  isObjectLiteralExpr,
+  isPropAssignExpr,
+  isReferenceExpr,
+} from "@functionless/ast";
 import type {
   EventBridge as AWSEventBridge,
   Lambda as AWSLambda,
@@ -7,11 +12,6 @@ import { SDK as _SDK } from "./aws-sdk";
 import { ErrorCodes, SynthError } from "./error-code";
 import { Function, isFunction } from "./function";
 import { NativePreWarmContext, PrewarmClients } from "./function-prewarm";
-import {
-  isObjectLiteralExpr,
-  isPropAssignExpr,
-  isReferenceExpr,
-} from "./guards";
 import { makeIntegration } from "./integration";
 
 /**
