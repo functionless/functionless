@@ -12,7 +12,7 @@
       "path": "../../packages/core"
     },
     {
-      "path": "../../packages/fl-exp"
+      "path": "../../packages/@functionless/fl-exp"
     }
   ]
 }
