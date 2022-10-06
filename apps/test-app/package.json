@@ -10,7 +10,7 @@
   },
   "dependencies": {
     "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
-    "@functionless/aws-lib-constructs": "*",
+    "@functionless/aws-constructs": "*",
     "@functionless/language-service": "^0.0.4",
     "@functionless/register": "*",
     "@graphql-codegen/cli": "^2.6.2",

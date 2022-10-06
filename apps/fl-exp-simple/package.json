@@ -14,7 +14,7 @@
   "devDependencies": {
     "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
     "@functionless/ast-reflection": "^0.3.1",
-    "@functionless/aws-lib-constructs": "*",
+    "@functionless/aws-constructs": "*",
     "@functionless/fl-exp": "*",
     "@functionless/language-service": "^0.0.4",
     "@functionless/register": "*",

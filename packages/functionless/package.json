@@ -3,7 +3,7 @@
   "version": "0.25.0",
   "dependencies": {
     "@functionless/ast-reflection": "^0.3.2",
-    "@functionless/aws-lib-constructs": "^0.0.0",
+    "@functionless/aws-constructs": "^0.0.0",
     "@functionless/fl-exp": "^0.0.0",
     "@functionless/language-service": "^0.0.4",
     "@functionless/register": "^0.0.0"

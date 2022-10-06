@@ -21,7 +21,7 @@ import {
   ExpressStepFunction,
   AppsyncField,
   AppsyncContext,
-} from "@functionless/aws-lib-constructs";
+} from "@functionless/aws-constructs";
 
 export const app = new App();
 export const stack = new Stack(app, "message-board");

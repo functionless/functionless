@@ -12,7 +12,7 @@ import {
   Event,
   StepFunction,
   JsonSecret,
-} from "@functionless/aws-lib-constructs";
+} from "@functionless/aws-constructs";
 
 const app = new App();
 const stack = new Stack(app, "queue");

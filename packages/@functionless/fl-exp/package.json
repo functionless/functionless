@@ -29,7 +29,7 @@
     "toposort": "^2.0.2"
   },
   "peerDependencies": {
-    "@functionless/aws-lib-constructs": "0.0.0"
+    "@functionless/aws-constructs": "0.0.0"
   },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "*",
@@ -46,7 +46,7 @@
     "aws-sdk": "^2",
     "constructs": "10.0.0",
     "esbuild": "0.15.9",
-    "@functionless/aws-lib-constructs": "*",
+    "@functionless/aws-constructs": "*",
     "jest": "^29.0.3",
     "ts-node": "^10.9.1",
     "tsconfig": "*",

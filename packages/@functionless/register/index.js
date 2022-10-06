@@ -3,11 +3,7 @@ const { config } = require("@functionless/swc-config");
 const path = require("path");
 
 const src = path.resolve("src");
-const functionlessLib = path.resolve(
-  "@functionless",
-  "aws-lib-constructs",
-  "lib"
-);
+const functionlessLib = path.resolve("@functionless", "aws-constructs", "lib");
 const flExpPathPart = path.join("@functionless", "fl-exp", "lib");
 
 register({

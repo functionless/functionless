@@ -11,5 +11,5 @@
   },
   "include": ["src/**/*.ts"],
   "exclude": ["node_modules"],
-  "references": [{ "path": "../../packages/@functionless/aws-lib-constructs" }]
+  "references": [{ "path": "../../packages/@functionless/aws-constructs" }]
 }
