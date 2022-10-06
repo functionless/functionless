@@ -3,7 +3,9 @@
   "npmClient": "yarn",
   "useWorkspaces": true,
   "packages": [
-    "packages/*"
+    "packages/create-functionless",
+    "packages/functionless",
+    "packages/@functionless/*"
   ],
   "conventionalCommits": true,
   "commitHooks": false,
@@ -13,10 +15,7 @@
   "command": {
     "publish": {
       "npmClient": "npm",
-      "allowBranch": [
-        "main",
-        "*"
-      ]
+      "allowBranch": ["main", "*"]
     }
   },
   "version": "0.27.1"
