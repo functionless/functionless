@@ -87,7 +87,7 @@
     "typescript": "^4.8.3"
   },
   "dependencies": {
-    "@functionless/ast": "^0.0.0",
+    "@functionless/ast": "*",
     "@functionless/ast-reflection": "^0.3.1",
     "@functionless/nodejs-closure-serializer": "^0.1.2",
     "@swc/cli": "^0.1.57",
