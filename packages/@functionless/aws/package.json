@@ -12,10 +12,10 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "typesafe-dynamodb": "^0.2.3",
     "@functionless/aws-constructs": "*",
     "@functionless/aws-util": "*",
-    "@functionless/util": "*"
+    "@functionless/util": "*",
+    "typesafe-dynamodb": "^0.2.3"
   },
   "devDependencies": {
     "typescript": "^4.8.3"
