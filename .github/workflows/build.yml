@@ -114,5 +114,5 @@ jobs:
           overwrites-pull-request-comment: true
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: effortless-malabi-1c3e77
+          NETLIFY_SITE_ID: b49248b3-07b2-49ea-bc73-86deecce6633
         timeout-minutes: 1
