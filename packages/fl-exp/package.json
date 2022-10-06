@@ -1,6 +1,6 @@
 {
   "name": "@functionless/fl-exp",
-  "version": "0.24.4",
+  "version": "0.24.5",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "bin": {
@@ -45,7 +45,7 @@
     "aws-sdk": "^2",
     "constructs": "10.0.0",
     "esbuild": "0.15.9",
-    "functionless": "0.24.4",
+    "functionless": "0.24.5",
     "jest": "^29.0.3",
     "ts-node": "^10.9.1",
     "tsconfig": "*",
