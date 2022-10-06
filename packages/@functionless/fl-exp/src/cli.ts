@@ -1,5 +1,5 @@
 // eslint-disable-next-line turbo/no-undeclared-env-vars
-process.env.AWS_SDK_LOAD_CONFIG = "1";
+// process.env.AWS_SDK_LOAD_CONFIG = "1";
 
 import { program } from "commander";
 import { loadProject } from "./load-project";
