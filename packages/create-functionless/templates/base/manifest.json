@@ -1,0 +1,24 @@
+{
+  "devDependencies": [
+    "@aws-cdk/aws-appsync-alpha",
+    "@functionless/ast-reflection",
+    "@functionless/language-service",
+    "@types/jest",
+    "@types/node",
+    "aws-cdk",
+    "aws-cdk-lib",
+    "aws-sdk",
+    "constructs",
+    "esbuild",
+    "functionless",
+    "jest",
+    "typesafe-dynamodb",
+    "typescript"
+  ],
+  "files": [
+    "package.json",
+    "cdk.json",
+    "tsconfig.json",
+    ".gitignore.template"
+  ]
+}
