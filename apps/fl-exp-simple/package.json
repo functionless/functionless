@@ -3,7 +3,7 @@
   "version": "0.0.0",
   "private": true,
   "scripts": {
-    "typecheck": "tsc -b",
+    "typecheck": "tsc --noEmit",
     "build": "npm run synth",
     "deploy": "cdk deploy",
     "local": "fl local",
