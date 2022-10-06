@@ -94,7 +94,7 @@
   },
   "main": "lib/index.js",
   "license": "Apache-2.0",
-  "version": "0.24.3",
+  "version": "0.24.4",
   "jest": {
     "collectCoverage": false,
     "coveragePathIgnorePatterns": [
@@ -145,5 +145,8 @@
     "*.{tsx,jsx,ts,js,md,css}": [
       "eslint --fix"
     ]
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
