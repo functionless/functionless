@@ -12,6 +12,7 @@
   ],
   "scripts": {
     "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
     "deploy": "cdk deploy",
     "synth": "cdk synth",
     "test": "jest --passWithNoTests",
