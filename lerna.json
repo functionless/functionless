@@ -11,15 +11,13 @@
   "createRelease": "github",
   "verifyAccess": false,
   "command": {
-    "version": {
-      "exact": true
-    },
     "publish": {
       "npmClient": "npm",
       "allowBranch": [
-        "main"
+        "main",
+        "*"
       ]
     }
   },
-  "version": "0.24.5"
+  "version": "0.25.0"
 }

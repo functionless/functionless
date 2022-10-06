@@ -1,6 +1,6 @@
 {
   "name": "@functionless/fl-exp",
-  "version": "0.0.0",
+  "version": "0.25.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "bin": {
@@ -20,11 +20,12 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@types/aws-lambda": "^8.10.106",
     "@babel/core": "^7.19.3",
     "@babel/plugin-transform-typescript": "^7.19.3",
-    "@functionless/aws-constructs": "*",
+    "@functionless/ast-reflection": "^0.3.1",
+    "@functionless/aws-constructs": "^0.25.0",
     "@functionless/aws": "*",
+    "@types/aws-lambda": "^8.10.106",
     "commander": "^9.4.0",
     "dependency-tree": "^8.1.2",
     "express": "^4.18.1",
