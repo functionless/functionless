@@ -2,7 +2,18 @@ name: build
 on:
   pull_request: {}
 jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+      CLEAN_UP_STACK: "1"
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: ./.github/actions/build
+
   test:
+    needs: [build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -13,6 +24,8 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - uses: ./.github/actions/build
+
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -21,8 +34,6 @@ jobs:
           role-duration-seconds: 3600
         if: contains(fromJson('["release", "build", "close"]'), github.workflow)
 
-      - uses: ./.github/actions/setup
-
       - name: Run tests
         run: yarn turbo run test --cache-dir=.turbo-cache
         env:
@@ -30,6 +41,7 @@ jobs:
           NODE_OPTIONS: --max-old-space-size=6144
 
   website-preview:
+    needs: [build]
     runs-on: ubuntu-latest
     permissions:
       issues: write
@@ -39,7 +51,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - uses: ./.github/actions/setup
+      - uses: ./.github/actions/build
 
       - name: Netlify Preview
         uses: nwtgck/actions-netlify@v1.2
