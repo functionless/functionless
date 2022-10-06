@@ -38,6 +38,11 @@ jobs:
       - name: Install dependencies
         run: yarn install --check-files
 
+      - name: Build Packages
+        run: yarn turbo run build -- --cache-dir=.turbo-cache
+        env:
+          NODE_OPTIONS: --max-old-space-size=6144
+
       - name: Run tests
         run: yarn turbo run test -- --cache-dir=.turbo-cache
         env:

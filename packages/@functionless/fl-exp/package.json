@@ -35,6 +35,7 @@
     "@aws-sdk/client-dynamodb": "*",
     "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
     "@functionless/ast-reflection": "^0.3.1",
+    "@functionless/aws-constructs": "*",
     "@functionless/language-service": "^0.0.4",
     "@swc/jest": "^0.2.22",
     "@types/express": "^4.17.14",
@@ -46,7 +47,6 @@
     "aws-sdk": "^2",
     "constructs": "10.0.0",
     "esbuild": "0.15.9",
-    "@functionless/aws-constructs": "*",
     "jest": "^29.0.3",
     "ts-node": "^10.9.1",
     "tsconfig": "*",
@@ -59,5 +59,8 @@
         {}
       ]
     }
+  },
+  "publishConfig": {
+    "access": "public"
   }
 }
