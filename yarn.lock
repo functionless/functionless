@@ -2547,12 +2547,12 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@functionless/ast-reflection@^0.3.1", "@functionless/ast-reflection@^0.3.2":
+"@functionless/ast-reflection@*", "@functionless/ast-reflection@^0.3.1":
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.3.2.tgz#da4601ec07af11953cf8c819df684c01b59b96f9"
   integrity sha512-XMBnxPh/0hwCKo92Zq96L+Qh8WCYINsyzx5NBLTevlmgv4CKo899Y05/4fT4o78jQEaXaeb3B6XpTt4i8bGxnw==
 
-"@functionless/language-service@^0.0.4":
+"@functionless/language-service@*", "@functionless/language-service@^0.0.4":
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/@functionless/language-service/-/language-service-0.0.4.tgz#fc2e23c8d4fa5766268fe83a65cdd3a385078462"
   integrity sha512-epJZbM7OiBaPVr77qpQgFCdePBV9xzEnqa/Bx0quY16I8RN1c2is2VTxsad/70JUM9xodd1Zy79vrLkNLwijGQ==

@@ -19,23 +19,20 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@types/aws-lambda": "^8.10.106",
     "@babel/core": "^7.19.3",
     "@babel/plugin-transform-typescript": "^7.19.3",
+    "@functionless/ast-reflection": "^0.3.1",
+    "@functionless/aws-constructs": "*",
+    "@types/aws-lambda": "^8.10.106",
     "commander": "^9.4.0",
     "dependency-tree": "^8.1.2",
     "express": "^4.18.1",
     "open": "^8.4.0",
     "toposort": "^2.0.2"
   },
-  "peerDependencies": {
-    "@functionless/aws-constructs": "*"
-  },
   "devDependencies": {
     "@aws-sdk/client-dynamodb": "*",
     "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
-    "@functionless/ast-reflection": "^0.3.1",
-    "@functionless/aws-constructs": "*",
     "@functionless/language-service": "^0.0.4",
     "@swc/jest": "^0.2.22",
     "@types/express": "^4.17.14",
