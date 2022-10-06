@@ -9,9 +9,6 @@
   "createRelease": "github",
   "verifyAccess": false,
   "command": {
-    "version": {
-      "exact": true
-    },
     "publish": {
       "npmClient": "npm",
       "allowBranch": ["main", "*"]
