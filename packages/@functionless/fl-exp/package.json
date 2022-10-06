@@ -1,6 +1,6 @@
 {
   "name": "@functionless/fl-exp",
-  "version": "0.24.5",
+  "version": "0.24.6",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "bin": {
