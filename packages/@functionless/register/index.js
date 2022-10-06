@@ -2,13 +2,20 @@ const register = require("@swc/register/lib/node").default;
 const { config } = require("@functionless/swc-config");
 const path = require("path");
 
-const awsConstructs = path.dirname(
-  require.resolve("@functionless/aws-constructs")
-);
-const flExp = path.dirname(require.resolve("@functionless/fl-exp"));
+function tryResolve(mod) {
+  try {
+    const index = require.resolve(mod);
+    return path.dirname(index);
+  } catch {
+    return undefined;
+  }
+}
+
+const awsConstructs = tryResolve("@functionless/aws-constructs");
+const flExp = tryResolve("@functionless/fl-exp");
 const src = path.resolve("src");
 
-const prefixes = [awsConstructs, flExp, src];
+const prefixes = [awsConstructs, flExp, src].filter((s) => s !== undefined);
 
 register({
   ...config,
