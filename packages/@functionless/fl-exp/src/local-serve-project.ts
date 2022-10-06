@@ -9,7 +9,7 @@ import {
   LambdaFunction,
   Resource,
   StepFunction,
-} from "@functionless/aws-lib";
+} from "@functionless/aws";
 import { Project } from "./project";
 import type {
   APIGatewayProxyEventQueryStringParameters,

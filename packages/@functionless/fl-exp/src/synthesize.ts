@@ -22,7 +22,7 @@ import {
   LambdaFunction,
   LambdaFunctionKind,
   StepFunction,
-} from "@functionless/aws-lib";
+} from "@functionless/aws";
 import {
   ASL,
   FunctionlessNode,

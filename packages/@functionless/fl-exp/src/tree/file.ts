@@ -1,5 +1,5 @@
 import path from "path";
-import { Resource } from "@functionless/aws-lib";
+import { Resource } from "@functionless/aws";
 import { Project } from "../project";
 import { Folder } from "./folder";
 

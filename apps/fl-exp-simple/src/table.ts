@@ -1,5 +1,5 @@
 import type { AttributeType, BillingMode } from "aws-cdk-lib/aws-dynamodb";
-import { Table } from "@functionless/aws-lib";
+import { Table } from "@functionless/aws";
 
 interface TableItem<T extends string> {
   pk: T;
