@@ -6,7 +6,7 @@ sidebar_position: 2
 
 In order to write effective VTL templates, it helps to understand how TypeScript syntax maps to Velocity Template Statements.
 
-An AppSync Request Mapping Template is synthesized by evaluating all [Expressions](../../../../../packages/@functionless/aws-lib-constructs/src/expression.ts) to a series of `#set`, `$util.qr`, `#foreach` and `#if` statements. The end result is an object containing the returned result of the function which can then be converted to JSON with `$util.toJson`.
+An AppSync Request Mapping Template is synthesized by evaluating all [Expressions](../../../../../packages/@functionless/aws-constructs/src/expression.ts) to a series of `#set`, `$util.qr`, `#foreach` and `#if` statements. The end result is an object containing the returned result of the function which can then be converted to JSON with `$util.toJson`.
 
 The following section provides a reference guide on how each of the supported TypeScript syntax is mapped to VTL.
 

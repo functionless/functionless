@@ -50,7 +50,7 @@ const config = {
       // Plugin / TypeDoc options
       /** @type {import('docusaurus-plugin-typedoc').PluginOptions} */
       {
-        entryPoints: ["../../packages/@functionless/aws-lib-constructs"],
+        entryPoints: ["../../packages/@functionless/aws-constructs"],
         entryPointStrategy: "packages",
         sidebar: {
           categoryLabel: "API Reference",

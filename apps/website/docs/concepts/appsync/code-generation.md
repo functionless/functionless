@@ -56,7 +56,7 @@ The generated types will include type definitions for all graphql types, inputs 
 
 ```ts
 import { QueryResolvers, Person } from "./generated-types";
-import { $util, AppsyncResolver } from "@functionless/aws-lib-constructs";
+import { $util, AppsyncResolver } from "@functionless/aws-constructs";
 
 export class PeopleDatabase extends Construct {
   readonly personTable;

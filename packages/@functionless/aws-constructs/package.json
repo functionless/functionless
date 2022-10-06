@@ -1,11 +1,11 @@
 {
-  "name": "@functionless/aws-lib-constructs",
+  "name": "@functionless/aws-constructs",
   "description": "Functionless, a TypeScript plugin and Construct library for the AWS CDK",
   "types": "lib/index.d.ts",
   "main": "lib/index.js",
   "repository": {
     "url": "github:functionless/functionless",
-    "directory": "packages/@functionless/aws-lib-constructs"
+    "directory": "packages/@functionless/aws-constructs"
   },
   "bin": {
     "functionless": "./bin/functionless.js",

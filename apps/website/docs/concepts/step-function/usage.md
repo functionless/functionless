@@ -9,7 +9,7 @@ sidebar_position: 1
 Import `StepFunction` from `functionless`.
 
 ```ts
-import { StepFunction } from "@functionless/aws-lib-constructs";
+import { StepFunction } from "@functionless/aws-constructs";
 ```
 
 Instantiate the Construct and provide the implementation as a function.
@@ -69,7 +69,7 @@ Due to limitations in ASL, only a subset of TypeScript syntax is supported. Read
 The `$SFN` object provides intrinsic functions that can be called from within a Step Function. These include APIs for explicitly creating states such as `Wait`, `Parallel` and `Map`.
 
 ```ts
-import { $SFN } from "@functionless/aws-lib-constructs";
+import { $SFN } from "@functionless/aws-constructs";
 
 new StepFunction(scope, "WaitOneSecond", () => {
   $SFN.waitFor(1);
@@ -83,7 +83,7 @@ Refer to the [Intrinsic Functions](./intrinsic-functions.md) documentation for a
 Use the [$AWS SDK Integrations](../aws.md) to call other services from within a Step Function, for example:
 
 ```ts
-import { $AWS, Table } from "@functionless/aws-lib-constructs";
+import { $AWS, Table } from "@functionless/aws-constructs";
 
 const table = Table.fromTable<Item, "pk">(new aws_dynamodb.Table(..));
 

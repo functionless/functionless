@@ -10,7 +10,7 @@
   "exclude": ["lib", "test", "node_modules"],
   "references": [
     {
-      "path": "../../@functionless/aws-lib-constructs"
+      "path": "../../@functionless/aws-constructs"
     }
   ]
 }

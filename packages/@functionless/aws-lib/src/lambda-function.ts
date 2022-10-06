@@ -1,4 +1,4 @@
-import type * as functionless from "@functionless/aws-lib-constructs";
+import type * as functionless from "@functionless/aws-constructs";
 import Lambda from "aws-sdk/clients/lambda";
 import { memoize, getEnvironmentVariableName } from "@functionless/util";
 

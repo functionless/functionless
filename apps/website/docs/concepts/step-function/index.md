@@ -98,7 +98,7 @@ To achieve this, use the `StepFunction.fromStateMachine` or `ExpressStepFunction
 
 ```ts
 import { aws_stepfunctions } from "aws-cdk-lib";
-import { StepFunction } from "@functionless/aws-lib-constructs";
+import { StepFunction } from "@functionless/aws-constructs";
 
 const myMachine = StepFunction.fromStateMachine<{ name: string }, string>(
   new aws_stepfunctions.StateMachine(this, "MyMachine", {
