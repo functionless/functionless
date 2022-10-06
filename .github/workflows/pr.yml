@@ -1,6 +1,6 @@
 name: pr
 on:
-  pull_request: {}
+  push: {}
 jobs:
   test:
     runs-on: ubuntu-latest
