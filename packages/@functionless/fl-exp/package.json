@@ -55,7 +55,7 @@
   "jest": {
     "transform": {
       "^.+\\.(t|j)sx?$": [
-        "functionless/jest",
+        "@functionless/jest",
         {}
       ]
     }
