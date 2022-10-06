@@ -1,7 +1,6 @@
 name: build
 on:
   pull_request: {}
-  workflow_dispatch: {}
 jobs:
   build:
     runs-on: ubuntu-latest
@@ -17,6 +16,7 @@ jobs:
         with:
           ref: ${{ github.event.pull_request.head.ref }}
           repository: ${{ github.event.pull_request.head.repo.full_name }}
+
       - name: Get yarn cache directory path
         id: yarn-cache-dir-path
         run: echo "::set-output name=dir::$(yarn cache dir)"
@@ -29,7 +29,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-yarn-
 
-      - uses: actions/cache@v2
+      - uses: actions/cache@v3
         id: turbo-cache
         with:
           path: .turbo-cache
