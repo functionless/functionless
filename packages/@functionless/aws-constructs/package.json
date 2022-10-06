@@ -2,7 +2,7 @@
   "name": "@functionless/aws-constructs",
   "description": "Functionless, a TypeScript plugin and Construct library for the AWS CDK",
   "license": "Apache-2.0",
-  "version": "0.0.0",
+  "version": "0.25.0",
   "types": "lib/index.d.ts",
   "main": "lib/index.js",
   "repository": {
@@ -31,8 +31,8 @@
     "@aws-cdk/cloudformation-diff": "2.44.0",
     "@aws-cdk/cx-api": "2.44.0",
     "@aws-sdk/client-dynamodb": "^3.180.0",
+    "@functionless/jest": "^0.25.0",
     "@swc/jest": "^0.2.22",
-    "@functionless/jest": "*",
     "@types/fs-extra": "^9.0.13",
     "@types/jest": "^29.0.3",
     "@types/minimatch": "^3.0.5",
@@ -87,12 +87,12 @@
     "typescript": "^4.8.3"
   },
   "dependencies": {
-    "@types/aws-lambda": "^8.10.106",
     "@functionless/ast-reflection": "^0.3.1",
     "@functionless/nodejs-closure-serializer": "^0.1.2",
     "@swc/cli": "^0.1.57",
     "@swc/core": "1.2.245",
     "@swc/register": "^0.1.10",
+    "@types/aws-lambda": "^8.10.106",
     "aws-lambda": "^1.0.7",
     "fs-extra": "^10.1.0",
     "minimatch": "^5.1.0",
