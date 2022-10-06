@@ -4,7 +4,6 @@ on:
 jobs:
   test:
     runs-on: ubuntu-latest
-    concurrency: ci-${{github.job}}-${{ github.ref }}
     permissions:
       contents: write
       id-token: write
@@ -14,34 +13,6 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Get yarn cache directory path
-        id: yarn-cache-dir-path
-        run: echo "::set-output name=dir::$(yarn cache dir)"
-
-      - uses: actions/cache@v3
-        id: yarn-cache
-        with:
-          path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
-          key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
-          restore-keys: |
-            ${{ runner.os }}-yarn-
-
-      - uses: actions/cache@v3
-        id: turbo-cache
-        with:
-          path: .turbo-cache
-          key: turbo-${{ github.job }}-${{ github.sha }}
-          restore-keys: |
-            turbo-${{ github.job }}-
-
-      - name: Install dependencies
-        run: yarn install --check-files
-
-      - name: Build
-        run: yarn build --cache-dir=.turbo-cache
-        env:
-          NODE_OPTIONS: --max-old-space-size=6144
-
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
         with:
@@ -49,6 +20,8 @@ jobs:
           aws-region: us-east-1
           role-duration-seconds: 3600
         if: contains(fromJson('["release", "build", "close"]'), github.workflow)
+
+      - uses: ./.github/actions/build
 
       - name: Run tests
         run: yarn turbo run test -- --cache-dir=.turbo-cache
@@ -58,7 +31,6 @@ jobs:
 
   website-preview:
     runs-on: ubuntu-latest
-    concurrency: ci-${{github.job}}-${{ github.ref }}
     permissions:
       issues: write
       pull-requests: write
@@ -91,7 +63,7 @@ jobs:
         run: yarn install --check-files
 
       - name: Build
-        run: yarn build --cache-dir=.turbo-cache
+        run: yarn build:website --cache-dir=.turbo-cache
         env:
           NODE_OPTIONS: --max-old-space-size=6144
 
