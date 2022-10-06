@@ -5,6 +5,7 @@
   "author": "Functionless Team",
   "license": "Apache-2.0",
   "scripts": {
+    "pkg:fix": "manypkg fix",
     "clean:deep": "git clean -fqdx .",
     "build:website": "turbo run build --filter=website",
     "lint": "turbo run lint",
