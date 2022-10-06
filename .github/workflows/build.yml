@@ -4,7 +4,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
-    concurrency: ci-${{ github.ref }}
+    concurrency: ci-${{github.job}}-${{ github.ref }}
     permissions:
       contents: write
       id-token: write
@@ -62,7 +62,7 @@ jobs:
 
   website-preview:
     runs-on: ubuntu-latest
-    concurrency: ci-${{ github.ref }}
+    concurrency: ci-${{github.job}}-${{ github.ref }}
     permissions:
       contents: write
       id-token: write
@@ -99,7 +99,7 @@ jobs:
         run: yarn install --check-files
 
       - name: Build Site
-        run: yarn build:website
+        run: yarn build:website -- --cache-dir=.turbo-cache
         env:
           NODE_OPTIONS: --max-old-space-size=6144
 
@@ -115,4 +115,3 @@ jobs:
         env:
           NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
           NETLIFY_SITE_ID: b49248b3-07b2-49ea-bc73-86deecce6633
-        timeout-minutes: 1
