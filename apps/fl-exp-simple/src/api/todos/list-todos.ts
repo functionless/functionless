@@ -1,4 +1,4 @@
-import { LambdaFunction, Method } from "@functionless/fl-exp";
+import { LambdaFunction, Method } from "@functionless/aws";
 
 import { MyDatabase } from "../../table";
 

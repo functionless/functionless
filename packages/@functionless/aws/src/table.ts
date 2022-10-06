@@ -5,7 +5,7 @@ import { AttributeType } from "./table/attribute-type";
 import { TableAttributesApi, TableDocumentApi } from "./table/runtime";
 import DynamoDB from "aws-sdk/clients/dynamodb";
 import { DocumentClient } from "aws-sdk/clients/dynamodb";
-import { getEnvironmentVariableName } from "../util";
+import { getEnvironmentVariableName } from "@functionless/util";
 import { createClientFactory } from "./client";
 
 export const TableKind = "fl.Table";

@@ -1,0 +1,26 @@
+{
+  "name": "@functionless/aws",
+  "version": "0.0.0",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "typesafe-dynamodb": "^0.2.3",
+    "@functionless/aws-constructs": "*",
+    "@functionless/aws-util": "*",
+    "@functionless/util": "*"
+  },
+  "devDependencies": {
+    "typescript": "^4.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

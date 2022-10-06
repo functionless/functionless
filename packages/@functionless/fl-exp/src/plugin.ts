@@ -3,7 +3,7 @@ import * as babel from "@babel/core";
 import fs from "fs/promises";
 import path from "path";
 import { Project } from "./project";
-import { isResource } from "./interface";
+import { isResource } from "@functionless/aws";
 
 const babel_ts = require("@babel/plugin-transform-typescript");
 

@@ -2547,12 +2547,12 @@
     minimatch "^3.1.2"
     strip-json-comments "^3.1.1"
 
-"@functionless/ast-reflection@*", "@functionless/ast-reflection@^0.3.1":
+"@functionless/ast-reflection@^0.3.1", "@functionless/ast-reflection@^0.3.2":
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.3.2.tgz#da4601ec07af11953cf8c819df684c01b59b96f9"
   integrity sha512-XMBnxPh/0hwCKo92Zq96L+Qh8WCYINsyzx5NBLTevlmgv4CKo899Y05/4fT4o78jQEaXaeb3B6XpTt4i8bGxnw==
 
-"@functionless/language-service@*", "@functionless/language-service@^0.0.4":
+"@functionless/language-service@^0.0.4":
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/@functionless/language-service/-/language-service-0.0.4.tgz#fc2e23c8d4fa5766268fe83a65cdd3a385078462"
   integrity sha512-epJZbM7OiBaPVr77qpQgFCdePBV9xzEnqa/Bx0quY16I8RN1c2is2VTxsad/70JUM9xodd1Zy79vrLkNLwijGQ==
@@ -5100,15 +5100,20 @@
   resolved "https://registry.yarnpkg.com/@types/ms/-/ms-0.7.31.tgz#31b7ca6407128a3d2bbc27fe2d21b345397f6197"
   integrity sha512-iiUgKzV9AuaEkZqkOLDIvlQiL6ltuZd9tGcW3gwpnX8JbuiuhFlEGmmFXEXkN50Cvq7Os88IY2v0dkDqXYWVgA==
 
-"@types/node@*", "@types/node@^18.7.18":
+"@types/node@*":
   version "18.8.2"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-18.8.2.tgz#17d42c6322d917764dd3d2d3a10d7884925de067"
   integrity sha512-cRMwIgdDN43GO4xMWAfJAecYn8wV4JbsOGHNfNUIDiuYkUYAR5ec4Rj7IO2SAhFPEfpPtLtUTbbny/TCT7aDwA==
 
-"@types/node@^14", "@types/node@^14.18.29":
+"@types/node@^14.18.29":
   version "14.18.31"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-14.18.31.tgz#4b873dea3122e71af4f77e65ec5841397ff254d3"
   integrity sha512-vQAnaReSQkEDa8uwAyQby8bYGKu84R/deEc6mg5T8fX6gzCn8QW6rziSgsti1fNvsrswKUKPnVTi7uoB+u62Mw==
+
+"@types/node@^16":
+  version "16.11.64"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-16.11.64.tgz#9171f327298b619e2c52238b120c19056415d820"
+  integrity sha512-z5hPTlVFzNwtJ2LNozTpJcD1Cu44c4LNuzaq1mwxmiHWQh2ULdR6Vjwo1UGldzRpzL0yUEdZddnfqGW2G70z6Q==
 
 "@types/node@^17.0.5":
   version "17.0.45"

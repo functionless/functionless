@@ -1,0 +1,23 @@
+{
+  "name": "@functionless/aws-util",
+  "version": "0.0.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "aws-sdk": "^2"
+  },
+  "devDependencies": {
+    "typescript": "^4.8.3",
+    "aws-sdk": "^2"
+  },
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

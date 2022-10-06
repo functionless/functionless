@@ -22,7 +22,7 @@ import {
   LambdaFunction,
   LambdaFunctionKind,
   StepFunction,
-} from "./interface";
+} from "@functionless/aws";
 import {
   ASL,
   FunctionlessNode,
@@ -35,7 +35,7 @@ import * as functionless from "@functionless/aws-constructs";
 import { forEachChild } from "@functionless/aws-constructs/lib/visit";
 import { logicalIdForPath } from "./logical-id";
 import { bundleLambdaFunction, getBundleOutFolder } from "./bundle-lambda";
-import { getEnvironmentVariableName } from "./util";
+import { getEnvironmentVariableName } from "@functionless/util";
 import { Tree } from "./tree/tree";
 import { isFile, File } from "./tree/file";
 import { isFolder } from "./tree/folder";

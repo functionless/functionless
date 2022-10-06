@@ -1,7 +1,7 @@
 import STS from "aws-sdk/clients/sts";
 import type { Credentials, CredentialsOptions } from "aws-sdk/lib/credentials";
-import { getClientProps } from "../credentials";
-import { memoize } from "../memoize";
+import { getClientProps } from "@functionless/aws-util";
+import { memoize } from "@functionless/util";
 
 export function createClientFactory<
   ClientClass extends new (props: {

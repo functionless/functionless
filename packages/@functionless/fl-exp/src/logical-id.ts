@@ -1,6 +1,6 @@
 import CloudFormation from "aws-sdk/clients/cloudformation";
 import crypto from "crypto";
-import { getClientProps } from "./credentials";
+import { getClientProps } from "@functionless/aws-util";
 
 export async function resolveStackDetail(stackName: string, logicalId: string) {
   const cfnClient = new CloudFormation(getClientProps());
