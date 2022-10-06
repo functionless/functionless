@@ -12,11 +12,17 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/aws-util": "*",
-    "@functionless/util": "*",
     "typesafe-dynamodb": "^0.2.3"
   },
+  "peerDependencies": {
+    "@functionless/aws-constructs": "^0.0.0",
+    "@functionless/aws-util": "^0.0.0",
+    "@functionless/util": "^0.0.0"
+  },
   "devDependencies": {
+    "@functionless/aws-constructs": "*",
+    "@functionless/aws-util": "*",
+    "@functionless/util": "*",
     "typescript": "^4.8.3"
   }
 }
