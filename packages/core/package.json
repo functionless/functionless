@@ -94,7 +94,7 @@
   },
   "main": "lib/index.js",
   "license": "Apache-2.0",
-  "version": "0.24.4",
+  "version": "0.24.5",
   "jest": {
     "collectCoverage": false,
     "coveragePathIgnorePatterns": [
