@@ -7,21 +7,11 @@ export default LambdaFunction(async (event: { message: string }) => {
   const id = uuid.v4();
   await AppTable.put({
     Item: {
-      pk: {
-        S: "todo",
-      },
-      sk: {
-        S: id,
-      },
-      id: {
-        S: id,
-      },
-      message: {
-        S: event.message,
-      },
-      type: {
-        S: "todo",
-      },
+      pk: "todo",
+      sk: id,
+      id: id,
+      message: event.message,
+      type: "todo",
     },
   });
 
