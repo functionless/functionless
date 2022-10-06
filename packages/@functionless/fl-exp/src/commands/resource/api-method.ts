@@ -1,5 +1,5 @@
 import { registerCommand } from "../../command-provider";
-import { MethodKind } from "../../interface/method";
+import { MethodKind } from "@functionless/aws-lib";
 import { invokeLambda } from "./lambda-function";
 import { openConsole } from "./open-console";
 import { invokeExpressStepFunction } from "./express-step-function";

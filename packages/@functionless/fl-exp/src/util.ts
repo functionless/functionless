@@ -14,7 +14,3 @@ export async function exists(file: string): Promise<boolean> {
 export async function ls(dir: string): Promise<string[]> {
   return (await fs.readdir(dir)).map((file) => path.resolve(dir, file));
 }
-
-export function getEnvironmentVariableName(resourceId: string): string {
-  return resourceId.replaceAll(/[^A-Za-z_0-9]/g, "_");
-}

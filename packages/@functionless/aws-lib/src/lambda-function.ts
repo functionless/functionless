@@ -1,7 +1,6 @@
 import type * as functionless from "@functionless/aws-lib-constructs";
-import { memoize } from "../memoize";
 import Lambda from "aws-sdk/clients/lambda";
-import { getEnvironmentVariableName } from "../util";
+import { memoize, getEnvironmentVariableName } from "@functionless/util";
 
 export type FunctionHandler<In = any, Out = any> = (input: In) => Promise<Out>;
 

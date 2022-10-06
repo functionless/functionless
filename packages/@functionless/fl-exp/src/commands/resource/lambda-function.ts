@@ -1,10 +1,10 @@
 import { registerCommand } from "../../command-provider";
 import Lambda from "aws-sdk/clients/lambda";
 import Logs from "aws-sdk/clients/cloudwatchlogs";
-import { LambdaFunctionKind } from "../../interface/lambda-function";
+import { LambdaFunctionKind } from "@functionless/aws-lib";
 import { promisify } from "util";
 import { StackResourceDetail } from "aws-sdk/clients/cloudformation";
-import { getClientProps } from "../../credentials";
+import { getClientProps } from "@functionless/aws-util";
 import { openConsole } from "./open-console";
 
 export async function invokeLambda(

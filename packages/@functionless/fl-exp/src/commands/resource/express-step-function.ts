@@ -1,8 +1,8 @@
 import { StackResourceDetail } from "aws-sdk/clients/cloudformation";
 import StepFunctions from "aws-sdk/clients/stepfunctions";
 import { registerCommand } from "../../command-provider";
-import { getClientProps } from "../../credentials";
-import { ExpressStepFunctionKind } from "../../interface/express-step-function";
+import { getClientProps } from "@functionless/aws-util";
+import { ExpressStepFunctionKind } from "@functionless/aws-lib";
 import { openConsole } from "./open-console";
 
 registerCommand({

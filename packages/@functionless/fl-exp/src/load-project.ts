@@ -1,6 +1,6 @@
 import path from "path";
 import fs from "fs/promises";
-import { isResource } from "./interface";
+import { isResource } from "@functionless/aws-lib";
 import { exists, ls } from "./util";
 import { Folder, FolderProps } from "./tree/folder";
 import { Project } from "./project";

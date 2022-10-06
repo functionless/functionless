@@ -1,4 +1,4 @@
-import { StepFunction } from "@functionless/fl-exp";
+import { StepFunction } from "@functionless/aws-lib";
 
 import MyDatabase from "./table";
 

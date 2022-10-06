@@ -1,4 +1,4 @@
-import { Method, PathParam, LambdaFunction } from "@functionless/fl-exp";
+import { Method, PathParam, LambdaFunction } from "@functionless/aws-lib";
 // BUG: Uncomment this and this line and `putEvents` call bellow
 //      to trigger the function serializer error.
 // import Events from "../event-bus";
