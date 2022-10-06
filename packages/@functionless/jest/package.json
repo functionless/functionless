@@ -1,0 +1,16 @@
+{
+  "name": "@functionless/jest",
+  "version": "0.0.0",
+  "main": "./index.js",
+  "files": [
+    "index.js"
+  ],
+  "dependencies": {
+    "@functionless/ast-reflection": "^0.3.1",
+    "@functionless/swc-config": "*",
+    "@swc/jest": "^0.2.23"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

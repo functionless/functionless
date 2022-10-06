@@ -581,7 +581,7 @@ export function serializeClosure(
           fs.readFileSync(pkgJsonPath).toString("utf-8")
         );
         if (typeof pkgJson.name === "string") {
-          if (pkgJson.name === "functionless") {
+          if (pkgJson.name === "@functionless/aws-constructs") {
             // always in-memory serialize functionless
             return null;
           }

@@ -1665,7 +1665,7 @@ export interface StepFunctionProps
  * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
  *
  * ```ts
- * import * as f from "functionless";
+ * import * as f from "@functionless/aws-constructs";
  *
  * const table = new f.Table(this, "Table", { ... });
  *
@@ -1767,7 +1767,7 @@ interface BaseExpressStepFunction<
  * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
  *
  * ```ts
- * import * as f from "functionless";
+ * import * as f from "@functionless/aws-constructs";
  *
  * const table = new f.Table(this, "Table", { ... });
  *
@@ -1925,7 +1925,7 @@ export interface ExpressStepFunction<
  * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
  *
  * ```ts
- * import * as f from "functionless";
+ * import * as f from "@functionless/aws-constructs";
  *
  * const table = new f.Table(this, "Table", { ... });
  *
@@ -2433,7 +2433,7 @@ interface BaseStandardStepFunction<
  * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
  *
  * ```ts
- * import * as f from "functionless";
+ * import * as f from "@functionless/aws-constructs";
  *
  * const table = new f.Table(this, "Table", { ... });
  *

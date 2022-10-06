@@ -32,5 +32,5 @@
   },
   "include": ["src/**/*", "test/**/*"],
   "exclude": ["**/node_modules"],
-  "references": [{ "path": "../../packages/core" }]
+  "references": [{ "path": "../../packages/@functionless/aws-constructs" }]
 }

@@ -1,6 +1,6 @@
 {
   "extends": "../tsconfig.json",
-  "include": ["./**/*.ts"],
+  "include": ["../src/**.ts", "./**/*.ts"],
   "compilerOptions": {
     "rootDir": "..",
     "noEmit": true,
@@ -10,9 +10,6 @@
       }
     ],
     "skipLibCheck": true,
-    "paths": {
-      "@fnls": ["../lib/index"]
-    },
     "baseUrl": "."
   },
   "exclude": ["node_modules"]

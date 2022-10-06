@@ -10,7 +10,7 @@ import {
   StepFunction,
   Function,
   EventBus,
-} from "@fnls";
+} from "../src";
 
 // 15k arbitrary max bundle size. Some functions may need more.
 // In that case increase explicitly.

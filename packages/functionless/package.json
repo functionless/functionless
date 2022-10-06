@@ -1,0 +1,14 @@
+{
+  "name": "functionless",
+  "version": "0.24.6",
+  "dependencies": {
+    "@functionless/ast-reflection": "*",
+    "@functionless/aws-constructs": "*",
+    "@functionless/fl-exp": "*",
+    "@functionless/language-service": "*",
+    "@functionless/register": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

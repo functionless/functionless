@@ -538,10 +538,10 @@ new StepFunction(stack, "supported errors", async (input: { key: string }) => {
   } else if (input.key === "4") {
     throw Error("message");
   } else if (input.key === "5") {
-    // import { StepFunctionError } from "functionless";
+    // import { StepFunctionError } from "@functionless/aws-constructs";
     throw new StepFunctionError("ErrorName", { reason: "you suck" });
   } else if (input.key === "6") {
-    // import * as functionless from "functionless";
+    // import * as functionless from "@functionless/aws-constructs";
     throw new functionless.StepFunctionError("ErrorName", {
       reason: "you suck",
     });

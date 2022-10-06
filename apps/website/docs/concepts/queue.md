@@ -101,7 +101,7 @@ new AppsyncResolver(
 ### Pipe messages from an Event Bus
 
 ```ts
-import { Event } from "functionless";
+import { Event } from "@functionless/aws-constructs";
 
 // order events include OrderPlaced or OrderCancelled
 type OrderEvent = OrderPlaced | OrderCancelled;

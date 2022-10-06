@@ -1,5 +1,5 @@
 import { Construct } from "constructs";
-import * as functionless from "functionless";
+import * as functionless from "@functionless/aws-constructs";
 
 interface UserDetails {
   id?: string;

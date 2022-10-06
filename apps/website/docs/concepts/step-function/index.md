@@ -11,9 +11,13 @@ new StepFunction(scope, "F", async () => {
 The Step Function can make calls to other resource like a Lambda [Function](../function/), handle a `payload`, introduce wait time, add conditional logic, throw errors, and more.
 
 ```ts
-const serviceCall = new Function(scope, "serviceCall", async (input: string) => {
-  console.log(input);
-});
+const serviceCall = new Function(
+  scope,
+  "serviceCall",
+  async (input: string) => {
+    console.log(input);
+  }
+);
 new StepFunction(scope, "F", async (payload: { property?: string }) => {
   if (payload.property) {
     SFN.waitFor(10);
@@ -69,9 +73,13 @@ These State Machines have many use-cases, such as long-running workflows involvi
 Functionless automatically generates the ASL (and any IAM Policies) directly from your TypeScript code, enabling you to leverage the operational benefits of Step Functions using ordinary control-flow such as `if-else`, `for`, `while`, etc.
 
 ```ts
-const serviceCall = new Function(scope, "serviceCall", async (input: string) => {
-  console.log(input);
-});
+const serviceCall = new Function(
+  scope,
+  "serviceCall",
+  async (input: string) => {
+    console.log(input);
+  }
+);
 new StepFunction(scope, "F", async (payload: { property?: string }) => {
   if (payload.property) {
     SFN.waitFor(10);
@@ -90,7 +98,7 @@ To achieve this, use the `StepFunction.fromStateMachine` or `ExpressStepFunction
 
 ```ts
 import { aws_stepfunctions } from "aws-cdk-lib";
-import { StepFunction } from "functionless";
+import { StepFunction } from "@functionless/aws-constructs";
 
 const myMachine = StepFunction.fromStateMachine<{ name: string }, string>(
   new aws_stepfunctions.StateMachine(this, "MyMachine", {

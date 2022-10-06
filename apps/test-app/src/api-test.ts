@@ -14,7 +14,7 @@ import {
   Table,
   ApiGatewayInput,
   LambdaMethod,
-} from "functionless";
+} from "@functionless/aws-constructs";
 
 export const app = new App();
 

@@ -7,7 +7,7 @@ sidebar_position: 3
 The `$SFN` object provides intrinsic functions that can be called from within a Step Function. These include APIs for explicitly creating states such as `Wait`, `Parallel` and `Map`.
 
 ```ts
-import { $SFN } from "functionless";
+import { $SFN } from "@functionless/aws-constructs";
 ```
 
 ## waitFor

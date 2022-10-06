@@ -15,7 +15,7 @@ Let's take a closer look at `./src/app.ts`:
 
 ```typescript
 import { App, Stack } from "aws-cdk-lib";
-import { Function, StepFunction } from "functionless";
+import { Function, StepFunction } from "@functionless/aws-constructs";
 
 const app = new App();
 
@@ -39,7 +39,7 @@ We start by importing Constructs from `aws-cdk-lib` and `functionless`:
 
 ```typescript
 import { App, Stack } from "aws-cdk-lib";
-import { Function, StepFunction } from "functionless";
+import { Function, StepFunction } from "@functionless/aws-constructs";
 ```
 
 :::note

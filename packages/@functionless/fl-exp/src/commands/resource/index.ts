@@ -7,7 +7,7 @@ import "./express-step-function";
 import "./step-function";
 import { File } from "../../tree/file";
 
-require("functionless/register");
+require("@functionless/register");
 
 export async function invoke(resourceFile: File, _args: string[]) {
   const absoluteResourcePath = resourceFile.filePath;

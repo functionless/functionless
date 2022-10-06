@@ -1,4 +1,4 @@
-import type * as functionless from "functionless";
+import type * as functionless from "@functionless/aws-constructs";
 import type { EventBusProps } from "aws-cdk-lib/aws-events";
 
 export interface EventBusEvent<

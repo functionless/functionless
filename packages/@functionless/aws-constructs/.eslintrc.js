@@ -32,6 +32,7 @@ module.exports = {
     },
   },
   ignorePatterns: [
+    "bin/functionless.js",
     "scripts/**",
     "register.js",
     "jest.js",
