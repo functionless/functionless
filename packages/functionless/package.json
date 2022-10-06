@@ -1,10 +1,10 @@
 {
   "name": "functionless",
-  "version": "0.25.0",
+  "version": "0.25.1",
   "dependencies": {
     "@functionless/ast-reflection": "*",
     "@functionless/aws-constructs": "^0.25.0",
-    "@functionless/fl-exp": "^0.25.0",
+    "@functionless/fl-exp": "^0.25.1",
     "@functionless/language-service": "*",
     "@functionless/register": "^0.25.0"
   },
