@@ -1,5 +1,5 @@
 {
-  "extends": "../../../tsconfig-base.json",
+  "extends": "../../tsconfig-base.json",
   "compilerOptions": {
     "outDir": "lib",
     "declaration": true,
@@ -10,7 +10,7 @@
   "exclude": ["lib", "test", "node_modules"],
   "references": [
     {
-      "path": "../../core"
+      "path": "../core"
     }
   ]
 }
