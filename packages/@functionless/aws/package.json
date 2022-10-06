@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws",
-  "version": "0.26.0",
+  "version": "0.27.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -12,9 +12,9 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/aws-constructs": "^0.26.0",
-    "@functionless/aws-util": "^0.26.0",
-    "@functionless/util": "^0.26.0",
+    "@functionless/aws-constructs": "^0.27.0",
+    "@functionless/aws-util": "^0.27.0",
+    "@functionless/util": "^0.27.0",
     "typesafe-dynamodb": "^0.2.3"
   },
   "devDependencies": {

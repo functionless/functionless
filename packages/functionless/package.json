@@ -1,15 +1,15 @@
 {
   "name": "functionless",
-  "version": "0.26.0",
+  "version": "0.27.0",
   "dependencies": {
     "@functionless/ast-reflection": "^0.3.2",
-    "@functionless/aws": "^0.26.0",
-    "@functionless/aws-constructs": "^0.26.0",
-    "@functionless/aws-util": "^0.26.0",
-    "@functionless/fl-exp": "^0.26.0",
+    "@functionless/aws": "^0.27.0",
+    "@functionless/aws-constructs": "^0.27.0",
+    "@functionless/aws-util": "^0.27.0",
+    "@functionless/fl-exp": "^0.27.0",
     "@functionless/language-service": "^0.0.4",
-    "@functionless/register": "^0.26.0",
-    "@functionless/util": "^0.26.0"
+    "@functionless/register": "^0.27.0",
+    "@functionless/util": "^0.27.0"
   },
   "publishConfig": {
     "access": "public"
