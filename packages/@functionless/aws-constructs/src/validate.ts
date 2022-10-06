@@ -1,3 +1,4 @@
+import { anyOf, hasOnlyAncestors } from "@functionless/ast";
 import ts from "typescript";
 import {
   BinaryArithmeticToken,
@@ -22,7 +23,6 @@ import {
   formatErrorMessage,
   SynthError,
 } from "./error-code";
-import { anyOf, hasOnlyAncestors } from "./util";
 
 const StepFunctions = {
   SupportedBinaryArithmeticToken: new Set([

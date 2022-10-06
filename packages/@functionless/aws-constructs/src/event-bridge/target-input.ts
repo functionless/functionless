@@ -1,16 +1,10 @@
-import { aws_events } from "aws-cdk-lib";
-import { RuleTargetInput } from "aws-cdk-lib/aws-events";
-import { assertConstantValue, assertString } from "../assert";
-import { FunctionLike } from "../declaration";
-import { Err } from "../error";
-import { ErrorCodes, SynthError } from "../error-code";
 import {
   ArrayLiteralExpr,
+  Err,
+  evalToConstant,
   Expr,
+  FunctionLike,
   Identifier,
-  ObjectLiteralExpr,
-} from "../expression";
-import {
   isArrayLiteralExpr,
   isAwaitExpr,
   isBinaryExpr,
@@ -24,10 +18,14 @@ import {
   isReferenceExpr,
   isStringLiteralExpr,
   isTemplateExpr,
-} from "../guards";
+  ObjectLiteralExpr,
+} from "@functionless/ast";
+import { aws_events } from "aws-cdk-lib";
+import { RuleTargetInput } from "aws-cdk-lib/aws-events";
+import { assertConstantValue, assertString } from "../assert";
+import { ErrorCodes, SynthError } from "../error-code";
 import { isIntegration } from "../integration";
 import { validateFunctionLike } from "../reflect";
-import { evalToConstant } from "../util";
 import {
   assertValidEventReference,
   flattenReturnEvent,

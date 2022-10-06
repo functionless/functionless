@@ -1,4 +1,18 @@
 import {
+  CallExpr,
+  Expr,
+  Identifier,
+  isArrayLiteralExpr,
+  isComputedPropertyNameExpr,
+  isIdentifier,
+  isObjectLiteralExpr,
+  isPrivateIdentifier,
+  isPropAssignExpr,
+  isSpreadAssignExpr,
+  PropAssignExpr,
+  StringLiteralExpr,
+} from "@functionless/ast";
+import {
   aws_apigateway,
   aws_events,
   aws_events_targets,
@@ -7,23 +21,7 @@ import {
 import { Construct } from "constructs";
 import { ASL, ASLGraph } from "../asl";
 import { ErrorCodes, SynthError } from "../error-code";
-import {
-  CallExpr,
-  Expr,
-  Identifier,
-  PropAssignExpr,
-  StringLiteralExpr,
-} from "../expression";
 import { NativePreWarmContext, PrewarmClients } from "../function-prewarm";
-import {
-  isArrayLiteralExpr,
-  isComputedPropertyNameExpr,
-  isIdentifier,
-  isObjectLiteralExpr,
-  isPrivateIdentifier,
-  isPropAssignExpr,
-  isSpreadAssignExpr,
-} from "../guards";
 import {
   Integration,
   IntegrationCall,

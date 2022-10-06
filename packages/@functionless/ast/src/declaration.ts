@@ -9,7 +9,6 @@ import type {
   PropName,
   ReferenceExpr,
 } from "./expression";
-import type { Integration } from "./integration";
 import { BaseNode, FunctionlessNode } from "./node";
 import { NodeKind } from "./node-kind";
 import type { Span } from "./span";
@@ -475,10 +474,6 @@ export class FunctionDecl<F extends AnyFunction = AnyFunction> extends BaseDecl<
   }
 }
 
-export interface IntegrationInvocation {
-  integration: Integration<any>;
-  args: Expr[];
-}
 export class ParameterDecl extends BaseDecl<
   NodeKind.ParameterDecl,
   ArrowFunctionExpr | FunctionDecl | FunctionExpr | SetAccessorDecl
@@ -699,6 +694,3 @@ export class VariableDeclList extends BaseNode<
     this.ensureArrayOf(decls, "decls", [NodeKind.VariableDecl]);
   }
 }
-
-// to prevent the closure serializer from trying to import all of functionless.
-export const deploymentOnlyModule = true;

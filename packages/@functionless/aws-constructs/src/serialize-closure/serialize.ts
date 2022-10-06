@@ -1,21 +1,17 @@
 import fs from "fs";
 import path from "path";
 import util from "util";
-import { Token } from "aws-cdk-lib";
-import { CodeWithSourceMap, SourceNode } from "source-map";
-
-import { assertNever } from "../assert";
 import {
+  AnyClass,
+  AnyFunction,
   BindingName,
   ClassDecl,
+  ClassExpr,
+  evalToConstant,
+  forEachChild,
+  FunctionlessNode,
   FunctionLike,
   GetAccessorDecl,
-  MethodDecl,
-  SetAccessorDecl,
-  VariableDeclKind,
-} from "../declaration";
-import { ClassExpr } from "../expression";
-import {
   isArgument,
   isArrayBinding,
   isArrayLiteralExpr,
@@ -99,11 +95,15 @@ import {
   isWhileStmt,
   isWithStmt,
   isYieldExpr,
-} from "../guards";
-import { FunctionlessNode } from "../node";
+  MethodDecl,
+  SetAccessorDecl,
+  VariableDeclKind,
+} from "@functionless/ast";
+import { Token } from "aws-cdk-lib";
+import { CodeWithSourceMap, SourceNode } from "source-map";
+
+import { assertNever } from "../assert";
 import { reflect, reverseProxy, unbind } from "../reflect";
-import { AnyClass, AnyFunction, evalToConstant } from "../util";
-import { forEachChild } from "../visit";
 import { Globals } from "./globals";
 import {
   exprStmt,

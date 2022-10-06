@@ -1,4 +1,50 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
+import {
+  AnyFunction,
+  Argument,
+  BinaryExpr,
+  BlockStmt,
+  CallExpr,
+  ConditionExpr,
+  DeterministicNameGenerator,
+  emptySpan,
+  Expr,
+  FunctionlessNode,
+  FunctionLike,
+  Identifier,
+  isAwaitExpr,
+  isBinaryExpr,
+  isBindingElem,
+  isBindingPattern,
+  isBlockStmt,
+  isCallExpr,
+  isElementAccessExpr,
+  isExprStmt,
+  isForInStmt,
+  isForOfStmt,
+  isFunctionLike,
+  isIfStmt,
+  isInTopLevelScope,
+  isParameterDecl,
+  isPropAccessExpr,
+  isReferenceExpr,
+  isReturnStmt,
+  isStmt,
+  isThisExpr,
+  isVariableDecl,
+  isVariableStmt,
+  memoize,
+  PropAccessExpr,
+  ReferenceExpr,
+  StringLiteralExpr,
+  ThisExpr,
+  UndefinedLiteralExpr,
+  VariableDeclList,
+  VariableStmt,
+  visitBlock,
+  visitEachChild,
+  visitSpecificChildren,
+} from "@functionless/ast";
 import { aws_appsync, Lazy } from "aws-cdk-lib";
 import type { AppSyncResolverEvent } from "aws-lambda";
 import { Construct } from "constructs";
@@ -6,43 +52,7 @@ import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
-import { FunctionLike, VariableDeclList } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
-import {
-  Argument,
-  BinaryExpr,
-  CallExpr,
-  ConditionExpr,
-  Expr,
-  Identifier,
-  PropAccessExpr,
-  ReferenceExpr,
-  StringLiteralExpr,
-  ThisExpr,
-  UndefinedLiteralExpr,
-} from "./expression";
-import {
-  isVariableStmt,
-  isParameterDecl,
-  isBinaryExpr,
-  isExprStmt,
-  isReturnStmt,
-  isCallExpr,
-  isPropAccessExpr,
-  isElementAccessExpr,
-  isIfStmt,
-  isBlockStmt,
-  isStmt,
-  isForInStmt,
-  isForOfStmt,
-  isAwaitExpr,
-  isBindingElem,
-  isBindingPattern,
-  isReferenceExpr,
-  isThisExpr,
-  isVariableDecl,
-  isFunctionLike,
-} from "./guards";
 import {
   findDeepIntegrations,
   getIntegrationExprFromIntegrationCallPattern,
@@ -52,21 +62,9 @@ import {
   isIntegrationCallPattern,
 } from "./integration";
 import { Literal } from "./literal";
-import { FunctionlessNode } from "./node";
 import { validateFunctionLike } from "./reflect";
-import { emptySpan } from "./span";
-import { BlockStmt, VariableStmt } from "./statement";
-import {
-  AnyFunction,
-  DeterministicNameGenerator,
-  isInTopLevelScope,
-  memoize,
-  singletonConstruct,
-} from "./util";
-import { visitBlock, visitEachChild, visitSpecificChildren } from "./visit";
+import { singletonConstruct } from "./util";
 import { VTL } from "./vtl";
-
-import "./node-clone";
 
 /**
  * The shape of the AWS Appsync `$context` variable.

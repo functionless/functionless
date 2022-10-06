@@ -291,7 +291,7 @@
     "@aws-sdk/types" "3.183.0"
     tslib "^2.3.1"
 
-"@aws-sdk/client-dynamodb@*", "@aws-sdk/client-dynamodb@^3.100.0", "@aws-sdk/client-dynamodb@^3.180.0":
+"@aws-sdk/client-dynamodb@^3.100.0", "@aws-sdk/client-dynamodb@^3.180.0":
   version "3.185.0"
   resolved "https://registry.yarnpkg.com/@aws-sdk/client-dynamodb/-/client-dynamodb-3.185.0.tgz#b4830d0972e1108176c4423eb87812c9f6b547cf"
   integrity sha512-7gjcBnkclZ0GqRvaE78Yemn3Tzt4XEU1dK4pnqzulmhOasFT+KKBdcaJ8EfR/h30AyHrnGlf0unrQSONxXiCmQ==
@@ -5119,6 +5119,11 @@
   version "17.0.45"
   resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.45.tgz#2c0fafd78705e7a18b7906b5201a522719dc5190"
   integrity sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==
+
+"@types/node@^18.0.0":
+  version "18.8.3"
+  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.8.3.tgz#ce750ab4017effa51aed6a7230651778d54e327c"
+  integrity sha512-0os9vz6BpGwxGe9LOhgP/ncvYN5Tx1fNcd2TM3rD/aCGBkysb+ZWpXEocG24h6ZzOi13+VB8HndAQFezsSOw1w==
 
 "@types/normalize-package-data@^2.4.0":
   version "2.4.1"

@@ -36,7 +36,10 @@
   },
   "devDependencies": {
     "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
-    "@aws-sdk/client-dynamodb": "*",
+    "@functionless/ast-reflection": "^0.3.1",
+    "@functionless/aws-constructs": "*",
+    "@functionless/aws": "*",
+    "@functionless/util": "*",
     "@functionless/language-service": "^0.0.4",
     "@swc/jest": "^0.2.22",
     "@types/express": "^4.17.14",

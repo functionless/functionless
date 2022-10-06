@@ -8,11 +8,8 @@
   "include": ["."],
   "exclude": ["lib", "test", "node_modules"],
   "references": [
-    {
-      "path": "../../packages/@functionless/aws-constructs"
-    },
-    {
-      "path": "../../packages/@functionless/fl-exp"
-    }
+    { "path": "../../packages/@functionless/aws-constructs" },
+    { "path": "../../packages/@functionless/aws" },
+    { "path": "../../packages/@functionless/fl-exp" }
   ]
 }

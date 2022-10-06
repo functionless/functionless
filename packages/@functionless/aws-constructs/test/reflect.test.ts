@@ -1,3 +1,4 @@
+import { NodeKind } from "@functionless/ast";
 import { aws_events, Stack } from "aws-cdk-lib";
 import {
   EventBus,
@@ -6,7 +7,6 @@ import {
   validateFunctionLike,
 } from "../src";
 import { assertNodeKind } from "../src/assert";
-import { NodeKind } from "../src/node-kind";
 
 test("function", () => {
   expect(reflect(() => {})?.kindName).toEqual("ArrowFunctionExpr");

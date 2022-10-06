@@ -1,6 +1,6 @@
 import path from "path";
+import { FunctionlessNode } from "@functionless/ast";
 import { SourceNode } from "source-map";
-import { FunctionlessNode } from "../node";
 
 export function undefinedExpr() {
   return "undefined";

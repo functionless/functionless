@@ -1,22 +1,11 @@
-import { assertNever, assertNodeKind } from "./assert";
 import {
+  AnyFunction,
   BindingElem,
   BindingPattern,
-  Decl,
-  ParameterDecl,
-  VariableDecl,
-  VariableDeclList,
-} from "./declaration";
-import { ErrorCodes, SynthError } from "./error-code";
-import {
   CallExpr,
+  Decl,
   Expr,
   Identifier,
-  ReferenceExpr,
-  SuperKeyword,
-  ThisExpr,
-} from "./expression";
-import {
   isArgument,
   isArrayBinding,
   isArrayLiteralExpr,
@@ -55,6 +44,7 @@ import {
   isIdentifier,
   isIfStmt,
   isImportKeyword,
+  isInTopLevelScope,
   isLabelledStmt,
   isMethodDecl,
   isNewExpr,
@@ -95,16 +85,23 @@ import {
   isWhileStmt,
   isWithStmt,
   isYieldExpr,
-} from "./guards";
+  NodeKind,
+  ParameterDecl,
+  ReferenceExpr,
+  Stmt,
+  SuperKeyword,
+  ThisExpr,
+  VariableDecl,
+  VariableDeclList,
+} from "@functionless/ast";
+import { assertNever, assertNodeKind } from "./assert";
+import { ErrorCodes, SynthError } from "./error-code";
 import {
   Integration,
   IntegrationImpl,
   isIntegration,
   tryFindIntegration,
 } from "./integration";
-import { NodeKind } from "./node-kind";
-import { Stmt } from "./statement";
-import { AnyFunction, isInTopLevelScope } from "./util";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
 // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull

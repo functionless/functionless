@@ -1,3 +1,4 @@
+import { anyOf, hasParent } from "@functionless/ast";
 import ts from "typescript";
 import { ApiMethod, ApiMethodKind, isApiMethodKind } from "./api";
 import { AppsyncField, AppsyncResolver } from "./appsync";
@@ -6,7 +7,6 @@ import { EventTransform } from "./event-bridge/transform";
 import { Function } from "./function";
 import { ExpressStepFunction, StepFunction } from "./step-function";
 import { Table } from "./table";
-import { anyOf, hasParent } from "./util";
 
 /**
  * Various types that could be in a call argument position of a function parameter.
