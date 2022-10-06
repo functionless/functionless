@@ -5,16 +5,6 @@
     "rootDir": "src",
     "types": ["node"]
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.json",
-    "../ast/src/error.ts",
-    "../ast/src/ensure.ts"
-  ],
-  "exclude": [],
-  "references": [
-    {
-      "path": "../ast"
-    }
-  ]
+  "include": ["src/**/*.ts", "src/**/*.json"],
+  "exclude": []
 }

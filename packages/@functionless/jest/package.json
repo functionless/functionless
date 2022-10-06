@@ -1,6 +1,6 @@
 {
   "name": "@functionless/jest",
-  "version": "0.0.0",
+  "version": "0.25.0",
   "main": "./index.js",
   "files": [
     "index.js"

@@ -1,9 +1,21 @@
 name: build
 on:
   pull_request: {}
-  workflow_dispatch: {}
+  workflow_call: {}
 jobs:
   build:
+    runs-on: ubuntu-latest
+    env:
+      CI: "true"
+      CLEAN_UP_STACK: "1"
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: ./.github/actions/build
+
+  test:
+    needs: [build]
+    concurrency: pr-test-${{ github.ref }}
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -12,20 +24,9 @@ jobs:
       CI: "true"
       CLEAN_UP_STACK: "1"
     steps:
-      - name: Checkout
-        uses: actions/checkout@v3
-        with:
-          ref: ${{ github.event.pull_request.head.ref }}
-          repository: ${{ github.event.pull_request.head.repo.full_name }}
+      - uses: actions/checkout@v3
 
-      - name: Turbo Cache
-        id: turbo-cache
-        uses: actions/cache@v2
-        with:
-          path: .turbo-cache
-          key: turbo-${{ github.job }}-${{ github.ref_name }}-${{ github.sha }}
-          restore-keys: |
-            turbo-${{ github.job }}-${{ github.ref_name }}-
+      - uses: ./.github/actions/build
 
       - name: Configure AWS Credentials
         uses: aws-actions/configure-aws-credentials@v1
@@ -35,16 +36,34 @@ jobs:
           role-duration-seconds: 3600
         if: contains(fromJson('["release", "build", "close"]'), github.workflow)
 
-      - name: Install dependencies
-        run: yarn install --check-files
-
-      - name: Build Packages
-        run: yarn turbo run build -- --cache-dir=.turbo-cache
-        env:
-          NODE_OPTIONS: --max-old-space-size=6144
-
       - name: Run tests
-        run: yarn turbo run test -- --cache-dir=.turbo-cache
+        run: yarn turbo run test --cache-dir=.turbo-cache
         env:
           TEST_DEPLOY_TARGET: AWS
           NODE_OPTIONS: --max-old-space-size=6144
+
+  website-preview:
+    needs: [build]
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      pull-requests: write
+    env:
+      CI: "true"
+    steps:
+      - uses: actions/checkout@v3
+
+      - uses: ./.github/actions/build
+
+      - name: Netlify Preview
+        uses: nwtgck/actions-netlify@v1.2
+        with:
+          publish-dir: "./apps/website/build"
+          production-branch: main
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          deploy-message: "Deploy from GitHub Actions"
+          enable-pull-request-comment: true
+          overwrites-pull-request-comment: true
+        env:
+          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
+          NETLIFY_SITE_ID: b49248b3-07b2-49ea-bc73-86deecce6633

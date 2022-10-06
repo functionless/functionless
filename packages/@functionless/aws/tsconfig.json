@@ -9,11 +9,9 @@
   "include": ["src"],
   "exclude": ["lib", "test", "node_modules"],
   "references": [
-    {
-      "path": "../aws-util"
-    },
-    {
-      "path": "../util"
-    }
+    { "path": "../ast" },
+    { "path": "../aws-constructs" },
+    { "path": "../aws-util" },
+    { "path": "../util" }
   ]
 }
