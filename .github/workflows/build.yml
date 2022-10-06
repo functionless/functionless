@@ -4,6 +4,7 @@ on:
 jobs:
   build:
     runs-on: ubuntu-latest
+    concurrency: ci-${{ github.ref }}
     permissions:
       contents: write
       id-token: write
