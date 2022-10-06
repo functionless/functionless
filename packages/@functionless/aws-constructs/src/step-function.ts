@@ -1,5 +1,22 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import {
+  AnyFunction,
+  CallExpr,
+  evalToConstant,
+  Expr,
+  FunctionLike,
+  isComputedPropertyNameExpr,
+  isErr,
+  isFunctionLike,
+  isGetAccessorDecl,
+  isMethodDecl,
+  isNumberLiteralExpr,
+  isObjectLiteralExpr,
+  isPropAssignExpr,
+  isSetAccessorDecl,
+  isSpreadAssignExpr,
+} from "@functionless/ast";
+import {
   aws_apigateway,
   aws_events_targets,
   aws_stepfunctions,
@@ -13,26 +30,12 @@ import { ApiGatewayVtlIntegration } from "./api";
 import { AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph, Retry, StateMachine, States, Task } from "./asl";
 import { assertDefined } from "./assert";
-import { FunctionLike } from "./declaration";
 import { ErrorCodes, SynthError } from "./error-code";
 import { EventBus, PredicateRuleBase, Rule } from "./event-bridge";
 import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { Event } from "./event-bridge/types";
-import { CallExpr, Expr } from "./expression";
 import { NativeIntegration } from "./function";
 import { PrewarmClients } from "./function-prewarm";
-import {
-  isComputedPropertyNameExpr,
-  isErr,
-  isFunctionLike,
-  isGetAccessorDecl,
-  isMethodDecl,
-  isNumberLiteralExpr,
-  isObjectLiteralExpr,
-  isPropAssignExpr,
-  isSetAccessorDecl,
-  isSpreadAssignExpr,
-} from "./guards";
 import {
   Integration,
   IntegrationCall,
@@ -40,7 +43,6 @@ import {
   makeIntegration,
 } from "./integration";
 import { validateFunctionLike } from "./reflect";
-import { AnyFunction, evalToConstant } from "./util";
 import { VTL } from "./vtl";
 
 export type AnyStepFunction =

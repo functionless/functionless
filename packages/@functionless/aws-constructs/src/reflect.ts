@@ -1,18 +1,23 @@
 import {
+  AnyAsyncFunction,
+  AnyFunction,
+  Err,
+  forEachChild,
+  FunctionlessNode,
   FunctionLike,
   GetAccessorDecl,
+  isErr,
+  isFunctionLike,
+  isNewExpr,
+  isReferenceExpr,
   MethodDecl,
+  parseSExpr,
+  ReferenceExpr,
   SetAccessorDecl,
-} from "./declaration";
-import { Err } from "./error";
+  visitEachChild,
+} from "@functionless/ast";
 import { ErrorCodes, SynthError } from "./error-code";
-import { ReferenceExpr } from "./expression";
-import { isFunctionLike, isErr, isNewExpr, isReferenceExpr } from "./guards";
 import { tryResolveReferences } from "./integration";
-import type { FunctionlessNode } from "./node";
-import { parseSExpr } from "./s-expression";
-import { AnyAsyncFunction, AnyFunction } from "./util";
-import { forEachChild, visitEachChild } from "./visit";
 
 const Global: any = global;
 

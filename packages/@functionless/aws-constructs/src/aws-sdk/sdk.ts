@@ -1,10 +1,8 @@
+import { Expr, Argument, isArgument, evalToConstant } from "@functionless/ast";
 import { aws_iam } from "aws-cdk-lib";
 import { ASLGraph } from "../asl";
 import { ErrorCodes, SynthError } from "../error-code";
-import { Expr, Argument } from "../expression";
-import { isArgument } from "../guards";
 import { makeIntegration } from "../integration";
-import { evalToConstant } from "../util";
 import { SDK_INTEGRATION_SERVICE_NAME } from "./asl";
 import { IAM_SERVICE_PREFIX } from "./iam";
 import type { SDK as TSDK } from "./sdk.generated";

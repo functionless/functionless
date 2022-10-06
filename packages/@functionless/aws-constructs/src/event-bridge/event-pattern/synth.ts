@@ -1,24 +1,14 @@
 import {
-  assertDefined,
-  assertNever,
-  assertNumber,
-  assertPrimitive,
-  assertString,
-} from "../../assert";
-import { FunctionLike } from "../../declaration";
-import { Err } from "../../error";
-import { ErrorCodes, SynthError } from "../../error-code";
-import {
-  BinaryOp,
   BinaryExpr,
+  BinaryOp,
   CallExpr,
   ElementAccessExpr,
+  Err,
+  evalToConstant,
   Expr,
-  PropAccessExpr,
-  UnaryExpr,
-  SuperKeyword,
-} from "../../expression";
-import {
+  FunctionLike,
+  getNodeKindName,
+  invertBinaryOperator,
   isBinaryExpr,
   isBooleanLiteralExpr,
   isCallExpr,
@@ -28,11 +18,20 @@ import {
   isPropAccessExpr,
   isUnaryExpr,
   isUndefinedLiteralExpr,
-} from "../../guards";
+  PropAccessExpr,
+  SuperKeyword,
+  UnaryExpr,
+} from "@functionless/ast";
+import {
+  assertDefined,
+  assertNever,
+  assertNumber,
+  assertPrimitive,
+  assertString,
+} from "../../assert";
+import { ErrorCodes, SynthError } from "../../error-code";
 import { isIntegrationCallPattern } from "../../integration";
-import { getNodeKindName } from "../../node-kind";
 import { validateFunctionLike } from "../../reflect";
-import { evalToConstant, invertBinaryOperator } from "../../util";
 import { RulePredicateFunction } from "../rule";
 import * as functionless_event_bridge from "../types";
 import {

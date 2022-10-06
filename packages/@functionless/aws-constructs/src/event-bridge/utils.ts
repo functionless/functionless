@@ -1,25 +1,10 @@
-import { assertNodeKind } from "../assert";
-import { ParameterDecl } from "../declaration";
-import { ErrorCodes, SynthError } from "../error-code";
 import {
   ArrayLiteralExpr,
   BinaryExpr,
   ElementAccessExpr,
+  evalToConstant,
   Expr,
   Identifier,
-  NumberLiteralExpr,
-  ObjectLiteralExpr,
-  PropAccessExpr,
-  PropAssignExpr,
-  StringLiteralExpr,
-  TemplateExpr,
-  TemplateMiddle,
-  TemplateSpan,
-  TemplateTail,
-  UnaryExpr,
-  UndefinedLiteralExpr,
-} from "../expression";
-import {
   isArrayLiteralExpr,
   isBinaryExpr,
   isBindingPattern,
@@ -40,10 +25,24 @@ import {
   isTemplateMiddle,
   isUnaryExpr,
   isVariableStmt,
-} from "../guards";
-import { NodeKind } from "../node-kind";
-import { Stmt, VariableStmt } from "../statement";
-import { evalToConstant } from "../util";
+  NodeKind,
+  NumberLiteralExpr,
+  ObjectLiteralExpr,
+  ParameterDecl,
+  PropAccessExpr,
+  PropAssignExpr,
+  Stmt,
+  StringLiteralExpr,
+  TemplateExpr,
+  TemplateMiddle,
+  TemplateSpan,
+  TemplateTail,
+  UnaryExpr,
+  UndefinedLiteralExpr,
+  VariableStmt,
+} from "@functionless/ast";
+import { assertNodeKind } from "../assert";
+import { ErrorCodes, SynthError } from "../error-code";
 
 /**
  * Returns a string array representing the property access starting from a named identity.

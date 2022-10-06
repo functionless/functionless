@@ -1,6 +1,13 @@
 import fs from "fs";
 import path from "path";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
+import {
+  AnyAsyncFunction,
+  AnyFunction,
+  CallExpr,
+  Expr,
+  FunctionLike,
+} from "@functionless/ast";
 import { serializeFunction } from "@functionless/nodejs-closure-serializer";
 import {
   AssetHashType,
@@ -33,7 +40,6 @@ import { ApiGatewayVtlIntegration } from "./api";
 import { AppsyncResolver, AppSyncVtlIntegration } from "./appsync";
 import { ASL, ASLGraph } from "./asl";
 import { BindFunctionName, RegisterFunctionName } from "./compile";
-import { FunctionLike, IntegrationInvocation } from "./declaration";
 import { ErrorCodes, formatErrorMessage, SynthError } from "./error-code";
 import {
   IEventBus,
@@ -44,7 +50,6 @@ import {
   PredicateRuleBase,
 } from "./event-bridge";
 import { makeEventBusIntegration } from "./event-bridge/event-bus";
-import { CallExpr, Expr } from "./expression";
 import {
   NativePreWarmContext,
   PrewarmClients,
@@ -65,7 +70,6 @@ import {
 } from "./serialize-closure/serialize";
 import { isStepFunction } from "./step-function";
 import { isTable } from "./table";
-import { AnyAsyncFunction, AnyFunction } from "./util";
 
 export function isFunction<Payload = any, Output = any>(
   a: any
@@ -793,6 +797,11 @@ export function inferIamPolicies(
     const native = new IntegrationImpl(integration).native;
     native.bind(func, args);
   });
+}
+
+export interface IntegrationInvocation {
+  integration: Integration<any>;
+  args: Expr[];
 }
 
 export function findAllIntegrations(decl: FunctionLike<AnyFunction>) {

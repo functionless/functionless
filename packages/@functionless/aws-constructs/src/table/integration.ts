@@ -1,20 +1,21 @@
 /* eslint-disable @typescript-eslint/no-require-imports */
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
+import {
+  AnyFunction,
+  CallExpr,
+  Expr,
+  isIdentifier,
+  isObjectLiteralExpr,
+  isPropAssignExpr,
+  isStringLiteralExpr,
+} from "@functionless/ast";
 import { aws_apigateway, aws_dynamodb, aws_iam } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { AppSyncVtlIntegration } from "../appsync";
 import { ASL, ASLGraph, Task } from "../asl";
 import { ErrorCodes, SynthError } from "../error-code";
-import { CallExpr, Expr } from "../expression";
 import { PrewarmClientInitializer } from "../function-prewarm";
-import {
-  isIdentifier,
-  isObjectLiteralExpr,
-  isPropAssignExpr,
-  isStringLiteralExpr,
-} from "../guards";
 import { IntegrationInput, makeIntegration } from "../integration";
-import { AnyFunction } from "../util";
 import { VTL } from "../vtl";
 import { ITable } from "./table";
 
