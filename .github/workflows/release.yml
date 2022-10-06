@@ -5,7 +5,11 @@ on:
       - main
   workflow_dispatch: {}
 jobs:
+  build:
+    uses: ./.github/workflows/build.yml
+
   release:
+    needs: [build]
     runs-on: ubuntu-latest
     permissions:
       contents: write
@@ -19,28 +23,16 @@ jobs:
         with:
           fetch-depth: 0
 
+      - uses: ./.github/actions/build
+
       - name: Set git identity
         run: |-
           git config user.name "github-actions"
           git config user.email "github-actions@github.com"
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v1
-        with:
-          role-to-assume: arn:aws:iam::593491530938:role/githubActionStack-githubactionroleA106E4DC-14SHKLVA61IN4
-          aws-region: us-east-1
-          role-duration-seconds: 3600
-        if: contains(fromJson('["release", "build", "close"]'), github.workflow)
-
-      - name: Install dependencies
-        run: yarn install --check-files --frozen-lockfile
-
       - run: echo //registry.npmjs.org/:_authToken=${NPM_TOKEN} > .npmrc
         env:
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
-
-      - name: Build Packages
-        run: yarn run build
 
       - name: release
         run: yarn lerna publish --yes

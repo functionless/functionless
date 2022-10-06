@@ -1,6 +1,3 @@
-// eslint-disable-next-line turbo/no-undeclared-env-vars
-process.env.AWS_SDK_LOAD_CONFIG = "1";
-
 import { program } from "commander";
 import { loadProject } from "./load-project";
 
@@ -23,11 +20,17 @@ program
     console.log(args);
   })
   .action(async (resourcePath, ...args) => {
+    // eslint-disable-next-line turbo/no-undeclared-env-vars
+    process.env.AWS_SDK_LOAD_CONFIG = "1";
+
     const { invoke } = await import("./commands/resource");
     return invoke(resourcePath, args);
   });
 
 program.command("local").action(async () => {
+  // eslint-disable-next-line turbo/no-undeclared-env-vars
+  process.env.AWS_SDK_LOAD_CONFIG = "1";
+
   const { localServer } = await import("./commands/local");
   return localServer();
 });
