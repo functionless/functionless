@@ -141,6 +141,11 @@
       ]
     ]
   },
+  "lint-staged": {
+    "*.{tsx,jsx,ts,js,md,css}": [
+      "eslint --fix"
+    ]
+  },
   "publishConfig": {
     "access": "public"
   }
