@@ -1,0 +1,35 @@
+name: Setup
+description: "Setup Project"
+runs:
+  using: "composite"
+  steps:
+    - name: Get yarn cache directory path
+      id: yarn-cache-dir-path
+      run: echo "::set-output name=dir::$(yarn cache dir)"
+      shell: bash
+
+    - uses: actions/cache@v3
+      id: yarn-cache
+      with:
+        path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
+        key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
+        restore-keys: |
+          ${{ runner.os }}-yarn-
+
+    - uses: actions/cache@v3
+      id: turbo-cache
+      with:
+        path: .turbo-cache
+        key: turbo-${{ github.sha }}
+        restore-keys: |
+          turbo-
+
+    - name: Install dependencies
+      run: yarn install --check-files
+      shell: bash
+
+    - name: Build
+      run: yarn build --cache-dir=.turbo-cache
+      env:
+        NODE_OPTIONS: --max-old-space-size=6144
+      shell: bash

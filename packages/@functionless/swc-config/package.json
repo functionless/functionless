@@ -1,0 +1,11 @@
+{
+  "name": "@functionless/swc-config",
+  "version": "0.27.0",
+  "main": "./index.js",
+  "files": [
+    "index.js"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "extends": "../../tsconfig-base",
+  "compilerOptions": {
+    "rootDir": "src",
+    "outDir": "lib",
+    "plugins": [
+      {
+        "name": "@functionless/language-service"
+      }
+    ]
+  },
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"],
+  "references": [{ "path": "../../packages/@functionless/aws-constructs" }]
+}

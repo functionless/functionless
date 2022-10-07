@@ -1,0 +1,34 @@
+{
+  "name": "test-app",
+  "version": "0.0.0",
+  "private": true,
+  "scripts": {
+    "lint": "tsc --noEmit && functionless",
+    "test": "cdk synth",
+    "deploy": "cdk deploy",
+    "build": "graphql-codegen --config codegen.yml"
+  },
+  "dependencies": {
+    "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
+    "@functionless/aws-constructs": "*",
+    "@functionless/language-service": "^0.0.4",
+    "@functionless/register": "*",
+    "@graphql-codegen/cli": "^2.6.2",
+    "@graphql-codegen/typescript-resolvers": "^2.6.1",
+    "@graphql-codegen/typescript": "^2.4.8",
+    "@types/node": "^16",
+    "aws-cdk-lib": "^2.44.0",
+    "aws-cdk": "^2.44.0",
+    "constructs": "10.0.0",
+    "graphql": "^16.3.0",
+    "typesafe-dynamodb": "^0.2.3",
+    "typescript": "^4.8.3"
+  },
+  "devDependencies": {
+    "@swc/cli": "^0.1.57",
+    "@swc/core": "1.2.245",
+    "@swc/jest": "^0.2.22",
+    "@swc/register": "^0.1.10",
+    "@types/graphql": "^14.5.0"
+  }
+}

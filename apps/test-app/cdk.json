@@ -1,0 +1,3 @@
+{
+  "app": "node -r '@functionless/register' ./src/order-processing-queue.ts"
+}

@@ -1,0 +1,11 @@
+{
+  "extends": "../../../tsconfig-base",
+  "compilerOptions": {
+    "composite": false,
+    "noEmit": true,
+    "outDir": "lib",
+    "baseUrl": "."
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules"]
+}
