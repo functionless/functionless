@@ -55,8 +55,6 @@ export function isIntegrationCallPattern(
   );
 }
 
-export interface somethingnew {}
-
 /**
  * Give the possible ways to define an integration, return just the call(ref) of the integration.
  */
