@@ -2,7 +2,7 @@
   "name": "@functionless/aws-constructs",
   "description": "Functionless, a TypeScript plugin and Construct library for the AWS CDK",
   "license": "Apache-2.0",
-  "version": "0.27.0",
+  "version": "0.27.1",
   "types": "lib/index.d.ts",
   "main": "lib/index.js",
   "repository": {
