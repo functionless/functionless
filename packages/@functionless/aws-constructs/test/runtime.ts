@@ -1,5 +1,6 @@
 import * as cxapi from "@aws-cdk/cx-api";
 import * as ssm from "@aws-sdk/client-ssm";
+import * as node_cfn from "@functionless/formation";
 import { App, CfnOutput, Stack } from "aws-cdk-lib";
 import { ArnPrincipal, Role } from "aws-cdk-lib/aws-iam";
 import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
@@ -16,7 +17,6 @@ import AWS, {
 } from "aws-sdk";
 import { ServiceConfigurationOptions } from "aws-sdk/lib/service";
 import { Construct } from "constructs";
-import * as node_cfn from "node-cfn";
 import { asyncSynth } from "../src/async-synth";
 import { Function } from "../src/function";
 import { SelfDestructor, SelfDestructorProps } from "./self-destructor";

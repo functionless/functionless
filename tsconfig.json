@@ -5,6 +5,7 @@
     { "path": "./packages/@functionless/aws-util" },
     { "path": "./packages/@functionless/util" },
     { "path": "./packages/@functionless/fl-exp" },
+    { "path": "./packages/@functionless/formation" },
     { "path": "./apps/fl-exp-simple" },
     { "path": "./apps/website" },
     { "path": "./apps/test-app" }

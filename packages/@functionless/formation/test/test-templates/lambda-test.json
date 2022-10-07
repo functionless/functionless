@@ -1,0 +1,3043 @@
+{
+  "Resources": {
+    "resourceRoleD74D0AAE": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            },
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": {
+                  "Fn::FindInMap": [
+                    "ServiceprincipalMap",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    "states"
+                  ]
+                }
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      }
+    },
+    "stringFunction728B4656": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "4c6d8625b8f5022c4613240f07a884cc4fddc1f2d1634aa1e083dc25997513df.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "stringStepFunctionADC8A23D": {
+      "Type": "AWS::StepFunctions::StateMachine",
+      "Properties": {
+        "RoleArn": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "DefinitionString": "{\"StartAt\":\"Initialize Functionless Context\",\"States\":{\"Initialize Functionless Context\":{\"Type\":\"Pass\",\"Parameters\":{\"fnl_context\":{\"null\":null}},\"ResultPath\":\"$\",\"Next\":\"return \\\"hi\\\"\"},\"return \\\"hi\\\"\":{\"Type\":\"Pass\",\"End\":true,\"ResultPath\":\"$\",\"Result\":\"hi\"}}}",
+        "StateMachineType": "STANDARD"
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "table8235A42E": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "KeySchema": [
+          {
+            "AttributeName": "key",
+            "KeyType": "HASH"
+          }
+        ],
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "key",
+            "AttributeType": "S"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST"
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "bus707364D1": {
+      "Type": "AWS::Events::EventBus",
+      "Properties": {
+        "Name": "functionStackbusB158CA01"
+      }
+    },
+    "testRole836465CB": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:sts::983725774087:assumed-role/AWSReservedSSO_AdministratorAccess_387c4ab627001ff8/sussman"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      }
+    },
+    "testRoleDefaultPolicy0365047B": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent0func5C05C608", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent0func5C05C608", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent1func2654F7BF", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent1func2654F7BF", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent2funcB1B31DBB", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent2funcB1B31DBB", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent3func67DD7212A", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent3func67DD7212A", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent4func7AB1488B2", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent4func7AB1488B2", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent5funcA141DA6B", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent5funcA141DA6B", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent6func5A43B84B", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent6func5A43B84B", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent7func755383F5", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent7func755383F5", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent8func947A236C", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent8func947A236C", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent9func04571357", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent9func04571357", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent10func62A2D3CA", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent10func62A2D3CA", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent11func4B982AC2", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent11func4B982AC2", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent12funcEBFF9DF5", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent12funcEBFF9DF5", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent13func5FAA3A38", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent13func5FAA3A38", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent14func26828C1E", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent14func26828C1E", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent15func0D86B369", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent15func0D86B369", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent16funcC9E8A29F", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent16funcC9E8A29F", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent18func22EBBBD4", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent18func22EBBBD4", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent19func312E7B0F", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent19func312E7B0F", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent20func86C47A73", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent20func86C47A73", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent21func34BBD76F", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent21func34BBD76F", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent22funcD60FBC73", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent22funcD60FBC73", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent25funcBB95F162", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent25funcBB95F162", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent26func421FE95B", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent26func421FE95B", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent27funcA0ECE51B", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent27funcA0ECE51B", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent28func78E4741C", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent28func78E4741C", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "testRoleDefaultPolicy0365047B",
+        "Roles": [
+          {
+            "Ref": "testRole836465CB"
+          }
+        ]
+      }
+    },
+    "testRoleOverflowPolicy1BC8F1791": {
+      "Type": "AWS::IAM::ManagedPolicy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent29funcBB7A3F42", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent29funcBB7A3F42", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent31func96CAF175", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent31func96CAF175", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent32func54A8708E", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent32func54A8708E", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent34funcE030B717", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent34funcE030B717", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Description": "Part of the policies for functionStack/testRole",
+        "Path": "/",
+        "Roles": [
+          {
+            "Ref": "testRole836465CB"
+          }
+        ]
+      }
+    },
+    "parent0func5C05C608": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "cf0f63b63d07643c439f8eff3a78c3ef1a9d35253e25e323597b965cfde6de2c.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "parent1func2654F7BF": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "f3d638e72a4cd35770f3afa0ce756da58a607153006f2b7de227e31db441cc71.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "parent2funcB1B31DBB": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "3084b93e3640b4bf3772e45c8a3a5cbebf4e6fca2a1e89b01db423f6aa0a3189.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "parent3func67DD7212A": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "5530a9af3dadf310306ca3093234e3dc3e2cafd0e6ef6094a0929a0bd8f26476.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "parent4func7AB1488B2": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "93efa65efc3a55abeadd351e0edee8ea5d04ae2cd6d3a9b2b269e3b759c3b232.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "parent5funcA141DA6B": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "972dfbf41aced4beed7757823501830daae50158aa47ae9eba641c9590d666d2.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "parent6func5A43B84B": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "40dd768d2a82dd1530677282b31016c09a4a7c7029710f62ff16a24cb88d0dd6.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "parent7func755383F5": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "e14482895ff33f21b2628026a20b0f19d652970d3ea893394d277024bba24385.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "parent8func947A236C": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "94c8278e4c83348e8348544a2a5e050b1087df20b4e3ffe2e0859cfd5b028ca3.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "parent9func04571357": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "e5126740f0bb7ef0431895db5112f6c02bdc38517ba822076656dd48e93afd79.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "parent10busbus3B8CC606": {
+      "Type": "AWS::Events::EventBus",
+      "Properties": {
+        "Name": "functionStackparent10busbus54775A6E"
+      }
+    },
+    "parent10funcServiceRole0DAA12B2": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent10func62A2D3CA": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "239cf766012a36907d26cd9039f0d357adbb1a518cd078819f3106677833e603.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent10funcServiceRole0DAA12B2", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Fn::GetAtt": ["bus707364D1", "Arn"]
+            },
+            "env__functionless1": {
+              "Fn::GetAtt": ["parent10busbus3B8CC606", "Arn"]
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent10funcServiceRole0DAA12B2"]
+    },
+    "parent11func4B982AC2": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "61c774c7cb86a676640de08727d240e4d8ed47555524733a048054c0ae601cf3.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "parent12funcEBFF9DF5": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "cfffaa84ec16967ccc09995552c3968f3a1addc3c4228bde959c764940e263f2.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "parent13funcServiceRoleEADD0FC8": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent13func5FAA3A38": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "5342423d4a2450e1efa50fdd744457b018286f9d20d837162f0906f36b30b4a4.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent13funcServiceRoleEADD0FC8", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Fn::Select": [
+                1,
+                {
+                  "Fn::Split": [
+                    ":",
+                    {
+                      "Fn::GetAtt": ["bus707364D1", "Arn"]
+                    }
+                  ]
+                }
+              ]
+            },
+            "env__functionless1": {
+              "Fn::Join": [
+                "-",
+                [
+                  {
+                    "Fn::Select": [
+                      0,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": ["bus707364D1", "Arn"]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": ["bus707364D1", "Arn"]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Fn::Select": [
+                      2,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": ["bus707364D1", "Arn"]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Fn::Select": [
+                      3,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": ["bus707364D1", "Arn"]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Fn::Select": [
+                      4,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": ["bus707364D1", "Arn"]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Fn::Select": [
+                      5,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": ["bus707364D1", "Arn"]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              ]
+            },
+            "env__functionless2": {
+              "Fn::Base64": "data"
+            },
+            "env__functionless3": {
+              "Fn::FindInMap": ["parent13mapping61CB4331", "map1", "test"]
+            },
+            "env__functionless4": {
+              "Ref": "parent13param17EFA087"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent13funcServiceRoleEADD0FC8"]
+    },
+    "parent14funcServiceRoleDF283899": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent14func26828C1E": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "5342423d4a2450e1efa50fdd744457b018286f9d20d837162f0906f36b30b4a4.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent14funcServiceRoleDF283899", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Fn::Select": [
+                1,
+                {
+                  "Fn::Split": [
+                    ":",
+                    {
+                      "Fn::GetAtt": ["bus707364D1", "Arn"]
+                    }
+                  ]
+                }
+              ]
+            },
+            "env__functionless1": {
+              "Fn::Join": [
+                "-",
+                [
+                  {
+                    "Fn::Select": [
+                      0,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": ["bus707364D1", "Arn"]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Fn::Select": [
+                      1,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": ["bus707364D1", "Arn"]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Fn::Select": [
+                      2,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": ["bus707364D1", "Arn"]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Fn::Select": [
+                      3,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": ["bus707364D1", "Arn"]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Fn::Select": [
+                      4,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": ["bus707364D1", "Arn"]
+                          }
+                        ]
+                      }
+                    ]
+                  },
+                  {
+                    "Fn::Select": [
+                      5,
+                      {
+                        "Fn::Split": [
+                          ":",
+                          {
+                            "Fn::GetAtt": ["bus707364D1", "Arn"]
+                          }
+                        ]
+                      }
+                    ]
+                  }
+                ]
+              ]
+            },
+            "env__functionless2": {
+              "Fn::Base64": "data"
+            },
+            "env__functionless3": {
+              "Fn::FindInMap": ["parent14mapping6ADFC483", "map1", "test"]
+            },
+            "env__functionless4": {
+              "Ref": "parent14paramD3DA48CE"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent14funcServiceRoleDF283899"]
+    },
+    "parent15funcServiceRole6BC24B5F": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent15funcServiceRoleDefaultPolicyF400E879": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "events:PutEvents",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": ["bus707364D1", "Arn"]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent15funcServiceRoleDefaultPolicyF400E879",
+        "Roles": [
+          {
+            "Ref": "parent15funcServiceRole6BC24B5F"
+          }
+        ]
+      }
+    },
+    "parent15func0D86B369": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "b9802c7ac551265530143d29fd512a009644f447952333d827f8e0860662bede.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent15funcServiceRole6BC24B5F", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "bus707364D1"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent15funcServiceRole6BC24B5F"]
+    },
+    "parent16funcServiceRole0FBB4837": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent16funcServiceRoleDefaultPolicy12D31C31": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "events:PutEvents",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": ["bus707364D1", "Arn"]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent16funcServiceRoleDefaultPolicy12D31C31",
+        "Roles": [
+          {
+            "Ref": "parent16funcServiceRole0FBB4837"
+          }
+        ]
+      }
+    },
+    "parent16funcC9E8A29F": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "38df4ea67f017ff729c9b34e1e58ed329a105c46610d0a1782203025fb2b373e.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent16funcServiceRole0FBB4837", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Fn::GetAtt": ["bus707364D1", "Arn"]
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": [
+        "parent16funcServiceRoleDefaultPolicy12D31C31",
+        "parent16funcServiceRole0FBB4837"
+      ]
+    },
+    "parent18funcServiceRole3EEFB41C": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent18funcServiceRoleDefaultPolicyA5A96833": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "events:PutEvents",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": ["bus707364D1", "Arn"]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent18funcServiceRoleDefaultPolicyA5A96833",
+        "Roles": [
+          {
+            "Ref": "parent18funcServiceRole3EEFB41C"
+          }
+        ]
+      }
+    },
+    "parent18func22EBBBD4": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "ca08d7617936baaf99b119386823c327223eddbfc03e08bc9bbbe95e31658d6c.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent18funcServiceRole3EEFB41C", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "bus707364D1"
+            },
+            "env__functionless1": {
+              "Fn::GetAtt": ["bus707364D1", "Arn"]
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent18funcServiceRole3EEFB41C"]
+    },
+    "parent19funcServiceRoleBFF5FFCA": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent19funcServiceRoleDefaultPolicy116E7FB3": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "events:PutEvents",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": ["bus707364D1", "Arn"]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent19funcServiceRoleDefaultPolicy116E7FB3",
+        "Roles": [
+          {
+            "Ref": "parent19funcServiceRoleBFF5FFCA"
+          }
+        ]
+      }
+    },
+    "parent19func312E7B0F": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "d15630b67554543f67a8d4263a5080533629b06655833918cacf859a72cb0b20.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent19funcServiceRoleBFF5FFCA", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "bus707364D1"
+            },
+            "env__functionless1": {
+              "Fn::GetAtt": ["bus707364D1", "Arn"]
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent19funcServiceRoleBFF5FFCA"]
+    },
+    "parent20funcServiceRoleB8EDC190": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent20funcServiceRoleDefaultPolicyBF2E4E9E": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["stringFunction728B4656", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["stringFunction728B4656", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent20funcServiceRoleDefaultPolicyBF2E4E9E",
+        "Roles": [
+          {
+            "Ref": "parent20funcServiceRoleB8EDC190"
+          }
+        ]
+      }
+    },
+    "parent20func86C47A73": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "b5a954c747ddc857a9074f837d6fa32bc26e1c04d390346e02e0abbe5733d70f.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent20funcServiceRoleB8EDC190", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "stringFunction728B4656"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent20funcServiceRoleB8EDC190"]
+    },
+    "parent21funcServiceRoleB6BD7847": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent21funcServiceRoleDefaultPolicy18635511": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["stringFunction728B4656", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["stringFunction728B4656", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent21funcServiceRoleDefaultPolicy18635511",
+        "Roles": [
+          {
+            "Ref": "parent21funcServiceRoleB6BD7847"
+          }
+        ]
+      }
+    },
+    "parent21func34BBD76F": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "d503568f3a6cdc8cadd46bfafd98be3bbe4e2df9e3ab9e0b9e97639a1cb949fe.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent21funcServiceRoleB6BD7847", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "stringFunction728B4656"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent21funcServiceRoleB6BD7847"]
+    },
+    "parent22funcServiceRole9785D327": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent22funcServiceRoleDefaultPolicyA1907B15": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["stringFunction728B4656", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["stringFunction728B4656", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent22funcServiceRoleDefaultPolicyA1907B15",
+        "Roles": [
+          {
+            "Ref": "parent22funcServiceRole9785D327"
+          }
+        ]
+      }
+    },
+    "parent22funcD60FBC73": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "4720952013fff1ebff8ab17c778e463f76886727922b34502cf2c6fe3417ed48.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent22funcServiceRole9785D327", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "stringFunction728B4656"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent22funcServiceRole9785D327"]
+    },
+    "parent25funcServiceRole52632DF9": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent25funcServiceRoleDefaultPolicy29336BCB": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "states:StartExecution",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "stringStepFunctionADC8A23D"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent25funcServiceRoleDefaultPolicy29336BCB",
+        "Roles": [
+          {
+            "Ref": "parent25funcServiceRole52632DF9"
+          }
+        ]
+      }
+    },
+    "parent25funcBB95F162": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "c5737a614e7046e291c488b87b4b98a2047c1ca8c9eeea7a0de6c486c745e1b1.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent25funcServiceRole52632DF9", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "stringStepFunctionADC8A23D"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent25funcServiceRole52632DF9"]
+    },
+    "parent26func421FE95B": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "02088c8c42678ca3003cd8a8f91bac83b61f704c21ce809935cbef403404bfbc.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "parent27table35480C0A": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "KeySchema": [
+          {
+            "AttributeName": "key",
+            "KeyType": "HASH"
+          }
+        ],
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "key",
+            "AttributeType": "S"
+          }
+        ],
+        "GlobalSecondaryIndexes": [
+          {
+            "IndexName": "testIndex",
+            "KeySchema": [
+              {
+                "AttributeName": "key",
+                "KeyType": "HASH"
+              }
+            ],
+            "Projection": {
+              "ProjectionType": "ALL"
+            },
+            "ProvisionedThroughput": {
+              "ReadCapacityUnits": 5,
+              "WriteCapacityUnits": 5
+            }
+          }
+        ],
+        "ProvisionedThroughput": {
+          "ReadCapacityUnits": 5,
+          "WriteCapacityUnits": 5
+        }
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "parent27funcServiceRole7241CC9D": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent27funcServiceRoleDefaultPolicy04D9FD31": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["parent27table35480C0A", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["parent27table35480C0A", "Arn"]
+                      },
+                      "/index/*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent27funcServiceRoleDefaultPolicy04D9FD31",
+        "Roles": [
+          {
+            "Ref": "parent27funcServiceRole7241CC9D"
+          }
+        ]
+      }
+    },
+    "parent27funcA0ECE51B": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "fc2dc9315e14f94c25f010a9256de7dc32ff298db017b5dd00d047c7120d88d9.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent27funcServiceRole7241CC9D", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "parent27table35480C0A"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent27funcServiceRole7241CC9D"]
+    },
+    "parent28funcServiceRole606836A0": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent28funcServiceRoleDefaultPolicy46EC735E": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["stringFunction728B4656", "Arn"]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": ["stringFunction728B4656", "Arn"]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent28funcServiceRoleDefaultPolicy46EC735E",
+        "Roles": [
+          {
+            "Ref": "parent28funcServiceRole606836A0"
+          }
+        ]
+      }
+    },
+    "parent28func78E4741C": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "3ae5330fa0ef7356358907b6fd8d9f30542c0a717d33b0cb90610d76fb21b847.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent28funcServiceRole606836A0", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "stringFunction728B4656"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent28funcServiceRole606836A0"]
+    },
+    "parent29funcServiceRole5D5CDB96": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent29funcBB7A3F42": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "3ba552be48960e9b61dcfa44b59d7bbf213b553cbd1163f56da75bc46e36d3bb.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent29funcServiceRole5D5CDB96", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Fn::GetAtt": ["table8235A42E", "Arn"]
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent29funcServiceRole5D5CDB96"]
+    },
+    "parent31funcServiceRole5FBAD213": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent31funcServiceRoleDefaultPolicy97BEF418": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": "states:StartExecution",
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "stringStepFunctionADC8A23D"
+              }
+            },
+            {
+              "Action": ["states:ListExecutions", "states:ListStateMachines"],
+              "Effect": "Allow",
+              "Resource": {
+                "Ref": "stringStepFunctionADC8A23D"
+              }
+            },
+            {
+              "Action": [
+                "states:DescribeExecution",
+                "states:DescribeStateMachineForExecution",
+                "states:GetExecutionHistory"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::Join": [
+                  "",
+                  [
+                    "arn:",
+                    {
+                      "Ref": "AWS::Partition"
+                    },
+                    ":states:",
+                    {
+                      "Ref": "AWS::Region"
+                    },
+                    ":",
+                    {
+                      "Ref": "AWS::AccountId"
+                    },
+                    ":execution:",
+                    {
+                      "Fn::Select": [
+                        6,
+                        {
+                          "Fn::Split": [
+                            ":",
+                            {
+                              "Ref": "stringStepFunctionADC8A23D"
+                            }
+                          ]
+                        }
+                      ]
+                    },
+                    ":*"
+                  ]
+                ]
+              }
+            },
+            {
+              "Action": [
+                "states:ListActivities",
+                "states:DescribeStateMachine",
+                "states:DescribeActivity"
+              ],
+              "Effect": "Allow",
+              "Resource": "*"
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent31funcServiceRoleDefaultPolicy97BEF418",
+        "Roles": [
+          {
+            "Ref": "parent31funcServiceRole5FBAD213"
+          }
+        ]
+      }
+    },
+    "parent31func96CAF175": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "309f3f77e0b9a0ed009d49e74d00b5d0d7992408bd89dc73892d13bd588fe436.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent31funcServiceRole5FBAD213", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "stringStepFunctionADC8A23D"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent31funcServiceRole5FBAD213"]
+    },
+    "parent32func54A8708E": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "8072914aaf9a8cadf4af77baed778b27e89d04a3699339678221d514421e8e80.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["resourceRoleD74D0AAE", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE"
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["resourceRoleD74D0AAE"]
+    },
+    "parent34funcServiceRole5D861B1A": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent34funcServiceRoleDefaultPolicy5F3E117B": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["table8235A42E", "Arn"]
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": ["table8235A42E", "Arn"]
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent34funcServiceRoleDefaultPolicy5F3E117B",
+        "Roles": [
+          {
+            "Ref": "parent34funcServiceRole5D861B1A"
+          }
+        ]
+      }
+    },
+    "parent34funcE030B717": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "3579c7b8e080a6a94f9dfd7d2bc6f2e7195e06e567f1c13195d919a070155b64.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": ["parent34funcServiceRole5D861B1A", "Arn"]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "table8235A42E"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": ["parent34funcServiceRole5D861B1A"]
+    }
+  },
+  "Outputs": {
+    "testRoleArn": {
+      "Value": {
+        "Fn::GetAtt": ["testRole836465CB", "Arn"]
+      },
+      "Export": {
+        "Name": "TestRoleArn-functionStack"
+      }
+    },
+    "parent0functionout64946AE2": {
+      "Value": {
+        "Ref": "parent0func5C05C608"
+      }
+    },
+    "parent1functionout672E8EBF": {
+      "Value": {
+        "Ref": "parent1func2654F7BF"
+      }
+    },
+    "parent2functionoutF0D74968": {
+      "Value": {
+        "Ref": "parent2funcB1B31DBB"
+      }
+    },
+    "parent3functionout7AD53AEA": {
+      "Value": {
+        "Ref": "parent3func67DD7212A"
+      }
+    },
+    "parent4functionoutED0A6CF7": {
+      "Value": {
+        "Ref": "parent4func7AB1488B2"
+      }
+    },
+    "parent5functionout5C6DDF01": {
+      "Value": {
+        "Ref": "parent5funcA141DA6B"
+      }
+    },
+    "parent6functionout7AC81B9D": {
+      "Value": {
+        "Ref": "parent6func5A43B84B"
+      }
+    },
+    "parent7functionout1B1CD7A8": {
+      "Value": {
+        "Ref": "parent7func755383F5"
+      }
+    },
+    "parent8functionoutE7C3D4D3": {
+      "Value": {
+        "Ref": "parent8func947A236C"
+      }
+    },
+    "parent9functionoutB70485A2": {
+      "Value": {
+        "Ref": "parent9func04571357"
+      }
+    },
+    "parent10functionout828A8DF1": {
+      "Value": {
+        "Ref": "parent10func62A2D3CA"
+      }
+    },
+    "parent10busoutC8C5F3C9": {
+      "Value": {
+        "Fn::GetAtt": ["bus707364D1", "Arn"]
+      }
+    },
+    "parent10busbusoutBA1B391B": {
+      "Value": {
+        "Fn::GetAtt": ["parent10busbus3B8CC606", "Arn"]
+      }
+    },
+    "parent11functionout8F335D5B": {
+      "Value": {
+        "Ref": "parent11func4B982AC2"
+      }
+    },
+    "parent12functionout18DA84A9": {
+      "Value": {
+        "Ref": "parent12funcEBFF9DF5"
+      }
+    },
+    "parent13functionout2A7312CB": {
+      "Value": {
+        "Ref": "parent13func5FAA3A38"
+      }
+    },
+    "parent13busoutB2730B17": {
+      "Value": {
+        "Fn::GetAtt": ["bus707364D1", "Arn"]
+      }
+    },
+    "parent14functionoutCADD6C5C": {
+      "Value": {
+        "Ref": "parent14func26828C1E"
+      }
+    },
+    "parent14busout71E8094B": {
+      "Value": {
+        "Fn::GetAtt": ["bus707364D1", "Arn"]
+      }
+    },
+    "parent15functionout9CE88308": {
+      "Value": {
+        "Ref": "parent15func0D86B369"
+      }
+    },
+    "parent16functionoutBEC55CC4": {
+      "Value": {
+        "Ref": "parent16funcC9E8A29F"
+      }
+    },
+    "parent18functionout4CB6639C": {
+      "Value": {
+        "Ref": "parent18func22EBBBD4"
+      }
+    },
+    "parent19functionout6E5A0E80": {
+      "Value": {
+        "Ref": "parent19func312E7B0F"
+      }
+    },
+    "parent20functionout3C0456B0": {
+      "Value": {
+        "Ref": "parent20func86C47A73"
+      }
+    },
+    "parent21functionout501EBC27": {
+      "Value": {
+        "Ref": "parent21func34BBD76F"
+      }
+    },
+    "parent22functionoutBB86B670": {
+      "Value": {
+        "Ref": "parent22funcD60FBC73"
+      }
+    },
+    "parent25functionout9272036C": {
+      "Value": {
+        "Ref": "parent25funcBB95F162"
+      }
+    },
+    "parent26functionoutE02E3DBE": {
+      "Value": {
+        "Ref": "parent26func421FE95B"
+      }
+    },
+    "parent27functionout54CDFBFD": {
+      "Value": {
+        "Ref": "parent27funcA0ECE51B"
+      }
+    },
+    "parent28functionoutCBC28F66": {
+      "Value": {
+        "Ref": "parent28func78E4741C"
+      }
+    },
+    "parent29functionout2AE24E99": {
+      "Value": {
+        "Ref": "parent29funcBB7A3F42"
+      }
+    },
+    "parent29tableout68795F82": {
+      "Value": {
+        "Fn::GetAtt": ["table8235A42E", "Arn"]
+      }
+    },
+    "parent31functionout25401910": {
+      "Value": {
+        "Ref": "parent31func96CAF175"
+      }
+    },
+    "parent32functionout7AA563C2": {
+      "Value": {
+        "Ref": "parent32func54A8708E"
+      }
+    },
+    "parent34functionoutDE0B00E1": {
+      "Value": {
+        "Ref": "parent34funcE030B717"
+      }
+    }
+  },
+  "Mappings": {
+    "parent13mapping61CB4331": {
+      "map1": {
+        "test": "value"
+      }
+    },
+    "parent14mapping6ADFC483": {
+      "map1": {
+        "test": "value"
+      }
+    },
+    "ServiceprincipalMap": {
+      "af-south-1": {
+        "states": "states.af-south-1.amazonaws.com"
+      },
+      "ap-east-1": {
+        "states": "states.ap-east-1.amazonaws.com"
+      },
+      "ap-northeast-1": {
+        "states": "states.ap-northeast-1.amazonaws.com"
+      },
+      "ap-northeast-2": {
+        "states": "states.ap-northeast-2.amazonaws.com"
+      },
+      "ap-northeast-3": {
+        "states": "states.ap-northeast-3.amazonaws.com"
+      },
+      "ap-south-1": {
+        "states": "states.ap-south-1.amazonaws.com"
+      },
+      "ap-southeast-1": {
+        "states": "states.ap-southeast-1.amazonaws.com"
+      },
+      "ap-southeast-2": {
+        "states": "states.ap-southeast-2.amazonaws.com"
+      },
+      "ap-southeast-3": {
+        "states": "states.ap-southeast-3.amazonaws.com"
+      },
+      "ca-central-1": {
+        "states": "states.ca-central-1.amazonaws.com"
+      },
+      "cn-north-1": {
+        "states": "states.cn-north-1.amazonaws.com"
+      },
+      "cn-northwest-1": {
+        "states": "states.cn-northwest-1.amazonaws.com"
+      },
+      "eu-central-1": {
+        "states": "states.eu-central-1.amazonaws.com"
+      },
+      "eu-north-1": {
+        "states": "states.eu-north-1.amazonaws.com"
+      },
+      "eu-south-1": {
+        "states": "states.eu-south-1.amazonaws.com"
+      },
+      "eu-south-2": {
+        "states": "states.eu-south-2.amazonaws.com"
+      },
+      "eu-west-1": {
+        "states": "states.eu-west-1.amazonaws.com"
+      },
+      "eu-west-2": {
+        "states": "states.eu-west-2.amazonaws.com"
+      },
+      "eu-west-3": {
+        "states": "states.eu-west-3.amazonaws.com"
+      },
+      "me-south-1": {
+        "states": "states.me-south-1.amazonaws.com"
+      },
+      "sa-east-1": {
+        "states": "states.sa-east-1.amazonaws.com"
+      },
+      "us-east-1": {
+        "states": "states.us-east-1.amazonaws.com"
+      },
+      "us-east-2": {
+        "states": "states.us-east-2.amazonaws.com"
+      },
+      "us-gov-east-1": {
+        "states": "states.us-gov-east-1.amazonaws.com"
+      },
+      "us-gov-west-1": {
+        "states": "states.us-gov-west-1.amazonaws.com"
+      },
+      "us-iso-east-1": {
+        "states": "states.amazonaws.com"
+      },
+      "us-iso-west-1": {
+        "states": "states.amazonaws.com"
+      },
+      "us-isob-east-1": {
+        "states": "states.amazonaws.com"
+      },
+      "us-west-1": {
+        "states": "states.us-west-1.amazonaws.com"
+      },
+      "us-west-2": {
+        "states": "states.us-west-2.amazonaws.com"
+      }
+    }
+  },
+  "Parameters": {
+    "parent13param17EFA087": {
+      "Type": "String",
+      "Default": "paramValue"
+    },
+    "parent14paramD3DA48CE": {
+      "Type": "String",
+      "Default": "paramValue"
+    },
+    "BootstrapVersion": {
+      "Type": "AWS::SSM::Parameter::Value<String>",
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+    }
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  ["1", "2", "3", "4", "5"],
+                  {
+                    "Ref": "BootstrapVersion"
+                  }
+                ]
+              }
+            ]
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+        }
+      ]
+    }
+  }
+}

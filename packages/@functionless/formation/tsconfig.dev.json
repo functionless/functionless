@@ -1,0 +1,12 @@
+{
+  "extends": "../../../tsconfig-base",
+  "compilerOptions": {
+    "composite": true,
+    "noEmit": true,
+    "outDir": "lib",
+    "baseUrl": ".",
+    "types": ["@types/jest"]
+  },
+  "include": ["src/**/*.ts", "test/**/*.ts"],
+  "exclude": ["node_modules"]
+}
