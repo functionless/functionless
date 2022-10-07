@@ -1,12 +1,6 @@
 import "jest";
 
-import {
-  aws_dynamodb,
-  aws_sqs,
-  CfnOutput,
-  Duration,
-  RemovalPolicy,
-} from "aws-cdk-lib";
+import { aws_dynamodb, aws_sqs, Duration, RemovalPolicy } from "aws-cdk-lib";
 import { Role } from "aws-cdk-lib/aws-iam";
 import { SQSBatchResponse } from "aws-lambda";
 import { Construct } from "constructs";
@@ -248,10 +242,7 @@ runtimeTestSuite<{
         data: string;
       }
 
-      const addr = new CfnOutput(scope, "out", { value: "" });
-      const bus = new EventBus<Event<Message>>(scope, "bus", {
-        eventBusName: addr.node.addr,
-      });
+      const bus = new EventBus<Event<Message>>(scope, "bus");
 
       bus.resource.grantPutEventsTo(testRole);
 
@@ -273,7 +264,7 @@ runtimeTestSuite<{
       return {
         queue,
         outputs: {
-          busName: addr.node.addr,
+          busName: bus.resource.eventBusName,
         },
       };
     },
@@ -288,10 +279,7 @@ runtimeTestSuite<{
         data: string;
       }
 
-      const addr = new CfnOutput(scope, "out", { value: "" });
-      const bus = new EventBus<Event<Message>>(scope, "bus", {
-        eventBusName: addr.node.addr,
-      });
+      const bus = new EventBus<Event<Message>>(scope, "bus");
 
       bus.resource.grantPutEventsTo(testRole);
 
@@ -334,7 +322,7 @@ runtimeTestSuite<{
       return {
         queue,
         outputs: {
-          busName: addr.node.addr,
+          busName: bus.resource.eventBusName,
           messageGroupId: "busGroup",
         },
       };

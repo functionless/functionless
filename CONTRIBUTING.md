@@ -93,6 +93,7 @@ test-app$ yarn watch
 | TEST_STACK_RETENTION_POLICY      | After tests complete, `RETAIN`, `DELETE`, or `SELF_DESTRUCT` (delete after `TEST_SELF_DESTRUCT_DELAY_SECONDS`). Default: `SELF_DESTRUCT`                      |
 | TEST_SELF_DESTRUCT_DELAY_SECONDS | Number of seconds to wait before self destructing the stack, Default: 12 hours (43200s)                                                                       |
 | CLEAN_UP_STACK                   | Deploys a CFN stack that can delete all of the test stacks (and itself) when invoked. Used the in Pull Request Closed CleanUp workflow to clean up after PRs. |
+| TEST_DEPLOYER                    | Deploy using CDK/cloud formation (`CFN`) or using functionless's custom `NODE_CFN`, Default `CFN`                                                                            |
 
 ### Website
 

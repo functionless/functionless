@@ -1,8 +1,11 @@
 import * as cxapi from "@aws-cdk/cx-api";
+import * as ssm from "@aws-sdk/client-ssm";
+import * as node_cfn from "@functionless/formation";
 import { App, CfnOutput, Stack } from "aws-cdk-lib";
 import { ArnPrincipal, Role } from "aws-cdk-lib/aws-iam";
 import { SdkProvider } from "aws-cdk/lib/api/aws-auth";
 import { CloudFormationDeployments } from "aws-cdk/lib/api/cloudformation-deployments";
+import { DeployStackResult } from "aws-cdk/lib/api/deploy-stack";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import AWS, {
   DynamoDB,
@@ -27,6 +30,7 @@ export interface RuntimeTestExecutionContext {
   selfDestructProps: SelfDestructorProps;
   stackRetentionPolicy: "RETAIN" | "DELETE" | "SELF_DESTRUCT";
   deployTarget: "AWS" | "LOCALSTACK";
+  deployer: "CFN" | "NODE_CFN";
   cleanUpStack: boolean;
 }
 
@@ -52,6 +56,7 @@ export const runtimeTestExecutionContext: RuntimeTestExecutionContext = {
       : "SELF_DESTRUCT")) as RuntimeTestExecutionContext["stackRetentionPolicy"],
   // AWS | LOCALSTACK ; default: LOCALSTACK
   deployTarget: deploymentTarget as RuntimeTestExecutionContext["deployTarget"],
+  deployer: (process.env.TEST_DEPLOYER as "CFN" | "NODE_CFN") ?? "CFN",
   cleanUpStack: process.env.CLEAN_UP_STACK === "1" ? true : false,
 };
 
@@ -288,6 +293,9 @@ export function runtimeTestSuite<
       >)
     | undefined = undefined;
 
+  let synthTime: number = 0;
+  let deploymentTime: number = 0;
+
   beforeAll(async () => {
     // resolve account and arn of current credentials
     const caller = await sts.getCallerIdentity().promise();
@@ -321,25 +329,40 @@ export function runtimeTestSuite<
       (t) => ("error" in t && t.error) || ("skip" in t && t.skip)
     );
     if (!allErrored) {
+      const startSynth = new Date();
       const cloudAssembly = await asyncSynth(app);
+      synthTime = new Date().getTime() - startSynth.getTime();
+      const assetManifestArtifact = cloudAssembly.tryGetArtifact(
+        `${stack.artifactId}.assets`
+      ) as unknown as cxapi.AssetManifestArtifact;
       stackArtifact = cloudAssembly.getStackArtifact(
         stack.artifactId
       ) as unknown as cxapi.CloudFormationStackArtifact;
 
-      // Inspiration for the current approach: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
-      // Writeup on performance improvements: https://github.com/functionless/functionless/pull/184#issuecomment-1144767427
-      const deployOut = await getCfnClient().then((client) =>
-        client.deployStack({
-          stack: stackArtifact!,
-          tags: Object.entries(stack.tags.tagValues()).map(([k, v]) => ({
-            Key: k,
-            Value: v,
-          })),
-          // hotswap uses the current user's role and not the bootstrapped role.
-          // the CI user does not have all of the right permissions.
-          hotswap: !process.env.CI,
-        })
-      );
+      const startDeploy = new Date();
+
+      let deployOut: DeployStackResult | node_cfn.StackState;
+      if (runtimeTestExecutionContext.deployer === "CFN") {
+        // Inspiration for the current approach: https://github.com/aws/aws-cdk/pull/18667#issuecomment-1075348390
+        // Writeup on performance improvements: https://github.com/functionless/functionless/pull/184#issuecomment-1144767427
+        deployOut = await getCfnClient().then((client) =>
+          client.deployStack({
+            stack: stackArtifact!,
+            tags: Object.entries(stack.tags.tagValues()).map(([k, v]) => ({
+              Key: k,
+              Value: v,
+            })),
+            // hotswap uses the current user's role and not the bootstrapped role.
+            // the CI user does not have all of the right permissions.
+            hotswap: !process.env.CI,
+          })
+        );
+      } else {
+        deployOut = await nodeCfnDeploy(stackArtifact, assetManifestArtifact);
+      }
+      deploymentTime = new Date().getTime() - startDeploy.getTime();
+
+      console.log(deployOut.outputs);
 
       const testRoleArn =
         deployOut.outputs[stack.resolve(testArnOutput.logicalId)];
@@ -385,18 +408,46 @@ export function runtimeTestSuite<
         deployOutputs: s,
       }));
     }
+
+    async function nodeCfnDeploy(
+      stackArtifact: cxapi.CloudFormationStackArtifact,
+      assetManifest: cxapi.AssetManifestArtifact
+    ) {
+      const caller = await sts.getCallerIdentity().promise();
+      console.log(JSON.stringify(stackArtifact.template, null, 2));
+      const stack = new node_cfn.Stack({
+        account: caller.Account!,
+        region: clientConfig.region!,
+        stackName: stackArtifact.stackName,
+        // @ts-ignore
+        ssmClient: new ssm.SSMClient({
+          credentials: clientConfig.credentials!,
+          region: clientConfig.region!,
+        }),
+        sdkConfig: clientConfig,
+      });
+
+      const result = await stack.updateStack(
+        stackArtifact.template,
+        undefined,
+        assetManifest.file
+      );
+
+      return result;
+    }
   });
 
   afterAll(async () => {
+    console.log("Synth Time:", synthTime, "DeployTime:", deploymentTime);
     if (
       stackArtifact &&
       runtimeTestExecutionContext.stackRetentionPolicy === "DELETE"
     ) {
-      await getCfnClient().then((client) =>
-        client.destroyStack({
-          stack: stackArtifact!,
-        })
-      );
+      // await getCfnClient().then((client) =>
+      //   client.destroyStack({
+      //     stack: stackArtifact!,
+      //   })
+      // );
     }
   });
 

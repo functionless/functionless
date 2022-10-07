@@ -1,0 +1,2028 @@
+{
+  "Resources": {
+    "TableCD117FA1": {
+      "Type": "AWS::DynamoDB::Table",
+      "Properties": {
+        "KeySchema": [
+          {
+            "AttributeName": "id",
+            "KeyType": "HASH"
+          }
+        ],
+        "AttributeDefinitions": [
+          {
+            "AttributeName": "id",
+            "AttributeType": "S"
+          }
+        ],
+        "BillingMode": "PAY_PER_REQUEST"
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "testRole836465CB": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "AWS": "arn:aws:sts::983725774087:assumed-role/AWSReservedSSO_AdministratorAccess_387c4ab627001ff8/sussman"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        }
+      }
+    },
+    "testRoleDefaultPolicy0365047B": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent0queue08EB2FDB",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "dynamodb:BatchGetItem",
+                "dynamodb:GetRecords",
+                "dynamodb:GetShardIterator",
+                "dynamodb:Query",
+                "dynamodb:GetItem",
+                "dynamodb:Scan",
+                "dynamodb:ConditionCheckItem",
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TableCD117FA1",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            },
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent1queueCB6E818D",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent2queueEE23DDD6",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent3queue155BCB69",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": "events:PutEvents",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent4bus7611E2BB",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent4queue091CFF71",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": "events:PutEvents",
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent5bus19D23AEF",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent5queue15EA7F47",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent6queue9203F7F9",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent7queue2D163567",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "parent8send867A79C7",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "parent8send867A79C7",
+                          "Arn"
+                        ]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "parent8sendBatch5DF78F37",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "parent8sendBatch5DF78F37",
+                          "Arn"
+                        ]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": "lambda:InvokeFunction",
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "parent8receive2D21AC86",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Fn::Join": [
+                    "",
+                    [
+                      {
+                        "Fn::GetAtt": [
+                          "parent8receive2D21AC86",
+                          "Arn"
+                        ]
+                      },
+                      ":*"
+                    ]
+                  ]
+                }
+              ]
+            },
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent8queue56B52D4D",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "testRoleDefaultPolicy0365047B",
+        "Roles": [
+          {
+            "Ref": "testRole836465CB"
+          }
+        ]
+      }
+    },
+    "parent0queue08EB2FDB": {
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "parent0queueonEventServiceRoleB04D4561": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent0queueonEventServiceRoleDefaultPolicy1D8FB01F": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent0queue08EB2FDB",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TableCD117FA1",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent0queueonEventServiceRoleDefaultPolicy1D8FB01F",
+        "Roles": [
+          {
+            "Ref": "parent0queueonEventServiceRoleB04D4561"
+          }
+        ]
+      }
+    },
+    "parent0queueonEventED4A34F7": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "f3bcdbe60d97b43cf54bd1cdcca54488ac3467efe59af4cf2e98a2680e8f39d6.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "parent0queueonEventServiceRoleB04D4561",
+            "Arn"
+          ]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "TableCD117FA1"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": [
+        "parent0queueonEventServiceRoleDefaultPolicy1D8FB01F",
+        "parent0queueonEventServiceRoleB04D4561"
+      ]
+    },
+    "parent0queueonEventSqsEventSourcequeueStackparent0queue629ABC702783FFCA": {
+      "Type": "AWS::Lambda::EventSourceMapping",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "parent0queueonEventED4A34F7"
+        },
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "parent0queue08EB2FDB",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "parent1queueCB6E818D": {
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "parent1queueidServiceRole02FDD379": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent1queueidServiceRoleDefaultPolicyA620D4F5": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent1queueCB6E818D",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TableCD117FA1",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent1queueidServiceRoleDefaultPolicyA620D4F5",
+        "Roles": [
+          {
+            "Ref": "parent1queueidServiceRole02FDD379"
+          }
+        ]
+      }
+    },
+    "parent1queueid1DD63A23": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "f3bcdbe60d97b43cf54bd1cdcca54488ac3467efe59af4cf2e98a2680e8f39d6.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "parent1queueidServiceRole02FDD379",
+            "Arn"
+          ]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "TableCD117FA1"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": [
+        "parent1queueidServiceRoleDefaultPolicyA620D4F5",
+        "parent1queueidServiceRole02FDD379"
+      ]
+    },
+    "parent1queueidSqsEventSourcequeueStackparent1queueD8F6561A1A6C8F30": {
+      "Type": "AWS::Lambda::EventSourceMapping",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "parent1queueid1DD63A23"
+        },
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "parent1queueCB6E818D",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "parent2queueEE23DDD6": {
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "parent2queueonEventServiceRole7E1A51B4": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent2queueonEventServiceRoleDefaultPolicy401B2D00": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent2queueEE23DDD6",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TableCD117FA1",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent2queueonEventServiceRoleDefaultPolicy401B2D00",
+        "Roles": [
+          {
+            "Ref": "parent2queueonEventServiceRole7E1A51B4"
+          }
+        ]
+      }
+    },
+    "parent2queueonEvent3B48B0AC": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "b76f3ef8711a8fe53963d7f745927546371e7f37f1f6e2a96b2b1928649827e5.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "parent2queueonEventServiceRole7E1A51B4",
+            "Arn"
+          ]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "TableCD117FA1"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": [
+        "parent2queueonEventServiceRoleDefaultPolicy401B2D00",
+        "parent2queueonEventServiceRole7E1A51B4"
+      ]
+    },
+    "parent2queueonEventSqsEventSourcequeueStackparent2queue376F09E99D91A9AA": {
+      "Type": "AWS::Lambda::EventSourceMapping",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "parent2queueonEvent3B48B0AC"
+        },
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "parent2queueEE23DDD6",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "parent3queue155BCB69": {
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "parent3queueonEventServiceRoleBB0869DA": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent3queueonEventServiceRoleDefaultPolicyC7505F83": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent3queue155BCB69",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TableCD117FA1",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent3queueonEventServiceRoleDefaultPolicyC7505F83",
+        "Roles": [
+          {
+            "Ref": "parent3queueonEventServiceRoleBB0869DA"
+          }
+        ]
+      }
+    },
+    "parent3queueonEvent638EB704": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "11f28171b8ac2998efa49ed236f7b23a406186657b2742e8140edd71e20208c9.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "parent3queueonEventServiceRoleBB0869DA",
+            "Arn"
+          ]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "TableCD117FA1"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": [
+        "parent3queueonEventServiceRoleDefaultPolicyC7505F83",
+        "parent3queueonEventServiceRoleBB0869DA"
+      ]
+    },
+    "parent3queueonEventSqsEventSourcequeueStackparent3queue07664ADE115A0795": {
+      "Type": "AWS::Lambda::EventSourceMapping",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "parent3queueonEvent638EB704"
+        },
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "parent3queue155BCB69",
+            "Arn"
+          ]
+        },
+        "FunctionResponseTypes": [
+          "ReportBatchItemFailures"
+        ]
+      }
+    },
+    "parent4bus7611E2BB": {
+      "Type": "AWS::Events::EventBus",
+      "Properties": {
+        "Name": "c8f9905200f3ed1123d22f42874b9fcfc05350dd7b"
+      }
+    },
+    "parent4busallF1F607E1": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "EventBusName": {
+          "Ref": "parent4bus7611E2BB"
+        },
+        "EventPattern": {
+          "source": [
+            {
+              "prefix": ""
+            }
+          ]
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "parent4queue091CFF71",
+                "Arn"
+              ]
+            },
+            "Id": "Target0",
+            "InputPath": "$.detail"
+          }
+        ]
+      }
+    },
+    "parent4queue091CFF71": {
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "parent4queuePolicy83318BB3": {
+      "Type": "AWS::SQS::QueuePolicy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl"
+              ],
+              "Condition": {
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Fn::GetAtt": [
+                      "parent4busallF1F607E1",
+                      "Arn"
+                    ]
+                  }
+                }
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com"
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent4queue091CFF71",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Queues": [
+          {
+            "Ref": "parent4queue091CFF71"
+          }
+        ]
+      }
+    },
+    "parent4queueonEventServiceRoleAD0085F6": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent4queueonEventServiceRoleDefaultPolicy919D357D": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent4queue091CFF71",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TableCD117FA1",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent4queueonEventServiceRoleDefaultPolicy919D357D",
+        "Roles": [
+          {
+            "Ref": "parent4queueonEventServiceRoleAD0085F6"
+          }
+        ]
+      }
+    },
+    "parent4queueonEvent2EE11913": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "11f28171b8ac2998efa49ed236f7b23a406186657b2742e8140edd71e20208c9.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "parent4queueonEventServiceRoleAD0085F6",
+            "Arn"
+          ]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "TableCD117FA1"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": [
+        "parent4queueonEventServiceRoleDefaultPolicy919D357D",
+        "parent4queueonEventServiceRoleAD0085F6"
+      ]
+    },
+    "parent4queueonEventSqsEventSourcequeueStackparent4queue8123C613E37FD6E2": {
+      "Type": "AWS::Lambda::EventSourceMapping",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "parent4queueonEvent2EE11913"
+        },
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "parent4queue091CFF71",
+            "Arn"
+          ]
+        },
+        "FunctionResponseTypes": [
+          "ReportBatchItemFailures"
+        ]
+      }
+    },
+    "parent5bus19D23AEF": {
+      "Type": "AWS::Events::EventBus",
+      "Properties": {
+        "Name": "c812590c5ab41c7a15153b34fd5df1ab5edb457796"
+      }
+    },
+    "parent5busallEACB95FA": {
+      "Type": "AWS::Events::Rule",
+      "Properties": {
+        "EventBusName": {
+          "Ref": "parent5bus19D23AEF"
+        },
+        "EventPattern": {
+          "source": [
+            {
+              "prefix": ""
+            }
+          ]
+        },
+        "State": "ENABLED",
+        "Targets": [
+          {
+            "Arn": {
+              "Fn::GetAtt": [
+                "parent5queue15EA7F47",
+                "Arn"
+              ]
+            },
+            "Id": "Target0",
+            "InputPath": "$.detail",
+            "SqsParameters": {
+              "MessageGroupId": "busGroup"
+            }
+          }
+        ]
+      }
+    },
+    "parent5queue15EA7F47": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "ContentBasedDeduplication": true,
+        "DeduplicationScope": "messageGroup",
+        "FifoQueue": true,
+        "FifoThroughputLimit": "perMessageGroupId"
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "parent5queuePolicyF23ABF68": {
+      "Type": "AWS::SQS::QueuePolicy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl"
+              ],
+              "Condition": {
+                "ArnEquals": {
+                  "aws:SourceArn": {
+                    "Fn::GetAtt": [
+                      "parent5busallEACB95FA",
+                      "Arn"
+                    ]
+                  }
+                }
+              },
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "events.amazonaws.com"
+              },
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent5queue15EA7F47",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "Queues": [
+          {
+            "Ref": "parent5queue15EA7F47"
+          }
+        ]
+      }
+    },
+    "parent5queueonEventServiceRoleD53C5115": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent5queueonEventServiceRoleDefaultPolicy15F6028F": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent5queue15EA7F47",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TableCD117FA1",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent5queueonEventServiceRoleDefaultPolicy15F6028F",
+        "Roles": [
+          {
+            "Ref": "parent5queueonEventServiceRoleD53C5115"
+          }
+        ]
+      }
+    },
+    "parent5queueonEventB8C058C0": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "6c05baf8a753f745048f822e60b1da0cf559f5ecebc086dd089e68156dbece98.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "parent5queueonEventServiceRoleD53C5115",
+            "Arn"
+          ]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "TableCD117FA1"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": [
+        "parent5queueonEventServiceRoleDefaultPolicy15F6028F",
+        "parent5queueonEventServiceRoleD53C5115"
+      ]
+    },
+    "parent5queueonEventSqsEventSourcequeueStackparent5queueB8D6F56DD89DFC07": {
+      "Type": "AWS::Lambda::EventSourceMapping",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "parent5queueonEventB8C058C0"
+        },
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "parent5queue15EA7F47",
+            "Arn"
+          ]
+        },
+        "FunctionResponseTypes": [
+          "ReportBatchItemFailures"
+        ]
+      }
+    },
+    "parent6queue9203F7F9": {
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "parent6queueonEventServiceRoleAD2D35D5": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent6queueonEventServiceRoleDefaultPolicyE4AADA60": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent6queue9203F7F9",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TableCD117FA1",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent6queueonEventServiceRoleDefaultPolicyE4AADA60",
+        "Roles": [
+          {
+            "Ref": "parent6queueonEventServiceRoleAD2D35D5"
+          }
+        ]
+      }
+    },
+    "parent6queueonEvent748A348C": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "3794b4530e911c7f39e4cdc99fdb8c34afff3b1ab3ec96babc4457ecea2e797c.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "parent6queueonEventServiceRoleAD2D35D5",
+            "Arn"
+          ]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "TableCD117FA1"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": [
+        "parent6queueonEventServiceRoleDefaultPolicyE4AADA60",
+        "parent6queueonEventServiceRoleAD2D35D5"
+      ]
+    },
+    "parent6queueonEventSqsEventSourcequeueStackparent6queue9210ED4E0C4747BB": {
+      "Type": "AWS::Lambda::EventSourceMapping",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "parent6queueonEvent748A348C"
+        },
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "parent6queue9203F7F9",
+            "Arn"
+          ]
+        },
+        "FunctionResponseTypes": [
+          "ReportBatchItemFailures"
+        ]
+      }
+    },
+    "parent7queue2D163567": {
+      "Type": "AWS::SQS::Queue",
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "parent7queueonEventServiceRole98A7C8C3": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent7queueonEventServiceRoleDefaultPolicy4B81D589": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent7queue2D163567",
+                  "Arn"
+                ]
+              }
+            },
+            {
+              "Action": [
+                "dynamodb:BatchWriteItem",
+                "dynamodb:PutItem",
+                "dynamodb:UpdateItem",
+                "dynamodb:DeleteItem",
+                "dynamodb:DescribeTable"
+              ],
+              "Effect": "Allow",
+              "Resource": [
+                {
+                  "Fn::GetAtt": [
+                    "TableCD117FA1",
+                    "Arn"
+                  ]
+                },
+                {
+                  "Ref": "AWS::NoValue"
+                }
+              ]
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent7queueonEventServiceRoleDefaultPolicy4B81D589",
+        "Roles": [
+          {
+            "Ref": "parent7queueonEventServiceRole98A7C8C3"
+          }
+        ]
+      }
+    },
+    "parent7queueonEventC4DE53B4": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "478e24bfa5e636c9b630d84f890004d7d1b42052ab6d0f8b1f4deb6c366cbdb2.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "parent7queueonEventServiceRole98A7C8C3",
+            "Arn"
+          ]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "TableCD117FA1"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": [
+        "parent7queueonEventServiceRoleDefaultPolicy4B81D589",
+        "parent7queueonEventServiceRole98A7C8C3"
+      ]
+    },
+    "parent7queueonEventSqsEventSourcequeueStackparent7queueB123892356932133": {
+      "Type": "AWS::Lambda::EventSourceMapping",
+      "Properties": {
+        "FunctionName": {
+          "Ref": "parent7queueonEventC4DE53B4"
+        },
+        "EventSourceArn": {
+          "Fn::GetAtt": [
+            "parent7queue2D163567",
+            "Arn"
+          ]
+        }
+      }
+    },
+    "parent8queue56B52D4D": {
+      "Type": "AWS::SQS::Queue",
+      "Properties": {
+        "DeduplicationScope": "messageGroup",
+        "FifoQueue": true,
+        "FifoThroughputLimit": "perMessageGroupId"
+      },
+      "UpdateReplacePolicy": "Delete",
+      "DeletionPolicy": "Delete"
+    },
+    "parent8sendServiceRole4189746E": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent8sendServiceRoleDefaultPolicy69130156": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent8queue56B52D4D",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent8sendServiceRoleDefaultPolicy69130156",
+        "Roles": [
+          {
+            "Ref": "parent8sendServiceRole4189746E"
+          }
+        ]
+      }
+    },
+    "parent8send867A79C7": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "7f9ac3a2b87e1671e2723acead44bdf1e8e26b033509f987959abb75529ccba4.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "parent8sendServiceRole4189746E",
+            "Arn"
+          ]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "parent8queue56B52D4D"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": [
+        "parent8sendServiceRole4189746E"
+      ]
+    },
+    "parent8sendBatchServiceRole6B59E225": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent8sendBatchServiceRoleDefaultPolicy9954A0F4": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:SendMessage",
+                "sqs:GetQueueAttributes",
+                "sqs:GetQueueUrl"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent8queue56B52D4D",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent8sendBatchServiceRoleDefaultPolicy9954A0F4",
+        "Roles": [
+          {
+            "Ref": "parent8sendBatchServiceRole6B59E225"
+          }
+        ]
+      }
+    },
+    "parent8sendBatch5DF78F37": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "fd31618ab626eb91202133e453286a658e13f83239bf0e399b81a1876e64ad1d.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "parent8sendBatchServiceRole6B59E225",
+            "Arn"
+          ]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "parent8queue56B52D4D"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": [
+        "parent8sendBatchServiceRole6B59E225"
+      ]
+    },
+    "parent8receiveServiceRoleFC99A873": {
+      "Type": "AWS::IAM::Role",
+      "Properties": {
+        "AssumeRolePolicyDocument": {
+          "Statement": [
+            {
+              "Action": "sts:AssumeRole",
+              "Effect": "Allow",
+              "Principal": {
+                "Service": "lambda.amazonaws.com"
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "ManagedPolicyArns": [
+          {
+            "Fn::Join": [
+              "",
+              [
+                "arn:",
+                {
+                  "Ref": "AWS::Partition"
+                },
+                ":iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+              ]
+            ]
+          }
+        ]
+      }
+    },
+    "parent8receiveServiceRoleDefaultPolicy06390CB9": {
+      "Type": "AWS::IAM::Policy",
+      "Properties": {
+        "PolicyDocument": {
+          "Statement": [
+            {
+              "Action": [
+                "sqs:ReceiveMessage",
+                "sqs:ChangeMessageVisibility",
+                "sqs:GetQueueUrl",
+                "sqs:DeleteMessage",
+                "sqs:GetQueueAttributes"
+              ],
+              "Effect": "Allow",
+              "Resource": {
+                "Fn::GetAtt": [
+                  "parent8queue56B52D4D",
+                  "Arn"
+                ]
+              }
+            }
+          ],
+          "Version": "2012-10-17"
+        },
+        "PolicyName": "parent8receiveServiceRoleDefaultPolicy06390CB9",
+        "Roles": [
+          {
+            "Ref": "parent8receiveServiceRoleFC99A873"
+          }
+        ]
+      }
+    },
+    "parent8receive2D21AC86": {
+      "Type": "AWS::Lambda::Function",
+      "Properties": {
+        "Code": {
+          "S3Bucket": {
+            "Fn::Sub": "cdk-hnb659fds-assets-${AWS::AccountId}-${AWS::Region}"
+          },
+          "S3Key": "148c2452775de8123a8c15c433af73c35cd1cc730eaebdeb9c70fb818f032f2e.zip"
+        },
+        "Role": {
+          "Fn::GetAtt": [
+            "parent8receiveServiceRoleFC99A873",
+            "Arn"
+          ]
+        },
+        "Environment": {
+          "Variables": {
+            "NODE_OPTIONS": "--enable-source-maps",
+            "functionless_infer": "DONE",
+            "env__functionless0": {
+              "Ref": "parent8queue56B52D4D"
+            }
+          }
+        },
+        "Handler": "index.handler",
+        "Runtime": "nodejs14.x",
+        "Timeout": 20
+      },
+      "DependsOn": [
+        "parent8receiveServiceRoleFC99A873"
+      ]
+    }
+  },
+  "Outputs": {
+    "testRoleArn": {
+      "Value": {
+        "Fn::GetAtt": [
+          "testRole836465CB",
+          "Arn"
+        ]
+      },
+      "Export": {
+        "Name": "TestRoleArn-queueStack"
+      }
+    },
+    "parent0queueUrlout1CE9DB5B": {
+      "Value": {
+        "Ref": "parent0queue08EB2FDB"
+      }
+    },
+    "parent0tableNameout38F0A80C": {
+      "Value": {
+        "Ref": "TableCD117FA1"
+      }
+    },
+    "parent1queueUrlout86890FFC": {
+      "Value": {
+        "Ref": "parent1queueCB6E818D"
+      }
+    },
+    "parent1tableNameoutD49ACE0D": {
+      "Value": {
+        "Ref": "TableCD117FA1"
+      }
+    },
+    "parent2queueUrlout82F6A4F4": {
+      "Value": {
+        "Ref": "parent2queueEE23DDD6"
+      }
+    },
+    "parent2tableNameout134E82AF": {
+      "Value": {
+        "Ref": "TableCD117FA1"
+      }
+    },
+    "parent3queueUrlout56ED3B85": {
+      "Value": {
+        "Ref": "parent3queue155BCB69"
+      }
+    },
+    "parent3tableNameoutD3A5E6DD": {
+      "Value": {
+        "Ref": "TableCD117FA1"
+      }
+    },
+    "parent4out18140D28": {
+      "Value": ""
+    },
+    "parent4queueUrlout0C2E2A82": {
+      "Value": {
+        "Ref": "parent4queue091CFF71"
+      }
+    },
+    "parent4tableNameout979C03B2": {
+      "Value": {
+        "Ref": "TableCD117FA1"
+      }
+    },
+    "parent4busNameoutDCEF036A": {
+      "Value": "c8f9905200f3ed1123d22f42874b9fcfc05350dd7b"
+    },
+    "parent5outFDA8E589": {
+      "Value": ""
+    },
+    "parent5queueUrloutF443C8A3": {
+      "Value": {
+        "Ref": "parent5queue15EA7F47"
+      }
+    },
+    "parent5tableNameoutB93E9B41": {
+      "Value": {
+        "Ref": "TableCD117FA1"
+      }
+    },
+    "parent5busNameoutEA0CFEB9": {
+      "Value": "c812590c5ab41c7a15153b34fd5df1ab5edb457796"
+    },
+    "parent5messageGroupIdoutA292431C": {
+      "Value": "busGroup"
+    },
+    "parent6queueUrloutBE140ABB": {
+      "Value": {
+        "Ref": "parent6queue9203F7F9"
+      }
+    },
+    "parent6tableNameoutD7F809A1": {
+      "Value": {
+        "Ref": "TableCD117FA1"
+      }
+    },
+    "parent7queueUrlout5CA84369": {
+      "Value": {
+        "Ref": "parent7queue2D163567"
+      }
+    },
+    "parent7tableNameout855E34BC": {
+      "Value": {
+        "Ref": "TableCD117FA1"
+      }
+    },
+    "parent8queueUrloutFBC72BBD": {
+      "Value": {
+        "Ref": "parent8queue56B52D4D"
+      }
+    },
+    "parent8tableNameout109EB010": {
+      "Value": {
+        "Ref": "TableCD117FA1"
+      }
+    },
+    "parent8sendoutF4B336A7": {
+      "Value": {
+        "Ref": "parent8send867A79C7"
+      }
+    },
+    "parent8sendBatchoutB5093E9E": {
+      "Value": {
+        "Ref": "parent8sendBatch5DF78F37"
+      }
+    },
+    "parent8receiveout62CC436B": {
+      "Value": {
+        "Ref": "parent8receive2D21AC86"
+      }
+    }
+  },
+  "Parameters": {
+    "BootstrapVersion": {
+      "Type": "AWS::SSM::Parameter::Value<String>",
+      "Default": "/cdk-bootstrap/hnb659fds/version",
+      "Description": "Version of the CDK Bootstrap resources in this environment, automatically retrieved from SSM Parameter Store. [cdk:skip]"
+    }
+  },
+  "Rules": {
+    "CheckBootstrapVersion": {
+      "Assertions": [
+        {
+          "Assert": {
+            "Fn::Not": [
+              {
+                "Fn::Contains": [
+                  [
+                    "1",
+                    "2",
+                    "3",
+                    "4",
+                    "5"
+                  ],
+                  {
+                    "Ref": "BootstrapVersion"
+                  }
+                ]
+              }
+            ]
+          },
+          "AssertDescription": "CDK bootstrap stack version 6 required. Please run 'cdk bootstrap' with a recent version of the CDK CLI."
+        }
+      ]
+    }
+  }
+}
