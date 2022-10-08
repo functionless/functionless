@@ -358,7 +358,7 @@ export function runtimeTestSuite<
           })
         );
       } else {
-        deployOut = await nodeCfnDeploy(stackArtifact, assetManifestArtifact);
+        deployOut = await formationDeploy(stackArtifact, assetManifestArtifact);
       }
       deploymentTime = new Date().getTime() - startDeploy.getTime();
 
@@ -409,7 +409,7 @@ export function runtimeTestSuite<
       }));
     }
 
-    async function nodeCfnDeploy(
+    async function formationDeploy(
       stackArtifact: cxapi.CloudFormationStackArtifact,
       assetManifest: cxapi.AssetManifestArtifact
     ) {

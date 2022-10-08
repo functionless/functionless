@@ -27,11 +27,12 @@ export class CloudControlProvider
 {
   readonly Type = "AWS::SQS::QueuePolicy";
   private controlClient: control.CloudControlClient;
+  readonly retry: ResourceProviderRetryConfig = { canRetry: true };
 
   constructor(props: ResourceProviderProps) {
     this.controlClient = new control.CloudControlClient(props.sdkConfig);
   }
-  retry: ResourceProviderRetryConfig = { canRetry: true };
+
   async create(
     request: CreateRequest<PhysicalProperties>
   ): Promise<

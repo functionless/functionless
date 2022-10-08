@@ -1,28 +1,28 @@
 import {
+  ConditionFunction,
   FnAnd,
+  FnEquals,
+  FnNot,
+  FnOr,
+  isConditionFunction,
+} from "./condition";
+import {
   FnContains,
   FnEachMemberEquals,
   FnEachMemberIn,
-  FnEquals,
-  FnIf,
-  FnNot,
-  FnOr,
+  FnFindInMap,
   FnRefAll,
   FnValueOf,
   FnValueOfAll,
-  isFnAnd,
   isFnContains,
   isFnEachMemberEquals,
   isFnEachMemberIn,
-  isFnEquals,
-  isFnIf,
-  isFnNot,
-  isFnOr,
   isFnRefAll,
   isFnValueOf,
   isFnValueOfAll,
+  Ref,
 } from "./function";
-// @ts-ignore - improted for tsdoc
+// @ts-ignore - imported for tsdoc
 import { ParameterValues } from "./parameter";
 
 /**
@@ -84,30 +84,24 @@ export interface Assertion {
  * @see {@link FnValueOfAll}
  */
 export type RuleFunction =
-  | FnAnd
+  | ConditionFunction
   | FnContains
   | FnEachMemberEquals
   | FnEachMemberIn
-  | FnEquals
-  | FnIf // not actually in the CFN spec, but seems like no big deal to add it
-  | FnNot
-  | FnOr
   | FnRefAll
   | FnValueOf
   | FnValueOfAll;
 
 export function isRuleFunction(a: any): a is RuleFunction {
   return (
-    isFnAnd(a) ||
+    isConditionFunction(a) ||
     isFnContains(a) ||
     isFnEachMemberEquals(a) ||
     isFnEachMemberIn(a) ||
-    isFnEquals(a) ||
-    isFnIf(a) || // not actually in the CFN spec, but seems like no big deal to add it
-    isFnNot(a) ||
-    isFnOr(a) ||
     isFnRefAll(a) ||
     isFnValueOf(a) ||
     isFnValueOfAll(a)
   );
 }
+
+export type RuleNestedFunction = RuleFunction | FnFindInMap | Ref;

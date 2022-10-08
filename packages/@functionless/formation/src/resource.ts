@@ -1,12 +1,9 @@
-// @ts-ignore - imported for type-doc
 import type {
   CreateResourceCommand,
   UpdateResourceCommand,
 } from "@aws-sdk/client-cloudcontrol";
 
-// @ts-ignore - imported for type-doc
 import { Expression } from "./expression";
-// @ts-ignore - imported for type-doc
 import type { IntrinsicFunction } from "./function";
 
 import { Value } from "./value";

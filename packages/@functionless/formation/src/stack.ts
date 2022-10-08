@@ -3,18 +3,14 @@ import * as ssm from "@aws-sdk/client-ssm";
 import { Expression } from "./expression";
 import {
   IntrinsicFunction,
-  isFnAnd,
   isFnBase64,
   isFnContains,
   isFnEachMemberEquals,
   isFnEachMemberIn,
-  isFnEquals,
   isFnFindInMap,
   isFnGetAtt,
   isFnIf,
   isFnJoin,
-  isFnNot,
-  isFnOr,
   isFnRefAll,
   isFnSelect,
   isFnSplit,
@@ -27,9 +23,17 @@ import {
   parseRefString,
 } from "./function";
 import {
+  isFnEquals,
+  isFnNot,
+  isFnAnd,
+  isFnOr,
+  isConditionRef,
+} from "./condition";
+import {
   buildDependencyGraph,
-  DependencyGraph,
+  ResourceDependencyGraph,
   discoverOrphanedDependencies,
+  isResourceReference,
 } from "./graph";
 
 import {
@@ -47,7 +51,7 @@ import {
   DeletionPolicy,
   PhysicalProperties,
 } from "./resource";
-import { Assertion, Rule, RuleFunction, Rules } from "./rule";
+import { Assertion, isRuleFunction, Rule, RuleFunction, Rules } from "./rule";
 
 import { CloudFormationTemplate } from "./template";
 import { isDeepEqual, wait } from "./util";
@@ -103,9 +107,9 @@ export interface UpdateState {
    */
   previousState: CloudFormationTemplate | undefined;
   /**
-   * The {@link previousState}'s {@link DependencyGraph}.
+   * The {@link previousState}'s {@link ResourceDependencyGraph}.
    */
-  previousDependencyGraph: DependencyGraph | undefined;
+  previousDependencyGraph: ResourceDependencyGraph | undefined;
   /**
    * The new {@link CloudFormationTemplate} which triggered the `Update`.
    *
@@ -113,9 +117,9 @@ export interface UpdateState {
    */
   desiredState: CloudFormationTemplate | undefined;
   /**
-   * The {@link desiredState}'s {@link DependencyGraph}.
+   * The {@link desiredState}'s {@link ResourceDependencyGraph}.
    */
-  desiredDependencyGraph: DependencyGraph | undefined;
+  desiredDependencyGraph: ResourceDependencyGraph | undefined;
   /**
    * Input {@link ParameterValues} for the {@link desiredState}'s {@link Parameters}.
    */
@@ -403,9 +407,11 @@ export class Stack {
 
           // wait for dependencies to delete before deleting this resource
           await Promise.all(
-            dependencies.map((dependency) =>
-              this.deleteResource(dependency, state, allowedLogicalIds)
-            )
+            dependencies
+              .filter(isResourceReference)
+              .map(({ logicalId }) =>
+                this.deleteResource(logicalId, state, allowedLogicalIds)
+              )
           );
 
           if (allowedLogicalIds?.has(logicalId) ?? true) {
@@ -670,12 +676,12 @@ ${metricsMessage}`);
     state: UpdateState,
     logicalId: string
   ): Promise<PhysicalResource | undefined> {
-    const logicalResource = this.getLogicalResource(logicalId, state);
     if (logicalId in state.modules) {
       console.log("Task Cache Hit: " + logicalId);
       return state.modules[logicalId]!.resource;
     } else {
       console.log("Add UPDATE: " + logicalId);
+      const logicalResource = this.getLogicalResource(logicalId, state);
       const physicalResource = this.getPhysicalResource(logicalId);
       const update = physicalResource !== undefined;
 
@@ -685,6 +691,7 @@ ${metricsMessage}`);
         state,
         state.desiredState?.Resources[logicalId]?.Type,
         async () => {
+          // conditions are evaluated first
           if (logicalResource.Condition) {
             const conditionRule =
               state.desiredState?.Conditions?.[logicalResource.Condition];
@@ -1028,14 +1035,58 @@ ${metricsMessage}`);
             : undefined
         )
         .filter((paramVal) => paramVal !== undefined);
-    } else if (isFnEquals(expr)) {
+    } else if (isFnIf(expr)) {
+      const [_when, thenExpr, elseExpr] = expr["Fn::If"];
+
+      const whenExpr =
+        typeof _when === "string"
+          ? state.desiredState?.Conditions?.[_when]
+          : _when;
+
+      if (!whenExpr) {
+        throw new Error(
+          "When clause of Fn::If must be defined and if it is a reference, it must exist."
+        );
+      }
+
+      const when = await this.evaluateRuleFunction(whenExpr, state);
+      if (when === true) {
+        return this.evaluateExpr(thenExpr, state);
+      } else if (when === false) {
+        return this.evaluateExpr(elseExpr, state);
+      } else {
+        throw new Error(`invalid value for 'condition' in Fn:If: ${whenExpr}`);
+      }
+    }
+
+    throw new Error(
+      `expression not implemented: ${Object.keys(expr).join(",")}`
+    );
+  }
+
+  /**
+   * Evaluate a {@link RuleFunction} or {@link ConditionFunction} to a boolean.
+   */
+  private async evaluateRuleFunction(
+    expr: RuleFunction,
+    state: UpdateState
+  ): Promise<boolean> {
+    if (isFnEquals(expr)) {
       const [left, right] = await Promise.all(
-        expr["Fn::Equals"].map((expr) => this.evaluateExpr(expr, state))
+        expr["Fn::Equals"].map((expr) =>
+          isRuleFunction(expr)
+            ? this.evaluateRuleFunction(expr, state)
+            : this.evaluateExpr(expr, state)
+        )
       );
       return isDeepEqual(left, right);
     } else if (isFnNot(expr)) {
       const [condition] = await Promise.all(
-        expr["Fn::Not"].map((expr) => this.evaluateExpr(expr, state))
+        expr["Fn::Not"].map((expr) =>
+          isRuleFunction(expr)
+            ? this.evaluateRuleFunction(expr, state)
+            : this.evaluateExpr(expr, state)
+        )
       );
       if (typeof condition === "boolean") {
         return !condition;
@@ -1052,9 +1103,13 @@ ${metricsMessage}`);
       }
       return (
         await Promise.all(
-          expr["Fn::And"].map((expr) => this.evaluateExpr(expr, state))
+          expr["Fn::And"].map((expr) =>
+            isRuleFunction(expr)
+              ? this.evaluateRuleFunction(expr, state)
+              : this.evaluateExpr(expr, state)
+          )
         )
-      ).reduce((a, b) => {
+      ).reduce((a: boolean, b) => {
         if (typeof b !== "boolean") {
           throw new Error(
             `Malformed input to Fn::And - expected a boolean but received ${typeof b}`
@@ -1070,9 +1125,13 @@ ${metricsMessage}`);
       }
       return (
         await Promise.all(
-          expr["Fn::Or"].map((expr) => this.evaluateExpr(expr, state))
+          expr["Fn::Or"].map((expr) =>
+            isRuleFunction(expr)
+              ? this.evaluateRuleFunction(expr, state)
+              : this.evaluateExpr(expr, state)
+          )
         )
-      ).reduce((a, b) => {
+      ).reduce((a: boolean, b) => {
         if (typeof b !== "boolean") {
           throw new Error(
             `Malformed input to Fn::Or - expected a boolean but received ${typeof b}`
@@ -1108,29 +1167,22 @@ ${metricsMessage}`);
       assertIsListOfStrings(stringsToCheck, "stringsToCheck");
       assertIsListOfStrings(stringsToMatch, "stringsToMatch");
 
-      return stringsToCheck.find(
-        (check) => stringsToMatch.find((match) => check === match) !== undefined
-      );
+      return stringsToCheck.every((check) => stringsToMatch.includes(check));
     } else if (isFnValueOf(expr)) {
       throw new Error("Fn::ValueOf is not yet supported");
     } else if (isFnValueOfAll(expr)) {
       throw new Error("Fn::ValueOfAll is not yet supported");
-    } else if (isFnIf(expr)) {
-      const [whenExpr, thenExpr, elseExpr] = expr["Fn::If"];
-
-      const when = await this.evaluateExpr(whenExpr, state);
-      if (when === true) {
-        return this.evaluateExpr(thenExpr, state);
-      } else if (when === false) {
-        return this.evaluateExpr(elseExpr, state);
-      } else {
-        throw new Error(`invalid value for 'condition' in Fn:If: ${whenExpr}`);
+    } else if (isFnRefAll(expr)) {
+      throw new Error("Fn::refAll is not yet supported");
+    } else if (isConditionRef(expr)) {
+      const condition = state.desiredState?.Conditions?.[expr.Condition];
+      if (!condition) {
+        throw new Error("Condition does not exist: " + expr.Condition);
       }
+      return this.evaluateRuleFunction(condition, state);
     }
-
-    throw new Error(
-      `expression not implemented: ${Object.keys(expr).join(",")}`
-    );
+    const __exhaustive: never = expr;
+    return __exhaustive;
   }
 
   /**
@@ -1364,7 +1416,7 @@ ${metricsMessage}`);
     rule: RuleFunction,
     state: UpdateState
   ): Promise<boolean> {
-    const result = await this.evaluateExpr(rule, state);
+    const result = await this.evaluateRuleFunction(rule, state);
     if (typeof result === "boolean") {
       return result;
     } else {

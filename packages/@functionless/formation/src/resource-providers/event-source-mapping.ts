@@ -57,14 +57,13 @@ export class EventSourceMappingProvider
 {
   readonly Type = "AWS::Lambda::EventSourceMapping";
   private lambdaClient: lambda.LambdaClient;
+  readonly retry: ResourceProviderRetryConfig | undefined = {
+    canRetry: true,
+  };
 
   constructor(props: ResourceProviderProps) {
     this.lambdaClient = new lambda.LambdaClient(props.sdkConfig);
   }
-
-  retry?: ResourceProviderRetryConfig | undefined = {
-    canRetry: true,
-  };
 
   async create(
     request: CreateRequest<EventSourceMappingResource>

@@ -64,7 +64,7 @@ export default class AwsClient implements IAws {
     return {
       ...this.sdkConfig,
       region: options.region,
-      customUserAgent: "node-cfn",
+      customUserAgent: "formation",
       credentials,
     };
   }
@@ -85,11 +85,11 @@ export default class AwsClient implements IAws {
       params: {
         RoleArn: roleArn,
         ExternalId: externalId,
-        RoleSessionName: `node-cfn-${safeUsername()}`,
+        RoleSessionName: `formation-${safeUsername()}`,
       },
       stsConfig: {
         region,
-        customUserAgent: "node-cfn",
+        customUserAgent: "formation",
       },
     });
   }

@@ -1,8 +1,10 @@
-import { Expression } from "./expression";
-import { AwsParameterType, Parameters } from "./parameter";
-import { isRuleFunction, RuleFunction } from "./rule";
+import type { Expression } from "./expression";
+import type { AwsParameterType, Parameters } from "./parameter";
+import { RuleFunction } from "./rule";
 import { guard } from "./util";
 
+// TODO: Support Condition (!Condition)
+// TODO: Support new intrinsic functions (AWS::LanguageExtensions): ToJsonString, Length
 export function isIntrinsicFunction(a: any): a is IntrinsicFunction {
   return (
     isFnBase64(a) ||
@@ -17,8 +19,7 @@ export function isIntrinsicFunction(a: any): a is IntrinsicFunction {
     isFnSplit(a) ||
     isFnSub(a) ||
     isFnTransform(a) ||
-    isRef(a) ||
-    isRuleFunction(a)
+    isRef(a)
   );
 }
 
@@ -34,8 +35,7 @@ export type IntrinsicFunction =
   | FnSplit
   | FnSub
   | FnTransform
-  | Ref
-  | RuleFunction;
+  | Ref;
 
 /**
  * Checks if the {@link expr} string is a short-hand {@link Ref} string.
@@ -214,50 +214,14 @@ export interface FnIf {
     /**
      * In AWS CloudFormation, this is required to be the string name of a Condition
      *
-     * I don't see why we can't just expand this and allow it to be any Expression?
+     * We support any {@link RuleFunction} which resolves to a boolean.
      *
      * If this is a raw `string`, we will treat it as a reference to a {@link ConditionExpression}
      */
-    condition: Expression,
+    condition: string | RuleFunction,
     exprTrue: Expression,
     exprFalse: Expression
   ];
-}
-
-export const isFnEquals = guard<FnEquals>("Fn::Equals");
-
-/**
- * @see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-rules.html#fn-equals
- */
-export interface FnEquals {
-  "Fn::Equals": [left: Expression, right: Expression];
-}
-
-export const isFnNot = guard<FnNot>("Fn::Not");
-
-/**
- * @see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-rules.html#fn-not
- */
-export interface FnNot {
-  "Fn::Not": [IntrinsicFunction];
-}
-
-export const isFnAnd = guard<FnAnd>("Fn::And");
-
-/**
- * @see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-rules.html#fn-and
- */
-export interface FnAnd {
-  "Fn::And": IntrinsicFunction[];
-}
-
-export const isFnOr = guard<FnOr>("Fn::Or");
-
-/**
- * @see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-rules.html#fn-or
- */
-export interface FnOr {
-  "Fn::Or": IntrinsicFunction[];
 }
 
 export const isFnContains = guard<FnContains>("Fn::Contains");

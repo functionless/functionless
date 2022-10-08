@@ -3,7 +3,7 @@
   "compilerOptions": {
     "rootDir": "src",
     "outDir": "lib",
-    "types": ["node"]
+    "types": ["node", "@types/jest"]
   },
   "include": ["src/**/*.ts"],
   "exclude": [],

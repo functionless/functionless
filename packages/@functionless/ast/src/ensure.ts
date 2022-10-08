@@ -69,7 +69,7 @@ export function ensure<Assert extends Assertion>(
         .map((kind) =>
           typeof kind === "number" ? getNodeKindName(kind) : kind
         )
-        .join(", ")}, found: ${item}`
+        .join(", ")}, found: ${JSON.stringify(item)}`
     );
   }
 }

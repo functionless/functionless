@@ -1,50 +1,95 @@
-import { Set as ImmutableSet } from "immutable";
 import { Expression } from "./expression";
 import {
   isIntrinsicFunction,
   isRef,
   isFnGetAtt,
-  isFnJoin,
-  isFnSelect,
-  isFnSplit,
-  isFnSub,
-  isFnBase64,
+  isFnIf,
+  isFnFindInMap,
 } from "./function";
+import { isConditionRef } from "./condition";
 import { isPseudoParameter } from "./pseudo-parameter";
-// @ts-ignore - for tsdoc
 import type { Stack } from "./stack";
 import { CloudFormationTemplate } from "./template";
+import { guard } from "./util";
+import { isRuleFunction, RuleFunction } from "./rule";
+
+export interface ConditionReference {
+  condition: string;
+}
+
+export const isConditionReference = guard<ConditionReference>("condition");
+
+export interface ParameterReference {
+  parameter: string;
+}
+
+export interface MappingReference {
+  mapping: string;
+}
+
+export interface ResourceReference {
+  logicalId: string;
+}
+
+export const isResourceReference = guard<ResourceReference>("logicalId");
+
+export type Dependency =
+  | ConditionReference
+  | ParameterReference
+  | ResourceReference
+  | MappingReference;
+
+/**
+ * A resource can point to a resource, condition, parameter, or a mapping.
+ */
+export type ResourceDependency =
+  | ParameterReference
+  | ResourceReference
+  | MappingReference
+  | ConditionReference;
+
+/**
+ * A condition can point to a condition, parameter, or a mapping.
+ */
+export type ConditionDependency =
+  | ParameterReference
+  | ConditionReference
+  | MappingReference;
 
 /**
  * Maps a Logical ID to the Logical IDs it depends on.
  */
-export interface DependencyGraph {
-  [logicalId: string]: string[];
+export interface ResourceDependencyGraph {
+  [logicalId: string]: ResourceDependency[];
+}
+
+export interface ConditionDependencyGraph {
+  [logicalId: string]: ConditionDependency[];
 }
 
 /**
- * Builds the {@link DependencyGraph} for the {@link template}.
+ * Builds the {@link ResourceDependencyGraph} for the {@link template}.
  *
  * @param template a {@link CloudFormationTemplate}
- * @returns the {@link DependencyGraph} for the {@link CloudFormationTemplate}.
+ * @returns the {@link ResourceDependencyGraph} for the {@link CloudFormationTemplate}.
  * @throws an Error if the stack is invalid, for example when there are any circular references in the template
  */
 export function buildDependencyGraph(
   template: CloudFormationTemplate
-): DependencyGraph {
-  const graph: DependencyGraph = {};
-  for (const [logicalId, resource] of Object.entries(template.Resources)) {
-    graph[logicalId] = [
-      ...(resource.Properties
-        ? Array.from(new Set(findReferences(resource.Properties)))
-        : []),
-      ...(resource.DependsOn ?? []),
-    ]
-      // do not maintain parameters as dependencies, for now.
-      .filter((x) => !(x in (template.Parameters ?? {})));
-  }
+): ResourceDependencyGraph {
+  const graph: ResourceDependencyGraph = Object.fromEntries(
+    Object.entries(template.Resources).map(([logicalId, resource]) => {
+      const deps = [
+        ...(resource.Properties
+          ? Array.from(new Set(findReferences(resource.Properties)))
+          : []),
+        ...(resource.DependsOn ?? []),
+      ].map((x) => referenceStringToDependency(template, x));
+      return [logicalId, deps];
+    })
+  );
 
-  const circularReferences = findCircularReferences(graph);
+  const circularReferences = findCircularResourceReferences(graph);
   if (circularReferences.length > 0) {
     throw new Error(
       `circular references detected: ${circularReferences.join(",")}`
@@ -54,25 +99,47 @@ export function buildDependencyGraph(
   return graph;
 }
 
-/**
- * Maps logical ids to the logical ids that depend on it.
- */
-export function createDependentGraph(graph: DependencyGraph): DependencyGraph {
-  const iGraph: Record<string, Set<string>> = {};
-  Object.entries(graph).forEach(([dependent, dependencies]) => {
-    if (!(dependent in iGraph)) {
-      iGraph[dependent] = new Set();
-    }
-    dependencies.forEach((dependency) => {
-      if (!(dependency in iGraph)) {
-        iGraph[dependency] = new Set();
-      }
-      iGraph[dependency]!.add(dependent);
-    });
-  });
-  return Object.fromEntries(
-    Object.entries(iGraph).map(([key, values]) => [key, [...values]])
+export function buildConditionDependencyGraph(
+  template: CloudFormationTemplate
+): ConditionDependencyGraph {
+  const graph: ConditionDependencyGraph = Object.fromEntries(
+    Object.entries(template.Conditions ?? {}).map(([logicalId, condition]) => {
+      const deps = findReferences(condition).map((x) => {
+        const d = referenceStringToDependency(template, x);
+        if (isResourceReference(d)) {
+          throw new Error("Conditions cannot reference resources: " + x);
+        }
+        return d;
+      });
+      return [logicalId, deps];
+    })
   );
+
+  const circularReferences = findCircularConditionReferences(graph);
+  if (circularReferences.length > 0) {
+    throw new Error(
+      `circular references detected: ${circularReferences.join(",")}`
+    );
+  }
+
+  return graph;
+}
+
+function referenceStringToDependency(
+  template: CloudFormationTemplate,
+  reference: string
+): Dependency {
+  if (reference in template.Resources) {
+    return { logicalId: reference };
+  } else if (reference in (template.Conditions ?? {})) {
+    return { condition: reference };
+  } else if (reference in (template.Mappings ?? {})) {
+    return { mapping: reference };
+  } else if (reference in (template.Parameters ?? {})) {
+    return { parameter: reference };
+  }
+
+  throw new Error("Reference is not found in the template: " + reference);
 }
 
 export interface TopoEntry {
@@ -102,7 +169,7 @@ export interface TopoEntry {
  *                      most dependency first. This should put dependencies as near to their dependents as possible.
  */
 export function topoSortWithLevels(
-  graph: DependencyGraph,
+  graph: ResourceDependencyGraph,
   improvedOrder?: boolean
 ): TopoEntry[] {
   const randomOrderKeys = Object.keys(graph);
@@ -152,7 +219,9 @@ export function topoSortWithLevels(
         return depth[node]!;
       }
       pres[node] = pre++;
-      const depths = graph[node]!.map(visit);
+      const depths = graph[node]!.filter(isResourceReference).map((r) =>
+        visit(r.logicalId)
+      );
       if (depths.length === 0) {
         depth[node] = 1;
       } else {
@@ -164,50 +233,65 @@ export function topoSortWithLevels(
   }
 }
 
-const emptySet = ImmutableSet<string>([]);
-
-function findCircularReferences(graph: DependencyGraph): string[] {
-  const circularReferences: string[] = [];
-  for (const [logicalId, references] of Object.entries(graph)) {
-    for (const reference of references) {
-      const isCircular = transitReference(reference);
-      if (isCircular) {
-        circularReferences.push(logicalId);
-        break;
+function findCircularReferences<G extends Record<string, any>>(
+  graph: G,
+  dependencies: (values: G[string]) => string[]
+): string[] {
+  const circularReferences: Record<string, boolean> = {};
+  for (const logicalId of Object.keys(graph)) {
+    transitReference(logicalId, new Set());
+    function transitReference(reference: string, seen: Set<string>): void {
+      if (seen.has(reference)) {
+        circularReferences[reference] = true;
+        return;
       }
-    }
-
-    function transitReference(
-      reference: string,
-      seen: ImmutableSet<string> = emptySet
-    ): boolean | undefined {
-      if (reference === logicalId) {
-        return true;
-      } else if (seen.has(reference)) {
-        // we're walking in circles, there is a circular reference somewhere
-        // but this logicalId is not the culprit - one of its transitive dependencies is
-        return undefined;
+      if (reference in circularReferences) {
+        return;
       } else {
+        // if we see this again, we know it is circular
+        const _seen = new Set(seen).add(reference);
+        // assume false...
+        circularReferences[reference] = false;
         const transitiveReferences = graph[reference];
         if (transitiveReferences === undefined) {
           throw new Error(`reference does not exist: '${reference}'`);
         }
-        seen = seen.add(reference);
-        for (const transitiveReference of transitiveReferences) {
-          const isCircular = transitReference(transitiveReference, seen);
-          if (isCircular) {
-            return true;
-          }
-        }
-        return false;
+        dependencies(transitiveReferences).forEach((r) =>
+          transitReference(r, _seen)
+        );
       }
     }
   }
-  return circularReferences;
+  return Object.entries(circularReferences)
+    .filter(([_, v]) => v)
+    .map(([k]) => k);
 }
 
-function findReferences(expr: Expression): string[] {
-  if (isIntrinsicFunction(expr)) {
+export function findCircularResourceReferences(graph: ResourceDependencyGraph) {
+  return findCircularReferences(graph, (deps) =>
+    deps.filter(isResourceReference).map(({ logicalId }) => logicalId)
+  );
+}
+
+export function findCircularConditionReferences(
+  graph: ConditionDependencyGraph
+) {
+  return findCircularReferences(graph, (deps) =>
+    deps.filter(isConditionReference).map(({ condition }) => condition)
+  );
+}
+
+/**
+ * Find references in intrinsic expressions until we run out of values or
+ * a rule function is found.
+ */
+function findReferences(expr: Expression | RuleFunction): string[] {
+  // is a rile function, except for Condition:
+  // Condition can be ambiguous with a object in a Resource
+  // with the key Condition.
+  if (isRuleFunction(expr) && !isConditionRef(expr)) {
+    return findConditionReferences(expr);
+  } else if (isIntrinsicFunction(expr)) {
     if (isRef(expr)) {
       if (isPseudoParameter(expr.Ref)) {
         return [];
@@ -215,16 +299,21 @@ function findReferences(expr: Expression): string[] {
       return [expr.Ref];
     } else if (isFnGetAtt(expr)) {
       return [expr["Fn::GetAtt"][0]];
-    } else if (isFnJoin(expr)) {
-      return findReferences(expr["Fn::Join"]);
-    } else if (isFnSelect(expr)) {
-      return findReferences(expr["Fn::Select"]);
-    } else if (isFnSplit(expr)) {
-      return findReferences(expr["Fn::Split"]);
-    } else if (isFnSub(expr)) {
-      return findReferences(expr["Fn::Sub"]);
-    } else if (isFnBase64(expr)) {
-      return findReferences(expr["Fn::Base64"]);
+    } else if (isFnFindInMap(expr)) {
+      const [mapName, ...tail] = expr["Fn::FindInMap"];
+      return [mapName, ...findReferences(tail)];
+    } else if (isFnIf(expr)) {
+      const [condition, ...tail] = expr["Fn::If"];
+      return [
+        ...(typeof condition === "string"
+          ? // is a condition reference
+            condition
+          : // is another intrinsic - this is a divergence from the cfn spec that functionless/formation supports.
+            findConditionReferences(condition)),
+        ...findReferences(tail),
+      ];
+    } else {
+      return Object.values(expr).flatMap((e) => findReferences(e));
     }
     // TODO: RuleFunctions
   } else if (!!expr) {
@@ -232,6 +321,29 @@ function findReferences(expr: Expression): string[] {
       return expr.flatMap((e) => findReferences(e));
     } else if (typeof expr === "object") {
       return Object.values(expr).flatMap((e) => findReferences(e));
+    }
+  }
+  return [];
+}
+
+/**
+ * Find references in conditions until we run out of values or a non-condition
+ * intrinsic function is found.
+ */
+function findConditionReferences(expr: Expression | RuleFunction): string[] {
+  if (isIntrinsicFunction(expr)) {
+    return findReferences(expr);
+  } else if (isRuleFunction(expr)) {
+    if (isConditionRef(expr)) {
+      return [expr.Condition];
+    } else {
+      return Object.values(expr).flatMap((e) => findConditionReferences(e));
+    }
+  } else if (!!expr) {
+    if (Array.isArray(expr)) {
+      return expr.flatMap((e) => findConditionReferences(e));
+    } else if (typeof expr === "object") {
+      return Object.values(expr).flatMap((e) => findConditionReferences(e));
     }
   }
   return [];

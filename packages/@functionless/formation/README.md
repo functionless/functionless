@@ -1,4 +1,4 @@
-# node-cfn
+# formation
 
 This is a toy-implementation of the AWS CloudFormation deployment engine in TypeScript and Node-JS. It was built as an experiment to better understand why CloudFormation is so slow and to also experiment locally with new features.
 
@@ -19,7 +19,7 @@ The most important missing feature right now is Rollbacks, so this tool should n
 ## Usage
 
 ```ts
-import { CloudFormationTemplate, Stack } from "node-cfn";
+import { CloudFormationTemplate, Stack } from "@functionless/formation";
 
 const deployer = new Stack({
   account: "<aws-account>",
