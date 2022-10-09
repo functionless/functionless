@@ -1,33 +1,35 @@
-import { buildDependencyGraph, topoSortWithLevels } from "./graph";
+import { buildDependencyGraph, TopoEntry, topoSortWithLevels } from "./graph";
 import { CloudFormationTemplate } from "./template";
 import chalk, { Color } from "chalk";
+
+const COLORS: typeof Color[] = [
+  "red",
+  "yellow",
+  "green",
+  "cyan",
+  "blue",
+  "magenta",
+];
 
 export function displayTopoOrder(
   template: CloudFormationTemplate,
   color?: boolean
 ) {
-  const colors: typeof Color[] = [
-    "red",
-    "yellow",
-    "green",
-    "cyan",
-    "blue",
-    "magenta",
-  ];
-
   const graph = buildDependencyGraph(template);
   const topoResult = topoSortWithLevels(graph, true);
 
-  const output = topoResult
+  console.log(displayTopoEntries(topoResult, color));
+}
+
+export function displayTopoEntries(entries: TopoEntry[], color?: boolean) {
+  return entries
     .map(({ resourceId, level }) => {
       const l = `${[...new Array(level)].join("  ")}${resourceId}`;
       if (color) {
-        return chalk[colors[(level - 1) % colors.length]!](l);
+        return chalk[COLORS[(level - 1) % COLORS.length]!](l);
       } else {
         return l;
       }
     })
     .join("\n");
-
-  console.log(output);
 }

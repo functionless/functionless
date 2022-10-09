@@ -34,6 +34,8 @@ import {
   ResourceDependencyGraph,
   discoverOrphanedDependencies,
   isResourceReference,
+  buildConditionDependencyGraph,
+  topoSortWithLevels,
 } from "./graph";
 
 import {
@@ -56,12 +58,13 @@ import { Assertion, isRuleFunction, Rule, RuleFunction, Rules } from "./rule";
 import { CloudFormationTemplate } from "./template";
 import { isDeepEqual, wait } from "./util";
 import { Value } from "./value";
-import { AssetManifest, AssetPublishing } from "cdk-assets";
+import { AssetManifest, AssetPublishing, FileManifestEntry } from "cdk-assets";
 import AwsClient from "./aws";
 import {
   DefaultResourceProviders,
   ResourceProviders,
 } from "./resource-provider";
+import { displayTopoEntries } from "./display";
 
 /**
  * A map of each {@link LogicalResource}'s Logical ID to its {@link PhysicalProperties}.
@@ -202,7 +205,7 @@ export class Stack {
    */
   private awsClient: AwsClient;
 
-  constructor(props: StackProps) {
+  constructor(private props: StackProps) {
     this.awsClient = new AwsClient(
       props.account,
       props.region,
@@ -406,6 +409,9 @@ export class Stack {
           }
 
           // wait for dependencies to delete before deleting this resource
+          // FIXME: this is wrong? we want all dependents to be deleted before their dependencies
+          //        CREATE: add ROLE -> add POLICY -> attach to role
+          //        DELETE: remove policy from rule => del policy => del role (note: could we optimize this if we know the role will be deleted?)
           await Promise.all(
             dependencies
               .filter(isResourceReference)
@@ -494,7 +500,7 @@ export class Stack {
       assetManifest?.entries.map(async (a) => {
         console.log("publishing " + a.id);
         // @ts-ignore
-        await publisher.publishAsset(a);
+        await publisher?.publishAsset(a);
       }) ?? []
     );
 
@@ -659,6 +665,147 @@ ${metricsMessage}`);
       // clear tasks
       state.modules = {};
     }
+  }
+
+  public async planUpdateStack(
+    desiredState: CloudFormationTemplate,
+    parameterValues?: ParameterValues,
+    assetManifestFile?: string
+  ): Promise<{
+    assetState: Record<string, boolean>;
+    conditionValues: Record<string, boolean>;
+    logicalIdsToDelete?: string[];
+    logicalIdsToCreateOrUpdate?: string[];
+  }> {
+    // what assets need to be uploaded?
+    // const previousState = this.state?.template;
+
+    const assetManifest = assetManifestFile
+      ? AssetManifest.fromFile(assetManifestFile)
+      : undefined;
+
+    if (assetManifest?.entries.some((s) => s.type !== "file")) {
+      throw new Error(
+        "Only file assets are currently supported, found: " +
+          assetManifest?.entries
+            .filter((s) => s.type !== "file")
+            .map((s) => s.type)
+            .join(",")
+      );
+    }
+
+    const fileAssets = assetManifest?.entries.filter(
+      (x): x is FileManifestEntry => x.type === "file"
+    );
+
+    console.log(fileAssets);
+
+    const s3Client = await this.awsClient.s3Client(this.props.sdkConfig);
+
+    const state: UpdateState = {
+      previousState: this.state?.template,
+      previousDependencyGraph: this.state?.template
+        ? buildDependencyGraph(this.state.template)
+        : undefined,
+      desiredState: desiredState,
+      desiredDependencyGraph: buildDependencyGraph(desiredState),
+      parameterValues,
+      modules: {},
+    };
+
+    const assetState: Record<string, boolean> = Object.fromEntries(
+      await Promise.all(
+        fileAssets?.map(async (x) => {
+          const key = (await this.evaluateExpr(
+            { "Fn::Sub": x.destination.objectKey },
+            state
+          )) as unknown as string;
+          const bucket = (await this.evaluateExpr(
+            { "Fn::Sub": x.destination.bucketName },
+            state
+          )) as unknown as string;
+
+          return [
+            x.id,
+            (
+              await s3Client
+                .listObjectsV2({
+                  Prefix: key,
+                  Bucket: bucket,
+                })
+                .promise()
+            ).Contents?.some((c) => c.Key === x.destination.objectKey),
+          ];
+        }) ?? []
+      )
+    );
+
+    // evaluate rules and conditions
+    // TODO rules
+
+    const conditionGraph = buildConditionDependencyGraph(desiredState);
+
+    console.log(conditionGraph);
+
+    // conditions should be constants
+    const conditionValues = Object.fromEntries(
+      await Promise.all(
+        Object.entries(desiredState.Conditions ?? {}).map(
+          async ([key, cond]) => [
+            key,
+            await this.evaluateRuleFunction(cond, state),
+          ]
+        )
+      )
+    );
+
+    console.log(conditionValues);
+
+    // check for deletions
+
+    // TODO: separate create (new), update (changed, dependency changed), and keep
+    const logicalIdsToCreateOrUpdate = Object.entries(
+      state.desiredState?.Resources ?? {}
+    )
+      // do not create when the condition is false.
+      .filter(([, v]) => (v.Condition ? conditionValues[v.Condition] : true))
+      .map(([key]) => key);
+
+    // TOOD: decorate with WHY (condition vs missing)
+    const logicalIdsToDelete = [
+      ...new Set([
+        ...Object.keys(state.desiredState?.Resources ?? {}),
+        ...Object.keys(state.previousState?.Resources ?? {}),
+      ]),
+    ].filter((k) => !logicalIdsToCreateOrUpdate.includes(k));
+
+    const topoPrevious = state.previousDependencyGraph
+      ? topoSortWithLevels(state.previousDependencyGraph)
+      : undefined;
+    const deleteTopo = topoPrevious
+      ?.filter((x) => logicalIdsToDelete.includes(x.resourceId))
+      .reverse();
+
+    const topoDesired = state.desiredDependencyGraph
+      ? topoSortWithLevels(state.desiredDependencyGraph)
+      : undefined;
+    const topoCreateUpdate = topoDesired?.filter((x) =>
+      logicalIdsToCreateOrUpdate.includes(x.resourceId)
+    );
+
+    console.log("Create/Update Plan:");
+    console.log(displayTopoEntries(topoCreateUpdate ?? [], true));
+    console.log("Delete Plan:");
+    console.log(displayTopoEntries(deleteTopo ?? [], true));
+
+    // return steps
+
+    return {
+      assetState,
+      conditionValues,
+      logicalIdsToDelete,
+      logicalIdsToCreateOrUpdate,
+    };
   }
 
   /**

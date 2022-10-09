@@ -113,18 +113,18 @@ failedOrderQueue.messages().forEach(async (message) => {
 //   console.log("processed order", order);
 // });
 
-new StepFunction(
-  stack,
-  "SendMessageBatch",
-  async (input: { messages: OrderPlacedEvent[] }) => {
-    await orderQueue.sendMessageBatch({
-      Entries: input.messages.map((message, idx) => ({
-        Id: `${idx}`,
-        MessageBody: message,
-      })),
-    });
-  }
-);
+// new StepFunction(
+//   stack,
+//   "SendMessageBatch",
+//   async (input: { messages: OrderPlacedEvent[] }) => {
+//     await orderQueue.sendMessageBatch({
+//       Entries: input.messages.map((message, idx) => ({
+//         Id: `${idx}`,
+//         MessageBody: message,
+//       })),
+//     });
+//   }
+// );
 
 new StepFunction(
   stack,
