@@ -55,6 +55,8 @@ jobs:
 
       - uses: ./.github/actions/build
 
+      - run: yarn run build:website
+
       - name: Netlify Preview
         uses: nwtgck/actions-netlify@v1.2
         with:
