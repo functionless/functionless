@@ -3,7 +3,7 @@ import type { Expr } from "@functionless/ast";
 import type { VTL } from "@functionless/vtl";
 
 export interface APIGatewayVTL extends VTL {
-  role: aws_iam.Role;
+  role: aws_iam.IRole;
   /**
    * Attempt to return the expression as a valid escaped json string.
    *

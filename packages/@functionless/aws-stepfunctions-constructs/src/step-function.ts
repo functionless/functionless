@@ -28,26 +28,40 @@ import { IPrincipal } from "aws-cdk-lib/aws-iam";
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
-import { AppSyncVtlIntegration } from "@functionless/aws-appsync";
-import { ApiGatewayVtlIntegration } from "@functionless/aws-apigateway";
+import {
+  AppSyncIntegration,
+  AppSyncVtlIntegration,
+} from "@functionless/aws-appsync";
+import {
+  ApiGatewayIntegration,
+  ApiGatewayVtlIntegration,
+} from "@functionless/aws-apigateway";
 import {
   ASL,
   ASLGraph,
+  ASLIntegration,
   Retry,
   StateMachine,
   States,
   Task,
 } from "@functionless/asl-graph";
 import { assertDefined } from "@functionless/util";
-import { Event } from "@functionless/aws-events";
+import {
+  Event,
+  EventBusIntegration,
+  EventBusTargetIntegration,
+} from "@functionless/aws-events";
 import {
   EventBus,
   PredicateRuleBase,
   Rule,
-  makeEventBusIntegration,
 } from "@functionless/aws-events-constructs";
 
-import { VTL } from "@functionless/vtl";
+import { NativeIntegration } from "@functionless/aws-lambda";
+import {
+  StepFunctionProps,
+  StepFunctionsClient,
+} from "@functionless/aws-stepfunctions";
 
 export type AnyStepFunction =
   | ExpressStepFunction<any, any>
@@ -828,7 +842,7 @@ export const $SFN = {
    * https://docs.aws.amazon.com/step-functions/latest/dg/amazon-states-language-task-state.html
    */
   task: makeStepFunctionIntegration<"SFN.task", $SFN["task"]>("SFN.task", {
-    asl: (call, context) => {
+    asl: (call: CallExpr, context: ASL): ASLGraph.NodeResults => {
       const [definition] = call.args;
 
       if (!definition) {
@@ -1092,17 +1106,12 @@ function mapOrForEach(call: CallExpr, context: ASL) {
 
 function makeStepFunctionIntegration<K extends string, F extends AnyFunction>(
   methodName: K,
-  integration: Omit<IntegrationInput<`$SFN.${K}`, F>, "kind">
-) {
-  return makeIntegration<`$SFN.${K}`, F>({
+  integration: Omit<ASLIntegration, "kind">
+): F {
+  return {
     kind: `$SFN.${methodName}`,
-    unhandledContext(kind, context) {
-      throw new Error(
-        `${kind} is only allowed within a '${VTL.ContextName}' context, but was called within a '${context}' context.`
-      );
-    },
     ...integration,
-  });
+  } as any;
 }
 
 export function isStepFunction<
@@ -1146,7 +1155,10 @@ abstract class BaseStepFunction<
   Payload extends Record<string, any> | undefined,
   CallIn,
   CallOut
-> implements Integration<"StepFunction", (input: CallIn) => Promise<CallOut>>
+> implements
+    AppSyncIntegration,
+    ApiGatewayIntegration,
+    EventBusIntegration<Payload, StepFunctionEventBusTargetProps | undefined>
 {
   readonly kind = "StepFunction";
   readonly functionlessKind = "StepFunction";
@@ -1374,17 +1386,18 @@ abstract class BaseStepFunction<
     });
   }
 
-  public readonly eventBus = makeEventBusIntegration<
+  public readonly eventBus: EventBusTargetIntegration<
     Payload,
     StepFunctionEventBusTargetProps | undefined
-  >({
-    target: (props, targetInput) => {
+  > = {
+    __payloadBrand: undefined as any,
+    target: (props: any, targetInput: any) => {
       return new aws_events_targets.SfnStateMachine(this.resource, {
         ...props,
         input: targetInput,
       });
     },
-  });
+  } as any;
 
   private statusChangeEventDocument() {
     return {
@@ -1644,12 +1657,11 @@ class BaseExpressStepFunction<
         this.resource.grantStartSyncExecution(context);
       },
       preWarm(preWarmContext) {
-        preWarmContext.getOrInit(PrewarmClients.StepFunctions);
+        preWarmContext.getOrInit(StepFunctionsClient);
       },
       call: async (args, prewarmContext) => {
-        const stepFunctionsClient = prewarmContext.getOrInit<StepFunctions>(
-          PrewarmClients.StepFunctions
-        );
+        const stepFunctionsClient =
+          prewarmContext.getOrInit<StepFunctions>(StepFunctionsClient);
         const [payload] = args;
         const result = await stepFunctionsClient
           .startSyncExecution({
@@ -1874,15 +1886,14 @@ export interface ExpressStepFunction<
 export interface IStepFunction<
   Payload extends Record<string, any> | undefined,
   _Out
-> extends Integration<
-    "StepFunction",
+> extends AppSyncIntegration,
+    ApiGatewayIntegration,
+    EventBusIntegration<Payload, StepFunctionEventBusTargetProps | undefined> {
+  native: NativeIntegration<
     (
       input: StepFunctionRequest<Payload>
     ) => Promise<AWS.StepFunctions.StartExecutionOutput>
-  > {
-  (
-    input: StepFunctionRequest<Payload>
-  ): Promise<AWS.StepFunctions.StartExecutionOutput>;
+  >;
 }
 
 class BaseStandardStepFunction<
@@ -1917,12 +1928,11 @@ class BaseStandardStepFunction<
         this.resource.grantStartExecution(context);
       },
       preWarm(preWarmContext) {
-        preWarmContext.getOrInit(PrewarmClients.StepFunctions);
+        preWarmContext.getOrInit(StepFunctionsClient);
       },
       call: async (args, prewarmContext) => {
-        const stepFunctionsClient = prewarmContext.getOrInit<StepFunctions>(
-          PrewarmClients.StepFunctions
-        );
+        const stepFunctionsClient =
+          prewarmContext.getOrInit<StepFunctions>(StepFunctionsClient);
         const [payload] = args;
         const result = await stepFunctionsClient
           .startExecution({
@@ -1937,10 +1947,9 @@ class BaseStandardStepFunction<
     };
   }
 
-  public describeExecution = makeIntegration<
-    "StepFunction.describeExecution",
-    (executionArn: string) => Promise<AWS.StepFunctions.DescribeExecutionOutput>
-  >({
+  public describeExecution: (
+    executionArn: string
+  ) => Promise<AWS.StepFunctions.DescribeExecutionOutput> = {
     kind: "StepFunction.describeExecution",
     appSyncVtl: this.appSyncIntegration(
       {
@@ -1970,7 +1979,7 @@ class BaseStandardStepFunction<
       },
       (resource, principal) => resource.grantRead(principal)
     ),
-    asl: (call, context) => {
+    asl: (call: CallExpr, context: ASL): ASLGraph.NodeResults => {
       // need DescribeExecution
       this.resource.grantRead(context.role);
 
@@ -1988,15 +1997,20 @@ class BaseStandardStepFunction<
         });
       });
     },
-    native: {
+    native: <
+      NativeIntegration<
+        (
+          executionArn: string
+        ) => Promise<AWS.StepFunctions.DescribeExecutionOutput>
+      >
+    >{
       bind: (context) => this.resource.grantRead(context),
       preWarm(prewarmContext) {
-        prewarmContext.getOrInit(PrewarmClients.StepFunctions);
+        prewarmContext.getOrInit(StepFunctionsClient);
       },
       call: async (args, prewarmContext) => {
-        const stepFunctionClient = prewarmContext.getOrInit<StepFunctions>(
-          PrewarmClients.StepFunctions
-        );
+        const stepFunctionClient =
+          prewarmContext.getOrInit<StepFunctions>(StepFunctionsClient);
 
         const [arn] = args;
 
@@ -2007,15 +2021,12 @@ class BaseStandardStepFunction<
           .promise();
       },
     },
-  });
+  } as any;
 
-  public sendTaskSuccess = makeIntegration<
-    "StepFunction.sendTaskSuccess",
-    <Payload>(
-      taskToken: AWS.StepFunctions.TaskToken,
-      output: Payload
-    ) => Promise<AWS.StepFunctions.SendTaskSuccessOutput>
-  >({
+  public sendTaskSuccess: <Payload>(
+    taskToken: AWS.StepFunctions.TaskToken,
+    output: Payload
+  ) => Promise<AWS.StepFunctions.SendTaskSuccessOutput> = {
     kind: "StepFunction.sendTaskSuccess",
     appSyncVtl: this.appSyncIntegration(
       {
@@ -2052,7 +2063,7 @@ class BaseStandardStepFunction<
       },
       (resource, principal) => resource.grantTaskResponse(principal)
     ),
-    asl: (call, context) => {
+    asl: (call: CallExpr, context: ASL): ASLGraph.NodeResults => {
       // need DescribeExecution
       this.resource.grantTaskResponse(context.role);
 
@@ -2113,15 +2124,21 @@ class BaseStandardStepFunction<
         }
       );
     },
-    native: {
+    native: <
+      NativeIntegration<
+        <Payload>(
+          taskToken: AWS.StepFunctions.TaskToken,
+          output: Payload
+        ) => Promise<AWS.StepFunctions.SendTaskSuccessOutput>
+      >
+    >{
       bind: (context) => this.resource.grantTaskResponse(context),
       preWarm(prewarmContext) {
-        prewarmContext.getOrInit(PrewarmClients.StepFunctions);
+        prewarmContext.getOrInit(StepFunctionsClient);
       },
       call: async (args, prewarmContext) => {
-        const stepFunctionClient = prewarmContext.getOrInit<StepFunctions>(
-          PrewarmClients.StepFunctions
-        );
+        const stepFunctionClient =
+          prewarmContext.getOrInit<StepFunctions>(StepFunctionsClient);
 
         const [taskToken, output] = args;
 
@@ -2130,16 +2147,13 @@ class BaseStandardStepFunction<
           .promise();
       },
     },
-  });
+  } as any;
 
-  public sendTaskFailure = makeIntegration<
-    "StepFunction.sendTaskFailure",
-    (
-      taskToken: AWS.StepFunctions.TaskToken,
-      error?: string,
-      cause?: string
-    ) => Promise<AWS.StepFunctions.SendTaskFailureOutput>
-  >({
+  public sendTaskFailure: (
+    taskToken: AWS.StepFunctions.TaskToken,
+    error?: string,
+    cause?: string
+  ) => Promise<AWS.StepFunctions.SendTaskFailureOutput> = {
     kind: "StepFunction.sendTaskFailure",
     appSyncVtl: this.appSyncIntegration(
       {
@@ -2176,7 +2190,7 @@ ${[
       },
       (resource, principal) => resource.grantTaskResponse(principal)
     ),
-    asl: (call, context) => {
+    asl: (call: CallExpr, context: ASL): ASLGraph.NodeResults => {
       this.resource.grantTaskResponse(context.role);
 
       const [taskToken, error, cause] = call.args;
@@ -2212,15 +2226,22 @@ ${[
         );
       });
     },
-    native: {
+    native: <
+      NativeIntegration<
+        (
+          taskToken: AWS.StepFunctions.TaskToken,
+          error?: string,
+          cause?: string
+        ) => Promise<AWS.StepFunctions.SendTaskFailureOutput>
+      >
+    >{
       bind: (context) => this.resource.grantTaskResponse(context),
       preWarm(prewarmContext) {
-        prewarmContext.getOrInit(PrewarmClients.StepFunctions);
+        prewarmContext.getOrInit(StepFunctionsClient);
       },
       call: async (args, prewarmContext) => {
-        const stepFunctionClient = prewarmContext.getOrInit<StepFunctions>(
-          PrewarmClients.StepFunctions
-        );
+        const stepFunctionClient =
+          prewarmContext.getOrInit<StepFunctions>(StepFunctionsClient);
 
         const [taskToken, error, cause] = args;
 
@@ -2229,14 +2250,11 @@ ${[
           .promise();
       },
     },
-  });
+  } as any;
 
-  public sendTaskHeartbeat = makeIntegration<
-    "StepFunction.sendTaskHeartbeat",
-    (
-      taskToken: AWS.StepFunctions.TaskToken
-    ) => Promise<AWS.StepFunctions.SendTaskHeartbeatOutput>
-  >({
+  public sendTaskHeartbeat: (
+    taskToken: AWS.StepFunctions.TaskToken
+  ) => Promise<AWS.StepFunctions.SendTaskHeartbeatOutput> = {
     kind: "StepFunction.sendTaskHeartbeat",
     appSyncVtl: this.appSyncIntegration(
       {
@@ -2266,7 +2284,7 @@ ${[
       },
       (resource, principal) => resource.grantTaskResponse(principal)
     ),
-    asl: (call, context) => {
+    asl: (call: CallExpr, context: ASL): ASLGraph.NodeResults => {
       // need DescribeExecution
       this.resource.grantTaskResponse(context.role);
 
@@ -2295,15 +2313,20 @@ ${[
         );
       });
     },
-    native: {
+    native: <
+      NativeIntegration<
+        (
+          taskToken: AWS.StepFunctions.TaskToken
+        ) => Promise<AWS.StepFunctions.SendTaskHeartbeatOutput>
+      >
+    >{
       bind: (context) => this.resource.grantTaskResponse(context),
       preWarm(prewarmContext) {
-        prewarmContext.getOrInit(PrewarmClients.StepFunctions);
+        prewarmContext.getOrInit(StepFunctionsClient);
       },
       call: async (args, prewarmContext) => {
-        const stepFunctionClient = prewarmContext.getOrInit<StepFunctions>(
-          PrewarmClients.StepFunctions
-        );
+        const stepFunctionClient =
+          prewarmContext.getOrInit<StepFunctions>(StepFunctionsClient);
 
         const [token] = args;
 
@@ -2312,43 +2335,7 @@ ${[
           .promise();
       },
     },
-  });
-}
-
-interface BaseStandardStepFunction<
-  Payload extends Record<string, any> | undefined,
-  Out
-> {
-  (
-    input: StepFunctionRequest<Payload>
-  ): Promise<AWS.StepFunctions.StartExecutionOutput>;
-
-  describeExecution: IntegrationCall<
-    "StepFunction.describeExecution",
-    (executionArn: string) => Promise<AWS.StepFunctions.DescribeExecutionOutput>
-  >;
-
-  sendTaskSuccess: IntegrationCall<
-    "StepFunction.sendTaskSuccess",
-    <Payload>(
-      taskToken: AWS.StepFunctions.TaskToken,
-      output: Payload
-    ) => Promise<AWS.StepFunctions.SendTaskSuccessOutput>
-  >;
-  sendTaskFailure: IntegrationCall<
-    "StepFunction.sendTaskFailure",
-    (
-      taskToken: AWS.StepFunctions.TaskToken,
-      error?: string,
-      cause?: string
-    ) => Promise<AWS.StepFunctions.SendTaskFailureOutput>
-  >;
-  sendTaskHeartbeat: IntegrationCall<
-    "StepFunction.sendTaskHeartbeat",
-    (
-      taskToken: AWS.StepFunctions.TaskToken
-    ) => Promise<AWS.StepFunctions.SendTaskHeartbeatOutput>
-  >;
+  } as any;
 }
 
 /**

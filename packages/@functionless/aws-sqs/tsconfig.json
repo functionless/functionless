@@ -4,9 +4,10 @@
     "outDir": "lib",
     "declaration": true,
     "inlineSourceMap": true,
-    "rootDir": "src"
+    "rootDir": "src",
+    "types": ["@types/node"]
   },
   "include": ["src"],
   "exclude": ["lib", "test", "node_modules"],
-  "references": [{ "path": "../ast" }]
+  "references": [{ "path": "../ast" }, { "path": "../aws-lambda" }]
 }
