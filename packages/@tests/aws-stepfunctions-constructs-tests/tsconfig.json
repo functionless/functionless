@@ -1,17 +1,17 @@
 {
   "extends": "../../../tsconfig-base.json",
   "compilerOptions": {
+    "noEmit": true,
     "outDir": "lib",
     "declaration": true,
     "inlineSourceMap": true,
     "rootDir": "src"
   },
   "include": [
-    "src"
+    "test"
   ],
   "exclude": [
     "lib",
-    "test",
     "node_modules"
   ],
   "references": [
@@ -35,6 +35,9 @@
     },
     {
       "path": "../../@functionless/aws-stepfunctions"
+    },
+    {
+      "path": "../../@functionless/test"
     },
     {
       "path": "../../@functionless/vtl"

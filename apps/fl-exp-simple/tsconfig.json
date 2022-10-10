@@ -21,7 +21,7 @@
       "path": "../../packages/@functionless/aws-constructs"
     },
     {
-      "path": "../../packages/@functionless/fl-exp"
+      "path": "../../packages/@functionless/cli"
     },
     {
       "path": "../../packages/@functionless/register"

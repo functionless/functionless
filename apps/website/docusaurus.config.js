@@ -18,6 +18,13 @@ const packagesPath = path.resolve(
   "@functionless"
 );
 
+const entryPoints = fs
+  .readdirSync(packagesPath)
+  .map((pkg) => [
+    pkg,
+    path.relative(process.cwd(), path.join(packagesPath, pkg)),
+  ]);
+
 /** @type {import('@docusaurus/types').Config} */
 const config = {
   title: "Functionless",
@@ -54,16 +61,28 @@ const config = {
         },
       };
     },
+    ...entryPoints.map(([name, entryPoint], i) => {
+      return [
+        "docusaurus-plugin-typedoc",
+        /** @type {import('docusaurus-plugin-typedoc').PluginOptions} */ {
+          id: name,
+          out: path.join("api", name),
+          entryPoints: [entryPoint],
+          entryPointStrategy: "packages",
+          sidebar: {
+            categoryLabel: `API Reference - ${name}`,
+            position: 10 + i,
+          },
+        },
+      ];
+    }),
     [
       "docusaurus-plugin-typedoc",
       // Plugin / TypeDoc options
       /** @type {import('docusaurus-plugin-typedoc').PluginOptions} */
       {
-        entryPoints: fs
-          .readdirSync(packagesPath)
-          .map((pkg) =>
-            path.relative(process.cwd(), path.join(packagesPath, pkg))
-          ),
+        // load all the package entry-points
+        entryPoints: ["../../"],
         entryPointStrategy: "packages",
         sidebar: {
           categoryLabel: "API Reference",
