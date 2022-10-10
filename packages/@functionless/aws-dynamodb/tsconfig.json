@@ -8,6 +8,5 @@
     "types": ["@types/node"]
   },
   "include": ["src"],
-  "exclude": ["lib", "test", "node_modules"],
-  "references": [{ "path": "../aws-lambda" }, { "path": "../aws-util" }]
+  "exclude": ["lib", "test", "node_modules"]
 }

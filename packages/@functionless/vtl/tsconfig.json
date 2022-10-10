@@ -7,10 +7,5 @@
     "rootDir": "src"
   },
   "include": ["src"],
-  "exclude": ["lib", "test", "node_modules"],
-  "references": [
-    //
-    { "path": "../ast" },
-    { "path": "../util" }
-  ]
+  "exclude": ["lib", "test", "node_modules"]
 }

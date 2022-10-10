@@ -5,22 +5,6 @@
     "rootDir": "src",
     "types": ["node"]
   },
-  "include": [
-    "src/**/*.ts",
-    "src/**/*.json",
-    "../aws-stepfunctions-constructs/src/step-function.ts",
-    "../vtl/src/vtl.ts",
-    "../aws-appsync-constructs/src/api.ts"
-  ],
-  "exclude": [],
-  "references": [
-    //
-    { "path": "../asl-graph" },
-    { "path": "../ast" },
-    { "path": "../aws-lambda-constructs" },
-    { "path": "../integration" },
-    { "path": "../error-code" },
-    { "path": "../util" },
-    { "path": "../vtl" }
-  ]
+  "include": ["src/**/*.ts", "src/**/*.json"],
+  "exclude": []
 }

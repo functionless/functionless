@@ -31,6 +31,5 @@
     "allowJs": true
   },
   "include": ["src/**/*", "test/**/*"],
-  "exclude": ["**/node_modules"],
-  "references": [{ "path": "../../packages/@functionless/aws-constructs" }]
+  "exclude": ["**/node_modules"]
 }

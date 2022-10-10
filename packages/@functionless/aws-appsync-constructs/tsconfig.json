@@ -7,14 +7,5 @@
     "rootDir": "src"
   },
   "include": ["src"],
-  "exclude": ["lib", "test", "node_modules"],
-  "references": [
-    //
-    { "path": "../ast" },
-    { "path": "../aws-appsync" },
-    { "path": "../aws-lambda-constructs" },
-    { "path": "../aws-util" },
-    { "path": "../util" },
-    { "path": "../vtl" }
-  ]
+  "exclude": ["lib", "test", "node_modules"]
 }

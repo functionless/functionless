@@ -7,15 +7,5 @@
     "rootDir": "src"
   },
   "include": ["src"],
-  "exclude": ["lib", "test", "node_modules"],
-  "references": [
-    { "path": "../asl-graph" },
-    { "path": "../ast" },
-    { "path": "../aws-apigateway" },
-    { "path": "../aws-appsync" },
-    { "path": "../aws-events" },
-    { "path": "../aws-events-constructs" },
-    { "path": "../aws-stepfunctions" },
-    { "path": "../vtl" }
-  ]
+  "exclude": ["lib", "test", "node_modules"]
 }

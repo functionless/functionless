@@ -7,12 +7,5 @@
     "rootDir": "src"
   },
   "include": ["src"],
-  "exclude": ["lib", "node_modules"],
-  "references": [
-    { "path": "../aws-apigateway-constructs" },
-    { "path": "../aws-appsync-constructs" },
-    { "path": "../aws-dynamodb-constructs" },
-    { "path": "../aws-events-constructs" },
-    { "path": "../aws-lambda-constructs" }
-  ]
+  "exclude": ["lib", "node_modules"]
 }

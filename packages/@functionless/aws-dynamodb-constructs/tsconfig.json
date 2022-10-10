@@ -8,13 +8,5 @@
     "types": ["@types/node"]
   },
   "include": ["src"],
-  "exclude": ["lib", "test", "node_modules"],
-  "references": [
-    { "path": "../asl-graph" },
-    { "path": "../aws-appsync" },
-    { "path": "../aws-apigateway" },
-    { "path": "../aws-dynamodb" },
-    { "path": "../aws-lambda" },
-    { "path": "../vtl" }
-  ]
+  "exclude": ["lib", "test", "node_modules"]
 }

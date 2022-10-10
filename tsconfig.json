@@ -1,11 +1,4 @@
 {
-  "compilerOptions": {
-    "paths": {
-      "@functionless/*": [
-        "./packages/@functionless/*/src"
-      ]
-    }
-  },
   "references": [
     {
       "path": "apps/fl-exp-simple"

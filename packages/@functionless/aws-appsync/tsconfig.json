@@ -7,9 +7,5 @@
     "rootDir": "src"
   },
   "include": ["src"],
-  "exclude": ["lib", "test", "node_modules"],
-  "references": [
-    //
-    { "path": "../vtl" }
-  ]
+  "exclude": ["lib", "test", "node_modules"]
 }

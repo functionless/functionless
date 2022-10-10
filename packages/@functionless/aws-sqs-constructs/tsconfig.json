@@ -8,15 +8,5 @@
     "types": ["@types/node"]
   },
   "include": ["src"],
-  "exclude": ["lib", "test", "node_modules"],
-  "references": [
-    //
-    { "path": "../ast" },
-    { "path": "../asl-graph" },
-    { "path": "../aws-events" },
-    { "path": "../aws-lambda" },
-    { "path": "../aws-lambda-constructs" },
-    { "path": "../aws-sqs" },
-    { "path": "../serde" }
-  ]
+  "exclude": ["lib", "test", "node_modules"]
 }
