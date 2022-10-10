@@ -70,9 +70,6 @@
       "path": "../aws-stepfunctions-constructs"
     },
     {
-      "path": "../language-service"
-    },
-    {
       "path": "../util"
     }
   ]

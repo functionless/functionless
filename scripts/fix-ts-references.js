@@ -71,6 +71,7 @@ async function patchNestedTsConfig(roots) {
               dep.startsWith("@functionless") &&
               ![
                 "@functionless/ast-reflection",
+                "@functionless/language-service",
                 "@functionless/nodejs-closure-serializer",
               ].includes(dep)
           )

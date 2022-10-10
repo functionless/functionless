@@ -24,9 +24,6 @@
       "path": "../../packages/@functionless/fl-exp"
     },
     {
-      "path": "../../packages/@functionless/language-service"
-    },
-    {
       "path": "../../packages/@functionless/register"
     }
   ]

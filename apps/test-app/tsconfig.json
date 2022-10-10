@@ -20,9 +20,6 @@
       "path": "../../packages/@functionless/aws-constructs"
     },
     {
-      "path": "../../packages/@functionless/language-service"
-    },
-    {
       "path": "../../packages/@functionless/register"
     }
   ]
