@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "composite": true,
     "outDir": "lib",
     "declaration": true,
     "inlineSourceMap": true,

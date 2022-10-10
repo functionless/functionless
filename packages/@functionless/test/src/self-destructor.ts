@@ -5,8 +5,8 @@ import {
   PhysicalResourceId,
   PhysicalResourceIdReference,
 } from "aws-cdk-lib/custom-resources";
-import { Construct } from "constructs";
 
+import { Construct } from "constructs";
 import { $AWS } from "@functionless/aws-sdk";
 import { StepFunctionError } from "@functionless/asl-graph";
 import { Function } from "@functionless/aws-lambda-constructs";

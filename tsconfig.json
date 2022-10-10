@@ -73,9 +73,6 @@
       "path": "packages/@functionless/aws-stepfunctions-constructs"
     },
     {
-      "path": "packages/@functionless/aws-stepfunctions-constructs-tests"
-    },
-    {
       "path": "packages/@functionless/aws-util"
     },
     {
@@ -101,6 +98,9 @@
     },
     {
       "path": "packages/@functionless/vtl"
+    },
+    {
+      "path": "packages/@tests/aws-stepfunctions-constructs-tests"
     }
   ]
 }

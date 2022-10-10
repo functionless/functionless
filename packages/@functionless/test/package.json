@@ -12,7 +12,8 @@
     "@functionless/asl-graph": "*",
     "@functionless/aws-sdk": "*",
     "@functionless/aws-lambda-constructs": "*",
-    "@functionless/aws-stepfunctions-constructs": "*"
+    "@functionless/aws-stepfunctions-constructs": "*",
+    "amplify-appsync-simulator": "^2.4.1"
   },
   "devDependencies": {
     "@types/node": "^16",

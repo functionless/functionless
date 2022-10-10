@@ -28,6 +28,7 @@ async function patchTsConfig(tsConfigPath, references) {
   tsConfig.references = references.map((ref) => ({
     path: ref,
   }));
+
   await fs.writeFile(tsConfigPath, JSON.stringify(tsConfig, null, 2));
 }
 
@@ -37,6 +38,7 @@ async function findAllPackageRoots() {
       ls(path.join(pwd, "apps")),
       ls(path.join(pwd, "packages")),
       ls(path.join(pwd, "packages", "@functionless")),
+      ls(path.join(pwd, "packages", "@tests")),
     ])
   ).flat();
 
@@ -90,7 +92,11 @@ async function patchNestedTsConfig(roots) {
 }
 
 async function readJsonFile(file) {
-  return JSON.parse((await fs.readFile(file)).toString("utf-8"));
+  try {
+    return JSON.parse((await fs.readFile(file)).toString("utf-8"));
+  } catch (err) {
+    console.error("Failed to read JSON file", file, err);
+  }
 }
 
 async function ls(dir) {
