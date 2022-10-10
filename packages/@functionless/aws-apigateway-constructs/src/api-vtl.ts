@@ -33,7 +33,7 @@ import {
 import * as apigw from "@functionless/aws-apigateway";
 import { VTL } from "@functionless/vtl";
 import type { aws_iam } from "aws-cdk-lib";
-import { ErrorCodes, SynthError } from "packages/@functionless/error-code";
+import { ErrorCodes, SynthError } from "@functionless/error-code";
 
 /**
  * API Gateway's VTL interpreter. API Gateway has limited VTL support and differing behavior to Appsync,

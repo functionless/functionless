@@ -3,11 +3,20 @@
 
 const codeTheme = require("./src/theme/code-theme");
 const path = require("path");
+const fs = require("fs");
 
 const url =
   process.env.CONTEXT === "deploy-preview" && process.env.DEPLOY_PRIME_URL
     ? process.env.DEPLOY_PRIME_URL
     : "https://functionless.org";
+
+const packagesPath = path.resolve(
+  __dirname,
+  "..",
+  "..",
+  "packages",
+  "@functionless"
+);
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -50,7 +59,11 @@ const config = {
       // Plugin / TypeDoc options
       /** @type {import('docusaurus-plugin-typedoc').PluginOptions} */
       {
-        entryPoints: ["../../packages/@functionless/aws-constructs"],
+        entryPoints: fs
+          .readdirSync(packagesPath)
+          .map((pkg) =>
+            path.relative(process.cwd(), path.join(packagesPath, pkg))
+          ),
         entryPointStrategy: "packages",
         sidebar: {
           categoryLabel: "API Reference",

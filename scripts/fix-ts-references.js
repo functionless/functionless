@@ -11,18 +11,21 @@ const pwd = path.resolve(path.join(__dirname, ".."));
  * 2. (TODO): propagate any dep, devDep or peerDep on an internal package to the relevant tsconfig.json
  */
 (async function () {
-  await patchTopLevelTsConfig();
+  const roots = await findAllPackageRoots();
+  await patchTopLevelTsConfig(roots);
+  await patchNestedTsConfig(roots);
 })().catch((err) => {
   console.error(err);
   process.exit(1);
 });
 
 async function patchTopLevelTsConfig(roots) {
-  const tsConfigPath = path.join(pwd, "tsconfig.json");
-  const tsConfig = JSON.parse(
-    (await fs.readFile(tsConfigPath)).toString("utf-8")
-  );
-  tsConfig.references = (roots ?? (await findAllPackageRoots())).map((ref) => ({
+  await patchTsConfig(path.join(pwd, "tsconfig.json"), roots);
+}
+
+async function patchTsConfig(tsConfigPath, references) {
+  const tsConfig = await readJsonFile(tsConfigPath);
+  tsConfig.references = references.map((ref) => ({
     path: ref,
   }));
   await fs.writeFile(tsConfigPath, JSON.stringify(tsConfig, null, 2));
@@ -49,6 +52,39 @@ async function findAllPackageRoots() {
   )
     .filter((p) => !!p)
     .sort();
+}
+
+async function patchNestedTsConfig(roots) {
+  await Promise.all(
+    roots.map(async (rootDir) => {
+      const pkgJsonPath = path.join(rootDir, "package.json");
+      const pkgJson = await readJsonFile(pkgJsonPath);
+
+      const dependencies = new Set(
+        [
+          ...Object.keys(pkgJson.dependencies ?? {}),
+          ...Object.keys(pkgJson.devDependencies ?? {}),
+          ...Object.keys(pkgJson.peerDependencies ?? {}),
+        ].filter(
+          (dep) =>
+            dep.startsWith("@functionless") &&
+            ![
+              "@functionless/ast-reflection",
+              "@functionless/nodejs-closure-serializer",
+            ].includes(dep)
+        )
+      );
+
+      await patchTsConfig(
+        path.join(rootDir, "tsconfig.json"),
+        Array.from(dependencies)
+      );
+    })
+  );
+}
+
+async function readJsonFile(file) {
+  return JSON.parse((await fs.readFile(file)).toString("utf-8"));
 }
 
 async function ls(dir) {

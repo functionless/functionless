@@ -6,6 +6,22 @@
     "esModuleInterop": true,
     "rootDir": "src"
   },
-  "include": ["src"],
-  "exclude": ["lib", "node_modules"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "lib",
+    "node_modules"
+  ],
+  "references": [
+    {
+      "path": "@functionless/asl-graph"
+    },
+    {
+      "path": "@functionless/ast"
+    },
+    {
+      "path": "@functionless/error-code"
+    }
+  ]
 }

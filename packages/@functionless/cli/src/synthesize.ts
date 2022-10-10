@@ -9,36 +9,49 @@ import {
   Stack,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
+
 import {
-  ExpressStepFunction,
-  ExpressStepFunctionKind,
-  isEventBus,
-  isExpressStepFunction,
-  isLambdaFunction,
-  isMethod,
-  isRestApi,
-  isStepFunction,
-  isTableDecl,
-  LambdaFunction,
-  LambdaFunctionKind,
-  StepFunction,
-} from "@functionless/aws";
-import {
-  ASL,
+  forEachChild,
   FunctionlessNode,
-  inferIamPolicies,
   isReferenceExpr,
   reflect,
+  registerSubstitution,
+  resolveSubstitution,
   validateFunctionLike,
-} from "@functionless/aws-constructs";
-import * as functionless from "@functionless/aws-constructs";
-import { forEachChild } from "@functionless/ast";
+} from "@functionless/ast";
 import { logicalIdForPath } from "./logical-id";
 import { bundleLambdaFunction, getBundleOutFolder } from "./bundle-lambda";
 import { getEnvironmentVariableName } from "@functionless/util";
 import { Tree } from "./tree/tree";
 import { isFile, File } from "./tree/file";
 import { isFolder } from "./tree/folder";
+
+import { ASL } from "@functionless/asl-graph";
+import { isRestApi, isMethod } from "@functionless/aws-apigateway";
+import { isLambdaFunction, LambdaFunction } from "@functionless/aws-lambda";
+import { isTable } from "@functionless/aws-dynamodb";
+import { isTableConstruct, Table } from "@functionless/aws-dynamodb-constructs";
+import { isEventBus } from "@functionless/aws-events";
+import { EventBus } from "@functionless/aws-events-constructs";
+import {
+  isFunctionConstruct,
+  Function,
+  inferIamPolicies,
+} from "@functionless/aws-lambda-constructs";
+import {
+  StepFunction as StepFunctionConstruct,
+  ExpressStepFunction as ExpressStepFunctionConstruct,
+  $SFN,
+  IStepFunction,
+  IExpressStepFunction,
+  isStepFunctionConstruct,
+} from "@functionless/aws-stepfunctions-constructs";
+import {
+  ExpressStepFunction,
+  isExpressStepFunction,
+  isStepFunction,
+  StepFunction,
+} from "@functionless/aws-stepfunctions";
 
 export class FunctionlessStack extends Stack {
   protected allocateLogicalId(cfnElement: CfnElement): string {
@@ -53,10 +66,7 @@ export class FunctionlessNestedStack extends NestedStack {
 }
 
 export async function synthesizeProject(project: Project): Promise<void> {
-  functionless.registerSubstitution(
-    StepFunction.waitSeconds,
-    functionless.$SFN.waitFor
-  );
+  registerSubstitution(StepFunction.waitSeconds, $SFN.waitFor);
 
   const app = new App({
     autoSynth: false,
@@ -130,7 +140,7 @@ export async function synthesizeProject(project: Project): Promise<void> {
     if (construct instanceof Construct) {
       return construct;
     } else {
-      functionless.registerSubstitution(file.resource, construct);
+      registerSubstitution(file.resource, construct);
       // @ts-ignore
       return construct.resource;
     }
@@ -155,9 +165,9 @@ export async function synthesizeProject(project: Project): Promise<void> {
         },
       });
       func.addEnvironment("RESOURCE_ID", func.node.path);
-      return functionless.Function.fromFunction(func);
+      return Function.fromFunction(func);
     } else if (isStepFunction(file.resource)) {
-      return functionless.StepFunction.fromStateMachine(
+      return StepFunctionConstruct.fromStateMachine(
         new aws_stepfunctions.StateMachine(scope, id, {
           ...file.resource.props,
           stateMachineType: aws_stepfunctions.StateMachineType.STANDARD,
@@ -165,18 +175,18 @@ export async function synthesizeProject(project: Project): Promise<void> {
         })
       );
     } else if (isExpressStepFunction(file.resource)) {
-      return functionless.ExpressStepFunction.fromStateMachine(
+      return ExpressStepFunctionConstruct.fromStateMachine(
         new aws_stepfunctions.StateMachine(scope, id, {
           ...file.resource.props,
           stateMachineType: aws_stepfunctions.StateMachineType.EXPRESS,
           definition: new aws_stepfunctions.Pass(scope, "dummy"),
         })
       );
-    } else if (isTableDecl(file.resource)) {
-      return new functionless.Table(scope, id, file.resource.props);
+    } else if (isTable(file.resource)) {
+      return new Table(scope, id, file.resource.props);
       ``;
     } else if (isEventBus(file.resource)) {
-      return new functionless.EventBus(scope, id, file.resource.props);
+      return new EventBus(scope, id, file.resource.props);
       ``;
     } else if (isRestApi(file.resource)) {
       return new aws_apigateway.RestApi(scope, id, file.resource.props);
@@ -229,13 +239,13 @@ export async function synthesizeProject(project: Project): Promise<void> {
 }
 
 export type SynthesizedResource =
-  | functionless.StepFunction<any, any>
-  | functionless.IStepFunction<any, any>
-  | functionless.ExpressStepFunction<any, any>
-  | functionless.IExpressStepFunction<any, any>
-  | functionless.Function<any, any>
-  | functionless.Table<any, any, any>
-  | functionless.EventBus<any>
+  | StepFunctionConstruct<any, any>
+  | IStepFunction<any, any>
+  | ExpressStepFunctionConstruct<any, any>
+  | IExpressStepFunction<any, any>
+  | Function<any, any>
+  | Table<any, any, any>
+  | EventBus<any>
   | Construct;
 
 function formatResourcePath(
@@ -310,11 +320,11 @@ function synthesizeLambdaEnvironment(
         if (resource?.__esModule === true && "default" in resource) {
           resource = ref.default;
         }
-        const construct = functionless.resolveSubstitution(resource);
+        const construct = resolveSubstitution(resource);
         if (
-          functionless.isTable(construct) ||
-          functionless.isFunction(construct) ||
-          functionless.isStepFunction(construct)
+          isTableConstruct(construct) ||
+          isFunctionConstruct(construct) ||
+          isStepFunctionConstruct(construct)
         ) {
           if (construct && !seen.has(construct)) {
             const resourceID = construct.resource.node.path;
@@ -324,19 +334,19 @@ function synthesizeLambdaEnvironment(
             }
             seen.add(construct);
             const envKey = getEnvironmentVariableName(resourceID);
-            if (functionless.isTable(construct)) {
+            if (isTableConstruct(construct)) {
               const table = construct.resource;
               lambdaFunction.addEnvironment(`${envKey}_NAME`, table.tableName);
               lambdaFunction.addEnvironment(`${envKey}_ARN`, table.tableArn);
               lambdaFunction.addEnvironment("TODO", "TODO");
-            } else if (functionless.isFunction(construct)) {
+            } else if (isFunctionConstruct(construct)) {
               const func = construct.resource;
               lambdaFunction.addEnvironment(
                 `${envKey}_NAME`,
                 func.functionName
               );
               lambdaFunction.addEnvironment(`${envKey}_ARN`, func.functionArn);
-            } else if (functionless.isStepFunction(construct)) {
+            } else if (isStepFunctionConstruct(construct)) {
               const machine = construct.resource;
               lambdaFunction.addEnvironment(
                 `${envKey}_NAME`,

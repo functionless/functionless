@@ -16,6 +16,9 @@
       "path": "packages/@functionless/ast"
     },
     {
+      "path": "packages/@functionless/aws"
+    },
+    {
       "path": "packages/@functionless/aws-apigateway"
     },
     {
@@ -29,9 +32,6 @@
     },
     {
       "path": "packages/@functionless/aws-cognito-constructs"
-    },
-    {
-      "path": "packages/@functionless/aws-constructs"
     },
     {
       "path": "packages/@functionless/aws-dynamodb"
@@ -99,7 +99,5 @@
     {
       "path": "packages/@functionless/vtl"
     }
-  ],
-  "files": [],
-  "include": []
+  ]
 }

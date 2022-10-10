@@ -5,6 +5,29 @@
     "declaration": true,
     "inlineSourceMap": true
   },
-  "include": ["."],
-  "exclude": ["lib", "test", "node_modules"]
+  "include": [
+    "."
+  ],
+  "exclude": [
+    "lib",
+    "test",
+    "node_modules"
+  ],
+  "references": [
+    {
+      "path": "@functionless/aws"
+    },
+    {
+      "path": "@functionless/aws-constructs"
+    },
+    {
+      "path": "@functionless/fl-exp"
+    },
+    {
+      "path": "@functionless/language-service"
+    },
+    {
+      "path": "@functionless/register"
+    }
+  ]
 }

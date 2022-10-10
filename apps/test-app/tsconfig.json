@@ -9,6 +9,21 @@
       }
     ]
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"]
+  "include": [
+    "src/**/*.ts"
+  ],
+  "exclude": [
+    "node_modules"
+  ],
+  "references": [
+    {
+      "path": "@functionless/aws-constructs"
+    },
+    {
+      "path": "@functionless/language-service"
+    },
+    {
+      "path": "@functionless/register"
+    }
+  ]
 }

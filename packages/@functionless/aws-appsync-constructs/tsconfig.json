@@ -6,6 +6,32 @@
     "inlineSourceMap": true,
     "rootDir": "src"
   },
-  "include": ["src"],
-  "exclude": ["lib", "test", "node_modules"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "lib",
+    "test",
+    "node_modules"
+  ],
+  "references": [
+    {
+      "path": "@functionless/ast"
+    },
+    {
+      "path": "@functionless/aws-appsync"
+    },
+    {
+      "path": "@functionless/aws-lambda"
+    },
+    {
+      "path": "@functionless/aws-util"
+    },
+    {
+      "path": "@functionless/util"
+    },
+    {
+      "path": "@functionless/vtl"
+    }
+  ]
 }

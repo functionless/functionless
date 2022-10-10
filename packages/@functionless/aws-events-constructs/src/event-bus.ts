@@ -40,7 +40,7 @@ import {
   NativeIntegration,
   NativeRuntimeEnvironment,
 } from "@functionless/aws-lambda";
-import { ApiGatewayVtlIntegration } from "packages/@functionless/aws-apigateway/lib";
+import { ApiGatewayVtlIntegration } from "@functionless/aws-apigateway/lib";
 
 export const isEventBus = <EvntBus extends IEventBus<any>>(
   v: any

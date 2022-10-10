@@ -113,7 +113,7 @@ import {
 } from "./states";
 import { StepFunctionError } from "./step-function-error";
 import { assertNever } from "@functionless/util";
-import { SynthError, ErrorCodes } from "packages/@functionless/error-code";
+import { SynthError, ErrorCodes } from "@functionless/error-code";
 import {
   FUNCTIONLESS_CONTEXT_NAME,
   FUNCTIONLESS_CONTEXT_JSON_PATH,

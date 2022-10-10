@@ -6,6 +6,16 @@
     "inlineSourceMap": true,
     "rootDir": "src"
   },
-  "include": ["src"],
-  "exclude": ["lib", "node_modules"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "lib",
+    "node_modules"
+  ],
+  "references": [
+    {
+      "path": "@functionless/util"
+    }
+  ]
 }

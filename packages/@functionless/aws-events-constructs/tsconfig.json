@@ -6,6 +6,35 @@
     "inlineSourceMap": true,
     "rootDir": "src"
   },
-  "include": ["src"],
-  "exclude": ["lib", "test", "node_modules"]
+  "include": [
+    "src"
+  ],
+  "exclude": [
+    "lib",
+    "test",
+    "node_modules"
+  ],
+  "references": [
+    {
+      "path": "@functionless/asl-graph"
+    },
+    {
+      "path": "@functionless/ast"
+    },
+    {
+      "path": "@functionless/aws-apigateway"
+    },
+    {
+      "path": "@functionless/aws-appsync"
+    },
+    {
+      "path": "@functionless/aws-events"
+    },
+    {
+      "path": "@functionless/aws-lambda"
+    },
+    {
+      "path": "@functionless/util"
+    }
+  ]
 }

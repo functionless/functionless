@@ -7,6 +7,18 @@
     "resolveJsonModule": true,
     "rootDir": "src"
   },
-  "include": ["src", "src/globals.json"],
-  "exclude": ["lib", "test", "node_modules"]
+  "include": [
+    "src",
+    "src/globals.json"
+  ],
+  "exclude": [
+    "lib",
+    "test",
+    "node_modules"
+  ],
+  "references": [
+    {
+      "path": "@functionless/ast"
+    }
+  ]
 }

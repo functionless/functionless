@@ -12,7 +12,8 @@
     "typecheck": "turbo run typecheck",
     "build": "turbo run build",
     "test": "turbo run test",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "fix:references": "node ./scripts/fix-ts-references.js"
   },
   "workspaces": {
     "packages": [

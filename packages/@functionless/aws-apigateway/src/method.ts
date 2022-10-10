@@ -1,7 +1,7 @@
 import type { aws_apigateway } from "aws-cdk-lib";
-import { ExpressStepFunction } from "./express-step-function";
-import { LambdaFunction } from "./lambda-function";
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import type { ExpressStepFunction } from "@functionless/aws-stepfunctions";
+import type { LambdaFunction } from "@functionless/aws-lambda";
+import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 
 type TaggedParam<Tag extends string, Value> = {
   tag: Tag;

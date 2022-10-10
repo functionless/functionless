@@ -1114,7 +1114,7 @@ function makeStepFunctionIntegration<K extends string, F extends AnyFunction>(
   } as any;
 }
 
-export function isStepFunction<
+export function isStepFunctionConstruct<
   P extends Record<string, any> | undefined,
   O = any
 >(a: any): a is StepFunction<P, O> | ExpressStepFunction<P, O> {
