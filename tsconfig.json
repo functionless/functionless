@@ -1,4 +1,9 @@
 {
+  "compilerOptions": {
+    "paths": {
+      "@functionless/*": ["packages/@functionless/*/src"]
+    }
+  },
   "references": [
     { "path": "./packages/@functionless/ast" },
     { "path": "./packages/@functionless/aws-constructs" },

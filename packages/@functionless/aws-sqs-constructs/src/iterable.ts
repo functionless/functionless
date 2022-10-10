@@ -1,6 +1,9 @@
 import type { Construct } from "constructs";
 import type { EventBatch, EventSource, IEventSource } from "./event-source";
-import type { Function, FunctionProps } from "./function";
+import type {
+  Function,
+  FunctionProps,
+} from "@functionless/aws-lambda-constructs";
 import type { Queue } from "./queue";
 
 export type Processor<

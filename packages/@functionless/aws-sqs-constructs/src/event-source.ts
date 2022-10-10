@@ -1,6 +1,6 @@
 import { aws_sqs, aws_lambda } from "aws-cdk-lib";
 import { Construct, IConstruct } from "constructs";
-import { Function, FunctionProps } from "./function";
+import { Function, FunctionProps } from "@functionless/aws-lambda-constructs";
 import type { Iterable } from "./iterable";
 import type { Queue } from "./queue";
 

@@ -1,8 +1,7 @@
 import { Expr, Argument, isArgument, evalToConstant } from "@functionless/ast";
 import { aws_iam } from "aws-cdk-lib";
-import { ASLGraph } from "../asl";
-import { ErrorCodes, SynthError } from "../error-code";
-import { makeIntegration } from "../integration";
+import { ASLGraph, ASLIntegration } from "@functionless/asl-graph";
+import { ErrorCodes, SynthError } from "@functionless/error-code";
 import { SDK_INTEGRATION_SERVICE_NAME } from "./asl";
 import { IAM_SERVICE_PREFIX } from "./iam";
 import type { SDK as TSDK } from "./sdk.generated";
@@ -106,11 +105,11 @@ const SFN_SERVICE_BLOCK_LIST: {
   STS: ["assumeRole", "assumeRoleWithSAML", "assumeRoleWithWebIdentity"],
 };
 
-function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
-  return makeIntegration<
-    `$AWS.SDK.${typeof serviceName}`,
-    (input: any) => Promise<any>
-  >({
+function makeSdkIntegration(
+  serviceName: ServiceKeys,
+  methodName: string
+): (input: any) => Promise<any> {
+  return (<ASLIntegration>{
     kind: `$AWS.SDK.${serviceName}`,
     asl: (call, context) => {
       const [payloadArg, optionsArg] = call.args;
@@ -172,7 +171,7 @@ function makeSdkIntegration(serviceName: ServiceKeys, methodName: string) {
         );
       });
     },
-  });
+  }) as any;
 }
 
 /**

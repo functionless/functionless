@@ -1,0 +1,9 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": ".",
+    "types": ["@types/node"]
+  },
+  "include": ["scripts/*.ts"],
+  "exclude": ["lib", "node_modules"]
+}

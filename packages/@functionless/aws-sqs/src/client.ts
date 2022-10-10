@@ -1,5 +1,5 @@
 import type { NativeRuntimeInitializer } from "@functionless/aws-lambda";
-import type SQS from "aws-sdk/clients/lambda";
+import type SQS from "aws-sdk/clients/sqs";
 
 export const SQSClient: NativeRuntimeInitializer<"SQS", SQS> = {
   key: "SQS",

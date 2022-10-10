@@ -1,3 +1,4 @@
+import type SQS from "aws-sdk/clients/sqs";
 import {
   aws_sqs,
   aws_lambda_event_sources,
@@ -6,16 +7,17 @@ import {
 } from "aws-cdk-lib";
 import lambda from "aws-lambda";
 import { Construct } from "constructs";
-import { ASLGraph, Parameters } from "./asl";
+import { ASL, ASLGraph, Parameters } from "@functionless/asl-graph";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
-import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { EventSource, IEventSource } from "./event-source";
-import { SQSClient } from "./function-prewarm";
-import { Integration, makeIntegration } from "./integration";
+import { SQSClient } from "@functionless/aws-sqs";
 import { Iterable } from "./iterable";
-import { Serializer, JsonSerializer, DataType } from "./serializer";
+import { Serializer, JsonSerializer, DataType } from "@functionless/serde";
+import { NativeIntegration } from "@functionless/aws-lambda";
+import { CallExpr } from "@functionless/ast";
+import { EventBusTargetIntegration } from "@functionless/aws-events";
 
-export interface Message<M> extends AWS.SQS.Message {
+export interface Message<M> extends SQS.Message {
   /**
    * The parsed form of the {@link M} received from the {@link Queue}.
    */
@@ -42,7 +44,7 @@ export interface SQSRecord<Message> extends lambda.SQSRecord {
 }
 
 export interface SendMessageRequest<M>
-  extends Omit<AWS.SQS.SendMessageRequest, "MessageBody" | "QueueUrl"> {
+  extends Omit<SQS.SendMessageRequest, "MessageBody" | "QueueUrl"> {
   /**
    * The {@link M} to be sent to the {@link Queue}.
    */
@@ -50,20 +52,20 @@ export interface SendMessageRequest<M>
 }
 
 export interface SendMessageBatchRequest<M>
-  extends Omit<AWS.SQS.SendMessageBatchRequest, "QueueUrl" | "Entries"> {
+  extends Omit<SQS.SendMessageBatchRequest, "QueueUrl" | "Entries"> {
   Entries: SendMessageBatchRequestEntry<M>[];
 }
 
 export interface SendMessageBatchRequestEntry<M>
-  extends Omit<AWS.SQS.SendMessageBatchRequestEntry, "MessageBody"> {
+  extends Omit<SQS.SendMessageBatchRequestEntry, "MessageBody"> {
   MessageBody: M;
 }
 
 export interface ReceiveMessageRequest
-  extends Omit<AWS.SQS.ReceiveMessageRequest, "QueueUrl"> {}
+  extends Omit<SQS.ReceiveMessageRequest, "QueueUrl"> {}
 
 export interface ReceiveMessageResult<M>
-  extends Omit<AWS.SQS.ReceiveMessageResult, "Messages"> {
+  extends Omit<SQS.ReceiveMessageResult, "Messages"> {
   /**
    * The {@link M} to be sent to the {@link Queue}.
    */
@@ -116,7 +118,7 @@ interface BaseQueue<Message> {
    */
   sendMessage(
     input: SendMessageRequest<Message>
-  ): Promise<AWS.SQS.SendMessageResult>;
+  ): Promise<SQS.SendMessageResult>;
 
   /**
    * Delivers up to ten messages to the specified queue. This is a batch version of
@@ -205,7 +207,7 @@ interface BaseQueue<Message> {
    */
   sendMessageBatch(
     input: SendMessageBatchRequest<Message>
-  ): Promise<AWS.SQS.SendMessageBatchResult>;
+  ): Promise<SQS.SendMessageBatchResult>;
 
   /**
    * Retrieves one or more messages (up to 10), from the specified queue.
@@ -283,22 +285,14 @@ interface BaseQueue<Message> {
   purge(): Promise<{}>;
 }
 
-abstract class BaseQueue<Message>
-  extends EventSource<
-    aws_sqs.IQueue,
-    QueueProps<Message>,
-    lambda.SQSEvent,
-    SQSEvent<Message>,
-    lambda.SQSBatchResponse | void,
-    aws_lambda_event_sources.SqsEventSourceProps
-  >
-  implements
-    Integration<
-      "Queue",
-      // queue is not directly invokable, only via event bridge pipe.
-      () => any
-    >
-{
+abstract class BaseQueue<Message> extends EventSource<
+  aws_sqs.IQueue,
+  QueueProps<Message>,
+  lambda.SQSEvent,
+  SQSEvent<Message>,
+  lambda.SQSBatchResponse | void,
+  aws_lambda_event_sources.SqsEventSourceProps
+> {
   /**
    * @hidden
    */
@@ -375,12 +369,13 @@ abstract class BaseQueue<Message>
       }
     }
 
-    this.sendMessage = makeIntegration<
-      "AWS.SQS.SendMessage",
-      (input: SendMessageRequest<Message>) => Promise<AWS.SQS.SendMessageResult>
-    >({
+    this.sendMessage = {
       kind: "AWS.SQS.SendMessage",
-      native: {
+      native: <
+        NativeIntegration<
+          (input: SendMessageRequest<Message>) => Promise<SQS.SendMessageResult>
+        >
+      >{
         bind: (func) => this.resource.grantSendMessages(func),
         preWarm: (context) => context.getOrInit(SQSClient),
         call: async ([input], context) => {
@@ -405,7 +400,7 @@ abstract class BaseQueue<Message>
           return response;
         },
       },
-      asl: (call, context) => {
+      asl: (call: CallExpr, context: ASL): ASLGraph.NodeResults => {
         const input = call.args[0]?.expr;
 
         if (input === undefined) {
@@ -519,20 +514,21 @@ abstract class BaseQueue<Message>
           }
         );
       },
-    });
+    } as any;
 
-    this.sendMessageBatch = makeIntegration<
-      "AWS.SQS.SendMessageBatch",
-      (
-        input: SendMessageBatchRequest<Message>
-      ) => Promise<AWS.SQS.SendMessageBatchResult>
-    >({
+    this.sendMessageBatch = {
       kind: "AWS.SQS.SendMessageBatch",
-      native: {
+      native: <
+        NativeIntegration<
+          (
+            input: SendMessageBatchRequest<Message>
+          ) => Promise<SQS.SendMessageBatchResult>
+        >
+      >{
         bind: (func) => this.resource.grantSendMessages(func),
         preWarm: (context) => context.getOrInit(SQSClient),
         call: async ([input], context) => {
-          const sqs: AWS.SQS = context.getOrInit<AWS.SQS>(SQSClient);
+          const sqs = context.getOrInit<SQS>(SQSClient);
 
           const updatedQueueUrl =
             lambdaQueueUrlRetriever?.(queueUrl) ?? queueUrl;
@@ -553,7 +549,7 @@ abstract class BaseQueue<Message>
           return response;
         },
       },
-      asl: (call, context) => {
+      asl: (call: CallExpr, context: ASL): ASLGraph.NodeResults => {
         const entries = call.args[0]?.expr;
         if (entries === undefined) {
           throw new SynthError(
@@ -652,19 +648,22 @@ abstract class BaseQueue<Message>
           );
         }
       },
-    });
+    } as any;
 
-    this.receiveMessage = makeIntegration<
-      "AWS.SQS.ReceiveMessage",
-      (input: ReceiveMessageRequest) => Promise<ReceiveMessageResult<Message>>
-    >({
+    this.receiveMessage = {
       kind: "AWS.SQS.ReceiveMessage",
       // asl: (call, context) => {},
-      native: {
+      native: <
+        NativeIntegration<
+          (
+            input: ReceiveMessageRequest
+          ) => Promise<ReceiveMessageResult<Message>>
+        >
+      >{
         bind: (func) => this.resource.grantConsumeMessages(func),
         preWarm: (context) => context.getOrInit(SQSClient),
         call: async ([input], context) => {
-          const sqs: AWS.SQS = context.getOrInit(SQSClient);
+          const sqs = context.getOrInit(SQSClient);
 
           const updatedQueueUrl =
             lambdaQueueUrlRetriever?.(queueUrl) ?? queueUrl;
@@ -687,7 +686,7 @@ abstract class BaseQueue<Message>
           };
         },
       },
-      asl: (call, context) => {
+      asl: (call: CallExpr, context: ASL): ASLGraph.NodeResults => {
         const queueUrl = this.queueUrl;
         const serializer = this.serializer;
         const input = call.args[0]?.expr;
@@ -802,11 +801,11 @@ abstract class BaseQueue<Message>
           };
         }
       },
-    });
+    } as any;
 
-    this.purge = makeIntegration<"AWS.SQS.PurgeQueue", () => Promise<{}>>({
+    this.purge = {
       kind: "AWS.SQS.PurgeQueue",
-      native: {
+      native: <NativeIntegration<() => Promise<{}>>>{
         bind: (func) => this.resource.grantPurge(func),
         preWarm: (context) => context.getOrInit(SQSClient),
         call: async ([], context) => {
@@ -821,7 +820,7 @@ abstract class BaseQueue<Message>
             .promise();
         },
       },
-      asl: (_, context) => {
+      asl: (_: CallExpr, context: ASL): ASLGraph.NodeResults => {
         this.resource.grantPurge(context.role);
         return context.stateWithVoidOutput({
           Type: "Task",
@@ -833,7 +832,7 @@ abstract class BaseQueue<Message>
           Next: ASLGraph.DeferNext,
         });
       },
-    });
+    } as any;
   }
 
   /**
@@ -962,17 +961,18 @@ abstract class BaseQueue<Message>
    *
    * @hidden
    */
-  public readonly eventBus = makeEventBusIntegration<
-    Message,
+  public readonly eventBus: EventBusTargetIntegration<
+    any,
     Omit<aws_events_targets.SqsQueueProps, "message"> | undefined
-  >({
-    target: (props, targetInput?) => {
+  > = {
+    __payloadBrand: undefined as any,
+    target: (props: any, targetInput: any) => {
       return new aws_events_targets.SqsQueue(this.resource, {
         ...(props ?? {}),
         message: targetInput,
       });
     },
-  });
+  } as any;
 }
 
 export interface DeadLetterQueue<Message>

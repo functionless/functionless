@@ -1,0 +1,17 @@
+{
+  "compilerOptions": {
+    "outDir": "lib",
+    "declaration": true,
+    "inlineSourceMap": true,
+    "esModuleInterop": true,
+    "rootDir": "src",
+    "types": ["@types/node"]
+  },
+  "include": ["src"],
+  "exclude": ["lib", "node_modules"],
+  "references": [
+    { "path": "../asl-graph" },
+    { "path": "../ast" },
+    { "path": "../error-code" }
+  ]
+}

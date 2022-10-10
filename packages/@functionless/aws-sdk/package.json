@@ -1,0 +1,29 @@
+{
+  "name": "@functionless/aws-sdk",
+  "version": "0.27.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "ts-node -p ./tsconfig.gen.json ./scripts/sdk-gen.ts && tsc -b",
+    "typecheck": "tsc --noEmit"
+  },
+  "peerDependencies": {
+    "aws-sdk": "^2"
+  },
+  "dependencies": {
+    "@functionless/asl-graph": "*",
+    "@functionless/ast": "*",
+    "@functionless/error-code": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^16",
+    "aws-sdk": "^2",
+    "typescript": "^4.8.3"
+  },
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}
