@@ -28,7 +28,11 @@ import { isFolder } from "./tree/folder";
 
 import { ASL } from "@functionless/asl-graph";
 import { isRestApi, isMethod } from "@functionless/aws-apigateway";
-import { isLambdaFunction, LambdaFunction } from "@functionless/aws-lambda";
+import {
+  isLambdaFunction,
+  LambdaFunction,
+  LambdaFunctionKind,
+} from "@functionless/aws-lambda";
 import { isTable } from "@functionless/aws-dynamodb";
 import { isTableConstruct, Table } from "@functionless/aws-dynamodb-constructs";
 import { isEventBus } from "@functionless/aws-events";
@@ -48,6 +52,7 @@ import {
 } from "@functionless/aws-stepfunctions-constructs";
 import {
   ExpressStepFunction,
+  ExpressStepFunctionKind,
   isExpressStepFunction,
   isStepFunction,
   StepFunction,
@@ -183,7 +188,7 @@ export async function synthesizeProject(project: Project): Promise<void> {
         })
       );
     } else if (isTable(file.resource)) {
-      return new Table(scope, id, file.resource.props);
+      return new Table(scope, id, file.resource.props as any);
       ``;
     } else if (isEventBus(file.resource)) {
       return new EventBus(scope, id, file.resource.props);

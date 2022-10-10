@@ -19,6 +19,9 @@
       "path": "../asl-graph"
     },
     {
+      "path": "../ast"
+    },
+    {
       "path": "../aws-apigateway"
     },
     {
@@ -32,9 +35,6 @@
     },
     {
       "path": "../aws-stepfunctions"
-    },
-    {
-      "path": "../ast"
     },
     {
       "path": "../vtl"

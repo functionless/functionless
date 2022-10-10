@@ -16,9 +16,6 @@
   ],
   "references": [
     {
-      "path": "../aws-constructs"
-    },
-    {
       "path": "../aws-util"
     },
     {

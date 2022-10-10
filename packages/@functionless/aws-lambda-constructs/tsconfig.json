@@ -31,19 +31,19 @@
       "path": "../aws-dynamodb"
     },
     {
-      "path": "../aws-events-constructs"
+      "path": "../aws-events"
     },
     {
-      "path": "../aws-events"
+      "path": "../aws-events-constructs"
     },
     {
       "path": "../aws-lambda"
     },
     {
-      "path": "../aws-secretsmanager-constructs"
+      "path": "../aws-secretsmanager"
     },
     {
-      "path": "../aws-secretsmanager"
+      "path": "../aws-secretsmanager-constructs"
     },
     {
       "path": "../aws-util"

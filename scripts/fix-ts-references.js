@@ -77,6 +77,7 @@ async function patchNestedTsConfig(roots) {
           .map((pkgName) =>
             path.relative(rootDir, path.resolve(pwd, "packages", pkgName))
           )
+          .sort()
       );
 
       await patchTsConfig(
