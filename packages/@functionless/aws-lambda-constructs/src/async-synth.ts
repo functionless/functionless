@@ -1,5 +1,5 @@
-import { App } from "aws-cdk-lib";
-import { SynthesisOptions } from "aws-cdk-lib/core/lib/private/synthesis";
+import type { App } from "aws-cdk-lib";
+import type { SynthesisOptions } from "aws-cdk-lib/core/lib/private/synthesis";
 import { Function } from "./function";
 
 /**
@@ -11,6 +11,3 @@ export const asyncSynth = async (app: App, options?: SynthesisOptions) => {
   await Promise.all(Function.promises);
   return app.synth(options);
 };
-
-// to prevent the closure serializer from trying to import all of functionless.
-export const deploymentOnlyModule = true;

@@ -19,17 +19,7 @@ import {
 // eslint-disable-next-line import/no-extraneous-dependencies
 import axios from "axios";
 import { Construct } from "constructs";
-import {
-  $AWS,
-  EventBus,
-  Event,
-  ExpressStepFunction,
-  Function,
-  FunctionProps,
-  StepFunction,
-  Table,
-  FunctionClosure,
-} from "../src";
+import { Function, FunctionProps, FunctionClosure } from "../src";
 import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
 import { testFunction } from "./runtime-util";
 

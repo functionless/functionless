@@ -1,11 +1,6 @@
 import { NodeKind } from "@functionless/ast";
 import { aws_events, Stack } from "aws-cdk-lib";
-import {
-  EventBus,
-  reflect,
-  ReflectionSymbols,
-  validateFunctionLike,
-} from "../src";
+import { reflect, ReflectionSymbols, validateFunctionLike } from "../src";
 import { assertNodeKind } from "../src/assert";
 
 test("function", () => {
@@ -263,3 +258,7 @@ test("validateFunctionLikeNode throws when function not registered", () => {
 
   expect(() => validateFunctionLike(foo, "here")).toThrow();
 });
+
+class EventBus<T> {
+  constructor(scope: any, id: string) {}
+}

@@ -4,10 +4,12 @@ import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import {
   AnyAsyncFunction,
   AnyFunction,
+  BindFunctionName,
   CallExpr,
   Expr,
   findDeepReferences,
   FunctionLike,
+  RegisterFunctionName,
 } from "@functionless/ast";
 import { serializeFunction } from "@functionless/nodejs-closure-serializer";
 import {
@@ -46,7 +48,6 @@ import {
   AppSyncVtlIntegration,
 } from "@functionless/aws-appsync";
 import { ASL, ASLGraph } from "@functionless/asl-graph";
-import { BindFunctionName, RegisterFunctionName } from "./constants";
 import {
   ErrorCodes,
   formatErrorMessage,

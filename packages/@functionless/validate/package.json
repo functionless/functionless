@@ -1,0 +1,27 @@
+{
+  "name": "@functionless/validate",
+  "version": "0.27.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "tsc -b",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@functionless/aws-apigateway-constructs": "*",
+    "@functionless/aws-appsync-constructs": "*",
+    "@functionless/aws-dynamodb-constructs": "*",
+    "@functionless/aws-events-constructs": "*",
+    "@functionless/aws-lambda-constructs": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^16",
+    "typescript": "^4.8.3"
+  },
+  "files": [
+    "lib"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

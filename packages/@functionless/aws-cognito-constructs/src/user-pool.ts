@@ -1,7 +1,7 @@
 import { aws_cognito } from "aws-cdk-lib";
-import lambda from "aws-lambda";
-import { Construct } from "constructs";
-import { Function } from "./function";
+import type lambda from "aws-lambda";
+import type { Construct } from "constructs";
+import type { Function } from "@functionless/aws-lambda-constructs";
 
 export type Trigger<Request, Response = Request> = Function<Request, Response>;
 

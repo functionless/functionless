@@ -14,11 +14,11 @@
     { "path": "../ast" },
     { "path": "../aws-apigateway" },
     { "path": "../aws-appsync" },
-    { "path": "../aws-events" },
     { "path": "../aws-events-constructs" },
+    { "path": "../aws-events" },
     { "path": "../aws-lambda" },
-    { "path": "../aws-secretsmanager" },
     { "path": "../aws-secretsmanager-constructs" },
+    { "path": "../aws-secretsmanager" },
     { "path": "../aws-util" },
     { "path": "../serialize-closure" },
     { "path": "../util" }

@@ -3,15 +3,17 @@ import path from "path";
 import {
   ArrowFunctionExpr,
   BinaryOp,
+  BindFunctionName,
   ConstructorDecl,
   FunctionDecl,
   FunctionExpr,
   MethodDecl,
   NodeKind,
   PostfixUnaryOp,
+  ReflectionSymbolNames,
+  RegisterFunctionName,
   UnaryOp,
   VariableDeclKind,
-  ReflectionSymbolNames,
 } from "@functionless/ast";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
 import { assertDefined } from "@functionless/util";

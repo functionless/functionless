@@ -9,11 +9,17 @@ import {
   ApiMethod,
   ApiMethodKind,
   isApiMethodKind,
-} from "../../aws-appsync-constructs/src/api";
-import { AppsyncField, AppsyncResolver } from "./appsync";
-import { EventBus, Rule } from "./event-bridge";
-import { EventTransform } from "./event-bridge/transform";
-import { Table } from "./table";
+} from "@functionless/aws-apigateway-constructs";
+import {
+  AppsyncField,
+  AppsyncResolver,
+} from "@functionless/aws-appsync-constructs";
+import {
+  EventBus,
+  Rule,
+  EventTransform,
+} from "@functionless/aws-events-constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
 
 /**
  * Various types that could be in a call argument position of a function parameter.
