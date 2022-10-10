@@ -1,11 +1,11 @@
 import {
   CreateRequest,
   DeleteRequest,
+  ResourceOperationResult,
   ResourceProvider,
   ResourceProviderProps,
   UpdateRequest,
 } from "../resource-provider";
-import { PhysicalResource } from "../resource";
 import * as events from "@aws-sdk/client-eventbridge";
 import type { Tag } from "@aws-sdk/client-eventbridge";
 import { awsSDKRetry } from "../util";
@@ -40,7 +40,7 @@ export class EventBusProvider implements ResourceProvider<EventBusResource> {
 
   async create(
     request: CreateRequest<EventBusResource>
-  ): Promise<PhysicalResource<EventBusResource>> {
+  ): ResourceOperationResult<EventBusResource> {
     let result: { arn: string };
     try {
       const r = await awsSDKRetry(() =>
@@ -78,10 +78,7 @@ export class EventBusProvider implements ResourceProvider<EventBusResource> {
   }
   update(
     _request: UpdateRequest<EventBusResource>
-  ): Promise<
-    | PhysicalResource<EventBusResource>
-    | { paddingMillis: number; resource: PhysicalResource<EventBusResource> }
-  > {
+  ): ResourceOperationResult<EventBusResource> {
     throw new Error("Method not implemented.");
   }
   delete(_request: DeleteRequest<EventBusResource>): Promise<void> {

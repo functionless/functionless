@@ -1,6 +1,7 @@
 import {
   CreateRequest,
   DeleteRequest,
+  ResourceOperationResult,
   ResourceProvider as ResourceProvider,
   ResourceProviderProps as ResourceProviderProps,
   ResourceProviderRetryConfig,
@@ -35,9 +36,7 @@ export class CloudControlProvider
 
   async create(
     request: CreateRequest<PhysicalProperties>
-  ): Promise<
-    PhysicalResource | { paddingMillis: number; resource: PhysicalResource }
-  > {
+  ): ResourceOperationResult<PhysicalProperties> {
     // TODO create logger
     const properties = request.definition;
     console.log(`Creating ${request.logicalId} (${request.resourceType})`);
@@ -79,7 +78,9 @@ export class CloudControlProvider
       throw err;
     }
   }
-  async update(request: UpdateRequest<PhysicalProperties>) {
+  async update(
+    request: UpdateRequest<PhysicalProperties>
+  ): ResourceOperationResult<PhysicalProperties> {
     const patch = compare(request.previous, request.definition);
     if (patch.length === 0) {
       console.log(

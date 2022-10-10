@@ -197,8 +197,6 @@ export function topoSortWithLevels(
     let post = 0; // post-order, when all resolvable children are resolved
     let pre = 0; // pre-order, when the node can be resolved
 
-    console.log(keys);
-
     keys.forEach(visit);
 
     return Object.keys(graph)

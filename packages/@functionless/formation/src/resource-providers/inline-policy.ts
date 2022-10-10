@@ -7,11 +7,11 @@ import {
 import {
   CreateRequest,
   DeleteRequest,
+  ResourceOperationResult,
   ResourceProvider,
   ResourceProviderProps,
   UpdateRequest,
 } from "../resource-provider";
-import { PhysicalResource } from "../resource";
 import { PolicyResource } from "../resource-types";
 import { awsSDKRetry } from "../util";
 
@@ -26,7 +26,9 @@ export class InlinePolicyProvider implements ResourceProvider<PolicyResource> {
     this.iamClient = new IAMClient(props.sdkConfig);
   }
 
-  async create(request: CreateRequest<PolicyResource>) {
+  async create(
+    request: CreateRequest<PolicyResource>
+  ): ResourceOperationResult<PolicyResource> {
     const definition = request.definition;
     const policyDocument = JSON.stringify(definition.PolicyDocument);
     const roles = definition.Roles?.map((r) =>
@@ -78,7 +80,7 @@ export class InlinePolicyProvider implements ResourceProvider<PolicyResource> {
   }
   async update(
     _request: UpdateRequest<PolicyResource>
-  ): Promise<PhysicalResource<PolicyResource>> {
+  ): ResourceOperationResult<PolicyResource> {
     throw new Error("Method not implemented.");
   }
   async delete(_request: DeleteRequest<PolicyResource>): Promise<void> {

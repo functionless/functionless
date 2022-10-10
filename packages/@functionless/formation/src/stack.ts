@@ -64,7 +64,7 @@ import {
   DefaultResourceProviders,
   ResourceProviders,
 } from "./resource-provider";
-import { displayTopoEntries } from "./display";
+import { displayTopoEntries, TopoDisplayEntry } from "./display";
 
 /**
  * A map of each {@link LogicalResource}'s Logical ID to its {@link PhysicalProperties}.
@@ -678,8 +678,6 @@ ${metricsMessage}`);
     logicalIdsToCreateOrUpdate?: string[];
   }> {
     // what assets need to be uploaded?
-    // const previousState = this.state?.template;
-
     const assetManifest = assetManifestFile
       ? AssetManifest.fromFile(assetManifestFile)
       : undefined;
@@ -697,8 +695,6 @@ ${metricsMessage}`);
     const fileAssets = assetManifest?.entries.filter(
       (x): x is FileManifestEntry => x.type === "file"
     );
-
-    console.log(fileAssets);
 
     const s3Client = await this.awsClient.s3Client(this.props.sdkConfig);
 
@@ -742,6 +738,7 @@ ${metricsMessage}`);
 
     // evaluate rules and conditions
     // TODO rules
+    // TODO unresolved conditions with parameters
 
     const conditionGraph = buildConditionDependencyGraph(desiredState);
 
@@ -786,6 +783,17 @@ ${metricsMessage}`);
       ?.filter((x) => logicalIdsToDelete.includes(x.resourceId))
       .reverse();
 
+    // check for add/update/delete
+
+    const createUpdateMap = Object.fromEntries(
+      logicalIdsToCreateOrUpdate.map((logicalId) => [
+        logicalId,
+        state.previousState && logicalId in state.previousState?.Resources
+          ? "UPDATE"
+          : "CREATE",
+      ])
+    );
+
     const topoDesired = state.desiredDependencyGraph
       ? topoSortWithLevels(state.desiredDependencyGraph)
       : undefined;
@@ -793,10 +801,22 @@ ${metricsMessage}`);
       logicalIdsToCreateOrUpdate.includes(x.resourceId)
     );
 
-    console.log("Create/Update Plan:");
-    console.log(displayTopoEntries(topoCreateUpdate ?? [], true));
-    console.log("Delete Plan:");
-    console.log(displayTopoEntries(deleteTopo ?? [], true));
+    const displayEntry: TopoDisplayEntry[] = [
+      ...(topoCreateUpdate?.map((x) => ({
+        name: x.resourceId,
+        level: x.level,
+        additional: createUpdateMap[x.resourceId],
+      })) ?? []),
+      // TODO invert levels
+      ...(deleteTopo?.map((x) => ({
+        name: x.resourceId,
+        level: x.level,
+        additional: "DELETE",
+      })) ?? []),
+    ];
+
+    console.log("Plan:");
+    console.log(displayTopoEntries(displayEntry, true));
 
     // return steps
 
