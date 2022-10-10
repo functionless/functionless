@@ -8,13 +8,13 @@ import { forEachChild } from "./visit";
 
 export function findDeepReferences<T>(
   ast: FunctionlessNode,
-  find: (node: FunctionlessNode) => T[]
+  guard: (node: any) => node is T
 ): CallExpr<ReferenceExpr<T>>[] {
   const nodes: CallExpr<ReferenceExpr<T>>[] = [];
   const seen = new Set();
   forEachChild(ast, function visit(node: FunctionlessNode): void {
     if (isCallExpr(node)) {
-      const found = find(node.expr);
+      const found = tryFindReferences(node.expr, guard);
       if (found) {
         nodes.push(
           ...found.map((ref) =>
@@ -128,4 +128,19 @@ export function isCallReferencePattern(
     (isAwaitExpr(node) && tryFindReference(node.expr, is) !== undefined) ||
     tryFindReference(node, is) !== undefined
   );
+}
+
+export function getExprFromCallReferencePattern<T>(
+  pattern: CallReferencePattern,
+  is: (node: any) => node is T
+): CallReferencePattern | undefined {
+  if (isAwaitExpr(pattern)) {
+    return getExprFromCallReferencePattern(pattern.expr, is);
+  } else if (isCallExpr(pattern)) {
+    const integration = tryFindReference<T>(pattern.expr, is);
+    if (integration) {
+      return pattern;
+    }
+  }
+  return undefined;
 }

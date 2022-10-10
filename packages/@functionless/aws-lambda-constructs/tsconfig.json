@@ -15,6 +15,7 @@
     { "path": "../aws-apigateway" },
     { "path": "../aws-appsync" },
     { "path": "../aws-events" },
+    { "path": "../aws-events-constructs" },
     { "path": "../aws-lambda" },
     { "path": "../aws-util" },
     { "path": "../serialize-closure" },

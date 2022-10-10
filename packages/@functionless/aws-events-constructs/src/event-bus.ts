@@ -150,6 +150,15 @@ const ENTRY_PROPERTY_MAP: Record<keyof Event, string> = {
   version: "Version",
 };
 
+export function isEventBusConstruct<T extends IEventBus<any> = IEventBus>(
+  a: any
+): a is T {
+  return (
+    a.kind === EventBus.FunctionlessType &&
+    a.functionlessKind === EventBus.FunctionlessType
+  );
+}
+
 /**
  * @typeParam Evnt - the union type of events that this EventBus can accept.
  *                   `Evnt` is the contravariant version of `OutEvnt` in that
@@ -460,10 +469,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
     };
   }
 
-  public readonly eventBus = makeEventBusIntegration<
-    PutEventInput<Evnt>,
-    aws_events_targets.EventBusProps | undefined
-  >({
+  public readonly eventBus = {
     target: (props: any, targetInput: any) => {
       if (targetInput) {
         throw new Error("Event bus rule target does not support target input.");
@@ -471,7 +477,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
 
       return new aws_events_targets.EventBus(this.resource, props);
     },
-  });
+  };
 
   /**
    * @inheritDoc
@@ -761,19 +767,6 @@ export type IntegrationWithEventBus<
   eventBus: EventBusTargetIntegration<Payload, Props>;
 };
 
-/**
- * @typeParam - Payload - the type which the {@link Integration} expects as an input from {@link EventBus}.
- * @typeParam - Props - the optional properties the {@link Integration} accepts. Leave undefined to require no properties.
- */
-export function makeEventBusIntegration<
-  Payload,
-  Props extends object | undefined = undefined
->(
-  integration: Omit<EventBusTargetIntegration<Payload, Props>, "__payloadBrand">
-) {
-  return integration as EventBusTargetIntegration<Payload, Props>;
-}
-
 export type DynamicProps<Props> = Props extends never
   ? never
   : [Props] extends [undefined]
@@ -799,6 +792,7 @@ export function pipe<
   targetInput: Target
 ) {
   if (isEventBusIntegration(integration)) {
+    // @ts-ignore
     const target = integration.eventBus.target(props, targetInput);
     return rule.resource.addTarget(target);
   } else {

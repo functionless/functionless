@@ -332,6 +332,3 @@ const formatJsonPath = (first: string, ...path: (string | number)[]): string =>
       acc + (typeof seg === "string" ? `.${seg}` : `[${seg.toString()}]`),
     first
   );
-
-// to prevent the closure serializer from trying to import all of functionless.
-export const deploymentOnlyModule = true;

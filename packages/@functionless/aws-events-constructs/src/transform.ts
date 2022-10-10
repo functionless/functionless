@@ -102,6 +102,3 @@ export class EventTransform<
  * EventBus to EventBus input transform is not allowed.
  */
 export type NonEventBusIntegration<I> = I extends IEventBus<any> ? never : I;
-
-// to prevent the closure serializer from trying to import all of functionless.
-export const deploymentOnlyModule = true;

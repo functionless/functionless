@@ -1,7 +1,7 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import {
-  AppSyncVtlIntegration,
-  isAppsyncVtlIntegration,
+  AppSyncIntegration,
+  isAppSyncIntegration,
 } from "@functionless/aws-appsync";
 import {
   Argument,
@@ -12,8 +12,10 @@ import {
   DeterministicNameGenerator,
   emptySpan,
   Expr,
+  findDeepReferences,
   FunctionlessNode,
   FunctionLike,
+  getExprFromCallReferencePattern,
   Identifier,
   isAwaitExpr,
   isBinaryExpr,
@@ -21,6 +23,7 @@ import {
   isBindingPattern,
   isBlockStmt,
   isCallExpr,
+  isCallReferencePattern,
   isElementAccessExpr,
   isExprStmt,
   isForInStmt,
@@ -59,7 +62,7 @@ import {
   ToAttributeMap,
   ToAttributeValue,
 } from "typesafe-dynamodb/lib/attribute-value";
-import { VTL } from "../../vtl/src/vtl";
+import { VTL } from "@functionless/vtl";
 
 /**
  * The shape of the AWS Appsync `$context` variable.
@@ -122,15 +125,15 @@ export class SynthesizedAppsyncResolver extends appsync.Resolver {
   }
 }
 
-export class AppsyncVTL extends VTL<AppSyncVtlIntegration> {
-  protected isIntegration(a: any): a is AppSyncVtlIntegration {
-    return isAppsyncVtlIntegration(a);
+export class AppsyncVTL extends VTL<AppSyncIntegration> {
+  protected isIntegration(a: any): a is AppSyncIntegration {
+    return isAppSyncIntegration(a);
   }
   public static readonly CircuitBreaker = `#if($context.stash.return__flag)
   #return($context.stash.return__val)
 #end`;
 
-  protected integrate(target: AppSyncVtlIntegration, call: CallExpr): string {
+  protected integrate(target: AppSyncIntegration, call: CallExpr): string {
     if (target.appSyncVtl) {
       return target.appSyncVtl.request(call, this);
     } else {
@@ -455,13 +458,13 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
             generatedNames
           ).statements,
         ]);
-      } else if (isIntegrationCallPattern(node)) {
+      } else if (isCallReferencePattern(node, isAppSyncIntegration)) {
         resolverCount++;
         // we find the range of nodes to hoist so that we avoid visiting the middle nodes.
         // The start node is the first node in the integration pattern (integ, await, or promise)
         // The end is always the integration.
 
-        const end = getIntegrationExprFromIntegrationCallPattern(node);
+        const end = getExprFromCallReferencePattern(node, isAppSyncIntegration);
 
         if (end) {
           const updatedChild = visitSpecificChildren(node, [end], (expr) =>
@@ -599,7 +602,7 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
   const functions = updatedDecl.body.statements
     .map((stmt, i) => {
       const isLastExpr = i + 1 === updatedDecl.body.statements.length;
-      const integrations = findDeepIntegrations(stmt);
+      const integrations = findDeepReferences(stmt, isAppSyncIntegration);
       if (integrations.length > 1) {
         throw new SynthError(
           ErrorCodes.Unexpected_Error,
@@ -608,33 +611,32 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
       } else if (integrations[0]) {
         const integrationCall = integrations[0];
         const ref = integrationCall.expr.ref();
-        if (!isIntegration<Integration>(ref)) {
+        if (!isAppSyncIntegration(ref)) {
           throw new SynthError(
             ErrorCodes.Unexpected_Error,
             "Expected called reference to be an integration"
           );
         }
-        const service = new IntegrationImpl(ref);
         // we must now render a resolver with request mapping template
         const dataSource = singletonConstruct(
           api,
-          service.appSyncVtl.dataSourceId(),
-          (scope, id) => service.appSyncVtl.dataSource(scope, id)
+          ref.appSyncVtl.dataSourceId(),
+          (scope, id) => ref.appSyncVtl.dataSource(scope, id)
         );
 
         const resultValName = "$context.result";
 
         // The integration can optionally transform the result into a new variable.
-        const resultTemplate = service.appSyncVtl.result?.(resultValName);
+        const resultTemplate = ref.appSyncVtl.result?.(resultValName);
         const pre = resultTemplate?.template;
         const returnValName = resultTemplate?.returnVariable ?? resultValName;
 
         if (isExprStmt(stmt)) {
           template.call(integrationCall);
-          return createStage(service, "{}");
+          return createStage(ref, "{}");
         } else if (isReturnStmt(stmt)) {
           return createStage(
-            service,
+            ref,
             `${pre ? `${pre}\n` : ""}#set( $context.stash.return__flag = true )
 #set( $context.stash.return__val = ${getResult(
               stmt.expr ?? stmt.fork(new UndefinedLiteralExpr(stmt.span))
@@ -644,14 +646,17 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
         } else if (
           isVariableStmt(stmt) &&
           stmt.declList.decls[0]?.initializer &&
-          isIntegrationCallPattern(stmt.declList.decls[0].initializer)
+          isCallReferencePattern(
+            stmt.declList.decls[0].initializer,
+            isAppSyncIntegration
+          )
         ) {
           const preTemplate = new AppsyncVTL(...(pre ? [pre] : []));
           preTemplate.evalDecl(
             stmt.declList.decls[0],
             getResult(stmt.declList.decls[0].initializer)
           );
-          return createStage(service, `${preTemplate.toVTL()}\n{}`);
+          return createStage(ref, `${preTemplate.toVTL()}\n{}`);
         } else {
           throw new SynthError(
             ErrorCodes.Appsync_Integration_invocations_must_be_unidirectional_and_defined_statically
@@ -693,7 +698,7 @@ function synthesizeFunctions(api: appsync.GraphqlApi, decl: FunctionLike) {
         }
 
         function createStage(
-          integration: IntegrationImpl,
+          integration: AppSyncIntegration,
           responseMappingTemplate: string
         ) {
           const requestMappingTemplateString = template.toVTL();

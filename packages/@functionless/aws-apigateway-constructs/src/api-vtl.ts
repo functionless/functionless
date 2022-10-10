@@ -117,12 +117,6 @@ export class APIGatewayVTL
       )}"`;
   }
 
-  /**
-   * Renders a VTL string that will emit a JSON String representation of the {@link expr} to the VTL output.
-   *
-   * @param expr the {@link Expr} to convert to JSON
-   * @returns a VTL string that emits the {@link expr} as JSON
-   */
   public exprToJson(expr: Expr): string {
     const context = this;
     const jsonPath = toJsonPath(expr);

@@ -6,6 +6,7 @@ import {
   AnyFunction,
   CallExpr,
   Expr,
+  findDeepReferences,
   FunctionLike,
 } from "@functionless/ast";
 import { serializeFunction } from "@functionless/nodejs-closure-serializer";
@@ -36,8 +37,14 @@ import type { Context } from "aws-lambda";
 import { Construct } from "constructs";
 import esbuild from "esbuild";
 import ts from "typescript";
-import { ApiGatewayVtlIntegration } from "@functionless/aws-apigateway";
-import { AppSyncVtlIntegration } from "@functionless/aws-appsync";
+import {
+  ApiGatewayIntegration,
+  ApiGatewayVtlIntegration,
+} from "@functionless/aws-apigateway";
+import {
+  AppSyncIntegration,
+  AppSyncVtlIntegration,
+} from "@functionless/aws-appsync";
 import { ASL, ASLGraph } from "@functionless/asl-graph";
 import { BindFunctionName, RegisterFunctionName } from "./constants";
 import {
@@ -49,23 +56,14 @@ import {
   isEventBus,
   Event,
   EventBusTargetIntegration,
+  EventBusIntegration,
 } from "@functionless/aws-events";
 import {
   IEventBus,
   Rule,
   PredicateRuleBase,
-  makeEventBusIntegration,
+  isEventBusConstruct,
 } from "@functionless/aws-events-constructs";
-import {
-  findDeepIntegrations,
-  INTEGRATION_TYPE_KEYS,
-  Integration,
-  IntegrationImpl,
-  isIntegration,
-  NativeRuntimeEnvironment,
-  PrewarmClients,
-  NativeRuntimeEnvironmentProps,
-} from "@functionless/integration";
 import { ReflectionSymbols, validateFunctionLike } from "@functionless/ast";
 import { isSecret } from "@functionless/aws-secretsmanager";
 import {
@@ -73,10 +71,16 @@ import {
   serializeCodeWithSourceMap,
 } from "@functionless/serialize-closure";
 import { isStepFunction } from "@functionless/aws-stepfunctions";
-import { isTable } from "@functionless/aws-dynamodb";
-import { NativeIntegration } from "@functionless/aws-lambda";
+import { isTableConstruct } from "@functionless/aws-dynamodb-constructs";
+import {
+  isNativeIntegration,
+  LambdaClient,
+  NativeIntegration,
+  NativeRuntimeEnvironment,
+  NativeRuntimeEnvironmentProps,
+} from "@functionless/aws-lambda";
 
-export function isFunction<Payload = any, Output = any>(
+export function isFunctionConstruct<Payload = any, Output = any>(
   a: any
 ): a is IFunction<Payload, Output> {
   return a?.kind === "Function";
@@ -140,7 +144,10 @@ export interface EventInvokeConfigOptions<Payload, Output>
  *                         empty to be inferred. ex: `Function<Payload1, Output1 | Output2>`.
  */
 export interface IFunction<in Payload, Output>
-  extends Integration<"Function", ConditionalFunction<Payload, Output>> {
+  extends AppSyncIntegration,
+    ApiGatewayIntegration,
+    EventBusIntegration<Payload, FunctionEventBusTargetProps | undefined>,
+    NativeIntegration<ConditionalFunction<Payload, Output>> {
   readonly functionlessKind: typeof Function.FunctionlessType;
   readonly kind: typeof Function.FunctionlessType;
   readonly resource: aws_lambda.IFunction;
@@ -294,9 +301,7 @@ export interface AsyncResponseFailureEvent<P>
   > {}
 
 abstract class FunctionBase<in Payload, Out>
-  implements
-    IFunction<Payload, Out>,
-    Integration<"Function", ConditionalFunction<Payload, Out>>
+  implements IFunction<Payload, Out>
 {
   readonly kind = "Function" as const;
   readonly native: NativeIntegration<ConditionalFunction<Payload, Out>>;
@@ -326,7 +331,7 @@ abstract class FunctionBase<in Payload, Out>
        * The pre-warm client supports singleton invocation of clients (or other logic) across all integrations in the caller function.
        */
       preWarm: (preWarmContext: NativeRuntimeEnvironment) => {
-        preWarmContext.getOrInit(PrewarmClients.Lambda);
+        preWarmContext.getOrInit(LambdaClient);
       },
       /**
        * This method is called from the calling runtime lambda code (context) to invoke this lambda function.
@@ -334,9 +339,7 @@ abstract class FunctionBase<in Payload, Out>
       // @ts-ignore - Typescript fails when comparing Promise<O> with ReturnType<ConditionalFunction<P, O>> though they should be the same.
       call: async (args, prewarmContext) => {
         const [payload] = args;
-        const lambdaClient = prewarmContext.getOrInit<AWS.Lambda>(
-          PrewarmClients.Lambda
-        );
+        const lambdaClient = prewarmContext.getOrInit<AWS.Lambda>(LambdaClient);
         const response = (
           await lambdaClient
             .invoke({
@@ -349,7 +352,7 @@ abstract class FunctionBase<in Payload, Out>
       },
     };
 
-    this.appSyncVtl = {
+    this.appSyncVtl = <AppSyncVtlIntegration>{
       dataSourceId: () => resource.node.addr,
       dataSource(api, id) {
         return new appsync.LambdaDataSource(api, id, {
@@ -384,6 +387,18 @@ abstract class FunctionBase<in Payload, Out>
       },
     };
   }
+
+  public readonly eventBus: EventBusTargetIntegration<
+    Payload,
+    FunctionEventBusTargetProps | undefined
+  > = {
+    __payloadBrand: undefined as any,
+    target: (props, targetInput) =>
+      new aws_events_targets.LambdaFunction(this.resource, {
+        ...props,
+        event: targetInput,
+      }),
+  };
 
   public asl(call: CallExpr, context: ASL) {
     const payloadArg = call.args[0]?.expr;
@@ -421,12 +436,12 @@ abstract class FunctionBase<in Payload, Out>
   ): IDestination | undefined {
     return destination === undefined
       ? undefined
-      : isEventBus<
+      : isEventBusConstruct<
           | IEventBus<AsyncResponseSuccessEvent<P, O>>
           | IEventBus<AsyncResponseFailureEvent<P>>
         >(destination)
       ? new EventBridgeDestination(destination.resource)
-      : isFunction<
+      : isFunctionConstruct<
           FunctionPayloadType<Extract<typeof destination, IFunction<any, any>>>,
           FunctionOutputType<Extract<typeof destination, IFunction<any, any>>>
         >(destination)
@@ -497,17 +512,6 @@ abstract class FunctionBase<in Payload, Out>
       }
     );
   }
-
-  public readonly eventBus = makeEventBusIntegration<
-    Payload,
-    FunctionEventBusTargetProps | undefined
-  >({
-    target: (props, targetInput) =>
-      new aws_events_targets.LambdaFunction(this.resource, {
-        ...props,
-        event: targetInput,
-      }),
-  });
 }
 
 interface FunctionBase<in Payload, Out> {
@@ -729,7 +733,7 @@ export class Function<
     // TODO: move this logic into the synthesis phase, see https://github.com/functionless/functionless/issues/476
     const nativeIntegrationsPrewarm = findAllIntegrations(ast).flatMap(
       ({ integration }) => {
-        const native = new IntegrationImpl(integration).native;
+        const native = integration.native;
         if (native.preWarm) {
           return [native.preWarm];
         } else {
@@ -799,18 +803,19 @@ export function inferIamPolicies(
   func: aws_lambda.IFunction
 ) {
   findAllIntegrations(decl).forEach(({ integration, args }) => {
-    const native = new IntegrationImpl(integration).native;
-    native.bind(func, args);
+    integration.native.bind(func, args);
   });
 }
 
 export interface IntegrationInvocation {
-  integration: Integration<any>;
+  integration: {
+    native: NativeIntegration<AnyFunction>;
+  };
   args: Expr[];
 }
 
 export function findAllIntegrations(decl: FunctionLike<AnyFunction>) {
-  return findDeepIntegrations(decl).map(
+  return findDeepReferences(decl, isNativeIntegration).map(
     (i) =>
       <IntegrationInvocation>{
         args: i.args,
@@ -1173,16 +1178,12 @@ export async function serialize(
        * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
        */
       function transformIntegration(integ: unknown): any {
-        if (integ && isIntegration(integ)) {
+        if (integ && isNativeIntegration(integ)) {
           const c = integ.native?.call;
           const call =
             typeof c !== "undefined"
               ? function (...args: any[]) {
                   return c(args, preWarmContext);
-                }
-              : integ.unhandledContext
-              ? function () {
-                  integ.unhandledContext!(integ.kind, "Function");
                 }
               : function () {
                   throw new Error();
@@ -1205,7 +1206,7 @@ export async function serialize(
        * https://github.com/functionless/functionless/issues/239
        */
       function transformResource(integ: unknown): any {
-        if (isTable(integ)) {
+        if (isTableConstruct(integ)) {
           const { resource, appsync, ...rest } = integ;
           return rest;
         } else if (
@@ -1262,3 +1263,18 @@ export async function bundle(
   // a bundled output will be one file
   return bundle.outputFiles[0]!;
 }
+
+/**
+ * Maintain a typesafe runtime map of integration type keys to use elsewhere.
+ *
+ * For example, removing all but native integration from the {@link Function} closure.
+ */
+const INTEGRATION_TYPES = {
+  appSyncVtl: "appSyncVtl",
+  apiGWVtl: "apiGWVtl",
+  asl: "asl",
+  native: "native",
+  eventBus: "eventBus",
+};
+
+const INTEGRATION_TYPE_KEYS = Object.values(INTEGRATION_TYPES);

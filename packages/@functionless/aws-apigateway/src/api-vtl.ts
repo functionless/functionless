@@ -24,4 +24,12 @@ export interface APIGatewayVTL extends VTL {
    * ```
    */
   stringify(expr: Expr): string;
+
+  /**
+   * Renders a VTL string that will emit a JSON String representation of the {@link expr} to the VTL output.
+   *
+   * @param expr the {@link Expr} to convert to JSON
+   * @returns a VTL string that emits the {@link expr} as JSON
+   */
+  exprToJson(expr: Expr): string;
 }

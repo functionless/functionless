@@ -74,21 +74,6 @@ export function getIntegrationExprFromIntegrationCallPattern(
 }
 
 /**
- * Maintain a typesafe runtime map of integration type keys to use elsewhere.
- *
- * For example, removing all but native integration from the {@link Function} closure.
- */
-const INTEGRATION_TYPES: { [P in keyof IntegrationMethods<any>]: P } = {
-  appSyncVtl: "appSyncVtl",
-  apiGWVtl: "apiGWVtl",
-  asl: "asl",
-  native: "native",
-  eventBus: "eventBus",
-};
-
-export const INTEGRATION_TYPE_KEYS = Object.values(INTEGRATION_TYPES);
-
-/**
  * All integration methods supported by functionless.
  */
 export interface IntegrationMethods<F extends AnyFunction> {

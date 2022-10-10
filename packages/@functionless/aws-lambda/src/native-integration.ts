@@ -3,6 +3,12 @@ import type { AnyFunction } from "@functionless/ast";
 import type { aws_lambda } from "aws-cdk-lib";
 import type { NativeRuntimeEnvironment } from "./native-runtime-environment";
 
+export function isNativeIntegration(a: any): a is {
+  native: NativeIntegration<AnyFunction>;
+} {
+  return typeof a?.native?.bind === "function";
+}
+
 /**
  * Interface to consume to add an Integration to Native Lambda Functions.
  *

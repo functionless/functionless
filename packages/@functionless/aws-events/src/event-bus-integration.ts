@@ -7,8 +7,7 @@ export function isEventBusIntegration(
     a &&
     typeof a === "object" &&
     a.eventBus &&
-    typeof a.eventBus === "object" &&
-    typeof a.eventBus.target === "function"
+    isEventBusTargetIntegration(a.eventBus)
   );
 }
 
@@ -20,6 +19,11 @@ export interface EventBusIntegration<
   eventBus: EventBusTargetIntegration<Payload, Props>;
 }
 
+export function isEventBusTargetIntegration(
+  a: any
+): a is EventBusIntegration<any, any> {
+  return typeof a === "object" && typeof a.target === "function";
+}
 /**
  * Defines an integration that can be used in the `pipe` function of an {@link EventBus} (Rule or Transform).
  *
