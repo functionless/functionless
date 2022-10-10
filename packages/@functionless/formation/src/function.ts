@@ -271,6 +271,8 @@ export interface FnEachMemberIn {
 export const isFnRefAll = guard<FnRefAll>("Fn::RefAll");
 
 /**
+ * Note: Normally {@link } is a {@link RuleFunction}, but this library supports RefAll anywhere.
+ *
  * @see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/intrinsic-function-reference-rules.html#fn-refall
  */
 export interface FnRefAll {

@@ -102,7 +102,7 @@ export interface Resource {
   end?: Date;
 }
 
-export interface UpdateState {
+export interface BaseState {
   /**
    * The previous {@link CloudFormationTemplate} which triggered the `Update`.
    *
@@ -114,25 +114,28 @@ export interface UpdateState {
    */
   previousDependencyGraph: ResourceDependencyGraph | undefined;
   /**
-   * The new {@link CloudFormationTemplate} which triggered the `Update`.
-   *
-   * This is `undefined` when a {@link Stack} is being deleted..
-   */
-  desiredState: CloudFormationTemplate | undefined;
-  /**
-   * The {@link desiredState}'s {@link ResourceDependencyGraph}.
-   */
-  desiredDependencyGraph: ResourceDependencyGraph | undefined;
-  /**
-   * Input {@link ParameterValues} for the {@link desiredState}'s {@link Parameters}.
-   */
-  parameterValues?: ParameterValues;
-  /**
    * Map of `logicalId` to a task ({@link Promise}) resolving the new state of the {@link PhysicalResource}.
    */
   modules: {
     [logicalId: string]: Resource;
   };
+}
+
+export interface UpdateState extends BaseState {
+  /**
+   * The new {@link CloudFormationTemplate} which triggered the `Update`.
+   *
+   * This is `undefined` when a {@link Stack} is being deleted..
+   */
+  desiredState: CloudFormationTemplate;
+  /**
+   * The {@link desiredState}'s {@link ResourceDependencyGraph}.
+   */
+  desiredDependencyGraph: ResourceDependencyGraph;
+  /**
+   * Input {@link ParameterValues} for the {@link desiredState}'s {@link Parameters}.
+   */
+  parameterValues: ParameterValues;
 }
 
 export interface StackProps {
@@ -252,10 +255,10 @@ export class Stack {
    */
   private getLogicalResource(
     logicalId: string,
-    state: UpdateState
+    state: UpdateState | BaseState
   ): LogicalResource {
     const resource =
-      state.desiredState?.Resources[logicalId] ??
+      ("desiredState" in state && state.desiredState?.Resources[logicalId]) ||
       state.previousState?.Resources[logicalId];
     if (resource === undefined) {
       throw new Error(`resource does not exist: '${logicalId}'`);
@@ -272,11 +275,9 @@ export class Stack {
         `Cannot delete stack '${this.stackName}' since it does not exist.`
       );
     }
-    const state: UpdateState = {
+    const state: BaseState = {
       previousState: this.state.template,
       previousDependencyGraph: buildDependencyGraph(this.state.template),
-      desiredState: undefined,
-      desiredDependencyGraph: undefined,
       modules: {}, // initialize with empty state
     };
 
@@ -293,7 +294,7 @@ export class Stack {
    * @param logicalIds list of logicalIds to delete
    * @param state {@link UpdateState} for this Stack Update operation.
    */
-  private async deleteResources(logicalIds: string[], state: UpdateState) {
+  private async deleteResources(logicalIds: string[], state: BaseState) {
     const allowedLogicalIds = new Set(logicalIds);
     return logicalIds.map((logicalId) =>
       this.deleteResource(logicalId, state, allowedLogicalIds)
@@ -303,7 +304,7 @@ export class Stack {
   private startProcessResource(
     logicalId: string,
     operation: "UPDATE" | "CREATE" | "DELETE" | undefined,
-    state: UpdateState,
+    state: BaseState,
     type: string | undefined,
     operationTask: (start: Date) => Promise<OperationResult>
   ): Resource {
@@ -346,7 +347,7 @@ export class Stack {
    */
   private addDeploymentPadding(
     paddingMillis: number,
-    state: UpdateState,
+    state: BaseState,
     name: string = "PADDING"
   ) {
     if (state.modules[name]) {
@@ -378,7 +379,7 @@ export class Stack {
    */
   private async deleteResource(
     logicalId: string,
-    state: UpdateState,
+    state: BaseState,
     allowedLogicalIds: Set<String>
   ): Promise<PhysicalResource | undefined> {
     if (logicalId in state.modules) {
@@ -457,7 +458,7 @@ export class Stack {
         logicalId,
         "DELETE",
         state,
-        state.desiredState?.Resources[logicalId]?.Type,
+        state.previousState?.Resources[logicalId]?.Type,
         async (start) => {
           console.log("Add DELETE: " + logicalId);
           return {
@@ -519,7 +520,7 @@ export class Stack {
         : undefined,
       desiredState: desiredState,
       desiredDependencyGraph: buildDependencyGraph(desiredState),
-      parameterValues,
+      parameterValues: parameterValues ?? {},
       modules: {},
     };
     try {
@@ -705,7 +706,7 @@ ${metricsMessage}`);
         : undefined,
       desiredState: desiredState,
       desiredDependencyGraph: buildDependencyGraph(desiredState),
-      parameterValues,
+      parameterValues: parameterValues ?? {},
       modules: {},
     };
 
@@ -1053,7 +1054,6 @@ ${metricsMessage}`);
     expr: IntrinsicFunction
   ): Promise<Value> {
     const parameters = state.desiredState?.Parameters ?? {};
-    const parameterValues = state.parameterValues ?? {};
 
     if (isRef(expr)) {
       if (isPseudoParameter(expr.Ref)) {
@@ -1198,7 +1198,7 @@ ${metricsMessage}`);
       return Object.entries(parameters)
         .map(([paramName, paramDef]) =>
           paramDef.Type === expr["Fn::RefAll"]
-            ? parameterValues[paramName]
+            ? state.parameterValues[paramName]
             : undefined
         )
         .filter((paramVal) => paramVal !== undefined);
@@ -1399,7 +1399,7 @@ ${metricsMessage}`);
     paramName: string,
     paramDef: Parameter
   ): Promise<Value> {
-    let paramVal = state.parameterValues?.[paramName];
+    let paramVal = state.parameterValues[paramName];
     if (paramVal === undefined) {
       if (paramDef.Default !== undefined) {
         paramVal = paramDef.Default;
@@ -1591,32 +1591,5 @@ ${metricsMessage}`);
         `rule must evaluate to a Boolean, but evalauted to ${typeof result}`
       );
     }
-  }
-}
-
-function assertIsString(
-  string: any,
-  argumentName: string
-): asserts string is string {
-  if (typeof string !== "string") {
-    throw new Error(
-      `The ${argumentName} must be a string, but was ${typeof string}`
-    );
-  }
-}
-
-function assertIsListOfStrings(
-  strings: any,
-  argumentName: string
-): asserts strings is string[] {
-  if (
-    !Array.isArray(strings) ||
-    strings.find((s) => typeof s !== "string") !== undefined
-  ) {
-    throw new Error(
-      `The ${argumentName} argument must be a list of strings, but was ${typeof strings}`
-    );
-  } else if (strings.length === 0) {
-    throw new Error(`The ${argumentName} cannot be empty.`);
   }
 }

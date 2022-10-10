@@ -7,9 +7,9 @@
       {
         "name": "@functionless/language-service"
       }
-    ]
+    ],
+    "types": ["node"]
   },
   "include": ["src/**/*.ts"],
-  "exclude": ["node_modules"],
-  "references": [{ "path": "../../packages/@functionless/aws-constructs" }]
+  "exclude": ["node_modules"]
 }

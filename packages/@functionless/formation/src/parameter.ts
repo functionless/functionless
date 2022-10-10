@@ -1,5 +1,7 @@
 import { deepStrictEqual } from "assert";
+import type { ParameterResolver } from "./resolve-template";
 import { Value } from "./value";
+import * as ssm from "@aws-sdk/client-ssm";
 
 /**
  * @see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/parameters-section-structure.html
@@ -370,3 +372,98 @@ export type PseudoParameter =
   | "AWS::StackId"
   | "AWS::StackName"
   | "AWS::URLSuffix ";
+
+export interface DefaultParameterResolverProps {
+  ssmClient: ssm.SSMClient;
+}
+
+/**
+ * Determine the value of a {@link paramName}.
+ *
+ * If the {@link Parameter} is a {@link SSMParameterType} then the value is fetched
+ * from AWS Systems Manager Parameter Store.
+ *
+ * The {@link CloudFormationTemplate}'s {@link Parameter}s and the input {@link ParameterValues}
+ * are assumed to be valid because the {@link validateParameters} function is called by
+ * {@link updateStack}.
+ *
+ * @param state {@link UpdateState} being evaluated.
+ * @param paramName name of the {@link Parameter}.
+ * @param paramDef the {@link Parameter} definition in the source {@link CloudFormationTemplate}.
+ */
+export class DefaultParameterResolver implements ParameterResolver {
+  constructor(
+    private parameterValues: ParameterValues,
+    private props: DefaultParameterResolverProps
+  ) {}
+
+  async resolve(paramName: string, paramDef: Parameter): Promise<Value> {
+    let paramVal = this.parameterValues[paramName];
+    if (paramVal === undefined) {
+      if (paramDef.Default !== undefined) {
+        paramVal = paramDef.Default;
+      } else {
+        throw new Error(`Missing required input-Parameter ${paramName}`);
+      }
+    }
+
+    const type = paramDef.Type;
+
+    if (type === "String" || type === "Number") {
+      return paramVal;
+    } else if (type === "CommaDelimitedList") {
+      return (paramVal as string).split(",");
+    } else if (type === "List<Number>") {
+      return (paramVal as string).split(",").map((s) => parseInt(s, 10));
+    } else if (
+      type.startsWith("AWS::EC2") ||
+      type.startsWith("AWS::Route53") ||
+      type.startsWith("List<AWS::EC2") ||
+      type.startsWith("List<AWS::Route53")
+    ) {
+      return paramVal;
+    } else if (type.startsWith("AWS::SSM")) {
+      try {
+        const ssmParamVal = await this.props.ssmClient.send(
+          new ssm.GetParameterCommand({
+            Name: paramVal as string,
+            WithDecryption: true,
+          })
+        );
+
+        if (
+          ssmParamVal.Parameter?.Name === undefined ||
+          ssmParamVal.Parameter.Value === undefined
+        ) {
+          throw new Error(`GetParameter '${paramVal}' returned undefined`);
+        }
+
+        if (type === "AWS::SSM::Parameter::Name") {
+          return ssmParamVal.Parameter.Name;
+        } else if (type === "AWS::SSM::Parameter::Value<String>") {
+          if (ssmParamVal.Parameter.Type !== "String") {
+            throw new Error(
+              `Expected SSM Parameter ${paramVal} to be ${type} but was ${ssmParamVal.Parameter.Type}`
+            );
+          }
+          return ssmParamVal.Parameter.Value;
+        } else if (
+          type === "AWS::SSM::Parameter::Value<List<String>>" ||
+          type.startsWith("AWS::SSM::Parameter::Value<List<")
+        ) {
+          if (ssmParamVal.Parameter.Type !== "StringList") {
+            throw new Error(
+              `Expected SSM Parameter ${paramVal} to be ${type} but was ${ssmParamVal.Parameter.Type}`
+            );
+          }
+          return ssmParamVal.Parameter.Value.split(",");
+        } else {
+        }
+      } catch (err) {
+        throw err;
+      }
+    }
+
+    return paramVal;
+  }
+}
