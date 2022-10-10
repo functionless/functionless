@@ -1,0 +1,17 @@
+{
+  "extends": "../../../tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "lib",
+    "declaration": true,
+    "inlineSourceMap": true,
+    "rootDir": "src"
+  },
+  "include": ["src", "../aws-stepfunctions-constructs/src/step-function.ts"],
+  "exclude": ["lib", "test", "node_modules"],
+  "references": [
+    { "path": "../asl-graph" },
+    { "path": "../ast" },
+    { "path": "../integration" },
+    { "path": "../util" }
+  ]
+}

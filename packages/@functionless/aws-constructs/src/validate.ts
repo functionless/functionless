@@ -1,4 +1,10 @@
 import { anyOf, hasOnlyAncestors } from "@functionless/ast";
+import {
+  ErrorCode,
+  ErrorCodes,
+  formatErrorMessage,
+  SynthError,
+} from "@functionless/error-code";
 import ts from "typescript";
 import {
   BinaryArithmeticToken,
@@ -17,12 +23,6 @@ import {
   typeMatch,
   UnaryArithmeticToken,
 } from "./checker";
-import {
-  ErrorCode,
-  ErrorCodes,
-  formatErrorMessage,
-  SynthError,
-} from "./error-code";
 
 const StepFunctions = {
   SupportedBinaryArithmeticToken: new Set([

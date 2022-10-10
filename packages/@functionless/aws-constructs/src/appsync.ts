@@ -45,14 +45,7 @@ import {
   visitEachChild,
   visitSpecificChildren,
 } from "@functionless/ast";
-import { aws_appsync, Lazy } from "aws-cdk-lib";
-import type { AppSyncResolverEvent } from "aws-lambda";
-import { Construct } from "constructs";
-import {
-  ToAttributeMap,
-  ToAttributeValue,
-} from "typesafe-dynamodb/lib/attribute-value";
-import { ErrorCodes, SynthError } from "./error-code";
+import { ErrorCodes, SynthError } from "@functionless/error-code";
 import {
   findDeepIntegrations,
   getIntegrationExprFromIntegrationCallPattern,
@@ -60,11 +53,18 @@ import {
   IntegrationImpl,
   isIntegration,
   isIntegrationCallPattern,
-} from "./integration";
+} from "@functionless/integration";
+import { validateFunctionLike } from "@functionless/reflect";
+import { aws_appsync, Lazy } from "aws-cdk-lib";
+import type { AppSyncResolverEvent } from "aws-lambda";
+import { Construct } from "constructs";
+import {
+  ToAttributeMap,
+  ToAttributeValue,
+} from "typesafe-dynamodb/lib/attribute-value";
 import { Literal } from "./literal";
-import { validateFunctionLike } from "./reflect";
 import { singletonConstruct } from "./util";
-import { VTL } from "./vtl";
+import { VTL } from "../../vtl/src/vtl";
 
 /**
  * The shape of the AWS Appsync `$context` variable.
@@ -1124,46 +1124,6 @@ function getUniqueName(api: appsync.GraphqlApi, name: string): string {
     uniqueNames[name] += 1;
     return `${name}_${counter}`;
   }
-}
-
-/**
- * Hooks used to create an app sync integration, implement using the {@link Integration} interface.
- *
- * 1. Get the AppSync data source
- * 2. Create the VTL request template to make data source call.
- * 3. Optionally post process the result of the data source call.
- */
-export interface AppSyncVtlIntegration {
-  /**
-   * Retrieve the id of the date source to use for the integration.
-   *
-   * If the ID is unique to the current {@link appsync.GraphqlApi}, the `dataSource` will be called next with this id.
-   */
-  dataSourceId: () => string;
-  /**
-   * Retrieve a unique data source for the {@link appsync.GraphqlApi}.
-   * Use the dataSourceId hook to return a unique id.
-   * This method will only be called once per api or unique data source id.
-   *
-   * @param api - the api construct which should be the parent of the returned {@link appsync.BaseDataSource}
-   * @param dataSourceId - the ID given by the dataSourceId hook, should be used as the construct id for the new data source.
-   */
-  dataSource: (
-    api: appsync.GraphqlApi,
-    dataSourceId: string
-  ) => appsync.BaseDataSource;
-  /**
-   * Return a VTL template which builds a valid request to the integration's endpoint.
-   * Should reflect the contents of the CallExpr.
-   */
-  request: (call: CallExpr, context: VTL) => string;
-  /**
-   * Optionally transform the result of the API and place into a unique variable.
-   */
-  result?: (resultVariable: string) => {
-    returnVariable: string;
-    template: string;
-  };
 }
 
 // to prevent the closure serializer from trying to import all of functionless.

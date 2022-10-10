@@ -1,3 +1,4 @@
+import { ASL, ASLGraph } from "@functionless/asl-graph";
 import {
   AnyFunction,
   AwaitExpr,
@@ -18,14 +19,14 @@ import {
   isThisExpr,
   isVariableDecl,
   ReferenceExpr,
+  reflect,
+  resolveSubstitution,
 } from "@functionless/ast";
-import { ApiGatewayVtlIntegration } from "./api";
+import { ApiGatewayVtlIntegration } from "../../aws-appsync-constructs/src/api";
+import { VTL } from "../../vtl/src/vtl";
 import { AppSyncVtlIntegration } from "./appsync";
-import { ASL, ASLGraph } from "./asl";
 import { EventBus, EventBusTargetIntegration } from "./event-bridge";
 import { Function, NativeIntegration } from "./function";
-import { reflect, resolveSubstitution } from "./reflect";
-import { VTL } from "./vtl";
 
 export const isIntegration = <I extends Integration<string, AnyFunction>>(
   i: any
@@ -194,67 +195,6 @@ export type IntegrationInput<
   K extends string = string,
   F extends AnyFunction = AnyFunction
 > = Omit<Integration<K, F>, "__functionBrand">;
-
-/**
- * Internal wrapper class for Integration handlers that provides default error handling for unsupported integrations.
- *
- * Functionless wraps Integration at runtime with this class.
- * @private
- */
-export class IntegrationImpl<F extends AnyFunction = AnyFunction>
-  implements IntegrationMethods<F>
-{
-  readonly kind: string;
-  constructor(readonly integration: Integration) {
-    if (!integration) {
-      throw Error("Integrations cannot be undefined.");
-    }
-    this.kind = integration.kind;
-  }
-
-  private assertIntegrationDefined<I>(
-    contextKind: CallContext["kind"],
-    integration?: I
-  ): I {
-    if (integration) {
-      return integration;
-    } else if (this.integration.unhandledContext) {
-      throw this.integration.unhandledContext(this.kind, contextKind);
-    }
-    throw Error(`${this.kind} is not supported by context ${contextKind}.`);
-  }
-
-  public get appSyncVtl(): AppSyncVtlIntegration {
-    return this.assertIntegrationDefined(
-      "Velocity Template",
-      this.integration.appSyncVtl
-    );
-  }
-
-  public get apiGWVtl(): ApiGatewayVtlIntegration {
-    return this.assertIntegrationDefined(
-      // TODO: differentiate Velocity Template?
-      "Velocity Template",
-      this.integration.apiGWVtl
-    );
-  }
-
-  // TODO: Update to use an interface https://github.com/functionless/functionless/issues/197
-  public asl(call: CallExpr, context: ASL): ASLGraph.NodeResults {
-    return this.assertIntegrationDefined(
-      context.kind,
-      this.integration.asl
-    ).call(this.integration, call, context);
-  }
-
-  public get eventBus(): EventBusTargetIntegration<any, any> {
-    return this.assertIntegrationDefined("EventBus", this.integration.eventBus);
-  }
-
-  public get native(): NativeIntegration<F> {
-    return this.assertIntegrationDefined("Function", this.integration.native);
-  }
-}
 
 export type IntegrationCall<K extends string, F extends AnyFunction> = {
   FunctionlessType: K;

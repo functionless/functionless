@@ -1,11 +1,18 @@
 import { anyOf, hasParent } from "@functionless/ast";
+import { Function } from "@functionless/aws-lambda-constructs";
+import {
+  ExpressStepFunction,
+  StepFunction,
+} from "@functionless/aws-stepfunctions-constructs";
 import ts from "typescript";
-import { ApiMethod, ApiMethodKind, isApiMethodKind } from "./api";
+import {
+  ApiMethod,
+  ApiMethodKind,
+  isApiMethodKind,
+} from "../../aws-appsync-constructs/src/api";
 import { AppsyncField, AppsyncResolver } from "./appsync";
 import { EventBus, Rule } from "./event-bridge";
 import { EventTransform } from "./event-bridge/transform";
-import { Function } from "./function";
-import { ExpressStepFunction, StepFunction } from "./step-function";
 import { Table } from "./table";
 
 /**

@@ -11,14 +11,14 @@ import {
   PostfixUnaryOp,
   UnaryOp,
   VariableDeclKind,
+  ReflectionSymbolNames,
 } from "@functionless/ast";
+import { ErrorCodes, SynthError } from "@functionless/error-code";
+import { assertDefined } from "@functionless/util";
 import minimatch from "minimatch";
 import type { PluginConfig, TransformerExtras } from "ts-patch";
 import ts from "typescript";
-import { assertDefined } from "./assert";
 import { makeFunctionlessChecker } from "./checker";
-import { ErrorCodes, SynthError } from "./error-code";
-import { ReflectionSymbolNames } from "./reflect";
 
 export default compile;
 

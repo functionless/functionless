@@ -1,0 +1,26 @@
+{
+  "name": "@functionless/aws-stepfunctions",
+  "version": "0.27.0",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@functionless/ast": "^0.27.0",
+    "@functionless/aws-util": "^0.27.0",
+    "aws-cdk-lib": "^2.44.0"
+  },
+  "devDependencies": {
+    "@types/node": "^16",
+    "typescript": "^4.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

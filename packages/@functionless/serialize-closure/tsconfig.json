@@ -1,0 +1,13 @@
+{
+  "extends": "../../../tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "lib",
+    "declaration": true,
+    "inlineSourceMap": true,
+    "resolveJsonModule": true,
+    "rootDir": "src",
+    "types": ["@types/node"]
+  },
+  "include": ["src", "src/globals.json"],
+  "exclude": ["lib", "test", "node_modules"]
+}

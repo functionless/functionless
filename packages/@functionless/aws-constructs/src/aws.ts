@@ -1,19 +1,21 @@
+import { ASLGraph } from "@functionless/asl-graph";
 import {
   isObjectLiteralExpr,
   isPropAssignExpr,
   isReferenceExpr,
 } from "@functionless/ast";
+import { Function, isFunction } from "@functionless/aws-lambda-constructs";
+import { ErrorCodes, SynthError } from "@functionless/error-code";
+import {
+  NativeRuntimeEnvironment,
+  PrewarmClients,
+  makeIntegration,
+} from "@functionless/integration";
 import type {
   EventBridge as AWSEventBridge,
   Lambda as AWSLambda,
 } from "aws-sdk";
-import { ASLGraph } from "./asl";
 import { SDK as _SDK } from "./aws-sdk";
-import { ErrorCodes, SynthError } from "./error-code";
-import { Function, isFunction } from "./function";
-import { NativePreWarmContext, PrewarmClients } from "./function-prewarm";
-import { makeIntegration } from "./integration";
-
 /**
  * The `AWS` namespace exports functions that map to AWS Step Functions AWS-SDK Integrations.
  *
@@ -116,7 +118,7 @@ export namespace $AWS {
       native: {
         // Access needs to be granted manually
         bind: () => {},
-        preWarm: (prewarmContext: NativePreWarmContext) => {
+        preWarm: (prewarmContext: NativeRuntimeEnvironment) => {
           prewarmContext.getOrInit(PrewarmClients.EventBridge);
         },
         call: async ([request], preWarmContext) => {

@@ -7,6 +7,8 @@ export * from "./node-clone";
 export * from "./node-ctor";
 export * from "./node-kind";
 export * from "./node";
+export * from "./reflect";
+export * from "./resolve-references";
 export * from "./s-expression";
 export * from "./span";
 export * from "./statement";

@@ -9,7 +9,7 @@ import AWS from "aws-sdk";
 import { v4 } from "uuid";
 import { AnyFunction, Table, Function } from "../src";
 
-import { NativePreWarmContext } from "../src/function-prewarm";
+import { NativeRuntimeEnvironment } from "../src/function-prewarm";
 import {
   serializeClosure,
   SerializeClosureProps,
@@ -1268,8 +1268,8 @@ test("broad spectrum syntax test", async () => {
   ]);
 });
 
-test("should serialize NativePreWarmContext", async () => {
-  const preWarm = new NativePreWarmContext();
+test("should serialize NativeRuntimeEnvironment", async () => {
+  const preWarm = new NativeRuntimeEnvironment();
 
   const closure = await expectClosure(() => {
     return preWarm.getOrInit({

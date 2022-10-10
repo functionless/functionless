@@ -173,6 +173,11 @@
   resolved "https://registry.yarnpkg.com/@aws-cdk/aws-appsync-alpha/-/aws-appsync-alpha-2.44.0-alpha.0.tgz#a41ec46c28ce95a34e0eb79c033dd0cc17dd59b6"
   integrity sha512-lapIZMKZQJVB6z56IIFJd3DMOue5UxBWNtOiRUaqdIXJ/dh2+CLudCPQAeno1y6JoGZTuhK0SG8absSCEfmrWw==
 
+"@aws-cdk/aws-appsync-alpha@^2.45.0-alpha.0":
+  version "2.45.0-alpha.0"
+  resolved "https://registry.yarnpkg.com/@aws-cdk/aws-appsync-alpha/-/aws-appsync-alpha-2.45.0-alpha.0.tgz#41ccad940b2f26b1a7aee2bcefbd534f84624b6c"
+  integrity sha512-c4DzE5gkikwoG4+PuDHJciSs5La4qMm/HLSC3g0egulLSeyJnClf/zZKuFU3aqRJM3AVJ2r8juxLszvqpSP4Fg==
+
 "@aws-cdk/cfnspec@2.44.0":
   version "2.44.0"
   resolved "https://registry.yarnpkg.com/@aws-cdk/cfnspec/-/cfnspec-2.44.0.tgz#e042d852f8ae7c0d9250b817ec3478a4a0ae48ee"
@@ -2551,6 +2556,16 @@
   version "0.3.2"
   resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.3.2.tgz#da4601ec07af11953cf8c819df684c01b59b96f9"
   integrity sha512-XMBnxPh/0hwCKo92Zq96L+Qh8WCYINsyzx5NBLTevlmgv4CKo899Y05/4fT4o78jQEaXaeb3B6XpTt4i8bGxnw==
+
+"@functionless/aws@*", "@functionless/aws@^0.27.0":
+  version "0.27.0"
+  resolved "https://registry.yarnpkg.com/@functionless/aws/-/aws-0.27.0.tgz#e05cfbe9bfde2a63f7339d4f76686575bea54233"
+  integrity sha512-7eZl4zrr1cdZqfzaommY9wNW5vxTwTB6edQGAFFZYoqshXohOo9v2XTxP/+cddTauqg/urXqD1ID7V/Z/MPo3g==
+  dependencies:
+    "@functionless/aws-constructs" "^0.27.0"
+    "@functionless/aws-util" "^0.27.0"
+    "@functionless/util" "^0.27.0"
+    typesafe-dynamodb "^0.2.3"
 
 "@functionless/language-service@^0.0.4":
   version "0.0.4"
@@ -5120,11 +5135,6 @@
   resolved "https://registry.yarnpkg.com/@types/node/-/node-17.0.45.tgz#2c0fafd78705e7a18b7906b5201a522719dc5190"
   integrity sha512-w+tIMs3rq2afQdsPJlODhoUEKzFP1ayaoyl1CcnwtIlsVe7K7bA1NGm4s3PraqTLlXnbIN84zuBlxBWo1u9BLw==
 
-"@types/node@^18.0.0":
-  version "18.8.3"
-  resolved "https://registry.yarnpkg.com/@types/node/-/node-18.8.3.tgz#ce750ab4017effa51aed6a7230651778d54e327c"
-  integrity sha512-0os9vz6BpGwxGe9LOhgP/ncvYN5Tx1fNcd2TM3rD/aCGBkysb+ZWpXEocG24h6ZzOi13+VB8HndAQFezsSOw1w==
-
 "@types/normalize-package-data@^2.4.0":
   version "2.4.1"
   resolved "https://registry.yarnpkg.com/@types/normalize-package-data/-/normalize-package-data-2.4.1.tgz#d3357479a0fdfdd5907fe67e17e0a85c906e1301"
@@ -6330,6 +6340,21 @@ aws-cdk-lib@2.44.0, aws-cdk-lib@^2.44.0:
   version "2.44.0"
   resolved "https://registry.yarnpkg.com/aws-cdk-lib/-/aws-cdk-lib-2.44.0.tgz#e6157df7a72b8d1a4528f6fb9f9b0ed7aa404bcc"
   integrity sha512-h0lCcS3t2TPF5FIpkA7OcE2t4vChtz/FGcZ5jVaORj21quiUz84eOhGk2BeRoKqfSp1Zqu2QxQUk6p6YpAOrRA==
+  dependencies:
+    "@balena/dockerignore" "^1.0.2"
+    case "1.6.3"
+    fs-extra "^9.1.0"
+    ignore "^5.2.0"
+    jsonschema "^1.4.1"
+    minimatch "^3.1.2"
+    punycode "^2.1.1"
+    semver "^7.3.7"
+    yaml "1.10.2"
+
+aws-cdk-lib@^2.45.0:
+  version "2.45.0"
+  resolved "https://registry.yarnpkg.com/aws-cdk-lib/-/aws-cdk-lib-2.45.0.tgz#04da554912728005d687ab19e51a2c57376a870a"
+  integrity sha512-oEeZZF8xjub9KYAB7n01A60wwQXSzNapmiih3t5uf9aEvlvqT+0as8/WrPdNIeAaf9Lhb0WQXdZ2o2DlsFHbAg==
   dependencies:
     "@balena/dockerignore" "^1.0.2"
     case "1.6.3"

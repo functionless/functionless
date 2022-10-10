@@ -1196,10 +1196,10 @@ exports.handler = v1
 //# sourceMappingURL=data:application/json;base64,eyJ2ZXJzaW9uIjozLCJzb3VyY2VzIjpbImluZGV4LmpzIiwiLi4vYXN0L2xpYi9ndWFyZHMuanMiXSwibmFtZXMiOltdLCJtYXBwaW5ncyI6IkFBQUE7QUFBQTtBQ0tBLG9CRExBIn0="
 `;
 
-exports[`should serialize NativePreWarmContext 1`] = `
+exports[`should serialize NativeRuntimeEnvironment 1`] = `
 "var v0;
 var v2;
-v2 = class NativePreWarmContext{
+v2 = class NativeRuntimeEnvironment{
 constructor(props,){
 this.props = props;
 this.cache = {};

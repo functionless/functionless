@@ -2,7 +2,7 @@ import { Blob } from "buffer";
 import { aws_secretsmanager } from "aws-cdk-lib";
 import type AWS from "aws-sdk";
 import { Construct } from "constructs";
-import { NativePreWarmContext, PrewarmClients } from "./function-prewarm";
+import { NativeRuntimeEnvironment, PrewarmClients } from "./function-prewarm";
 import { makeIntegration } from "./integration";
 
 /**
@@ -139,7 +139,7 @@ export abstract class Secret<SecretValue = any> {
       },
     });
 
-    function initClient(context: NativePreWarmContext) {
+    function initClient(context: NativeRuntimeEnvironment) {
       return context.getOrInit(PrewarmClients.SecretsManager);
     }
   }

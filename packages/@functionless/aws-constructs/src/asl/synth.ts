@@ -128,7 +128,7 @@ import {
   IntegrationImpl,
   isIntegration,
 } from "../integration";
-import { StepFunctionError } from "../step-function";
+import { StepFunctionError } from "../../../aws-stepfunctions-constructs/src/step-function";
 import { ASLGraph } from "./asl-graph";
 import {
   States,

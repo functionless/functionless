@@ -1,0 +1,19 @@
+{
+  "extends": "../../../tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "lib",
+    "declaration": true,
+    "inlineSourceMap": true,
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "exclude": ["lib", "test", "node_modules"],
+  "references": [
+    { "path": "../asl-graph" },
+    { "path": "../ast" },
+    { "path": "../aws-apigateway" },
+    { "path": "../aws-appsync" },
+    { "path": "../integration" },
+    { "path": "../vtl" }
+  ]
+}

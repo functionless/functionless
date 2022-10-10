@@ -1,0 +1,28 @@
+{
+  "name": "@functionless/aws-stepfunctions-constructs",
+  "version": "0.27.0",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc --build",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@functionless/asl-graph": "^0.27.0",
+    "@functionless/aws-apigateway": "^0.27.0",
+    "@functionless/aws-appsync": "^0.27.0",
+    "@functionless/ast": "^0.27.0",
+    "@functionless/integration": "^0.27.0",
+    "@functionless/vtl": "^0.27.0"
+  },
+  "devDependencies": {
+    "typescript": "^4.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

@@ -87,9 +87,15 @@
     "typescript": "^4.8.3"
   },
   "dependencies": {
+    "@functionless/asl-graph": "^0.27.0",
     "@functionless/ast": "^0.27.0",
-    "@functionless/ast-reflection": "^0.3.1",
+    "@functionless/ast-reflection": "^0.3.2",
+    "@functionless/aws-lambda-constructs": "^0.27.0",
+    "@functionless/error-code": "^0.27.0",
+    "@functionless/integration": "^0.27.0",
     "@functionless/nodejs-closure-serializer": "^0.1.2",
+    "@functionless/util": "^0.27.0",
+    "@functionless/vtl": "^0.27.0",
     "@swc/cli": "^0.1.57",
     "@swc/core": "1.2.245",
     "@swc/register": "^0.1.10",

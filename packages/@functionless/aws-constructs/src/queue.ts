@@ -7,7 +7,7 @@ import {
 import lambda from "aws-lambda";
 import { Construct } from "constructs";
 import { ASLGraph, Parameters } from "./asl";
-import { ErrorCodes, SynthError } from "./error-code";
+import { ErrorCodes, SynthError } from "@functionless/error-code";
 import { makeEventBusIntegration } from "./event-bridge/event-bus";
 import { EventSource, IEventSource } from "./event-source";
 import { SQSClient } from "./function-prewarm";

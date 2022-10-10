@@ -4,7 +4,8 @@
     "outDir": "lib",
     "declaration": true,
     "inlineSourceMap": true,
-    "rootDir": "src"
+    "rootDir": "src",
+    "types": ["@types/node"]
   },
   "include": ["src"],
   "exclude": ["lib", "node_modules"]
