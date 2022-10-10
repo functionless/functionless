@@ -4,9 +4,31 @@ const path = require("path");
 
 const pwd = path.resolve(path.join(__dirname, ".."));
 
-console.log("PWD: ", pwd);
-
+/**
+ * This script patches the references in tsconfig.json
+ *
+ * 1. add all packages to the top-level tsconfig.json's references
+ * 2. (TODO): propagate any dep, devDep or peerDep on an internal package to the relevant tsconfig.json
+ */
 (async function () {
+  await patchTopLevelTsConfig();
+})().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});
+
+async function patchTopLevelTsConfig(roots) {
+  const tsConfigPath = path.join(pwd, "tsconfig.json");
+  const tsConfig = JSON.parse(
+    (await fs.readFile(tsConfigPath)).toString("utf-8")
+  );
+  tsConfig.references = (roots ?? (await findAllPackageRoots())).map((ref) => ({
+    path: ref,
+  }));
+  await fs.writeFile(tsConfigPath, JSON.stringify(tsConfig, null, 2));
+}
+
+async function findAllPackageRoots() {
   const paths = (
     await Promise.all([
       ls(path.join(pwd, "apps")),
@@ -15,7 +37,7 @@ console.log("PWD: ", pwd);
     ])
   ).flat();
 
-  const allReferences = (
+  return (
     await Promise.all(
       paths.map(async (p) => {
         try {
@@ -27,17 +49,7 @@ console.log("PWD: ", pwd);
   )
     .filter((p) => !!p)
     .sort();
-
-  const tsConfigPath = path.join(pwd, "tsconfig.json");
-  const tsConfig = JSON.parse(
-    (await fs.readFile(tsConfigPath)).toString("utf-8")
-  );
-  tsConfig.references = allReferences.map((ref) => ({ path: ref }));
-  await fs.writeFile(tsConfigPath, JSON.stringify(tsConfig, null, 2));
-})().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+}
 
 async function ls(dir) {
   return (await fs.readdir(dir)).map((d) => path.join(dir, d));
