@@ -17,7 +17,6 @@
     { "path": "../aws-events" },
     { "path": "../aws-lambda" },
     { "path": "../aws-util" },
-    { "path": "../integration" },
     { "path": "../serialize-closure" },
     { "path": "../util" }
   ]

@@ -1,4 +1,5 @@
 import {
+  assertPrimitive,
   BinaryExpr,
   BinaryOp,
   CallExpr,
@@ -12,6 +13,7 @@ import {
   isBinaryExpr,
   isBooleanLiteralExpr,
   isCallExpr,
+  isCallReferencePattern,
   isElementAccessExpr,
   isNullLiteralExpr,
   isParenthesizedExpr,
@@ -26,11 +28,10 @@ import {
   assertDefined,
   assertNever,
   assertNumber,
-  assertPrimitive,
   assertString,
 } from "@functionless/util";
+import { isEventBusIntegration } from "@functionless/aws-events";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
-import { isIntegrationCallPattern } from "@functionless/integration";
 import { validateFunctionLike } from "@functionless/ast";
 import { RulePredicateFunction } from "../rule";
 import * as functionless_event_bridge from "../types";
@@ -147,7 +148,7 @@ export const synthesizePatternDocument = (
       return evalPropAccess(expr);
     } else if (isUnaryExpr(expr)) {
       return evalUnaryExpression(expr);
-    } else if (isIntegrationCallPattern(expr)) {
+    } else if (isCallReferencePattern(expr, isEventBusIntegration)) {
       throw new SynthError(
         ErrorCodes.EventBus_Rules_do_not_support_Integrations
       );

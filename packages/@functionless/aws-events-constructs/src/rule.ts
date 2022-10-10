@@ -14,7 +14,7 @@ import {
 } from "./event-pattern";
 import { PatternDocument } from "./event-pattern/pattern";
 import { EventTransformFunction, EventTransform } from "./transform";
-import type { Event } from "./types";
+import type { Event } from "@functionless/aws-events";
 
 /**
  * A function interface used by the {@link EventBus}'s when function to generate a rule.

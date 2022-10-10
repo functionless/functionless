@@ -1,5 +1,5 @@
 {
-  "name": "@functionless/integration",
+  "name": "@functionless/aws-apigateway-constructs",
   "version": "0.27.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -12,15 +12,12 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@aws-cdk/aws-appsync-alpha": "^2.45.0-alpha.0",
-    "aws-cdk-lib": "^2.45.0",
-    "aws-sdk": "^2",
-    "@functionless/ast": "^0.27.0",
-    "@functionless/aws-util": "^0.27.0",
-    "@functionless/util": "^0.27.0"
+    "aws-cdk-lib": "2.44.0",
+    "@functionless/ast": "*",
+    "@functionless/aws-apigateway": "*",
+    "@functionless/vtl": "*"
   },
   "devDependencies": {
-    "@types/node": "^16",
     "typescript": "^4.8.3"
   },
   "publishConfig": {

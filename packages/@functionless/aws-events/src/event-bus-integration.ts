@@ -1,5 +1,25 @@
 import type { aws_events } from "aws-cdk-lib";
 
+export function isEventBusIntegration(
+  a: any
+): a is EventBusIntegration<any, any> {
+  return (
+    a &&
+    typeof a === "object" &&
+    a.eventBus &&
+    typeof a.eventBus === "object" &&
+    typeof a.eventBus.target === "function"
+  );
+}
+
+export interface EventBusIntegration<
+  // the payload type we expect to be transformed into before making this call.
+  in Payload,
+  in Props extends object | undefined = undefined
+> {
+  eventBus: EventBusTargetIntegration<Payload, Props>;
+}
+
 /**
  * Defines an integration that can be used in the `pipe` function of an {@link EventBus} (Rule or Transform).
  *

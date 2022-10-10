@@ -15,8 +15,8 @@
     "@functionless/asl-graph": "^0.27.0",
     "@functionless/aws-apigateway": "^0.27.0",
     "@functionless/aws-appsync": "^0.27.0",
+    "@functionless/aws-events-constructs": "^0.27.0",
     "@functionless/ast": "^0.27.0",
-    "@functionless/integration": "^0.27.0",
     "@functionless/vtl": "^0.27.0"
   },
   "devDependencies": {

@@ -12,8 +12,13 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
+    "@functionless/asl-graph": "^0.27.0",
+    "@functionless/aws-appsync": "^0.27.0",
+    "@functionless/aws-appsync-constructs": "^0.27.0",
+    "@functionless/aws-apigateway": "^0.27.0",
     "@functionless/aws-dynamodb": "^0.27.0",
     "@functionless/aws-lambda": "^0.27.0",
+    "@functionless/vtl": "^0.27.0",
     "aws-sdk": "^2"
   },
   "devDependencies": {

@@ -1,7 +1,8 @@
-import { CallExpr, ReferenceExpr } from "./expression";
-import { isCallExpr, isReferenceExpr } from "./guards";
+import { AwaitExpr, CallExpr, ReferenceExpr } from "./expression";
+import { isAwaitExpr, isCallExpr, isReferenceExpr } from "./guards";
 import { FunctionlessNode } from "./node";
 import { reflect } from "./reflect";
+import { tryResolveReferences } from "./resolve-references";
 import { isAnyFunction } from "./util";
 import { forEachChild } from "./visit";
 
@@ -51,4 +52,80 @@ export function findDeepReferences<T>(
   });
 
   return nodes;
+}
+
+/**
+ * A bottom-up algorithm that determines the ONLY {@link Integration} value that the {@link node}
+ * will resolve to at runtime.
+ *
+ * If the {@link node} resolves to 0 or more than 1 {@link Integration} then `undefined` is returned.
+ *
+ * **Note**: This function is an intermediate helper until we migrate the interpreters to be more general
+ * (likely by migrating to top-down algorithms, see https://github.com/functionless/functionless/issues/374#issuecomment-1203313604)
+ *
+ * @param node the node to resolve the {@link Integration} of.
+ * @returns the ONLY {@link Integration} that {@link node} can resolve to, otherwise `undefined`.
+ */
+export function tryFindReference<T>(
+  node: FunctionlessNode,
+  is: (node: any) => node is T
+): T | undefined {
+  const integrations = tryFindReferences(node, is);
+  if (integrations?.length === 1) {
+    return integrations[0];
+  }
+  return undefined;
+}
+
+/**
+ * A bottom-up algorithm that determines all of the possible {@link Integration}s that a {@link node}
+ * may resolve to at runtime.
+ *
+ * ```ts
+ * declare const table1;
+ * declare const table2;
+ *
+ * const tables = [table1, table2];
+ *
+ * const a = table1;
+ *    // ^ [table1]
+ *
+ * for (const a of tables) {
+ *   const b = a;
+ *          // ^ [table1, table2]
+ *
+ *   const { appsync: { getItem } } = a;
+ *                     // ^ [ table1.appsync.getItem, table2.appsync.getItem ]
+ * }
+ *
+ * const a = tables[0];
+ *          // ^ [table1]
+ *
+ * const { appsync: { getItem } } = table[0];
+ *                   // ^ [ table1.appsync.getItem ]
+ *
+ * const { appsync: { getItem = table1.appsync.getItem } } = table[2];
+ *                   // ^ [ table1.appsync.getItem ] (because of initializer)
+ * ```
+ *
+ * @param node the node to resolve the possible {@link Integration}s of.
+ * @returns a list of all the {@link Integration}s that the {@link node} could evaluate to.
+ */
+export function tryFindReferences<T>(
+  node: FunctionlessNode,
+  is: (node: any) => node is T
+): T[] {
+  return tryResolveReferences(node, undefined).filter(is);
+}
+
+export type CallReferencePattern = CallExpr | (AwaitExpr & { expr: CallExpr });
+
+export function isCallReferencePattern(
+  node: FunctionlessNode,
+  is: (a: any) => a is any
+): node is CallReferencePattern {
+  return (
+    (isAwaitExpr(node) && tryFindReference(node.expr, is) !== undefined) ||
+    tryFindReference(node, is) !== undefined
+  );
 }

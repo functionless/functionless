@@ -13,7 +13,7 @@
     { "path": "../ast" },
     { "path": "../aws-apigateway" },
     { "path": "../aws-appsync" },
-    { "path": "../integration" },
+    { "path": "../aws-events-constructs" },
     { "path": "../vtl" }
   ]
 }

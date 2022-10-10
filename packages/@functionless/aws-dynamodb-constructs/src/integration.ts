@@ -9,37 +9,19 @@ import {
   isPropAssignExpr,
   isStringLiteralExpr,
 } from "@functionless/ast";
+import { ApiGatewayVtlIntegration } from "@functionless/aws-apigateway";
 import { aws_apigateway, aws_dynamodb, aws_iam } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb/lib/json-format";
-import { AppSyncVtlIntegration } from "../appsync";
-import { ASL, ASLGraph, Task } from "../asl";
-import { ErrorCodes, SynthError } from "../error-code";
-import { NativeRuntimeInitializer } from "../function-prewarm";
-import { IntegrationInput, makeIntegration } from "../integration";
-import { VTL } from "../../../vtl/src/vtl";
+import { AppSyncVtlIntegration } from "@functionless/aws-appsync";
+import { ASL, ASLGraph, Task } from "@functionless/asl-graph";
+import { ErrorCodes, SynthError } from "@functionless/error-code";
+import {
+  NativeIntegration,
+  NativeRuntimeInitializer,
+} from "@functionless/aws-lambda";
+import { VTL } from "@functionless/vtl";
 import { ITable } from "./table";
-
-export const DocumentDBClient: NativeRuntimeInitializer<
-  "DynamoDB",
-  AWS.DynamoDB.DocumentClient
-> = {
-  key: "DynamoDB",
-  init: (key, props) =>
-    new (require("aws-sdk/clients/dynamodb").DocumentClient)(
-      props?.clientConfigRetriever?.(key)
-    ),
-};
-
-export const DynamoDBClient: NativeRuntimeInitializer<
-  "DynamoDBDocument",
-  AWS.DynamoDB
-> = {
-  key: "DynamoDBDocument",
-  init: (key, props) =>
-    new (require("aws-sdk/clients/dynamodb"))(
-      props?.clientConfigRetriever?.(key)
-    ),
-};
+import { DocumentDBClient, DynamoDBClient } from "@functionless/aws-dynamodb";
 
 export type DynamoDBAccess = "read" | "write" | "read-write" | "full";
 
@@ -69,9 +51,9 @@ export function createDynamoIntegration<
         override: (input: Expr, context: ASL) => ASLGraph.NodeResults;
       }
 ): F {
-  return makeIntegration({
+  return {
     kind: operationName,
-    native: {
+    native: <NativeIntegration<F>>{
       bind: (func) => grantPermissions(func),
       preWarm: (context) => {
         context.getOrInit(
@@ -142,7 +124,7 @@ export function createDynamoIntegration<
         });
       }
     },
-    apiGWVtl: {
+    apiGWVtl: <ApiGatewayVtlIntegration>{
       createIntegration: (options) => {
         return new aws_apigateway.AwsIntegration({
           service: "dynamodb",
@@ -199,7 +181,7 @@ export function createDynamoIntegration<
 }`;
       },
     },
-  });
+  } as any as F;
 
   function grantPermissions(principal: aws_iam.IGrantable) {
     if (access === "read") {
@@ -218,14 +200,14 @@ export function createDynamoIntegration<
 export function makeAppSyncTableIntegration<F extends AnyFunction>(
   table: ITable<any, any, any>,
   methodName: string,
-  integration: Omit<IntegrationInput<string, F>, "kind" | "appSyncVtl"> & {
+  integration: {
     appSyncVtl: Omit<AppSyncVtlIntegration, "dataSource" | "dataSourceId">;
   }
 ): F {
-  return makeIntegration<`Table.AppSync.${string}`, F>({
+  return {
     ...integration,
     kind: `Table.AppSync.${methodName}`,
-    appSyncVtl: {
+    appSyncVtl: <AppSyncVtlIntegration>{
       dataSourceId: () => table.resource.node.addr,
       dataSource: (api, dataSourceId) => {
         return new appsync.DynamoDbDataSource(api, dataSourceId, {
@@ -235,7 +217,7 @@ export function makeAppSyncTableIntegration<F extends AnyFunction>(
       },
       ...integration.appSyncVtl,
     },
-  });
+  } as any as F;
 }
 
 export function addIfDefined(vtl: VTL, from: string, to: string, key: string) {

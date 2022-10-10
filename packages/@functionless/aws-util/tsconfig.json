@@ -8,5 +8,6 @@
     "types": ["@types/node"]
   },
   "include": ["src"],
-  "exclude": ["lib", "node_modules"]
+  "exclude": ["lib", "node_modules"],
+  "references": [{ "path": "../util" }]
 }

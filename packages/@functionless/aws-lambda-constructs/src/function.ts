@@ -37,26 +37,25 @@ import { Construct } from "constructs";
 import esbuild from "esbuild";
 import ts from "typescript";
 import { ApiGatewayVtlIntegration } from "@functionless/aws-apigateway";
-import {
-  AppsyncResolver,
-  AppSyncVtlIntegration,
-} from "@functionless/aws-appsync";
+import { AppSyncVtlIntegration } from "@functionless/aws-appsync";
 import { ASL, ASLGraph } from "@functionless/asl-graph";
-import { BindFunctionName, RegisterFunctionName } from "./compile";
+import { BindFunctionName, RegisterFunctionName } from "./constants";
 import {
   ErrorCodes,
   formatErrorMessage,
   SynthError,
 } from "@functionless/error-code";
 import {
-  IEventBus,
   isEventBus,
   Event,
   EventBusTargetIntegration,
+} from "@functionless/aws-events";
+import {
+  IEventBus,
   Rule,
   PredicateRuleBase,
   makeEventBusIntegration,
-} from "@functionless/aws-events";
+} from "@functionless/aws-events-constructs";
 import {
   findDeepIntegrations,
   INTEGRATION_TYPE_KEYS,

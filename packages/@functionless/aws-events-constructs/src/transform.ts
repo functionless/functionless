@@ -8,7 +8,7 @@ import {
 } from "./event-bus";
 import { IRule } from "./rule";
 import { synthesizeEventBridgeTargets } from "./target-input";
-import { Event } from "./types";
+import { Event } from "@functionless/aws-events";
 
 /**
  * A function interface used by the {@link Rule}'s map function.

@@ -1,5 +1,6 @@
 import {
   ArrayLiteralExpr,
+  assertNodeKind,
   BinaryExpr,
   ElementAccessExpr,
   evalToConstant,
@@ -41,7 +42,6 @@ import {
   UndefinedLiteralExpr,
   VariableStmt,
 } from "@functionless/ast";
-import { assertNodeKind } from "@functionless/util";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
 
 /**

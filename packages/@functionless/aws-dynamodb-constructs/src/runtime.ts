@@ -1,64 +1,28 @@
+import type {
+  BatchGetItem,
+  BatchWriteItem,
+  DeleteItem,
+  GetItem,
+  PutItem,
+  Query,
+  ReturnValues,
+  TransactGetItems,
+  TransactWriteItems,
+  UpdateItem,
+} from "@functionless/aws-dynamodb";
 import { aws_dynamodb } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb";
-import {
-  BatchGetItem,
-  BatchGetItemInput,
-  BatchGetItemOutput,
-  createBatchGetItemIntegration,
-} from "./batch-get-item";
-import {
-  BatchWriteItem,
-  createBatchWriteItemIntegration,
-  PutRequest,
-  DeleteRequest,
-} from "./batch-write-item";
-import {
-  createDeleteItemIntegration,
-  DeleteItem,
-  DeleteItemReturnValues,
-  DeleteItemInput,
-  DeleteItemOutput,
-} from "./delete-item";
-import {
-  createGetItemIntegration,
-  GetItem,
-  GetItemInput,
-  GetItemOutput,
-} from "./get-item";
-import {
-  createPutItemIntegration,
-  PutItem,
-  PutItemInput,
-  PutItemOutput,
-} from "./put-item";
-import { createQueryIntegration, Query } from "./query";
-import { ReturnValues } from "./return-value";
+import { createBatchGetItemIntegration } from "./batch-get-item";
+import { createBatchWriteItemIntegration } from "./batch-write-item";
+import { createDeleteItemIntegration } from "./delete-item";
+import { createGetItemIntegration } from "./get-item";
+import { createPutItemIntegration } from "./put-item";
+import { createQueryIntegration } from "./query";
 import { createScanIntegration, Scan } from "./scan";
 import type { Table } from "./table";
-import {
-  createTransactGetItemsIntegration,
-  TransactGetItems,
-  TransactGetItem,
-  Get,
-} from "./transact-get-item";
-import {
-  createTransactWriteItemsIntegration,
-  TransactWriteItems,
-  TransactWriteItemsInput,
-  TransactWriteItemsOutput,
-  ConditionCheck,
-  Update,
-  Put,
-  Delete,
-} from "./transact-write-item";
-import {
-  createUpdateItemIntegration,
-  UpdateItem,
-  UpdateItemInput,
-  UpdateItemOutput,
-} from "./update-item";
-
-declare const a: AWS.DynamoDB;
+import { createTransactGetItemsIntegration } from "./transact-get-item";
+import { createTransactWriteItemsIntegration } from "./transact-write-item";
+import { createUpdateItemIntegration } from "./update-item";
 
 /**
  * The Runtime API for a DynamoDB {@link Table}.

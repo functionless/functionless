@@ -6,6 +6,7 @@
     "inlineSourceMap": true,
     "rootDir": "src"
   },
-  "include": ["src", "../aws-stepfunctions-constructs/src/step-function.ts"],
-  "exclude": ["lib", "test", "node_modules"]
+  "include": ["src"],
+  "exclude": ["lib", "test", "node_modules"],
+  "references": [{ "path": "../ast" }, { "path": "../vtl" }]
 }

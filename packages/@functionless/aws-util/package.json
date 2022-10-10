@@ -7,6 +7,9 @@
     "build": "tsc -b",
     "typecheck": "tsc --noEmit"
   },
+  "dependencies": {
+    "@functionless/util": "*"
+  },
   "peerDependencies": {
     "aws-sdk": "^2"
   },

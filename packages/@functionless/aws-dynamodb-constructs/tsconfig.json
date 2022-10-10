@@ -9,5 +9,12 @@
   },
   "include": ["src"],
   "exclude": ["lib", "test", "node_modules"],
-  "references": [{ "path": "../aws-dynamodb" }, { "path": "../aws-lambda" }]
+  "references": [
+    { "path": "../asl-graph" },
+    { "path": "../aws-appsync" },
+    { "path": "../aws-apigateway" },
+    { "path": "../aws-dynamodb" },
+    { "path": "../aws-lambda" },
+    { "path": "../vtl" }
+  ]
 }

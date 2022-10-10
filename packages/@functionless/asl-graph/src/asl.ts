@@ -30,6 +30,7 @@ import {
   isBlockStmt,
   isBreakStmt,
   isCallExpr,
+  isCallReferencePattern,
   isCaseClause,
   isCatchClause,
   isComputedPropertyNameExpr,
@@ -85,6 +86,7 @@ import {
   ReturnStmt,
   SpreadAssignExpr,
   Stmt,
+  tryFindReference,
   UniqueNameGenerator,
   VariableDecl,
   visitEachChild,
@@ -109,7 +111,7 @@ import {
   Succeed,
   Wait,
 } from "./states";
-import { StepFunctionError } from "@functionless/aws-stepfunctions";
+import { StepFunctionError } from "./step-function-error";
 import { assertNever } from "@functionless/util";
 import { SynthError, ErrorCodes } from "packages/@functionless/error-code";
 import {
@@ -137,6 +139,7 @@ import {
 } from "./guards";
 import { Parameters } from "./states";
 import { toStateName } from "./to-state-name";
+import { isASLIntegration } from "./asl-integration";
 
 /**
  * Amazon States Language (ASL) Generator.
@@ -794,7 +797,7 @@ export class ASL {
         !(
           isNewExpr(stmt.expr) ||
           isCallExpr(stmt.expr) ||
-          isIntegrationCallPattern(stmt.expr)
+          isCallReferencePattern(stmt.expr, isASLIntegration)
         )
       ) {
         throw new Error(
@@ -1721,10 +1724,9 @@ export class ASL {
         );
       });
     } else if (isCallExpr(expr)) {
-      const integration = tryFindIntegration(expr.expr);
+      const integration = tryFindReference(expr.expr, isASLIntegration);
       if (integration) {
-        const serviceCall = new IntegrationImpl(integration);
-        const integStates = serviceCall.asl(expr, this);
+        const integStates = integration.asl(expr, this);
 
         if (ASLGraph.isAslGraphOutput(integStates)) {
           return integStates;

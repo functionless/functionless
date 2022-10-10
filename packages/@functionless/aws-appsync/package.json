@@ -11,7 +11,10 @@
     "typecheck": "tsc --noEmit",
     "dev": "tsc --watch"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
+    "@functionless/vtl": "*"
+  },
   "devDependencies": {
     "typescript": "^4.8.3"
   },

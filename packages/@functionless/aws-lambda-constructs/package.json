@@ -20,7 +20,6 @@
     "@functionless/aws-events": "^0.27.0",
     "@functionless/aws-lambda": "^0.27.0",
     "@functionless/aws-util": "^0.27.0",
-    "@functionless/integration": "^0.27.0",
     "@functionless/serialize-closure": "^0.27.0",
     "@functionless/util": "^0.27.0",
     "typesafe-dynamodb": "^0.2.3"

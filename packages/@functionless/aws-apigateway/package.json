@@ -11,7 +11,11 @@
     "typecheck": "tsc --noEmit",
     "dev": "tsc --watch"
   },
-  "dependencies": {},
+  "dependencies": {
+    "aws-cdk-lib": "2.44.0",
+    "@functionless/ast": "*",
+    "@functionless/vtl": "*"
+  },
   "devDependencies": {
     "typescript": "^4.8.3"
   },

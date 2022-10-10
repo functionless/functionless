@@ -3,6 +3,7 @@ export * from "./attribute-type";
 export * from "./batch-get-item";
 export * from "./batch-write-item";
 export * from "./delete-item";
+export * from "./client";
 export * from "./get-item";
 export * from "./put-item";
 export * from "./query";

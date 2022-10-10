@@ -21,15 +21,7 @@ import {
 import { Construct } from "constructs";
 import { ASL, ASLGraph } from "@functionless/asl-graph";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
-import {
-  Integration,
-  IntegrationCall,
-  IntegrationImpl,
-  isIntegration,
-  makeIntegration,
-  NativeRuntimeEnvironment,
-  PrewarmClients,
-} from "@functionless/integration";
+
 import {
   RulePredicateFunction,
   Rule,
@@ -38,7 +30,17 @@ import {
   ScheduledEvent,
   IRule,
 } from "./rule";
-import type { Event } from "./types";
+import {
+  Event,
+  EventBridgeClient,
+  EventBusTargetIntegration,
+  isEventBusIntegration,
+} from "@functionless/aws-events";
+import {
+  NativeIntegration,
+  NativeRuntimeEnvironment,
+} from "@functionless/aws-lambda";
+import { ApiGatewayVtlIntegration } from "packages/@functionless/aws-apigateway/lib";
 
 export const isEventBus = <EvntBus extends IEventBus<any>>(
   v: any
@@ -155,14 +157,7 @@ const ENTRY_PROPERTY_MAP: Record<keyof Event, string> = {
  *                   emit any of `OutEvnt`.
  */
 export interface IEventBus<in Evnt extends Event = Event>
-  extends IEventBusFilterable<Evnt>,
-    Integration<
-      "EventBus",
-      (
-        event: PutEventInput<Evnt>,
-        ...events: PutEventInput<Evnt>[]
-      ) => Promise<void>
-    > {
+  extends IEventBusFilterable<Evnt> {
   readonly resource: aws_events.IEventBus;
   readonly eventBusArn: string;
   readonly eventBusName: string;
@@ -240,10 +235,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
 
   private allRule: PredicateRuleBase<Evnt, OutEvnt> | undefined;
 
-  public readonly putEvents: IntegrationCall<
-    "EventBus.putEvents",
-    IEventBus<Evnt>["putEvents"]
-  >;
+  public readonly putEvents: IEventBus<Evnt>["putEvents"];
 
   // @ts-ignore - value does not exist, is only available at compile time
   readonly __functionBrand: (
@@ -258,10 +250,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
     // Closure event bus base
     const eventBusName = this.eventBusName;
 
-    this.putEvents = makeIntegration<
-      "EventBus.putEvents",
-      IEventBus<Evnt>["putEvents"]
-    >({
+    this.putEvents = <any>{
       kind: "EventBus.putEvents",
       asl: (call: CallExpr, context: ASL) => {
         this.resource.grantPutEventsTo(context.role);
@@ -347,7 +336,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
           });
         });
       },
-      apiGWVtl: {
+      apiGWVtl: <ApiGatewayVtlIntegration>{
         renderRequest: (call, context): string => {
           const args = call.args
             .map((arg) => arg.expr)
@@ -442,17 +431,15 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
           });
         },
       },
-      native: {
+      native: <NativeIntegration<IEventBus<Evnt>["putEvents"]>>{
         bind: (context) => {
           this.resource.grantPutEventsTo(context);
         },
         preWarm: (prewarmContext: NativeRuntimeEnvironment) => {
-          prewarmContext.getOrInit(PrewarmClients.EventBridge);
+          prewarmContext.getOrInit(EventBridgeClient);
         },
         call: async (args, preWarmContext) => {
-          const eventBridge = preWarmContext.getOrInit(
-            PrewarmClients.EventBridge
-          );
+          const eventBridge = preWarmContext.getOrInit(EventBridgeClient);
           await eventBridge
             .putEvents({
               Entries: args.map((event) => ({
@@ -470,14 +457,14 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
             .promise();
         },
       },
-    });
+    };
   }
 
   public readonly eventBus = makeEventBusIntegration<
     PutEventInput<Evnt>,
     aws_events_targets.EventBusProps | undefined
   >({
-    target: (props, targetInput?) => {
+    target: (props: any, targetInput: any) => {
       if (targetInput) {
         throw new Error("Event bus rule target does not support target input.");
       }
@@ -811,16 +798,10 @@ export function pipe<
   props: Props,
   targetInput: Target
 ) {
-  if (isIntegration(integration)) {
-    const target = new IntegrationImpl(integration).eventBus.target(
-      props,
-      targetInput
-    );
+  if (isEventBusIntegration(integration)) {
+    const target = integration.eventBus.target(props, targetInput);
     return rule.resource.addTarget(target);
   } else {
     return rule.resource.addTarget((integration as any)(targetInput));
   }
 }
-
-// to prevent the closure serializer from trying to import all of functionless.
-export const deploymentOnlyModule = true;

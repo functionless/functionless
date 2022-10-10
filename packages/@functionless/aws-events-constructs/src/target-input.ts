@@ -19,12 +19,12 @@ import {
   isStringLiteralExpr,
   isTemplateExpr,
   ObjectLiteralExpr,
+  assertConstantValue,
 } from "@functionless/ast";
 import { aws_events } from "aws-cdk-lib";
 import { RuleTargetInput } from "aws-cdk-lib/aws-events";
-import { assertConstantValue, assertString } from "@functionless/util";
+import { assertString } from "@functionless/util";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
-import { isIntegration } from "@functionless/integration";
 import { validateFunctionLike } from "@functionless/ast";
 import {
   assertValidEventReference,
@@ -32,6 +32,7 @@ import {
   getReferencePath,
   ReferencePath,
 } from "./utils";
+import { isEventBusIntegration } from "@functionless/aws-events";
 
 const PREDEFINED_VALUES = [
   "<aws.events.event>",
@@ -213,7 +214,7 @@ export const synthesizeEventBridgeTargets = (
     } else if (isCallExpr(expr)) {
       if (isReferenceExpr(expr.expr)) {
         const ref = expr.expr.ref();
-        if (isIntegration(ref)) {
+        if (isEventBusIntegration(ref)) {
           throw new SynthError(
             ErrorCodes.EventBus_Input_Transformers_do_not_support_Integrations
           );

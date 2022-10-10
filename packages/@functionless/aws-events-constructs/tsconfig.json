@@ -6,12 +6,15 @@
     "inlineSourceMap": true,
     "rootDir": "src"
   },
-  "include": ["src", "../aws-stepfunctions-constructs/src/step-function.ts"],
+  "include": ["src"],
   "exclude": ["lib", "test", "node_modules"],
   "references": [
     { "path": "../asl-graph" },
     { "path": "../ast" },
-    { "path": "../integration" },
+    { "path": "../aws-apigateway" },
+    { "path": "../aws-appsync" },
+    { "path": "../aws-events" },
+    { "path": "../aws-lambda" },
     { "path": "../util" }
   ]
 }

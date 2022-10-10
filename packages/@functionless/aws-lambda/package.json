@@ -12,6 +12,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
+    "@functionless/ast": "^0.27.0",
     "@functionless/aws-util": "^0.27.0",
     "@functionless/serde": "^0.27.0",
     "@functionless/util": "^0.27.0",

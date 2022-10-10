@@ -1,5 +1,5 @@
 import {
-  AnyFunction,
+  assertNodeKind,
   BindingElem,
   BindingPattern,
   CallExpr,
@@ -91,17 +91,12 @@ import {
   Stmt,
   SuperKeyword,
   ThisExpr,
+  tryFindReference,
   VariableDecl,
   VariableDeclList,
 } from "@functionless/ast";
-import { assertNever, assertNodeKind } from "@functionless/util";
+import { assertNever } from "@functionless/util";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
-import {
-  VTLContext,
-  IntegrationImpl,
-  isIntegration,
-  tryFindIntegration,
-} from "@functionless/integration";
 
 // https://velocity.apache.org/engine/devel/user-guide.html#conditionals
 // https://cwiki.apache.org/confluence/display/VELOCITY/CheckingForNull
@@ -111,7 +106,7 @@ export function isVTL(a: any): a is VTL {
   return (a as VTL | undefined)?.kind === VTL.ContextName;
 }
 
-export abstract class VTL implements VTLContext {
+export abstract class VTL<Integration = any> {
   static readonly ContextName = "Velocity Template";
 
   readonly kind = VTL.ContextName;
@@ -307,9 +302,11 @@ export abstract class VTL implements VTLContext {
    * @param call the CallExpr representing the integration logic
    */
   protected abstract integrate(
-    target: IntegrationImpl<AnyFunction> | undefined,
+    target: Integration | undefined,
     call: CallExpr
   ): string;
+
+  protected abstract isIntegration(a: any): a is Integration;
 
   protected abstract dereference(
     id: Identifier | ReferenceExpr | ThisExpr
@@ -386,11 +383,12 @@ export abstract class VTL implements VTLContext {
         ? node.expr.unwrap()
         : node.expr;
 
-      const ref = expr ? tryFindIntegration(expr) : undefined;
+      const ref = expr
+        ? tryFindReference(expr, (n): n is any => this.isIntegration(n))
+        : undefined;
       if (ref) {
-        if (isIntegration<Integration>(ref)) {
-          const serviceCall = new IntegrationImpl(ref);
-          return this.integrate(serviceCall, node);
+        if (this.isIntegration(ref)) {
+          return this.integrate(ref, node);
         } else {
           throw new SynthError(
             ErrorCodes.Unexpected_Error,

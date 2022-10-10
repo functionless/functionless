@@ -9,5 +9,9 @@
   },
   "include": ["src"],
   "exclude": ["lib", "test", "node_modules"],
-  "references": [{ "path": "../ast" }, { "path": "../aws-util" }]
+  "references": [
+    { "path": "../ast" },
+    { "path": "../aws-lambda" },
+    { "path": "../aws-util" }
+  ]
 }

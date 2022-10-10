@@ -146,25 +146,3 @@ export function analyzeFlow(node: FunctionlessNode): FlowResult {
         : {}
     );
 }
-
-export function isIntegrationCallExpr(
-  node: FunctionlessNode
-): node is IntegrationCallExpr {
-  if (isCallExpr(node)) {
-    return tryFindIntegration(node.expr) !== undefined;
-  }
-  return false;
-}
-
-export type IntegrationCallPattern =
-  | CallExpr
-  | (AwaitExpr & { expr: CallExpr });
-
-export function isIntegrationCallPattern(
-  node: FunctionlessNode
-): node is IntegrationCallPattern {
-  return (
-    (isAwaitExpr(node) && isIntegrationCallExpr(node.expr)) ||
-    isIntegrationCallExpr(node)
-  );
-}

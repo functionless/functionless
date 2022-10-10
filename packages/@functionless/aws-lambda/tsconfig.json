@@ -10,6 +10,7 @@
   "include": ["src", "src/native-context.ts"],
   "exclude": ["lib", "test", "node_modules"],
   "references": [
+    { "path": "../ast" },
     { "path": "../aws-util" },
     { "path": "../serde" },
     { "path": "../util" }

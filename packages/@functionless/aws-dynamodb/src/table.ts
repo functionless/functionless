@@ -1,5 +1,5 @@
 import type { aws_dynamodb } from "aws-cdk-lib";
-import DynamoDB from "aws-sdk/clients/dynamodb";
+import type DynamoDB from "aws-sdk/clients/dynamodb";
 import { TableAppsyncApi } from "./appsync";
 import { AttributeType } from "./attribute-type";
 import { TableAttributesApi, TableDocumentApi } from "./runtime";
@@ -78,7 +78,7 @@ export interface Table<
   readonly attributes: TableAttributesApi<Item, PartitionKey, RangeKey>;
 }
 
-export function isTableDecl(a: any): a is TableDecl {
+export function isTable(a: any): a is TableDecl {
   return a?.kind === TableKind;
 }
 

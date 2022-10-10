@@ -46,14 +46,7 @@ import {
   Rule,
   makeEventBusIntegration,
 } from "@functionless/aws-events-constructs";
-import {
-  NativeIntegration,
-  PrewarmClients,
-  Integration,
-  IntegrationCall,
-  IntegrationInput,
-  makeIntegration,
-} from "@functionless/integration";
+
 import { VTL } from "@functionless/vtl";
 
 export type AnyStepFunction =

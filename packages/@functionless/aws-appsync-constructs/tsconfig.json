@@ -11,6 +11,7 @@
   "references": [
     //
     { "path": "../ast" },
+    { "path": "../aws-appsync" },
     { "path": "../aws-lambda-constructs" },
     { "path": "../aws-util" },
     { "path": "../util" },

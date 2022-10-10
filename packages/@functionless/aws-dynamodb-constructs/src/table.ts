@@ -1,9 +1,9 @@
 import { aws_dynamodb } from "aws-cdk-lib";
 import { Construct } from "constructs";
 import { JsonFormat } from "typesafe-dynamodb";
-import { AppsyncResolver } from "../appsync";
 import { TableAppsyncApi } from "./appsync";
 import { TableAttributesApi, TableDocumentApi } from "./runtime";
+import { AppsyncResolver } from "@functionless/aws-appsync-constructs";
 
 export function isTable(a: any): a is AnyTable {
   return a?.kind === "Table";

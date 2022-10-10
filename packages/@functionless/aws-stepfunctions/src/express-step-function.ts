@@ -1,3 +1,5 @@
+import type { StepFunctionProps } from "./step-function";
+
 export type ExpressStepFunctionHandler<
   In extends Record<string, unknown> = any,
   Out = any
