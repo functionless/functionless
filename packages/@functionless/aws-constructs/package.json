@@ -14,7 +14,7 @@
     "functionless.js": "bin/functionless.js"
   },
   "scripts": {
-    "build": "ts-node ./scripts/sdk-gen.ts && tsc --build",
+    "build": "ts-node ./scripts/sdk-gen.ts && tsc -b",
     "lint": "eslint --ext .ts,.tsx --fix --no-error-on-unmatched-pattern src test",
     "localstack": "./scripts/localstack",
     "test": "npm run test:fast && npm run test:runtime",
@@ -23,7 +23,7 @@
     "test:update": "jest --updateSnapshot",
     "test:watch": "jest --watch",
     "typecheck": "tsc -p ./tsconfig.dev.json --noEmit",
-    "dev": "tsc --build -w"
+    "dev": "tsc --watch"
   },
   "devDependencies": {
     "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",

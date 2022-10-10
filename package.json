@@ -7,12 +7,13 @@
   "license": "Apache-2.0",
   "scripts": {
     "clean:deep": "git clean -fqdx .",
-    "build:website": "turbo run build --filter=website",
+    "build:website": "turbo run build:website",
     "lint": "turbo run lint",
     "typecheck": "turbo run typecheck",
     "build": "turbo run build",
     "test": "turbo run test",
-    "prepare": "husky install"
+    "prepare": "husky install",
+    "dev": "turbo run dev --parallel"
   },
   "workspaces": {
     "packages": [

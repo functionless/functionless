@@ -2,14 +2,10 @@
   "extends": "../../tsconfig-base.json",
   "compilerOptions": {
     "outDir": "lib",
+    "rootDir": "src",
     "declaration": true,
     "inlineSourceMap": true
   },
   "include": ["."],
-  "exclude": ["lib", "test", "node_modules"],
-  "references": [
-    { "path": "../../packages/@functionless/aws-constructs" },
-    { "path": "../../packages/@functionless/aws" },
-    { "path": "../../packages/@functionless/fl-exp" }
-  ]
+  "exclude": ["lib", "test", "node_modules"]
 }

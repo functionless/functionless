@@ -1,14 +1,14 @@
 {
+  "files": [],
   "references": [
     { "path": "./packages/@functionless/ast" },
+    { "path": "./packages/@functionless/aws" },
     { "path": "./packages/@functionless/aws-constructs" },
     { "path": "./packages/@functionless/aws-util" },
-    { "path": "./packages/@functionless/util" },
     { "path": "./packages/@functionless/fl-exp" },
+    { "path": "./packages/@functionless/util" },
     { "path": "./apps/fl-exp-simple" },
     { "path": "./apps/website" },
     { "path": "./apps/test-app" }
-  ],
-  "files": [],
-  "include": []
+  ]
 }
