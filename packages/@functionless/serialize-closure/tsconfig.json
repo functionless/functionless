@@ -5,8 +5,7 @@
     "declaration": true,
     "inlineSourceMap": true,
     "resolveJsonModule": true,
-    "rootDir": "src",
-    "types": ["@types/node"]
+    "rootDir": "src"
   },
   "include": ["src", "src/globals.json"],
   "exclude": ["lib", "test", "node_modules"]

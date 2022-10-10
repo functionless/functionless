@@ -4,8 +4,7 @@
     "declaration": true,
     "inlineSourceMap": true,
     "esModuleInterop": true,
-    "rootDir": "src",
-    "types": ["@types/node"]
+    "rootDir": "src"
   },
   "include": ["src"],
   "exclude": ["lib", "node_modules"]

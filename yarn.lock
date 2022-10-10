@@ -2552,15 +2552,24 @@
   resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.3.2.tgz#da4601ec07af11953cf8c819df684c01b59b96f9"
   integrity sha512-XMBnxPh/0hwCKo92Zq96L+Qh8WCYINsyzx5NBLTevlmgv4CKo899Y05/4fT4o78jQEaXaeb3B6XpTt4i8bGxnw==
 
-"@functionless/aws@*", "@functionless/aws@^0.27.0":
-  version "0.27.0"
-  resolved "https://registry.yarnpkg.com/@functionless/aws/-/aws-0.27.0.tgz#e05cfbe9bfde2a63f7339d4f76686575bea54233"
-  integrity sha512-7eZl4zrr1cdZqfzaommY9wNW5vxTwTB6edQGAFFZYoqshXohOo9v2XTxP/+cddTauqg/urXqD1ID7V/Z/MPo3g==
+"@functionless/fl-exp@*", "@functionless/fl-exp@^0.27.1":
+  version "0.27.1"
+  resolved "https://registry.yarnpkg.com/@functionless/fl-exp/-/fl-exp-0.27.1.tgz#8bd3c74574df8cce4a57805a8b1e70ba8f1174b2"
+  integrity sha512-Jgu/PD1aPB2C7uYhS6soFPDa1PFqiFU234i4s+X9O3Suwe3OBK9Fd9r8LDrTq3D7Ukqy3+e2rYr1CJOUMUQb2Q==
   dependencies:
-    "@functionless/aws-constructs" "^0.27.0"
+    "@babel/core" "^7.19.3"
+    "@babel/plugin-transform-typescript" "^7.19.3"
+    "@functionless/ast-reflection" "^0.3.1"
+    "@functionless/aws" "^0.27.1"
+    "@functionless/aws-constructs" "^0.27.1"
     "@functionless/aws-util" "^0.27.0"
     "@functionless/util" "^0.27.0"
-    typesafe-dynamodb "^0.2.3"
+    "@types/aws-lambda" "^8.10.106"
+    commander "^9.4.0"
+    dependency-tree "^8.1.2"
+    express "^4.18.1"
+    open "^8.4.0"
+    toposort "^2.0.2"
 
 "@functionless/language-service@^0.0.4":
   version "0.0.4"

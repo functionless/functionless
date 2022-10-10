@@ -4,9 +4,8 @@
     "outDir": "lib",
     "declaration": true,
     "inlineSourceMap": true,
-    "rootDir": "src",
-    "types": ["@types/node"]
+    "rootDir": "src"
   },
-  "include": ["src", "src/native-context.ts"],
+  "include": ["src"],
   "exclude": ["lib", "test", "node_modules"]
 }
