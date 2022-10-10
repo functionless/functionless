@@ -1,7 +1,9 @@
-import { Expr } from "@functionless/ast";
-import { VTL } from "@functionless/vtl";
+import type { aws_iam } from "aws-cdk-lib";
+import type { Expr } from "@functionless/ast";
+import type { VTL } from "@functionless/vtl";
 
 export interface APIGatewayVTL extends VTL {
+  role: aws_iam.Role;
   /**
    * Attempt to return the expression as a valid escaped json string.
    *

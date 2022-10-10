@@ -1,5 +1,5 @@
 {
-  "name": "@functionless/aws-secretsmanager",
+  "name": "@functionless/aws-secretsmanager-constructs",
   "version": "0.27.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -12,7 +12,8 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/ast": "^0.27.0",
+    "@functionless/aws-lambda": "*",
+    "@functionless/aws-secretsmanager": "*",
     "aws-sdk": "^2"
   },
   "devDependencies": {

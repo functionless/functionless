@@ -22,6 +22,8 @@
     "@functionless/aws-events": "^0.27.0",
     "@functionless/aws-events-constructs": "^0.27.0",
     "@functionless/aws-lambda": "^0.27.0",
+    "@functionless/aws-secretsmanager": "^0.27.0",
+    "@functionless/aws-secretsmanager-constructs": "^0.27.0",
     "@functionless/aws-util": "^0.27.0",
     "@functionless/serialize-closure": "*",
     "@functionless/util": "^0.27.0",

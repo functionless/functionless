@@ -65,13 +65,13 @@ import {
   isEventBusConstruct,
 } from "@functionless/aws-events-constructs";
 import { ReflectionSymbols, validateFunctionLike } from "@functionless/ast";
-import { isSecret } from "@functionless/aws-secretsmanager";
+import { isSecret } from "@functionless/aws-secretsmanager-constructs";
 import {
   serializeClosure,
   serializeCodeWithSourceMap,
 } from "@functionless/serialize-closure";
 import { isStepFunction } from "@functionless/aws-stepfunctions";
-import { isTableConstruct } from "@functionless/aws-dynamodb-constructs";
+import { isTable } from "@functionless/aws-dynamodb";
 import {
   isNativeIntegration,
   LambdaClient,
@@ -393,12 +393,12 @@ abstract class FunctionBase<in Payload, Out>
     FunctionEventBusTargetProps | undefined
   > = {
     __payloadBrand: undefined as any,
-    target: (props, targetInput) =>
+    target: (props: any, targetInput: any) =>
       new aws_events_targets.LambdaFunction(this.resource, {
         ...props,
         event: targetInput,
       }),
-  };
+  } as any;
 
   public asl(call: CallExpr, context: ASL) {
     const payloadArg = call.args[0]?.expr;
@@ -1206,17 +1206,17 @@ export async function serialize(
        * https://github.com/functionless/functionless/issues/239
        */
       function transformResource(integ: unknown): any {
-        if (isTableConstruct(integ)) {
-          const { resource, appsync, ...rest } = integ;
+        if (isTable(integ)) {
+          const { resource, appsync, ...rest } = integ as any;
           return rest;
         } else if (
           integ &&
-          (isFunction(integ) ||
+          (isFunctionConstruct(integ) ||
             isStepFunction(integ) ||
             isEventBus(integ) ||
             isSecret(integ))
         ) {
-          const { resource, ...rest } = integ;
+          const { resource, ...rest } = integ as any;
           return rest;
         }
         return integ;

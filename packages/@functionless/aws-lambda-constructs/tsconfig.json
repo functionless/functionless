@@ -17,6 +17,8 @@
     { "path": "../aws-events" },
     { "path": "../aws-events-constructs" },
     { "path": "../aws-lambda" },
+    { "path": "../aws-secretsmanager" },
+    { "path": "../aws-secretsmanager-constructs" },
     { "path": "../aws-util" },
     { "path": "../serialize-closure" },
     { "path": "../util" }

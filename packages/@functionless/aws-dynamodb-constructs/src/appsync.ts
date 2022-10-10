@@ -1,35 +1,32 @@
-import { AttributeValue } from "typesafe-dynamodb/lib/attribute-value";
-import {
-  BatchGetItemAppsync,
-  createBatchGetItemAppsyncIntegration,
-} from "./batch-get-item";
 import {
   BatchDeleteItemAppsync,
+  BatchGetItemAppsync,
   BatchPutItemAppsync,
+  DeleteItemAppsync,
+  GetItemAppsync,
+  PutItemAppsync,
+  QueryAppsync,
+  TransactGetItemsAppsync,
+  UpdateItemAppsync,
+} from "@functionless/aws-dynamodb";
+import { AttributeValue } from "typesafe-dynamodb/lib/attribute-value";
+import { createBatchGetItemAppsyncIntegration } from "./batch-get-item";
+import {
   createBatchDeleteItemAppsyncIntegration,
   createBatchPutItemAppsyncIntegration,
 } from "./batch-write-item";
-import {
-  createDeleteItemAppsyncIntegration,
-  DeleteItemAppsync,
-} from "./delete-item";
-import { createGetItemAppsyncIntegration, GetItemAppsync } from "./get-item";
-import { createPutItemAppsyncIntegration, PutItemAppsync } from "./put-item";
-import { createQueryAppsyncIntegration, QueryAppsync } from "./query";
+import { createDeleteItemAppsyncIntegration } from "./delete-item";
+import { createGetItemAppsyncIntegration } from "./get-item";
+import { createPutItemAppsyncIntegration } from "./put-item";
+import { createQueryAppsyncIntegration } from "./query";
 import { createScanAppsyncIntegration, ScanAppsync } from "./scan";
 import { ITable } from "./table";
-import {
-  createTransactGetItemsAppsyncIntegration,
-  TransactGetItemsAppsync,
-} from "./transact-get-item";
+import { createTransactGetItemsAppsyncIntegration } from "./transact-get-item";
 import {
   createTransactWriteItemsAppsyncIntegration,
   TransactWriteItemsAppsync,
 } from "./transact-write-item";
-import {
-  createUpdateItemAppsyncIntegration,
-  UpdateItemAppsync,
-} from "./update-item";
+import { createUpdateItemAppsyncIntegration } from "./update-item";
 
 export class TableAppsyncApi<
   Item extends object,
