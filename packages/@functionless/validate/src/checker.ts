@@ -1017,6 +1017,3 @@ export function typeMatch(
   }
   return predicate(type);
 }
-
-// to prevent the closure serializer from trying to import all of functionless.
-export const deploymentOnlyModule = true;
