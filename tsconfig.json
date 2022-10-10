@@ -73,6 +73,9 @@
       "path": "packages/@functionless/aws-stepfunctions-constructs"
     },
     {
+      "path": "packages/@functionless/aws-stepfunctions-constructs-tests"
+    },
+    {
       "path": "packages/@functionless/aws-util"
     },
     {

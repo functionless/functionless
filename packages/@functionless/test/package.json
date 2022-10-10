@@ -9,7 +9,10 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@functionless/aws-lambda-constructs": "*"
+    "@functionless/asl-graph": "*",
+    "@functionless/aws-sdk": "*",
+    "@functionless/aws-lambda-constructs": "*",
+    "@functionless/aws-stepfunctions-constructs": "*"
   },
   "devDependencies": {
     "@types/node": "^16",

@@ -15,7 +15,16 @@
   ],
   "references": [
     {
+      "path": "../asl-graph"
+    },
+    {
       "path": "../aws-lambda-constructs"
+    },
+    {
+      "path": "../aws-sdk"
+    },
+    {
+      "path": "../aws-stepfunctions-constructs"
     }
   ]
 }

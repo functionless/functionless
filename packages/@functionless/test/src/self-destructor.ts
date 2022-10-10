@@ -6,7 +6,11 @@ import {
   PhysicalResourceIdReference,
 } from "aws-cdk-lib/custom-resources";
 import { Construct } from "constructs";
-import { $AWS, $SFN, Function, StepFunction, StepFunctionError } from "../src";
+
+import { $AWS } from "@functionless/aws-sdk";
+import { StepFunctionError } from "@functionless/asl-graph";
+import { Function } from "@functionless/aws-lambda-constructs";
+import { $SFN, StepFunction } from "@functionless/aws-stepfunctions-constructs";
 
 export interface SelfDestructorProps extends SelfDestructorMachineProps {}
 

@@ -13,6 +13,10 @@
   "dependencies": {
     "@functionless/asl-graph": "*",
     "@functionless/ast": "*",
+    "@functionless/aws-lambda": "*",
+    "@functionless/aws-lambda-constructs": "*",
+    "@functionless/aws-events": "*",
+    "@functionless/aws-events-constructs": "*",
     "@functionless/error-code": "*"
   },
   "devDependencies": {
