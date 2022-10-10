@@ -1,3 +1,5 @@
+import "jest";
+
 import * as cxapi from "@aws-cdk/cx-api";
 import { App, CfnOutput, Stack } from "aws-cdk-lib";
 import { ArnPrincipal, Role } from "aws-cdk-lib/aws-iam";
@@ -14,8 +16,7 @@ import AWS, {
 } from "aws-sdk";
 import { ServiceConfigurationOptions } from "aws-sdk/lib/service";
 import { Construct } from "constructs";
-import { asyncSynth } from "../src/async-synth";
-import { Function } from "../src/function";
+import { Function, asyncSynth } from "@functionless/aws-lambda-constructs";
 import { SelfDestructor, SelfDestructorProps } from "./self-destructor";
 
 const selfDestructDelay = Number(process.env.TEST_SELF_DESTRUCT_DELAY_SECONDS);

@@ -1,5 +1,5 @@
 {
-  "name": "@functionless/fl-exp",
+  "name": "@functionless/cli",
   "version": "0.27.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
