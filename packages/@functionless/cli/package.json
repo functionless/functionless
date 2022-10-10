@@ -1,6 +1,6 @@
 {
   "name": "@functionless/cli",
-  "version": "0.27.0",
+  "version": "0.27.1",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "bin": {
@@ -23,8 +23,8 @@
     "@babel/core": "^7.19.3",
     "@babel/plugin-transform-typescript": "^7.19.3",
     "@functionless/ast-reflection": "^0.3.1",
-    "@functionless/aws": "^0.27.0",
-    "@functionless/aws-constructs": "^0.27.0",
+    "@functionless/aws": "^0.27.1",
+    "@functionless/aws-constructs": "^0.27.1",
     "@functionless/aws-util": "^0.27.0",
     "@functionless/util": "^0.27.0",
     "@types/aws-lambda": "^8.10.106",
