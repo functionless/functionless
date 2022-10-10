@@ -45,7 +45,7 @@
   ],
   "references": [
     {
-      "path": "@functionless/aws-constructs"
+      "path": "../../packages/@functionless/aws-constructs"
     }
   ]
 }

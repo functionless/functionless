@@ -16,25 +16,25 @@
   ],
   "references": [
     {
-      "path": "@functionless/asl-graph"
+      "path": "../asl-graph"
     },
     {
-      "path": "@functionless/ast"
+      "path": "../ast"
     },
     {
-      "path": "@functionless/aws-apigateway"
+      "path": "../aws-apigateway"
     },
     {
-      "path": "@functionless/aws-appsync"
+      "path": "../aws-appsync"
     },
     {
-      "path": "@functionless/aws-events"
+      "path": "../aws-events"
     },
     {
-      "path": "@functionless/aws-lambda"
+      "path": "../aws-lambda"
     },
     {
-      "path": "@functionless/util"
+      "path": "../util"
     }
   ]
 }

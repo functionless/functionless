@@ -16,16 +16,16 @@
   ],
   "references": [
     {
-      "path": "@functionless/ast"
+      "path": "../ast"
     },
     {
-      "path": "@functionless/aws-lambda"
+      "path": "../aws-lambda"
     },
     {
-      "path": "@functionless/aws-stepfunctions"
+      "path": "../aws-stepfunctions"
     },
     {
-      "path": "@functionless/vtl"
+      "path": "../vtl"
     }
   ]
 }

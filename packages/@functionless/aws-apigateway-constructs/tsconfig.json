@@ -16,13 +16,13 @@
   ],
   "references": [
     {
-      "path": "@functionless/ast"
+      "path": "../ast"
     },
     {
-      "path": "@functionless/aws-apigateway"
+      "path": "../aws-apigateway"
     },
     {
-      "path": "@functionless/vtl"
+      "path": "../vtl"
     }
   ]
 }

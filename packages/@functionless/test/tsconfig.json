@@ -15,7 +15,7 @@
   ],
   "references": [
     {
-      "path": "@functionless/aws-lambda-constructs"
+      "path": "../aws-lambda-constructs"
     }
   ]
 }

@@ -16,7 +16,7 @@
   ],
   "references": [
     {
-      "path": "@functionless/aws-lambda"
+      "path": "../aws-lambda"
     }
   ]
 }

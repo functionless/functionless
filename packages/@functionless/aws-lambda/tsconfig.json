@@ -16,16 +16,16 @@
   ],
   "references": [
     {
-      "path": "@functionless/ast"
+      "path": "../ast"
     },
     {
-      "path": "@functionless/aws-util"
+      "path": "../aws-util"
     },
     {
-      "path": "@functionless/serde"
+      "path": "../serde"
     },
     {
-      "path": "@functionless/util"
+      "path": "../util"
     }
   ]
 }

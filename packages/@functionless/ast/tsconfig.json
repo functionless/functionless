@@ -15,7 +15,7 @@
   ],
   "references": [
     {
-      "path": "@functionless/error-code"
+      "path": "../error-code"
     }
   ]
 }

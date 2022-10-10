@@ -65,14 +65,18 @@ async function patchNestedTsConfig(roots) {
           ...Object.keys(pkgJson.dependencies ?? {}),
           ...Object.keys(pkgJson.devDependencies ?? {}),
           ...Object.keys(pkgJson.peerDependencies ?? {}),
-        ].filter(
-          (dep) =>
-            dep.startsWith("@functionless") &&
-            ![
-              "@functionless/ast-reflection",
-              "@functionless/nodejs-closure-serializer",
-            ].includes(dep)
-        )
+        ]
+          .filter(
+            (dep) =>
+              dep.startsWith("@functionless") &&
+              ![
+                "@functionless/ast-reflection",
+                "@functionless/nodejs-closure-serializer",
+              ].includes(dep)
+          )
+          .map((pkgName) =>
+            path.relative(rootDir, path.resolve(pwd, "packages", pkgName))
+          )
       );
 
       await patchTsConfig(

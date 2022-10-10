@@ -16,10 +16,10 @@
   ],
   "references": [
     {
-      "path": "@functionless/aws-lambda"
+      "path": "../aws-lambda"
     },
     {
-      "path": "@functionless/aws-secretsmanager"
+      "path": "../aws-secretsmanager"
     }
   ]
 }

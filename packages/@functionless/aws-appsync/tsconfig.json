@@ -16,7 +16,7 @@
   ],
   "references": [
     {
-      "path": "@functionless/vtl"
+      "path": "../vtl"
     }
   ]
 }

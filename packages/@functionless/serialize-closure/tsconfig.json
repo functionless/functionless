@@ -18,7 +18,7 @@
   ],
   "references": [
     {
-      "path": "@functionless/ast"
+      "path": "../ast"
     }
   ]
 }

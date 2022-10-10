@@ -16,13 +16,13 @@
   ],
   "references": [
     {
-      "path": "@functionless/aws-constructs"
+      "path": "../aws-constructs"
     },
     {
-      "path": "@functionless/aws-util"
+      "path": "../aws-util"
     },
     {
-      "path": "@functionless/util"
+      "path": "../util"
     }
   ]
 }

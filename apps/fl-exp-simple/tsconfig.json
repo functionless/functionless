@@ -15,19 +15,19 @@
   ],
   "references": [
     {
-      "path": "@functionless/aws"
+      "path": "../../packages/@functionless/aws"
     },
     {
-      "path": "@functionless/aws-constructs"
+      "path": "../../packages/@functionless/aws-constructs"
     },
     {
-      "path": "@functionless/fl-exp"
+      "path": "../../packages/@functionless/fl-exp"
     },
     {
-      "path": "@functionless/language-service"
+      "path": "../../packages/@functionless/language-service"
     },
     {
-      "path": "@functionless/register"
+      "path": "../../packages/@functionless/register"
     }
   ]
 }

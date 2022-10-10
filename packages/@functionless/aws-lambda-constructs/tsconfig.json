@@ -16,43 +16,43 @@
   ],
   "references": [
     {
-      "path": "@functionless/asl-graph"
+      "path": "../asl-graph"
     },
     {
-      "path": "@functionless/ast"
+      "path": "../ast"
     },
     {
-      "path": "@functionless/aws-apigateway"
+      "path": "../aws-apigateway"
     },
     {
-      "path": "@functionless/aws-appsync"
+      "path": "../aws-appsync"
     },
     {
-      "path": "@functionless/aws-dynamodb"
+      "path": "../aws-dynamodb"
     },
     {
-      "path": "@functionless/aws-events-constructs"
+      "path": "../aws-events-constructs"
     },
     {
-      "path": "@functionless/aws-events"
+      "path": "../aws-events"
     },
     {
-      "path": "@functionless/aws-lambda"
+      "path": "../aws-lambda"
     },
     {
-      "path": "@functionless/aws-secretsmanager-constructs"
+      "path": "../aws-secretsmanager-constructs"
     },
     {
-      "path": "@functionless/aws-secretsmanager"
+      "path": "../aws-secretsmanager"
     },
     {
-      "path": "@functionless/aws-util"
+      "path": "../aws-util"
     },
     {
-      "path": "@functionless/serialize-closure"
+      "path": "../serialize-closure"
     },
     {
-      "path": "@functionless/util"
+      "path": "../util"
     }
   ]
 }

@@ -16,10 +16,10 @@
   ],
   "references": [
     {
-      "path": "@functionless/ast"
+      "path": "../ast"
     },
     {
-      "path": "@functionless/aws-lambda"
+      "path": "../aws-lambda"
     }
   ]
 }

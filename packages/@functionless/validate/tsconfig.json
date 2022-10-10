@@ -15,19 +15,19 @@
   ],
   "references": [
     {
-      "path": "@functionless/aws-apigateway-constructs"
+      "path": "../aws-apigateway-constructs"
     },
     {
-      "path": "@functionless/aws-appsync-constructs"
+      "path": "../aws-appsync-constructs"
     },
     {
-      "path": "@functionless/aws-dynamodb-constructs"
+      "path": "../aws-dynamodb-constructs"
     },
     {
-      "path": "@functionless/aws-events-constructs"
+      "path": "../aws-events-constructs"
     },
     {
-      "path": "@functionless/aws-lambda-constructs"
+      "path": "../aws-lambda-constructs"
     }
   ]
 }

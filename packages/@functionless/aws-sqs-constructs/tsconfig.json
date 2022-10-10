@@ -16,25 +16,25 @@
   ],
   "references": [
     {
-      "path": "@functionless/asl-graph"
+      "path": "../asl-graph"
     },
     {
-      "path": "@functionless/ast"
+      "path": "../ast"
     },
     {
-      "path": "@functionless/aws-events"
+      "path": "../aws-events"
     },
     {
-      "path": "@functionless/aws-lambda"
+      "path": "../aws-lambda"
     },
     {
-      "path": "@functionless/aws-lambda-constructs"
+      "path": "../aws-lambda-constructs"
     },
     {
-      "path": "@functionless/aws-sqs"
+      "path": "../aws-sqs"
     },
     {
-      "path": "@functionless/serde"
+      "path": "../serde"
     }
   ]
 }

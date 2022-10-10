@@ -15,13 +15,13 @@
   ],
   "references": [
     {
-      "path": "@functionless/asl-graph"
+      "path": "../asl-graph"
     },
     {
-      "path": "@functionless/ast"
+      "path": "../ast"
     },
     {
-      "path": "@functionless/error-code"
+      "path": "../error-code"
     }
   ]
 }
