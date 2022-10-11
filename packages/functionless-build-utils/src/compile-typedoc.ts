@@ -16,8 +16,8 @@ async function main() {
     },
     {
       id: "load-content",
-      entryPointStrategy: "packages",
-      entryPoints: [rootDir],
+      entryPointStrategy: "expand",
+      entryPoints: [path.join(rootDir, "src", "index.ts")],
       sidebar: {
         fullNames: true,
         categoryLabel: pkgJson.name,
