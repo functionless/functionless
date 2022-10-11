@@ -3,24 +3,34 @@ import { Template } from "aws-cdk-lib/assertions";
 import { Pass } from "aws-cdk-lib/aws-stepfunctions";
 import "jest";
 import type * as AWS from "aws-sdk";
-import * as functionless from "../src";
+
 import {
-  $AWS,
-  $SFN,
-  ErrorCodes,
-  Event,
-  EventBus,
-  ExpressStepFunction,
-  Queue,
-  Serializer,
-  StepFunction,
+  StateMachine,
+  States,
   StepFunctionError,
+  Task,
+} from "@functionless/asl-graph";
+import { Function } from "@functionless/aws-lambda-constructs";
+import {
+  initStepFunctionApp,
+  normalizeCDKJson,
+  Person,
+} from "@functionless/test";
+import {
+  $SFN,
+  ExpressStepFunction,
+  StepFunction,
   SyncExecutionResult,
-  SynthError,
-} from "../src";
-import { StateMachine, States, Task } from "../src/asl";
-import { Function } from "../src/function";
-import { initStepFunctionApp, normalizeCDKJson, Person } from "./util";
+} from "@functionless/aws-stepfunctions-constructs";
+import { Event } from "@functionless/aws-events";
+import { EventBus } from "@functionless/aws-events-constructs";
+import { $AWS } from "@functionless/aws-sdk";
+
+import * as functionless from "@functionless/asl-graph";
+import { ErrorCodes, SynthError } from "@functionless/error-code";
+import { Queue } from "@functionless/aws-sqs-constructs";
+import { Serializer } from "@functionless/serde";
+
 /**
  * Removes randomized values (CDK token strings) form the definitions.
  */

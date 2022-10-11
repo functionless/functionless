@@ -21,7 +21,8 @@
     "amplify-appsync-simulator": "^2.4.1",
     "aws-cdk": "2.44.0",
     "cdk-assets": "2.44.0",
-    "promptly": "^3.2.0"
+    "promptly": "^3.2.0",
+    "proxy-agent": "^5.0.0"
   },
   "peerDependencies": {
     "aws-cdk-lib": "2.44.0"

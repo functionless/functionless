@@ -14,6 +14,7 @@
     "typecheck": "tsc -b",
     "build": "turbo run build",
     "test": "turbo run test",
+    "test:aws": "TEST_DEPLOY_TARGET=AWS yarn test",
     "prepare": "husky install && yarn doctor",
     "doctor": "yarn doctor:references && yarn doctor:readmes",
     "doctor:references": "node ./scripts/fix-ts-references.js",

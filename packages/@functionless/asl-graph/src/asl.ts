@@ -77,6 +77,7 @@ import {
   isVariableDeclList,
   isVariableReference,
   isVariableStmt,
+  isVoidExpr,
   isWhileStmt,
   isWithStmt,
   NullLiteralExpr,
@@ -2179,6 +2180,14 @@ export class ASL {
         value: expr.value ?? null,
         containsJsonPath: false,
       };
+    } else if (isVoidExpr(expr)) {
+      return this.evalExpr(expr.expr, () => {
+        return <ASLGraph.NodeResults>{
+          output: {
+            value: null,
+          },
+        };
+      });
     } else if (isUnaryExpr(expr) || isPostfixUnaryExpr(expr)) {
       if (expr.op === "!") {
         const constant = evalToConstant(expr);

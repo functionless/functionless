@@ -1894,6 +1894,10 @@ export interface IStepFunction<
       input: StepFunctionRequest<Payload>
     ) => Promise<AWS.StepFunctions.StartExecutionOutput>
   >;
+
+  (
+    input: StepFunctionRequest<Payload>
+  ): Promise<AWS.StepFunctions.StartExecutionOutput>;
 }
 
 interface BaseStandardStepFunction<
