@@ -18,6 +18,9 @@
     },
     "test": {
       "dependsOn": ["^build"]
+    },
+    "test:smoke": {
+      "dependsOn": ["^build"]
     }
   }
 }

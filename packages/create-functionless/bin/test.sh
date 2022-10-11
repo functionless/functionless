@@ -24,7 +24,7 @@ function clean_up() {
 
 trap clean_up EXIT
 
-# test_case test-npm
+test_case test-npm
 
 test_case test-yarn
 

@@ -1,6 +1,6 @@
 {
   "name": "create-functionless",
-  "version": "0.1.0",
+  "version": "0.0.0",
   "description": "Create a Functionless app.",
   "files": [
     "dist",
@@ -11,14 +11,8 @@
   },
   "scripts": {
     "build": "esbuild --bundle src/index.ts --outfile=dist/index.js --platform=node",
-    "test": "./bin/test.sh",
-    "test:experimental": "./bin/test-devx.sh",
-    "test:npm": "./bin/test-npm.sh",
-    "test:yarn": "./bin/test-yarn.sh",
-    "typecheck": "tsc --noEmit",
-    "prerelease": "rimraf ./dist/",
-    "release": "esbuild --bundle src/index.ts --outfile=dist/index.js --platform=node",
-    "prepublishOnly": "npm run release"
+    "test:smoke": "./bin/test.sh",
+    "typecheck": "tsc --noEmit"
   },
   "keywords": [
     "functionless"
@@ -37,24 +31,14 @@
     "commander": "^9.4.0",
     "cross-spawn": "^7.0.3",
     "esbuild": "0.15.9",
-    "fl-exp": "^1.0.3",
-    "functionless": "^0.22.6",
+    "fl-exp": "*",
+    "functionless": "*",
     "mustache": "^4.2.0",
     "prompts": "^2.4.2",
     "rimraf": "^3.0.2",
-    "semantic-release": "^19.0.5",
     "typescript": "^4.8.3",
     "uuid": "^9.0.0",
     "validate-npm-package-name": "^4.0.0"
-  },
-  "release": {
-    "branches": [
-      "main",
-      {
-        "name": "dev",
-        "prerelease": true
-      }
-    ]
   },
   "publishConfig": {
     "access": "public"
