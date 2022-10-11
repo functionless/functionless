@@ -16,7 +16,7 @@ describe("topo", () => {
 
     const template = JSON.parse(file.toString()) as CloudFormationTemplate;
 
-    const graph = buildDependencyGraph(template);
+    const graph = await buildDependencyGraph(template);
     console.log(graph);
     console.log(topoSortWithLevels(graph));
     displayTopoOrder(template);
@@ -29,14 +29,14 @@ describe("topo", () => {
 
     const template = JSON.parse(file.toString()) as CloudFormationTemplate;
 
-    const graph = buildDependencyGraph(template);
+    const graph = await buildDependencyGraph(template);
     console.log(topoSortWithLevels(graph));
   });
 });
 
 describe("condition graph", () => {
-  test("basic", () => {
-    const g = buildConditionDependencyGraph({
+  test("basic", async () => {
+    const g = await buildConditionDependencyGraph({
       Resources: {},
       AWSTemplateFormatVersion: "2010-09-09",
       Parameters: { Env: { Type: "String" } },
@@ -50,8 +50,8 @@ describe("condition graph", () => {
     });
   });
 
-  test("depends on condition", () => {
-    const g = buildConditionDependencyGraph({
+  test("depends on condition", async () => {
+    const g = await buildConditionDependencyGraph({
       Resources: {},
       AWSTemplateFormatVersion: "2010-09-09",
       Parameters: { Env: { Type: "String" } },
@@ -67,8 +67,8 @@ describe("condition graph", () => {
     });
   });
 
-  test("and mapping", () => {
-    const g = buildConditionDependencyGraph({
+  test("and mapping", async () => {
+    const g = await buildConditionDependencyGraph({
       Resources: {},
       AWSTemplateFormatVersion: "2010-09-09",
       Parameters: { Env: { Type: "String" } },

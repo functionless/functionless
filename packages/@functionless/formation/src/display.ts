@@ -11,11 +11,11 @@ const COLORS: typeof Color[] = [
   "magenta",
 ];
 
-export function displayTopoOrder(
+export async function displayTopoOrder(
   template: CloudFormationTemplate,
   color?: boolean
 ) {
-  const graph = buildDependencyGraph(template);
+  const graph = await buildDependencyGraph(template);
   const topoResult = topoSortWithLevels(graph, true);
 
   console.log(

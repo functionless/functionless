@@ -251,7 +251,7 @@ export class Stack {
     }
     const state: BaseState = {
       previousState: this.state.template,
-      previousDependencyGraph: buildDependencyGraph(this.state.template),
+      previousDependencyGraph: await buildDependencyGraph(this.state.template),
       modules: {}, // initialize with empty state
     };
 
@@ -490,10 +490,10 @@ export class Stack {
     const state: UpdateState = {
       previousState: this.state?.template,
       previousDependencyGraph: this.state?.template
-        ? buildDependencyGraph(this.state.template)
+        ? await buildDependencyGraph(this.state.template)
         : undefined,
       desiredState: desiredState,
-      desiredDependencyGraph: buildDependencyGraph(desiredState),
+      desiredDependencyGraph: await buildDependencyGraph(desiredState),
       parameterValues: parameterValues ?? {},
       modules: {},
     };
@@ -677,6 +677,7 @@ ${metricsMessage}`);
     conditionValues: Record<string, boolean>;
     logicalIdsToDelete?: string[];
     logicalIdsToCreateOrUpdate?: string[];
+    logicalIdsToSkipUpdate?: string[];
   }> {
     // what assets need to be uploaded?
     const assetManifest = assetManifestFile
@@ -702,10 +703,10 @@ ${metricsMessage}`);
     const state: UpdateState = {
       previousState: this.state?.template,
       previousDependencyGraph: this.state?.template
-        ? buildDependencyGraph(this.state.template)
+        ? await buildDependencyGraph(this.state.template)
         : undefined,
       desiredState: desiredState,
-      desiredDependencyGraph: buildDependencyGraph(desiredState),
+      desiredDependencyGraph: await buildDependencyGraph(desiredState),
       parameterValues: parameterValues ?? {},
       modules: {},
     };
@@ -816,7 +817,8 @@ ${metricsMessage}`);
     // check for deletions
 
     // TODO: separate create (new), update (changed, dependency changed), and keep
-    const logicalIdsToCreateOrUpdate = Object.entries(
+    // TODO: support UNKNOWN when condition is not resolvable
+    const logicalIdsToKeepOrCreate = Object.entries(
       state.desiredState?.Resources ?? {}
     )
       // do not create when the condition is false.
@@ -829,7 +831,7 @@ ${metricsMessage}`);
         ...Object.keys(state.desiredState?.Resources ?? {}),
         ...Object.keys(state.previousState?.Resources ?? {}),
       ]),
-    ].filter((k) => !logicalIdsToCreateOrUpdate.includes(k));
+    ].filter((k) => !logicalIdsToKeepOrCreate.includes(k));
 
     const topoPrevious = state.previousDependencyGraph
       ? topoSortWithLevels(state.previousDependencyGraph)
@@ -842,7 +844,7 @@ ${metricsMessage}`);
 
     const createUpdateMap = Object.fromEntries(
       await Promise.all(
-        logicalIdsToCreateOrUpdate.map(async (logicalId) => {
+        logicalIdsToKeepOrCreate.map(async (logicalId) => {
           return [
             logicalId,
             await computeResourceOperation(
@@ -850,19 +852,36 @@ ${metricsMessage}`);
               this.getLogicalResource(logicalId, state),
               this.getPhysicalResource(logicalId)
             ),
-          ];
+          ] as const;
         })
       )
     );
 
-    const topoDesired = state.desiredDependencyGraph
-      ? topoSortWithLevels(state.desiredDependencyGraph)
-      : undefined;
+    const logicalIdsToSkipUpdate = Object.entries(createUpdateMap)
+      .filter(([, op]) => op === "SKIP_UPDATE")
+      .map(([k]) => k);
+
+    const logicalIdsToCreateOrUpdate = logicalIdsToKeepOrCreate.filter(
+      (l) => !logicalIdsToSkipUpdate.includes(l)
+    );
+
+    const desiredUpdatedGraph = await buildDependencyGraph(
+      state.desiredState,
+      templateResolver,
+      false
+    );
+    const topoDesired = topoSortWithLevels(desiredUpdatedGraph);
     const topoCreateUpdate = topoDesired?.filter((x) =>
       logicalIdsToCreateOrUpdate.includes(x.resourceId)
     );
 
+    // TODO display elsewhere.
     const displayEntry: TopoDisplayEntry[] = [
+      ...logicalIdsToSkipUpdate?.map((x) => ({
+        name: x,
+        level: 1,
+        additional: "SKIP_UPDATE",
+      })),
       ...(topoCreateUpdate?.map((x) => ({
         name: x.resourceId,
         level: x.level,
@@ -886,6 +905,7 @@ ${metricsMessage}`);
       conditionValues,
       logicalIdsToDelete,
       logicalIdsToCreateOrUpdate,
+      logicalIdsToSkipUpdate,
     };
   }
 

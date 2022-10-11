@@ -1,17 +1,8 @@
-import { Expression } from "./expression";
-import {
-  isIntrinsicFunction,
-  isRef,
-  isFnGetAtt,
-  isFnIf,
-  isFnFindInMap,
-} from "./function";
-import { isConditionRef } from "./condition";
-import { isPseudoParameter, PseudoParameter } from "./pseudo-parameter";
+import { PseudoParameter } from "./pseudo-parameter";
 import type { Stack } from "./stack";
 import { CloudFormationTemplate } from "./template";
 import { guard } from "./util";
-import { isRuleFunction, RuleFunction } from "./rule";
+import { TemplateResolver } from "./resolve-template";
 
 export interface ConditionReference {
   condition: string;
@@ -81,19 +72,30 @@ export interface ConditionDependencyGraph {
  * @returns the {@link ResourceDependencyGraph} for the {@link CloudFormationTemplate}.
  * @throws an Error if the stack is invalid, for example when there are any circular references in the template
  */
-export function buildDependencyGraph(
-  template: CloudFormationTemplate
-): ResourceDependencyGraph {
+export async function buildDependencyGraph(
+  template: CloudFormationTemplate,
+  templateResolver?: TemplateResolver,
+  includeResolved?: boolean
+): Promise<ResourceDependencyGraph> {
+  const _templateResolver =
+    templateResolver ?? new TemplateResolver(template, {});
   const graph: ResourceDependencyGraph = Object.fromEntries(
-    Object.entries(template.Resources).map(([logicalId, resource]) => {
-      const deps = [
-        ...(resource.Properties
-          ? Array.from(new Set(findReferences(resource.Properties)))
-          : []),
-        ...(resource.DependsOn ?? []),
-      ].map((x) => referenceStringToDependency(template, x));
-      return [logicalId, deps];
-    })
+    await Promise.all(
+      Object.entries(template.Resources).map(async ([logicalId, resource]) => {
+        const result = resource.Properties
+          ? await _templateResolver.evaluateExpr(resource.Properties)
+          : undefined;
+
+        return [
+          logicalId,
+          [
+            ...((includeResolved && result?.resolvedDependencies) || []),
+            ...(result?.unresolvedDependencies ?? []),
+            resource.DependsOn?.map((x) => ({ logicalId: x })),
+          ],
+        ];
+      })
+    )
   );
 
   const circularReferences = findCircularResourceReferences(graph);
@@ -106,20 +108,27 @@ export function buildDependencyGraph(
   return graph;
 }
 
-export function buildConditionDependencyGraph(
+export async function buildConditionDependencyGraph(
   template: CloudFormationTemplate
-): ConditionDependencyGraph {
+): Promise<ConditionDependencyGraph> {
+  const templateResolver = new TemplateResolver(template, {});
   const graph: ConditionDependencyGraph = Object.fromEntries(
-    Object.entries(template.Conditions ?? {}).map(([logicalId, condition]) => {
-      const deps = findReferences(condition).map((x) => {
-        const d = referenceStringToDependency(template, x);
-        if (isResourceReference(d)) {
-          throw new Error("Conditions cannot reference resources: " + x);
+    await Promise.all(
+      Object.entries(template.Conditions ?? {}).map(
+        async ([logicalId, condition]) => {
+          const results = await templateResolver.evaluateRuleFunction(
+            condition
+          );
+          return [
+            logicalId,
+            [
+              ...(results.resolvedDependencies ?? []),
+              ...(results.unresolvedDependencies ?? []),
+            ],
+          ];
         }
-        return d;
-      });
-      return [logicalId, deps];
-    })
+      )
+    )
   );
 
   const circularReferences = findCircularConditionReferences(graph);
@@ -130,23 +139,6 @@ export function buildConditionDependencyGraph(
   }
 
   return graph;
-}
-
-function referenceStringToDependency(
-  template: CloudFormationTemplate,
-  reference: string
-): Dependency {
-  if (reference in template.Resources) {
-    return { logicalId: reference };
-  } else if (reference in (template.Conditions ?? {})) {
-    return { condition: reference };
-  } else if (reference in (template.Mappings ?? {})) {
-    return { mapping: reference };
-  } else if (reference in (template.Parameters ?? {})) {
-    return { parameter: reference };
-  }
-
-  throw new Error("Reference is not found in the template: " + reference);
 }
 
 export interface TopoEntry {
@@ -284,74 +276,6 @@ export function findCircularConditionReferences(
   return findCircularReferences(graph, (deps) =>
     deps.filter(isConditionReference).map(({ condition }) => condition)
   );
-}
-
-/**
- * Find references in intrinsic expressions until we run out of values or
- * a rule function is found.
- */
-function findReferences(expr: Expression | RuleFunction): string[] {
-  // is a rile function, except for Condition:
-  // Condition can be ambiguous with a object in a Resource
-  // with the key Condition.
-  if (isRuleFunction(expr) && !isConditionRef(expr)) {
-    return findConditionReferences(expr);
-  } else if (isIntrinsicFunction(expr)) {
-    if (isRef(expr)) {
-      if (isPseudoParameter(expr.Ref)) {
-        return [];
-      }
-      return [expr.Ref];
-    } else if (isFnGetAtt(expr)) {
-      return [expr["Fn::GetAtt"][0]];
-    } else if (isFnFindInMap(expr)) {
-      const [mapName, ...tail] = expr["Fn::FindInMap"];
-      return [mapName, ...findReferences(tail)];
-    } else if (isFnIf(expr)) {
-      const [condition, ...tail] = expr["Fn::If"];
-      return [
-        ...(typeof condition === "string"
-          ? // is a condition reference
-            condition
-          : // is another intrinsic - this is a divergence from the cfn spec that functionless/formation supports.
-            findConditionReferences(condition)),
-        ...findReferences(tail),
-      ];
-    } else {
-      return Object.values(expr).flatMap((e) => findReferences(e));
-    }
-    // TODO: RuleFunctions
-  } else if (!!expr) {
-    if (Array.isArray(expr)) {
-      return expr.flatMap((e) => findReferences(e));
-    } else if (typeof expr === "object") {
-      return Object.values(expr).flatMap((e) => findReferences(e));
-    }
-  }
-  return [];
-}
-
-/**
- * Find references in conditions until we run out of values or a non-condition
- * intrinsic function is found.
- */
-function findConditionReferences(expr: Expression | RuleFunction): string[] {
-  if (isIntrinsicFunction(expr)) {
-    return findReferences(expr);
-  } else if (isRuleFunction(expr)) {
-    if (isConditionRef(expr)) {
-      return [expr.Condition];
-    } else {
-      return Object.values(expr).flatMap((e) => findConditionReferences(e));
-    }
-  } else if (!!expr) {
-    if (Array.isArray(expr)) {
-      return expr.flatMap((e) => findConditionReferences(e));
-    } else if (typeof expr === "object") {
-      return Object.values(expr).flatMap((e) => findConditionReferences(e));
-    }
-  }
-  return [];
 }
 
 /**

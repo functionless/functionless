@@ -15,7 +15,7 @@ program
     const templateStr = (await fs.readFile(t)).toString("utf-8");
     const template = JSON.parse(templateStr) as CloudFormationTemplate;
 
-    console.log(displayTopoOrder(template, true));
+    console.log(await displayTopoOrder(template, true));
   });
 
 program
