@@ -14,6 +14,7 @@
   "devDependencies": {
     "@types/jest": "^29.0.3",
     "@types/node": "^16",
+    "@functionless/jest": "*",
     "functionless-build-utils": "*",
     "jest": "^29.0.3",
     "ts-jest": "^29.0.2",
@@ -35,7 +36,7 @@
     ],
     "transform": {
       "^.+\\.(t|j)sx?$": [
-        "ts-jest",
+        "@functionless/jest",
         {}
       ]
     },
