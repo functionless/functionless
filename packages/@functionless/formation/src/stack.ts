@@ -796,7 +796,7 @@ ${metricsMessage}`);
     // TODO rules
     // TODO unresolved conditions with parameters
 
-    const conditionGraph = buildConditionDependencyGraph(desiredState);
+    const conditionGraph = await buildConditionDependencyGraph(desiredState);
 
     console.log(conditionGraph);
 
@@ -833,12 +833,14 @@ ${metricsMessage}`);
       ]),
     ].filter((k) => !logicalIdsToKeepOrCreate.includes(k));
 
-    const topoPrevious = state.previousDependencyGraph
-      ? topoSortWithLevels(state.previousDependencyGraph)
+    // topologically sort using only the deleted keys
+    const deleteTopo = state.previousDependencyGraph
+      ? topoSortWithLevels(
+          state.previousDependencyGraph,
+          true,
+          logicalIdsToDelete
+        )
       : undefined;
-    const deleteTopo = topoPrevious
-      ?.filter((x) => logicalIdsToDelete.includes(x.resourceId))
-      .reverse();
 
     // check for add/update/delete
 
@@ -870,9 +872,12 @@ ${metricsMessage}`);
       templateResolver,
       false
     );
-    const topoDesired = topoSortWithLevels(desiredUpdatedGraph);
-    const topoCreateUpdate = topoDesired?.filter((x) =>
-      logicalIdsToCreateOrUpdate.includes(x.resourceId)
+
+    // topologically sort with only the ids being created
+    const topoCreateUpdate = topoSortWithLevels(
+      desiredUpdatedGraph,
+      true,
+      logicalIdsToCreateOrUpdate
     );
 
     // TODO display elsewhere.

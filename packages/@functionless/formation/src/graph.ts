@@ -169,9 +169,12 @@ export interface TopoEntry {
  */
 export function topoSortWithLevels(
   graph: ResourceDependencyGraph,
-  improvedOrder?: boolean
+  improvedOrder?: boolean,
+  filterIds?: string[]
 ): TopoEntry[] {
-  const randomOrderKeys = Object.keys(graph);
+  const randomOrderKeys = filterIds
+    ? Object.keys(graph).filter((x) => filterIds.includes(x))
+    : Object.keys(graph);
 
   // run once using the random ordered keys
   const topo1 = topoSort(randomOrderKeys);
@@ -198,7 +201,7 @@ export function topoSortWithLevels(
 
     keys.forEach(visit);
 
-    return Object.keys(graph)
+    return randomOrderKeys
       .map((node) => ({
         resourceId: node,
         level: depth[node]!,
@@ -216,9 +219,9 @@ export function topoSortWithLevels(
         return depth[node]!;
       }
       pres[node] = pre++;
-      const depths = graph[node]!.filter(isResourceReference).map((r) =>
-        visit(r.logicalId)
-      );
+      const depths = graph[node]!.filter(isResourceReference)
+        .filter((x) => !filterIds || filterIds.includes(x.logicalId))
+        .map((r) => visit(r.logicalId));
       if (depths.length === 0) {
         depth[node] = 1;
       } else {
