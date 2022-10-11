@@ -125,7 +125,8 @@ export type ResourceOperation =
   | "SKIP_UPDATE"
   | "UPDATE"
   | "CREATE"
-  | "MAYBE_UPDATE";
+  | "MAYBE_UPDATE"
+  | "DELETE";
 
 export async function computeResourceOperation(
   templateResolver: TemplateResolver,

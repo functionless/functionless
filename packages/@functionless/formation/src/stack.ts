@@ -6,8 +6,8 @@ import {
   ResourceDependencyGraph,
   discoverOrphanedDependencies,
   isResourceReference,
-  buildConditionDependencyGraph,
   topoSortWithLevels,
+  TopoEntry,
 } from "./graph";
 
 import {
@@ -27,6 +27,7 @@ import {
   PhysicalProperties,
   computeResourceOperation,
   logicalResourcePropertyHash,
+  ResourceOperation,
 } from "./resource";
 import { Assertion, Rule, Rules } from "./rule";
 
@@ -38,7 +39,6 @@ import {
   DefaultResourceProviders,
   ResourceProviders,
 } from "./resource-provider";
-import { displayTopoEntries, TopoDisplayEntry } from "./display";
 import { TemplateResolver } from "./resolve-template";
 
 /**
@@ -676,9 +676,9 @@ ${metricsMessage}`);
   ): Promise<{
     assetState: Record<string, boolean>;
     conditionValues: Record<string, boolean>;
-    logicalIdsToDelete?: string[];
-    logicalIdsToCreateOrUpdate?: string[];
-    logicalIdsToSkipUpdate?: string[];
+    topoSortedCreateUpdates: TopoEntry[];
+    topoSortedDeletes?: TopoEntry[];
+    resourceOperationMap: Record<string, ResourceOperation>;
   }> {
     // what assets need to be uploaded?
     const assetManifest = assetManifestFile
@@ -797,9 +797,7 @@ ${metricsMessage}`);
     // TODO rules
     // TODO unresolved conditions with parameters
 
-    const conditionGraph = await buildConditionDependencyGraph(desiredState);
-
-    console.log(conditionGraph);
+    // const conditionGraph = await buildConditionDependencyGraph(desiredState);
 
     // conditions should be constants
     const conditionValues = Object.fromEntries(
@@ -812,8 +810,6 @@ ${metricsMessage}`);
         )
       )
     );
-
-    console.log(conditionValues);
 
     // check for deletions
 
@@ -845,9 +841,9 @@ ${metricsMessage}`);
 
     // check for add/update/delete
 
-    const createUpdateMap = Object.fromEntries(
-      await Promise.all(
-        logicalIdsToKeepOrCreate.map(async (logicalId) => {
+    const resourceOperationMap = Object.fromEntries(
+      await Promise.all([
+        ...logicalIdsToKeepOrCreate.map(async (logicalId) => {
           return [
             logicalId,
             await computeResourceOperation(
@@ -856,11 +852,12 @@ ${metricsMessage}`);
               this.getPhysicalResource(logicalId)
             ),
           ] as const;
-        })
-      )
+        }),
+        ...logicalIdsToDelete.map((id) => [id, "DELETE"]),
+      ])
     );
 
-    const logicalIdsToSkipUpdate = Object.entries(createUpdateMap)
+    const logicalIdsToSkipUpdate = Object.entries(resourceOperationMap)
       .filter(([, op]) => op === "SKIP_UPDATE")
       .map(([k]) => k);
 
@@ -881,37 +878,14 @@ ${metricsMessage}`);
       logicalIdsToCreateOrUpdate
     );
 
-    // TODO display elsewhere.
-    const displayEntry: TopoDisplayEntry[] = [
-      ...logicalIdsToSkipUpdate?.map((x) => ({
-        name: x,
-        level: 1,
-        additional: "SKIP_UPDATE",
-      })),
-      ...(topoCreateUpdate?.map((x) => ({
-        name: x.resourceId,
-        level: x.level,
-        additional: createUpdateMap[x.resourceId],
-      })) ?? []),
-      // TODO invert levels
-      ...(deleteTopo?.map((x) => ({
-        name: x.resourceId,
-        level: x.level,
-        additional: "DELETE",
-      })) ?? []),
-    ];
-
-    console.log("Plan:");
-    console.log(displayTopoEntries(displayEntry, true));
-
     // return steps
 
     return {
       assetState,
       conditionValues,
-      logicalIdsToDelete,
-      logicalIdsToCreateOrUpdate,
-      logicalIdsToSkipUpdate,
+      topoSortedCreateUpdates: topoCreateUpdate,
+      topoSortedDeletes: deleteTopo,
+      resourceOperationMap: resourceOperationMap,
     };
   }
 

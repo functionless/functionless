@@ -1,6 +1,10 @@
 import { program } from "commander";
 import fs from "fs/promises";
-import { displayTopoOrder } from "./display";
+import {
+  displayTopoEntries,
+  displayTopoOrder,
+  TopoDisplayEntry,
+} from "./display";
 import { Stack, StackState } from "./stack";
 import { CloudFormationTemplate } from "./template";
 import * as sts from "@aws-sdk/client-sts";
@@ -115,7 +119,35 @@ program
     );
 
     // TODO: pretty print
-    console.log(output);
+    console.log(output.assetState);
+    console.log(output.conditionValues);
+
+    const skippedResources = Object.entries(output.resourceOperationMap)
+      .filter(([, x]) => x === "SKIP_UPDATE")
+      .map((s) => s[0]);
+
+    const displayEntry: TopoDisplayEntry[] = [
+      // Display is a more compact way
+      ...skippedResources?.map((x) => ({
+        name: x,
+        level: 1,
+        additional: "SKIP_UPDATE",
+      })),
+      ...(output.topoSortedCreateUpdates?.map((x) => ({
+        name: x.resourceId,
+        level: x.level,
+        additional: output.resourceOperationMap[x.resourceId],
+      })) ?? []),
+      // TODO invert levels
+      ...(output.topoSortedDeletes?.map((x) => ({
+        name: x.resourceId,
+        level: x.level,
+        additional: "DELETE",
+      })) ?? []),
+    ];
+
+    console.log("Plan:");
+    console.log(displayTopoEntries(displayEntry, true));
 
     console.log(`Complete: ${new Date().getTime() - start.getTime()}ms`);
   });
