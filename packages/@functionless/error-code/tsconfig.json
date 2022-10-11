@@ -7,5 +7,10 @@
     "inlineSourceMap": true
   },
   "include": ["src"],
-  "exclude": ["lib", "test", "node_modules"]
+  "exclude": ["lib", "test", "node_modules"],
+  "references": [
+    {
+      "path": "../../functionless-build-utils"
+    }
+  ]
 }

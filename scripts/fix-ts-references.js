@@ -25,15 +25,31 @@ async function patchTopLevelTsConfig(roots) {
 
 async function patchTsConfig(tsConfigPath, references) {
   const tsConfig = await readJsonFile(tsConfigPath);
-  if (references.length > 0) {
-    tsConfig.references = references.sort().map((ref) => ({
-      path: ref,
-    }));
-  } else {
-    delete tsConfig.references;
+  if (shouldPatchTsConfig(tsConfig, references)) {
+    if (references.length > 0) {
+      tsConfig.references = references.sort().map((ref) => ({
+        path: ref,
+      }));
+    } else {
+      delete tsConfig.references;
+    }
+    await fs.writeFile(tsConfigPath, JSON.stringify(tsConfig, null, 2));
   }
+}
 
-  await fs.writeFile(tsConfigPath, JSON.stringify(tsConfig, null, 2));
+function shouldPatchTsConfig(tsConfig, newReferences) {
+  if (newReferences.length === 0) {
+    return "references" in tsConfig;
+  } else {
+    const oldReferences = tsConfig.references?.map((ref) => ref.path) ?? [];
+
+    const newReferencesSet = new Set(newReferences);
+    const oldReferencesSet = new Set(oldReferences);
+
+    newReferences.forEach((ref) => oldReferencesSet.delete(ref));
+    oldReferences.forEach((ref) => newReferencesSet.delete(ref));
+    return newReferencesSet.length > 0 || oldReferencesSet.length > 0;
+  }
 }
 
 async function findAllPackageRoots() {
@@ -74,7 +90,8 @@ async function patchNestedTsConfig(roots) {
         ]
           .filter(
             (dep) =>
-              dep.startsWith("@functionless") &&
+              (dep.startsWith("@functionless") ||
+                dep.startsWith("functionless-")) &&
               ![
                 "@functionless/ast-reflection",
                 "@functionless/language-service",

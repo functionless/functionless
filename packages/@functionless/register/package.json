@@ -8,7 +8,7 @@
     "docs"
   ],
   "scripts": {
-    "build": "tsc --build && typedoc"
+    "build": "tsc --build && fls-typedoc"
   },
   "dependencies": {
     "@functionless/ast-reflection": "^0.3.1",
@@ -16,6 +16,7 @@
     "@swc/register": "^0.1.10"
   },
   "devDependencies": {
+    "functionless-build-utils": "*",
     "typescript": "^4.8.3"
   },
   "publishConfig": {

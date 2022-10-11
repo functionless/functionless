@@ -6,15 +6,12 @@
     "inlineSourceMap": true,
     "rootDir": "src"
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "lib",
-    "test",
-    "node_modules"
-  ],
+  "include": ["src"],
+  "exclude": ["lib", "test", "node_modules"],
   "references": [
+    {
+      "path": "../../functionless-build-utils"
+    },
     {
       "path": "../aws-lambda"
     },

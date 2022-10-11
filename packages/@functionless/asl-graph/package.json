@@ -8,7 +8,7 @@
     "docs"
   ],
   "scripts": {
-    "build": "tsc --build && typedoc",
+    "build": "tsc --build && fls-typedoc",
     "typecheck": "tsc --noEmit",
     "dev": "tsc --watch"
   },
@@ -17,10 +17,12 @@
     "@functionless/ast": "^0.27.0",
     "@functionless/aws-stepfunctions": "^0.27.0",
     "@functionless/util": "^0.27.0",
-    "aws-cdk-lib": "^2.44.0"
+    "aws-cdk-lib": "^2.44.0",
+    "functionless-build-utils": "*"
   },
   "devDependencies": {
-    "typescript": "^4.8.3"
+    "typescript": "^4.8.3",
+    "functionless-build-utils": "*"
   },
   "publishConfig": {
     "access": "public"

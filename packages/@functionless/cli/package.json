@@ -11,7 +11,7 @@
     "lib"
   ],
   "scripts": {
-    "build": "tsc --build && typedoc",
+    "build": "tsc --build && fls-typedoc",
     "typecheck": "tsc --noEmit",
     "deploy": "cdk deploy",
     "synth": "cdk synth",
@@ -86,6 +86,7 @@
     "aws-sdk": "^2",
     "constructs": "10.0.0",
     "esbuild": "0.15.9",
+    "functionless-build-utils": "*",
     "jest": "^29.0.3",
     "ts-node": "^10.9.1",
     "tsconfig": "*",

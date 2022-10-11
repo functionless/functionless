@@ -4,7 +4,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "build": "ts-node -p ./tsconfig.gen.json ./scripts/sdk-gen.ts && tsc --build && typedoc",
+    "build": "ts-node -p ./tsconfig.gen.json ./scripts/sdk-gen.ts && tsc --build && fls-typedoc",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
@@ -22,6 +22,7 @@
   "devDependencies": {
     "@types/node": "^16",
     "aws-sdk": "^2",
+    "functionless-build-utils": "*",
     "typescript": "^4.8.3"
   },
   "files": [

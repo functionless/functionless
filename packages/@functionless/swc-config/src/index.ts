@@ -17,7 +17,7 @@ export const config = {
     },
   },
   minify: true,
-  sourceMaps: "inline",
+  sourceMaps: true,
   module: {
     type: "commonjs",
   },

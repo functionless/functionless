@@ -110,6 +110,9 @@
     },
     {
       "path": "packages/@tests/aws-stepfunctions-constructs"
+    },
+    {
+      "path": "packages/functionless-build-utils"
     }
   ]
 }

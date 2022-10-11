@@ -5,7 +5,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "build": "tsc --build && typedoc",
+    "build": "tsc --build && fls-typedoc",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
@@ -23,6 +23,7 @@
     "constructs": "10.0.0",
     "@types/node": "^16",
     "@types/jest": "^29.0.3",
+    "functionless-build-utils": "*",
     "typescript": "^4.8.3"
   },
   "files": [

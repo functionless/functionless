@@ -8,7 +8,7 @@
     "docs"
   ],
   "scripts": {
-    "build": "tsc --build && typedoc",
+    "build": "tsc --build && fls-typedoc",
     "typecheck": "tsc --noEmit",
     "dev": "tsc --watch"
   },
@@ -21,6 +21,7 @@
     "@functionless/vtl": "^0.27.0"
   },
   "devDependencies": {
+    "functionless-build-utils": "*",
     "typescript": "^4.8.3"
   },
   "publishConfig": {

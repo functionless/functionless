@@ -1,0 +1,23 @@
+{
+  "name": "functionless-build-utils",
+  "description": "Private utility scripts for use within the functionless repository",
+  "private": true,
+  "version": "0.0.0",
+  "bin": {
+    "fls-typedoc": "./bin/fls-typedoc.js"
+  },
+  "scripts": {
+    "build": "tsc --build"
+  },
+  "dependencies": {
+    "typedoc": "^0.23.16",
+    "docusaurus-plugin-typedoc": "^0.17.4"
+  },
+  "devDependencies": {
+    "typescript": "^4.8.3"
+  },
+  "files": [
+    "bin",
+    "lib"
+  ]
+}

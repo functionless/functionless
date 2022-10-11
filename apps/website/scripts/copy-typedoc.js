@@ -19,7 +19,7 @@ exports.copyTypeDoc = async function () {
         shortName: path.basename(pkgRoot),
         pkgRoot,
         pkgJson,
-        docRoot: path.join(pkgRoot, "docs"),
+        docRoot: path.join(pkgRoot, "docs", "api"),
       };
     })
   );
@@ -35,6 +35,11 @@ exports.copyTypeDoc = async function () {
         console.log("File not found: ", pkg.docRoot);
       }
     })
+  );
+
+  await fs.writeFile(
+    path.join(apiRefDir, "_category_.yml"),
+    `label: "API Reference"`
   );
 };
 

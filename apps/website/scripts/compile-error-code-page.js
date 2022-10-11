@@ -16,7 +16,8 @@ const errorCodesAPIReference = path.join(
   "@functionless",
   "error-code",
   "docs",
-  "modules",
+  "api",
+  "namespaces",
   "ErrorCodes.md"
 );
 
