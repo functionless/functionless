@@ -4,11 +4,11 @@ import axios from "axios";
 import {
   ApiGatewayInput,
   AwsMethod,
-  Function,
   LambdaMethod,
   MockMethod,
-} from "../src";
-import { runtimeTestSuite } from "./runtime";
+} from "@functionless/aws-apigateway-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
+import { runtimeTestSuite } from "@functionless/test";
 
 runtimeTestSuite("apiGatewayStack", (test, stack) => {
   // skipped because local stack does not support mapping templates https://github.com/localstack/localstack/issues/5850

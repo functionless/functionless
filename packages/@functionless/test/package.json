@@ -17,12 +17,19 @@
     "@functionless/aws-events-constructs": "*",
     "@functionless/aws-lambda-constructs": "*",
     "@functionless/aws-stepfunctions-constructs": "*",
-    "amplify-appsync-simulator": "^2.4.1"
+    "amplify-appsync-simulator": "^2.4.1",
+    "aws-cdk": "2.44.0",
+    "cdk-assets": "2.44.0",
+    "promptly": "^3.2.0"
+  },
+  "peerDependencies": {
+    "aws-cdk-lib": "2.44.0"
   },
   "devDependencies": {
-    "constructs": "10.0.0",
     "@types/node": "^16",
     "@types/jest": "^29.0.3",
+    "aws-cdk-lib": "2.44.0",
+    "constructs": "10.0.0",
     "functionless-build-utils": "*",
     "typescript": "^4.8.3"
   },

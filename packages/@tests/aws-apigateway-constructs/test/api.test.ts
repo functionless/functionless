@@ -3,14 +3,16 @@ import { aws_apigateway, aws_dynamodb, Stack } from "aws-cdk-lib";
 import {
   AwsMethod,
   MockMethod,
-  Function,
-  ExpressStepFunction,
-  Table,
   ApiGatewayInput,
+} from "@functionless/aws-apigateway-constructs";
+import { EventBus } from "@functionless/aws-events-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
+import {
+  ExpressStepFunction,
   StepFunction,
-  EventBus,
-} from "../src";
-import { normalizeCDKJson } from "./util";
+} from "@functionless/aws-stepfunctions-constructs";
+import { normalizeCDKJson } from "@functionless/test";
+import { Table } from "@functionless/aws-dynamodb-constructs";
 
 let stack: Stack;
 let func: Function<any, any>;

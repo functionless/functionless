@@ -110,6 +110,9 @@
       "path": "packages/@functionless/vtl"
     },
     {
+      "path": "packages/@tests/aws-apigateway-constructs"
+    },
+    {
       "path": "packages/@tests/aws-stepfunctions-constructs"
     },
     {

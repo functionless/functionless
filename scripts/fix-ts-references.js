@@ -1,6 +1,7 @@
 const fs = require("fs/promises");
 const { constants } = require("fs");
 const path = require("path");
+const prettier = require("prettier");
 
 const pwd = path.resolve(path.join(__dirname, ".."));
 
@@ -25,16 +26,20 @@ async function patchTopLevelTsConfig(roots) {
 
 async function patchTsConfig(tsConfigPath, references) {
   const tsConfig = await readJsonFile(tsConfigPath);
-  if (shouldPatchTsConfig(tsConfig, references)) {
-    if (references.length > 0) {
-      tsConfig.references = references.sort().map((ref) => ({
-        path: ref,
-      }));
-    } else {
-      delete tsConfig.references;
-    }
-    await fs.writeFile(tsConfigPath, JSON.stringify(tsConfig, null, 2));
+  // TODO: get this check to work properly
+  // if (shouldPatchTsConfig(tsConfig, references)) {
+  // }
+  if (references.length > 0) {
+    tsConfig.references = references.sort().map((ref) => ({
+      path: ref,
+    }));
+  } else {
+    delete tsConfig.references;
   }
+  const json = prettier.format(JSON.stringify(tsConfig, null, 2), {
+    parser: "json",
+  });
+  await fs.writeFile(tsConfigPath, json);
 }
 
 function shouldPatchTsConfig(tsConfig, newReferences) {

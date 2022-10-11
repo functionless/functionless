@@ -14,6 +14,9 @@
     },
     {
       "path": "../error-code"
+    },
+    {
+      "path": "../jest"
     }
   ]
 }

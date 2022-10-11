@@ -1,5 +1,5 @@
 {
-  "name": "@functionless/aws-apigateway-constructs",
+  "name": "@tests/aws-apigateway-constructs",
   "version": "0.27.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -8,7 +8,7 @@
     "docs"
   ],
   "scripts": {
-    "build": "tsc --build && fls-typedoc",
+    "test": "jest",
     "typecheck": "tsc --noEmit",
     "dev": "tsc --watch"
   },
@@ -16,12 +16,16 @@
     "aws-cdk-lib": "2.44.0",
     "@functionless/ast": "*",
     "@functionless/aws-apigateway": "*",
+    "@functionless/aws-apigateway-constructs": "*",
+    "@functionless/aws-dynamodb-constructs": "*",
+    "@functionless/aws-events-constructs": "*",
     "@functionless/aws-lambda-constructs": "*",
+    "@functionless/aws-stepfunctions-constructs": "*",
     "@functionless/error-code": "*",
     "@functionless/vtl": "*"
   },
   "devDependencies": {
-    "functionless-build-utils": "*",
+    "@functionless/test": "*",
     "typescript": "^4.8.3"
   },
   "publishConfig": {
