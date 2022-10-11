@@ -567,9 +567,9 @@ export class TemplateResolver {
           `Malformed input to Fn::Not - you must provide exactly one [{condition}].`
         );
       }
-      const conditionExprResult = isRuleFunction(expr)
-        ? await this.evaluateRuleFunction(expr)
-        : await this.evaluateExpr(expr);
+      const conditionExprResult = isRuleFunction(conditionExpr)
+        ? await this.evaluateRuleFunction(conditionExpr)
+        : await this.evaluateExpr(conditionExpr);
       return {
         ...conditionExprResult,
         value: async () => {

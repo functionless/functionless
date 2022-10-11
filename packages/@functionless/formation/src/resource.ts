@@ -7,6 +7,7 @@ import { compare } from "fast-json-patch";
 import { Expression } from "./expression";
 import type { IntrinsicFunction } from "./function";
 import { TemplateResolver } from "./resolve-template";
+import { cyrb53 } from "./util";
 
 import { Value } from "./value";
 
@@ -105,6 +106,12 @@ export interface PhysicalResource<Properties extends any = PhysicalProperties> {
    * Attributes exported by the {@link PhysicalResource}.
    */
   Attributes: PhysicalProperties;
+  /**
+   * An optional hash used to determine if the Logical Resource used to generate this resource was changed.
+   *
+   * If a Provider does not return a value here, the engine will generate one using {@link LogicalResource.Properties}.
+   */
+  PropertiesHash?: string;
 }
 
 /**
@@ -136,9 +143,12 @@ export async function computeResourceOperation(
       result?.unresolvedDependencies &&
       result.unresolvedDependencies.length > 0
     ) {
-      // TODO support MAYBE_UPDATE
-      // A dependency is unresolved
-      return "UPDATE";
+      return logicalResourcePropertyHash(logicalResource) ===
+        previous.PropertiesHash
+        ? // A dependency is unresolved, but the logical properties are unchanged
+          "MAYBE_UPDATE"
+        : // A dependency is unresolved and the inputs changes.
+          "UPDATE";
     } else if (!result) {
       if (
         !previous.InputProperties ||
@@ -162,4 +172,10 @@ export async function computeResourceOperation(
       return "SKIP_UPDATE";
     }
   }
+}
+
+export function logicalResourcePropertyHash(resource: LogicalResource) {
+  return cyrb53(
+    resource.Properties ? JSON.stringify(resource.Properties) : "{}"
+  );
 }

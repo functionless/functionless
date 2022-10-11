@@ -26,6 +26,7 @@ import {
   DeletionPolicy,
   PhysicalProperties,
   computeResourceOperation,
+  logicalResourcePropertyHash,
 } from "./resource";
 import { Assertion, Rule, Rules } from "./rule";
 
@@ -1037,24 +1038,22 @@ ${metricsMessage}`);
 
               const processTime = new Date().getTime() - startTime.getTime();
 
+              const resource = "resource" in result ? result.resource : result;
               if ("resource" in result) {
                 if (result.paddingMillis) {
                   self.addDeploymentPadding(result.paddingMillis, state);
                 }
-                return {
-                  resource: result.resource,
-                  processTime,
-                  retries: attemptsBase - attempts,
-                  retryWaitTime: totalDelay,
-                };
-              } else {
-                return {
-                  processTime,
-                  resource: result,
-                  retries: attemptsBase - attempts,
-                  retryWaitTime: totalDelay,
-                };
               }
+              return {
+                processTime,
+                resource: {
+                  ...resource,
+                  // store a hash of the properties used to create the physical resource for later.
+                  PropertiesHash: logicalResourcePropertyHash(logicalResource),
+                },
+                retries: attemptsBase - attempts,
+                retryWaitTime: totalDelay,
+              };
             } catch (err) {
               if (attempts > 1) {
                 totalDelay += delay;

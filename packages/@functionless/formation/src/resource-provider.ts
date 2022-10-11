@@ -53,9 +53,9 @@ export interface ResourceOperationResultMetadata {
 }
 
 export type ResourceOperationResult<Properties = any> = Promise<
-  | PhysicalResource<Properties>
+  | Omit<PhysicalResource<Properties>, "PropertiesHash">
   | ({
-      resource: PhysicalResource<Properties>;
+      resource: Omit<PhysicalResource<Properties>, "PropertiesHash">;
     } & ResourceOperationResultMetadata)
 >;
 

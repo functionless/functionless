@@ -126,15 +126,15 @@ failedOrderQueue.messages().forEach(async (message) => {
 //   }
 // );
 
-new StepFunction(
-  stack,
-  "SendMessage",
-  async (input: { message: OrderPlacedEvent }) => {
-    await orderQueue.sendMessage({
-      MessageBody: input.message,
-    });
-  }
-);
+// new StepFunction(
+//   stack,
+//   "SendMessage",
+//   async (input: { message: OrderPlacedEvent }) => {
+//     await orderQueue.sendMessage({
+//       MessageBody: input.message,
+//     });
+//   }
+// );
 
 // TODO: implement retry logic once new intrinsics arrive
 // @see https://github.com/functionless/functionless/pull/468
@@ -203,4 +203,13 @@ new Function(stack, "SecretFunc", async (input: "get" | UserPass) => {
     });
     return response;
   }
+});
+
+new JsonSecret<UserPass>(stack, "JsonSecret2", {
+  secretStringValue: SecretValue.unsafePlainText(
+    JSON.stringify({
+      username: "sam",
+      password: "sam",
+    })
+  ),
 });
