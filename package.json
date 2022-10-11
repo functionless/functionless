@@ -13,8 +13,10 @@
     "typecheck": "turbo run typecheck",
     "build": "turbo run build",
     "test": "turbo run test",
-    "prepare": "husky install",
-    "fix:references": "node ./scripts/fix-ts-references.js"
+    "prepare": "husky install && yarn doctor",
+    "doctor": "yarn doctor:references && yarn doctor:readmes",
+    "doctor:references": "node ./scripts/fix-ts-references.js",
+    "doctor:readmes": "node ./scripts/fix-pkg-readmes.js"
   },
   "workspaces": {
     "packages": [

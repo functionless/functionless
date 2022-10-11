@@ -8,7 +8,7 @@ const pwd = path.resolve(path.join(__dirname, ".."));
  * This script patches the references in tsconfig.json
  *
  * 1. add all packages to the top-level tsconfig.json's references
- * 2. (TODO): propagate any dep, devDep or peerDep on an internal package to the relevant tsconfig.json
+ * 2. propagate any dep, devDep or peerDep on an internal package to the relevant tsconfig.json references
  */
 (async function () {
   const roots = await findAllPackageRoots();
