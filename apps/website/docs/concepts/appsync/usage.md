@@ -234,7 +234,7 @@ new AppsyncResolver(scope, id, props, () => {
 });
 ```
 
-For a full list of all available utility functions, see the [API reference documentation for $util](../../api/interfaces/util.md) and [AWS's Resolver mapping template utility reference](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-util-reference.html).
+For a full list of all available utility functions, see the [API reference documentation for $util](../../api/aws-appsync-constructs/interfaces/util.md) and [AWS's Resolver mapping template utility reference](https://docs.aws.amazon.com/appsync/latest/devguide/resolver-util-reference.html).
 
 **Warning**: not all of the utilities have been implemented. You can track progress here [#61](https://github.com/functionless/functionless/issues/61)
 

@@ -53,7 +53,7 @@ A wrapped function annotates the type signature of the Function and makes it ava
 
 ## Request Payload
 
-The callback ([`FunctionClosure`](../../../../../packages/%40functionless/aws-lambda-constructs/docs/modules.md#functionclosure)) matches the interface supported by a [NodeJS Lambda function handler](https://docs.aws.amazon.com/lambda/latest/dg/nodejs-handler.html).
+The callback ([`FunctionClosure`](../../api/aws-lambda-constructs/modules.md#functionclosure)) matches the interface supported by a [NodeJS Lambda function handler](https://docs.aws.amazon.com/lambda/latest/dg/nodejs-handler.html).
 
 Your Function must have 0, 1, or 2 arguments. The first argument contains the JSON data from the Invoke Lambda API Request payload. The second parameter is the [Lambda Context Object](https://docs.aws.amazon.com/lambda/latest/dg/nodejs-handler.html).
 

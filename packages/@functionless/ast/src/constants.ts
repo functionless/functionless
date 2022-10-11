@@ -40,7 +40,7 @@ export const RegisterFunctionName = `register_${FunctionlessSalt}`;
  * }
  * ```
  *
- * All CallExpressions with the shape <expr>.bind(...<args>) are re-written as calls
+ * All CallExpressions with the shape `<expr>.bind(...<args>)` are re-written as calls
  * to this special function which intercepts the call.
  * ```ts
  * <expr>.bind(...<args>)

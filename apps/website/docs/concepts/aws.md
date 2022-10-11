@@ -28,4 +28,4 @@ For now, only hand-coded implementations exist for DynamoDB that also integrate 
 
 Also review and contribute to this discussion https://github.com/functionless/functionless/issues/76.
 
-See the [API Reference Documentation](../api/namespaces/AWS.md) for `$AWS`.
+See the [API Reference Documentation](../api/aws-sdk/modules/AWS.md) for `$AWS`.

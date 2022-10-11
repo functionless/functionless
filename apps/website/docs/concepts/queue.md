@@ -146,7 +146,7 @@ events
 
 ### With a Lambda Function `onEvent` handler
 
-The `onEvent` method will create a new Lambda [Function](./function/index.md) and attach it to the `Queue`. Your Function will be called with a [`SQSEvent`](../api/interfaces/SQSEvent.md) containing the messages to be processed.
+The `onEvent` method will create a new Lambda [Function](./function/index.md) and attach it to the `Queue`. Your Function will be called with a [`SQSEvent`](../api/aws-sqs-constructs/interfaces/SQSEvent.md) containing the messages to be processed.
 
 ```ts
 import { SQSBatchItemFailure } from "aws-lambda";
