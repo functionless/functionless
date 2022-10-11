@@ -5,14 +5,12 @@ import {
   SecretValue,
   Stack,
 } from "aws-cdk-lib";
-import {
-  Queue,
-  Function,
-  EventBus,
-  Event,
-  StepFunction,
-  JsonSecret,
-} from "@functionless/aws-constructs";
+import { Event } from "@functionless/aws-events";
+import { EventBus } from "@functionless/aws-events-constructs";
+import { Queue } from "@functionless/aws-sqs-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
+import { StepFunction } from "@functionless/aws-stepfunctions-constructs";
+import { JsonSecret } from "@functionless/aws-secretsmanager-constructs";
 
 const app = new App();
 const stack = new Stack(app, "queue");

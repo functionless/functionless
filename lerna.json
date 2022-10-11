@@ -2,9 +2,7 @@
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
   "npmClient": "yarn",
   "useWorkspaces": true,
-  "packages": [
-    "packages/*"
-  ],
+  "packages": ["packages/*"],
   "conventionalCommits": true,
   "commitHooks": false,
   "private": false,
@@ -13,11 +11,8 @@
   "command": {
     "publish": {
       "npmClient": "npm",
-      "allowBranch": [
-        "main",
-        "*"
-      ]
+      "allowBranch": ["main", "*"]
     }
   },
-  "version": "0.27.1"
+  "version": "0.27.2"
 }

@@ -33,6 +33,7 @@ import {
 import {
   Event,
   EventBridgeClient,
+  EventBusIntegration,
   EventBusTargetIntegration,
   isEventBusIntegration,
 } from "@functionless/aws-events";
@@ -166,7 +167,8 @@ export function isEventBusConstruct<T extends IEventBus<any> = IEventBus>(
  *                   emit any of `OutEvnt`.
  */
 export interface IEventBus<in Evnt extends Event = Event>
-  extends IEventBusFilterable<Evnt> {
+  extends IEventBusFilterable<Evnt>,
+    EventBusIntegration<Event> {
   readonly resource: aws_events.IEventBus;
   readonly eventBusArn: string;
   readonly eventBusName: string;
@@ -216,6 +218,8 @@ export interface IEventBus<in Evnt extends Event = Event>
     id: string
   ): PredicateRuleBase<Evnt, OutEnvt>;
 }
+
+interface EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt> {}
 
 /**
  * @typeParam Evnt - the union type of events that this EventBus can accept.
@@ -468,7 +472,6 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
       },
     };
   }
-
   public readonly eventBus = {
     target: (props: any, targetInput: any) => {
       if (targetInput) {
@@ -477,7 +480,7 @@ abstract class EventBusBase<in Evnt extends Event, OutEvnt extends Evnt = Evnt>
 
       return new aws_events_targets.EventBus(this.resource, props);
     },
-  };
+  } as any;
 
   /**
    * @inheritDoc

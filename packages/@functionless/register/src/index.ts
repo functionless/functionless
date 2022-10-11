@@ -11,8 +11,8 @@ function tryResolve(mod: string) {
   }
 }
 
-const awsConstructs = tryResolve("@functionless/aws-constructs");
-const flExp = tryResolve("@functionless/fl-exp");
+const awsConstructs = tryResolve("@functionless/aws-sqs-constructs");
+const flExp = tryResolve("@functionless/cli");
 const src = path.resolve("src");
 
 const prefixes = [awsConstructs, flExp, src].filter(

@@ -1,10 +1,11 @@
 {
   "name": "@functionless/aws-util",
-  "version": "0.27.0",
+  "version": "0.27.2",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc --build && fls-typedoc",
+    "dev": "tsc --watch",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

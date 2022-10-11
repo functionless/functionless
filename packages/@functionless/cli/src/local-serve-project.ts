@@ -15,7 +15,7 @@ import Lambda from "aws-sdk/clients/lambda";
 import StepFunctions from "aws-sdk/clients/stepfunctions";
 import STS from "aws-sdk/clients/sts";
 import IAM from "aws-sdk/clients/iam";
-import { isStepFunction } from "@functionless/aws-constructs";
+import { isStepFunction } from "@functionless/aws-stepfunctions";
 import { getClientProps } from "@functionless/aws-util";
 import { getEnvironmentVariableName } from "@functionless/util";
 import { Tree } from "./tree/tree";

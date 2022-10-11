@@ -2497,23 +2497,6 @@
   resolved "https://registry.yarnpkg.com/@functionless/ast-reflection/-/ast-reflection-0.3.2.tgz#da4601ec07af11953cf8c819df684c01b59b96f9"
   integrity sha512-XMBnxPh/0hwCKo92Zq96L+Qh8WCYINsyzx5NBLTevlmgv4CKo899Y05/4fT4o78jQEaXaeb3B6XpTt4i8bGxnw==
 
-"@functionless/aws-constructs@*":
-  version "0.27.1"
-  resolved "https://registry.yarnpkg.com/@functionless/aws-constructs/-/aws-constructs-0.27.1.tgz#dafa7e68bfb502b4ea0ee640bed30b744fcd4428"
-  integrity sha512-dDvt/nUouJYVvJNM+PkW5v3iT64CNnqVQkNhnuKMXk1lmVzKj1EJolG+4ENqI+zLMqhowxeWMCLeh5jDkEkhkg==
-  dependencies:
-    "@functionless/ast" "^0.27.0"
-    "@functionless/ast-reflection" "^0.3.1"
-    "@functionless/nodejs-closure-serializer" "^0.1.2"
-    "@swc/cli" "^0.1.57"
-    "@swc/core" "1.2.245"
-    "@swc/register" "^0.1.10"
-    "@types/aws-lambda" "^8.10.106"
-    aws-lambda "^1.0.7"
-    fs-extra "^10.1.0"
-    minimatch "^5.1.0"
-    source-map "^0.7.4"
-
 "@functionless/language-service@^0.0.4":
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/@functionless/language-service/-/language-service-0.0.4.tgz#fc2e23c8d4fa5766268fe83a65cdd3a385078462"
@@ -16767,7 +16750,7 @@ typesafe-dynamodb@^0.2.3:
     "@types/aws-lambda" "^8.10.97"
     aws-sdk "^2.1145.0"
 
-"typescript@^3 || ^4", typescript@^4.8.2, typescript@^4.8.3:
+"typescript@^3 || ^4", typescript@^4.8.2, typescript@^4.8.3, typescript@^4.8.4:
   version "4.8.4"
   resolved "https://registry.yarnpkg.com/typescript/-/typescript-4.8.4.tgz#c464abca159669597be5f96b8943500b238e60e6"
   integrity sha512-QCh+85mCy+h0IGff8r5XWzOVSbBO+KfeYrMQh7NJ58QujwcE22u+NUSmUxqF+un70P9GXKxa2HCNiTTMJknyjQ==

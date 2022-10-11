@@ -9,16 +9,9 @@
       }
     ]
   },
-  "include": [
-    "src/**/*.ts"
-  ],
-  "exclude": [
-    "node_modules"
-  ],
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules"],
   "references": [
-    {
-      "path": "../../packages/@functionless/aws-constructs"
-    },
     {
       "path": "../../packages/@functionless/register"
     }

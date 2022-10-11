@@ -43,7 +43,9 @@ export abstract class Secret<SecretValue = any> {
    * });
    * ```
    */
-  public readonly putSecretValue;
+  public readonly putSecretValue: (
+    input: PutSecretValueRequest<SecretValue>
+  ) => Promise<AWS.SecretsManager.PutSecretValueResponse>;
 
   /**
    * Get the value of the Secret from the Secret Store.
@@ -60,7 +62,9 @@ export abstract class Secret<SecretValue = any> {
    * });
    * ```
    */
-  public readonly getSecretValue;
+  public readonly getSecretValue: (
+    input?: Omit<AWS.SecretsManager.GetSecretValueRequest, "SecretId">
+  ) => Promise<GetSecretValueResponse<SecretValue>>;
 
   constructor(resource: aws_secretsmanager.ISecret, props?: SecretProps);
   constructor(scope: Construct, id: string, props?: SecretProps);
@@ -108,7 +112,7 @@ export abstract class Secret<SecretValue = any> {
             })
             .promise(),
       },
-    };
+    } as any;
 
     this.getSecretValue = {
       kind: "AWS.SecretsManager.GetSecretValue",
@@ -141,7 +145,7 @@ export abstract class Secret<SecretValue = any> {
           };
         },
       },
-    };
+    } as any;
 
     function initClient(context: NativeRuntimeEnvironment) {
       return context.getOrInit(SecretsManagerClient);

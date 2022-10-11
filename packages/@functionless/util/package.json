@@ -1,11 +1,12 @@
 {
   "name": "@functionless/util",
-  "version": "0.27.0",
+  "version": "0.27.2",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc --build && fls-typedoc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
   },
   "devDependencies": {
     "@types/node": "^16",

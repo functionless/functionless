@@ -1,7 +1,8 @@
 import path from "path";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { App, Stack } from "aws-cdk-lib";
-import { EventBus, Event } from "@functionless/aws-constructs";
+import { Event } from "@functionless/aws-events";
+import { EventBus } from "@functionless/aws-events-constructs";
 import { PeopleDatabase, Person } from "./people-db";
 import { PeopleEvents } from "./people-events";
 
