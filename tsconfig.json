@@ -82,10 +82,16 @@
       "path": "packages/@functionless/error-code"
     },
     {
+      "path": "packages/@functionless/register"
+    },
+    {
       "path": "packages/@functionless/serde"
     },
     {
       "path": "packages/@functionless/serialize-closure"
+    },
+    {
+      "path": "packages/@functionless/swc-config"
     },
     {
       "path": "packages/@functionless/test"

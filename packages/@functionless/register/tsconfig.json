@@ -7,5 +7,10 @@
     "rootDir": "src"
   },
   "include": ["src"],
-  "exclude": ["lib", "test", "node_modules"]
+  "exclude": ["lib", "test", "node_modules"],
+  "references": [
+    {
+      "path": "../swc-config"
+    }
+  ]
 }

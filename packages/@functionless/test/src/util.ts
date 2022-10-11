@@ -1,6 +1,6 @@
 import path from "path";
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
-import { isErr } from "@functionless/ast";
+import { AnyFunction, isErr, reflect } from "@functionless/ast";
 import {
   AmplifyAppSyncSimulator,
   AmplifyAppSyncSimulatorAuthenticationType,
@@ -9,23 +9,22 @@ import {
 import * as amplify from "amplify-appsync-simulator/lib/velocity";
 import { App, aws_dynamodb, aws_events, aws_lambda, Stack } from "aws-cdk-lib";
 import { Rule } from "aws-cdk-lib/aws-events";
-import {
-  AppsyncResolver,
-  Table,
-  Function,
-  Event,
-  FunctionlessEventPattern,
-  ResolverFunction,
-  ResolverArguments,
-  reflect,
-  AnyFunction,
-} from "../src";
+
+import { Function } from "@functionless/aws-lambda-constructs";
+import { Event } from "@functionless/aws-events";
 import {
   synthesizeEventPattern,
   synthesizePatternDocument,
-} from "../src/event-bridge/event-pattern/synth";
-import { synthesizeEventBridgeTargets } from "../src/event-bridge/target-input";
-import { EventTransformFunction } from "../src/event-bridge/transform";
+  synthesizeEventBridgeTargets,
+  EventTransformFunction,
+  FunctionlessEventPattern,
+} from "@functionless/aws-events-constructs";
+import {
+  AppsyncResolver,
+  ResolverArguments,
+  ResolverFunction,
+} from "@functionless/aws-appsync-constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
 
 // generates boilerplate for the circuit-breaker logic for implementing early return
 export function returnExpr(varName: string) {

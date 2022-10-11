@@ -6,16 +6,23 @@
     "inlineSourceMap": true,
     "rootDir": "src"
   },
-  "include": [
-    "src"
-  ],
-  "exclude": [
-    "lib",
-    "node_modules"
-  ],
+  "include": ["src"],
+  "exclude": ["lib", "node_modules"],
   "references": [
     {
       "path": "../asl-graph"
+    },
+    {
+      "path": "../aws-appsync-constructs"
+    },
+    {
+      "path": "../aws-dynamodb-constructs"
+    },
+    {
+      "path": "../aws-events"
+    },
+    {
+      "path": "../aws-events-constructs"
     },
     {
       "path": "../aws-lambda-constructs"

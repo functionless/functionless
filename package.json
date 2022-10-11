@@ -28,7 +28,8 @@
     "husky": "^8.0.1",
     "lerna": "^5.5.4",
     "lint-staged": "^13.0.3",
-    "turbo": "^1.5.5"
+    "turbo": "^1.5.5",
+    "prettier": "^2.7.1"
   },
   "lint-staged": {
     "*.{tsx,jsx,ts,js,md,css,yml,json}": [

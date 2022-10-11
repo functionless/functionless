@@ -1896,6 +1896,15 @@ export interface IStepFunction<
   >;
 }
 
+interface BaseStandardStepFunction<
+  Payload extends Record<string, any> | undefined,
+  Out
+> {
+  (
+    input: StepFunctionRequest<Payload>
+  ): Promise<AWS.StepFunctions.StartExecutionOutput>;
+}
+
 class BaseStandardStepFunction<
     Payload extends Record<string, any> | undefined,
     Out

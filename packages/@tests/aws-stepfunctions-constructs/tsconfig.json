@@ -5,15 +5,10 @@
     "outDir": "lib",
     "declaration": true,
     "inlineSourceMap": true,
-    "rootDir": "src"
+    "rootDir": "test"
   },
-  "include": [
-    "test"
-  ],
-  "exclude": [
-    "lib",
-    "node_modules"
-  ],
+  "include": ["test"],
+  "exclude": ["lib", "node_modules"],
   "references": [
     {
       "path": "../../@functionless/asl-graph"
@@ -34,7 +29,16 @@
       "path": "../../@functionless/aws-events-constructs"
     },
     {
+      "path": "../../@functionless/aws-sdk"
+    },
+    {
+      "path": "../../@functionless/aws-sqs-constructs"
+    },
+    {
       "path": "../../@functionless/aws-stepfunctions"
+    },
+    {
+      "path": "../../@functionless/aws-stepfunctions-constructs"
     },
     {
       "path": "../../@functionless/test"

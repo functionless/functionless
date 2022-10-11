@@ -8,10 +8,7 @@
     "experimentalDecorators": true,
     "inlineSourceMap": true,
     "inlineSources": true,
-    "lib": [
-      "dom",
-      "ES2019"
-    ],
+    "lib": ["dom", "ES2019"],
     "jsx": "react-jsx",
     "module": "CommonJS",
     "noEmitOnError": false,
@@ -30,18 +27,9 @@
     "target": "ES2019",
     "declarationMap": true,
     "baseUrl": ".",
-    "types": [
-      "mdx",
-      "@docusaurus/theme-classic"
-    ],
+    "types": ["mdx", "@docusaurus/theme-classic"],
     "allowJs": true
   },
-  "include": [
-    "src/**/*",
-    "test/**/*"
-  ],
-  "exclude": [
-    "**/node_modules"
-  ],
-  "references": []
+  "include": ["src/**/*", "test/**/*"],
+  "exclude": ["**/node_modules"]
 }

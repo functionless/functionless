@@ -25,9 +25,13 @@ async function patchTopLevelTsConfig(roots) {
 
 async function patchTsConfig(tsConfigPath, references) {
   const tsConfig = await readJsonFile(tsConfigPath);
-  tsConfig.references = references.map((ref) => ({
-    path: ref,
-  }));
+  if (references.length > 0) {
+    tsConfig.references = references.map((ref) => ({
+      path: ref,
+    }));
+  } else {
+    delete tsConfig.references;
+  }
 
   await fs.writeFile(tsConfigPath, JSON.stringify(tsConfig, null, 2));
 }

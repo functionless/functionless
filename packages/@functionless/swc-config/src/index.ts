@@ -1,4 +1,4 @@
-exports.config = {
+export const config = {
   jsc: {
     parser: {
       syntax: "typescript",
@@ -21,4 +21,4 @@ exports.config = {
   module: {
     type: "commonjs",
   },
-};
+} as const;

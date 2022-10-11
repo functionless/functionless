@@ -15,22 +15,23 @@ import {
 // eslint-disable-next-line import/no-extraneous-dependencies
 import { StepFunctions } from "aws-sdk";
 import { Construct } from "constructs";
+
 import {
-  StepFunction,
+  runtimeTestExecutionContext,
+  runtimeTestSuite,
+  testStepFunction,
+  normalizeCDKJson,
+} from "@functionless/test";
+import { $SFN, StepFunction } from "@functionless/aws-stepfunctions-constructs";
+import { $AWS } from "@functionless/aws-sdk";
+import {
   Function,
-  $AWS,
-  $SFN,
-  Table,
-  FunctionProps,
-  StepFunctionError,
   FunctionClosure,
-  Queue,
-  ASLGraph,
-} from "../src";
-import { makeIntegration } from "../src/integration";
-import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
-import { testStepFunction } from "./runtime-util";
-import { normalizeCDKJson } from "./util";
+  FunctionProps,
+} from "@functionless/aws-lambda-constructs";
+import { ASLGraph, StepFunctionError } from "@functionless/asl-graph";
+import { Table } from "@functionless/aws-dynamodb-constructs";
+import { Queue } from "@functionless/aws-sqs-constructs";
 
 interface TestExpressStepFunctionBase {
   <
@@ -2513,9 +2514,9 @@ runtimeTestSuite<
  * return state.a;
  * ```
  */
-const dumpState = makeIntegration<"dumpState", <T>() => T>({
+const dumpState: <T>() => T = {
   kind: "dumpState",
   asl: () => ({
     jsonPath: "$",
   }),
-});
+} as any;

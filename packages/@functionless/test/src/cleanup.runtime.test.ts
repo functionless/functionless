@@ -1,6 +1,8 @@
+import { $AWS } from "@functionless/aws-sdk";
+import { $SFN, StepFunction } from "@functionless/aws-stepfunctions-constructs";
 import { FunctionUrlAuthType } from "aws-cdk-lib/aws-lambda";
+import { Function } from "@functionless/aws-lambda-constructs";
 import { StringParameter } from "aws-cdk-lib/aws-ssm";
-import { $AWS, $SFN, Function, StepFunction } from "../src";
 import {
   runtimeTestExecutionContext,
   runtimeTestSuite,
