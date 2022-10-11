@@ -2,9 +2,11 @@ import type {
   CreateResourceCommand,
   UpdateResourceCommand,
 } from "@aws-sdk/client-cloudcontrol";
+import { compare } from "fast-json-patch";
 
 import { Expression } from "./expression";
 import type { IntrinsicFunction } from "./function";
+import { TemplateResolver } from "./resolve-template";
 
 import { Value } from "./value";
 
@@ -110,4 +112,54 @@ export interface PhysicalResource<Properties extends any = PhysicalProperties> {
  */
 export interface PhysicalProperties {
   [propertyName: string]: Value;
+}
+
+export type ResourceOperation =
+  | "SKIP_UPDATE"
+  | "UPDATE"
+  | "CREATE"
+  | "MAYBE_UPDATE";
+
+export async function computeResourceOperation(
+  templateResolver: TemplateResolver,
+  logicalResource: LogicalResource,
+  previous?: PhysicalResource
+): Promise<ResourceOperation> {
+  // resource did not exist before, will need to be created
+  if (!previous) {
+    return "CREATE";
+  } else {
+    const result = logicalResource.Properties
+      ? await templateResolver.evaluateExpr(logicalResource.Properties)
+      : undefined;
+    if (
+      result?.unresolvedDependencies &&
+      result.unresolvedDependencies.length > 0
+    ) {
+      // TODO support MAYBE_UPDATE
+      // A dependency is unresolved
+      return "UPDATE";
+    } else if (!result) {
+      if (
+        !previous.InputProperties ||
+        Object.keys(previous.InputProperties).length === 0
+      ) {
+        return "SKIP_UPDATE";
+      } else {
+        // properties is undefined or empty for input and the previous properties were not undefined
+        return "UPDATE";
+      }
+    } else {
+      const diff = compare(
+        (await result.value()) as object,
+        previous.InputProperties
+      );
+      if (diff.length > 0) {
+        // properties were resolved, but they changed.
+        return "UPDATE";
+      }
+      // properties were resolved and there were no difference between the previous and desired state
+      return "SKIP_UPDATE";
+    }
+  }
 }

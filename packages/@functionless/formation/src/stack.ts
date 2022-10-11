@@ -25,6 +25,7 @@ import {
   LogicalResource,
   DeletionPolicy,
   PhysicalProperties,
+  computeResourceOperation,
 } from "./resource";
 import { Assertion, Rule, Rules } from "./rule";
 
@@ -38,7 +39,6 @@ import {
 } from "./resource-provider";
 import { displayTopoEntries, TopoDisplayEntry } from "./display";
 import { TemplateResolver } from "./resolve-template";
-import { compare } from "fast-json-patch";
 
 /**
  * A map of each {@link LogicalResource}'s Logical ID to its {@link PhysicalProperties}.
@@ -736,45 +736,26 @@ ${metricsMessage}`);
               return undefined;
             }
           } else {
-            const previous = this.getPhysicalResource(logicalId);
-            // resource did not exist before, will need to be created
-            if (!previous) {
+            const operation = await computeResourceOperation(
+              templateResolver,
+              this.getLogicalResource(logicalId, state),
+              this.getPhysicalResource(logicalId)
+            );
+            if (
+              operation === "CREATE" ||
+              operation === "UPDATE" ||
+              operation === "MAYBE_UPDATE"
+            ) {
+              /**
+               * Why don't we return resolved resources when the resolved properties have not changed?
+               *
+               * We don't know when a resource will be replaced and have some properties deployment resolved change.
+               */
               return (resolvedResources[logicalId] = undefined)!;
             } else {
-              const definition = this.getLogicalResource(logicalId, state);
-              const result = definition.Properties
-                ? await templateResolver.evaluateExpr(definition.Properties)
-                : undefined;
-              if (
-                result?.unresolvedDependencies &&
-                result.unresolvedDependencies.length > 0
-              ) {
-                return (resolvedResources[logicalId] = undefined);
-              } else if (!result) {
-                if (
-                  !previous.InputProperties ||
-                  Object.keys(previous.InputProperties).length === 0
-                ) {
-                  resolvedResources[logicalId] = previous;
-                  return {
-                    value: () => previous,
-                  };
-                } else {
-                  return undefined;
-                }
-              } else {
-                const diff = compare(
-                  (await result.value()) as object,
-                  previous.InputProperties
-                );
-                if (diff.length > 0) {
-                  return (resolvedResources[logicalId] = undefined);
-                }
-                resolvedResources[logicalId] = previous;
-                return {
-                  value: () => previous,
-                };
-              }
+              resolvedResources[logicalId] =
+                this.getPhysicalResource(logicalId);
+              return { value: () => this.getPhysicalResource(logicalId) };
             }
           }
         },
@@ -862,38 +843,14 @@ ${metricsMessage}`);
     const createUpdateMap = Object.fromEntries(
       await Promise.all(
         logicalIdsToCreateOrUpdate.map(async (logicalId) => {
-          const update =
-            state.previousState && logicalId in state.previousState?.Resources;
-          if (update) {
-            const logical = this.getLogicalResource(logicalId, state);
-            const previous = this.getPhysicalResource(logicalId);
-            const definitionResult =
-              logical && logical.Properties
-                ? await templateResolver.evaluateExpr(logical.Properties)
-                : undefined;
-            if (
-              !definitionResult?.unresolvedDependencies ||
-              definitionResult.unresolvedDependencies.length === 0
-            ) {
-              const definition = await definitionResult?.value();
-              if (!definition) {
-                return [
-                  logicalId,
-                  !previous?.InputProperties ||
-                  Object.keys(previous.InputProperties).length === 0
-                    ? "SKIP_UPDATE"
-                    : "UPDATE",
-                ];
-              }
-              const diff = compare(definition, previous?.InputProperties ?? {});
-              if (diff.length === 0) {
-                return [logicalId, "SKIP_UPDATE"];
-              }
-            }
-            return [logicalId, "UPDATE"];
-          } else {
-            return [logicalId, "CREATE"];
-          }
+          return [
+            logicalId,
+            await computeResourceOperation(
+              templateResolver,
+              this.getLogicalResource(logicalId, state),
+              this.getPhysicalResource(logicalId)
+            ),
+          ];
         })
       )
     );
