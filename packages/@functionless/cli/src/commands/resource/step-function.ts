@@ -2,7 +2,7 @@ import { StackResourceDetail } from "aws-sdk/clients/cloudformation";
 import StepFunctions from "aws-sdk/clients/stepfunctions";
 import { registerCommand } from "../../command-provider";
 import { getClientProps } from "@functionless/aws-util";
-import { StepFunctionKind } from "@functionless/aws";
+import { StepFunctionKind } from "@functionless/aws-stepfunctions";
 import { openConsole } from "./open-console";
 
 registerCommand({

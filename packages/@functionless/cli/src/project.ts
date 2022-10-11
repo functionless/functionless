@@ -1,4 +1,4 @@
-import { Resource } from "@functionless/aws";
+import { Resource } from "./resource";
 import { isFile, File } from "./tree/file";
 import { Folder } from "./tree/folder";
 import { Tree } from "./tree/tree";

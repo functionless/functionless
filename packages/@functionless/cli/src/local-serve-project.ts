@@ -1,15 +1,6 @@
 import path from "path";
 import express, { Router, Response } from "express";
-import {
-  ExpressStepFunction,
-  isExpressStepFunction,
-  isLambdaFunction,
-  isMethod,
-  isTableDecl,
-  LambdaFunction,
-  Resource,
-  StepFunction,
-} from "@functionless/aws";
+
 import { Project } from "./project";
 import type {
   APIGatewayProxyEventQueryStringParameters,
@@ -29,6 +20,15 @@ import { getClientProps } from "@functionless/aws-util";
 import { getEnvironmentVariableName } from "@functionless/util";
 import { Tree } from "./tree/tree";
 import { isFile } from "./tree/file";
+import { isLambdaFunction, LambdaFunction } from "@functionless/aws-lambda";
+import {
+  ExpressStepFunction,
+  isExpressStepFunction,
+  StepFunction,
+} from "@functionless/aws-stepfunctions";
+import { Resource } from "./resource";
+import { isTable } from "@functionless/aws-dynamodb";
+import { isMethod } from "@functionless/aws-apigateway";
 
 const lambda = new Lambda(getClientProps());
 const stepFunctions = new StepFunctions(getClientProps());
@@ -88,7 +88,7 @@ export async function localServeProject(project: Project): Promise<void> {
 
 async function setEnvironment(node: Tree) {
   if (isFile(node)) {
-    if (isTableDecl(node.resource)) {
+    if (isTable(node.resource)) {
       const resourceId = node.address;
       const logicalId = logicalIdForPath(resourceId);
       const envKey = getEnvironmentVariableName(resourceId);

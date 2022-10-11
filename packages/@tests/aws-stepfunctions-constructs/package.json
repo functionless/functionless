@@ -1,5 +1,5 @@
 {
-  "name": "@tests/aws-stepfunctions-constructs-tests",
+  "name": "@tests/aws-stepfunctions-constructs",
   "private": true,
   "version": "0.27.0",
   "main": "./lib/index.js",

@@ -100,7 +100,7 @@
       "path": "packages/@functionless/vtl"
     },
     {
-      "path": "packages/@tests/aws-stepfunctions-constructs-tests"
+      "path": "packages/@tests/aws-stepfunctions-constructs"
     }
   ]
 }

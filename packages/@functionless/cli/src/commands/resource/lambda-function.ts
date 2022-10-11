@@ -1,7 +1,7 @@
 import { registerCommand } from "../../command-provider";
 import Lambda from "aws-sdk/clients/lambda";
 import Logs from "aws-sdk/clients/cloudwatchlogs";
-import { LambdaFunctionKind } from "@functionless/aws";
+import { LambdaFunctionKind } from "@functionless/aws-lambda";
 import { promisify } from "util";
 import { StackResourceDetail } from "aws-sdk/clients/cloudformation";
 import { getClientProps } from "@functionless/aws-util";
