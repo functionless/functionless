@@ -5,8 +5,14 @@
     "declaration": true,
     "inlineSourceMap": true
   },
-  "include": ["."],
-  "exclude": ["lib", "test", "node_modules"],
+  "include": [
+    "."
+  ],
+  "exclude": [
+    "lib",
+    "test",
+    "node_modules"
+  ],
   "references": [
     {
       "path": "../../packages/@functionless/cli"

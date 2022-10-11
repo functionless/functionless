@@ -26,7 +26,7 @@ async function patchTopLevelTsConfig(roots) {
 async function patchTsConfig(tsConfigPath, references) {
   const tsConfig = await readJsonFile(tsConfigPath);
   if (references.length > 0) {
-    tsConfig.references = references.map((ref) => ({
+    tsConfig.references = references.sort().map((ref) => ({
       path: ref,
     }));
   } else {
@@ -84,7 +84,6 @@ async function patchNestedTsConfig(roots) {
           .map((pkgName) =>
             path.relative(rootDir, path.resolve(pwd, "packages", pkgName))
           )
-          .sort()
       );
 
       await patchTsConfig(

@@ -22,6 +22,12 @@
       "path": "../aws-apigateway"
     },
     {
+      "path": "../aws-lambda-constructs"
+    },
+    {
+      "path": "../error-code"
+    },
+    {
       "path": "../vtl"
     }
   ]

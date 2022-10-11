@@ -4,7 +4,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "build": "tsc -b",
+    "build": "tsc --build && typedoc",
     "typecheck": "tsc --noEmit",
     "test": "jest"
   },

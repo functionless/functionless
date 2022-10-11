@@ -7,8 +7,13 @@
     "inlineSourceMap": true,
     "rootDir": "test"
   },
-  "include": ["test"],
-  "exclude": ["lib", "node_modules"],
+  "include": [
+    "test"
+  ],
+  "exclude": [
+    "lib",
+    "node_modules"
+  ],
   "references": [
     {
       "path": "../../@functionless/asl-graph"

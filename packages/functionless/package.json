@@ -24,6 +24,7 @@
     "@functionless/aws-stepfunctions": "*",
     "@functionless/aws-stepfunctions-constructs": "*",
     "@functionless/aws-util": "*",
+    "@functionless/error-code": "*",
     "@functionless/cli": "*",
     "@functionless/language-service": "^0.0.4",
     "@functionless/register": "*",

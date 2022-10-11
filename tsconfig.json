@@ -82,6 +82,9 @@
       "path": "packages/@functionless/error-code"
     },
     {
+      "path": "packages/@functionless/jest"
+    },
+    {
       "path": "packages/@functionless/register"
     },
     {

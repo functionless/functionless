@@ -7,7 +7,7 @@
     "lib"
   ],
   "scripts": {
-    "build": "tsc --build",
+    "build": "tsc --build && typedoc",
     "typecheck": "tsc --noEmit",
     "dev": "tsc --watch"
   },
@@ -15,6 +15,8 @@
     "aws-cdk-lib": "2.44.0",
     "@functionless/ast": "*",
     "@functionless/aws-apigateway": "*",
+    "@functionless/aws-lambda-constructs": "*",
+    "@functionless/error-code": "*",
     "@functionless/vtl": "*"
   },
   "devDependencies": {

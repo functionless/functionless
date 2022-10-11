@@ -2,28 +2,11 @@
 // Note: type annotations allow type checking and IDEs autocompletion
 
 const codeTheme = require("./src/theme/code-theme");
-const path = require("path");
-const fs = require("fs");
 
 const url =
   process.env.CONTEXT === "deploy-preview" && process.env.DEPLOY_PRIME_URL
     ? process.env.DEPLOY_PRIME_URL
     : "https://functionless.org";
-
-const packagesPath = path.resolve(
-  __dirname,
-  "..",
-  "..",
-  "packages",
-  "@functionless"
-);
-
-const entryPoints = fs
-  .readdirSync(packagesPath)
-  .map((pkg) => [
-    pkg,
-    path.relative(process.cwd(), path.join(packagesPath, pkg)),
-  ]);
 
 /** @type {import('@docusaurus/types').Config} */
 const config = {
@@ -61,35 +44,14 @@ const config = {
         },
       };
     },
-    ...entryPoints.map(([name, entryPoint], i) => {
-      return [
-        "docusaurus-plugin-typedoc",
-        /** @type {import('docusaurus-plugin-typedoc').PluginOptions} */ {
-          id: name,
-          out: path.join("api", name),
-          entryPoints: [entryPoint],
-          entryPointStrategy: "packages",
-          sidebar: {
-            categoryLabel: `API Reference - ${name}`,
-            position: 10 + i,
-          },
-        },
-      ];
-    }),
-    [
-      "docusaurus-plugin-typedoc",
-      // Plugin / TypeDoc options
-      /** @type {import('docusaurus-plugin-typedoc').PluginOptions} */
-      {
-        // load all the package entry-points
-        entryPoints: ["../../"],
-        entryPointStrategy: "packages",
-        sidebar: {
-          categoryLabel: "API Reference",
-          position: 10,
-        },
-      },
-    ],
+    function () {
+      return {
+        name: "copy-typedoc",
+        loadContent: () =>
+          // copy the typedoc from all child packages
+          require("./scripts/copy-typedoc").copyTypeDoc(),
+      };
+    },
     function () {
       return {
         name: "functionless-error-code-docs",

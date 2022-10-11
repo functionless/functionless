@@ -11,7 +11,7 @@
     "lib"
   ],
   "scripts": {
-    "build": "tsc --build",
+    "build": "tsc --build && typedoc",
     "typecheck": "tsc --noEmit",
     "deploy": "cdk deploy",
     "synth": "cdk synth",

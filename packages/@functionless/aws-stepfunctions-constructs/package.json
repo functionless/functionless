@@ -7,7 +7,7 @@
     "lib"
   ],
   "scripts": {
-    "build": "tsc --build",
+    "build": "tsc --build && typedoc",
     "typecheck": "tsc --noEmit",
     "dev": "tsc --watch"
   },

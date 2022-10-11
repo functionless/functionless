@@ -4,16 +4,19 @@
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
+    "docs",
     "lib"
   ],
   "scripts": {
-    "build": "tsc --build",
+    "build": "tsc --build && typedoc",
     "typecheck": "tsc --noEmit",
     "dev": "tsc --watch"
   },
   "devDependencies": {
     "@types/node": "^16",
-    "typescript": "^4.8.3"
+    "typescript": "^4.8.3",
+    "typedoc": "^0.23.16",
+    "typedoc-plugin-markdown": "^3"
   },
   "publishConfig": {
     "access": "public"

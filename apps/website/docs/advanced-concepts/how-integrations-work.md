@@ -48,7 +48,7 @@ See the [Appsync Integration](../concepts/appsync/index.md) for more information
 
 ### `apiGWVtl`
 
-Implements the logic for attaching an Integration to an AWS API Gateway REST HTTP Method. It contains the following hooks that will be invoked when this Integration is called from within an [AwsMethod](../api/classes/AwsMethod.md).
+Implements the logic for attaching an Integration to an AWS API Gateway REST HTTP Method. It contains the following hooks that will be invoked when this Integration is called from within an [AwsMethod](../../../../packages/@functionless/aws-apigateway-constructs/docs/classes/AwsMethod.md).
 
 - `renderRequest` - generate a VTL template that will emit the JSON request payload required by the Integration's API call.
 - `createIntegration` - creates the corresponding [REST API Integration](https://docs.aws.amazon.com/apigateway/latest/developerguide/how-to-integration-settings.html) to configure AWS to call the Integration.
@@ -59,7 +59,7 @@ The API GW interface is not mature or stable.
 
 ### `asl`
 
-The `asl` property defines how to generate Amazon States Language (ASL) for integrating a service into an AWS Step Function. It is a function that accepts a [`CallExpr`](../api/classes/CallExpr.md) and an [`ASL`](../api/classes/ASL-1.md) context representing the Integration and the current Amazon States Language (ASL) Context. This callback then grants any IAM Policies it requires and returns an ASL Task State that fulfils the request.
+The `asl` property defines how to generate Amazon States Language (ASL) for integrating a service into an AWS Step Function. It is a function that accepts a [`CallExpr`](../../../../packages/@functionless/ast/docs/classes/CallExpr.md) and an [`ASL`](../../../../packages/@functionless/asl-graph/docs/classes/ASL-1.md) context representing the Integration and the current Amazon States Language (ASL) Context. This callback then grants any IAM Policies it requires and returns an ASL Task State that fulfils the request.
 
 See the [Step Function](../concepts/step-function/index.md) for more information on Step Functions.
 
@@ -83,7 +83,7 @@ It contains the following hooks that will be called either during CDK synthesis 
 
 ## Functionless AST
 
-When you compile your application with `tsc`, the [`functionless/lib/compile`](../../../../packages/@functionless/aws-constructs/src/compile.ts) transformer will replace the function declaration, `F`, in `new AppsyncResolver(F)` with its corresponding [Abstract Syntax Tree](../../../../packages/@functionless/ast/src/expression.ts) representation. This representation is then synthesized to Velocity Templates and AWS AppSync Resolver configurations, using the `@aws-cdk/aws-appsync-alpha` CDK Construct Library.
+When you compile your application with `tsc`, the [`functionless/lib/compile`](../../../../packages/@functionless/validate/src/compile.ts) transformer will replace the function declaration, `F`, in `new AppsyncResolver(F)` with its corresponding [Abstract Syntax Tree](../../../../packages/@functionless/ast/src/expression.ts) representation. This representation is then synthesized to Velocity Templates and AWS AppSync Resolver configurations, using the `@aws-cdk/aws-appsync-alpha` CDK Construct Library.
 
 For example, this function declaration:
 

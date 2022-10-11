@@ -1,10 +1,14 @@
 {
   "name": "@functionless/jest",
   "version": "0.27.0",
-  "main": "./index.js",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "files": [
-    "index.js"
+    "lib"
   ],
+  "scripts": {
+    "build": "tsc --build && typedoc"
+  },
   "dependencies": {
     "@functionless/ast-reflection": "^0.3.1",
     "@functionless/swc-config": "^0.27.0",

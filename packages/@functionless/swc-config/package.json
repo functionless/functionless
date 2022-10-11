@@ -4,8 +4,11 @@
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
-    "index.js"
+    "lib"
   ],
+  "scripts": {
+    "build": "tsc --build && typedoc"
+  },
   "publishConfig": {
     "access": "public"
   }

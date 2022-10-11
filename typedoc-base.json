@@ -1,0 +1,6 @@
+{
+  "$schema": "https://typedoc.org/schema.json",
+  "entryPointStrategy": "expand",
+  "logLevel": "Error",
+  "plugin": ["typedoc-plugin-markdown"]
+}

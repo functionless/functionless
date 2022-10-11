@@ -1,7 +1,4 @@
-const {
-  ErrorCodes,
-  ErrorType,
-} = require("@functionless/aws-constructs/lib/error-code");
+const { ErrorCodes, ErrorType } = require("@functionless/error-code/lib");
 
 const fs = require("fs");
 const path = require("path");
@@ -13,9 +10,13 @@ const path = require("path");
 const errorCodesAPIReference = path.join(
   __dirname,
   "..",
+  "..",
+  "..",
+  "packages",
+  "@functionless",
+  "error-code",
   "docs",
-  "api",
-  "namespaces",
+  "modules",
   "ErrorCodes.md"
 );
 
