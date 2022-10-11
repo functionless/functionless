@@ -5,6 +5,7 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "tsc -b",
+    "dev": "tsc --watch",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
