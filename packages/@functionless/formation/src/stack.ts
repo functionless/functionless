@@ -1,34 +1,6 @@
 import * as ssm from "@aws-sdk/client-ssm";
 
-import { Expression } from "./expression";
-import {
-  IntrinsicFunction,
-  isFnBase64,
-  isFnContains,
-  isFnEachMemberEquals,
-  isFnEachMemberIn,
-  isFnFindInMap,
-  isFnGetAtt,
-  isFnIf,
-  isFnJoin,
-  isFnRefAll,
-  isFnSelect,
-  isFnSplit,
-  isFnSub,
-  isFnValueOf,
-  isFnValueOfAll,
-  isIntrinsicFunction,
-  isRef,
-  isRefString,
-  parseRefString,
-} from "./function";
-import {
-  isFnEquals,
-  isFnNot,
-  isFnAnd,
-  isFnOr,
-  isConditionRef,
-} from "./condition";
+import { DefaultConditionResolver } from "./condition";
 import {
   buildDependencyGraph,
   ResourceDependencyGraph,
@@ -44,8 +16,9 @@ import {
   Parameter,
   ParameterValues,
   validateParameter,
+  DefaultParameterResolver,
 } from "./parameter";
-import { isPseudoParameter, PseudoParameter } from "./pseudo-parameter";
+import { DefaultPseudoParameterResolver } from "./pseudo-parameter";
 import {
   PhysicalResource,
   PhysicalResources,
@@ -53,11 +26,10 @@ import {
   DeletionPolicy,
   PhysicalProperties,
 } from "./resource";
-import { Assertion, isRuleFunction, Rule, RuleFunction, Rules } from "./rule";
+import { Assertion, Rule, Rules } from "./rule";
 
 import { CloudFormationTemplate } from "./template";
-import { isDeepEqual, wait } from "./util";
-import { Value } from "./value";
+import { wait } from "./util";
 import { AssetManifest, AssetPublishing, FileManifestEntry } from "cdk-assets";
 import AwsClient from "./aws";
 import {
@@ -65,6 +37,8 @@ import {
   ResourceProviders,
 } from "./resource-provider";
 import { displayTopoEntries, TopoDisplayEntry } from "./display";
+import { TemplateResolver } from "./resolve-template";
+import { compare } from "fast-json-patch";
 
 /**
  * A map of each {@link LogicalResource}'s Logical ID to its {@link PhysicalProperties}.
@@ -523,15 +497,41 @@ export class Stack {
       parameterValues: parameterValues ?? {},
       modules: {},
     };
+
+    const templateResolver = new TemplateResolver(desiredState, {
+      pseudoParameterResolver: new DefaultPseudoParameterResolver({
+        account: this.account,
+        region: this.region,
+        stackName: this.stackName,
+      }),
+      parameterReferenceResolver: new DefaultParameterResolver(
+        parameterValues ?? {},
+        { ssmClient: this.ssmClient }
+      ),
+      conditionReferenceResolver: new DefaultConditionResolver(),
+      resourceReferenceResolver: {
+        resolve: async (logicalId, templateResolver) => {
+          return {
+            value: () =>
+              this.updateResource(state, logicalId, templateResolver),
+          };
+        },
+      },
+    });
+
     try {
       await this.validateParameters(desiredState, parameterValues);
       if (desiredState.Rules) {
-        await this.validateRules(desiredState.Rules, state);
+        await this.validateRules(desiredState.Rules, templateResolver);
       }
 
       const resourceResults = await Promise.allSettled(
         Object.keys(desiredState.Resources).map(async (logicalId) => {
-          const resource = await this.updateResource(state, logicalId);
+          const resource = await this.updateResource(
+            state,
+            logicalId,
+            templateResolver
+          );
           return resource
             ? {
                 [logicalId]: resource,
@@ -710,17 +710,90 @@ ${metricsMessage}`);
       modules: {},
     };
 
+    const resolvedResources: Record<string, PhysicalResource | undefined> = {};
+
+    const templateResolver = new TemplateResolver(desiredState, {
+      conditionReferenceResolver: new DefaultConditionResolver(),
+      parameterReferenceResolver: new DefaultParameterResolver(
+        parameterValues ?? {},
+        { ssmClient: this.ssmClient }
+      ),
+      pseudoParameterResolver: new DefaultPseudoParameterResolver({
+        account: this.account,
+        region: this.region,
+        stackName: this.stackName,
+      }),
+      // TODO: extract into a "NO_DEPLOY" resource resolver.
+      // attempts to resolve resource references without making any deployments.
+      resourceReferenceResolver: {
+        resolve: async (logicalId, templateResolver) => {
+          if (logicalId in resolvedResources) {
+            if (resolvedResources[logicalId]) {
+              return {
+                value: () => resolvedResources[logicalId]!,
+              };
+            } else {
+              return undefined;
+            }
+          } else {
+            const previous = this.getPhysicalResource(logicalId);
+            // resource did not exist before, will need to be created
+            if (!previous) {
+              return (resolvedResources[logicalId] = undefined)!;
+            } else {
+              const definition = this.getLogicalResource(logicalId, state);
+              const result = definition.Properties
+                ? await templateResolver.evaluateExpr(definition.Properties)
+                : undefined;
+              if (
+                result?.unresolvedDependencies &&
+                result.unresolvedDependencies.length > 0
+              ) {
+                return (resolvedResources[logicalId] = undefined);
+              } else if (!result) {
+                if (
+                  !previous.InputProperties ||
+                  Object.keys(previous.InputProperties).length === 0
+                ) {
+                  resolvedResources[logicalId] = previous;
+                  return {
+                    value: () => previous,
+                  };
+                } else {
+                  return undefined;
+                }
+              } else {
+                const diff = compare(
+                  (await result.value()) as object,
+                  previous.InputProperties
+                );
+                if (diff.length > 0) {
+                  return (resolvedResources[logicalId] = undefined);
+                }
+                resolvedResources[logicalId] = previous;
+                return {
+                  value: () => previous,
+                };
+              }
+            }
+          }
+        },
+      },
+    });
+
     const assetState: Record<string, boolean> = Object.fromEntries(
       await Promise.all(
         fileAssets?.map(async (x) => {
-          const key = (await this.evaluateExpr(
-            { "Fn::Sub": x.destination.objectKey },
-            state
-          )) as unknown as string;
-          const bucket = (await this.evaluateExpr(
-            { "Fn::Sub": x.destination.bucketName },
-            state
-          )) as unknown as string;
+          const key = (await (
+            await templateResolver.evaluateExpr({
+              "Fn::Sub": x.destination.objectKey,
+            })
+          ).value()) as unknown as string;
+          const bucket = (await (
+            await templateResolver.evaluateExpr({
+              "Fn::Sub": x.destination.bucketName,
+            })
+          ).value()) as unknown as string;
 
           return [
             x.id,
@@ -751,7 +824,7 @@ ${metricsMessage}`);
         Object.entries(desiredState.Conditions ?? {}).map(
           async ([key, cond]) => [
             key,
-            await this.evaluateRuleFunction(cond, state),
+            await (await templateResolver.evaluateRuleFunction(cond)).value(),
           ]
         )
       )
@@ -787,12 +860,42 @@ ${metricsMessage}`);
     // check for add/update/delete
 
     const createUpdateMap = Object.fromEntries(
-      logicalIdsToCreateOrUpdate.map((logicalId) => [
-        logicalId,
-        state.previousState && logicalId in state.previousState?.Resources
-          ? "UPDATE"
-          : "CREATE",
-      ])
+      await Promise.all(
+        logicalIdsToCreateOrUpdate.map(async (logicalId) => {
+          const update =
+            state.previousState && logicalId in state.previousState?.Resources;
+          if (update) {
+            const logical = this.getLogicalResource(logicalId, state);
+            const previous = this.getPhysicalResource(logicalId);
+            const definitionResult =
+              logical && logical.Properties
+                ? await templateResolver.evaluateExpr(logical.Properties)
+                : undefined;
+            if (
+              !definitionResult?.unresolvedDependencies ||
+              definitionResult.unresolvedDependencies.length === 0
+            ) {
+              const definition = await definitionResult?.value();
+              if (!definition) {
+                return [
+                  logicalId,
+                  !previous?.InputProperties ||
+                  Object.keys(previous.InputProperties).length === 0
+                    ? "SKIP_UPDATE"
+                    : "UPDATE",
+                ];
+              }
+              const diff = compare(definition, previous?.InputProperties ?? {});
+              if (diff.length === 0) {
+                return [logicalId, "SKIP_UPDATE"];
+              }
+            }
+            return [logicalId, "UPDATE"];
+          } else {
+            return [logicalId, "CREATE"];
+          }
+        })
+      )
     );
 
     const topoDesired = state.desiredDependencyGraph
@@ -842,7 +945,8 @@ ${metricsMessage}`);
    */
   private async updateResource(
     state: UpdateState,
-    logicalId: string
+    logicalId: string,
+    templateResolver: TemplateResolver
   ): Promise<PhysicalResource | undefined> {
     if (logicalId in state.modules) {
       console.log("Task Cache Hit: " + logicalId);
@@ -868,9 +972,8 @@ ${metricsMessage}`);
                 `Condition '${logicalResource.Condition}' does not exist`
               );
             }
-            const shouldCreate = await this.evaluateRuleExpressionToBoolean(
-              conditionRule,
-              state
+            const shouldCreate = await templateResolver.evaluateRuleFunction(
+              conditionRule
             );
             if (!shouldCreate) {
               return {
@@ -888,7 +991,9 @@ ${metricsMessage}`);
                   Object.entries(logicalResource.Properties).map(
                     async ([propName, propExpr]) => [
                       propName,
-                      await this.evaluateExpr(propExpr, state),
+                      await (
+                        await templateResolver.evaluateExpr(propExpr)
+                      ).value(),
                     ]
                   )
                 )
@@ -898,7 +1003,7 @@ ${metricsMessage}`);
           if (logicalResource.DependsOn) {
             const results = await Promise.allSettled(
               logicalResource.DependsOn.map((logicalDep) =>
-                this.updateResource(state, logicalDep)
+                this.updateResource(state, logicalDep, templateResolver)
               )
             );
             const failed = results.filter((s) => s.status === "rejected");
@@ -990,485 +1095,6 @@ ${metricsMessage}`);
   }
 
   /**
-   * Evaluates an {@link Expression} to a {@link PhysicalProperty}.
-   *
-   * This property may come from evaluating an intrinsic function or by fetching
-   * an attribute from a physically deployed resource.
-   *
-   * @param expr expression to evaluate
-   * @param state the {@link UpdateState} being evaluated
-   * @returns the physical property as a primitive JSON object
-   */
-  private async evaluateExpr(
-    expr: Expression,
-    state: UpdateState
-  ): Promise<Value> {
-    if (expr === undefined || expr === null) {
-      return expr;
-    } else if (isIntrinsicFunction(expr)) {
-      return this.evaluateIntrinsicFunction(state, expr);
-    } else if (typeof expr === "string") {
-      if (isRefString(expr)) {
-        return this.evaluateIntrinsicFunction(state, parseRefString(expr));
-      } else if (isPseudoParameter(expr)) {
-        return this.evaluatePseudoParameter(expr);
-      } else {
-        return expr;
-      }
-    } else if (Array.isArray(expr)) {
-      return Promise.all(
-        expr
-          // hack to remove NoValue from an array
-          .filter(
-            (v) =>
-              !(
-                v &&
-                typeof v === "object" &&
-                "Ref" in v &&
-                v.Ref === "AWS::NoValue"
-              )
-          )
-          .map((e) => this.evaluateExpr(e, state))
-      );
-    } else if (typeof expr === "object") {
-      return (
-        await Promise.all(
-          Object.entries(expr).map(async ([k, v]) => ({
-            [k]: await this.evaluateExpr(v, state),
-          }))
-        )
-      ).reduce((a, b) => ({ ...a, ...b }), {});
-    } else {
-      return expr;
-    }
-  }
-
-  /**
-   * Evaluate a CloudFormation {@link IntrinsicFunction} to a {@link PhysicalProperty}.
-   *
-   * @param expr intrinsic function expression
-   * @returns the physical value of the function
-   */
-  private async evaluateIntrinsicFunction(
-    state: UpdateState,
-    expr: IntrinsicFunction
-  ): Promise<Value> {
-    const parameters = state.desiredState?.Parameters ?? {};
-
-    if (isRef(expr)) {
-      if (isPseudoParameter(expr.Ref)) {
-        return this.evaluatePseudoParameter(expr.Ref);
-      }
-      const paramDef = parameters[expr.Ref];
-      if (paramDef !== undefined) {
-        return this.evaluateParameter(state, expr.Ref, paramDef);
-      } else {
-        const resource = await this.updateResource(state, expr.Ref);
-        // TODO: find a way to abstract this
-        if (resource?.Type === "AWS::SQS::Queue") {
-          return resource.Attributes.QueueUrl;
-        }
-        return resource?.PhysicalId;
-      }
-    } else if (isFnGetAtt(expr)) {
-      const [logicalId, attributeName] = expr["Fn::GetAtt"];
-      const resource = await this.updateResource(state, logicalId);
-      if (resource === undefined) {
-        throw new Error(
-          `Resource '${logicalId}' does not exist, perhaps a Condition is preventing it from being created?`
-        );
-      }
-      const attributeValue = resource.Attributes[attributeName];
-      if (attributeValue === undefined) {
-        throw new Error(
-          `attribute '${attributeName}' does not exist on resource '${logicalId}' of type '${resource.Type}'`
-        );
-      }
-      return attributeValue;
-    } else if (isFnJoin(expr)) {
-      const [delimiter, values] = expr["Fn::Join"];
-      return (
-        await Promise.all(
-          values.map((value) => this.evaluateExpr(value, state))
-        )
-      ).join(delimiter);
-    } else if (isFnSelect(expr)) {
-      const [index, listOfObjects] = expr["Fn::Select"];
-      if (isIntrinsicFunction(listOfObjects)) {
-        const evaled = await this.evaluateIntrinsicFunction(
-          state,
-          listOfObjects
-        );
-        if (!Array.isArray(evaled)) {
-          throw new Error(`Expected an array, found: ${evaled}`);
-        } else if (index in evaled) {
-          return evaled[index];
-        } else {
-          throw new Error(`index ${index} out of bounds in list: ${evaled}`);
-        }
-      }
-      if (index in listOfObjects) {
-        return this.evaluateExpr(listOfObjects[index]!, state);
-      } else {
-        throw new Error(
-          `index ${index} out of bounds in list: ${listOfObjects}`
-        );
-      }
-    } else if (isFnSplit(expr)) {
-      const [delimiter, sourceStringExpr] = expr["Fn::Split"];
-      const sourceString = await this.evaluateExpr(sourceStringExpr, state);
-      if (typeof sourceString !== "string") {
-        throw new Error(
-          `Fn::Split must operate on a String, but received: ${typeof sourceString}`
-        );
-      }
-      return sourceString.split(delimiter);
-    } else if (isFnSub(expr)) {
-      const [string, variables] =
-        typeof expr["Fn::Sub"] === "string"
-          ? [expr["Fn::Sub"], {}]
-          : expr["Fn::Sub"];
-      const resolvedValues = Object.fromEntries(
-        await Promise.all(
-          Object.entries(variables).map(async ([varName, varVal]) => [
-            varName,
-            await this.evaluateExpr(varVal, state),
-          ])
-        )
-      );
-
-      // match "something ${this} something"
-      return string.replace(/\$\{([^\}]*)\}/g, (_, varName) => {
-        const varVal =
-          varName in resolvedValues
-            ? resolvedValues[varName]
-            : isPseudoParameter(varName)
-            ? this.evaluatePseudoParameter(varName)
-            : undefined;
-        if (
-          typeof varVal === "string" ||
-          typeof varVal === "number" ||
-          typeof varVal === "boolean"
-        ) {
-          return `${varVal}`;
-        } else {
-          throw new Error(
-            `Variable '${varName}' in Fn::Sub did not resolve to a String, Number or Boolean: ${varVal}`
-          );
-        }
-      });
-    } else if (isFnBase64(expr)) {
-      const exprVal = await this.evaluateExpr(expr["Fn::Base64"], state);
-      if (typeof exprVal === "string") {
-        return Buffer.from(exprVal, "utf8").toString("base64");
-      } else {
-        throw new Error(
-          `Fn::Base64 can only convert String values to Base64, but got '${typeof exprVal}'`
-        );
-      }
-    } else if (isFnFindInMap(expr)) {
-      const [mapName, topLevelKeyExpr, secondLevelKeyExpr] =
-        expr["Fn::FindInMap"];
-
-      const [topLevelKey, secondLevelKey] = await Promise.all([
-        this.evaluateExpr(topLevelKeyExpr, state),
-        this.evaluateExpr(secondLevelKeyExpr, state),
-      ]);
-      if (typeof topLevelKey !== "string") {
-        throw new Error(
-          `The topLevelKey in Fn::FindInMap must be a string, but got ${typeof topLevelKeyExpr}`
-        );
-      }
-      if (typeof secondLevelKey !== "string") {
-        throw new Error(
-          `The secondLevelKey in Fn::FindInMap must be a string, but got ${typeof secondLevelKeyExpr}`
-        );
-      }
-      const value =
-        state.desiredState?.Mappings?.[mapName]?.[topLevelKey]?.[
-          secondLevelKey
-        ];
-      if (value === undefined) {
-        throw new Error(
-          `Could not find map value: ${mapName}.${topLevelKey}.${secondLevelKey}`
-        );
-      }
-      return value;
-    } else if (isFnRefAll(expr)) {
-      return Object.entries(parameters)
-        .map(([paramName, paramDef]) =>
-          paramDef.Type === expr["Fn::RefAll"]
-            ? state.parameterValues[paramName]
-            : undefined
-        )
-        .filter((paramVal) => paramVal !== undefined);
-    } else if (isFnIf(expr)) {
-      const [_when, thenExpr, elseExpr] = expr["Fn::If"];
-
-      const whenExpr =
-        typeof _when === "string"
-          ? state.desiredState?.Conditions?.[_when]
-          : _when;
-
-      if (!whenExpr) {
-        throw new Error(
-          "When clause of Fn::If must be defined and if it is a reference, it must exist."
-        );
-      }
-
-      const when = await this.evaluateRuleFunction(whenExpr, state);
-      if (when === true) {
-        return this.evaluateExpr(thenExpr, state);
-      } else if (when === false) {
-        return this.evaluateExpr(elseExpr, state);
-      } else {
-        throw new Error(`invalid value for 'condition' in Fn:If: ${whenExpr}`);
-      }
-    }
-
-    throw new Error(
-      `expression not implemented: ${Object.keys(expr).join(",")}`
-    );
-  }
-
-  /**
-   * Evaluate a {@link RuleFunction} or {@link ConditionFunction} to a boolean.
-   */
-  private async evaluateRuleFunction(
-    expr: RuleFunction,
-    state: UpdateState
-  ): Promise<boolean> {
-    if (isFnEquals(expr)) {
-      const [left, right] = await Promise.all(
-        expr["Fn::Equals"].map((expr) =>
-          isRuleFunction(expr)
-            ? this.evaluateRuleFunction(expr, state)
-            : this.evaluateExpr(expr, state)
-        )
-      );
-      return isDeepEqual(left, right);
-    } else if (isFnNot(expr)) {
-      const [condition] = await Promise.all(
-        expr["Fn::Not"].map((expr) =>
-          isRuleFunction(expr)
-            ? this.evaluateRuleFunction(expr, state)
-            : this.evaluateExpr(expr, state)
-        )
-      );
-      if (typeof condition === "boolean") {
-        return !condition;
-      } else {
-        throw new Error(
-          `Malformed input to Fn::Not - expected a boolean but received ${typeof condition}`
-        );
-      }
-    } else if (isFnAnd(expr)) {
-      if (expr["Fn::And"].length === 0) {
-        throw new Error(
-          `Malformed input to Fn::And - your must provide at least one [{condition}].`
-        );
-      }
-      return (
-        await Promise.all(
-          expr["Fn::And"].map((expr) =>
-            isRuleFunction(expr)
-              ? this.evaluateRuleFunction(expr, state)
-              : this.evaluateExpr(expr, state)
-          )
-        )
-      ).reduce((a: boolean, b) => {
-        if (typeof b !== "boolean") {
-          throw new Error(
-            `Malformed input to Fn::And - expected a boolean but received ${typeof b}`
-          );
-        }
-        return a && b;
-      }, true);
-    } else if (isFnOr(expr)) {
-      if (expr["Fn::Or"].length === 0) {
-        throw new Error(
-          `Malformed input to Fn::Or - your must provide at least one [{condition}].`
-        );
-      }
-      return (
-        await Promise.all(
-          expr["Fn::Or"].map((expr) =>
-            isRuleFunction(expr)
-              ? this.evaluateRuleFunction(expr, state)
-              : this.evaluateExpr(expr, state)
-          )
-        )
-      ).reduce((a: boolean, b) => {
-        if (typeof b !== "boolean") {
-          throw new Error(
-            `Malformed input to Fn::Or - expected a boolean but received ${typeof b}`
-          );
-        }
-        return a || b;
-      }, false);
-    } else if (isFnContains(expr)) {
-      const [listOfStrings, string] = await Promise.all(
-        expr["Fn::Contains"].map((expr) => this.evaluateExpr(expr, state))
-      );
-
-      assertIsListOfStrings(listOfStrings, "listOfStrings");
-      assertIsString(string, "string");
-
-      return listOfStrings.includes(string);
-    } else if (isFnEachMemberEquals(expr)) {
-      const [listOfStrings, string] = await Promise.all(
-        expr["Fn::EachMemberEquals"].map((expr) =>
-          this.evaluateExpr(expr, state)
-        )
-      );
-
-      assertIsListOfStrings(listOfStrings, "listOfStrings");
-      assertIsString(string, "string");
-
-      return listOfStrings.find((s) => s !== string) === undefined;
-    } else if (isFnEachMemberIn(expr)) {
-      const [stringsToCheck, stringsToMatch] = await Promise.all(
-        expr["Fn::EachMemberIn"].map((expr) => this.evaluateExpr(expr, state))
-      );
-
-      assertIsListOfStrings(stringsToCheck, "stringsToCheck");
-      assertIsListOfStrings(stringsToMatch, "stringsToMatch");
-
-      return stringsToCheck.every((check) => stringsToMatch.includes(check));
-    } else if (isFnValueOf(expr)) {
-      throw new Error("Fn::ValueOf is not yet supported");
-    } else if (isFnValueOfAll(expr)) {
-      throw new Error("Fn::ValueOfAll is not yet supported");
-    } else if (isFnRefAll(expr)) {
-      throw new Error("Fn::refAll is not yet supported");
-    } else if (isConditionRef(expr)) {
-      const condition = state.desiredState?.Conditions?.[expr.Condition];
-      if (!condition) {
-        throw new Error("Condition does not exist: " + expr.Condition);
-      }
-      return this.evaluateRuleFunction(condition, state);
-    }
-    const __exhaustive: never = expr;
-    return __exhaustive;
-  }
-
-  /**
-   * Evaluate a {@link PseudoParameter} and return its value.
-   *
-   * @see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/pseudo-parameter-reference.html
-   */
-  private evaluatePseudoParameter(expr: PseudoParameter) {
-    if (expr === "AWS::AccountId") {
-      return this.account;
-    } else if (expr === "AWS::NoValue") {
-      return null;
-    } else if (expr === "AWS::Region") {
-      return this.region;
-    } else if (expr === "AWS::Partition") {
-      // gov regions are not supported
-      return "aws";
-    } else if (expr === "AWS::NotificationARNs") {
-      // don't yet support sending notifications to SNS
-      // on top of supporting this, we could also provide native JS hooks into the engine
-      return [];
-    } else if (expr === "AWS::StackId") {
-      return this.stackName;
-    } else if (expr === "AWS::StackName") {
-      return this.stackName;
-    } else {
-      throw new Error(`unsupported Pseudo Parameter '${expr}'`);
-    }
-  }
-
-  /**
-   * Determine the value of a {@link paramName}.
-   *
-   * If the {@link Parameter} is a {@link SSMParameterType} then the value is fetched
-   * from AWS Systems Manager Parameter Store.
-   *
-   * The {@link CloudFormationTemplate}'s {@link Parameter}s and the input {@link ParameterValues}
-   * are assumed to be valid because the {@link validateParameters} function is called by
-   * {@link updateStack}.
-   *
-   * @param state {@link UpdateState} being evaluated.
-   * @param paramName name of the {@link Parameter}.
-   * @param paramDef the {@link Parameter} definition in the source {@link CloudFormationTemplate}.
-   */
-  private async evaluateParameter(
-    state: UpdateState,
-    paramName: string,
-    paramDef: Parameter
-  ): Promise<Value> {
-    let paramVal = state.parameterValues[paramName];
-    if (paramVal === undefined) {
-      if (paramDef.Default !== undefined) {
-        paramVal = paramDef.Default;
-      } else {
-        throw new Error(`Missing required input-Parameter ${paramName}`);
-      }
-    }
-
-    const type = paramDef.Type;
-
-    if (type === "String" || type === "Number") {
-      return paramVal;
-    } else if (type === "CommaDelimitedList") {
-      return (paramVal as string).split(",");
-    } else if (type === "List<Number>") {
-      return (paramVal as string).split(",").map((s) => parseInt(s, 10));
-    } else if (
-      type.startsWith("AWS::EC2") ||
-      type.startsWith("AWS::Route53") ||
-      type.startsWith("List<AWS::EC2") ||
-      type.startsWith("List<AWS::Route53")
-    ) {
-      return paramVal;
-    } else if (type.startsWith("AWS::SSM")) {
-      try {
-        const ssmParamVal = await this.ssmClient.send(
-          new ssm.GetParameterCommand({
-            Name: paramVal as string,
-            WithDecryption: true,
-          })
-        );
-
-        if (
-          ssmParamVal.Parameter?.Name === undefined ||
-          ssmParamVal.Parameter.Value === undefined
-        ) {
-          throw new Error(`GetParameter '${paramVal}' returned undefined`);
-        }
-
-        if (type === "AWS::SSM::Parameter::Name") {
-          return ssmParamVal.Parameter.Name;
-        } else if (type === "AWS::SSM::Parameter::Value<String>") {
-          if (ssmParamVal.Parameter.Type !== "String") {
-            throw new Error(
-              `Expected SSM Parameter ${paramVal} to be ${type} but was ${ssmParamVal.Parameter.Type}`
-            );
-          }
-          return ssmParamVal.Parameter.Value;
-        } else if (
-          type === "AWS::SSM::Parameter::Value<List<String>>" ||
-          type.startsWith("AWS::SSM::Parameter::Value<List<")
-        ) {
-          if (ssmParamVal.Parameter.Type !== "StringList") {
-            throw new Error(
-              `Expected SSM Parameter ${paramVal} to be ${type} but was ${ssmParamVal.Parameter.Type}`
-            );
-          }
-          return ssmParamVal.Parameter.Value.split(",");
-        } else {
-        }
-      } catch (err) {
-        throw err;
-      }
-    }
-
-    return paramVal;
-  }
-
-  /**
    * Validate the {@link parameterValues} against the {@link Parameter} defintiions in the {@link template}.
    *
    * @param template the {@link CloudFormationTemplate}
@@ -1504,12 +1130,15 @@ ${metricsMessage}`);
    * @param rules the {@link Rules} section of a {@link CloudFormationTemplate}.
    * @param state the {@link UpdateState} of the current evaluation.
    */
-  private async validateRules(rules: Rules, state: UpdateState) {
+  private async validateRules(
+    rules: Rules,
+    templateResolver: TemplateResolver
+  ) {
     const errors = (
       await Promise.all(
         Object.entries(rules).map(async ([ruleId, rule]) =>
           (
-            await this.evaluateRule(rule, state)
+            await this.evaluateRule(rule, templateResolver)
           ).map(
             (errorMessage) =>
               `Rule '${ruleId}' failed vaidation: ${errorMessage}`
@@ -1532,16 +1161,21 @@ ${metricsMessage}`);
    */
   private async evaluateRule(
     rule: Rule,
-    state: UpdateState
+    templateResolver: TemplateResolver
   ): Promise<string[]> {
     if (
       rule.RuleCondition === undefined ||
-      (await this.evaluateRuleExpressionToBoolean(rule.RuleCondition, state))
+      (await (
+        await templateResolver.evaluateRuleFunction(rule.RuleCondition)
+      ).value())
     ) {
       return (
         await Promise.all(
           rule.Assertions.map(async (assertion) => {
-            const error = await this.evaluateAssertion(assertion, state);
+            const error = await this.evaluateAssertion(
+              assertion,
+              templateResolver
+            );
             return error ? [error] : [];
           })
         )
@@ -1560,36 +1194,16 @@ ${metricsMessage}`);
    */
   private async evaluateAssertion(
     assertion: Assertion,
-    state: UpdateState
+    templateResolver: TemplateResolver
   ): Promise<string | undefined> {
     if (
-      !(await this.evaluateRuleExpressionToBoolean(assertion.Assert, state))
+      !(await (
+        await templateResolver.evaluateRuleFunction(assertion.Assert)
+      ).value())
     ) {
       return assertion.AssertDescription ?? JSON.stringify(assertion.Assert);
     } else {
       return undefined;
-    }
-  }
-
-  /**
-   * Evaluate a {@link RuleFunction} to a `boolean`.
-   *
-   * @param rule the {@link RuleFunction} to evaluate.
-   * @param state the {@link UpdateState} of the current evaluation.
-   * @returns the evaluated `boolean` value of the {@link rule}.
-   * @throws an Error if the {@link rule} does not evaluate to a `boolean`.
-   */
-  private async evaluateRuleExpressionToBoolean(
-    rule: RuleFunction,
-    state: UpdateState
-  ): Promise<boolean> {
-    const result = await this.evaluateRuleFunction(rule, state);
-    if (typeof result === "boolean") {
-      return result;
-    } else {
-      throw new Error(
-        `rule must evaluate to a Boolean, but evalauted to ${typeof result}`
-      );
     }
   }
 }

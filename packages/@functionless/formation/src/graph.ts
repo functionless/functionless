@@ -7,7 +7,7 @@ import {
   isFnFindInMap,
 } from "./function";
 import { isConditionRef } from "./condition";
-import { isPseudoParameter } from "./pseudo-parameter";
+import { isPseudoParameter, PseudoParameter } from "./pseudo-parameter";
 import type { Stack } from "./stack";
 import { CloudFormationTemplate } from "./template";
 import { guard } from "./util";
@@ -31,13 +31,18 @@ export interface ResourceReference {
   logicalId: string;
 }
 
+export interface PseudoParameterReference {
+  pseudoParameter: PseudoParameter;
+}
+
 export const isResourceReference = guard<ResourceReference>("logicalId");
 
 export type Dependency =
   | ConditionReference
   | ParameterReference
   | ResourceReference
-  | MappingReference;
+  | MappingReference
+  | PseudoParameterReference;
 
 /**
  * A resource can point to a resource, condition, parameter, or a mapping.
@@ -46,7 +51,8 @@ export type ResourceDependency =
   | ParameterReference
   | ResourceReference
   | MappingReference
-  | ConditionReference;
+  | ConditionReference
+  | PseudoParameterReference;
 
 /**
  * A condition can point to a condition, parameter, or a mapping.
@@ -54,7 +60,8 @@ export type ResourceDependency =
 export type ConditionDependency =
   | ParameterReference
   | ConditionReference
-  | MappingReference;
+  | MappingReference
+  | PseudoParameterReference;
 
 /**
  * Maps a Logical ID to the Logical IDs it depends on.

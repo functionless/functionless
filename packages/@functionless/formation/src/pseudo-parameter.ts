@@ -1,3 +1,6 @@
+import type { PseudoParameterResolver } from "./resolve-template";
+import type { Value } from "./value";
+
 /**
  * @see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/pseudo-parameter-reference.html
  */
@@ -74,3 +77,35 @@ export const isStackName = assertIsPseudo("AWS::StackName");
  * @see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/pseudo-parameter-reference.html#cfn-pseudo-param-urlsuffix
  */
 export const isURLSuffix = assertIsPseudo("AWS::URLSuffix");
+
+export interface DefaultPseudoParameterResolverProps {
+  account: string;
+  region: string;
+  stackName: string;
+}
+
+export class DefaultPseudoParameterResolver implements PseudoParameterResolver {
+  constructor(private props: DefaultPseudoParameterResolverProps) {}
+  resolve(expr: PseudoParameter): Value {
+    if (expr === "AWS::AccountId") {
+      return this.props.account;
+    } else if (expr === "AWS::NoValue") {
+      return null;
+    } else if (expr === "AWS::Region") {
+      return this.props.region;
+    } else if (expr === "AWS::Partition") {
+      // gov regions are not supported
+      return "aws";
+    } else if (expr === "AWS::NotificationARNs") {
+      // don't yet support sending notifications to SNS
+      // on top of supporting this, we could also provide native JS hooks into the engine
+      return [];
+    } else if (expr === "AWS::StackId") {
+      return this.props.stackName;
+    } else if (expr === "AWS::StackName") {
+      return this.props.stackName;
+    } else {
+      throw new Error(`unsupported Pseudo Parameter '${expr}'`);
+    }
+  }
+}

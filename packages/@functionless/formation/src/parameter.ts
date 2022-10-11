@@ -360,19 +360,6 @@ export type SSMParameterType =
   // A Systems Manager parameter whose value is a list of AWS-specific parameter types. For example, the following specifies a list of AWS::EC2::KeyPair::KeyName types:
   | "AWS::SSM::Parameter::Value<List<AWS::EC2::KeyPair::KeyName>>";
 
-/**
- * @see https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/pseudo-parameter-reference.html
- */
-export type PseudoParameter =
-  | "AWS::AccountId"
-  | "AWS::NotificationARNs"
-  | "AWS::NoValue"
-  | "AWS::Partition"
-  | "AWS::Region"
-  | "AWS::StackId"
-  | "AWS::StackName"
-  | "AWS::URLSuffix ";
-
 export interface DefaultParameterResolverProps {
   ssmClient: ssm.SSMClient;
 }

@@ -1,4 +1,5 @@
 import type { Expression } from "./expression";
+import { ConditionResolver, TemplateResolver } from "./resolve-template";
 import type { RuleFunction, RuleNestedFunction } from "./rule";
 import { guard } from "./util";
 
@@ -81,4 +82,26 @@ export function isConditionFunction(a: any): a is RuleFunction {
  */
 export interface Conditions {
   [logicalId: string]: RuleFunction;
+}
+
+export class DefaultConditionResolver implements ConditionResolver {
+  private conditions: Record<string, boolean> = {};
+
+  async resolve(
+    conditionName: string,
+    condition: RuleFunction,
+    templateResolver: TemplateResolver
+  ): Promise<boolean> {
+    if (conditionName in this.conditions) {
+      return this.conditions[conditionName]!;
+    } else {
+      const result = await templateResolver.evaluateRuleFunction(condition);
+      if (result.unresolvedDependencies?.length === 0) {
+        return (this.conditions[conditionName] = await result.value());
+      }
+      throw new Error(
+        `Cannot resolve condition ${conditionName} because it has unresolved dependencies.`
+      );
+    }
+  }
 }
