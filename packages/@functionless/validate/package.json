@@ -4,7 +4,8 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "build": "tsc --build && fls-typedoc",
+    "build": "tsc --build",
+    "build:docs": "fls-typedoc",
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {

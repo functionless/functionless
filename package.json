@@ -8,6 +8,7 @@
   "scripts": {
     "clean:deep": "git clean -fqdx .",
     "clean:tsbuildinfo": "find . -name tsconfig.tsbuildinfo -exec rm {} \\;",
+    "build:docs": "turbo run build:docs",
     "build:website": "turbo run build:website",
     "lint": "turbo run lint",
     "typecheck": "tsc -b",

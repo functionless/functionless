@@ -11,7 +11,8 @@
     "lib"
   ],
   "scripts": {
-    "build": "tsc --build && fls-typedoc",
+    "build": "tsc --build",
+    "build:docs": "fls-typedoc",
     "typecheck": "tsc --noEmit",
     "deploy": "cdk deploy",
     "synth": "cdk synth",

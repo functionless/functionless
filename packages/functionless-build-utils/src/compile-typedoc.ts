@@ -24,6 +24,7 @@ async function main() {
       },
       logLevel: "Error",
       readme: "./README.md",
+      tsconfig: "./tsconfig.json",
     }
   );
 
