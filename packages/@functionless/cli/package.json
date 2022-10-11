@@ -49,6 +49,7 @@
     "@functionless/aws-sqs-constructs": "*",
     "@functionless/aws-stepfunctions": "*",
     "@functionless/aws-stepfunctions-constructs": "*",
+    "@functionless/register": "*",
     "@functionless/util": "*"
   },
   "devDependencies": {
@@ -73,6 +74,7 @@
     "@functionless/aws-stepfunctions": "*",
     "@functionless/aws-stepfunctions-constructs": "*",
     "@functionless/language-service": "^0.0.4",
+    "@functionless/register": "*",
     "@functionless/util": "*",
     "@swc/jest": "^0.2.22",
     "@types/express": "^4.17.14",
