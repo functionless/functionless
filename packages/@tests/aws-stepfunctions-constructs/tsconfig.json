@@ -29,6 +29,9 @@
       "path": "../../@functionless/aws-events-constructs"
     },
     {
+      "path": "../../@functionless/aws-lambda-constructs"
+    },
+    {
       "path": "../../@functionless/aws-sdk"
     },
     {
@@ -39,6 +42,9 @@
     },
     {
       "path": "../../@functionless/aws-stepfunctions-constructs"
+    },
+    {
+      "path": "../../@functionless/serde"
     },
     {
       "path": "../../@functionless/test"

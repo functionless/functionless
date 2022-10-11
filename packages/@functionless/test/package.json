@@ -7,7 +7,8 @@
   "scripts": {
     "build": "tsc --build",
     "build:docs": "fls-typedoc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc -w"
   },
   "dependencies": {
     "@functionless/asl-graph": "*",
