@@ -120,16 +120,6 @@ export function tryFindReferences<T>(
 
 export type CallReferencePattern = CallExpr | (AwaitExpr & { expr: CallExpr });
 
-export function isCallReferencePattern(
-  node: FunctionlessNode,
-  is: (a: any) => a is any
-): node is CallReferencePattern {
-  return (
-    (isAwaitExpr(node) && tryFindReference(node.expr, is) !== undefined) ||
-    tryFindReference(node, is) !== undefined
-  );
-}
-
 export function getExprFromCallReferencePattern<T>(
   pattern: CallReferencePattern,
   is: (node: any) => node is T
@@ -143,4 +133,48 @@ export function getExprFromCallReferencePattern<T>(
     }
   }
   return undefined;
+}
+
+export function isIntegrationCallExpr<T>(
+  node: FunctionlessNode,
+  guard: (a: any) => a is T
+): node is CallExpr {
+  if (isCallExpr(node)) {
+    return tryFindIntegration(node.expr, guard) !== undefined;
+  }
+  return false;
+}
+
+export type IntegrationCallPattern =
+  | CallExpr
+  | (AwaitExpr & { expr: CallExpr });
+
+export function isCallReferencePattern<T>(
+  node: FunctionlessNode,
+  guard: (a: any) => a is T
+): node is IntegrationCallPattern {
+  return (
+    (isAwaitExpr(node) && isIntegrationCallExpr(node.expr, guard)) ||
+    isIntegrationCallExpr(node, guard)
+  );
+}
+
+export function tryFindIntegration<T>(
+  node: FunctionlessNode,
+  guard: (a: any) => a is T
+): T | undefined {
+  const integrations = tryFindIntegrations(node, guard);
+  if (integrations?.length === 1) {
+    return integrations[0];
+  }
+  return undefined;
+}
+
+export function tryFindIntegrations<T>(
+  node: FunctionlessNode,
+  guard: (a: any) => a is T
+): T[] {
+  return tryResolveReferences(node, undefined).filter((i) => {
+    return guard(i);
+  });
 }

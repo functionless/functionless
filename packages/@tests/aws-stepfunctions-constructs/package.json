@@ -9,7 +9,8 @@
   ],
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "dev": "tsc --watch"
+    "dev": "tsc --watch",
+    "test": "jest"
   },
   "dependencies": {
     "@functionless/asl-graph": "^0.27.0",
@@ -32,5 +33,13 @@
   },
   "publishConfig": {
     "access": "public"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "@functionless/jest",
+        {}
+      ]
+    }
   }
 }
