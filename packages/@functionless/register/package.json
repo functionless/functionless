@@ -4,7 +4,8 @@
   "main": "./lib/index.js",
   "types": "./lib/index.js",
   "files": [
-    "lib"
+    "lib",
+    "docs"
   ],
   "scripts": {
     "build": "tsc --build && typedoc"
@@ -13,6 +14,9 @@
     "@functionless/ast-reflection": "^0.3.1",
     "@functionless/swc-config": "^0.27.0",
     "@swc/register": "^0.1.10"
+  },
+  "devDependencies": {
+    "typescript": "^4.8.3"
   },
   "publishConfig": {
     "access": "public"

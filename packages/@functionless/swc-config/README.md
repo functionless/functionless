@@ -1,0 +1,1 @@
+# @functionless/swc-config

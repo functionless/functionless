@@ -46,14 +46,6 @@ const config = {
     },
     function () {
       return {
-        name: "copy-typedoc",
-        loadContent: () =>
-          // copy the typedoc from all child packages
-          require("./scripts/copy-typedoc").copyTypeDoc(),
-      };
-    },
-    function () {
-      return {
         name: "functionless-error-code-docs",
         loadContent: () =>
           // run the compile-error-code-page CLI after typedoc is run by `docusaurus-plugin-typedoc`

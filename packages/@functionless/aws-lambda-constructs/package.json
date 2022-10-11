@@ -4,7 +4,8 @@
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
-    "lib"
+    "lib",
+    "docs"
   ],
   "scripts": {
     "build": "tsc --build && typedoc",

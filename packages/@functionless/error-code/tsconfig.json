@@ -1,7 +1,10 @@
 {
   "extends": "../../../tsconfig-base.json",
   "compilerOptions": {
-    "rootDir": "src"
+    "rootDir": "src",
+    "outDir": "lib",
+    "declaration": true,
+    "inlineSourceMap": true
   },
   "include": ["src"],
   "exclude": ["lib", "test", "node_modules"]

@@ -3,7 +3,7 @@ const path = require("path");
 
 exports.copyTypeDoc = async function () {
   const workspaceDir = path.resolve(__dirname, "..", "..", "..");
-  const docsDir = path.join(workspaceDir, "website", "docs");
+  const docsDir = path.join(workspaceDir, "apps", "website", "docs");
   const apiRefDir = path.join(docsDir, "api");
   const flDir = path.join(workspaceDir, "packages", "@functionless");
   const pkgs = await Promise.all(
@@ -28,10 +28,17 @@ exports.copyTypeDoc = async function () {
     pkgs.map(async (pkg) => {
       if (await fs.pathExists(pkg.docRoot)) {
         const copyTo = path.join(apiRefDir, pkg.shortName);
-        await fs.copy(pkg.docRoot, copyTo);
+        await fs.copy(pkg.docRoot, copyTo, {
+          recursive: true,
+        });
       } else {
         console.log("File not found: ", pkg.docRoot);
       }
     })
   );
 };
+
+exports.copyTypeDoc().catch((err) => {
+  console.error(err);
+  process.exit(1);
+});

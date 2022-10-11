@@ -5,7 +5,7 @@
   "scripts": {
     "docusaurus": "docusaurus",
     "start": "FUNCTIONLESS_LOCAL=true; docusaurus start",
-    "build": "NODE_OPTIONS=--max_old_space_size=4096 mkdir -p docs/api/assets && cp ../../assets/* docs/api/assets && docusaurus build",
+    "build": "mkdir -p docs/api/assets && cp ../../assets/* docs/api/assets && node ./scripts/copy-typedoc.js && docusaurus build",
     "swizzle": "docusaurus swizzle",
     "deploy": "docusaurus deploy",
     "clear": "docusaurus clear",
