@@ -25,7 +25,7 @@ runs:
           turbo-
 
     - name: Install dependencies
-      run: yarn install --check-files
+      run: yarn install --frozen-lockfile
       shell: bash
 
     - name: Build
