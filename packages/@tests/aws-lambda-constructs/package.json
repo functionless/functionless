@@ -27,7 +27,7 @@
     "@functionless/aws-stepfunctions-constructs": "^0.27.0",
     "@functionless/aws-util": "^0.27.0",
     "@functionless/jest": "^0.27.0",
-    "@functionless/nodejs-closure-serializer": "^0.1.2",
+    "@functionless/nodejs-closure-serializer": "^0.1.5",
     "@functionless/serialize-closure": "*",
     "@functionless/util": "^0.27.0",
     "typesafe-dynamodb": "^0.2.3"

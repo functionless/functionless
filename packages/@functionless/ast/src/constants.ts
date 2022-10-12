@@ -54,3 +54,6 @@ export const RegisterFunctionName = `register_${FunctionlessSalt}`;
  * If `<expr>` is not a Function, then the call is proxied without modification.
  */
 export const BindFunctionName = `bind_${FunctionlessSalt}`;
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

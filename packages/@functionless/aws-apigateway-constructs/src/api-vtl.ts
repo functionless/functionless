@@ -361,3 +361,6 @@ function isInputBody(expr: Expr): expr is Identifier {
   }
   return false;
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

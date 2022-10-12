@@ -43,6 +43,12 @@
       "path": "../aws-secretsmanager-constructs"
     },
     {
+      "path": "../aws-stepfunctions"
+    },
+    {
+      "path": "../aws-stepfunctions-constructs"
+    },
+    {
       "path": "../aws-util"
     },
     {

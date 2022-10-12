@@ -1,2 +1,2 @@
-export * from "./async-synth";
+export { asyncSynth } from "./async-synth";
 export * from "./function";

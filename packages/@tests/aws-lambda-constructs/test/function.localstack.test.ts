@@ -1067,6 +1067,7 @@ test("should not create new functionless resources in lambda", async () => {
 
 test("should not use SecretValues in lambda", async () => {
   await expect(async () => {
+    debugger;
     const stack = new Stack();
     const secret = SecretValue.unsafePlainText("sshhhhh");
     new Function(

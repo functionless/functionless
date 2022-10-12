@@ -81,6 +81,9 @@ import {
   NativeRuntimeEnvironmentProps,
 } from "@functionless/aws-lambda";
 
+export const isIntegration = (i: any): i is any =>
+  typeof i === "object" && "kind" in i;
+
 export function isFunctionConstruct<Payload = any, Output = any>(
   a: any
 ): a is IFunction<Payload, Output> {
@@ -1179,7 +1182,8 @@ export async function serialize(
        * Remove unnecessary fields from {@link CfnTable} that bloat or fail the closure serialization.
        */
       function transformIntegration(integ: unknown): any {
-        if (integ && isNativeIntegration(integ)) {
+        if (integ && isIntegration(integ)) {
+          // @ts-ignore
           const c = integ.native?.call;
           const call =
             typeof c !== "undefined"
@@ -1215,6 +1219,7 @@ export async function serialize(
           (isFunctionConstruct(integ) ||
             isStepFunctionConstruct(integ) ||
             isEventBus(integ) ||
+            isEventBusConstruct(integ) ||
             isSecret(integ))
         ) {
           const { resource, ...rest } = integ as any;
@@ -1279,3 +1284,6 @@ const INTEGRATION_TYPES = {
 };
 
 const INTEGRATION_TYPE_KEYS = Object.values(INTEGRATION_TYPES);
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

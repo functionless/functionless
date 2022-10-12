@@ -52,3 +52,6 @@ export function assertNodeKind<Kind extends NodeKind[]>(
     }`
   );
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

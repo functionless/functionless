@@ -1134,3 +1134,6 @@ const singletonConstruct = <T extends Construct, S extends Construct>(
   const child = scope.node.tryFindChild(id);
   return child ? (child as T) : create(scope, id);
 };
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

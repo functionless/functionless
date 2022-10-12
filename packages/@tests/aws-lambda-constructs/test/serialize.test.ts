@@ -316,6 +316,30 @@ describe("serialize", () => {
       expect(bundled.text).toMatchSnapshot();
       expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
     });
+
+    test("aws put events reference", async () => {
+      // Necessary to keep the bundle small and stop the test from failing.
+      // See https://github.com/functionless/functionless/pull/122
+      const putEvents = $AWS.EventBridge.putEvents;
+      const [srlz] = await serialize(async () => {
+        const result = await putEvents({
+          Entries: [
+            {
+              EventBusName: bus.eventBusArn,
+              Source: "MyEvent",
+              DetailType: "DetailType",
+              Detail: "{}",
+            },
+          ],
+        });
+        return result.FailedEntryCount;
+      }, []);
+      expect(srlz).toMatchSnapshot();
+
+      const bundled = await bundle(srlz);
+      expect(bundled.text).toMatchSnapshot();
+      expect(bundled.text).toHaveLengthLessThan(BUNDLED_MAX_SIZE);
+    });
   });
 
   test("axios import", async () => {

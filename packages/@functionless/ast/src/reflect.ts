@@ -210,9 +210,6 @@ function getProxyMap() {
     Global[Global.Symbol.for("functionless:Proxies")] ?? new Global.WeakMap());
 }
 
-// to prevent the closure serializer from trying to import all of functionless.
-export const deploymentOnlyModule = true;
-
 export const ReflectionSymbolNames = {
   AST: "functionless:AST",
   BoundArgs: "functionless:BoundArgs",
@@ -330,3 +327,6 @@ function validateFunctionlessNodeSemantics<N extends FunctionlessNode>(
   });
   return node;
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

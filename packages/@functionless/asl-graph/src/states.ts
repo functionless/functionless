@@ -294,3 +294,6 @@ export function isSucceedState(state: State): state is Succeed {
 export function isWaitState(state: State): state is Wait {
   return state.Type === "Wait";
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

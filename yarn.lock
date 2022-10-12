@@ -2518,10 +2518,10 @@
   resolved "https://registry.yarnpkg.com/@functionless/language-service/-/language-service-0.0.4.tgz#fc2e23c8d4fa5766268fe83a65cdd3a385078462"
   integrity sha512-epJZbM7OiBaPVr77qpQgFCdePBV9xzEnqa/Bx0quY16I8RN1c2is2VTxsad/70JUM9xodd1Zy79vrLkNLwijGQ==
 
-"@functionless/nodejs-closure-serializer@^0.1.2":
-  version "0.1.2"
-  resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.1.2.tgz#70d0a00d34629e40a362e35b144506aa5ceac7cd"
-  integrity sha512-l5SXGotOZ+WV7muMFe4Y3mlSwL5kQoDk4CRSZs07fp1rJNbNIFtP+T0CgXB1IlHOAb6IImaCYIwFgJgahE/lIA==
+"@functionless/nodejs-closure-serializer@^0.1.5":
+  version "0.1.5"
+  resolved "https://registry.yarnpkg.com/@functionless/nodejs-closure-serializer/-/nodejs-closure-serializer-0.1.5.tgz#dcff012688a5f99fa279de8d0a5a7bb0d13201ed"
+  integrity sha512-mhbHEAWukOUUbGNhALLDK3JnIH3DLsyDYtfrHITkHNZRhLHqYj+hADtmzhsBm37HbfY0icm6fbQMUH4TQ4zF4w==
   dependencies:
     normalize-package-data "^4.0.0"
     read-package-tree "^5.3.1"

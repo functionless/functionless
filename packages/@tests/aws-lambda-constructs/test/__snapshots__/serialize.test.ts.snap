@@ -2631,22 +2631,17 @@ function __f0() {
 exports[`serialize event bridge aws put events 1`] = `
 "exports.handler = __f0;
 
-var __src = {};
-var __src_AWS = {};
+var __awsSdk = {};
+var __awsSdk_AWS = {};
 __f1.kind = "$AWS.Lambda.Invoke";
-var __src_AWS_Lambda = {Invoke: __f1};
-__src_AWS.Lambda = __src_AWS_Lambda;
-var __functionPrewarm = {};
-var __functionPrewarm_PrewarmClients = {};
-var __functionPrewarm_PrewarmClients_Lambda = {key: "Lambda", init: __f4};
-__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
-var __functionPrewarm_PrewarmClients_EventBridge = {key: "EventBridge", init: __f5};
-__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
-var __functionPrewarm_PrewarmClients_StepFunctions = {key: "StepFunctions", init: __f6};
-__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
-var __functionPrewarm_PrewarmClients_SecretsManager = {key: "SecretsManager", init: __f7};
-__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
-Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f8 });
+var __awsSdk_AWS_Lambda = {Invoke: __f1};
+__awsSdk_AWS.Lambda = __awsSdk_AWS_Lambda;
+var __aws_events_1 = {};
+var __aws_events_1_EventBridgeClient = {key: "EventBridge", init: __f6};
+var __m = Object.create(global.constructor.prototype);
+Object.defineProperty(__m, "__esModule", { value: true });
+__m.EventBridgeClient = __aws_events_1_EventBridgeClient;
+Object.defineProperty(__aws_events_1, "EventBridgeClient", { enumerable: true, get: __f7 });
 var __preWarmContext_proto = {};
 Object.defineProperty(__f9, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f9 });
@@ -2657,47 +2652,126 @@ __preWarmContext.props = undefined;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f2.kind = "$AWS.EventBridge.putEvent";
-var __src_AWS_EventBridge = {putEvents: __f2};
-__src_AWS.EventBridge = __src_AWS_EventBridge;
-var __src_AWS_SDK = {};
-__src_AWS.SDK = __src_AWS_SDK;
-var __from = Object.create(global.constructor.prototype);
-Object.defineProperty(__from, "__esModule", { value: true });
-Object.defineProperty(__from, "$AWS", { enumerable: true, get: __f13 });
-Object.defineProperty(__from, "deploymentOnlyModule", { enumerable: true, get: __f14 });
-Object.defineProperty(__src, "$AWS", { enumerable: true, get: __f12 });
+var __awsSdk_AWS_EventBridge = {putEvents: __f2};
+__awsSdk_AWS.EventBridge = __awsSdk_AWS_EventBridge;
+var __awsSdk_AWS_SDK = {};
+__awsSdk_AWS.SDK = __awsSdk_AWS_SDK;
+var __0_m = Object.create(global.constructor.prototype);
+__0_m.__esModule = true;
+__0_m["$AWS"] = __awsSdk_AWS;
+Object.defineProperty(__awsSdk, "$AWS", { enumerable: true, get: __f12 });
 var __bus = {eventBusName: process.env.env__functionless0};
 function __f1() {
   return (function() {
     return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f4(__0, __1) {
+}function __f4(__0, __1, __2, __3) {
   return (function() {
-    return ((key, props) => new (require("aws-sdk/clients/lambda"))(props?.clientConfigRetriever?.(key)));;
+    return (function __computed(thisArg, _arguments, P, generator) { adopt; function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); } return new (P || (P = Promise))(function (resolve, reject) { fulfilled; rejected; step; function fulfilled(value) { try {
+    step(generator.next(value));
+}
+catch (e) {
+    reject(e);
+} } function rejected(value) { try {
+    step(generator["throw"](value));
+}
+catch (e) {
+    reject(e);
+} } function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); } step((generator = generator.apply(thisArg, _arguments || [])).next()); }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0, __1) {
   return (function() {
-    return ((key, props) => new (require("aws-sdk/clients/eventbridge"))(props?.clientConfigRetriever?.(key)));;
+    return (function __computed(thisArg, body) { verb; step; var _ = { label: 0, sent: function () { if (t[0] & 1)
+        throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g; return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function () { return this; }), g; function verb(n) { return function (v) { return step([n, v]); }; } function step(op) { if (f)
+    throw new TypeError("Generator is already executing."); while (_)
+    try {
+        if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done)
+            return t;
+        if (y = 0, t)
+            op = [op[0] & 2, t.value];
+        switch (op[0]) {
+            case 0:
+            case 1:
+                t = op;
+                break;
+            case 4:
+                _.label++;
+                return { value: op[1], done: false };
+            case 5:
+                _.label++;
+                y = op[1];
+                op = [0];
+                continue;
+            case 7:
+                op = _.ops.pop();
+                _.trys.pop();
+                continue;
+            default:
+                if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+                    _ = 0;
+                    continue;
+                }
+                if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+                    _.label = op[1];
+                    break;
+                }
+                if (op[0] === 6 && _.label < t[1]) {
+                    _.label = t[1];
+                    t = op;
+                    break;
+                }
+                if (t && _.label < t[2]) {
+                    _.label = t[2];
+                    _.ops.push(op);
+                    break;
+                }
+                if (t[2])
+                    _.ops.pop();
+                _.trys.pop();
+                continue;
+        }
+        op = body.call(thisArg, _);
+    }
+    catch (e) {
+        op = [6, e];
+        y = 0;
+    }
+    finally {
+        f = t = 0;
+    } if (op[0] & 5)
+    throw op[1]; return { value: op[0] ? op[1] : void 0, done: true }; } });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f6(__0, __1) {
   return (function() {
-    return ((key, props) => new (require("aws-sdk/clients/stepfunctions"))(props?.clientConfigRetriever?.(key)));;
+    return ((key, props) => { var _a; return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f7(__0, __1) {
+}function __f7() {
   return (function() {
-    return ((key, props) => new (require("aws-sdk/clients/secretsmanager"))(props?.clientConfigRetriever?.(key)));;
+    let m = __m;
+    let k = "EventBridgeClient";
+
+    return (function __computed() { return m[k]; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f8() {
   return (function() {
-    let PrewarmClients = __functionPrewarm_PrewarmClients;
+    let __assign = __f8;
 
-    return (() => PrewarmClients);;
+    return (function __computed() { __assign = function (t) { for (var s, i = 1, n = arguments.length; i < n; i++) {
+    s = arguments[i];
+    for (var p in s)
+        if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+} return t; }; return __assign.apply(this, arguments); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f3(__0, __1) {
   return (function() {
-    let _functionPrewarm = __functionPrewarm;
+    let __awaiter = __f4;
+    let _this = undefined;
+    let __generator = __f5;
+    let aws_events_1 = __aws_events_1;
+    let __assign = __f8;
 
-    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(_functionPrewarm.PrewarmClients.EventBridge); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
+    return (function __computed(_a, preWarmContext) { var request = _a[0]; return __awaiter(_this, void 0, void 0, function () { var eventBridge; return __generator(this, function (_b) { eventBridge = preWarmContext.getOrInit(aws_events_1.EventBridgeClient); return [2, eventBridge.putEvents({ Entries: request.Entries.map(function (e) { return __assign({}, e); }) }).promise()]; }); }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f9(__0) {
   return (function() {
@@ -2720,31 +2794,19 @@ function __f1() {
 
     return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f13() {
-  return (function() {
-    let $AWS = __src_AWS;
-
-    return (() => $AWS);;
-  }).apply(undefined, undefined).apply(this, arguments);
-}function __f14() {
-  return (function() {
-    let deploymentOnlyModule = true;
-
-    return (() => deploymentOnlyModule);;
-  }).apply(undefined, undefined).apply(this, arguments);
 }function __f12() {
   return (function() {
-    let from = __from;
+    let m = __0_m;
     let k = "$AWS";
 
-    return (function __computed() { return from[k]; });;
+    return (function __computed() { return m[k]; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
-    let _src = __src;
+    let _awsSdk = __awsSdk;
     let bus = __bus;
 
-    return (() => { return _src["$AWS"].EventBridge.putEvents({ Entries: [{ EventBusName: bus.eventBusName },] }); });;
+    return (() => { return _awsSdk["$AWS"].EventBridge.putEvents({ Entries: [{ EventBusName: bus.eventBusName },] }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -2752,22 +2814,17 @@ function __f1() {
 exports[`serialize event bridge aws put events 2`] = `
 "// <stdin>
 exports.handler = __f0;
-var __src = {};
-var __src_AWS = {};
+var __awsSdk = {};
+var __awsSdk_AWS = {};
 __f1.kind = "$AWS.Lambda.Invoke";
-var __src_AWS_Lambda = { Invoke: __f1 };
-__src_AWS.Lambda = __src_AWS_Lambda;
-var __functionPrewarm = {};
-var __functionPrewarm_PrewarmClients = {};
-var __functionPrewarm_PrewarmClients_Lambda = { key: "Lambda", init: __f4 };
-__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
-var __functionPrewarm_PrewarmClients_EventBridge = { key: "EventBridge", init: __f5 };
-__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
-var __functionPrewarm_PrewarmClients_StepFunctions = { key: "StepFunctions", init: __f6 };
-__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
-var __functionPrewarm_PrewarmClients_SecretsManager = { key: "SecretsManager", init: __f7 };
-__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
-Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f8 });
+var __awsSdk_AWS_Lambda = { Invoke: __f1 };
+__awsSdk_AWS.Lambda = __awsSdk_AWS_Lambda;
+var __aws_events_1 = {};
+var __aws_events_1_EventBridgeClient = { key: "EventBridge", init: __f6 };
+var __m = Object.create(global.constructor.prototype);
+Object.defineProperty(__m, "__esModule", { value: true });
+__m.EventBridgeClient = __aws_events_1_EventBridgeClient;
+Object.defineProperty(__aws_events_1, "EventBridgeClient", { enumerable: true, get: __f7 });
 var __preWarmContext_proto = {};
 Object.defineProperty(__f9, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f9 });
@@ -2778,15 +2835,14 @@ __preWarmContext.props = void 0;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f2.kind = "$AWS.EventBridge.putEvent";
-var __src_AWS_EventBridge = { putEvents: __f2 };
-__src_AWS.EventBridge = __src_AWS_EventBridge;
-var __src_AWS_SDK = {};
-__src_AWS.SDK = __src_AWS_SDK;
-var __from = Object.create(global.constructor.prototype);
-Object.defineProperty(__from, "__esModule", { value: true });
-Object.defineProperty(__from, "$AWS", { enumerable: true, get: __f13 });
-Object.defineProperty(__from, "deploymentOnlyModule", { enumerable: true, get: __f14 });
-Object.defineProperty(__src, "$AWS", { enumerable: true, get: __f12 });
+var __awsSdk_AWS_EventBridge = { putEvents: __f2 };
+__awsSdk_AWS.EventBridge = __awsSdk_AWS_EventBridge;
+var __awsSdk_AWS_SDK = {};
+__awsSdk_AWS.SDK = __awsSdk_AWS_SDK;
+var __0_m = Object.create(global.constructor.prototype);
+__0_m.__esModule = true;
+__0_m["$AWS"] = __awsSdk_AWS;
+Object.defineProperty(__awsSdk, "$AWS", { enumerable: true, get: __f12 });
 var __bus = { eventBusName: process.env.env__functionless0 };
 function __f1() {
   return function() {
@@ -2796,20 +2852,121 @@ function __f1() {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f4(__0, __1) {
+function __f4(__0, __1, __2, __3) {
   return function() {
-    return (key, props) => {
-      var _a;
-      return new (require("aws-sdk/clients/lambda"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    return function __computed(thisArg, _arguments, P, generator) {
+      adopt;
+      function adopt(value) {
+        return value instanceof P ? value : new P(function(resolve) {
+          resolve(value);
+        });
+      }
+      return new (P || (P = Promise))(function(resolve, reject) {
+        fulfilled;
+        rejected;
+        step;
+        function fulfilled(value) {
+          try {
+            step(generator.next(value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function rejected(value) {
+          try {
+            step(generator["throw"](value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function step(result) {
+          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+        }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+      });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f5(__0, __1) {
   return function() {
-    return (key, props) => {
-      var _a;
-      return new (require("aws-sdk/clients/eventbridge"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    return function __computed(thisArg, body) {
+      verb;
+      step;
+      var _ = { label: 0, sent: function() {
+        if (t[0] & 1)
+          throw t[1];
+        return t[1];
+      }, trys: [], ops: [] }, f, y, t, g;
+      return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() {
+        return this;
+      }), g;
+      function verb(n) {
+        return function(v) {
+          return step([n, v]);
+        };
+      }
+      function step(op) {
+        if (f)
+          throw new TypeError("Generator is already executing.");
+        while (_)
+          try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done)
+              return t;
+            if (y = 0, t)
+              op = [op[0] & 2, t.value];
+            switch (op[0]) {
+              case 0:
+              case 1:
+                t = op;
+                break;
+              case 4:
+                _.label++;
+                return { value: op[1], done: false };
+              case 5:
+                _.label++;
+                y = op[1];
+                op = [0];
+                continue;
+              case 7:
+                op = _.ops.pop();
+                _.trys.pop();
+                continue;
+              default:
+                if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+                  _ = 0;
+                  continue;
+                }
+                if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+                  _.label = op[1];
+                  break;
+                }
+                if (op[0] === 6 && _.label < t[1]) {
+                  _.label = t[1];
+                  t = op;
+                  break;
+                }
+                if (t && _.label < t[2]) {
+                  _.label = t[2];
+                  _.ops.push(op);
+                  break;
+                }
+                if (t[2])
+                  _.ops.pop();
+                _.trys.pop();
+                continue;
+            }
+            op = body.call(thisArg, _);
+          } catch (e) {
+            op = [6, e];
+            y = 0;
+          } finally {
+            f = t = 0;
+          }
+        if (op[0] & 5)
+          throw op[1];
+        return { value: op[0] ? op[1] : void 0, done: true };
+      }
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -2818,33 +2975,57 @@ function __f6(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/stepfunctions"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f7(__0, __1) {
+function __f7() {
   return function() {
-    return (key, props) => {
-      var _a;
-      return new (require("aws-sdk/clients/secretsmanager"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    let m = __m;
+    let k = "EventBridgeClient";
+    return function __computed() {
+      return m[k];
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f8() {
   return function() {
-    let PrewarmClients = __functionPrewarm_PrewarmClients;
-    return () => PrewarmClients;
+    let __assign = __f8;
+    return function __computed() {
+      __assign = function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+          s = arguments[i];
+          for (var p in s)
+            if (Object.prototype.hasOwnProperty.call(s, p))
+              t[p] = s[p];
+        }
+        return t;
+      };
+      return __assign.apply(this, arguments);
+    };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f3(__0, __1) {
   return function() {
-    let _functionPrewarm = __functionPrewarm;
-    return async ([request], preWarmContext) => {
-      const eventBridge = preWarmContext.getOrInit(_functionPrewarm.PrewarmClients.EventBridge);
-      return eventBridge.putEvents({ Entries: request.Entries.map((e) => ({ ...e })) }).promise();
+    let __awaiter = __f4;
+    let _this = void 0;
+    let __generator = __f5;
+    let aws_events_1 = __aws_events_1;
+    let __assign = __f8;
+    return function __computed(_a, preWarmContext) {
+      var request = _a[0];
+      return __awaiter(_this, void 0, void 0, function() {
+        var eventBridge;
+        return __generator(this, function(_b) {
+          eventBridge = preWarmContext.getOrInit(aws_events_1.EventBridgeClient);
+          return [2, eventBridge.putEvents({ Entries: request.Entries.map(function(e) {
+            return __assign({}, e);
+          }) }).promise()];
+        });
+      });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -2887,36 +3068,431 @@ function __f2() {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f13() {
-  return function() {
-    let $AWS = __src_AWS;
-    return () => $AWS;
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
-function __f14() {
-  return function() {
-    let deploymentOnlyModule = true;
-    return () => deploymentOnlyModule;
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
 function __f12() {
   return function() {
-    let from = __from;
+    let m = __0_m;
     let k = "$AWS";
     return function __computed() {
-      return from[k];
+      return m[k];
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f0() {
   return function() {
-    let _src = __src;
+    let _awsSdk = __awsSdk;
     let bus = __bus;
     return () => {
-      return _src["$AWS"].EventBridge.putEvents({ Entries: [{ EventBusName: bus.eventBusName }] });
+      return _awsSdk["$AWS"].EventBridge.putEvents({ Entries: [{ EventBusName: bus.eventBusName }] });
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+"
+`;
+
+exports[`serialize event bridge aws put events reference 1`] = `
+"exports.handler = __f0;
+
+var __aws_events_1 = {};
+var __aws_events_1_EventBridgeClient = {key: "EventBridge", init: __f5};
+var __m = Object.create(global.constructor.prototype);
+Object.defineProperty(__m, "__esModule", { value: true });
+__m.EventBridgeClient = __aws_events_1_EventBridgeClient;
+Object.defineProperty(__aws_events_1, "EventBridgeClient", { enumerable: true, get: __f6 });
+var __preWarmContext_proto = {};
+Object.defineProperty(__f8, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f8 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f10 });
+var __preWarmContext = Object.create(__preWarmContext_proto);
+__preWarmContext.props = undefined;
+var __preWarmContext_cache = {};
+__preWarmContext.cache = __preWarmContext_cache;
+__f1.kind = "$AWS.EventBridge.putEvent";
+var __bus = {eventBusArn: process.env.env__functionless0};
+function __f3(__0, __1, __2, __3) {
+  return (function() {
+    return (function __computed(thisArg, _arguments, P, generator) { adopt; function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); } return new (P || (P = Promise))(function (resolve, reject) { fulfilled; rejected; step; function fulfilled(value) { try {
+    step(generator.next(value));
+}
+catch (e) {
+    reject(e);
+} } function rejected(value) { try {
+    step(generator["throw"](value));
+}
+catch (e) {
+    reject(e);
+} } function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); } step((generator = generator.apply(thisArg, _arguments || [])).next()); }); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f4(__0, __1) {
+  return (function() {
+    return (function __computed(thisArg, body) { verb; step; var _ = { label: 0, sent: function () { if (t[0] & 1)
+        throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g; return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function () { return this; }), g; function verb(n) { return function (v) { return step([n, v]); }; } function step(op) { if (f)
+    throw new TypeError("Generator is already executing."); while (_)
+    try {
+        if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done)
+            return t;
+        if (y = 0, t)
+            op = [op[0] & 2, t.value];
+        switch (op[0]) {
+            case 0:
+            case 1:
+                t = op;
+                break;
+            case 4:
+                _.label++;
+                return { value: op[1], done: false };
+            case 5:
+                _.label++;
+                y = op[1];
+                op = [0];
+                continue;
+            case 7:
+                op = _.ops.pop();
+                _.trys.pop();
+                continue;
+            default:
+                if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+                    _ = 0;
+                    continue;
+                }
+                if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+                    _.label = op[1];
+                    break;
+                }
+                if (op[0] === 6 && _.label < t[1]) {
+                    _.label = t[1];
+                    t = op;
+                    break;
+                }
+                if (t && _.label < t[2]) {
+                    _.label = t[2];
+                    _.ops.push(op);
+                    break;
+                }
+                if (t[2])
+                    _.ops.pop();
+                _.trys.pop();
+                continue;
+        }
+        op = body.call(thisArg, _);
+    }
+    catch (e) {
+        op = [6, e];
+        y = 0;
+    }
+    finally {
+        f = t = 0;
+    } if (op[0] & 5)
+    throw op[1]; return { value: op[0] ? op[1] : void 0, done: true }; } });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f5(__0, __1) {
+  return (function() {
+    return ((key, props) => { var _a; return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f6() {
+  return (function() {
+    let m = __m;
+    let k = "EventBridgeClient";
+
+    return (function __computed() { return m[k]; });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f7() {
+  return (function() {
+    let __assign = __f7;
+
+    return (function __computed() { __assign = function (t) { for (var s, i = 1, n = arguments.length; i < n; i++) {
+    s = arguments[i];
+    for (var p in s)
+        if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+} return t; }; return __assign.apply(this, arguments); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f2(__0, __1) {
+  return (function() {
+    let __awaiter = __f3;
+    let _this = undefined;
+    let __generator = __f4;
+    let aws_events_1 = __aws_events_1;
+    let __assign = __f7;
+
+    return (function __computed(_a, preWarmContext) { var request = _a[0]; return __awaiter(_this, void 0, void 0, function () { var eventBridge; return __generator(this, function (_b) { eventBridge = preWarmContext.getOrInit(aws_events_1.EventBridgeClient); return [2, eventBridge.putEvents({ Entries: request.Entries.map(function (e) { return __assign({}, e); }) }).promise()]; }); }); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f8(__0) {
+  return (function() {
+    return (function constructor(props) { this.props = props; this.cache = {}; });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f9(__0) {
+  return (function() {
+    return (function (key) { return this.cache[key]; });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f10(__0) {
+  return (function() {
+    return (function getOrInit(client) { if (!this.cache[client.key]) {
+    this.cache[client.key] = client.init(client.key, this.props);
+} return this.cache[client.key]; });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f1() {
+  return (function() {
+    let c = __f2;
+    let preWarmContext = __preWarmContext;
+
+    return (function __computed(...args) { return c(args, preWarmContext); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f0() {
+  return (function() {
+    let putEvents = __f1;
+    let bus = __bus;
+
+    return (async () => { const result = await putEvents({ Entries: [{ EventBusName: bus.eventBusArn, Source: "MyEvent", DetailType: "DetailType", Detail: "{}" },] }); return result.FailedEntryCount; });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}"
+`;
+
+exports[`serialize event bridge aws put events reference 2`] = `
+"// <stdin>
+exports.handler = __f0;
+var __aws_events_1 = {};
+var __aws_events_1_EventBridgeClient = { key: "EventBridge", init: __f5 };
+var __m = Object.create(global.constructor.prototype);
+Object.defineProperty(__m, "__esModule", { value: true });
+__m.EventBridgeClient = __aws_events_1_EventBridgeClient;
+Object.defineProperty(__aws_events_1, "EventBridgeClient", { enumerable: true, get: __f6 });
+var __preWarmContext_proto = {};
+Object.defineProperty(__f8, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f8 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f10 });
+var __preWarmContext = Object.create(__preWarmContext_proto);
+__preWarmContext.props = void 0;
+var __preWarmContext_cache = {};
+__preWarmContext.cache = __preWarmContext_cache;
+__f1.kind = "$AWS.EventBridge.putEvent";
+var __bus = { eventBusArn: process.env.env__functionless0 };
+function __f3(__0, __1, __2, __3) {
+  return function() {
+    return function __computed(thisArg, _arguments, P, generator) {
+      adopt;
+      function adopt(value) {
+        return value instanceof P ? value : new P(function(resolve) {
+          resolve(value);
+        });
+      }
+      return new (P || (P = Promise))(function(resolve, reject) {
+        fulfilled;
+        rejected;
+        step;
+        function fulfilled(value) {
+          try {
+            step(generator.next(value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function rejected(value) {
+          try {
+            step(generator["throw"](value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function step(result) {
+          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+        }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+      });
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f4(__0, __1) {
+  return function() {
+    return function __computed(thisArg, body) {
+      verb;
+      step;
+      var _ = { label: 0, sent: function() {
+        if (t[0] & 1)
+          throw t[1];
+        return t[1];
+      }, trys: [], ops: [] }, f, y, t, g;
+      return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() {
+        return this;
+      }), g;
+      function verb(n) {
+        return function(v) {
+          return step([n, v]);
+        };
+      }
+      function step(op) {
+        if (f)
+          throw new TypeError("Generator is already executing.");
+        while (_)
+          try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done)
+              return t;
+            if (y = 0, t)
+              op = [op[0] & 2, t.value];
+            switch (op[0]) {
+              case 0:
+              case 1:
+                t = op;
+                break;
+              case 4:
+                _.label++;
+                return { value: op[1], done: false };
+              case 5:
+                _.label++;
+                y = op[1];
+                op = [0];
+                continue;
+              case 7:
+                op = _.ops.pop();
+                _.trys.pop();
+                continue;
+              default:
+                if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+                  _ = 0;
+                  continue;
+                }
+                if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+                  _.label = op[1];
+                  break;
+                }
+                if (op[0] === 6 && _.label < t[1]) {
+                  _.label = t[1];
+                  t = op;
+                  break;
+                }
+                if (t && _.label < t[2]) {
+                  _.label = t[2];
+                  _.ops.push(op);
+                  break;
+                }
+                if (t[2])
+                  _.ops.pop();
+                _.trys.pop();
+                continue;
+            }
+            op = body.call(thisArg, _);
+          } catch (e) {
+            op = [6, e];
+            y = 0;
+          } finally {
+            f = t = 0;
+          }
+        if (op[0] & 5)
+          throw op[1];
+        return { value: op[0] ? op[1] : void 0, done: true };
+      }
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f5(__0, __1) {
+  return function() {
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f6() {
+  return function() {
+    let m = __m;
+    let k = "EventBridgeClient";
+    return function __computed() {
+      return m[k];
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f7() {
+  return function() {
+    let __assign = __f7;
+    return function __computed() {
+      __assign = function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+          s = arguments[i];
+          for (var p in s)
+            if (Object.prototype.hasOwnProperty.call(s, p))
+              t[p] = s[p];
+        }
+        return t;
+      };
+      return __assign.apply(this, arguments);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f2(__0, __1) {
+  return function() {
+    let __awaiter = __f3;
+    let _this = void 0;
+    let __generator = __f4;
+    let aws_events_1 = __aws_events_1;
+    let __assign = __f7;
+    return function __computed(_a, preWarmContext) {
+      var request = _a[0];
+      return __awaiter(_this, void 0, void 0, function() {
+        var eventBridge;
+        return __generator(this, function(_b) {
+          eventBridge = preWarmContext.getOrInit(aws_events_1.EventBridgeClient);
+          return [2, eventBridge.putEvents({ Entries: request.Entries.map(function(e) {
+            return __assign({}, e);
+          }) }).promise()];
+        });
+      });
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f8(__0) {
+  return function() {
+    return function constructor(props) {
+      this.props = props;
+      this.cache = {};
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f9(__0) {
+  return function() {
+    return function(key) {
+      return this.cache[key];
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f10(__0) {
+  return function() {
+    return function getOrInit(client) {
+      if (!this.cache[client.key]) {
+        this.cache[client.key] = client.init(client.key, this.props);
+      }
+      return this.cache[client.key];
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f1() {
+  return function() {
+    let c = __f2;
+    let preWarmContext = __preWarmContext;
+    return function __computed(...args) {
+      return c(args, preWarmContext);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f0() {
+  return function() {
+    let putEvents = __f1;
+    let bus = __bus;
+    return async () => {
+      const result = await putEvents({ Entries: [{ EventBusName: bus.eventBusArn, Source: "MyEvent", DetailType: "DetailType", Detail: "{}" }] });
+      return result.FailedEntryCount;
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -3266,22 +3842,17 @@ function __f0() {
 exports[`serialize lambda invoke func 1`] = `
 "exports.handler = __f0;
 
-var __src = {};
-var __src_AWS = {};
+var __awsSdk = {};
+var __awsSdk_AWS = {};
 __f1.kind = "$AWS.Lambda.Invoke";
-var __src_AWS_Lambda = {Invoke: __f1};
-__src_AWS.Lambda = __src_AWS_Lambda;
-var __functionPrewarm = {};
-var __functionPrewarm_PrewarmClients = {};
-var __functionPrewarm_PrewarmClients_Lambda = {key: "Lambda", init: __f4};
-__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
-var __functionPrewarm_PrewarmClients_EventBridge = {key: "EventBridge", init: __f5};
-__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
-var __functionPrewarm_PrewarmClients_StepFunctions = {key: "StepFunctions", init: __f6};
-__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
-var __functionPrewarm_PrewarmClients_SecretsManager = {key: "SecretsManager", init: __f7};
-__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
-Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f8 });
+var __awsSdk_AWS_Lambda = {Invoke: __f1};
+__awsSdk_AWS.Lambda = __awsSdk_AWS_Lambda;
+var __aws_events_1 = {};
+var __aws_events_1_EventBridgeClient = {key: "EventBridge", init: __f6};
+var __m = Object.create(global.constructor.prototype);
+Object.defineProperty(__m, "__esModule", { value: true });
+__m.EventBridgeClient = __aws_events_1_EventBridgeClient;
+Object.defineProperty(__aws_events_1, "EventBridgeClient", { enumerable: true, get: __f7 });
 var __preWarmContext_proto = {};
 Object.defineProperty(__f9, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f9 });
@@ -3292,48 +3863,133 @@ __preWarmContext.props = undefined;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f2.kind = "$AWS.EventBridge.putEvent";
-var __src_AWS_EventBridge = {putEvents: __f2};
-__src_AWS.EventBridge = __src_AWS_EventBridge;
-var __src_AWS_SDK = {};
-__src_AWS.SDK = __src_AWS_SDK;
-var __from = Object.create(global.constructor.prototype);
-Object.defineProperty(__from, "__esModule", { value: true });
-Object.defineProperty(__from, "$AWS", { enumerable: true, get: __f13 });
-Object.defineProperty(__from, "deploymentOnlyModule", { enumerable: true, get: __f14 });
-Object.defineProperty(__src, "$AWS", { enumerable: true, get: __f12 });
-__f15.kind = "Function";
-__f15.functionlessKind = "Function";
+var __awsSdk_AWS_EventBridge = {putEvents: __f2};
+__awsSdk_AWS.EventBridge = __awsSdk_AWS_EventBridge;
+var __awsSdk_AWS_SDK = {};
+__awsSdk_AWS.SDK = __awsSdk_AWS_SDK;
+var __0_m = Object.create(global.constructor.prototype);
+__0_m.__esModule = true;
+__0_m["$AWS"] = __awsSdk_AWS;
+Object.defineProperty(__awsSdk, "$AWS", { enumerable: true, get: __f12 });
+var __aws_lambda_1 = {};
+var __aws_lambda_1_LambdaClient = {key: "Lambda", init: __f15};
+var __1_m = Object.create(global.constructor.prototype);
+Object.defineProperty(__1_m, "__esModule", { value: true });
+__1_m.LambdaClient = __aws_lambda_1_LambdaClient;
+Object.defineProperty(__aws_lambda_1, "LambdaClient", { enumerable: true, get: __f16 });
+__f13.kind = "Function";
+__f13.functionlessKind = "Function";
 function __f1() {
   return (function() {
     return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f4(__0, __1) {
+}function __f4(__0, __1, __2, __3) {
   return (function() {
-    return ((key, props) => new (require("aws-sdk/clients/lambda"))(props?.clientConfigRetriever?.(key)));;
+    return (function __computed(thisArg, _arguments, P, generator) { adopt; function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); } return new (P || (P = Promise))(function (resolve, reject) { fulfilled; rejected; step; function fulfilled(value) { try {
+    step(generator.next(value));
+}
+catch (e) {
+    reject(e);
+} } function rejected(value) { try {
+    step(generator["throw"](value));
+}
+catch (e) {
+    reject(e);
+} } function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); } step((generator = generator.apply(thisArg, _arguments || [])).next()); }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0, __1) {
   return (function() {
-    return ((key, props) => new (require("aws-sdk/clients/eventbridge"))(props?.clientConfigRetriever?.(key)));;
+    return (function __computed(thisArg, body) { verb; step; var _ = { label: 0, sent: function () { if (t[0] & 1)
+        throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g; return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function () { return this; }), g; function verb(n) { return function (v) { return step([n, v]); }; } function step(op) { if (f)
+    throw new TypeError("Generator is already executing."); while (_)
+    try {
+        if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done)
+            return t;
+        if (y = 0, t)
+            op = [op[0] & 2, t.value];
+        switch (op[0]) {
+            case 0:
+            case 1:
+                t = op;
+                break;
+            case 4:
+                _.label++;
+                return { value: op[1], done: false };
+            case 5:
+                _.label++;
+                y = op[1];
+                op = [0];
+                continue;
+            case 7:
+                op = _.ops.pop();
+                _.trys.pop();
+                continue;
+            default:
+                if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+                    _ = 0;
+                    continue;
+                }
+                if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+                    _.label = op[1];
+                    break;
+                }
+                if (op[0] === 6 && _.label < t[1]) {
+                    _.label = t[1];
+                    t = op;
+                    break;
+                }
+                if (t && _.label < t[2]) {
+                    _.label = t[2];
+                    _.ops.push(op);
+                    break;
+                }
+                if (t[2])
+                    _.ops.pop();
+                _.trys.pop();
+                continue;
+        }
+        op = body.call(thisArg, _);
+    }
+    catch (e) {
+        op = [6, e];
+        y = 0;
+    }
+    finally {
+        f = t = 0;
+    } if (op[0] & 5)
+    throw op[1]; return { value: op[0] ? op[1] : void 0, done: true }; } });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f6(__0, __1) {
   return (function() {
-    return ((key, props) => new (require("aws-sdk/clients/stepfunctions"))(props?.clientConfigRetriever?.(key)));;
+    return ((key, props) => { var _a; return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f7(__0, __1) {
+}function __f7() {
   return (function() {
-    return ((key, props) => new (require("aws-sdk/clients/secretsmanager"))(props?.clientConfigRetriever?.(key)));;
+    let m = __m;
+    let k = "EventBridgeClient";
+
+    return (function __computed() { return m[k]; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f8() {
   return (function() {
-    let PrewarmClients = __functionPrewarm_PrewarmClients;
+    let __assign = __f8;
 
-    return (() => PrewarmClients);;
+    return (function __computed() { __assign = function (t) { for (var s, i = 1, n = arguments.length; i < n; i++) {
+    s = arguments[i];
+    for (var p in s)
+        if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+} return t; }; return __assign.apply(this, arguments); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f3(__0, __1) {
   return (function() {
-    let _functionPrewarm = __functionPrewarm;
+    let __awaiter = __f4;
+    let _this = undefined;
+    let __generator = __f5;
+    let aws_events_1 = __aws_events_1;
+    let __assign = __f8;
 
-    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(_functionPrewarm.PrewarmClients.EventBridge); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
+    return (function __computed(_a, preWarmContext) { var request = _a[0]; return __awaiter(_this, void 0, void 0, function () { var eventBridge; return __generator(this, function (_b) { eventBridge = preWarmContext.getOrInit(aws_events_1.EventBridgeClient); return [2, eventBridge.putEvents({ Entries: request.Entries.map(function (e) { return __assign({}, e); }) }).promise()]; }); }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f9(__0) {
   return (function() {
@@ -3356,45 +4012,44 @@ function __f1() {
 
     return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f13() {
-  return (function() {
-    let $AWS = __src_AWS;
-
-    return (() => $AWS);;
-  }).apply(undefined, undefined).apply(this, arguments);
-}function __f14() {
-  return (function() {
-    let deploymentOnlyModule = true;
-
-    return (() => deploymentOnlyModule);;
-  }).apply(undefined, undefined).apply(this, arguments);
 }function __f12() {
   return (function() {
-    let from = __from;
+    let m = __0_m;
     let k = "$AWS";
 
-    return (function __computed() { return from[k]; });;
+    return (function __computed() { return m[k]; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f16(__0, __1) {
+}function __f15(__0, __1) {
   return (function() {
-    let _functionPrewarm = __functionPrewarm;
+    return ((key, props) => { var _a; return new (require("aws-sdk/clients/lambda"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f16() {
+  return (function() {
+    let m = __1_m;
+    let k = "LambdaClient";
+
+    return (function __computed() { return m[k]; });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f14(__0, __1) {
+  return (function() {
+    let aws_lambda_1 = __aws_lambda_1;
     let functionName = process.env.env__functionless0;
 
-    return (async (args, prewarmContext) => { const [payload] = args; const lambdaClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.Lambda); const response = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : undefined }).promise()).Payload?.toString(); return response ? JSON.parse(response) : undefined; });;
+    return (async (args, prewarmContext) => { var _a; const [payload] = args; const lambdaClient = prewarmContext.getOrInit(aws_lambda_1.LambdaClient); const response = (_a = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : undefined }).promise()).Payload) === null || _a === void 0 ? void 0 : _a.toString(); return response ? JSON.parse(response) : undefined; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f15() {
+}function __f13() {
   return (function() {
-    let c = __f16;
+    let c = __f14;
     let preWarmContext = __preWarmContext;
 
     return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
-    let _src = __src;
-    let func = __f15;
+    let _awsSdk = __awsSdk;
+    let func = __f13;
 
-    return (() => { return _src["$AWS"].Lambda.Invoke({ Function: func, Payload: undefined }); });;
+    return (() => { return _awsSdk["$AWS"].Lambda.Invoke({ Function: func, Payload: undefined }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -3402,22 +4057,17 @@ function __f1() {
 exports[`serialize lambda invoke func 2`] = `
 "// <stdin>
 exports.handler = __f0;
-var __src = {};
-var __src_AWS = {};
+var __awsSdk = {};
+var __awsSdk_AWS = {};
 __f1.kind = "$AWS.Lambda.Invoke";
-var __src_AWS_Lambda = { Invoke: __f1 };
-__src_AWS.Lambda = __src_AWS_Lambda;
-var __functionPrewarm = {};
-var __functionPrewarm_PrewarmClients = {};
-var __functionPrewarm_PrewarmClients_Lambda = { key: "Lambda", init: __f4 };
-__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
-var __functionPrewarm_PrewarmClients_EventBridge = { key: "EventBridge", init: __f5 };
-__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
-var __functionPrewarm_PrewarmClients_StepFunctions = { key: "StepFunctions", init: __f6 };
-__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
-var __functionPrewarm_PrewarmClients_SecretsManager = { key: "SecretsManager", init: __f7 };
-__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
-Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f8 });
+var __awsSdk_AWS_Lambda = { Invoke: __f1 };
+__awsSdk_AWS.Lambda = __awsSdk_AWS_Lambda;
+var __aws_events_1 = {};
+var __aws_events_1_EventBridgeClient = { key: "EventBridge", init: __f6 };
+var __m = Object.create(global.constructor.prototype);
+Object.defineProperty(__m, "__esModule", { value: true });
+__m.EventBridgeClient = __aws_events_1_EventBridgeClient;
+Object.defineProperty(__aws_events_1, "EventBridgeClient", { enumerable: true, get: __f7 });
 var __preWarmContext_proto = {};
 Object.defineProperty(__f9, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f9 });
@@ -3428,17 +4078,22 @@ __preWarmContext.props = void 0;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f2.kind = "$AWS.EventBridge.putEvent";
-var __src_AWS_EventBridge = { putEvents: __f2 };
-__src_AWS.EventBridge = __src_AWS_EventBridge;
-var __src_AWS_SDK = {};
-__src_AWS.SDK = __src_AWS_SDK;
-var __from = Object.create(global.constructor.prototype);
-Object.defineProperty(__from, "__esModule", { value: true });
-Object.defineProperty(__from, "$AWS", { enumerable: true, get: __f13 });
-Object.defineProperty(__from, "deploymentOnlyModule", { enumerable: true, get: __f14 });
-Object.defineProperty(__src, "$AWS", { enumerable: true, get: __f12 });
-__f15.kind = "Function";
-__f15.functionlessKind = "Function";
+var __awsSdk_AWS_EventBridge = { putEvents: __f2 };
+__awsSdk_AWS.EventBridge = __awsSdk_AWS_EventBridge;
+var __awsSdk_AWS_SDK = {};
+__awsSdk_AWS.SDK = __awsSdk_AWS_SDK;
+var __0_m = Object.create(global.constructor.prototype);
+__0_m.__esModule = true;
+__0_m["$AWS"] = __awsSdk_AWS;
+Object.defineProperty(__awsSdk, "$AWS", { enumerable: true, get: __f12 });
+var __aws_lambda_1 = {};
+var __aws_lambda_1_LambdaClient = { key: "Lambda", init: __f15 };
+var __1_m = Object.create(global.constructor.prototype);
+Object.defineProperty(__1_m, "__esModule", { value: true });
+__1_m.LambdaClient = __aws_lambda_1_LambdaClient;
+Object.defineProperty(__aws_lambda_1, "LambdaClient", { enumerable: true, get: __f16 });
+__f13.kind = "Function";
+__f13.functionlessKind = "Function";
 function __f1() {
   return function() {
     return function __computed() {
@@ -3447,20 +4102,121 @@ function __f1() {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f4(__0, __1) {
+function __f4(__0, __1, __2, __3) {
   return function() {
-    return (key, props) => {
-      var _a;
-      return new (require("aws-sdk/clients/lambda"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    return function __computed(thisArg, _arguments, P, generator) {
+      adopt;
+      function adopt(value) {
+        return value instanceof P ? value : new P(function(resolve) {
+          resolve(value);
+        });
+      }
+      return new (P || (P = Promise))(function(resolve, reject) {
+        fulfilled;
+        rejected;
+        step;
+        function fulfilled(value) {
+          try {
+            step(generator.next(value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function rejected(value) {
+          try {
+            step(generator["throw"](value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function step(result) {
+          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+        }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+      });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f5(__0, __1) {
   return function() {
-    return (key, props) => {
-      var _a;
-      return new (require("aws-sdk/clients/eventbridge"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    return function __computed(thisArg, body) {
+      verb;
+      step;
+      var _ = { label: 0, sent: function() {
+        if (t[0] & 1)
+          throw t[1];
+        return t[1];
+      }, trys: [], ops: [] }, f, y, t, g;
+      return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() {
+        return this;
+      }), g;
+      function verb(n) {
+        return function(v) {
+          return step([n, v]);
+        };
+      }
+      function step(op) {
+        if (f)
+          throw new TypeError("Generator is already executing.");
+        while (_)
+          try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done)
+              return t;
+            if (y = 0, t)
+              op = [op[0] & 2, t.value];
+            switch (op[0]) {
+              case 0:
+              case 1:
+                t = op;
+                break;
+              case 4:
+                _.label++;
+                return { value: op[1], done: false };
+              case 5:
+                _.label++;
+                y = op[1];
+                op = [0];
+                continue;
+              case 7:
+                op = _.ops.pop();
+                _.trys.pop();
+                continue;
+              default:
+                if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+                  _ = 0;
+                  continue;
+                }
+                if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+                  _.label = op[1];
+                  break;
+                }
+                if (op[0] === 6 && _.label < t[1]) {
+                  _.label = t[1];
+                  t = op;
+                  break;
+                }
+                if (t && _.label < t[2]) {
+                  _.label = t[2];
+                  _.ops.push(op);
+                  break;
+                }
+                if (t[2])
+                  _.ops.pop();
+                _.trys.pop();
+                continue;
+            }
+            op = body.call(thisArg, _);
+          } catch (e) {
+            op = [6, e];
+            y = 0;
+          } finally {
+            f = t = 0;
+          }
+        if (op[0] & 5)
+          throw op[1];
+        return { value: op[0] ? op[1] : void 0, done: true };
+      }
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -3469,33 +4225,57 @@ function __f6(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/stepfunctions"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f7(__0, __1) {
+function __f7() {
   return function() {
-    return (key, props) => {
-      var _a;
-      return new (require("aws-sdk/clients/secretsmanager"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    let m = __m;
+    let k = "EventBridgeClient";
+    return function __computed() {
+      return m[k];
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f8() {
   return function() {
-    let PrewarmClients = __functionPrewarm_PrewarmClients;
-    return () => PrewarmClients;
+    let __assign = __f8;
+    return function __computed() {
+      __assign = function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+          s = arguments[i];
+          for (var p in s)
+            if (Object.prototype.hasOwnProperty.call(s, p))
+              t[p] = s[p];
+        }
+        return t;
+      };
+      return __assign.apply(this, arguments);
+    };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f3(__0, __1) {
   return function() {
-    let _functionPrewarm = __functionPrewarm;
-    return async ([request], preWarmContext) => {
-      const eventBridge = preWarmContext.getOrInit(_functionPrewarm.PrewarmClients.EventBridge);
-      return eventBridge.putEvents({ Entries: request.Entries.map((e) => ({ ...e })) }).promise();
+    let __awaiter = __f4;
+    let _this = void 0;
+    let __generator = __f5;
+    let aws_events_1 = __aws_events_1;
+    let __assign = __f8;
+    return function __computed(_a, preWarmContext) {
+      var request = _a[0];
+      return __awaiter(_this, void 0, void 0, function() {
+        var eventBridge;
+        return __generator(this, function(_b) {
+          eventBridge = preWarmContext.getOrInit(aws_events_1.EventBridgeClient);
+          return [2, eventBridge.putEvents({ Entries: request.Entries.map(function(e) {
+            return __assign({}, e);
+          }) }).promise()];
+        });
+      });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -3538,47 +4318,52 @@ function __f2() {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f13() {
-  return function() {
-    let $AWS = __src_AWS;
-    return () => $AWS;
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
-function __f14() {
-  return function() {
-    let deploymentOnlyModule = true;
-    return () => deploymentOnlyModule;
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
 function __f12() {
   return function() {
-    let from = __from;
+    let m = __0_m;
     let k = "$AWS";
     return function __computed() {
-      return from[k];
+      return m[k];
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f16(__0, __1) {
+function __f15(__0, __1) {
   return function() {
-    let _functionPrewarm = __functionPrewarm;
+    return (key, props) => {
+      var _a;
+      return new (require("aws-sdk/clients/lambda"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f16() {
+  return function() {
+    let m = __1_m;
+    let k = "LambdaClient";
+    return function __computed() {
+      return m[k];
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f14(__0, __1) {
+  return function() {
+    let aws_lambda_1 = __aws_lambda_1;
     let functionName = process.env.env__functionless0;
     return async (args, prewarmContext) => {
       var _a;
       const [payload] = args;
-      const lambdaClient = prewarmContext.getOrInit(_functionPrewarm.PrewarmClients.Lambda);
-      const response = (_a = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : void 0 }).promise()).Payload) == null ? void 0 : _a.toString();
+      const lambdaClient = prewarmContext.getOrInit(aws_lambda_1.LambdaClient);
+      const response = (_a = (await lambdaClient.invoke({ FunctionName: functionName, ...payload ? { Payload: JSON.stringify(payload) } : void 0 }).promise()).Payload) === null || _a === void 0 ? void 0 : _a.toString();
       return response ? JSON.parse(response) : void 0;
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f15() {
+function __f13() {
   return function() {
-    let c = __f16;
+    let c = __f14;
     let preWarmContext = __preWarmContext;
     return function __computed(...args) {
       return c(args, preWarmContext);
@@ -3588,10 +4373,10 @@ function __f15() {
 }
 function __f0() {
   return function() {
-    let _src = __src;
-    let func = __f15;
+    let _awsSdk = __awsSdk;
+    let func = __f13;
     return () => {
-      return _src["$AWS"].Lambda.Invoke({ Function: func, Payload: void 0 });
+      return _awsSdk["$AWS"].Lambda.Invoke({ Function: func, Payload: void 0 });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -3602,22 +4387,17 @@ function __f0() {
 exports[`serialize sdk SDK.CloudWatch.describeAlarms 1`] = `
 "exports.handler = __f0;
 
-var __src = {};
-var __src_AWS = {};
+var __awsSdk = {};
+var __awsSdk_AWS = {};
 __f1.kind = "$AWS.Lambda.Invoke";
-var __src_AWS_Lambda = {Invoke: __f1};
-__src_AWS.Lambda = __src_AWS_Lambda;
-var __functionPrewarm = {};
-var __functionPrewarm_PrewarmClients = {};
-var __functionPrewarm_PrewarmClients_Lambda = {key: "Lambda", init: __f4};
-__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
-var __functionPrewarm_PrewarmClients_EventBridge = {key: "EventBridge", init: __f5};
-__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
-var __functionPrewarm_PrewarmClients_StepFunctions = {key: "StepFunctions", init: __f6};
-__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
-var __functionPrewarm_PrewarmClients_SecretsManager = {key: "SecretsManager", init: __f7};
-__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
-Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f8 });
+var __awsSdk_AWS_Lambda = {Invoke: __f1};
+__awsSdk_AWS.Lambda = __awsSdk_AWS_Lambda;
+var __aws_events_1 = {};
+var __aws_events_1_EventBridgeClient = {key: "EventBridge", init: __f6};
+var __m = Object.create(global.constructor.prototype);
+Object.defineProperty(__m, "__esModule", { value: true });
+__m.EventBridgeClient = __aws_events_1_EventBridgeClient;
+Object.defineProperty(__aws_events_1, "EventBridgeClient", { enumerable: true, get: __f7 });
 var __preWarmContext_proto = {};
 Object.defineProperty(__f9, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f9 });
@@ -3628,46 +4408,125 @@ __preWarmContext.props = undefined;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f2.kind = "$AWS.EventBridge.putEvent";
-var __src_AWS_EventBridge = {putEvents: __f2};
-__src_AWS.EventBridge = __src_AWS_EventBridge;
-var __src_AWS_SDK = {};
-__src_AWS.SDK = __src_AWS_SDK;
-var __from = Object.create(global.constructor.prototype);
-Object.defineProperty(__from, "__esModule", { value: true });
-Object.defineProperty(__from, "$AWS", { enumerable: true, get: __f13 });
-Object.defineProperty(__from, "deploymentOnlyModule", { enumerable: true, get: __f14 });
-Object.defineProperty(__src, "$AWS", { enumerable: true, get: __f12 });
+var __awsSdk_AWS_EventBridge = {putEvents: __f2};
+__awsSdk_AWS.EventBridge = __awsSdk_AWS_EventBridge;
+var __awsSdk_AWS_SDK = {};
+__awsSdk_AWS.SDK = __awsSdk_AWS_SDK;
+var __0_m = Object.create(global.constructor.prototype);
+__0_m.__esModule = true;
+__0_m["$AWS"] = __awsSdk_AWS;
+Object.defineProperty(__awsSdk, "$AWS", { enumerable: true, get: __f12 });
 function __f1() {
   return (function() {
     return (function __computed() { throw new Error; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f4(__0, __1) {
+}function __f4(__0, __1, __2, __3) {
   return (function() {
-    return ((key, props) => new (require("aws-sdk/clients/lambda"))(props?.clientConfigRetriever?.(key)));;
+    return (function __computed(thisArg, _arguments, P, generator) { adopt; function adopt(value) { return value instanceof P ? value : new P(function (resolve) { resolve(value); }); } return new (P || (P = Promise))(function (resolve, reject) { fulfilled; rejected; step; function fulfilled(value) { try {
+    step(generator.next(value));
+}
+catch (e) {
+    reject(e);
+} } function rejected(value) { try {
+    step(generator["throw"](value));
+}
+catch (e) {
+    reject(e);
+} } function step(result) { result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected); } step((generator = generator.apply(thisArg, _arguments || [])).next()); }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f5(__0, __1) {
   return (function() {
-    return ((key, props) => new (require("aws-sdk/clients/eventbridge"))(props?.clientConfigRetriever?.(key)));;
+    return (function __computed(thisArg, body) { verb; step; var _ = { label: 0, sent: function () { if (t[0] & 1)
+        throw t[1]; return t[1]; }, trys: [], ops: [] }, f, y, t, g; return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function () { return this; }), g; function verb(n) { return function (v) { return step([n, v]); }; } function step(op) { if (f)
+    throw new TypeError("Generator is already executing."); while (_)
+    try {
+        if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done)
+            return t;
+        if (y = 0, t)
+            op = [op[0] & 2, t.value];
+        switch (op[0]) {
+            case 0:
+            case 1:
+                t = op;
+                break;
+            case 4:
+                _.label++;
+                return { value: op[1], done: false };
+            case 5:
+                _.label++;
+                y = op[1];
+                op = [0];
+                continue;
+            case 7:
+                op = _.ops.pop();
+                _.trys.pop();
+                continue;
+            default:
+                if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+                    _ = 0;
+                    continue;
+                }
+                if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+                    _.label = op[1];
+                    break;
+                }
+                if (op[0] === 6 && _.label < t[1]) {
+                    _.label = t[1];
+                    t = op;
+                    break;
+                }
+                if (t && _.label < t[2]) {
+                    _.label = t[2];
+                    _.ops.push(op);
+                    break;
+                }
+                if (t[2])
+                    _.ops.pop();
+                _.trys.pop();
+                continue;
+        }
+        op = body.call(thisArg, _);
+    }
+    catch (e) {
+        op = [6, e];
+        y = 0;
+    }
+    finally {
+        f = t = 0;
+    } if (op[0] & 5)
+    throw op[1]; return { value: op[0] ? op[1] : void 0, done: true }; } });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f6(__0, __1) {
   return (function() {
-    return ((key, props) => new (require("aws-sdk/clients/stepfunctions"))(props?.clientConfigRetriever?.(key)));;
+    return ((key, props) => { var _a; return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f7(__0, __1) {
+}function __f7() {
   return (function() {
-    return ((key, props) => new (require("aws-sdk/clients/secretsmanager"))(props?.clientConfigRetriever?.(key)));;
+    let m = __m;
+    let k = "EventBridgeClient";
+
+    return (function __computed() { return m[k]; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f8() {
   return (function() {
-    let PrewarmClients = __functionPrewarm_PrewarmClients;
+    let __assign = __f8;
 
-    return (() => PrewarmClients);;
+    return (function __computed() { __assign = function (t) { for (var s, i = 1, n = arguments.length; i < n; i++) {
+    s = arguments[i];
+    for (var p in s)
+        if (Object.prototype.hasOwnProperty.call(s, p))
+            t[p] = s[p];
+} return t; }; return __assign.apply(this, arguments); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f3(__0, __1) {
   return (function() {
-    let _functionPrewarm = __functionPrewarm;
+    let __awaiter = __f4;
+    let _this = undefined;
+    let __generator = __f5;
+    let aws_events_1 = __aws_events_1;
+    let __assign = __f8;
 
-    return (async ([request], preWarmContext) => { const eventBridge = preWarmContext.getOrInit(_functionPrewarm.PrewarmClients.EventBridge); return eventBridge.putEvents({ Entries: request.Entries.map(e => ({ ...e })) }).promise(); });;
+    return (function __computed(_a, preWarmContext) { var request = _a[0]; return __awaiter(_this, void 0, void 0, function () { var eventBridge; return __generator(this, function (_b) { eventBridge = preWarmContext.getOrInit(aws_events_1.EventBridgeClient); return [2, eventBridge.putEvents({ Entries: request.Entries.map(function (e) { return __assign({}, e); }) }).promise()]; }); }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f9(__0) {
   return (function() {
@@ -3690,30 +4549,18 @@ function __f1() {
 
     return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f13() {
-  return (function() {
-    let $AWS = __src_AWS;
-
-    return (() => $AWS);;
-  }).apply(undefined, undefined).apply(this, arguments);
-}function __f14() {
-  return (function() {
-    let deploymentOnlyModule = true;
-
-    return (() => deploymentOnlyModule);;
-  }).apply(undefined, undefined).apply(this, arguments);
 }function __f12() {
   return (function() {
-    let from = __from;
+    let m = __0_m;
     let k = "$AWS";
 
-    return (function __computed() { return from[k]; });;
+    return (function __computed() { return m[k]; });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f0() {
   return (function() {
-    let _src = __src;
+    let _awsSdk = __awsSdk;
 
-    return (() => { return _src["$AWS"].SDK.CloudWatch.describeAlarms({}, { iam: { resources: ["*"] } }); });;
+    return (() => { return _awsSdk["$AWS"].SDK.CloudWatch.describeAlarms({}, { iam: { resources: ["*"] } }); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }"
 `;
@@ -3721,22 +4568,17 @@ function __f1() {
 exports[`serialize sdk SDK.CloudWatch.describeAlarms 2`] = `
 "// <stdin>
 exports.handler = __f0;
-var __src = {};
-var __src_AWS = {};
+var __awsSdk = {};
+var __awsSdk_AWS = {};
 __f1.kind = "$AWS.Lambda.Invoke";
-var __src_AWS_Lambda = { Invoke: __f1 };
-__src_AWS.Lambda = __src_AWS_Lambda;
-var __functionPrewarm = {};
-var __functionPrewarm_PrewarmClients = {};
-var __functionPrewarm_PrewarmClients_Lambda = { key: "Lambda", init: __f4 };
-__functionPrewarm_PrewarmClients.Lambda = __functionPrewarm_PrewarmClients_Lambda;
-var __functionPrewarm_PrewarmClients_EventBridge = { key: "EventBridge", init: __f5 };
-__functionPrewarm_PrewarmClients.EventBridge = __functionPrewarm_PrewarmClients_EventBridge;
-var __functionPrewarm_PrewarmClients_StepFunctions = { key: "StepFunctions", init: __f6 };
-__functionPrewarm_PrewarmClients.StepFunctions = __functionPrewarm_PrewarmClients_StepFunctions;
-var __functionPrewarm_PrewarmClients_SecretsManager = { key: "SecretsManager", init: __f7 };
-__functionPrewarm_PrewarmClients.SecretsManager = __functionPrewarm_PrewarmClients_SecretsManager;
-Object.defineProperty(__functionPrewarm, "PrewarmClients", { enumerable: true, get: __f8 });
+var __awsSdk_AWS_Lambda = { Invoke: __f1 };
+__awsSdk_AWS.Lambda = __awsSdk_AWS_Lambda;
+var __aws_events_1 = {};
+var __aws_events_1_EventBridgeClient = { key: "EventBridge", init: __f6 };
+var __m = Object.create(global.constructor.prototype);
+Object.defineProperty(__m, "__esModule", { value: true });
+__m.EventBridgeClient = __aws_events_1_EventBridgeClient;
+Object.defineProperty(__aws_events_1, "EventBridgeClient", { enumerable: true, get: __f7 });
 var __preWarmContext_proto = {};
 Object.defineProperty(__f9, "prototype", { value: __preWarmContext_proto });
 Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f9 });
@@ -3747,15 +4589,14 @@ __preWarmContext.props = void 0;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f2.kind = "$AWS.EventBridge.putEvent";
-var __src_AWS_EventBridge = { putEvents: __f2 };
-__src_AWS.EventBridge = __src_AWS_EventBridge;
-var __src_AWS_SDK = {};
-__src_AWS.SDK = __src_AWS_SDK;
-var __from = Object.create(global.constructor.prototype);
-Object.defineProperty(__from, "__esModule", { value: true });
-Object.defineProperty(__from, "$AWS", { enumerable: true, get: __f13 });
-Object.defineProperty(__from, "deploymentOnlyModule", { enumerable: true, get: __f14 });
-Object.defineProperty(__src, "$AWS", { enumerable: true, get: __f12 });
+var __awsSdk_AWS_EventBridge = { putEvents: __f2 };
+__awsSdk_AWS.EventBridge = __awsSdk_AWS_EventBridge;
+var __awsSdk_AWS_SDK = {};
+__awsSdk_AWS.SDK = __awsSdk_AWS_SDK;
+var __0_m = Object.create(global.constructor.prototype);
+__0_m.__esModule = true;
+__0_m["$AWS"] = __awsSdk_AWS;
+Object.defineProperty(__awsSdk, "$AWS", { enumerable: true, get: __f12 });
 function __f1() {
   return function() {
     return function __computed() {
@@ -3764,20 +4605,121 @@ function __f1() {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f4(__0, __1) {
+function __f4(__0, __1, __2, __3) {
   return function() {
-    return (key, props) => {
-      var _a;
-      return new (require("aws-sdk/clients/lambda"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    return function __computed(thisArg, _arguments, P, generator) {
+      adopt;
+      function adopt(value) {
+        return value instanceof P ? value : new P(function(resolve) {
+          resolve(value);
+        });
+      }
+      return new (P || (P = Promise))(function(resolve, reject) {
+        fulfilled;
+        rejected;
+        step;
+        function fulfilled(value) {
+          try {
+            step(generator.next(value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function rejected(value) {
+          try {
+            step(generator["throw"](value));
+          } catch (e) {
+            reject(e);
+          }
+        }
+        function step(result) {
+          result.done ? resolve(result.value) : adopt(result.value).then(fulfilled, rejected);
+        }
+        step((generator = generator.apply(thisArg, _arguments || [])).next());
+      });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f5(__0, __1) {
   return function() {
-    return (key, props) => {
-      var _a;
-      return new (require("aws-sdk/clients/eventbridge"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    return function __computed(thisArg, body) {
+      verb;
+      step;
+      var _ = { label: 0, sent: function() {
+        if (t[0] & 1)
+          throw t[1];
+        return t[1];
+      }, trys: [], ops: [] }, f, y, t, g;
+      return g = { next: verb(0), "throw": verb(1), "return": verb(2) }, typeof Symbol === "function" && (g[Symbol.iterator] = function() {
+        return this;
+      }), g;
+      function verb(n) {
+        return function(v) {
+          return step([n, v]);
+        };
+      }
+      function step(op) {
+        if (f)
+          throw new TypeError("Generator is already executing.");
+        while (_)
+          try {
+            if (f = 1, y && (t = op[0] & 2 ? y["return"] : op[0] ? y["throw"] || ((t = y["return"]) && t.call(y), 0) : y.next) && !(t = t.call(y, op[1])).done)
+              return t;
+            if (y = 0, t)
+              op = [op[0] & 2, t.value];
+            switch (op[0]) {
+              case 0:
+              case 1:
+                t = op;
+                break;
+              case 4:
+                _.label++;
+                return { value: op[1], done: false };
+              case 5:
+                _.label++;
+                y = op[1];
+                op = [0];
+                continue;
+              case 7:
+                op = _.ops.pop();
+                _.trys.pop();
+                continue;
+              default:
+                if (!(t = _.trys, t = t.length > 0 && t[t.length - 1]) && (op[0] === 6 || op[0] === 2)) {
+                  _ = 0;
+                  continue;
+                }
+                if (op[0] === 3 && (!t || op[1] > t[0] && op[1] < t[3])) {
+                  _.label = op[1];
+                  break;
+                }
+                if (op[0] === 6 && _.label < t[1]) {
+                  _.label = t[1];
+                  t = op;
+                  break;
+                }
+                if (t && _.label < t[2]) {
+                  _.label = t[2];
+                  _.ops.push(op);
+                  break;
+                }
+                if (t[2])
+                  _.ops.pop();
+                _.trys.pop();
+                continue;
+            }
+            op = body.call(thisArg, _);
+          } catch (e) {
+            op = [6, e];
+            y = 0;
+          } finally {
+            f = t = 0;
+          }
+        if (op[0] & 5)
+          throw op[1];
+        return { value: op[0] ? op[1] : void 0, done: true };
+      }
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -3786,33 +4728,57 @@ function __f6(__0, __1) {
   return function() {
     return (key, props) => {
       var _a;
-      return new (require("aws-sdk/clients/stepfunctions"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+      return new (require("aws-sdk/clients/eventbridge"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key));
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f7(__0, __1) {
+function __f7() {
   return function() {
-    return (key, props) => {
-      var _a;
-      return new (require("aws-sdk/clients/secretsmanager"))((_a = props == null ? void 0 : props.clientConfigRetriever) == null ? void 0 : _a.call(props, key));
+    let m = __m;
+    let k = "EventBridgeClient";
+    return function __computed() {
+      return m[k];
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f8() {
   return function() {
-    let PrewarmClients = __functionPrewarm_PrewarmClients;
-    return () => PrewarmClients;
+    let __assign = __f8;
+    return function __computed() {
+      __assign = function(t) {
+        for (var s, i = 1, n = arguments.length; i < n; i++) {
+          s = arguments[i];
+          for (var p in s)
+            if (Object.prototype.hasOwnProperty.call(s, p))
+              t[p] = s[p];
+        }
+        return t;
+      };
+      return __assign.apply(this, arguments);
+    };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f3(__0, __1) {
   return function() {
-    let _functionPrewarm = __functionPrewarm;
-    return async ([request], preWarmContext) => {
-      const eventBridge = preWarmContext.getOrInit(_functionPrewarm.PrewarmClients.EventBridge);
-      return eventBridge.putEvents({ Entries: request.Entries.map((e) => ({ ...e })) }).promise();
+    let __awaiter = __f4;
+    let _this = void 0;
+    let __generator = __f5;
+    let aws_events_1 = __aws_events_1;
+    let __assign = __f8;
+    return function __computed(_a, preWarmContext) {
+      var request = _a[0];
+      return __awaiter(_this, void 0, void 0, function() {
+        var eventBridge;
+        return __generator(this, function(_b) {
+          eventBridge = preWarmContext.getOrInit(aws_events_1.EventBridgeClient);
+          return [2, eventBridge.putEvents({ Entries: request.Entries.map(function(e) {
+            return __assign({}, e);
+          }) }).promise()];
+        });
+      });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -3855,35 +4821,21 @@ function __f2() {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f13() {
-  return function() {
-    let $AWS = __src_AWS;
-    return () => $AWS;
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
-function __f14() {
-  return function() {
-    let deploymentOnlyModule = true;
-    return () => deploymentOnlyModule;
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
 function __f12() {
   return function() {
-    let from = __from;
+    let m = __0_m;
     let k = "$AWS";
     return function __computed() {
-      return from[k];
+      return m[k];
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
 function __f0() {
   return function() {
-    let _src = __src;
+    let _awsSdk = __awsSdk;
     return () => {
-      return _src["$AWS"].SDK.CloudWatch.describeAlarms({}, { iam: { resources: ["*"] } });
+      return _awsSdk["$AWS"].SDK.CloudWatch.describeAlarms({}, { iam: { resources: ["*"] } });
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);

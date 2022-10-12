@@ -175,3 +175,6 @@ export function isVariableReference(expr: Expr): expr is VariableReference {
     isIdentifier(expr) || isPropAccessExpr(expr) || isElementAccessExpr(expr)
   );
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

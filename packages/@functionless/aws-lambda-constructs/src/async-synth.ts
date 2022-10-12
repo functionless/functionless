@@ -11,3 +11,6 @@ export const asyncSynth = async (app: App, options?: SynthesisOptions) => {
   await Promise.all(Function.promises);
   return app.synth(options);
 };
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

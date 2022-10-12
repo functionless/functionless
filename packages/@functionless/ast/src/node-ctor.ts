@@ -203,3 +203,6 @@ export const nodes = {
   ...keywords,
   ...statements,
 } as const;
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

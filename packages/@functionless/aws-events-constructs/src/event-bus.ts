@@ -52,6 +52,15 @@ export const isEventBus = <EvntBus extends IEventBus<any>>(
   );
 };
 
+export function isEventBusConstruct<T extends IEventBus<any> = IEventBus>(
+  a: any
+): a is T {
+  return (
+    a.kind === EventBus.FunctionlessType &&
+    a.functionlessKind === EventBus.FunctionlessType
+  );
+}
+
 /**
  * Returns the {@link Event} type on the {@link EventBus}.
  */
@@ -150,15 +159,6 @@ const ENTRY_PROPERTY_MAP: Record<keyof Event, string> = {
   time: "Time",
   version: "Version",
 };
-
-export function isEventBusConstruct<T extends IEventBus<any> = IEventBus>(
-  a: any
-): a is T {
-  return (
-    a.kind === EventBus.FunctionlessType &&
-    a.functionlessKind === EventBus.FunctionlessType
-  );
-}
 
 /**
  * @typeParam Evnt - the union type of events that this EventBus can accept.

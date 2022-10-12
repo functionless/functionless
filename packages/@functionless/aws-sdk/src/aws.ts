@@ -11,10 +11,7 @@ import type {
 import { ASL, ASLGraph } from "@functionless/asl-graph";
 import { SDK as _SDK } from "./sdk";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
-import {
-  Function,
-  isFunctionConstruct,
-} from "@functionless/aws-lambda-constructs";
+import type { Function } from "@functionless/aws-lambda-constructs";
 import { NativeIntegration } from "@functionless/aws-lambda";
 import { EventBridgeClient } from "@functionless/aws-events";
 
@@ -70,8 +67,8 @@ export namespace $AWS {
             "property 'Function' must reference a functionless.Function"
           );
         }
-        const functionRef = functionName.expr.ref();
-        if (!isFunctionConstruct(functionRef)) {
+        const functionRef: Function<any, any> = functionName.expr.ref() as any;
+        if ((functionRef as any)?.kind !== "Function") {
           throw new Error(
             "property 'Function' must reference a functionless.Function"
           );
@@ -140,6 +137,3 @@ export namespace $AWS {
 
   export const SDK = _SDK;
 }
-
-// to prevent the closure serializer from trying to import all of functionless.
-export const deploymentOnlyModule = true;
