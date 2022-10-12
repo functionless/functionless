@@ -2,12 +2,14 @@ import { Duration, SecretValue } from "aws-cdk-lib";
 import "jest";
 import {
   BinarySecret,
-  Function,
-  FunctionProps,
   JsonSecret,
   TextSecret,
-} from "../src";
-import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
+} from "@functionless/aws-secretsmanager-constructs";
+import {
+  runtimeTestExecutionContext,
+  runtimeTestSuite,
+} from "@functionless/test";
+import { Function, FunctionProps } from "@functionless/aws-lambda-constructs";
 
 // inject the localstack client config into the lambda clients
 // without this configuration, the functions will try to hit AWS proper

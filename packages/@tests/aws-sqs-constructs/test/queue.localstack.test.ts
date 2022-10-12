@@ -11,15 +11,19 @@ import { Role } from "aws-cdk-lib/aws-iam";
 import { SQSBatchResponse } from "aws-lambda";
 import { Construct } from "constructs";
 import { v4 } from "uuid";
-import { EventBus, Event, Function, FunctionProps, Queue, Table } from "../src";
-import { JsonSerializer } from "../src/serializer";
+import { Function, FunctionProps } from "@functionless/aws-lambda-constructs";
+import { Queue } from "@functionless/aws-sqs-constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
+import { Event } from "@functionless/aws-events";
+import { EventBus } from "@functionless/aws-events-constructs";
+import { JsonSerializer } from "@functionless/serde";
 import {
   RuntimeTestClients,
   runtimeTestExecutionContext,
   runtimeTestSuite,
   TestCase,
-} from "./runtime";
-import { retry } from "./runtime-util";
+  retry,
+} from "@functionless/test";
 
 // inject the localstack client config into the lambda clients
 // without this configuration, the functions will try to hit AWS proper

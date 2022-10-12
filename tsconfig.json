@@ -119,6 +119,12 @@
       "path": "packages/@tests/aws-lambda-constructs"
     },
     {
+      "path": "packages/@tests/aws-secretsmanager-constructs"
+    },
+    {
+      "path": "packages/@tests/aws-sqs-constructs"
+    },
+    {
       "path": "packages/@tests/aws-stepfunctions-constructs"
     },
     {

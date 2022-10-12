@@ -6,7 +6,8 @@
   "scripts": {
     "build": "tsc --build",
     "build:docs": "fls-typedoc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
   },
   "dependencies": {
     "fs-extra": "^10.1.0",
@@ -29,5 +30,13 @@
   ],
   "publishConfig": {
     "access": "public"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "@functionless/jest",
+        {}
+      ]
+    }
   }
 }

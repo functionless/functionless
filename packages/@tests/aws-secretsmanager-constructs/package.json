@@ -1,0 +1,33 @@
+{
+  "name": "@tests/aws-secretsmanager-constructs",
+  "private": true,
+  "version": "0.27.0",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib",
+    "docs"
+  ],
+  "scripts": {
+    "test": "jest",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.44.0",
+    "@functionless/aws-lambda-constructs": "*",
+    "@functionless/aws-secretsmanager-constructs": "*"
+  },
+  "devDependencies": {
+    "@functionless/test": "*",
+    "typescript": "^4.8.3"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "@functionless/jest",
+        {}
+      ]
+    }
+  }
+}

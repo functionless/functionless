@@ -1,0 +1,22 @@
+{
+  "extends": "../../../tsconfig-base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "inlineSourceMap": true,
+    "rootDir": "test",
+    "noEmit": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"],
+  "references": [
+    {
+      "path": "../../@functionless/aws-lambda-constructs"
+    },
+    {
+      "path": "../../@functionless/aws-secretsmanager-constructs"
+    },
+    {
+      "path": "../../@functionless/test"
+    }
+  ]
+}
