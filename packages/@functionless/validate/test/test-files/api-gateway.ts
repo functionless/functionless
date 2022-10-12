@@ -5,7 +5,11 @@ import {
   aws_events,
   Stack,
 } from "aws-cdk-lib";
-import { AwsMethod, EventBus, Function, StepFunction, Table } from "../../src";
+import { AwsMethod } from "@functionless/aws-apigateway-constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
+import { EventBus } from "@functionless/aws-events-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
+import { StepFunction } from "@functionless/aws-stepfunctions-constructs";
 
 const app = new App({
   autoSynth: false,

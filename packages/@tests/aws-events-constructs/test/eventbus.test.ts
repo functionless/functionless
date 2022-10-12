@@ -5,11 +5,19 @@ import {
   Duration,
   Stack,
 } from "aws-cdk-lib";
-import { ExpressStepFunction, StepFunction } from "../src";
-import { EventBus, Rule, Event, ScheduledEvent } from "../src/event-bridge";
-import { synthesizeEventPattern } from "../src/event-bridge/event-pattern";
-import { EventTransform } from "../src/event-bridge/transform";
-import { Function } from "../src/function";
+import { Event } from "@functionless/aws-events";
+import {
+  EventBus,
+  Rule,
+  ScheduledEvent,
+  EventTransform,
+  synthesizeEventPattern,
+} from "@functionless/aws-events-constructs";
+import {
+  ExpressStepFunction,
+  StepFunction,
+} from "@functionless/aws-stepfunctions-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
 
 let stack: Stack;
 

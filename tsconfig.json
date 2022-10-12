@@ -116,6 +116,12 @@
       "path": "packages/@tests/aws-appsync-constructs"
     },
     {
+      "path": "packages/@tests/aws-dynamodb-constructs"
+    },
+    {
+      "path": "packages/@tests/aws-events-constructs"
+    },
+    {
       "path": "packages/@tests/aws-lambda-constructs"
     },
     {

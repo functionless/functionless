@@ -22,9 +22,6 @@
       "path": "../aws-appsync"
     },
     {
-      "path": "../aws-appsync-constructs"
-    },
-    {
       "path": "../aws-dynamodb"
     },
     {

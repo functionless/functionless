@@ -16,7 +16,6 @@
   "dependencies": {
     "@functionless/asl-graph": "^0.27.0",
     "@functionless/aws-appsync": "^0.27.0",
-    "@functionless/aws-appsync-constructs": "^0.27.0",
     "@functionless/aws-apigateway": "^0.27.0",
     "@functionless/aws-dynamodb": "^0.27.0",
     "@functionless/aws-lambda": "^0.27.0",

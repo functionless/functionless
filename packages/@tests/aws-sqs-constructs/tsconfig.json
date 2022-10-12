@@ -25,6 +25,9 @@
       "path": "../../@functionless/aws-sqs-constructs"
     },
     {
+      "path": "../../@functionless/jest"
+    },
+    {
       "path": "../../@functionless/serde"
     },
     {

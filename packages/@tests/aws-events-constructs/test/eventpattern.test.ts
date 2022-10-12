@@ -1,8 +1,10 @@
 import { App, Stack } from "aws-cdk-lib";
-import { StepFunction } from "../src";
-import { Event, EventBus } from "../src/event-bridge";
-import { Function } from "../src/function";
 import { ebEventPatternTestCase, ebEventPatternTestCaseError } from "./util";
+
+import { Event } from "@functionless/aws-events";
+import { EventBus } from "@functionless/aws-events-constructs";
+import { StepFunction } from "@functionless/aws-stepfunctions-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
 
 type TestEvent = Event<{
   num: number;

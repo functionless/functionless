@@ -2756,7 +2756,7 @@ catch (e) {
   return (function() {
     let __assign = __f8;
 
-    return (function __computed() { __assign = function (t) { for (var s, i = 1, n = arguments.length; i < n; i++) {
+    return (function __computed() { __assign = Object.assign || function (t) { for (var s, i = 1, n = arguments.length; i < n; i++) {
     s = arguments[i];
     for (var p in s)
         if (Object.prototype.hasOwnProperty.call(s, p))
@@ -2994,7 +2994,7 @@ function __f8() {
   return function() {
     let __assign = __f8;
     return function __computed() {
-      __assign = function(t) {
+      __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
           s = arguments[i];
           for (var p in s)
@@ -3202,7 +3202,7 @@ catch (e) {
   return (function() {
     let __assign = __f7;
 
-    return (function __computed() { __assign = function (t) { for (var s, i = 1, n = arguments.length; i < n; i++) {
+    return (function __computed() { __assign = Object.assign || function (t) { for (var s, i = 1, n = arguments.length; i < n; i++) {
     s = arguments[i];
     for (var p in s)
         if (Object.prototype.hasOwnProperty.call(s, p))
@@ -3412,7 +3412,7 @@ function __f7() {
   return function() {
     let __assign = __f7;
     return function __computed() {
-      __assign = function(t) {
+      __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
           s = arguments[i];
           for (var p in s)
@@ -3974,7 +3974,7 @@ catch (e) {
   return (function() {
     let __assign = __f8;
 
-    return (function __computed() { __assign = function (t) { for (var s, i = 1, n = arguments.length; i < n; i++) {
+    return (function __computed() { __assign = Object.assign || function (t) { for (var s, i = 1, n = arguments.length; i < n; i++) {
     s = arguments[i];
     for (var p in s)
         if (Object.prototype.hasOwnProperty.call(s, p))
@@ -4244,7 +4244,7 @@ function __f8() {
   return function() {
     let __assign = __f8;
     return function __computed() {
-      __assign = function(t) {
+      __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
           s = arguments[i];
           for (var p in s)
@@ -4511,7 +4511,7 @@ catch (e) {
   return (function() {
     let __assign = __f8;
 
-    return (function __computed() { __assign = function (t) { for (var s, i = 1, n = arguments.length; i < n; i++) {
+    return (function __computed() { __assign = Object.assign || function (t) { for (var s, i = 1, n = arguments.length; i < n; i++) {
     s = arguments[i];
     for (var p in s)
         if (Object.prototype.hasOwnProperty.call(s, p))
@@ -4747,7 +4747,7 @@ function __f8() {
   return function() {
     let __assign = __f8;
     return function __computed() {
-      __assign = function(t) {
+      __assign = Object.assign || function(t) {
         for (var s, i = 1, n = arguments.length; i < n; i++) {
           s = arguments[i];
           for (var p in s)

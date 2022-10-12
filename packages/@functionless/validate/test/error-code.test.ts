@@ -1,4 +1,4 @@
-import { ErrorCodes } from "../src";
+import { ErrorCodes } from "@functionless/error-code";
 
 test("error codes must be unique", () => {
   const errorCodes = new Set<number>();

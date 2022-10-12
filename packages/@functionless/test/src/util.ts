@@ -13,11 +13,8 @@ import { Rule } from "aws-cdk-lib/aws-events";
 import { Function } from "@functionless/aws-lambda-constructs";
 import { Event } from "@functionless/aws-events";
 import {
-  synthesizeEventPattern,
-  synthesizePatternDocument,
   synthesizeEventBridgeTargets,
   EventTransformFunction,
-  FunctionlessEventPattern,
 } from "@functionless/aws-events-constructs";
 import {
   AppsyncResolver,
@@ -210,26 +207,6 @@ export function initStepFunctionApp() {
   );
 
   return { stack, task, computeScore, getPerson, personTable };
-}
-
-export function ebEventPatternTestCase(
-  decl: AnyFunction,
-  expected: FunctionlessEventPattern
-) {
-  const document = synthesizePatternDocument(decl);
-  const result = synthesizeEventPattern(document);
-
-  expect(result).toEqual(expected);
-}
-
-export function ebEventPatternTestCaseError(
-  decl: AnyFunction,
-  message?: string
-) {
-  expect(() => {
-    const document = synthesizePatternDocument(decl);
-    synthesizeEventPattern(document);
-  }).toThrow(message);
 }
 
 let stack: Stack;

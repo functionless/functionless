@@ -13,6 +13,9 @@
       "path": "../../functionless-build-utils"
     },
     {
+      "path": "../asl-graph"
+    },
+    {
       "path": "../aws-apigateway-constructs"
     },
     {
@@ -22,10 +25,22 @@
       "path": "../aws-dynamodb-constructs"
     },
     {
+      "path": "../aws-events"
+    },
+    {
       "path": "../aws-events-constructs"
     },
     {
       "path": "../aws-lambda-constructs"
+    },
+    {
+      "path": "../aws-sdk"
+    },
+    {
+      "path": "../aws-stepfunctions-constructs"
+    },
+    {
+      "path": "../error-code"
     }
   ]
 }

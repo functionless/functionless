@@ -1,8 +1,9 @@
 import { aws_dynamodb, CfnOutput, RemovalPolicy } from "aws-cdk-lib";
-// eslint-disable-next-line import/no-extraneous-dependencies
-import { EventBus, Event, StepFunction, Table } from "../src";
-import { runtimeTestSuite } from "./runtime";
-import { retry } from "./runtime-util";
+import { Event } from "@functionless/aws-events";
+import { EventBus } from "@functionless/aws-events-constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
+import { StepFunction } from "@functionless/aws-stepfunctions-constructs";
+import { retry, runtimeTestSuite } from "@functionless/test";
 
 runtimeTestSuite("eventBusStack", (testResource) => {
   testResource(

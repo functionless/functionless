@@ -1,7 +1,8 @@
 import { aws_cognito, Stack } from "aws-cdk-lib";
 import { CreateAuthChallengeTriggerEvent } from "aws-lambda";
 import "jest";
-import { Function, UserPool } from "../src";
+import { UserPool } from "../src";
+import { Function } from "@functionless/aws-lambda-constructs";
 
 test("create user pool with triggers", async () => {
   const stack = new Stack();

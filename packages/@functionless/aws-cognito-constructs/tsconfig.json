@@ -17,6 +17,9 @@
     },
     {
       "path": "../aws-lambda-constructs"
+    },
+    {
+      "path": "../jest"
     }
   ]
 }

@@ -1,18 +1,13 @@
 import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
 import { App, aws_events, Stack } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
-import {
-  StepFunction,
-  Function,
-  EventBus,
-  AppsyncResolver,
-  $AWS,
-  Table,
-  StepFunctionError,
-  $SFN,
-} from "../../src";
-import { Event } from "../../src/event-bridge";
-import { PutEventInput } from "../../src/event-bridge/event-bus";
+import { AppsyncResolver } from "@functionless/aws-appsync-constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
+import { Event } from "@functionless/aws-events";
+import { EventBus, PutEventInput } from "@functionless/aws-events-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
+import { $SFN, StepFunction } from "@functionless/aws-stepfunctions-constructs";
+import { $AWS } from "@functionless/aws-sdk";
 
 const app = new App({
   autoSynth: false,
@@ -526,7 +521,8 @@ new StepFunction(stack, "obj ref", async (input: { key: string }) => {
 // supported errors
 
 // eslint-disable-next-line import/order
-import * as functionless from "../../src";
+import * as functionless from "@functionless/asl-graph";
+import { StepFunctionError } from "@functionless/asl-graph";
 
 new StepFunction(stack, "supported errors", async (input: { key: string }) => {
   if (input.key === "1") {
@@ -538,7 +534,7 @@ new StepFunction(stack, "supported errors", async (input: { key: string }) => {
   } else if (input.key === "4") {
     throw Error("message");
   } else if (input.key === "5") {
-    // import { StepFunctionError } from "@functionless/aws-constructs";
+    // import { StepFunctionError } from "@functionless/asl-graph";
     throw new StepFunctionError("ErrorName", { reason: "you suck" });
   } else if (input.key === "6") {
     // import * as functionless from "@functionless/aws-constructs";

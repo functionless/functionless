@@ -3,7 +3,7 @@ import fs from "fs";
 import fs_promise from "fs/promises";
 import path from "path";
 import ts from "typescript";
-import { ErrorCode, ErrorCodes } from "../src";
+import { ErrorCode, ErrorCodes } from "@functionless/error-code";
 import { makeFunctionlessChecker } from "../src/checker";
 import { formatDiagnosticsWithColorAndContext } from "../src/format-error";
 import { validate } from "../src/validate";

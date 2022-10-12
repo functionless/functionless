@@ -10,10 +10,16 @@
   "exclude": ["node_modules"],
   "references": [
     {
+      "path": "../../@functionless/aws-appsync-constructs"
+    },
+    {
+      "path": "../../@functionless/aws-dynamodb-constructs"
+    },
+    {
       "path": "../../@functionless/aws-lambda-constructs"
     },
     {
-      "path": "../../@functionless/aws-secretsmanager-constructs"
+      "path": "../../@functionless/aws-stepfunctions-constructs"
     },
     {
       "path": "../../@functionless/jest"

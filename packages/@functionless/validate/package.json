@@ -12,11 +12,16 @@
   "dependencies": {
     "fs-extra": "^10.1.0",
     "ts-patch": "^2.0.2",
+    "@functionless/asl-graph": "*",
     "@functionless/aws-apigateway-constructs": "*",
     "@functionless/aws-appsync-constructs": "*",
     "@functionless/aws-dynamodb-constructs": "*",
     "@functionless/aws-events-constructs": "*",
-    "@functionless/aws-lambda-constructs": "*"
+    "@functionless/aws-events": "*",
+    "@functionless/aws-lambda-constructs": "*",
+    "@functionless/aws-sdk": "*",
+    "@functionless/aws-stepfunctions-constructs": "*",
+    "@functionless/error-code": "*"
   },
   "devDependencies": {
     "@types/fs-extra": "^9.0.13",

@@ -3,7 +3,6 @@ import { Construct } from "constructs";
 import { JsonFormat } from "typesafe-dynamodb";
 import { TableAppsyncApi } from "./appsync";
 import { TableAttributesApi, TableDocumentApi } from "./runtime";
-import { AppsyncResolver } from "@functionless/aws-appsync-constructs";
 
 export function isTableConstruct(a: any): a is AnyTable {
   return a?.kind === "Table";
@@ -45,7 +44,7 @@ export type AnyTable = ITable<Record<string, any>, string, string | undefined>;
 
 /**
  * Wraps an {@link aws_dynamodb.Table} with a type-safe interface that can be
- * called from within other {@link AppsyncResolver}.
+ * called from within other AppsyncResolver.
  *
  * Its interface, e.g. `getItem`, `putItem`, is in 1:1 correspondence with the
  * AWS Appsync Resolver API https://docs.aws.amazon.com/appsync/latest/devguide/resolver-mapping-template-reference-dynamodb.html

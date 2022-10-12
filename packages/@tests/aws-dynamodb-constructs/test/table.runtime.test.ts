@@ -5,20 +5,16 @@ import { aws_dynamodb, aws_iam, Duration, RemovalPolicy } from "aws-cdk-lib";
 import AWS from "aws-sdk";
 import "cross-fetch/polyfill";
 import gql from "graphql-tag";
-import {
-  $util,
-  AppsyncResolver,
-  ExpressStepFunction,
-  Function,
-  FunctionProps,
-  Table,
-} from "../src";
+import { $util, AppsyncResolver } from "@functionless/aws-appsync-constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
+import { ExpressStepFunction } from "@functionless/aws-stepfunctions-constructs";
+import { Function, FunctionProps } from "@functionless/aws-lambda-constructs";
 import {
   getTestRole,
   RuntimeTestClients,
   runtimeTestExecutionContext,
   runtimeTestSuite,
-} from "./runtime";
+} from "@functionless/test";
 
 // inject the localstack client config into the lambda clients
 // without this configuration, the functions will try to hit AWS proper

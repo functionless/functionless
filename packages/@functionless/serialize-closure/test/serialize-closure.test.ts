@@ -4,17 +4,15 @@ import fs from "fs";
 import path from "path";
 import { DynamoDBClient } from "@aws-sdk/client-dynamodb";
 import { isNode } from "@functionless/ast";
-import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
 import AWS from "aws-sdk";
 import { v4 } from "uuid";
-import { AnyFunction, Table, Function } from "../src";
 
-import { NativeRuntimeEnvironment } from "../src/function-prewarm";
+import { NativeRuntimeEnvironment } from "@functionless/aws-lambda";
 import {
   serializeClosure,
   SerializeClosureProps,
   serializeCodeWithSourceMap,
-} from "../src/serialize-closure/serialize";
+} from "../src";
 
 // set to false to inspect generated js files in .test/
 const cleanup = true;
@@ -50,7 +48,7 @@ async function rmrf(file: string) {
   }
 }
 
-async function expectClosure<F extends AnyFunction>(
+async function expectClosure<F extends (...args: any[]) => any>(
   f: F,
   options?: SerializeClosureProps
 ): Promise<F> {
@@ -938,14 +936,14 @@ test("broad spectrum syntax test", async () => {
       }
     }
 
-    const whileStmts = [];
+    const whileStmts: string[] = [];
     while (whileStmts.length === 0) {
       whileStmts.push("while block");
     }
 
     while (whileStmts.length === 1) whileStmts.push("while stmt");
 
-    const doWhileStmts = [];
+    const doWhileStmts: string[] = [];
     do {
       doWhileStmts.push("do while block");
     } while (doWhileStmts.length === 0);
@@ -953,7 +951,7 @@ test("broad spectrum syntax test", async () => {
     do doWhileStmts.push("do while stmt");
     while (doWhileStmts.length === 1);
 
-    const whileTrue = [];
+    const whileTrue: string[] = [];
     while (true) {
       whileTrue.push(`while true ${whileTrue.length}`);
       if (whileTrue.length === 1) {
@@ -962,7 +960,7 @@ test("broad spectrum syntax test", async () => {
       break;
     }
 
-    const tryCatchErr = [];
+    const tryCatchErr: string[] = [];
     try {
       tryCatchErr.push("try");
       throw new Error("catch");
@@ -972,7 +970,7 @@ test("broad spectrum syntax test", async () => {
       tryCatchErr.push("finally");
     }
 
-    const tryCatch = [];
+    const tryCatch: string[] = [];
     try {
       tryCatch.push("try 2");
       throw new Error("");
@@ -982,7 +980,7 @@ test("broad spectrum syntax test", async () => {
       tryCatch.push("finally 2");
     }
 
-    const tryNoFinally = [];
+    const tryNoFinally: string[] = [];
     try {
       tryNoFinally.push("try 3");
       throw new Error("");
@@ -1281,26 +1279,26 @@ test("should serialize NativeRuntimeEnvironment", async () => {
   expect(closure()).toEqual("value");
 });
 
-test("should serialize Function", async () => {
-  const app = new App({
-    autoSynth: false,
-  });
-  const stack = new Stack(app, "stack");
+// test("should serialize Function", async () => {
+//   const app = new App({
+//     autoSynth: false,
+//   });
+//   const stack = new Stack(app, "stack");
 
-  const table = new Table(stack, "Table", {
-    partitionKey: {
-      name: "id",
-      type: aws_dynamodb.AttributeType.STRING,
-    },
-  });
+//   const table = new Table(stack, "Table", {
+//     partitionKey: {
+//       name: "id",
+//       type: aws_dynamodb.AttributeType.STRING,
+//     },
+//   });
 
-  new Function(stack, "foo", async () => {
-    await table.attributes.get({
-      Key: {
-        id: {
-          S: "id",
-        },
-      },
-    });
-  });
-});
+//   new Function(stack, "foo", async () => {
+//     await table.attributes.get({
+//       Key: {
+//         id: {
+//           S: "id",
+//         },
+//       },
+//     });
+//   });
+// });

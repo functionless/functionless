@@ -12,7 +12,7 @@
     "typecheck": "tsc --noEmit",
     "test": "jest"
   },
-  "dependencies": {
+  "devDependencies": {
     "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
     "@functionless/asl-graph": "^0.27.0",
     "@functionless/ast": "^0.27.0",
@@ -30,11 +30,10 @@
     "@functionless/nodejs-closure-serializer": "^0.1.5",
     "@functionless/serialize-closure": "*",
     "@functionless/util": "^0.27.0",
-    "typesafe-dynamodb": "^0.2.3"
-  },
-  "devDependencies": {
     "@types/node": "^16",
     "functionless-build-utils": "*",
+    "jest": "^29.0.3",
+    "typesafe-dynamodb": "^0.2.3",
     "typescript": "^4.8.3"
   },
   "jest": {

@@ -1,6 +1,11 @@
 import { Stack } from "aws-cdk-lib";
-import { EventBus, Function, Rule } from "../../src";
-import { EventTransform } from "../../src/event-bridge/transform";
+
+import {
+  EventBus,
+  EventTransform,
+  Rule,
+} from "@functionless/aws-events-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
 
 const stack = new Stack();
 const bus = new EventBus(stack, "bus");

@@ -5,13 +5,11 @@ import {
   EventBridgeDestination,
   LambdaDestination,
 } from "aws-cdk-lib/aws-lambda-destinations";
-import {
-  AppsyncResolver,
-  EventBus,
-  Function,
-  StepFunction,
-  Table,
-} from "../../src";
+import { AppsyncResolver } from "@functionless/aws-appsync-constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
+import { EventBus } from "@functionless/aws-events-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
+import { StepFunction } from "@functionless/aws-stepfunctions-constructs";
 
 const app = new App({
   autoSynth: false,

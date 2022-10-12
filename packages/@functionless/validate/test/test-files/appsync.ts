@@ -1,14 +1,12 @@
 import * as appsync from "@aws-cdk/aws-appsync-alpha";
 import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
 import { App, aws_dynamodb, aws_events, Stack } from "aws-cdk-lib";
-import {
-  $util,
-  AppsyncResolver,
-  EventBus,
-  Function,
-  StepFunction,
-  Table,
-} from "../../src";
+
+import { $util, AppsyncResolver } from "@functionless/aws-appsync-constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
+import { EventBus } from "@functionless/aws-events-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
+import { StepFunction } from "@functionless/aws-stepfunctions-constructs";
 
 const app = new App({
   autoSynth: false,
