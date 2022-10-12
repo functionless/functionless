@@ -4,6 +4,11 @@
   "version": "0.27.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "docs",
+    "schema.gql"
+  ],
   "scripts": {
     "build": "tsc --build",
     "build:docs": "fls-typedoc",
@@ -36,10 +41,6 @@
     "functionless-build-utils": "*",
     "typescript": "^4.8.3"
   },
-  "files": [
-    "lib",
-    "docs"
-  ],
   "publishConfig": {
     "access": "public"
   }

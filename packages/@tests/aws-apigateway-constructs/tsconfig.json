@@ -1,13 +1,13 @@
 {
   "extends": "../../../tsconfig-base.json",
   "compilerOptions": {
-    "outDir": "lib",
     "declaration": true,
     "inlineSourceMap": true,
-    "rootDir": "src"
+    "rootDir": "test",
+    "noEmit": true
   },
   "include": ["src"],
-  "exclude": ["lib", "test", "node_modules"],
+  "exclude": ["node_modules"],
   "references": [
     {
       "path": "../../@functionless/ast"

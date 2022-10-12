@@ -1,5 +1,6 @@
 {
   "name": "@tests/aws-apigateway-constructs",
+  "private": true,
   "version": "0.27.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
@@ -27,9 +28,6 @@
   "devDependencies": {
     "@functionless/test": "*",
     "typescript": "^4.8.3"
-  },
-  "publishConfig": {
-    "access": "public"
   },
   "jest": {
     "transform": {

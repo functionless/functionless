@@ -802,3 +802,6 @@ export function pipe<
     return rule.resource.addTarget((integration as any)(targetInput));
   }
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

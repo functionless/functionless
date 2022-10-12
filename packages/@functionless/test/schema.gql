@@ -1,0 +1,22 @@
+type Person {
+  id: String!
+  name: String!
+}
+
+type ProcessedPerson {
+  id: String!
+  name: String!
+  score: Int!
+}
+type Query {
+  getPerson(id: String!): ProcessedPerson
+}
+input PersonInput {
+  name: String!
+}
+type Mutation {
+  deletePerson(id: ID!): Person
+  addPerson(input: PersonInput!): Person
+  addPerson2(input: PersonInput!): Person
+  updateName(id: ID!, name: String!): Person
+}

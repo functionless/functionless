@@ -19,9 +19,24 @@ import {
 // eslint-disable-next-line import/no-extraneous-dependencies
 import axios from "axios";
 import { Construct } from "constructs";
-import { Function, FunctionProps, FunctionClosure } from "../src";
-import { runtimeTestExecutionContext, runtimeTestSuite } from "./runtime";
-import { testFunction } from "./runtime-util";
+import {
+  Function,
+  FunctionProps,
+  FunctionClosure,
+} from "@functionless/aws-lambda-constructs";
+import {
+  runtimeTestExecutionContext,
+  runtimeTestSuite,
+  testFunction,
+} from "@functionless/test";
+import { Table } from "@functionless/aws-dynamodb-constructs";
+import { EventBus } from "@functionless/aws-events-constructs";
+import { Event } from "@functionless/aws-events";
+import {
+  ExpressStepFunction,
+  StepFunction,
+} from "@functionless/aws-stepfunctions-constructs";
+import { $AWS } from "@functionless/aws-sdk";
 
 interface TestFunctionBase {
   <

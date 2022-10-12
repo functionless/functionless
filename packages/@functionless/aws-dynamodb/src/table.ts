@@ -4,7 +4,7 @@ import { TableAppsyncApi } from "./appsync";
 import { AttributeType } from "./attribute-type";
 import { TableAttributesApi, TableDocumentApi } from "./runtime";
 import { getEnvironmentVariableName } from "@functionless/util";
-import { documentClient, dynamoClient } from "./client";
+import { documentClient, dynamoClient } from "./client-factory";
 
 export const TableKind = "fl.Table";
 

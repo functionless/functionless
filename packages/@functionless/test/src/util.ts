@@ -42,7 +42,7 @@ export function getAppSyncTemplates(decl: AnyFunction): string[] {
   }
 
   const schema = new appsync.Schema({
-    filePath: path.join(__dirname, "schema.gql"),
+    filePath: path.join(__dirname, "..", "schema.gql"),
   });
 
   const api = new appsync.GraphqlApi(stack, "Api", {

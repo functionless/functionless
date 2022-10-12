@@ -1,16 +1,17 @@
 import { App, aws_dynamodb, aws_lambda, Stack } from "aws-cdk-lib";
 import "jest";
 import {
-  Function,
-  AppsyncContext,
-  EventBus,
   AsyncFunctionResponseEvent,
-  AsyncResponseSuccess,
   AsyncResponseFailure,
+  AsyncResponseSuccess,
   asyncSynth,
-  Table,
-} from "../src";
-import { appsyncTestCase } from "./util";
+  Function,
+} from "@functionless/aws-lambda-constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
+import { EventBus } from "@functionless/aws-events-constructs";
+
+import { appsyncTestCase } from "@functionless/test";
+import { AppsyncContext } from "@functionless/aws-appsync-constructs";
 
 interface Item {
   id: string;

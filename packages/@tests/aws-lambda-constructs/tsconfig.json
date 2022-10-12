@@ -19,7 +19,10 @@
       "path": "../../@functionless/aws-apigateway"
     },
     {
-      "path": "../../@functionless/aws-appsync"
+      "path": "../../@functionless/aws-appsync-constructs"
+    },
+    {
+      "path": "../../@functionless/aws-dynamodb-constructs"
     },
     {
       "path": "../../@functionless/aws-events"
@@ -34,25 +37,25 @@
       "path": "../../@functionless/aws-sdk"
     },
     {
-      "path": "../../@functionless/aws-sqs-constructs"
-    },
-    {
-      "path": "../../@functionless/aws-stepfunctions"
+      "path": "../../@functionless/aws-secretsmanager-constructs"
     },
     {
       "path": "../../@functionless/aws-stepfunctions-constructs"
     },
     {
+      "path": "../../@functionless/aws-util"
+    },
+    {
       "path": "../../@functionless/jest"
     },
     {
-      "path": "../../@functionless/serde"
+      "path": "../../@functionless/serialize-closure"
     },
     {
-      "path": "../../@functionless/test"
+      "path": "../../@functionless/util"
     },
     {
-      "path": "../../@functionless/vtl"
+      "path": "../../functionless-build-utils"
     }
   ]
 }

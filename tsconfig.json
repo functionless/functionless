@@ -113,6 +113,9 @@
       "path": "packages/@tests/aws-apigateway-constructs"
     },
     {
+      "path": "packages/@tests/aws-lambda-constructs"
+    },
+    {
       "path": "packages/@tests/aws-stepfunctions-constructs"
     },
     {

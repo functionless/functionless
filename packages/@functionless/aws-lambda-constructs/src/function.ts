@@ -54,12 +54,12 @@ import {
   SynthError,
 } from "@functionless/error-code";
 import {
-  isEventBus,
   Event,
   EventBusTargetIntegration,
   EventBusIntegration,
 } from "@functionless/aws-events";
 import {
+  isEventBus,
   IEventBus,
   Rule,
   PredicateRuleBase,
@@ -71,8 +71,8 @@ import {
   serializeClosure,
   serializeCodeWithSourceMap,
 } from "@functionless/serialize-closure";
-import { isStepFunction } from "@functionless/aws-stepfunctions";
-import { isTable } from "@functionless/aws-dynamodb";
+import { isStepFunctionConstruct } from "@functionless/aws-stepfunctions-constructs";
+import { isTableConstruct } from "@functionless/aws-dynamodb-constructs";
 import {
   isNativeIntegration,
   LambdaClient,
@@ -1207,13 +1207,13 @@ export async function serialize(
        * https://github.com/functionless/functionless/issues/239
        */
       function transformResource(integ: unknown): any {
-        if (isTable(integ)) {
+        if (isTableConstruct(integ)) {
           const { resource, appsync, ...rest } = integ as any;
           return rest;
         } else if (
           integ &&
           (isFunctionConstruct(integ) ||
-            isStepFunction(integ) ||
+            isStepFunctionConstruct(integ) ||
             isEventBus(integ) ||
             isSecret(integ))
         ) {

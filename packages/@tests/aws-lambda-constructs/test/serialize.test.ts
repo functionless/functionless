@@ -3,14 +3,14 @@ import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
 import axios from "axios";
 import { v4 } from "uuid";
 import {
-  serialize,
-  bundle,
-  $AWS,
-  Table,
-  StepFunction,
   Function,
-  EventBus,
-} from "../src";
+  bundle,
+  serialize,
+} from "@functionless/aws-lambda-constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
+import { EventBus } from "@functionless/aws-events-constructs";
+import { StepFunction } from "@functionless/aws-stepfunctions-constructs";
+import { $AWS } from "@functionless/aws-sdk";
 
 // 15k arbitrary max bundle size. Some functions may need more.
 // In that case increase explicitly.
