@@ -113,6 +113,9 @@
       "path": "packages/@tests/aws-apigateway-constructs"
     },
     {
+      "path": "packages/@tests/aws-appsync-constructs"
+    },
+    {
       "path": "packages/@tests/aws-lambda-constructs"
     },
     {

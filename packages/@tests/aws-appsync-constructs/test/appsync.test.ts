@@ -1,15 +1,16 @@
 import { GraphqlApi } from "@aws-cdk/aws-appsync-alpha";
 import { Stack } from "aws-cdk-lib";
 import { AttributeType } from "aws-cdk-lib/aws-dynamodb";
+
+import { appsyncTestCase, testAppsyncVelocity } from "@functionless/test";
+import { Function } from "@functionless/aws-lambda-constructs";
+import { StepFunction } from "@functionless/aws-stepfunctions-constructs";
 import {
+  $util,
   AppsyncContext,
   AppsyncResolver,
-  StepFunction,
-  Function,
-  Table,
-  $util,
-} from "../src";
-import { appsyncTestCase, testAppsyncVelocity } from "./util";
+} from "@functionless/aws-appsync-constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
 
 let stack: Stack;
 let api: GraphqlApi;
