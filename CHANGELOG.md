@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.27.3](https://github.com/functionless/functionless/compare/v0.27.2...v0.27.3) (2022-10-12)
+
+
+### Bug Fixes
+
+* **website:** fix scrolling of docs sidebar when longer than screen height ([#556](https://github.com/functionless/functionless/issues/556)) ([60ebcd4](https://github.com/functionless/functionless/commit/60ebcd4ab58d7f8363cf9a646b4e74c98b2ece64))
+
+
+
+
+
 ## [0.27.2](https://github.com/functionless/functionless/compare/v0.27.1...v0.27.2) (2022-10-11)
 
 **Note:** Version bump only for package functionless-monorepo
