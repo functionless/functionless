@@ -34,7 +34,103 @@
   "exclude": ["**/node_modules"],
   "references": [
     {
+      "path": "../../packages/@functionless/asl-graph"
+    },
+    {
+      "path": "../../packages/@functionless/ast"
+    },
+    {
+      "path": "../../packages/@functionless/aws"
+    },
+    {
+      "path": "../../packages/@functionless/aws-apigateway"
+    },
+    {
+      "path": "../../packages/@functionless/aws-apigateway-constructs"
+    },
+    {
+      "path": "../../packages/@functionless/aws-appsync"
+    },
+    {
+      "path": "../../packages/@functionless/aws-appsync-constructs"
+    },
+    {
+      "path": "../../packages/@functionless/aws-cognito-constructs"
+    },
+    {
+      "path": "../../packages/@functionless/aws-dynamodb"
+    },
+    {
+      "path": "../../packages/@functionless/aws-dynamodb-constructs"
+    },
+    {
+      "path": "../../packages/@functionless/aws-events"
+    },
+    {
+      "path": "../../packages/@functionless/aws-events-constructs"
+    },
+    {
+      "path": "../../packages/@functionless/aws-lambda"
+    },
+    {
+      "path": "../../packages/@functionless/aws-lambda-constructs"
+    },
+    {
+      "path": "../../packages/@functionless/aws-sdk"
+    },
+    {
+      "path": "../../packages/@functionless/aws-secretsmanager"
+    },
+    {
+      "path": "../../packages/@functionless/aws-secretsmanager-constructs"
+    },
+    {
+      "path": "../../packages/@functionless/aws-sqs"
+    },
+    {
+      "path": "../../packages/@functionless/aws-sqs-constructs"
+    },
+    {
+      "path": "../../packages/@functionless/aws-stepfunctions"
+    },
+    {
+      "path": "../../packages/@functionless/aws-stepfunctions-constructs"
+    },
+    {
+      "path": "../../packages/@functionless/aws-util"
+    },
+    {
+      "path": "../../packages/@functionless/cli"
+    },
+    {
       "path": "../../packages/@functionless/error-code"
+    },
+    {
+      "path": "../../packages/@functionless/jest"
+    },
+    {
+      "path": "../../packages/@functionless/register"
+    },
+    {
+      "path": "../../packages/@functionless/serde"
+    },
+    {
+      "path": "../../packages/@functionless/serialize-closure"
+    },
+    {
+      "path": "../../packages/@functionless/swc-config"
+    },
+    {
+      "path": "../../packages/@functionless/test"
+    },
+    {
+      "path": "../../packages/@functionless/util"
+    },
+    {
+      "path": "../../packages/@functionless/validate"
+    },
+    {
+      "path": "../../packages/@functionless/vtl"
     },
     {
       "path": "../../packages/functionless"
