@@ -12,15 +12,15 @@ import {
 import { ApiGatewayVtlIntegration } from "@functionless/aws-apigateway";
 import { aws_apigateway, aws_dynamodb, aws_iam } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb/lib/json-format";
-import { AppSyncVtlIntegration } from "@functionless/aws-appsync";
+import type { AppSyncVtlIntegration } from "@functionless/aws-appsync";
 import { ASL, ASLGraph, Task } from "@functionless/asl";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
-import {
+import type {
   NativeIntegration,
   NativeRuntimeInitializer,
 } from "@functionless/aws-lambda";
-import { VTL } from "@functionless/vtl";
-import { ITable } from "./table";
+import type { VTL } from "@functionless/vtl";
+import type { ITable } from "./table";
 import { DocumentDBClient, DynamoDBClient } from "@functionless/aws-dynamodb";
 
 export type DynamoDBAccess = "read" | "write" | "read-write" | "full";

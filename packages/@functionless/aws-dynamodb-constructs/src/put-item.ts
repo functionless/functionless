@@ -1,12 +1,12 @@
-import { PutItem, PutItemAppsync } from "@functionless/aws-dynamodb";
-import { aws_dynamodb } from "aws-cdk-lib";
+import type { PutItem, PutItemAppsync } from "@functionless/aws-dynamodb";
+import type { aws_dynamodb } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import {
   addIfDefined,
   createDynamoIntegration,
   makeAppSyncTableIntegration,
 } from "./integration";
-import { ITable } from "./table";
+import type { ITable } from "./table";
 
 export function createPutItemIntegration<
   Item extends object,

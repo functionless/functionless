@@ -3,7 +3,7 @@ import {
   BatchDeleteItemAppsync,
   BatchPutItemAppsync,
 } from "@functionless/aws-dynamodb";
-import { aws_dynamodb } from "aws-cdk-lib";
+import type { aws_dynamodb } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import {
   createDynamoIntegration,

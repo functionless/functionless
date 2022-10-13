@@ -1,4 +1,4 @@
-import { NativeBinaryAttribute } from "typesafe-dynamodb/lib/attribute-value";
+import type { NativeBinaryAttribute } from "typesafe-dynamodb/lib/attribute-value";
 
 export type AttributeKeyToObject<T> = {
   [k in keyof T]: T[k] extends { S: infer S }

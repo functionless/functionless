@@ -5,7 +5,7 @@ import {
   APIGatewayProxyResult,
   APIGatewayEventRequestContext,
 } from "aws-lambda";
-import { Function } from "@functionless/aws-lambda-constructs";
+import type { Function } from "@functionless/aws-lambda-constructs";
 import { APIGatewayVTL } from "./api-vtl";
 import { Construct } from "constructs";
 

@@ -10,7 +10,7 @@ import type {
   TransactWriteItems,
   UpdateItem,
 } from "@functionless/aws-dynamodb";
-import { aws_dynamodb } from "aws-cdk-lib";
+import type { aws_dynamodb } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb";
 import { createBatchGetItemIntegration } from "./batch-get-item";
 import { createBatchWriteItemIntegration } from "./batch-write-item";

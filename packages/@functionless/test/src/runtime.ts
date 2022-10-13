@@ -1,5 +1,3 @@
-import "jest";
-
 import * as cxapi from "@aws-cdk/cx-api";
 import { App, CfnOutput, Stack } from "aws-cdk-lib";
 import { ArnPrincipal, Role } from "aws-cdk-lib/aws-iam";

@@ -2,8 +2,8 @@ import type {
   BatchGetItem,
   BatchGetItemAppsync,
 } from "@functionless/aws-dynamodb";
-import { aws_dynamodb } from "aws-cdk-lib";
-import { PromiseResult } from "aws-sdk/lib/request";
+import type { aws_dynamodb } from "aws-cdk-lib";
+import type { PromiseResult } from "aws-sdk/lib/request";
 import { JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import {
   addIfDefined,

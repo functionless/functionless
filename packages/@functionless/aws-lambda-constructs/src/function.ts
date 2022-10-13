@@ -738,6 +738,13 @@ export class Function<
     const nativeIntegrationsPrewarm = findAllIntegrations(ast).flatMap(
       ({ integration }) => {
         const native = integration.native;
+        if (native === undefined) {
+          throw Error(
+            `${
+              (integration as any).kind
+            } is not supported in the context of a Lambda Function.`
+          );
+        }
         if (native.preWarm) {
           return [native.preWarm];
         } else {
@@ -807,6 +814,13 @@ export function inferIamPolicies(
   func: aws_lambda.IFunction
 ) {
   findAllIntegrations(decl).forEach(({ integration, args }) => {
+    if (integration.native === undefined) {
+      throw Error(
+        `${
+          (integration as any).kind
+        } is not supported in the context of a Lambda Function.`
+      );
+    }
     integration.native.bind(func, args);
   });
 }

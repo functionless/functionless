@@ -1,13 +1,13 @@
-import { aws_dynamodb } from "aws-cdk-lib";
-import { PromiseResult } from "aws-sdk/lib/request";
+import type { aws_dynamodb } from "aws-cdk-lib";
+import type { PromiseResult } from "aws-sdk/lib/request";
 import { JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { ASLGraph } from "@functionless/asl";
 import {
   createDynamoIntegration,
   makeAppSyncTableIntegration,
 } from "./integration";
-import { ITable } from "./table";
-import {
+import type { ITable } from "./table";
+import type {
   TransactGetItems,
   TransactGetItemsAppsync,
 } from "@functionless/aws-dynamodb";

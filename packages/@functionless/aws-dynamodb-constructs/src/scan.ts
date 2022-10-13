@@ -1,13 +1,16 @@
-import { aws_dynamodb } from "aws-cdk-lib";
-import { FormatObject, JsonFormat } from "typesafe-dynamodb/lib/json-format";
-import { TableKey } from "typesafe-dynamodb/lib/key";
-import { DynamoDBAppsyncExpression } from "./appsync";
+import type { aws_dynamodb } from "aws-cdk-lib";
+import type {
+  FormatObject,
+  JsonFormat,
+} from "typesafe-dynamodb/lib/json-format";
+import type { TableKey } from "typesafe-dynamodb/lib/key";
+import type { DynamoDBAppsyncExpression } from "./appsync";
 import {
   addIfDefined,
   createDynamoIntegration,
   makeAppSyncTableIntegration,
 } from "./integration";
-import { ITable } from "./table";
+import type { ITable } from "./table";
 
 export type ScanInput<
   Item extends object,
