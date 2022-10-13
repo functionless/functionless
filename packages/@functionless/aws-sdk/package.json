@@ -5,6 +5,7 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "build": "ts-node -p ./tsconfig.gen.json ./scripts/sdk-gen.ts && tsc --build",
+    "build:docs": "fls-typedoc",
     "typecheck": "tsc --noEmit"
   },
   "peerDependencies": {
