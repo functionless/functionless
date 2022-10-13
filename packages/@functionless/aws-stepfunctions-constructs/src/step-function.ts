@@ -1606,13 +1606,13 @@ function retrieveMachineArgs(call: CallExpr) {
  * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
  *
  * ```ts
- * import * as f from "@functionless/aws-constructs";
+ * import { Table } from "@functionless/aws-dynamodb-constructs"
+ * import { ExpressStepFunction } from "@functionless/aws-stepfunctions-constructs"
  *
  * const table = new f.Table(this, "Table", { ... });
  *
  * const getItem = new ExpressStepFunction(this, "F", () => {
- *   return f.$AWS.DynamoDB.GetItem({
- *     Table: table,
+ *   return table.get({
  *     Key: {
  *       ..
  *     }
@@ -1707,13 +1707,13 @@ interface BaseExpressStepFunction<
  * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
  *
  * ```ts
- * import * as f from "@functionless/aws-constructs";
+ * import { Table } from "@functionless/aws-dynamodb-constructs"
+ * import { ExpressStepFunction } from "@functionless/aws-stepfunctions-constructs"
  *
- * const table = new f.Table(this, "Table", { ... });
+ * const table = new Table(this, "Table", { ... });
  *
  * const getItem = new ExpressStepFunction(this, "F", () => {
- *   return f.$AWS.DynamoDB.GetItem({
- *     Table: table,
+ *   return table.get({
  *     Key: {
  *       ..
  *     }
@@ -1865,13 +1865,13 @@ export interface ExpressStepFunction<
  * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
  *
  * ```ts
- * import * as f from "@functionless/aws-constructs";
+ * import { Table } from "@functionless/aws-dynamodb-constructs"
+ * import { ExpressStepFunction } from "@functionless/aws-stepfunctions-constructs"
  *
- * const table = new f.Table(this, "Table", { ... });
+ * const table = new Table(this, "Table", { ... });
  *
  * const getItem = new StepFunction(this, "F", () => {
- *   return f.$AWS.DynamoDB.GetItem({
- *     Table: table,
+ *   return table.get({
  *     Key: {
  *       ..
  *     }
@@ -2361,13 +2361,13 @@ ${[
  * With Functionless, the ASL is derived from type-safe TypeScript code instead of JSON.
  *
  * ```ts
- * import * as f from "@functionless/aws-constructs";
+ * import { Table } from "@functionless/aws-dynamodb-constructs"
+ * import { StepFunction } from "@functionless/aws-stepfunctions-constructs"
  *
- * const table = new f.Table(this, "Table", { ... });
+ * const table = new Table(this, "Table", { ... });
  *
  * const getItem = new StepFunction(this, "F", () => {
- *   return f.$AWS.DynamoDB.GetItem({
- *     Table: table,
+ *   return table.get({
  *     Key: {
  *       ..
  *     }

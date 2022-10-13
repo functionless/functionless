@@ -538,7 +538,7 @@ new StepFunction(stack, "supported errors", async (input: { key: string }) => {
     // import { StepFunctionError } from "@functionless/asl-graph";
     throw new StepFunctionError("ErrorName", { reason: "you suck" });
   } else if (input.key === "6") {
-    // import * as functionless from "@functionless/aws-constructs";
+    // import * as functionless from "@functionless/aws-lambda-constructs";
     throw new functionless.StepFunctionError("ErrorName", {
       reason: "you suck",
     });

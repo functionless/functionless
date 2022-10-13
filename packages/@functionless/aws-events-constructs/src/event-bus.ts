@@ -563,6 +563,10 @@ export type PutEventInput<Evnt extends Event> = Partial<Evnt> &
  * Filtering events and sending them to Lambda.
  *
  * ```ts
+ * import { Event } from "@functionless/aws-events";
+ * import { EventBus } from "@functionless/aws-events-constructs";
+ * import { Function } from "@functionless/aws-lambda-constructs";
+ *
  * interface Payload {
  *    value: string;
  * }
@@ -571,13 +575,13 @@ export type PutEventInput<Evnt extends Event> = Partial<Evnt> &
  * interface myEvent extends Event<Payload> {}
  *
  * // A function that expects the payload.
- * const myLambdaFunction = new functionless.Function<Payload, void>(this, 'myFunction', ...);
+ * const myLambdaFunction = new Function<Payload, void>(this, 'myFunction', ...);
  *
  * // instantiate an aws_events.EventBus Construct
  * const awsBus = new aws_events.EventBus(this, "mybus");
  *
  * // Wrap the aws_events.EventBus with the functionless.EventBus
- * new functionless.EventBus<myEvent>(awsBus)
+ * new EventBus<myEvent>(awsBus)
  *    // when the payload is equal to some value
  *    .when(this, 'rule1', event => event.detail.value === "some value")
  *    // grab the payload
@@ -592,7 +596,7 @@ export type PutEventInput<Evnt extends Event> = Partial<Evnt> &
  * // Using an imported event bus
  * const anotherEventBus = aws_event.EventBus.fromEventBusArn(...);
  *
- * new functionless.EventBus<myEvent>(awsBus)
+ * new EventBus<myEvent>(awsBus)
  *    // when the payload is equal to some value
  *    .when(this, 'rule2', event => event.detail.value === "some value")
  *    // send verbatim to the other event bus
@@ -634,7 +638,7 @@ export class EventBus<
    * Equivalent to doing
    * ```ts
    * const awsBus = aws_events.EventBus.fromEventBusName(Stack.of(scope), id, "default");
-   * new functionless.EventBus.fromBus(awsBus);
+   * new EventBus.fromBus(awsBus);
    * ```
    *
    * @typeParam Evnt - the union of types which are expected on the default {@link EventBus}.

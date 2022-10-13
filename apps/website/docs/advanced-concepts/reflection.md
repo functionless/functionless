@@ -9,7 +9,7 @@ Functionless converts TypeScript function syntax into a [`FunctionDecl`](../api/
 To get a `FunctionDecl` for a function, use the `functionless.reflect` utility:
 
 ```ts
-import { reflect } from "@functionless/aws-constructs";
+import { reflect } from "@functionless/ast";
 
 const functionDecl = reflect((arg: string) => {
   return `${arg}_1`;
@@ -19,7 +19,7 @@ const functionDecl = reflect((arg: string) => {
 Then, write a recursive function to process the representation:
 
 ```ts
-import { FunctionlessNode, isFunctionDecl } from "@functionless/aws-constructs";
+import { FunctionlessNode, isFunctionDecl } from "@functionless/ast";
 
 function processExpr(node: FunctionlessNode) {
   // do work

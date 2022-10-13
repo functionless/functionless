@@ -9,7 +9,7 @@ An `EventBus` ingests and routes events throughout your application. Events can 
 ## New Event Bus
 
 ```ts
-import { EventBus } from "@functionless/aws-constructs";
+import { EventBus } from "@functionless/aws-events-constructs";
 
 new EventBus(stack, "bus");
 
