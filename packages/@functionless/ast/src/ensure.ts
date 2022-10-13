@@ -6,6 +6,9 @@ import type { NodeInstance } from "./node-ctor";
 import { getNodeKindName, NodeKind } from "./node-kind";
 import type { Stmt } from "./statement";
 
+/**
+ *
+ */
 export type Assertion =
   | "undefined"
   | "null"

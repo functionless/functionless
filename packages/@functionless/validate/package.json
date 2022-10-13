@@ -4,6 +4,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
+    "build": "echo no-op",
     "build:docs": "fls-typedoc",
     "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
     "typecheck": "tsc --noEmit",

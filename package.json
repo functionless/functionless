@@ -6,7 +6,7 @@
   "author": "Functionless Team",
   "license": "Apache-2.0",
   "scripts": {
-    "build": "tsc -b && turbo run build",
+    "build": "tsc -b --incremental && turbo run build",
     "build:docs": "tsc -b && turbo run build:docs",
     "build:website": "tsc -b && turbo run build:website",
     "clean:build": "turbo run clean:build",

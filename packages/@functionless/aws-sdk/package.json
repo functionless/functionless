@@ -5,6 +5,7 @@
   "types": "lib/index.d.ts",
   "scripts": {
     "prepare": "ts-node -p ./tsconfig.gen.json ./scripts/sdk-gen.ts",
+    "build": "echo no-op",
     "typecheck": "tsc --noEmit",
     "test": "echo no-op"
   },

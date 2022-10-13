@@ -3,6 +3,7 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
+    "build": "echo no-op",
     "deploy": "cdk deploy",
     "synth": "cdk synth",
     "test": "jest",

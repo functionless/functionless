@@ -8,6 +8,7 @@
     "docs"
   ],
   "scripts": {
+    "build": "echo no-op",
     "build:docs": "fls-typedoc"
   },
   "dependencies": {
