@@ -88,7 +88,7 @@ async function patchNestedTsConfig(roots) {
           .filter(
             (dep) =>
               (dep.startsWith("@functionless") ||
-                dep.startsWith("functionless-")) &&
+                dep.startsWith("functionless")) &&
               ![
                 "@functionless/ast-reflection",
                 "@functionless/language-service",

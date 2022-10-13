@@ -8,7 +8,6 @@
     "docs"
   ],
   "scripts": {
-    "build": "tsc --build",
     "build:docs": "fls-typedoc"
   },
   "dependencies": {

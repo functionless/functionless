@@ -140,6 +140,9 @@
       "path": "packages/create-functionless"
     },
     {
+      "path": "packages/functionless"
+    },
+    {
       "path": "packages/functionless-build-utils"
     }
   ]

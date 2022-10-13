@@ -10,8 +10,8 @@
     "schema.gql"
   ],
   "scripts": {
-    "build": "tsc --build",
     "build:docs": "fls-typedoc",
+    "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
     "typecheck": "tsc --noEmit",
     "dev": "tsc -w"
   },

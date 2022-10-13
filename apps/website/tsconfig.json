@@ -35,6 +35,9 @@
   "references": [
     {
       "path": "../../packages/@functionless/error-code"
+    },
+    {
+      "path": "../../packages/functionless"
     }
   ]
 }

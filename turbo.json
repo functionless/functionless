@@ -8,6 +8,9 @@
       "dependsOn": ["^build"]
     },
     "lint": {},
+    "clean:build": {
+      "cache": false
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["lib/**"]

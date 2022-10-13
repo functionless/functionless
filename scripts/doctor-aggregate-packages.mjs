@@ -10,9 +10,16 @@ const functionlessPkgJsonPath = path.resolve(
   "functionless",
   "package.json"
 );
+const websitePkgJsonPath = path.resolve(
+  rootDir,
+  "apps",
+  "website",
+  "package.json"
+);
 
-const [functionlessPkgJson, allPackages] = await Promise.all([
+const [functionlessPkgJson, websitePkgJson, allPackages] = await Promise.all([
   readJsonFile(functionlessPkgJsonPath),
+  readJsonFile(websitePkgJsonPath),
   (async () => {
     const pkgs = await ls(packagesPath);
 
@@ -22,16 +29,23 @@ const [functionlessPkgJson, allPackages] = await Promise.all([
   })(),
 ]);
 
-functionlessPkgJson.dependencies = {
-  ...(functionlessPkgJson.dependencies ?? {}),
-  ...Object.fromEntries(
-    allPackages
-      .sort()
-      .map((pkg) => [
-        pkg.name,
-        functionlessPkgJson.dependencies[pkg.name] ?? `^${pkg.version}` ?? "*",
-      ])
-  ),
-};
+async function patch(pkgJsonPath, pkgJson) {
+  pkgJson.dependencies = {
+    ...(pkgJson.dependencies ?? {}),
+    ...Object.fromEntries(
+      allPackages
+        .sort()
+        .map((pkg) => [
+          pkg.name,
+          pkgJson.dependencies[pkg.name] ?? `^${pkg.version}` ?? "*",
+        ])
+    ),
+  };
 
-await writeJsonFile(functionlessPkgJsonPath, functionlessPkgJson);
+  await writeJsonFile(pkgJsonPath, pkgJson);
+}
+
+await Promise.all([
+  patch(functionlessPkgJsonPath, functionlessPkgJson),
+  patch(websitePkgJsonPath, websitePkgJson),
+]);
