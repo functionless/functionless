@@ -13,7 +13,7 @@
       "outputs": ["lib/**"]
     },
     "build:docs": {
-      "dependsOn": ["build"],
+      "dependsOn": ["^build"],
       "outputs": ["docs/**"]
     },
     "build:website": {
