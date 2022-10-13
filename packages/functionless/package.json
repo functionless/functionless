@@ -28,7 +28,15 @@
     "@functionless/cli": "*",
     "@functionless/language-service": "^0.0.4",
     "@functionless/register": "*",
-    "@functionless/util": "*"
+    "@functionless/util": "*",
+    "@functionless/asl-graph": "^0.27.0",
+    "@functionless/jest": "^0.27.0",
+    "@functionless/serde": "^0.27.0",
+    "@functionless/serialize-closure": "^0.27.0",
+    "@functionless/swc-config": "^0.27.0",
+    "@functionless/test": "^0.27.0",
+    "@functionless/validate": "^0.27.0",
+    "@functionless/vtl": "^0.27.0"
   },
   "publishConfig": {
     "access": "public"

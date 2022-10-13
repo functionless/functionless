@@ -1,9 +1,9 @@
-const fs = require("fs/promises");
-const { constants } = require("fs");
-const path = require("path");
-const prettier = require("prettier");
+import fs from "fs/promises";
+import { constants } from "fs";
+import path from "path";
+import { ls, readJsonFile, writeJsonFile } from "./util.mjs";
 
-const pwd = path.resolve(path.join(__dirname, ".."));
+const pwd = process.cwd();
 
 /**
  * This script patches the references in tsconfig.json
@@ -11,14 +11,9 @@ const pwd = path.resolve(path.join(__dirname, ".."));
  * 1. add all packages to the top-level tsconfig.json's references
  * 2. propagate any dep, devDep or peerDep on an internal package to the relevant tsconfig.json references
  */
-(async function () {
-  const roots = await findAllPackageRoots();
-  await patchTopLevelTsConfig(roots);
-  await patchNestedTsConfig(roots);
-})().catch((err) => {
-  console.error(err);
-  process.exit(1);
-});
+const roots = await findAllPackageRoots();
+await patchTopLevelTsConfig(roots);
+await patchNestedTsConfig(roots);
 
 async function patchTopLevelTsConfig(roots) {
   await patchTsConfig(path.join(pwd, "tsconfig.json"), roots);
@@ -36,10 +31,7 @@ async function patchTsConfig(tsConfigPath, references) {
   } else {
     delete tsConfig.references;
   }
-  const json = prettier.format(JSON.stringify(tsConfig, null, 2), {
-    parser: "json",
-  });
-  await fs.writeFile(tsConfigPath, json);
+  await writeJsonFile(tsConfigPath, tsConfig);
 }
 
 function shouldPatchTsConfig(tsConfig, newReferences) {
@@ -114,16 +106,4 @@ async function patchNestedTsConfig(roots) {
       );
     })
   );
-}
-
-async function readJsonFile(file) {
-  try {
-    return JSON.parse((await fs.readFile(file)).toString("utf-8"));
-  } catch (err) {
-    console.error("Failed to read JSON file", file, err);
-  }
-}
-
-async function ls(dir) {
-  return (await fs.readdir(dir)).map((d) => path.join(dir, d));
 }
