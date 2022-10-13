@@ -31,6 +31,7 @@
     "@functionless/serialize-closure": "*",
     "@functionless/util": "^0.27.0",
     "@types/node": "^16",
+    "@types/jest": "^29.0.3",
     "functionless-build-utils": "*",
     "jest": "^29.0.3",
     "typesafe-dynamodb": "^0.2.3",

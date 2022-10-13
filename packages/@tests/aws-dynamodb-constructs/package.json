@@ -21,6 +21,7 @@
     "@functionless/aws-stepfunctions-constructs": "*",
     "@functionless/jest": "*",
     "@functionless/test": "*",
+    "@types/jest": "^29.0.3",
     "aws-appsync": "4.0.0",
     "graphql": "^16.6.0",
     "graphql-request": "^4.3.0",

@@ -1,13 +1,12 @@
 import "jest";
 import {
-  $util,
-  AppsyncContext,
   ArithmeticOp,
   BinaryLogicalOp,
   EqualityOp,
   RelationalOp,
-} from "../src";
-import { appsyncTestCase, testAppsyncVelocity } from "./util";
+} from "@functionless/ast";
+import { $util, AppsyncContext } from "@functionless/aws-appsync-constructs";
+import { appsyncTestCase, testAppsyncVelocity } from "@functionless/test";
 
 test("empty function returning an argument", () => {
   appsyncTestCase((context: AppsyncContext<{ a: string }>) => {
@@ -162,7 +161,7 @@ test("property assignment of conditional expression", () => {
 
 test("for-of loop", () => {
   appsyncTestCase((context: AppsyncContext<{ list: string[] }>) => {
-    const newList = [];
+    const newList: string[] = [];
     for (const item of context.arguments.list) {
       newList.push(item);
     }
@@ -172,7 +171,7 @@ test("for-of loop", () => {
 
 test("break from for-loop", () => {
   appsyncTestCase((context: AppsyncContext<{ list: string[] }>) => {
-    const newList = [];
+    const newList: string[] = [];
     for (const item of context.arguments.list) {
       if (item === "hello") {
         break;
@@ -185,7 +184,7 @@ test("break from for-loop", () => {
 
 test("local variable inside for-of loop is declared as a local variable", () => {
   appsyncTestCase((context: AppsyncContext<{ list: string[] }>) => {
-    const newList = [];
+    const newList: string[] = [];
     for (const item of context.arguments.list) {
       const i = item;
       newList.push(i);
@@ -197,7 +196,7 @@ test("local variable inside for-of loop is declared as a local variable", () => 
 test("for-in loop and element access", () => {
   appsyncTestCase(
     (context: AppsyncContext<{ record: Record<string, any> }>) => {
-      const newList = [];
+      const newList: string[] = [];
       for (const key in context.arguments.record) {
         newList.push(context.arguments.record[key]);
       }
@@ -750,10 +749,10 @@ test("assignment in object", () => {
 
 test("var args push", () => {
   const templates = appsyncTestCase(() => {
-    const y1 = [];
-    const y2 = [];
-    const y3 = [];
-    const y4 = [];
+    const y1: number[] = [];
+    const y2: number[] = [];
+    const y3: number[] = [];
+    const y4: number[] = [];
     const x = [1, 2, 3];
     y1.push(...x);
     y2.push(...x, 4);

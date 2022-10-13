@@ -7,7 +7,7 @@ import {
   runtimeTestExecutionContext,
   runtimeTestSuite,
   STACK_TAG_KEY,
-} from "./runtime";
+} from "@functionless/test";
 
 /**
  * When cleanUpStack is enabled, deploys a small CDK/CFN stack which can delete all of the other test stacks in one go.
