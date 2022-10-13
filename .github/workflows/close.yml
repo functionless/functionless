@@ -5,7 +5,7 @@ on:
       - closed
 jobs:
   cleanUp:
-    runs-on: macos-latest
+    runs-on: ubuntu-latest
     permissions:
       contents: write
       id-token: write
