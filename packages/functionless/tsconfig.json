@@ -1,12 +1,7 @@
 {
-  "extends": "../../tsconfig-base",
   "compilerOptions": {
-    "outDir": "lib",
-    "rootDir": "src",
-    "types": ["node"]
+    "composite": true
   },
-  "include": ["src/**/*.ts", "src/**/*.json"],
-  "exclude": [],
   "references": [
     {
       "path": "../@functionless/asl-graph"
