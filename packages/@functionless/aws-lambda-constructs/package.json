@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-lambda-constructs",
-  "version": "0.27.0",
+  "version": "0.0.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -14,29 +14,33 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.44.0",
-    "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
-    "@functionless/asl-graph": "^0.27.0",
-    "@functionless/ast": "^0.27.0",
-    "@functionless/aws-apigateway": "^0.27.0",
-    "@functionless/aws-appsync": "^0.27.0",
-    "@functionless/aws-dynamodb": "^0.27.0",
-    "@functionless/aws-dynamodb-constructs": "^0.27.0",
-    "@functionless/aws-events-constructs": "^0.27.0",
-    "@functionless/aws-events": "^0.27.0",
-    "@functionless/aws-lambda": "^0.27.0",
-    "@functionless/aws-secretsmanager-constructs": "^0.27.0",
-    "@functionless/aws-secretsmanager": "^0.27.0",
-    "@functionless/aws-stepfunctions-constructs": "^0.27.0",
-    "@functionless/aws-stepfunctions": "^0.27.0",
-    "@functionless/aws-util": "^0.27.0",
+    "@functionless/asl-graph": "*",
+    "@functionless/ast": "^0.27.2",
+    "@functionless/aws-apigateway": "*",
+    "@functionless/aws-appsync": "*",
+    "@functionless/aws-dynamodb": "*",
+    "@functionless/aws-dynamodb-constructs": "*",
+    "@functionless/aws-events-constructs": "*",
+    "@functionless/aws-events": "*",
+    "@functionless/aws-lambda": "*",
+    "@functionless/aws-secretsmanager-constructs": "*",
+    "@functionless/aws-secretsmanager": "*",
+    "@functionless/aws-stepfunctions-constructs": "*",
+    "@functionless/aws-stepfunctions": "*",
+    "@functionless/aws-util": "^0.27.2",
     "@functionless/nodejs-closure-serializer": "^0.1.5",
     "@functionless/serialize-closure": "*",
-    "@functionless/util": "^0.27.0",
+    "@functionless/util": "^0.27.2",
     "typesafe-dynamodb": "^0.2.3"
   },
+  "peerDependencies": {
+    "@aws-cdk/aws-appsync-alpha": "*",
+    "aws-cdk-lib": "^2.44.0"
+  },
   "devDependencies": {
+    "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
     "@types/node": "^16",
+    "aws-cdk-lib": "2.44.0",
     "functionless-build-utils": "*",
     "typescript": "^4.8.3"
   },

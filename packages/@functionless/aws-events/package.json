@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-events",
-  "version": "0.27.0",
+  "version": "0.0.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -14,10 +14,14 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/aws-lambda": "^0.27.0",
+    "@functionless/aws-lambda": "*",
     "aws-sdk": "^2"
   },
+  "peerDependencies": {
+    "aws-cdk-lib": "^2.44.0"
+  },
   "devDependencies": {
+    "aws-cdk-lib": "2.44.0",
     "@types/node": "^16",
     "functionless-build-utils": "*",
     "typescript": "^4.8.3"

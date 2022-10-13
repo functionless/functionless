@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-secretsmanager-constructs",
-  "version": "0.27.0",
+  "version": "0.0.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -18,8 +18,12 @@
     "@functionless/aws-secretsmanager": "*",
     "aws-sdk": "^2"
   },
+  "peerDependencies": {
+    "aws-cdk-lib": "^2.44.0"
+  },
   "devDependencies": {
     "@types/node": "^16",
+    "aws-cdk-lib": "2.44.0",
     "functionless-build-utils": "*",
     "typescript": "^4.8.3"
   },

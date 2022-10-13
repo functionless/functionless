@@ -1,7 +1,7 @@
 {
   "name": "@tests/cleanup",
   "private": true,
-  "version": "0.27.0",
+  "version": "0.0.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -13,11 +13,11 @@
     "test": "jest"
   },
   "devDependencies": {
-    "@functionless/aws-lambda-constructs": "^0.27.0",
-    "@functionless/aws-sdk": "^0.27.0",
-    "@functionless/aws-stepfunctions-constructs": "^0.27.0",
-    "@functionless/jest": "^0.27.0",
-    "@functionless/test": "^0.27.0",
+    "@functionless/aws-lambda-constructs": "*",
+    "@functionless/aws-sdk": "*",
+    "@functionless/aws-stepfunctions-constructs": "*",
+    "@functionless/jest": "*",
+    "@functionless/test": "*",
     "@tests/aws-apigateway-constructs": "*",
     "@tests/aws-appsync-constructs": "*",
     "@tests/aws-dynamodb-constructs": "*",

@@ -1,6 +1,6 @@
 {
   "name": "@functionless/serialize-closure",
-  "version": "0.27.0",
+  "version": "0.0.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -15,12 +15,12 @@
     "test": "jest"
   },
   "dependencies": {
-    "@functionless/ast": "^0.27.0",
-    "@functionless/util": "^0.27.0",
+    "@functionless/ast": "*",
+    "@functionless/util": "*",
     "source-map": "^0.7.4"
   },
   "devDependencies": {
-    "@functionless/aws-lambda": "^0.27.0",
+    "@functionless/aws-lambda": "*",
     "@functionless/jest": "*",
     "@types/jest": "^29.0.3",
     "@types/node": "^16",

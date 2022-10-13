@@ -1,6 +1,6 @@
 {
   "name": "@functionless/error-code",
-  "version": "0.27.0",
+  "version": "0.0.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [

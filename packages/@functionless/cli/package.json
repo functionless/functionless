@@ -1,6 +1,6 @@
 {
   "name": "@functionless/cli",
-  "version": "0.27.1",
+  "version": "0.0.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "bin": {
@@ -31,6 +31,8 @@
     "toposort": "^2.0.2"
   },
   "peerDependencies": {
+    "aws-cdk-lib": "^2.44.0",
+    "@aws-cdk/aws-appsync-alpha": "*",
     "@functionless/ast-reflection": "^0.3.1",
     "@functionless/asl-graph": "*",
     "@functionless/aws": "*",

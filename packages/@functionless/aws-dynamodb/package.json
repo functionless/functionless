@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-dynamodb",
-  "version": "0.27.1",
+  "version": "0.0.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -14,12 +14,16 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/aws-lambda": "^0.27.0",
-    "@functionless/aws-util": "^0.27.0",
+    "@functionless/aws-lambda": "*",
+    "@functionless/aws-util": "^0.27.2",
     "aws-sdk": "^2"
+  },
+  "peerDependencies": {
+    "aws-cdk-lib": "^2.44.0"
   },
   "devDependencies": {
     "@types/node": "^16",
+    "aws-cdk-lib": "2.44.0",
     "functionless-build-utils": "*",
     "typescript": "^4.8.3"
   },

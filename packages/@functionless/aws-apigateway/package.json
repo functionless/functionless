@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-apigateway",
-  "version": "0.27.0",
+  "version": "0.0.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "aws-cdk-lib": "2.44.0",
-    "@functionless/ast": "*",
+    "@functionless/ast": "^0.27.2",
     "@functionless/aws-lambda": "*",
     "@functionless/aws-stepfunctions": "*",
     "@functionless/vtl": "*"

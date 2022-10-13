@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-stepfunctions-constructs",
-  "version": "0.27.0",
+  "version": "0.0.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -14,16 +14,20 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/asl-graph": "^0.27.0",
-    "@functionless/aws-apigateway": "^0.27.0",
-    "@functionless/aws-appsync": "^0.27.0",
-    "@functionless/aws-events": "^0.27.0",
-    "@functionless/aws-events-constructs": "^0.27.0",
-    "@functionless/aws-stepfunctions": "^0.27.0",
-    "@functionless/ast": "^0.27.0",
-    "@functionless/vtl": "^0.27.0"
+    "@functionless/asl-graph": "*",
+    "@functionless/aws-apigateway": "*",
+    "@functionless/aws-appsync": "*",
+    "@functionless/aws-events": "*",
+    "@functionless/aws-events-constructs": "*",
+    "@functionless/aws-stepfunctions": "*",
+    "@functionless/ast": "*",
+    "@functionless/vtl": "*"
+  },
+  "peerDependencies": {
+    "aws-cdk-lib": "^2.44.0"
   },
   "devDependencies": {
+    "aws-cdk-lib": "2.44.0",
     "functionless-build-utils": "*",
     "typescript": "^4.8.3"
   },

@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-sdk",
-  "version": "0.27.0",
+  "version": "0.0.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
@@ -13,7 +13,7 @@
   },
   "dependencies": {
     "@functionless/asl-graph": "*",
-    "@functionless/ast": "*",
+    "@functionless/ast": "^0.27.2",
     "@functionless/aws-lambda": "*",
     "@functionless/aws-lambda-constructs": "*",
     "@functionless/aws-events": "*",
