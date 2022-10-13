@@ -17,7 +17,7 @@
       "outputs": ["docs/**"]
     },
     "build:website": {
-      "dependsOn": ["build:docs"],
+      "dependsOn": ["^build:docs"],
       "outputs": ["build/**"]
     },
     "test": {
