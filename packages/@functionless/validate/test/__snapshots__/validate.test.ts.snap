@@ -788,6 +788,12 @@ https://functionless.org/docs/error-codes#stepfunctions-error-cause-must-be-a-co
 
 [7m270[0m   throw Error(input.arg);
 [7m   [0m [91m              ~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m298[0m:[93m28[0m - [91merror[0m[90m Functionless(10012): [0mExpected the first argument of $AWS.Lambda.Invoke to be an object literal.
+
+https://functionless.org/docs/error-codes#expected-an-object-literal
+
+[7m298[0m   await $AWS.Lambda.Invoke(event);
+[7m   [0m [91m                           ~~~~~[0m
 [96mtest/test-files/step-function.ts[0m:[93m324[0m:[93m8[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
 
 https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function

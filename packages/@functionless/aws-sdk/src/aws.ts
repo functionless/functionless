@@ -27,7 +27,9 @@ export namespace $AWS {
      * @param input
      * @see https://docs.aws.amazon.com/lambda/latest/dg/API_Invoke.html
      */
-    export const Invoke: <Input, Output>(
+    export const Invoke: {
+      kind: "$AWS.Lambda.Invoke";
+    } & (<Input, Output>(
       input: {
         Function: Function<Input, Output>;
         ClientContext?: string;
@@ -41,7 +43,7 @@ export namespace $AWS {
       Omit<AWSLambda.InvocationResponse, "payload"> & {
         Payload: Output;
       }
-    > = {
+    >) = {
       kind: "$AWS.Lambda.Invoke",
       asl(call: CallExpr, context: ASL): ASLGraph.NodeResults {
         const input = call.args[0]?.expr;
