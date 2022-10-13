@@ -1,10 +1,17 @@
 import path from "path";
 import { ls, readJsonFile, writeJsonFile } from "./util.mjs";
 
+/**
+ * Adds all `@functionless/*` dependencies to the `website` and `functionless` aggregate packages.
+ *
+ * Adds all `@tests/aws-*-constructs` to the `@tests/cleanup` package's dev dependencies
+ */
+
 const rootDir = process.cwd();
 
 const packagesPath = path.resolve(rootDir, "packages", "@functionless");
-const functionlessPkgJsonPath = path.resolve(
+const testsPath = path.resolve(rootDir, "packages", "@tests");
+const flsPkgJsonPath = path.resolve(
   rootDir,
   "packages",
   "functionless",
@@ -17,35 +24,54 @@ const websitePkgJsonPath = path.resolve(
   "package.json"
 );
 
-const [functionlessPkgJson, websitePkgJson, allPackages] = await Promise.all([
-  readJsonFile(functionlessPkgJsonPath),
-  readJsonFile(websitePkgJsonPath),
-  (async () => {
-    const pkgs = await ls(packagesPath);
+const cleanupPkgJsonPath = path.resolve(
+  rootDir,
+  "packages",
+  "@tests",
+  "cleanup",
+  "package.json"
+);
 
-    return Promise.all(
-      pkgs.map((pkg) => readJsonFile(path.join(pkg, "package.json")))
-    );
-  })(),
+const [
+  flsPkgJson,
+  websitePkgJson,
+  cleanupPkgJson,
+  publicPackages,
+  testPackages,
+] = await Promise.all([
+  readJsonFile(flsPkgJsonPath),
+  readJsonFile(websitePkgJsonPath),
+  readJsonFile(cleanupPkgJsonPath),
+  getPackages(packagesPath),
+  getPackages(testsPath, (p) => path.basename(p) !== "cleanup"),
 ]);
 
-async function patch(pkgJsonPath, pkgJson) {
-  pkgJson.dependencies = {
-    ...(pkgJson.dependencies ?? {}),
+await Promise.all([
+  patch(flsPkgJsonPath, flsPkgJson, publicPackages, "dependencies"),
+  patch(websitePkgJsonPath, websitePkgJson, publicPackages, "dependencies"),
+  patch(cleanupPkgJsonPath, cleanupPkgJson, testPackages, "devDependencies"),
+]);
+
+async function getPackages(folder, filter) {
+  let pkgs = await ls(folder);
+  if (filter) {
+    pkgs = pkgs.filter(filter);
+  }
+
+  return Promise.all(
+    pkgs.map((pkg) => readJsonFile(path.join(pkg, "package.json")))
+  );
+}
+
+async function patch(pkgJsonPath, pkgJson, packages, dependenciesKey) {
+  pkgJson[dependenciesKey] = {
+    ...(pkgJson[dependenciesKey] ?? {}),
     ...Object.fromEntries(
-      allPackages
-        .sort()
-        .map((pkg) => [
-          pkg.name,
-          pkgJson.dependencies[pkg.name] ?? `^${pkg.version}` ?? "*",
-        ])
+      packages
+        .sort((pkgA, pkgB) => pkgA.name < pkgB.name)
+        .map((pkg) => [pkg.name, pkgJson[pkg.name] ?? "*"])
     ),
   };
 
   await writeJsonFile(pkgJsonPath, pkgJson);
 }
-
-await Promise.all([
-  patch(functionlessPkgJsonPath, functionlessPkgJson),
-  patch(websitePkgJsonPath, websitePkgJson),
-]);
