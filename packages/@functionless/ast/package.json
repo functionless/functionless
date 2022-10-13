@@ -60,15 +60,6 @@
     ],
     "watchPathIgnorePatterns": [
       "/node_modules/"
-    ],
-    "reporters": [
-      "default",
-      [
-        "jest-junit",
-        {
-          "outputDirectory": "test-reports"
-        }
-      ]
     ]
   }
 }
