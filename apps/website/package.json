@@ -34,7 +34,7 @@
     "react-syntax-highlighter": "^15.5.0",
     "react": "^17.0.2",
     "react-typewriter": "^0.4.1",
-    "@functionless/asl-graph": "*",
+    "@functionless/asl": "*",
     "@functionless/ast": "*",
     "@functionless/aws": "*",
     "@functionless/aws-apigateway": "*",

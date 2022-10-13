@@ -19,7 +19,7 @@ import {
   Stack,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
-import { ASL, ASLGraph } from "@functionless/asl-graph";
+import { ASL, ASLGraph } from "@functionless/asl";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
 
 import {

@@ -9,7 +9,7 @@ import {
   States,
   StepFunctionError,
   Task,
-} from "@functionless/asl-graph";
+} from "@functionless/asl";
 import { Function } from "@functionless/aws-lambda-constructs";
 import {
   initStepFunctionApp,
@@ -26,7 +26,7 @@ import { Event } from "@functionless/aws-events";
 import { EventBus } from "@functionless/aws-events-constructs";
 import { $AWS } from "@functionless/aws-sdk";
 
-import * as functionless from "@functionless/asl-graph";
+import * as functionless from "@functionless/asl";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
 import { Queue } from "@functionless/aws-sqs-constructs";
 import { Serializer } from "@functionless/serde";

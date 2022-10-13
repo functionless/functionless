@@ -29,7 +29,7 @@
     "@functionless/language-service": "^0.0.4",
     "@functionless/register": "*",
     "@functionless/util": "*",
-    "@functionless/asl-graph": "*",
+    "@functionless/asl": "*",
     "@functionless/jest": "*",
     "@functionless/serde": "*",
     "@functionless/serialize-closure": "*",

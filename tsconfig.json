@@ -11,7 +11,7 @@
       "path": "apps/website"
     },
     {
-      "path": "packages/@functionless/asl-graph"
+      "path": "packages/@functionless/asl"
     },
     {
       "path": "packages/@functionless/ast"

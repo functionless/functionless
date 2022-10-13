@@ -8,7 +8,7 @@ import type {
   EventBridge as AWSEventBridge,
   Lambda as AWSLambda,
 } from "aws-sdk";
-import { ASL, ASLGraph } from "@functionless/asl-graph";
+import { ASL, ASLGraph } from "@functionless/asl";
 import { SDK as _SDK } from "./sdk";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
 import type { Function } from "@functionless/aws-lambda-constructs";

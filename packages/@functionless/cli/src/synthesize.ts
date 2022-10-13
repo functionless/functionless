@@ -26,7 +26,7 @@ import { Tree } from "./tree/tree";
 import { isFile, File } from "./tree/file";
 import { isFolder } from "./tree/folder";
 
-import { ASL } from "@functionless/asl-graph";
+import { ASL } from "@functionless/asl";
 import { isRestApi, isMethod } from "@functionless/aws-apigateway";
 import {
   isLambdaFunction,

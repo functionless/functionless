@@ -522,8 +522,8 @@ new StepFunction(stack, "obj ref", async (input: { key: string }) => {
 // supported errors
 
 // eslint-disable-next-line import/order
-import * as functionless from "@functionless/asl-graph";
-import { StepFunctionError } from "@functionless/asl-graph";
+import * as functionless from "@functionless/asl";
+import { StepFunctionError } from "@functionless/asl";
 
 new StepFunction(stack, "supported errors", async (input: { key: string }) => {
   if (input.key === "1") {
@@ -535,7 +535,7 @@ new StepFunction(stack, "supported errors", async (input: { key: string }) => {
   } else if (input.key === "4") {
     throw Error("message");
   } else if (input.key === "5") {
-    // import { StepFunctionError } from "@functionless/asl-graph";
+    // import { StepFunctionError } from "@functionless/asl";
     throw new StepFunctionError("ErrorName", { reason: "you suck" });
   } else if (input.key === "6") {
     // import * as functionless from "@functionless/aws-lambda-constructs";

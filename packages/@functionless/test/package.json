@@ -16,7 +16,7 @@
     "dev": "tsc -w"
   },
   "dependencies": {
-    "@functionless/asl-graph": "*",
+    "@functionless/asl": "*",
     "@functionless/aws-sdk": "*",
     "@functionless/aws-appsync-constructs": "*",
     "@functionless/aws-dynamodb-constructs": "*",

@@ -13,7 +13,7 @@
       "path": "../../functionless-build-utils"
     },
     {
-      "path": "../asl-graph"
+      "path": "../asl"
     },
     {
       "path": "../aws-apigateway"

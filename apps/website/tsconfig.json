@@ -34,7 +34,7 @@
   "exclude": ["**/node_modules"],
   "references": [
     {
-      "path": "../../packages/@functionless/asl-graph"
+      "path": "../../packages/@functionless/asl"
     },
     {
       "path": "../../packages/@functionless/ast"

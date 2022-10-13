@@ -14,7 +14,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/asl-graph": "*",
+    "@functionless/asl": "*",
     "@functionless/ast": "*",
     "@functionless/aws-events": "*",
     "@functionless/aws-lambda": "*",

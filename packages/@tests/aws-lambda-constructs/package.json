@@ -14,7 +14,7 @@
   },
   "devDependencies": {
     "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
-    "@functionless/asl-graph": "*",
+    "@functionless/asl": "*",
     "@functionless/ast": "*",
     "@functionless/aws-apigateway": "*",
     "@functionless/aws-appsync-constructs": "*",

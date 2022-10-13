@@ -29,7 +29,7 @@ import {
   FunctionClosure,
   FunctionProps,
 } from "@functionless/aws-lambda-constructs";
-import { ASLGraph, StepFunctionError } from "@functionless/asl-graph";
+import { ASLGraph, StepFunctionError } from "@functionless/asl";
 import { Table } from "@functionless/aws-dynamodb-constructs";
 import { Queue } from "@functionless/aws-sqs-constructs";
 

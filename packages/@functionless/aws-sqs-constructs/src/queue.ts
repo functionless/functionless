@@ -7,7 +7,7 @@ import {
 } from "aws-cdk-lib";
 import lambda from "aws-lambda";
 import { Construct } from "constructs";
-import { ASL, ASLGraph, Parameters } from "@functionless/asl-graph";
+import { ASL, ASLGraph, Parameters } from "@functionless/asl";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
 import { EventSource, IEventSource } from "./event-source";
 import { SQSClient } from "@functionless/aws-sqs";

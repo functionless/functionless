@@ -1,7 +1,7 @@
 import { aws_dynamodb } from "aws-cdk-lib";
 import { PromiseResult } from "aws-sdk/lib/request";
 import { JsonFormat } from "typesafe-dynamodb/lib/json-format";
-import { ASLGraph } from "@functionless/asl-graph";
+import { ASLGraph } from "@functionless/asl";
 import {
   createDynamoIntegration,
   makeAppSyncTableIntegration,

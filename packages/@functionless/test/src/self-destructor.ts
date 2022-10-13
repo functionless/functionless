@@ -8,7 +8,7 @@ import {
 
 import { Construct } from "constructs";
 import { $AWS } from "@functionless/aws-sdk";
-import { StepFunctionError } from "@functionless/asl-graph";
+import { StepFunctionError } from "@functionless/asl";
 import { Function } from "@functionless/aws-lambda-constructs";
 import { $SFN, StepFunction } from "@functionless/aws-stepfunctions-constructs";
 

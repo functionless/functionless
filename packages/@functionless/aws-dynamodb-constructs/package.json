@@ -14,7 +14,7 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/asl-graph": "*",
+    "@functionless/asl": "*",
     "@functionless/aws-appsync": "*",
     "@functionless/aws-apigateway": "*",
     "@functionless/aws-dynamodb": "*",

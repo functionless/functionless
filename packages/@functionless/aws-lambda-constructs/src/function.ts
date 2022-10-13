@@ -47,7 +47,7 @@ import {
   AppSyncIntegration,
   AppSyncVtlIntegration,
 } from "@functionless/aws-appsync";
-import { ASL, ASLGraph } from "@functionless/asl-graph";
+import { ASL, ASLGraph } from "@functionless/asl";
 import {
   ErrorCodes,
   formatErrorMessage,

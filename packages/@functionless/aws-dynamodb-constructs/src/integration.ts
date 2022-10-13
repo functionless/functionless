@@ -13,7 +13,7 @@ import { ApiGatewayVtlIntegration } from "@functionless/aws-apigateway";
 import { aws_apigateway, aws_dynamodb, aws_iam } from "aws-cdk-lib";
 import { JsonFormat } from "typesafe-dynamodb/lib/json-format";
 import { AppSyncVtlIntegration } from "@functionless/aws-appsync";
-import { ASL, ASLGraph, Task } from "@functionless/asl-graph";
+import { ASL, ASLGraph, Task } from "@functionless/asl";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
 import {
   NativeIntegration,

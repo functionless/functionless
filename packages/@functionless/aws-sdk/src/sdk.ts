@@ -1,6 +1,6 @@
 import { Expr, Argument, isArgument, evalToConstant } from "@functionless/ast";
 import { aws_iam } from "aws-cdk-lib";
-import { ASLGraph, ASLIntegration } from "@functionless/asl-graph";
+import { ASLGraph, ASLIntegration } from "@functionless/asl";
 import { ErrorCodes, SynthError } from "@functionless/error-code";
 import { SDK_INTEGRATION_SERVICE_NAME } from "./asl";
 import { IAM_SERVICE_PREFIX } from "./iam";

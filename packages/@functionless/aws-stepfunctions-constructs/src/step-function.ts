@@ -44,7 +44,7 @@ import {
   StateMachine,
   States,
   Task,
-} from "@functionless/asl-graph";
+} from "@functionless/asl";
 import { assertDefined } from "@functionless/util";
 import {
   Event,

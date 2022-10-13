@@ -10,7 +10,7 @@
   "exclude": ["node_modules"],
   "references": [
     {
-      "path": "../../@functionless/asl-graph"
+      "path": "../../@functionless/asl"
     },
     {
       "path": "../../@functionless/ast"

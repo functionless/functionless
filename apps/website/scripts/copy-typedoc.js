@@ -6,6 +6,8 @@ exports.copyTypeDoc = async function () {
   const docsDir = path.join(workspaceDir, "apps", "website", "docs");
   const apiRefDir = path.join(docsDir, "api");
   const flDir = path.join(workspaceDir, "packages", "@functionless");
+
+  // load packages/@functionless/*/package.json
   const pkgs = await Promise.all(
     (
       await fs.readdir(flDir)
@@ -26,17 +28,21 @@ exports.copyTypeDoc = async function () {
 
   await Promise.all(
     pkgs.map(async (pkg) => {
+      // if the package contains a docs/ folder
       if (await fs.pathExists(pkg.docRoot)) {
         const copyTo = path.join(apiRefDir, pkg.shortName);
+        // then copy it to the website's doc folder
         await fs.copy(pkg.docRoot, copyTo, {
           recursive: true,
         });
       } else {
+        // log a warning for packages that do not have a docs/ folder
         console.log("File not found: ", pkg.docRoot);
       }
     })
   );
 
+  // give the API Reference folder a nice label in docusaurus
   await fs.writeFile(
     path.join(apiRefDir, "_category_.yml"),
     `label: "API Reference"`
