@@ -7,15 +7,9 @@ import {
   AppSyncGraphQLExecutionContext,
 } from "amplify-appsync-simulator";
 import * as amplify from "amplify-appsync-simulator/lib/velocity";
-import { App, aws_dynamodb, aws_events, aws_lambda, Stack } from "aws-cdk-lib";
-import { Rule } from "aws-cdk-lib/aws-events";
+import { App, aws_dynamodb, aws_lambda, Stack } from "aws-cdk-lib";
 
 import { Function } from "@functionless/aws-lambda-constructs";
-import { Event } from "@functionless/aws-events";
-import {
-  synthesizeEventBridgeTargets,
-  EventTransformFunction,
-} from "@functionless/aws-events-constructs";
 import {
   AppsyncResolver,
   ResolverArguments,
@@ -207,53 +201,6 @@ export function initStepFunctionApp() {
   );
 
   return { stack, task, computeScore, getPerson, personTable };
-}
-
-let stack: Stack;
-
-beforeEach(() => {
-  stack = new Stack();
-});
-
-export function ebEventTargetTestCase<T extends Event>(
-  decl: EventTransformFunction<T>,
-  targetInput: aws_events.RuleTargetInput
-) {
-  const result = synthesizeEventBridgeTargets(reflect(decl) as any);
-
-  const rule = new Rule(stack, "testrule");
-
-  // input template can contain tokens, lets fix that.
-
-  const {
-    inputTemplate: recievedTemplate,
-    input: recievedInput,
-    ...recieved
-  } = result.bind(rule);
-  const {
-    inputTemplate: expectedTemplate,
-    input: expectedInput,
-    ...expected
-  } = targetInput.bind(rule);
-
-  expect({
-    ...recieved,
-    inputTemplate: stack.resolve(recievedTemplate),
-    input: stack.resolve(recievedInput),
-  }).toEqual({
-    ...expected,
-    inputTemplate: stack.resolve(expectedTemplate),
-    input: stack.resolve(expectedInput),
-  });
-}
-
-export function ebEventTargetTestCaseError<T extends Event>(
-  decl: EventTransformFunction<T>,
-  message?: string
-) {
-  expect(() => synthesizeEventBridgeTargets(reflect(decl) as any)).toThrow(
-    message
-  );
 }
 
 export const normalizeCDKJson = (json: object) => {

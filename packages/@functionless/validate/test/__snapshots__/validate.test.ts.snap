@@ -171,6 +171,12 @@ https://functionless.org/docs/error-codes#apigateway-unsupported-reference
 
 [7m244[0m     return a;
 [7m   [0m [91m          ~~[0m
+[96mtest/test-files/api-gateway.ts[0m:[93m276[0m:[93m26[0m - [91merror[0m[90m Functionless(10012): [0mAPI Gateway Integration with EventBus.putEvents expects object literals with no computed properties
+
+https://functionless.org/docs/error-codes#expected-an-object-literal
+
+[7m276[0m     return bus.putEvents(x);
+[7m   [0m [91m                         ~[0m
 "
 `;
 
@@ -382,7 +388,17 @@ https://functionless.org/docs/error-codes#appsync-unsupported-reference
 `;
 
 exports[`event-bus.ts 1`] = `
-"[96mtest/test-files/event-bus.ts[0m:[93m28[0m:[93m9[0m - [91merror[0m[90m Functionless(10014): [0mEventBus Input Transformers do not support integrations
+"[96mtest/test-files/event-bus.ts[0m:[93m21[0m:[93m22[0m - [91merror[0m[90m Functionless(10014): [0mEventBus Input Transformers do not support integrations
+
+https://functionless.org/docs/error-codes#eventbus-input-transformers-do-not-support-integrations
+
+[7m21[0m bus.all().map(() => {
+[7m  [0m [91m                     [0m
+[7m22[0m   // eslint-disable-next-line @typescript-eslint/no-floating-promises
+[7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[7m23[0m   bus.putEvents({ "detail-type": "detail", detail: {}, source: "" });
+[7m  [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/event-bus.ts[0m:[93m28[0m:[93m9[0m - [91merror[0m[90m Functionless(10014): [0mEventBus Input Transformers do not support integrations
 
 https://functionless.org/docs/error-codes#eventbus-input-transformers-do-not-support-integrations
 
@@ -734,181 +750,213 @@ https://functionless.org/docs/error-codes#unsupported-initialization-of-resource
 [7m   [0m [91m                                               [0m
 [7m211[0m   new aws_events.EventBus(stack, "");
 [7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m269[0m:[93m15[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
+[96mtest/test-files/step-function.ts[0m:[93m224[0m:[93m23[0m - [91merror[0m[90m Functionless(10023): [0mStepFunctions calls to EventBus putEvents must use object literals
+
+https://functionless.org/docs/error-codes#stepfunctions-calls-to-eventbus-putevents-must-use-object-literals
+
+[7m224[0m   await bus.putEvents(event);
+[7m   [0m [91m                      ~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m231[0m:[93m69[0m - [91merror[0m[90m Functionless(10023): [0mStepFunctions calls to EventBus putEvents must use object literals
+
+https://functionless.org/docs/error-codes#stepfunctions-calls-to-eventbus-putevents-must-use-object-literals
+
+[7m231[0m   await bus.putEvents({ source: "", detail: {}, "detail-type": "" }, ...events);
+[7m   [0m [91m                                                                    ~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m240[0m:[93m23[0m - [91merror[0m[90m Functionless(10023): [0mStepFunctions calls to EventBus putEvents must use object literals
+
+https://functionless.org/docs/error-codes#stepfunctions-calls-to-eventbus-putevents-must-use-object-literals
+
+[7m240[0m   await bus.putEvents({ ...event });
+[7m   [0m [91m                      ~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m246[0m:[93m23[0m - [91merror[0m[90m Functionless(10023): [0mStepFunctions calls to EventBus putEvents must use object literals
+
+https://functionless.org/docs/error-codes#stepfunctions-calls-to-eventbus-putevents-must-use-object-literals
+
+[7m246[0m   await bus.putEvents({ [source]: "", detail: {}, "detail-type": "" });
+[7m   [0m [91m                      ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m252[0m:[93m51[0m - [91merror[0m[90m Functionless(10023): [0mStepFunctions calls to EventBus putEvents must use object literals
+
+https://functionless.org/docs/error-codes#stepfunctions-calls-to-eventbus-putevents-must-use-object-literals
+
+[7m252[0m     { source: "", detail: {}, "detail-type": "" },
+[7m   [0m [91m                                                  [0m
+[7m253[0m     { [source]: "", detail: {}, "detail-type": "" }
+[7m   [0m [91m~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
+[96mtest/test-files/step-function.ts[0m:[93m270[0m:[93m15[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
 
 https://functionless.org/docs/error-codes#stepfunctions-error-cause-must-be-a-constant
 
-[7m269[0m   throw Error(input.arg);
+[7m270[0m   throw Error(input.arg);
 [7m   [0m [91m              ~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m323[0m:[93m8[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
+[96mtest/test-files/step-function.ts[0m:[93m324[0m:[93m8[0m - [91merror[0m[90m Functionless(10019): [0mUnable to find reference out of application function
 
 https://functionless.org/docs/error-codes#unable-to-find-reference-out-of-application-function
 
-[7m323[0m   await x();
+[7m324[0m   await x();
 [7m   [0m [91m       ~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m356[0m:[93m12[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
+[96mtest/test-files/step-function.ts[0m:[93m357[0m:[93m12[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
 
 https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined
 
-[7m356[0m   const x = undefined;
+[7m357[0m   const x = undefined;
 [7m   [0m [91m           ~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m361[0m:[93m14[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
+[96mtest/test-files/step-function.ts[0m:[93m362[0m:[93m14[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
 
 https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined
 
-[7m361[0m   const x = { y: undefined };
+[7m362[0m   const x = { y: undefined };
 [7m   [0m [91m             ~~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m361[0m:[93m14[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
+[96mtest/test-files/step-function.ts[0m:[93m362[0m:[93m14[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
 
 https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined
 
-[7m361[0m   const x = { y: undefined };
+[7m362[0m   const x = { y: undefined };
 [7m   [0m [91m             ~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m361[0m:[93m17[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
+[96mtest/test-files/step-function.ts[0m:[93m362[0m:[93m17[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
 
 https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined
 
-[7m361[0m   const x = { y: undefined };
+[7m362[0m   const x = { y: undefined };
 [7m   [0m [91m                ~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m366[0m:[93m8[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
+[96mtest/test-files/step-function.ts[0m:[93m367[0m:[93m8[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
 
 https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined
 
-[7m366[0m   const x = await funcUndefined();
+[7m367[0m   const x = await funcUndefined();
 [7m   [0m [91m       ~~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m366[0m:[93m8[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
+[96mtest/test-files/step-function.ts[0m:[93m367[0m:[93m8[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
 
 https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined
 
-[7m366[0m   const x = await funcUndefined();
+[7m367[0m   const x = await funcUndefined();
 [7m   [0m [91m       ~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m366[0m:[93m12[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
+[96mtest/test-files/step-function.ts[0m:[93m367[0m:[93m12[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
 
 https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined
 
-[7m366[0m   const x = await funcUndefined();
+[7m367[0m   const x = await funcUndefined();
 [7m   [0m [91m           ~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m367[0m:[93m9[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
+[96mtest/test-files/step-function.ts[0m:[93m368[0m:[93m9[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
 
 https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined
 
-[7m367[0m   return x;
+[7m368[0m   return x;
 [7m   [0m [91m        ~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m371[0m:[93m11[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
+[96mtest/test-files/step-function.ts[0m:[93m372[0m:[93m11[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
 
 https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined
 
-[7m371[0m   return [undefined];
+[7m372[0m   return [undefined];
 [7m   [0m [91m          ~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m375[0m:[93m16[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
+[96mtest/test-files/step-function.ts[0m:[93m376[0m:[93m16[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
 
 https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined
 
-[7m375[0m   return true ? undefined : func();
+[7m376[0m   return true ? undefined : func();
 [7m   [0m [91m               ~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m383[0m:[93m11[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
+[96mtest/test-files/step-function.ts[0m:[93m384[0m:[93m11[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
 
 https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined
 
-[7m383[0m   return { y: await funcUndefined() };
+[7m384[0m   return { y: await funcUndefined() };
 [7m   [0m [91m          ~~~~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m383[0m:[93m11[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
+[96mtest/test-files/step-function.ts[0m:[93m384[0m:[93m11[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
 
 https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined
 
-[7m383[0m   return { y: await funcUndefined() };
+[7m384[0m   return { y: await funcUndefined() };
 [7m   [0m [91m          ~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m383[0m:[93m14[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
+[96mtest/test-files/step-function.ts[0m:[93m384[0m:[93m14[0m - [91merror[0m[90m Functionless(10022): [0mStep Functions does not support undefined
 
 https://functionless.org/docs/error-codes#step-functions-does-not-support-undefined
 
-[7m383[0m   return { y: await funcUndefined() };
+[7m384[0m   return { y: await funcUndefined() };
 [7m   [0m [91m             ~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m427[0m:[93m14[0m - [91merror[0m[90m Functionless(10025): [0mStepFunctions Invalid collection access
+[96mtest/test-files/step-function.ts[0m:[93m428[0m:[93m14[0m - [91merror[0m[90m Functionless(10025): [0mStepFunctions Invalid collection access
 
 https://functionless.org/docs/error-codes#stepfunctions-invalid-collection-access
 
-[7m427[0m   return obj[input.key];
+[7m428[0m   return obj[input.key];
 [7m   [0m [91m             ~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m499[0m:[93m11[0m - [91merror[0m[90m Functionless(10026): [0mStepFunction property names must be constant
+[96mtest/test-files/step-function.ts[0m:[93m500[0m:[93m11[0m - [91merror[0m[90m Functionless(10026): [0mStepFunction property names must be constant
 
 https://functionless.org/docs/error-codes#stepfunction-property-names-must-be-constant
 
-[7m499[0m   return {
+[7m500[0m   return {
 [7m   [0m [91m          [0m
-[7m500[0m     [input.key]: "",
+[7m501[0m     [input.key]: "",
 [7m   [0m [91m~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m555[0m:[93m23[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
+[96mtest/test-files/step-function.ts[0m:[93m556[0m:[93m23[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
 
 https://functionless.org/docs/error-codes#stepfunctions-error-cause-must-be-a-constant
 
-[7m555[0m       throw new Error(input.key);
+[7m556[0m       throw new Error(input.key);
 [7m   [0m [91m                      ~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m557[0m:[93m16[0m - [91merror[0m[90m Functionless(10030): [0mStepFunction throw must be Error or StepFunctionError class
+[96mtest/test-files/step-function.ts[0m:[93m558[0m:[93m16[0m - [91merror[0m[90m Functionless(10030): [0mStepFunction throw must be Error or StepFunctionError class
 
 https://functionless.org/docs/error-codes#stepfunction-throw-must-be-error-or-stepfunctionerror-class
 
-[7m557[0m       throw new CustomError("error");
+[7m558[0m       throw new CustomError("error");
 [7m   [0m [91m               ~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m560[0m:[93m35[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
+[96mtest/test-files/step-function.ts[0m:[93m561[0m:[93m35[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
 
 https://functionless.org/docs/error-codes#stepfunctions-error-cause-must-be-a-constant
 
-[7m560[0m       throw new StepFunctionError(input.key, { reason: "reason" });
+[7m561[0m       throw new StepFunctionError(input.key, { reason: "reason" });
 [7m   [0m [91m                                  ~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m563[0m:[93m47[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
+[96mtest/test-files/step-function.ts[0m:[93m564[0m:[93m47[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
 
 https://functionless.org/docs/error-codes#stepfunctions-error-cause-must-be-a-constant
 
-[7m563[0m       throw new StepFunctionError("ErrorName", { reason: input.key });
+[7m564[0m       throw new StepFunctionError("ErrorName", { reason: input.key });
 [7m   [0m [91m                                              ~~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m565[0m:[93m47[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
+[96mtest/test-files/step-function.ts[0m:[93m566[0m:[93m47[0m - [91merror[0m[90m Functionless(10024): [0mStepFunctions error cause must be a constant
 
 https://functionless.org/docs/error-codes#stepfunctions-error-cause-must-be-a-constant
 
-[7m565[0m       throw new StepFunctionError("ErrorName", input.key);
+[7m566[0m       throw new StepFunctionError("ErrorName", input.key);
 [7m   [0m [91m                                              ~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m579[0m:[93m40[0m - [91merror[0m[90m Functionless(10033): [0mStepFunctions does not support destructuring object with rest
+[96mtest/test-files/step-function.ts[0m:[93m580[0m:[93m40[0m - [91merror[0m[90m Functionless(10033): [0mStepFunctions does not support destructuring object with rest
 
 https://functionless.org/docs/error-codes#stepfunctions-does-not-support-destructuring-object-with-rest
 
-[7m579[0m new StepFunction(stack, "sfn", async ({ ...rest }) => {
+[7m580[0m new StepFunction(stack, "sfn", async ({ ...rest }) => {
 [7m   [0m [91m                                       ~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m583[0m:[93m10[0m - [91merror[0m[90m Functionless(10033): [0mStepFunctions does not support destructuring object with rest
+[96mtest/test-files/step-function.ts[0m:[93m584[0m:[93m10[0m - [91merror[0m[90m Functionless(10033): [0mStepFunctions does not support destructuring object with rest
 
 https://functionless.org/docs/error-codes#stepfunctions-does-not-support-destructuring-object-with-rest
 
-[7m583[0m   const { ...rest } = input;
+[7m584[0m   const { ...rest } = input;
 [7m   [0m [91m         ~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m612[0m:[93m20[0m - [91merror[0m[90m Functionless(10027): [0mthe callback argument of filter, forEach, and map must be a function or arrow expression, found: Identifier
+[96mtest/test-files/step-function.ts[0m:[93m613[0m:[93m20[0m - [91merror[0m[90m Functionless(10027): [0mthe callback argument of filter, forEach, and map must be a function or arrow expression, found: Identifier
 
 https://functionless.org/docs/error-codes#invalid-input
 
-[7m612[0m   [1, 2, 3].filter(someFunctionReference);
+[7m613[0m   [1, 2, 3].filter(someFunctionReference);
 [7m   [0m [91m                   ~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m613[0m:[93m17[0m - [91merror[0m[90m Functionless(10027): [0mthe callback argument of filter, forEach, and map must be a function or arrow expression, found: Identifier
+[96mtest/test-files/step-function.ts[0m:[93m614[0m:[93m17[0m - [91merror[0m[90m Functionless(10027): [0mthe callback argument of filter, forEach, and map must be a function or arrow expression, found: Identifier
 
 https://functionless.org/docs/error-codes#invalid-input
 
-[7m613[0m   [1, 2, 3].map(someFunctionReference);
+[7m614[0m   [1, 2, 3].map(someFunctionReference);
 [7m   [0m [91m                ~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m614[0m:[93m21[0m - [91merror[0m[90m Functionless(10027): [0mthe callback argument of filter, forEach, and map must be a function or arrow expression, found: Identifier
+[96mtest/test-files/step-function.ts[0m:[93m615[0m:[93m21[0m - [91merror[0m[90m Functionless(10027): [0mthe callback argument of filter, forEach, and map must be a function or arrow expression, found: Identifier
 
 https://functionless.org/docs/error-codes#invalid-input
 
-[7m614[0m   [1, 2, 3].forEach(someFunctionReference);
+[7m615[0m   [1, 2, 3].forEach(someFunctionReference);
 [7m   [0m [91m                    ~~~~~~~~~~~~~~~~~~~~~[0m
-[96mtest/test-files/step-function.ts[0m:[93m653[0m:[93m7[0m - [93mwarning[0m[90m Functionless(10035): [0mString constants should be used to access objects. Other types may fail at runtime.
+[96mtest/test-files/step-function.ts[0m:[93m654[0m:[93m7[0m - [93mwarning[0m[90m Functionless(10035): [0mString constants should be used to access objects. Other types may fail at runtime.
 
 https://functionless.org/docs/error-codes#stepfunctions-mismatched-index-type.
 
-[7m653[0m   obj[1];
+[7m654[0m   obj[1];
 [7m   [0m [93m      ~[0m
-[96mtest/test-files/step-function.ts[0m:[93m656[0m:[93m7[0m - [93mwarning[0m[90m Functionless(10035): [0mNumeric constants should be used to access arrays. Other types may fail at runtime.
+[96mtest/test-files/step-function.ts[0m:[93m657[0m:[93m7[0m - [93mwarning[0m[90m Functionless(10035): [0mNumeric constants should be used to access arrays. Other types may fail at runtime.
 
 https://functionless.org/docs/error-codes#stepfunctions-mismatched-index-type.
 
-[7m656[0m   arr["0"];
+[7m657[0m   arr["0"];
 [7m   [0m [93m      ~~~[0m
 "
 `;

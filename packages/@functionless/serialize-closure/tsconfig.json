@@ -17,7 +17,13 @@
       "path": "../ast"
     },
     {
+      "path": "../aws-lambda"
+    },
+    {
       "path": "../jest"
+    },
+    {
+      "path": "../util"
     }
   ]
 }

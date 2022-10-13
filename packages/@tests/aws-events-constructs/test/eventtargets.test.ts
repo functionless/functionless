@@ -1,6 +1,8 @@
 import { aws_events, Stack } from "aws-cdk-lib";
-import { ErrorCodes, formatErrorMessage, Function, StepFunction } from "../src";
-import { Event } from "../src/event-bridge";
+import { StepFunction } from "@functionless/aws-stepfunctions-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
+import { Event } from "@functionless/aws-events";
+import { ErrorCodes, formatErrorMessage } from "@functionless/error-code";
 
 import { ebEventTargetTestCase, ebEventTargetTestCaseError } from "./util";
 

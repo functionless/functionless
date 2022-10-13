@@ -28,6 +28,9 @@
       "path": "../aws-dynamodb"
     },
     {
+      "path": "../aws-dynamodb-constructs"
+    },
+    {
       "path": "../aws-events"
     },
     {

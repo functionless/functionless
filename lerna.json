@@ -2,7 +2,11 @@
   "$schema": "node_modules/lerna/schemas/lerna-schema.json",
   "npmClient": "yarn",
   "useWorkspaces": true,
-  "packages": ["packages/*"],
+  "packages": [
+    "packages/create-functionless",
+    "packages/functionless",
+    "packages/@functionless/*"
+  ],
   "conventionalCommits": true,
   "commitHooks": false,
   "private": false,
@@ -14,5 +18,5 @@
       "allowBranch": ["main", "*"]
     }
   },
-  "version": "0.27.2"
+  "version": "0.27.3"
 }

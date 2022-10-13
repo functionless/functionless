@@ -242,6 +242,7 @@ new StepFunction(stack, "usebus", async () => {
 
 new StepFunction(stack, "usebus", async () => {
   const source = "source";
+  bus.putEvents.k;
   await bus.putEvents({ [source]: "", detail: {}, "detail-type": "" });
 });
 

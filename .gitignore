@@ -55,3 +55,5 @@ packages/*/lib
 .turbo
 lib
 docs/
+.npmrc
+.turbo-cache

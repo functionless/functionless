@@ -1,7 +1,8 @@
 import { App, aws_dynamodb, Stack } from "aws-cdk-lib";
 import "jest";
-import { Table, $util, AppsyncContext, ITable, AnyTable } from "../src";
-import { appsyncTestCase } from "./util";
+import { appsyncTestCase } from "@functionless/test";
+import { AnyTable, ITable, Table } from "@functionless/aws-dynamodb-constructs";
+import { $util, AppsyncContext } from "@functionless/aws-appsync-constructs";
 
 interface Item {
   id: string;

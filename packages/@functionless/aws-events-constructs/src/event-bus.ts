@@ -187,10 +187,12 @@ export interface IEventBus<in Evnt extends Event = Event>
   /**
    * Put one or more events on an Event Bus.
    */
-  putEvents(
+  putEvents: ((
     event: PutEventInput<Evnt>,
     ...events: PutEventInput<Evnt>[]
-  ): Promise<void>;
+  ) => Promise<void>) & {
+    kind: "EventBus.putEvents";
+  };
 
   /**
    * Creates a rule that matches all events on the bus.

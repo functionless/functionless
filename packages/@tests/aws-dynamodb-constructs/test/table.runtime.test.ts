@@ -1362,6 +1362,7 @@ runtimeTestSuite("tableStack", (t: any) => {
       })();
 
       const role = await getTestRole(roleArn);
+      console.log(roleArn);
 
       const client = new AWSAppSyncClient({
         url: graphqlUrl,
@@ -1386,11 +1387,12 @@ runtimeTestSuite("tableStack", (t: any) => {
           }
         }
       `;
+      console.log("addPerson before");
       const addPersonResponse: { data: { addPerson: Person } } =
         await client.mutate({
           mutation: addPerson,
         });
-
+      console.log("addPerson after");
       expect(addPersonResponse.data.addPerson.pk).toEqual(
         `Person|${addPersonResponse.data.addPerson.id}`
       );

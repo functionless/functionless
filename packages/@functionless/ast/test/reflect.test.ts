@@ -1,6 +1,10 @@
-import { NodeKind } from "@functionless/ast";
 import { aws_events, Stack } from "aws-cdk-lib";
-import { reflect, ReflectionSymbols, validateFunctionLike } from "../src";
+import {
+  NodeKind,
+  reflect,
+  ReflectionSymbols,
+  validateFunctionLike,
+} from "../src";
 import { assertNodeKind } from "../src/assert";
 
 test("function", () => {

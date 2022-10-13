@@ -1,0 +1,11 @@
+{
+  "extend": "base",
+  "devDependencies": ["@types/uuid", "functionless", "uuid"],
+  "files": [
+    "cdk.json",
+    "src/create-todo.ts",
+    "src/delete-todo.ts",
+    "src/list-todos.ts",
+    "src/table.ts"
+  ]
+}

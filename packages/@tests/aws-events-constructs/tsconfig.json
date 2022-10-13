@@ -25,6 +25,9 @@
       "path": "../../@functionless/aws-stepfunctions-constructs"
     },
     {
+      "path": "../../@functionless/error-code"
+    },
+    {
       "path": "../../@functionless/jest"
     },
     {

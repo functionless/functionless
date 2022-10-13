@@ -1,0 +1,4 @@
+{
+  "extend": "base",
+  "files": ["src/app.ts"]
+}

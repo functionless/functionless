@@ -16,9 +16,11 @@
   },
   "dependencies": {
     "@functionless/ast": "^0.27.0",
+    "@functionless/util": "^0.27.0",
     "source-map": "^0.7.4"
   },
   "devDependencies": {
+    "@functionless/aws-lambda": "^0.27.0",
     "@types/node": "^16",
     "@functionless/jest": "*",
     "functionless-build-utils": "*",

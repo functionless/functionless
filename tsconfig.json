@@ -134,6 +134,9 @@
       "path": "packages/@tests/aws-stepfunctions-constructs"
     },
     {
+      "path": "packages/create-functionless"
+    },
+    {
       "path": "packages/functionless-build-utils"
     }
   ]
