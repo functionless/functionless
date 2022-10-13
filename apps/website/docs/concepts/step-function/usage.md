@@ -250,7 +250,7 @@ When throwing errors from a Step Function, you have two options available:
 throw new Error("message");
 ```
 
-2. throw Functionless's [`StepFunctionError`](../../api/asl-graph/classes/StepFunctionError.md) type
+2. throw Functionless's [`StepFunctionError`](../../api/asl/classes/StepFunctionError.md) type
 
 ```ts
 throw new StepFunctionError("CustomErrorName", "cause");
