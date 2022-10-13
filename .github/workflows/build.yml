@@ -37,7 +37,7 @@ jobs:
         if: contains(fromJson('["release", "build", "close"]'), github.workflow)
 
       - name: Run tests
-        run: yarn turbo run test --cache-dir=.turbo-cache
+        run: yarn turbo run test
         env:
           TEST_DEPLOY_TARGET: AWS
           NODE_OPTIONS: --max-old-space-size=6144
