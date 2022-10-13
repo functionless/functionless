@@ -8,7 +8,7 @@
   "scripts": {
     "build:docs": "tsc -b && turbo run build:docs",
     "build:website": "tsc -b && turbo run build:website",
-    "build": "tsc -b --incremental && turbo run build",
+    "build": "tsc -b && turbo run build",
     "clean:build": "turbo run clean:build",
     "clean:deep": "git clean -fqdx .",
     "clean:tsbuildinfo": "find . -name tsconfig.tsbuildinfo -exec rm {} \\;",
