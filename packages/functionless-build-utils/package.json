@@ -6,10 +6,6 @@
   "bin": {
     "fls-typedoc": "./bin/fls-typedoc.js"
   },
-  "scripts": {
-    "build": "echo no-op",
-    "build": "tsc --build"
-  },
   "dependencies": {
     "typedoc": "^0.23.16",
     "docusaurus-plugin-typedoc": "^0.17.4"

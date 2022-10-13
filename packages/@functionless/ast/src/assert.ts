@@ -3,6 +3,12 @@ import { NodeInstance } from "./node-ctor";
 import { getNodeKindName, NodeKind } from "./node-kind";
 import { ConstantValue, isPrimitive, PrimitiveValue } from "./util";
 
+/**
+ *
+ * @param val
+ * @param message
+ * @returns
+ */
 export function assertPrimitive(val: any, message?: string): PrimitiveValue {
   if (isPrimitive(val)) {
     return val;
