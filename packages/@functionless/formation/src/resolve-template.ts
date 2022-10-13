@@ -32,7 +32,6 @@ import { Parameter } from "./parameter";
 import { isPseudoParameter, PseudoParameter } from "./pseudo-parameter";
 import { PhysicalResource } from "./resource";
 import { RuleFunction, isRuleFunction } from "./rule";
-import { UpdateState } from "./stack";
 import { CloudFormationTemplate } from "./template";
 import { isDeepEqual } from "./util";
 import { Value } from "./value";
@@ -103,7 +102,6 @@ export class TemplateResolver {
    * an attribute from a physically deployed resource.
    *
    * @param expr expression to evaluate
-   * @param state the {@link UpdateState} being evaluated
    * @returns the physical property as a primitive JSON object
    */
   public async evaluateExpr(expr: Expression): Promise<TemplateResult<Value>> {

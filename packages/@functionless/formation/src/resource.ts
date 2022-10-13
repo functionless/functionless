@@ -6,8 +6,16 @@ import { compare } from "fast-json-patch";
 
 import { Expression } from "./expression";
 import type { IntrinsicFunction } from "./function";
-import { TemplateResolver } from "./resolve-template";
-import { cyrb53 } from "./util";
+import {
+  buildDependencyGraph,
+  getDirectDependents,
+  ResourceDependencyGraph,
+} from "./graph";
+import { TemplateResolver, TemplateResolverProps } from "./resolve-template";
+import { ResourceProviders } from "./resource-provider";
+import { ResourceDeploymentPlan, StackState } from "./stack";
+import { CloudFormationTemplate } from "./template";
+import { cyrb53, wait } from "./util";
 
 import { Value } from "./value";
 
@@ -121,6 +129,27 @@ export interface PhysicalProperties {
   [propertyName: string]: Value;
 }
 
+export interface ResourceProcessMetrics {
+  processTime?: number;
+  waitTime?: number;
+  retries?: number;
+}
+
+export interface Resource {
+  // the process which when complete, evaluates the resource
+  resource: Promise<PhysicalResource | undefined>;
+  operation: ResourceOperation;
+  logicalId: string;
+  metrics?: ResourceProcessMetrics;
+  start?: Date;
+  end?: Date;
+}
+
+export type CompleteResource = Omit<Resource, "resource"> & {
+  // the process which when complete, evaluates the resource
+  resource: PhysicalResource | undefined;
+};
+
 export type ResourceOperation =
   | "SKIP_UPDATE"
   | "UPDATE"
@@ -175,8 +204,399 @@ export async function computeResourceOperation(
   }
 }
 
+interface OperationResult {
+  retryWaitTime: number;
+  retries: number;
+  processTime: number;
+  resource: PhysicalResource | undefined;
+}
+
 export function logicalResourcePropertyHash(resource: LogicalResource) {
   return cyrb53(
     resource.Properties ? JSON.stringify(resource.Properties) : "{}"
   );
+}
+
+export class ResourceDeploymentPlanExecutor {
+  private readonly resources: {
+    [logicalId: string]: Resource;
+  };
+  private deploymentPadding: Promise<any>;
+  private templateResolver: TemplateResolver;
+  private previousDependencyGraph?: Promise<ResourceDependencyGraph>;
+
+  constructor(
+    private readonly deploymentPlan: ResourceDeploymentPlan,
+    private readonly template: CloudFormationTemplate,
+    private readonly resourceProviders: ResourceProviders,
+    templateResolverProps: Omit<
+      TemplateResolverProps,
+      "resourceReferenceResolver"
+    >,
+    private readonly previousState?: StackState
+  ) {
+    this.resources = {};
+    this.deploymentPadding = Promise.resolve();
+    // used by delete
+    this.previousDependencyGraph = this.previousState
+      ? buildDependencyGraph(this.previousState.template)
+      : undefined;
+    this.templateResolver = new TemplateResolver(template, {
+      ...templateResolverProps,
+      resourceReferenceResolver: {
+        resolve: async (logicalId) => {
+          return {
+            value: () => this.processAndGetResource(logicalId),
+          };
+        },
+      },
+    });
+  }
+
+  public async execute(): Promise<{
+    completedResources: CompleteResource[];
+    outputs: Record<string, string>;
+    errors: string[];
+  }> {
+    await Promise.allSettled(
+      this.deploymentPlan.topoSortedCreateUpdates.map((k) =>
+        this.processAndGetResource(k.resourceId)
+      )
+    );
+
+    if (this.deploymentPlan.topoSortedDeletes) {
+      await Promise.allSettled(
+        this.deploymentPlan.topoSortedDeletes.map((k) =>
+          this.processAndGetResource(k.resourceId)
+        )
+      );
+    }
+
+    const completed = await Promise.allSettled(
+      Object.values(this.resources).map(async (v) => ({
+        ...v,
+        resource: await v.resource,
+      }))
+    );
+
+    // resource providers can inject padding into the end of the deployment process
+    // TODO: add option to disable this
+    await this.deploymentPadding;
+
+    return {
+      errors: completed
+        .filter((r): r is PromiseRejectedResult => r.status === "rejected")
+        .map((r) => r.reason),
+      completedResources: completed
+        .filter(
+          (r): r is Exclude<typeof completed[number], PromiseRejectedResult> =>
+            r.status === "fulfilled"
+        )
+        .map((x) => x.value),
+      outputs: Object.fromEntries(
+        await Promise.all(
+          this.deploymentPlan.outputs.map(async (output) => [
+            output,
+            await (
+              await this.templateResolver.evaluateExpr(
+                this.template.Outputs?.[output]!
+              )
+            ).value(),
+          ])
+        )
+      ),
+    };
+  }
+
+  private async processAndGetResource(
+    logicalId: string
+  ): Promise<PhysicalResource | undefined> {
+    if (!(logicalId in this.deploymentPlan.resourceOperationMap)) {
+      throw new Error("Logical id missing from plan");
+    } else {
+      const resourceOperation =
+        this.deploymentPlan.resourceOperationMap[logicalId]!;
+      if (logicalId in this.resources) {
+        return this.resources[logicalId]!.resource;
+      } else if (resourceOperation === "SKIP_UPDATE") {
+        if (
+          !this.previousState ||
+          !(logicalId in this.previousState?.resources)
+        ) {
+          throw new Error(
+            `Logical id ${logicalId} is skipped, but is missing from previous state.`
+          );
+        }
+        // maybe pre-fill the resources object instead of on demand?
+        this.resources[logicalId] = {
+          resource: Promise.resolve(this.previousState.resources[logicalId]),
+          logicalId,
+          operation: resourceOperation,
+        };
+        return this.previousState.resources[logicalId];
+      } else if (resourceOperation === "DELETE") {
+        return this.deleteResource(logicalId);
+      } else {
+        return this.updateResource(logicalId, resourceOperation);
+      }
+    }
+  }
+
+  private startProcessResource(
+    logicalId: string,
+    operation: ResourceOperation,
+    operationTask: (start: Date) => Promise<OperationResult>
+  ): Resource {
+    if (this.resources[logicalId]) {
+      throw new Error("LogicalId started with two operations.");
+    } else {
+      const start = new Date();
+      return (this.resources[logicalId] = {
+        start,
+        resource: operationTask(start).then((x) => {
+          this.resources[logicalId] = {
+            ...this.resources[logicalId]!,
+            end: new Date(),
+            metrics: {
+              ...this.resources[logicalId]!.metrics,
+              processTime: x.processTime,
+              retries: x.retries,
+              waitTime: x.retryWaitTime,
+            },
+          };
+          return x.resource;
+        }),
+        operation,
+        logicalId,
+      });
+    }
+  }
+
+  /**
+   * Padding module is used to delay the completion of the deployment until after X time
+   * after a resource which may not be complete.
+   *
+   * Each call to this function will force the deployment to end at LEAST {@link paddingMillis}
+   * from this point in time.
+   *
+   * If the current padding is longer than the added padding, nothing will change, if the current padding is shorter, the process will
+   * end at least {@link paddingMillis} from this point in time.
+   */
+  private addDeploymentPadding(paddingMillis: number) {
+    this.deploymentPadding = this.deploymentPadding.then(() =>
+      wait(paddingMillis)
+    );
+  }
+
+  /**
+   * Deploy a {@link LogicalResource} to AWS.
+   *
+   * This Function will recursively deploy any dependent resoruces.
+   *
+   * TODO: intelligently support rollbacks.
+   *
+   * @param state the {@link UpdateState} being evaluated.
+   * @param logicalId Logical ID of the {@link LogicalResource} to deploy.
+   * @returns data describing the {@link PhysicalResource}.
+   */
+  private async updateResource(
+    logicalId: string,
+    operation: Extract<ResourceOperation, "UPDATE" | "MAYBE_UPDATE" | "CREATE">
+  ): Promise<PhysicalResource | undefined> {
+    console.log("Add UPDATE: " + logicalId);
+    const logicalResource = this.template?.Resources[logicalId];
+    const physicalResource = this.previousState?.resources[logicalId];
+    const update = physicalResource !== undefined;
+
+    if (!logicalResource) {
+      throw new Error("Missing logical resource to deploy: " + logicalId);
+    }
+
+    return this.startProcessResource(logicalId, operation, async () => {
+      const properties = logicalResource.Properties
+        ? Object.fromEntries(
+            await Promise.all(
+              Object.entries(logicalResource.Properties).map(
+                async ([propName, propExpr]) => [
+                  propName,
+                  await (
+                    await this.templateResolver.evaluateExpr(propExpr)
+                  ).value(),
+                ]
+              )
+            )
+          )
+        : {};
+
+      if (logicalResource.DependsOn) {
+        const results = await Promise.allSettled(
+          logicalResource.DependsOn.map((logicalDep) =>
+            this.processAndGetResource(logicalDep)
+          )
+        );
+        const failed = results.filter((s) => s.status === "rejected");
+        if (failed.length > 0) {
+          throw new Error(`Dependency of ${logicalId} failed, aborting.`);
+        }
+      }
+
+      const startTime = new Date();
+
+      const provider = this.resourceProviders.getHandler(logicalResource.Type);
+
+      // TODO support for delete.
+      // TODO let the providers override the attempts, delay, and backoff.
+      const retry = provider.retry;
+      const attemptsBase =
+        retry &&
+        retry.canRetry &&
+        (retry.canRetry === true ||
+          (Array.isArray(retry.canRetry) &&
+            retry.canRetry.includes(update ? "UPDATE" : "CREATE")))
+          ? 5
+          : 1;
+      let totalDelay = 0;
+      const backoff = 2;
+      const self = this;
+
+      return startWithRetry(attemptsBase, 1000);
+
+      async function startWithRetry(
+        attempts: number,
+        delay: number
+      ): Promise<OperationResult> {
+        try {
+          const result = await (update
+            ? provider.update({
+                definition: properties,
+                logicalId,
+                previous: physicalResource,
+                resourceType: logicalResource!.Type,
+              })
+            : provider.create({
+                definition: properties,
+                logicalId,
+                resourceType: logicalResource!.Type,
+              }));
+
+          const processTime = new Date().getTime() - startTime.getTime();
+
+          const resource = "resource" in result ? result.resource : result;
+          if ("resource" in result) {
+            if (result.paddingMillis) {
+              self.addDeploymentPadding(result.paddingMillis);
+            }
+          }
+          return {
+            processTime,
+            resource: {
+              ...resource,
+              // store a hash of the properties used to create the physical resource for later.
+              PropertiesHash: logicalResourcePropertyHash(logicalResource!),
+            },
+            retries: attemptsBase - attempts,
+            retryWaitTime: totalDelay,
+          };
+        } catch (err) {
+          if (attempts > 1) {
+            totalDelay += delay;
+            console.log(`Waiting for consistency (${delay}): ${logicalId}`);
+            await wait(delay);
+            return await startWithRetry(attempts - 1, delay * backoff);
+          } else {
+            console.error(err);
+            throw new Error(
+              `Error while ${update ? "updating" : "creating"} ${logicalId}: ${
+                (<any>err).message
+              }`
+            );
+          }
+        }
+      }
+    }).resource;
+  }
+
+  private async deleteResource(
+    logicalId: string
+  ): Promise<PhysicalResource | undefined> {
+    const process = async () => {
+      const logicalResource = this.previousState?.template.Resources[logicalId];
+      const physicalResource = this.previousState?.resources[logicalId];
+
+      if (physicalResource === undefined || logicalResource === undefined) {
+        // TODO: should we error here or continue optimistically?
+        throw new Error(`Resource does not exist: '${logicalId}'`);
+      }
+
+      const deletionPolicy = logicalResource.DeletionPolicy;
+      if (deletionPolicy === DeletionPolicy.Snapshot) {
+        throw new Error(`DeletionPolicy.Snapshot is not yet supported`);
+      }
+
+      if (
+        deletionPolicy === undefined ||
+        deletionPolicy === DeletionPolicy.Delete
+      ) {
+        const dependents = getDirectDependents(
+          { logicalId },
+          await this.previousDependencyGraph!
+        );
+
+        // ensure the dependents are being deleted...
+        if (
+          dependents.some(
+            (d) =>
+              d in this.deploymentPlan.resourceOperationMap &&
+              this.deploymentPlan.resourceOperationMap[d] !== "DELETE"
+          )
+        ) {
+          throw new Error(
+            "All dependents of a resource being deleted must also be deleted: " +
+              dependents.map(
+                (d) => `${d} - ${this.deploymentPlan.resourceOperationMap[d]}\n`
+              )
+          );
+        }
+
+        // wait for dependents to delete before deleting this resource
+        await Promise.all(dependents.map((d) => this.processAndGetResource(d)));
+
+        const provider = this.resourceProviders.getHandler(
+          logicalResource.Type
+        );
+
+        if (!physicalResource.PhysicalId) {
+          throw new Error("Resource much have a physical id to be deleted");
+        }
+
+        const result = await provider.delete({
+          logicalId,
+          physicalId: physicalResource.PhysicalId,
+          previous: physicalResource,
+          resourceType: logicalResource.Type,
+          snapshotDone: false,
+        });
+
+        if (result && result.paddingMillis) {
+          this.addDeploymentPadding(result.paddingMillis);
+        }
+        return;
+      } else if (deletionPolicy === DeletionPolicy.Retain) {
+        return physicalResource;
+      }
+
+      const __exhaustive: never = deletionPolicy;
+      return __exhaustive;
+    };
+
+    return this.startProcessResource(logicalId, "DELETE", async (start) => {
+      console.log("Add DELETE: " + logicalId);
+      return {
+        resource: await process(),
+        processTime: new Date().getTime() - start.getTime(),
+        retries: 0,
+        retryWaitTime: 0,
+      };
+    }).resource;
+  }
 }

@@ -1,5 +1,4 @@
 import { PseudoParameter } from "./pseudo-parameter";
-import type { Stack } from "./stack";
 import { CloudFormationTemplate } from "./template";
 import { guard } from "./util";
 import { TemplateResolver } from "./resolve-template";
@@ -7,8 +6,6 @@ import { TemplateResolver } from "./resolve-template";
 export interface ConditionReference {
   condition: string;
 }
-
-export const isConditionReference = guard<ConditionReference>("condition");
 
 export interface ParameterReference {
   parameter: string;
@@ -27,6 +24,11 @@ export interface PseudoParameterReference {
 }
 
 export const isResourceReference = guard<ResourceReference>("logicalId");
+export const isPseudoParameterReference =
+  guard<PseudoParameterReference>("pseudoParameter");
+export const isConditionReference = guard<ConditionReference>("condition");
+export const isMappingReference = guard<MappingReference>("mapping");
+export const isParameterReference = guard<ParameterReference>("parameter");
 
 export type Dependency =
   | ConditionReference
@@ -63,6 +65,10 @@ export interface ResourceDependencyGraph {
 
 export interface ConditionDependencyGraph {
   [logicalId: string]: ConditionDependency[];
+}
+
+export interface DependencyGraph {
+  [logicalId: string]: Dependency[];
 }
 
 /**
@@ -281,18 +287,29 @@ export function findCircularConditionReferences(
   );
 }
 
-/**
- * Return the `logicalId`s from {@link prevState} that do not exist in the {@link desiredState}.
- *
- * @param prevState the previous {@link CloudFormationTemplate} of a {@link Stack}.
- * @param desiredState the new (desired) {@link CloudFormationTemplate} for a {@link Stack}.
- * @returns an array of all `logicalId`s from {@link prevState} that do not exist in the {@link desiredState}.
- */
-export function discoverOrphanedDependencies(
-  prevState: CloudFormationTemplate,
-  desiredState: CloudFormationTemplate
+export function getDirectDependents<G extends DependencyGraph>(
+  dep: Dependency,
+  graph: G
 ): string[] {
-  const oldIds = new Set(Object.keys(prevState.Resources));
-  const newIds = new Set(Object.keys(desiredState.Resources));
-  return Array.from(oldIds).filter((oldId) => !newIds.has(oldId));
+  return Object.entries(graph)
+    .filter(([, deps]) =>
+      deps.find((d) => {
+        if (isResourceReference(d) && isResourceReference(dep)) {
+          return d.logicalId === dep.logicalId;
+        } else if (isConditionReference(d) && isConditionReference(dep)) {
+          return d.condition === dep.condition;
+        } else if (isParameterReference(d) && isParameterReference(dep)) {
+          return d.parameter === dep.parameter;
+        } else if (isMappingReference(d) && isMappingReference(dep)) {
+          return d.mapping === dep.mapping;
+        } else if (
+          isPseudoParameterReference(d) &&
+          isPseudoParameterReference(dep)
+        ) {
+          return d.pseudoParameter === dep.pseudoParameter;
+        }
+        return false;
+      })
+    )
+    .map(([k]) => k);
 }
