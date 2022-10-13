@@ -109,32 +109,32 @@ failedOrderQueue.messages().forEach(async (message) => {
   });
 });
 
-// processedOrderQueue.messages().forEach((order) => {
-//   console.log("processed order", order);
-// });
+processedOrderQueue.messages().forEach((order) => {
+  console.log("processed order", order);
+});
 
-// new StepFunction(
-//   stack,
-//   "SendMessageBatch",
-//   async (input: { messages: OrderPlacedEvent[] }) => {
-//     await orderQueue.sendMessageBatch({
-//       Entries: input.messages.map((message, idx) => ({
-//         Id: `${idx}`,
-//         MessageBody: message,
-//       })),
-//     });
-//   }
-// );
+new StepFunction(
+  stack,
+  "SendMessageBatch",
+  async (input: { messages: OrderPlacedEvent[] }) => {
+    await orderQueue.sendMessageBatch({
+      Entries: input.messages.map((message, idx) => ({
+        Id: `${idx}`,
+        MessageBody: message,
+      })),
+    });
+  }
+);
 
-// new StepFunction(
-//   stack,
-//   "SendMessage",
-//   async (input: { message: OrderPlacedEvent }) => {
-//     await orderQueue.sendMessage({
-//       MessageBody: input.message,
-//     });
-//   }
-// );
+new StepFunction(
+  stack,
+  "SendMessage",
+  async (input: { message: OrderPlacedEvent }) => {
+    await orderQueue.sendMessage({
+      MessageBody: input.message,
+    });
+  }
+);
 
 // TODO: implement retry logic once new intrinsics arrive
 // @see https://github.com/functionless/functionless/pull/468
@@ -205,11 +205,11 @@ new Function(stack, "SecretFunc", async (input: "get" | UserPass) => {
   }
 });
 
-new JsonSecret<UserPass>(stack, "JsonSecret2", {
-  secretStringValue: SecretValue.unsafePlainText(
-    JSON.stringify({
-      username: "sam",
-      password: "sam",
-    })
-  ),
-});
+// new JsonSecret<UserPass>(stack, "JsonSecret2", {
+//   secretStringValue: SecretValue.unsafePlainText(
+//     JSON.stringify({
+//       username: "sam",
+//       password: "sam",
+//     })
+//   ),
+// });

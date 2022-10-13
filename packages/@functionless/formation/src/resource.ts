@@ -180,6 +180,7 @@ export async function computeResourceOperation(
           {
             operation: "MAYBE_UPDATE",
             reason: `Has dependencies which may have updated: ${JSON.stringify(
+              // TODO: pretty print these
               result.unresolvedDependencies,
               null,
               4
@@ -221,7 +222,6 @@ export async function computeResourceOperation(
         previousPhysical.InputProperties
       );
       if (diff.length > 0) {
-        console.log(await result.value());
         // properties were resolved, but they changed.
         return {
           operation: "UPDATE",
@@ -430,9 +430,10 @@ export class ResourceDeploymentPlanExecutor {
    * end at least {@link paddingMillis} from this point in time.
    */
   private addDeploymentPadding(paddingMillis: number) {
-    this.deploymentPadding = this.deploymentPadding.then(() =>
-      wait(paddingMillis)
-    );
+    // start the padding time immediately
+    const waitter = wait(paddingMillis);
+    // join this waitter with the existing ones
+    this.deploymentPadding = this.deploymentPadding.then(() => waitter);
   }
 
   /**
@@ -450,7 +451,7 @@ export class ResourceDeploymentPlanExecutor {
     logicalId: string,
     operation: Extract<ResourceOperation, "UPDATE" | "MAYBE_UPDATE" | "CREATE">
   ): Promise<PhysicalResource | undefined> {
-    console.log("Add UPDATE: " + logicalId);
+    console.log(`Add ${operation}:  + ${logicalId}`);
     const logicalResource = this.template?.Resources[logicalId];
     const physicalResource = this.previousState?.resources[logicalId];
     const update = physicalResource !== undefined;
