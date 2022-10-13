@@ -79,6 +79,7 @@ program
   .argument("<template>")
   .option("-a, --asset-file <file>", "assets file")
   .option("-s, --stack-name <stack>", "stack name when not provided")
+  .option("-d, --detailed", "display detailed plan")
   .option(
     "-p, --previous <prev>",
     "location of the previous stack state to load"
@@ -87,6 +88,7 @@ program
     // TODO may not exist
     const templateStr = (await fs.readFile(t)).toString("utf-8");
     const template = JSON.parse(templateStr) as CloudFormationTemplate;
+    const detailed = options.detailed;
 
     const caller = await STS.send(new sts.GetCallerIdentityCommand({}));
 
@@ -122,28 +124,43 @@ program
     console.log(output.assetState);
     console.log(output.conditionValues);
 
-    const skippedResources = Object.entries(output.resourceOperationMap)
-      .filter(([, x]) => x === "SKIP_UPDATE")
-      .map((s) => s[0]);
+    const skippedResources = Object.entries(output.resourceOperationMap).filter(
+      ([, x]) => x.operation === "SKIP_UPDATE"
+    );
 
     const displayEntry: TopoDisplayEntry[] = [
       // Display is a more compact way
       ...skippedResources?.map((x) => ({
-        name: x,
+        name: x[0],
         level: 1,
-        additional: "SKIP_UPDATE",
+        additional:
+          detailed && x[1].reason
+            ? `${x[1].operation} (${x[1].reason})`
+            : x[1].operation,
       })),
-      ...(output.topoSortedCreateUpdates?.map((x) => ({
-        name: x.resourceId,
-        level: x.level,
-        additional: output.resourceOperationMap[x.resourceId],
-      })) ?? []),
+      ...(output.topoSortedCreateUpdates?.map((x) => {
+        const resourceOp = output.resourceOperationMap[x.resourceId];
+        return {
+          name: x.resourceId,
+          level: x.level,
+          additional:
+            detailed && resourceOp?.reason
+              ? `${resourceOp.operation} (${resourceOp.reason})`
+              : resourceOp?.operation,
+        };
+      }) ?? []),
       // TODO invert levels
-      ...(output.topoSortedDeletes?.map((x) => ({
-        name: x.resourceId,
-        level: x.level,
-        additional: "DELETE",
-      })) ?? []),
+      ...(output.topoSortedDeletes?.map((x) => {
+        const resourceOp = output.resourceOperationMap[x.resourceId];
+        return {
+          name: x.resourceId,
+          level: x.level,
+          additional:
+            detailed && resourceOp?.reason
+              ? `${resourceOp.operation} (${resourceOp.reason})`
+              : resourceOp?.operation,
+        };
+      }) ?? []),
     ];
 
     console.log("Plan:");

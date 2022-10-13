@@ -86,6 +86,12 @@ export interface StackProps {
   readonly sdkConfig?: any;
 }
 
+export interface ResourceDeploymentPlanEntry {
+  operation: ResourceOperation;
+  // TODO: update the reason to be data driven and format the text later.
+  reason?: string;
+}
+
 export interface ResourceDeploymentPlan {
   /**
    * A map of asset id to whether or not it already exists in the target account.
@@ -94,7 +100,7 @@ export interface ResourceDeploymentPlan {
   conditionValues: Record<string, boolean>;
   topoSortedCreateUpdates: TopoEntry[];
   topoSortedDeletes?: TopoEntry[];
-  resourceOperationMap: Record<string, ResourceOperation>;
+  resourceOperationMap: Record<string, ResourceDeploymentPlanEntry>;
   outputs: string[];
 }
 
@@ -423,11 +429,14 @@ ${metricsMessage}`);
               return undefined;
             }
           } else {
-            const operation = await computeResourceOperation(
-              templateResolver,
-              desiredState.Resources[logicalId]!,
-              this.state?.resources[logicalId]
-            );
+            const operation = (
+              await computeResourceOperation(
+                templateResolver,
+                desiredState.Resources[logicalId]!,
+                this.state?.resources[logicalId],
+                this.state?.template.Resources[logicalId]
+              )
+            ).operation;
             if (
               operation === "CREATE" ||
               operation === "UPDATE" ||
@@ -522,12 +531,16 @@ ${metricsMessage}`);
 
     // TODO: separate create (new), update (changed, dependency changed), and keep
     // TODO: support UNKNOWN when condition is not resolvable
-    const logicalIdsToKeepOrCreate = Object.entries(
+    const logicalIdsWithConditionFalse = Object.entries(
       desiredState?.Resources ?? {}
     )
       // do not create when the condition is false.
-      .filter(([, v]) => (v.Condition ? conditionValues[v.Condition] : true))
+      .filter(([, v]) => v.Condition && !conditionValues[v.Condition])
       .map(([key]) => key);
+
+    const logicalIdsToKeepOrCreate = Object.keys(desiredState?.Resources ?? {})
+      // do not create when the condition is false.
+      .filter((k) => !logicalIdsWithConditionFalse.includes(k));
 
     // TOOD: decorate with WHY (condition vs missing)
     const logicalIdsToDelete = [
@@ -548,24 +561,34 @@ ${metricsMessage}`);
 
     // check for add/update/delete
 
-    const resourceOperationMap = Object.fromEntries(
-      await Promise.all([
-        ...logicalIdsToKeepOrCreate.map(async (logicalId) => {
-          return [
-            logicalId,
-            await computeResourceOperation(
-              templateResolver,
-              desiredState.Resources[logicalId]!,
-              this.state?.resources[logicalId]
-            ),
-          ] as const;
-        }),
-        ...logicalIdsToDelete.map((id) => [id, "DELETE"]),
-      ])
-    );
+    const resourceOperationMap: ResourceDeploymentPlan["resourceOperationMap"] =
+      Object.fromEntries(
+        await Promise.all([
+          ...logicalIdsToKeepOrCreate.map(async (logicalId) => {
+            return [
+              logicalId,
+              await computeResourceOperation(
+                templateResolver,
+                desiredState.Resources[logicalId]!,
+                this.state?.resources[logicalId],
+                this.state?.template.Resources[logicalId]
+              ),
+            ] as const;
+          }),
+          ...logicalIdsToDelete.map((id) => [
+            id,
+            {
+              operation: "DELETE",
+              reason: logicalIdsWithConditionFalse.includes(id)
+                ? "Resource condition was false"
+                : "Resource does not exist in the new template",
+            },
+          ]),
+        ])
+      );
 
     const logicalIdsToSkipUpdate = Object.entries(resourceOperationMap)
-      .filter(([, op]) => op === "SKIP_UPDATE")
+      .filter(([, op]) => op.operation === "SKIP_UPDATE")
       .map(([k]) => k);
 
     const logicalIdsToCreateOrUpdate = logicalIdsToKeepOrCreate.filter(
@@ -609,7 +632,9 @@ ${metricsMessage}`);
     return {
       assetState: {},
       conditionValues: {},
-      resourceOperationMap: Object.fromEntries(ids.map((id) => [id, "DELETE"])),
+      resourceOperationMap: Object.fromEntries(
+        ids.map((id) => [id, { operation: "DELETE" }])
+      ),
       topoSortedCreateUpdates: [],
       topoSortedDeletes: deleteTopo,
       outputs: Object.keys(state.template.Outputs ?? {}),
@@ -655,16 +680,18 @@ ${metricsMessage}`);
     rules: Rules,
     templateResolver: TemplateResolver
   ) {
-    const errors = await Promise.all(
-      Object.entries(rules).flatMap(async ([ruleId, rule]) =>
-        (
-          await this.evaluateRule(rule, templateResolver)
-        ).map(
-          (errorMessage) =>
-            `Rule '${ruleId}' failed validation: ${errorMessage}`
+    const errors = (
+      await Promise.all(
+        Object.entries(rules).map(async ([ruleId, rule]) =>
+          (
+            await this.evaluateRule(rule, templateResolver)
+          ).map(
+            (errorMessage) =>
+              `Rule '${ruleId}' failed validation: ${errorMessage}`
+          )
         )
       )
-    );
+    ).flat();
 
     if (errors.length > 0) {
       throw new Error(errors.join("\n"));

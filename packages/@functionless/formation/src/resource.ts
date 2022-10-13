@@ -2,7 +2,7 @@ import type {
   CreateResourceCommand,
   UpdateResourceCommand,
 } from "@aws-sdk/client-cloudcontrol";
-import { compare } from "fast-json-patch";
+import { compare, Operation } from "fast-json-patch";
 
 import { Expression } from "./expression";
 import type { IntrinsicFunction } from "./function";
@@ -160,11 +160,12 @@ export type ResourceOperation =
 export async function computeResourceOperation(
   templateResolver: TemplateResolver,
   logicalResource: LogicalResource,
-  previous?: PhysicalResource
-): Promise<ResourceOperation> {
+  previousPhysical?: PhysicalResource,
+  previousLogical?: LogicalResource
+): Promise<{ operation: ResourceOperation; reason?: string }> {
   // resource did not exist before, will need to be created
-  if (!previous) {
-    return "CREATE";
+  if (!previousPhysical) {
+    return { operation: "CREATE" };
   } else {
     const result = logicalResource.Properties
       ? await templateResolver.evaluateExpr(logicalResource.Properties)
@@ -174,34 +175,80 @@ export async function computeResourceOperation(
       result.unresolvedDependencies.length > 0
     ) {
       return logicalResourcePropertyHash(logicalResource) ===
-        previous.PropertiesHash
+        previousPhysical.PropertiesHash
         ? // A dependency is unresolved, but the logical properties are unchanged
-          "MAYBE_UPDATE"
+          {
+            operation: "MAYBE_UPDATE",
+            reason: `Has dependencies which may have updated: ${JSON.stringify(
+              result.unresolvedDependencies,
+              null,
+              4
+            )}.`,
+          }
         : // A dependency is unresolved and the inputs changes.
-          "UPDATE";
+          {
+            operation: "UPDATE",
+            reason: `Has been explicitly updated ${
+              previousLogical
+                ? `(${displayDiff(compare(logicalResource, previousLogical))})`
+                : ""
+            } and has dependencies which may have updated: ${JSON.stringify(
+              result.unresolvedDependencies,
+              null,
+              4
+            )}.`,
+          };
     } else if (!result) {
       if (
-        !previous.InputProperties ||
-        Object.keys(previous.InputProperties).length === 0
+        !previousPhysical.InputProperties ||
+        Object.keys(previousPhysical.InputProperties).length === 0
       ) {
-        return "SKIP_UPDATE";
+        return {
+          operation: "SKIP_UPDATE",
+          reason: "Input properties and output properties are undefined.",
+        };
       } else {
         // properties is undefined or empty for input and the previous properties were not undefined
-        return "UPDATE";
+        return {
+          operation: "UPDATE",
+          reason:
+            "New resource has no properties, but the previous resource has properties.",
+        };
       }
     } else {
       const diff = compare(
         (await result.value()) as object,
-        previous.InputProperties
+        previousPhysical.InputProperties
       );
       if (diff.length > 0) {
+        console.log(await result.value());
         // properties were resolved, but they changed.
-        return "UPDATE";
+        return {
+          operation: "UPDATE",
+          reason: `New properties were resolved and have changed (${displayDiff(
+            diff
+          )})`,
+        };
       }
       // properties were resolved and there were no difference between the previous and desired state
-      return "SKIP_UPDATE";
+      return {
+        operation: "SKIP_UPDATE",
+        reason:
+          "New properties were resolved and has not changed from the previous deployment.",
+      };
     }
   }
+}
+
+function displayDiff(ops: Operation[]) {
+  return ops
+    .map(
+      (c) =>
+        `${c.op}: ${c.path} ${
+          c.op === "replace" || c.op === "add" ? c.value : ""
+        }`
+    )
+    .join("\n");
 }
 
 interface OperationResult {
@@ -315,7 +362,7 @@ export class ResourceDeploymentPlanExecutor {
       throw new Error("Logical id missing from plan");
     } else {
       const resourceOperation =
-        this.deploymentPlan.resourceOperationMap[logicalId]!;
+        this.deploymentPlan.resourceOperationMap[logicalId]!.operation;
       if (logicalId in this.resources) {
         return this.resources[logicalId]!.resource;
       } else if (resourceOperation === "SKIP_UPDATE") {
@@ -547,7 +594,8 @@ export class ResourceDeploymentPlanExecutor {
           dependents.some(
             (d) =>
               d in this.deploymentPlan.resourceOperationMap &&
-              this.deploymentPlan.resourceOperationMap[d] !== "DELETE"
+              this.deploymentPlan.resourceOperationMap[d]?.operation !==
+                "DELETE"
           )
         ) {
           throw new Error(
