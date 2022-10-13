@@ -133,38 +133,42 @@ program
       ...skippedResources?.map((x) => ({
         name: x[0],
         level: 1,
-        additional:
-          detailed && x[1].reason
-            ? `${x[1].operation} (${x[1].reason})`
-            : x[1].operation,
+        noColor: true,
+        additional: detailed
+          ? [x[1].operation, x[1].reason ?? ""]
+          : [x[1].operation],
       })),
       ...(output.topoSortedCreateUpdates?.map((x) => {
-        const resourceOp = output.resourceOperationMap[x.resourceId];
+        const resourceOp = output.resourceOperationMap[x.resourceId]!;
         return {
           name: x.resourceId,
           level: x.level,
-          additional:
-            detailed && resourceOp?.reason
-              ? `${resourceOp.operation} (${resourceOp.reason})`
-              : resourceOp?.operation,
+          additional: detailed
+            ? [resourceOp.operation, resourceOp.reason ?? ""]
+            : [resourceOp?.operation],
         };
       }) ?? []),
       // TODO invert levels
       ...(output.topoSortedDeletes?.map((x) => {
-        const resourceOp = output.resourceOperationMap[x.resourceId];
+        const resourceOp = output.resourceOperationMap[x.resourceId]!;
         return {
           name: x.resourceId,
           level: x.level,
-          additional:
-            detailed && resourceOp?.reason
-              ? `${resourceOp.operation} (${resourceOp.reason})`
-              : resourceOp?.operation,
+          additional: detailed
+            ? [resourceOp.operation, resourceOp.reason ?? ""]
+            : [resourceOp?.operation],
         };
       }) ?? []),
     ];
 
     console.log("Plan:");
-    console.log(displayTopoEntries(displayEntry, true));
+    console.log(
+      displayTopoEntries(
+        displayEntry,
+        true,
+        detailed ? ["Operation", "Reason"] : ["Operation"]
+      )
+    );
 
     console.log(`Complete: ${new Date().getTime() - start.getTime()}ms`);
   });

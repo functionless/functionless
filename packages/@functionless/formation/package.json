@@ -16,6 +16,7 @@
   "devDependencies": {
     "@types/jest": "^29.0.3",
     "@types/node": "^16",
+    "@types/cli-table": "^0.3.1",
     "@typescript-eslint/eslint-plugin": "^5",
     "@typescript-eslint/parser": "^5",
     "eslint": "^8",
@@ -47,6 +48,7 @@
     "cdk-assets": "^2.43.1",
     "chalk": "4",
     "commander": "*",
+    "cli-table": "^0.3.11",
     "fast-json-patch": "^3.1.0",
     "short-uuid": "^4.2.0"
   },

@@ -126,15 +126,15 @@ new StepFunction(
   }
 );
 
-new StepFunction(
-  stack,
-  "SendMessage",
-  async (input: { message: OrderPlacedEvent }) => {
-    await orderQueue.sendMessage({
-      MessageBody: input.message,
-    });
-  }
-);
+// new StepFunction(
+//   stack,
+//   "SendMessage",
+//   async (input: { message: OrderPlacedEvent }) => {
+//     await orderQueue.sendMessage({
+//       MessageBody: input.message,
+//     });
+//   }
+// );
 
 // TODO: implement retry logic once new intrinsics arrive
 // @see https://github.com/functionless/functionless/pull/468
@@ -188,7 +188,7 @@ export interface UserPass {
 const secret = new JsonSecret<UserPass>(stack, "JsonSecret", {
   secretStringValue: SecretValue.unsafePlainText(
     JSON.stringify({
-      username: "sam",
+      username: "sam2",
       password: "sam",
     })
   ),

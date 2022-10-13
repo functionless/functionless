@@ -1,6 +1,7 @@
 import { buildDependencyGraph, topoSortWithLevels } from "./graph";
 import { CloudFormationTemplate } from "./template";
 import chalk, { Color } from "chalk";
+import Table from "cli-table";
 
 const COLORS: typeof Color[] = [
   "red",
@@ -29,21 +30,28 @@ export async function displayTopoOrder(
 export interface TopoDisplayEntry {
   name: string;
   level: number;
-  additional?: string;
+  noColor?: boolean;
+  additional?: string[];
 }
 
 export function displayTopoEntries(
   entries: TopoDisplayEntry[],
-  color?: boolean
+  color?: boolean,
+  additionalHeaders?: string[]
 ) {
-  return entries
-    .map(({ name, level, additional }) => {
-      const l = `${[...new Array(level)].join("  ")}${name} - ${additional}`;
-      if (color) {
-        return chalk[COLORS[(level - 1) % COLORS.length]!](l);
+  return new Table({
+    head: ["Resource", ...(additionalHeaders ?? [])],
+    chars: { mid: "", "left-mid": "", "mid-mid": "", "right-mid": "" },
+    rows: entries.map(({ name, level, additional, noColor }) => {
+      const l = `${[...new Array(level)].join("  ")}${name}`;
+      if (!noColor && color) {
+        return [
+          chalk[COLORS[(level - 1) % COLORS.length]!](l),
+          ...(additional ?? []),
+        ];
       } else {
-        return l;
+        return [l, ...(additional ?? [])];
       }
-    })
-    .join("\n");
+    }),
+  }).toString();
 }
