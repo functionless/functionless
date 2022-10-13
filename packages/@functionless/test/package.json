@@ -16,6 +16,9 @@
     "dev": "tsc -w"
   },
   "dependencies": {
+    "@aws-cdk/cloud-assembly-schema": "2.44.0",
+    "@aws-cdk/cloudformation-diff": "2.44.0",
+    "@aws-cdk/cx-api": "2.44.0",
     "@functionless/asl-graph": "*",
     "@functionless/aws-sdk": "*",
     "@functionless/aws-appsync-constructs": "*",
