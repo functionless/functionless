@@ -4,7 +4,7 @@ on:
   workflow_call: {}
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     env:
       CI: "true"
       CLEAN_UP_STACK: "1"
@@ -16,7 +16,7 @@ jobs:
   test:
     needs: [build]
     concurrency: pr-test-${{ github.ref }}
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     permissions:
       contents: write
       id-token: write
@@ -44,7 +44,7 @@ jobs:
 
   website-preview:
     needs: [build]
-    runs-on: ubuntu-latest
+    runs-on: macos-latest
     permissions:
       issues: write
       pull-requests: write
