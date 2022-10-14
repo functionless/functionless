@@ -18,7 +18,7 @@
     "doctor:references": "node ./scripts/doctor-ts-references.mjs",
     "doctor": "yarn doctor:references && yarn doctor:readmes && yarn doctor:aggregate-packages",
     "lint": "turbo run lint",
-    "prepare": "husky install && yarn doctor",
+    "prepare": "husky install",
     "test:aws": "AWS_SDK_LOAD_CONFIG=1 TEST_DEPLOY_TARGET=AWS yarn test",
     "test:localstack": "TEST_DEPLOY_TARGET=LOCALSTACK yarn test",
     "test": "turbo run test",

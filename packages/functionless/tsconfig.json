@@ -91,9 +91,6 @@
       "path": "../@functionless/swc-config"
     },
     {
-      "path": "../@functionless/test"
-    },
-    {
       "path": "../@functionless/util"
     },
     {
