@@ -12,6 +12,7 @@
     "typecheck": "tsc -b",
     "build": "turbo run build",
     "test": "turbo run test",
+    "test:smoke": "turbo run test:smoke",
     "prepare": "husky install",
     "dev": "turbo run dev --parallel"
   },
