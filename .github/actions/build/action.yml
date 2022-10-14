@@ -22,6 +22,7 @@ runs:
 
     - name: Ensure no changes
       run: git diff --exit-code
+      shell: bash
 
     # Load turbo cache after yarn install so ./node_modules/.cache doesn't get blown away.
     - uses: actions/cache@v3
