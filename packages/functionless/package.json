@@ -1,6 +1,6 @@
 {
   "name": "functionless",
-  "version": "0.28.0",
+  "version": "0.28.2",
   "dependencies": {
     "@functionless/asl": "^0.28.0",
     "@functionless/ast": "^0.28.0",
