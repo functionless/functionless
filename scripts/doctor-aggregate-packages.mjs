@@ -68,6 +68,7 @@ async function patch(pkgJsonPath, pkgJson, packages, dependenciesKey) {
     ...(pkgJson[dependenciesKey] ?? {}),
     ...Object.fromEntries(
       packages
+        .filter((pkg) => pkg.private !== true)
         .sort((pkgA, pkgB) => pkgA.name < pkgB.name)
         .map((pkg) => {
           return [pkg.name, pkgJson[dependenciesKey][pkg.name] ?? "*"];

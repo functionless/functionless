@@ -121,9 +121,6 @@
       "path": "../../packages/@functionless/swc-config"
     },
     {
-      "path": "../../packages/@functionless/test"
-    },
-    {
       "path": "../../packages/@functionless/util"
     },
     {

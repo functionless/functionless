@@ -33,7 +33,6 @@
     "@functionless/serde": "^0.28.0",
     "@functionless/serialize-closure": "^0.28.0",
     "@functionless/swc-config": "^0.28.0",
-    "@functionless/test": "*",
     "@functionless/util": "^0.28.0",
     "@functionless/validate": "^0.28.0",
     "@functionless/vtl": "^0.28.0"
