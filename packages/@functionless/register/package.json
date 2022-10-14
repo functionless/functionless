@@ -1,6 +1,6 @@
 {
   "name": "@functionless/register",
-  "version": "0.27.0",
+  "version": "0.28.0",
   "main": "./lib/index.js",
   "types": "./lib/index.js",
   "files": [
@@ -12,7 +12,7 @@
   },
   "dependencies": {
     "@functionless/ast-reflection": "^0.3.1",
-    "@functionless/swc-config": "^0.27.0",
+    "@functionless/swc-config": "^0.28.0",
     "@swc/register": "^0.1.10"
   },
   "devDependencies": {

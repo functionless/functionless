@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-sdk",
-  "version": "0.0.0",
+  "version": "0.28.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
@@ -12,13 +12,13 @@
     "aws-sdk": "^2"
   },
   "dependencies": {
-    "@functionless/asl": "*",
-    "@functionless/ast": "^0.27.2",
-    "@functionless/aws-lambda": "*",
-    "@functionless/aws-lambda-constructs": "*",
-    "@functionless/aws-events": "*",
-    "@functionless/aws-events-constructs": "*",
-    "@functionless/error-code": "*"
+    "@functionless/asl": "^0.28.0",
+    "@functionless/ast": "^0.28.0",
+    "@functionless/aws-events": "^0.28.0",
+    "@functionless/aws-events-constructs": "^0.28.0",
+    "@functionless/aws-lambda": "^0.28.0",
+    "@functionless/aws-lambda-constructs": "^0.28.0",
+    "@functionless/error-code": "^0.28.0"
   },
   "devDependencies": {
     "@types/node": "^16",

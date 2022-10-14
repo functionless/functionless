@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-apigateway-constructs",
-  "version": "0.0.0",
+  "version": "0.28.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -14,12 +14,12 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.44.0",
-    "@functionless/ast": "^0.27.2",
-    "@functionless/aws-apigateway": "*",
-    "@functionless/aws-lambda-constructs": "*",
-    "@functionless/error-code": "*",
-    "@functionless/vtl": "*"
+    "@functionless/ast": "^0.28.0",
+    "@functionless/aws-apigateway": "^0.28.0",
+    "@functionless/aws-lambda-constructs": "^0.28.0",
+    "@functionless/error-code": "^0.28.0",
+    "@functionless/vtl": "^0.28.0",
+    "aws-cdk-lib": "2.44.0"
   },
   "devDependencies": {
     "functionless-build-utils": "*",

@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-appsync-constructs",
-  "version": "0.0.0",
+  "version": "0.28.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -14,12 +14,12 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/ast": "^0.27.0",
-    "@functionless/aws-appsync": "*",
-    "@functionless/aws-lambda": "*",
-    "@functionless/aws-util": "^0.27.2",
-    "@functionless/util": "^0.27.2",
-    "@functionless/vtl": "*"
+    "@functionless/ast": "^0.28.0",
+    "@functionless/aws-appsync": "^0.28.0",
+    "@functionless/aws-lambda": "^0.28.0",
+    "@functionless/aws-util": "^0.28.0",
+    "@functionless/util": "^0.28.0",
+    "@functionless/vtl": "^0.28.0"
   },
   "devDependencies": {
     "functionless-build-utils": "*",

@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-sqs",
-  "version": "0.0.0",
+  "version": "0.28.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -14,8 +14,8 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/ast": "*",
-    "@functionless/aws-lambda": "*",
+    "@functionless/ast": "^0.28.0",
+    "@functionless/aws-lambda": "^0.28.0",
     "aws-sdk": "^2"
   },
   "devDependencies": {

@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-apigateway",
-  "version": "0.0.0",
+  "version": "0.28.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -14,17 +14,17 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "aws-cdk-lib": "2.44.0",
-    "@functionless/ast": "^0.27.2",
-    "@functionless/aws-lambda": "*",
-    "@functionless/aws-stepfunctions": "*",
-    "@functionless/vtl": "*"
+    "@functionless/ast": "^0.28.0",
+    "@functionless/aws-lambda": "^0.28.0",
+    "@functionless/aws-stepfunctions": "^0.28.0",
+    "@functionless/vtl": "^0.28.0",
+    "aws-cdk-lib": "2.44.0"
   },
   "devDependencies": {
     "functionless-build-utils": "*",
-    "typescript": "^4.8.3",
     "typedoc": "^0.23.16",
-    "typedoc-plugin-markdown": "^3.13.6"
+    "typedoc-plugin-markdown": "^3.13.6",
+    "typescript": "^4.8.3"
   },
   "publishConfig": {
     "access": "public"

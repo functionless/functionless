@@ -1,6 +1,6 @@
 {
   "name": "@functionless/util",
-  "version": "0.27.2",
+  "version": "0.28.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {

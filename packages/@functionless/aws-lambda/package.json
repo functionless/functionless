@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-lambda",
-  "version": "0.0.0",
+  "version": "0.28.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -14,18 +14,18 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/ast": "^0.27.2",
-    "@functionless/aws-util": "^0.27.2",
-    "@functionless/serde": "*",
-    "@functionless/util": "^0.27.2",
+    "@functionless/ast": "^0.28.0",
+    "@functionless/aws-util": "^0.28.0",
+    "@functionless/serde": "^0.28.0",
+    "@functionless/util": "^0.28.0",
     "aws-sdk": "^2"
   },
   "peerDependencies": {
     "aws-cdk-lib": "^2.44.0"
   },
   "devDependencies": {
-    "aws-cdk-lib": "2.44.0",
     "@types/node": "^16",
+    "aws-cdk-lib": "2.44.0",
     "functionless-build-utils": "*",
     "typescript": "^4.8.3"
   },
