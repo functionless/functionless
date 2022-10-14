@@ -4,9 +4,7 @@
   "version": "0.0.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
-  "files": [
-    "lib"
-  ],
+  "files": ["lib"],
   "scripts": {
     "typecheck": "tsc --noEmit",
     "dev": "tsc --watch",
@@ -32,10 +30,7 @@
   },
   "jest": {
     "transform": {
-      "^.+\\.(t|j)sx?$": [
-        "@functionless/jest",
-        {}
-      ]
+      "^.+\\.(t|j)sx?$": ["@functionless/jest", {}]
     }
   }
 }
