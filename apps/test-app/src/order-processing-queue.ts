@@ -113,18 +113,18 @@ processedOrderQueue.messages().forEach((order) => {
   console.log("processed order", order);
 });
 
-new StepFunction(
-  stack,
-  "SendMessageBatch",
-  async (input: { messages: OrderPlacedEvent[] }) => {
-    await orderQueue.sendMessageBatch({
-      Entries: input.messages.map((message, idx) => ({
-        Id: `${idx}`,
-        MessageBody: message,
-      })),
-    });
-  }
-);
+// new StepFunction(
+//   stack,
+//   "SendMessageBatch",
+//   async (input: { messages: OrderPlacedEvent[] }) => {
+//     await orderQueue.sendMessageBatch({
+//       Entries: input.messages.map((message, idx) => ({
+//         Id: `${idx}`,
+//         MessageBody: message,
+//       })),
+//     });
+//   }
+// );
 
 // new StepFunction(
 //   stack,
@@ -205,11 +205,11 @@ new Function(stack, "SecretFunc", async (input: "get" | UserPass) => {
   }
 });
 
-// new JsonSecret<UserPass>(stack, "JsonSecret2", {
-//   secretStringValue: SecretValue.unsafePlainText(
-//     JSON.stringify({
-//       username: "sam",
-//       password: "sam",
-//     })
-//   ),
-// });
+new JsonSecret<UserPass>(stack, "JsonSecret2", {
+  secretStringValue: SecretValue.unsafePlainText(
+    JSON.stringify({
+      username: "sam",
+      password: "sam",
+    })
+  ),
+});
