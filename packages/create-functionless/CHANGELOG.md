@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.28.1](https://github.com/functionless/functionless/compare/v0.28.0...v0.28.1) (2022-10-14)
+
+### Bug Fixes
+
+- esbuild should output to lib ([#564](https://github.com/functionless/functionless/issues/564)) ([1e7689e](https://github.com/functionless/functionless/commit/1e7689e5604ae6d6568b49ef41425755496b642f))
+
 # [0.28.0](https://github.com/functionless/functionless/compare/v0.27.4...v0.28.0) (2022-10-14)
 
 ### chore
