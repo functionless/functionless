@@ -10,7 +10,7 @@
     "create-functionless": "./lib/index.js"
   },
   "scripts": {
-    "build": "esbuild --bundle src/index.ts --outfile=dist/index.js --platform=node",
+    "build": "esbuild --bundle src/index.ts --outfile=lib/index.js --platform=node",
     "clean:build": "rm -rf lib dist tsconfig.tsbuildinfo",
     "test:smoke": "./bin/test.sh",
     "typecheck": "tsc --noEmit"
