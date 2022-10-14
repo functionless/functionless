@@ -21,7 +21,6 @@ const config = {
   favicon: "img/logo/logo_dark_icon.svg",
   organizationName: "functionless",
   projectName: "functionless",
-
   // see: https://www.npmjs.com/package/docusaurus-plugin-typedoc
   // options: https://github.com/tgreyuk/typedoc-plugin-markdown/blob/master/packages/docusaurus-plugin-typedoc/src/options.ts#L3-L26
   plugins: [
@@ -61,7 +60,7 @@ const config = {
   presets: [
     [
       "classic",
-      /** @type {import('@docusaurus/preset-classic').Options} */
+      /** @type {import('@docusaurus/theme-classic').Options} */
       ({
         docs: {
           sidebarPath: require.resolve("./sidebars.js"),
@@ -81,7 +80,7 @@ const config = {
     ],
   ],
   themeConfig:
-    /** @type {import('@docusaurus/preset-classic').ThemeConfig} */
+    /** @type {import('@docusaurus/types').ThemeConfig} */
     ({
       // default page image, override using frontMatter `image`
       // https://docusaurus.io/docs/api/plugins/@docusaurus/plugin-content-docs#markdown-front-matter
@@ -136,30 +135,29 @@ const config = {
         ],
       },
       footer: {},
-      algolia: {
-        // The application ID provided by Algolia
-        appId: "YOUR_APP_ID",
-
-        // Public API key: it is safe to commit it
-        apiKey: "YOUR_SEARCH_API_KEY",
-
-        indexName: "YOUR_INDEX_NAME",
-
-        // Optional: see doc section below
-        contextualSearch: true,
-
-        // Optional: Specify domains where the navigation should occur through window.location instead on history.push. Useful when our Algolia config crawls multiple documentation sites and we want to navigate with window.location.href to them.
-        externalUrlRegex: "[]",
-
-        // Optional: Algolia search parameters
-        searchParameters: {},
-
-        // Optional: path for search page that enabled by default (`false` to disable it)
-        searchPagePath: "search",
-
-        //... other Algolia params
+    }),
+  webpack: {
+    jsLoader: (isServer) => ({
+      loader: require.resolve("swc-loader"),
+      options: {
+        jsc: {
+          parser: {
+            syntax: "typescript",
+            tsx: true,
+          },
+          target: "es2019",
+          transform: {
+            react: {
+              runtime: "automatic",
+            },
+          },
+        },
+        module: {
+          type: isServer ? "commonjs" : "es6",
+        },
       },
     }),
+  },
 };
 
 module.exports = config;
