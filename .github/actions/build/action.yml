@@ -14,22 +14,28 @@ runs:
         path: ${{ steps.yarn-cache-dir-path.outputs.dir }}
         key: ${{ runner.os }}-yarn-${{ hashFiles('**/yarn.lock') }}
         restore-keys: |
-          ${{ runner.os }}-yarn-
-
-    - uses: actions/cache@v3
-      id: turbo-cache
-      with:
-        path: .turbo-cache
-        key: turbo-${{ github.sha }}
-        restore-keys: |
-          turbo-
+          ${{ runner.os }}-yarn
 
     - name: Install dependencies
       run: yarn install --frozen-lockfile
       shell: bash
 
+    # Load turbo cache after yarn install so ./node_modules/.cache doesn't get blown away.
+    - uses: actions/cache@v3
+      id: turbo-cache
+      with:
+        path: ./node_modules/.cache/turbo
+        key: turbo-${{ github.job }}-${{ github.sha }}
+        # - Check the test cache first since it also contains the build cache.
+        # - Fallback to the build cache if no test cache has been generated yet.
+        # - If neither is found, fall back to whatever is available.
+        restore-keys: |
+          turbo-test-
+          turbo-build-
+          turbo-
+
     - name: Build
-      run: yarn build --cache-dir=.turbo-cache
+      run: yarn build
       env:
         NODE_OPTIONS: --max-old-space-size=6144
       shell: bash

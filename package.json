@@ -23,7 +23,8 @@
     "test:localstack": "TEST_DEPLOY_TARGET=LOCALSTACK yarn test",
     "test": "turbo run test",
     "typecheck": "tsc -b",
-    "watch": "tsc -b -w"
+    "watch": "tsc -b -w",
+    "test:smoke": "turbo run test:smoke"
   },
   "workspaces": {
     "packages": [

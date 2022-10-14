@@ -4,7 +4,7 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "prepare": "ts-node -p ./tsconfig.gen.json ./scripts/sdk-gen.ts",
+    "build": "ts-node -p ./scripts/sdk-gen.ts",
     "typecheck": "tsc --noEmit",
     "test": "echo no-op"
   },
