@@ -8,12 +8,19 @@
       "dependsOn": ["^build"]
     },
     "lint": {},
+    "clean:build": {
+      "cache": false
+    },
     "build": {
       "dependsOn": ["^build"],
       "outputs": ["lib/**"]
     },
-    "build:website": {
+    "build:docs": {
       "dependsOn": ["^build"],
+      "outputs": ["docs/**"]
+    },
+    "build:website": {
+      "dependsOn": ["^build:docs"],
       "outputs": ["build/**"]
     },
     "test": {

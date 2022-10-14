@@ -1,0 +1,36 @@
+{
+  "name": "@functionless/aws-sdk",
+  "version": "0.0.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build": "ts-node -p ./scripts/sdk-gen.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "echo no-op"
+  },
+  "peerDependencies": {
+    "aws-sdk": "^2"
+  },
+  "dependencies": {
+    "@functionless/asl": "*",
+    "@functionless/ast": "^0.27.2",
+    "@functionless/aws-lambda": "*",
+    "@functionless/aws-lambda-constructs": "*",
+    "@functionless/aws-events": "*",
+    "@functionless/aws-events-constructs": "*",
+    "@functionless/error-code": "*"
+  },
+  "devDependencies": {
+    "@types/node": "^16",
+    "aws-sdk": "^2",
+    "functionless-build-utils": "*",
+    "typescript": "^4.8.3"
+  },
+  "files": [
+    "lib",
+    "docs"
+  ],
+  "publishConfig": {
+    "access": "public"
+  }
+}

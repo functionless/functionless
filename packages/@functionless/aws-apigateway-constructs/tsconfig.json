@@ -1,0 +1,31 @@
+{
+  "extends": "../../../tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "lib",
+    "declaration": true,
+    "inlineSourceMap": true,
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "exclude": ["lib", "test", "node_modules"],
+  "references": [
+    {
+      "path": "../../functionless-build-utils"
+    },
+    {
+      "path": "../ast"
+    },
+    {
+      "path": "../aws-apigateway"
+    },
+    {
+      "path": "../aws-lambda-constructs"
+    },
+    {
+      "path": "../error-code"
+    },
+    {
+      "path": "../vtl"
+    }
+  ]
+}

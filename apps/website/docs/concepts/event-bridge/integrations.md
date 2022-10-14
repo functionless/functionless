@@ -81,7 +81,7 @@ Limitation: [Events passed to the bus in a step function must one or more litera
 
 ```ts
 const bus = new EventBus();
-new Lambda(stack, "sfn", async () => {
+new Function(stack, "sfn", async () => {
   bus.putEvents({
     source: "myFunction",
     "detail-type": "someType",

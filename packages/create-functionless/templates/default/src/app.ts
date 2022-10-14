@@ -1,5 +1,6 @@
 import { App, Stack } from "aws-cdk-lib";
-import { Function, StepFunction } from "functionless";
+import { Function } from "@functionless/aws-lambda-constructs";
+import { StepFunction } from "@functionless/aws-stepfunctions-constructs";
 
 const app = new App();
 

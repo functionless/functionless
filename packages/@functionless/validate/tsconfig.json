@@ -1,0 +1,46 @@
+{
+  "extends": "../../../tsconfig-base",
+  "compilerOptions": {
+    "outDir": "lib",
+    "declaration": true,
+    "inlineSourceMap": true,
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "exclude": ["lib", "node_modules"],
+  "references": [
+    {
+      "path": "../../functionless-build-utils"
+    },
+    {
+      "path": "../asl"
+    },
+    {
+      "path": "../aws-apigateway-constructs"
+    },
+    {
+      "path": "../aws-appsync-constructs"
+    },
+    {
+      "path": "../aws-dynamodb-constructs"
+    },
+    {
+      "path": "../aws-events"
+    },
+    {
+      "path": "../aws-events-constructs"
+    },
+    {
+      "path": "../aws-lambda-constructs"
+    },
+    {
+      "path": "../aws-sdk"
+    },
+    {
+      "path": "../aws-stepfunctions-constructs"
+    },
+    {
+      "path": "../error-code"
+    }
+  ]
+}

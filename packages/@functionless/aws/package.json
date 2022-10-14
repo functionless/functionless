@@ -4,21 +4,23 @@
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
-    "lib"
+    "lib",
+    "docs"
   ],
   "scripts": {
-    "build": "tsc -b",
+    "build:docs": "fls-typedoc",
+    "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
     "typecheck": "tsc --noEmit",
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/aws-constructs": "^0.27.2",
     "@functionless/aws-util": "^0.27.2",
     "@functionless/util": "^0.27.2",
     "typesafe-dynamodb": "^0.2.3"
   },
   "devDependencies": {
-    "typescript": "^4.8.3"
+    "typescript": "^4.8.3",
+    "functionless-build-utils": "*"
   },
   "publishConfig": {
     "access": "public"

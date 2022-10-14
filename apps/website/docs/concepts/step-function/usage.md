@@ -226,7 +226,7 @@ if (response.status === "SUCCEEDED") {
 
 ## Context Argument
 
-In addition to the `input` argument to the function, `StepFunction` supports a `context` argument of type [SfnContext](../../api/interfaces/SfnContext.md).
+In addition to the `input` argument to the function, `StepFunction` supports a `context` argument of type [SfnContext](../../api/aws-stepfunctions-constructs/interfaces/SfnContext.md).
 
 The context argument contains information about the machine and execution like names, ids, and the start timestamp.
 
@@ -250,7 +250,7 @@ When throwing errors from a Step Function, you have two options available:
 throw new Error("message");
 ```
 
-2. throw Functionless's [`StepFunctionError`](../../api/classes/StepFunctionError.md) type
+2. throw Functionless's [`StepFunctionError`](../../api/asl/classes/StepFunctionError.md) type
 
 ```ts
 throw new StepFunctionError("CustomErrorName", "cause");

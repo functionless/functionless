@@ -28,3 +28,6 @@ export function isSpan(a: any): a is Span {
 export function emptySpan(): Span {
   return [0, 0];
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

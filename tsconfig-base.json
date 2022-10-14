@@ -1,5 +1,6 @@
 {
   "compilerOptions": {
+    "outDir": "lib",
     "baseUrl": ".",
     "composite": true,
     "alwaysStrict": true,
@@ -25,7 +26,6 @@
     "target": "ES2019",
     "declarationMap": true,
     "noUncheckedIndexedAccess": true,
-    "skipLibCheck": true,
-    "types": []
+    "skipLibCheck": true
   }
 }

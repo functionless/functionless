@@ -7,5 +7,16 @@
     "inlineSourceMap": true
   },
   "include": ["."],
-  "exclude": ["lib", "test", "node_modules"]
+  "exclude": ["lib", "test", "node_modules"],
+  "references": [
+    {
+      "path": "../../packages/@functionless/cli"
+    },
+    {
+      "path": "../../packages/@functionless/register"
+    },
+    {
+      "path": "../../packages/functionless"
+    }
+  ]
 }

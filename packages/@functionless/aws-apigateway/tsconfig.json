@@ -1,0 +1,28 @@
+{
+  "extends": "../../../tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "lib",
+    "declaration": true,
+    "inlineSourceMap": true,
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "exclude": ["lib", "test", "node_modules"],
+  "references": [
+    {
+      "path": "../../functionless-build-utils"
+    },
+    {
+      "path": "../ast"
+    },
+    {
+      "path": "../aws-lambda"
+    },
+    {
+      "path": "../aws-stepfunctions"
+    },
+    {
+      "path": "../vtl"
+    }
+  ]
+}

@@ -1,14 +1,23 @@
 {
   "name": "@functionless/jest",
   "version": "0.27.0",
-  "main": "./index.js",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "files": [
-    "index.js"
+    "lib",
+    "docs"
   ],
+  "scripts": {
+    "build:docs": "fls-typedoc"
+  },
   "dependencies": {
     "@functionless/ast-reflection": "^0.3.1",
     "@functionless/swc-config": "^0.27.0",
     "@swc/jest": "^0.2.23"
+  },
+  "devDependencies": {
+    "functionless-build-utils": "*",
+    "typescript": "^4.8.3"
   },
   "publishConfig": {
     "access": "public"

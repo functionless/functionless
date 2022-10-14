@@ -1,0 +1,42 @@
+{
+  "name": "@functionless/serialize-closure",
+  "version": "0.0.0",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib",
+    "docs"
+  ],
+  "scripts": {
+    "build:docs": "fls-typedoc",
+    "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@functionless/ast": "*",
+    "@functionless/util": "*",
+    "source-map": "^0.7.4"
+  },
+  "devDependencies": {
+    "@functionless/aws-lambda": "*",
+    "@functionless/jest": "*",
+    "@types/jest": "^29.0.3",
+    "@types/node": "^16",
+    "functionless-build-utils": "*",
+    "jest": "^29.0.3",
+    "typescript": "^4.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "@functionless/jest",
+        {}
+      ]
+    }
+  }
+}

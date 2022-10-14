@@ -1,0 +1,58 @@
+{
+  "extends": "../../../tsconfig-base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "inlineSourceMap": true,
+    "rootDir": "test",
+    "noEmit": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"],
+  "references": [
+    {
+      "path": "../../@functionless/asl"
+    },
+    {
+      "path": "../../@functionless/ast"
+    },
+    {
+      "path": "../../@functionless/aws-apigateway"
+    },
+    {
+      "path": "../../@functionless/aws-appsync"
+    },
+    {
+      "path": "../../@functionless/aws-events"
+    },
+    {
+      "path": "../../@functionless/aws-events-constructs"
+    },
+    {
+      "path": "../../@functionless/aws-lambda-constructs"
+    },
+    {
+      "path": "../../@functionless/aws-sdk"
+    },
+    {
+      "path": "../../@functionless/aws-sqs-constructs"
+    },
+    {
+      "path": "../../@functionless/aws-stepfunctions"
+    },
+    {
+      "path": "../../@functionless/aws-stepfunctions-constructs"
+    },
+    {
+      "path": "../../@functionless/jest"
+    },
+    {
+      "path": "../../@functionless/serde"
+    },
+    {
+      "path": "../../@functionless/test"
+    },
+    {
+      "path": "../../@functionless/vtl"
+    }
+  ]
+}

@@ -1,0 +1,39 @@
+{
+  "name": "@functionless/aws-apigateway-constructs",
+  "version": "0.0.0",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib",
+    "docs"
+  ],
+  "scripts": {
+    "build:docs": "fls-typedoc",
+    "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "aws-cdk-lib": "2.44.0",
+    "@functionless/ast": "^0.27.2",
+    "@functionless/aws-apigateway": "*",
+    "@functionless/aws-lambda-constructs": "*",
+    "@functionless/error-code": "*",
+    "@functionless/vtl": "*"
+  },
+  "devDependencies": {
+    "functionless-build-utils": "*",
+    "typescript": "^4.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "@functionless/jest",
+        {}
+      ]
+    }
+  }
+}

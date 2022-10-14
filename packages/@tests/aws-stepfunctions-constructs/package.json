@@ -1,0 +1,43 @@
+{
+  "name": "@tests/aws-stepfunctions-constructs",
+  "private": true,
+  "version": "0.0.0",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@functionless/asl": "*",
+    "@functionless/ast": "*",
+    "@functionless/aws-apigateway": "*",
+    "@functionless/aws-appsync": "*",
+    "@functionless/aws-events-constructs": "*",
+    "@functionless/aws-events": "*",
+    "@functionless/aws-lambda-constructs": "*",
+    "@functionless/aws-sdk": "*",
+    "@functionless/aws-sqs-constructs": "*",
+    "@functionless/aws-stepfunctions-constructs": "*",
+    "@functionless/aws-stepfunctions": "*",
+    "@functionless/jest": "*",
+    "@functionless/serde": "*",
+    "@functionless/test": "*",
+    "@functionless/vtl": "*",
+    "@types/jest": "^29.0.3",
+    "jest": "^29.0.3",
+    "typescript": "^4.8.3"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "@functionless/jest",
+        {}
+      ]
+    }
+  }
+}

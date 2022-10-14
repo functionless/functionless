@@ -1,0 +1,34 @@
+{
+  "name": "@functionless/asl",
+  "version": "0.0.0",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib",
+    "docs"
+  ],
+  "scripts": {
+    "build:docs": "fls-typedoc",
+    "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@functionless/ast": "^0.27.0",
+    "@functionless/aws-stepfunctions": "*",
+    "@functionless/util": "^0.27.0"
+  },
+  "peerDependencies": {
+    "@aws-cdk/aws-appsync-alpha": "*",
+    "aws-cdk-lib": "^2.44.0"
+  },
+  "devDependencies": {
+    "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
+    "aws-cdk-lib": "2.44.0",
+    "typescript": "^4.8.3",
+    "functionless-build-utils": "*"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

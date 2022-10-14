@@ -1,0 +1,37 @@
+{
+  "extends": "../../../tsconfig-base.json",
+  "compilerOptions": {
+    "declaration": true,
+    "inlineSourceMap": true,
+    "rootDir": "test",
+    "noEmit": true
+  },
+  "include": ["src"],
+  "exclude": ["node_modules"],
+  "references": [
+    {
+      "path": "../../@functionless/aws-dynamodb-constructs"
+    },
+    {
+      "path": "../../@functionless/aws-events"
+    },
+    {
+      "path": "../../@functionless/aws-events-constructs"
+    },
+    {
+      "path": "../../@functionless/aws-lambda-constructs"
+    },
+    {
+      "path": "../../@functionless/aws-stepfunctions-constructs"
+    },
+    {
+      "path": "../../@functionless/error-code"
+    },
+    {
+      "path": "../../@functionless/jest"
+    },
+    {
+      "path": "../../@functionless/test"
+    }
+  ]
+}

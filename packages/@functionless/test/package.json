@@ -1,0 +1,55 @@
+{
+  "name": "@functionless/test",
+  "version": "0.0.0",
+  "private": true,
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib",
+    "docs",
+    "schema.gql"
+  ],
+  "scripts": {
+    "build:docs": "fls-typedoc",
+    "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc -w"
+  },
+  "dependencies": {
+    "@functionless/asl": "*",
+    "@functionless/aws-sdk": "*",
+    "@functionless/aws-appsync-constructs": "*",
+    "@functionless/aws-dynamodb-constructs": "*",
+    "@functionless/aws-events": "*",
+    "@functionless/aws-events-constructs": "*",
+    "@functionless/aws-lambda-constructs": "*",
+    "@functionless/aws-stepfunctions-constructs": "*",
+    "proxy-agent": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@aws-cdk/cloud-assembly-schema": "^2.44.0",
+    "@aws-cdk/cloudformation-diff": "^2.44.0",
+    "@aws-cdk/cx-api": "^2.44.0",
+    "aws-cdk-lib": "^2.44.0",
+    "cdk-assets": "^2.44.0",
+    "promptly": "^3.2.0"
+  },
+  "devDependencies": {
+    "@aws-cdk/cloud-assembly-schema": "2.44.0",
+    "@aws-cdk/cloudformation-diff": "2.44.0",
+    "@aws-cdk/cx-api": "2.44.0",
+    "@types/jest": "^29.0.3",
+    "@types/node": "^16",
+    "amplify-appsync-simulator": "^2.4.1",
+    "aws-cdk-lib": "2.44.0",
+    "aws-cdk": "2.44.0",
+    "cdk-assets": "2.44.0",
+    "constructs": "10.0.0",
+    "functionless-build-utils": "*",
+    "promptly": "^3.2.0",
+    "typescript": "^4.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

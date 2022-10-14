@@ -2,7 +2,6 @@
 // Note: type annotations allow type checking and IDEs autocompletion
 
 const codeTheme = require("./src/theme/code-theme");
-const path = require("path");
 
 const url =
   process.env.CONTEXT === "deploy-preview" && process.env.DEPLOY_PRIME_URL
@@ -45,19 +44,6 @@ const config = {
         },
       };
     },
-    [
-      "docusaurus-plugin-typedoc",
-      // Plugin / TypeDoc options
-      /** @type {import('docusaurus-plugin-typedoc').PluginOptions} */
-      {
-        entryPoints: ["../../packages/@functionless/aws-constructs"],
-        entryPointStrategy: "packages",
-        sidebar: {
-          categoryLabel: "API Reference",
-          position: 10,
-        },
-      },
-    ],
     function () {
       return {
         name: "functionless-error-code-docs",

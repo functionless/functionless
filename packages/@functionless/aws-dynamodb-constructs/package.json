@@ -1,0 +1,37 @@
+{
+  "name": "@functionless/aws-dynamodb-constructs",
+  "version": "0.0.0",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib",
+    "docs"
+  ],
+  "scripts": {
+    "build:docs": "fls-typedoc",
+    "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@functionless/asl": "*",
+    "@functionless/aws-appsync": "*",
+    "@functionless/aws-apigateway": "*",
+    "@functionless/aws-dynamodb": "*",
+    "@functionless/aws-lambda": "*",
+    "@functionless/vtl": "*",
+    "aws-sdk": "^2"
+  },
+  "peerDependencies": {
+    "aws-cdk-lib": "^2.44.0"
+  },
+  "devDependencies": {
+    "aws-cdk-lib": "2.44.0",
+    "@types/node": "^16",
+    "functionless-build-utils": "*",
+    "typescript": "^4.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

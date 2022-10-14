@@ -1,4 +1,4 @@
-import { Table } from "@functionless/aws";
+import { Table } from "@functionless/aws-dynamodb";
 
 interface TableItem<T extends string> {
   pk: T;

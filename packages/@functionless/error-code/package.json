@@ -1,0 +1,26 @@
+{
+  "name": "@functionless/error-code",
+  "version": "0.0.0",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "docs",
+    "lib"
+  ],
+  "scripts": {
+    "build:docs": "fls-typedoc",
+    "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "devDependencies": {
+    "@types/node": "^16",
+    "functionless-build-utils": "*",
+    "typescript": "^4.8.3",
+    "typedoc": "^0.23.16",
+    "typedoc-plugin-markdown": "^3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

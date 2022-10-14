@@ -75,7 +75,7 @@ An Interpreter is a process that runs during [Synthesis Time](#synthesis-time) t
 
 Examples include:
 
-- [Amazon States Language](../api/classes/ASL-1.md)
-- [Appsync Velocity Templates](../api/classes/AppsyncVTL.md)
-- [API Gateway Velocity Templates](../api/classes/APIGatewayVTL.md)
-- [Event Bus Rules and Targets](../api/classes/EventBus.md)
+- [Amazon States Language](../api/asl/classes/ASL-1.md)
+- [Appsync Velocity Templates](../api/aws-appsync-constructs/classes/AppsyncVTL.md)
+- [API Gateway Velocity Templates](../api/aws-apigateway-constructs/classes/APIGatewayVTL.md)
+- [Event Bus Rules and Targets](../api/aws-events-constructs/classes/EventBus.md)

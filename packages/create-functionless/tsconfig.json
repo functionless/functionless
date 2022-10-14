@@ -6,5 +6,10 @@
     "types": ["node"]
   },
   "include": ["src/**/*.ts", "src/**/*.json"],
-  "exclude": []
+  "exclude": [],
+  "references": [
+    {
+      "path": "../functionless"
+    }
+  ]
 }

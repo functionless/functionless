@@ -1,10 +1,19 @@
 {
   "name": "@functionless/swc-config",
   "version": "0.27.0",
-  "main": "./index.js",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
   "files": [
-    "index.js"
+    "lib",
+    "docs"
   ],
+  "scripts": {
+    "build:docs": "fls-typedoc"
+  },
+  "devDependencies": {
+    "functionless-build-utils": "*",
+    "typescript": "^4.8.3"
+  },
   "publishConfig": {
     "access": "public"
   }

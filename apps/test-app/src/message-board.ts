@@ -8,20 +8,22 @@ import {
   aws_events,
   Duration,
 } from "aws-cdk-lib";
+import { Event } from "@functionless/aws-events";
+import { EventBus } from "@functionless/aws-events-constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
 import {
-  $AWS,
-  $SFN,
   $util,
-  AppsyncResolver,
-  Function,
-  StepFunction,
-  Table,
-  EventBus,
-  Event,
-  ExpressStepFunction,
-  AppsyncField,
   AppsyncContext,
-} from "@functionless/aws-constructs";
+  AppsyncField,
+  AppsyncResolver,
+} from "@functionless/aws-appsync-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
+import {
+  $SFN,
+  ExpressStepFunction,
+  StepFunction,
+} from "@functionless/aws-stepfunctions-constructs";
+import { $AWS } from "@functionless/aws-sdk";
 
 export const app = new App();
 export const stack = new Stack(app, "message-board");

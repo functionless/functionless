@@ -1,0 +1,50 @@
+{
+  "name": "@functionless/aws-lambda-constructs",
+  "version": "0.0.0",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib",
+    "docs"
+  ],
+  "scripts": {
+    "build:docs": "fls-typedoc",
+    "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@functionless/asl": "*",
+    "@functionless/ast": "^0.27.2",
+    "@functionless/aws-apigateway": "*",
+    "@functionless/aws-appsync": "*",
+    "@functionless/aws-dynamodb": "*",
+    "@functionless/aws-dynamodb-constructs": "*",
+    "@functionless/aws-events-constructs": "*",
+    "@functionless/aws-events": "*",
+    "@functionless/aws-lambda": "*",
+    "@functionless/aws-secretsmanager-constructs": "*",
+    "@functionless/aws-secretsmanager": "*",
+    "@functionless/aws-stepfunctions-constructs": "*",
+    "@functionless/aws-stepfunctions": "*",
+    "@functionless/aws-util": "^0.27.2",
+    "@functionless/nodejs-closure-serializer": "^0.1.5",
+    "@functionless/serialize-closure": "*",
+    "@functionless/util": "^0.27.2",
+    "typesafe-dynamodb": "^0.2.3"
+  },
+  "peerDependencies": {
+    "@aws-cdk/aws-appsync-alpha": "*",
+    "aws-cdk-lib": "^2.44.0"
+  },
+  "devDependencies": {
+    "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
+    "@types/node": "^16",
+    "aws-cdk-lib": "2.44.0",
+    "functionless-build-utils": "*",
+    "typescript": "^4.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

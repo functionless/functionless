@@ -1,0 +1,45 @@
+{
+  "name": "@functionless/validate",
+  "version": "0.0.0",
+  "main": "lib/index.js",
+  "types": "lib/index.d.ts",
+  "scripts": {
+    "build:docs": "fls-typedoc",
+    "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
+  },
+  "dependencies": {
+    "fs-extra": "^10.1.0",
+    "ts-patch": "^2.0.2",
+    "@functionless/asl": "*",
+    "@functionless/aws-apigateway-constructs": "*",
+    "@functionless/aws-appsync-constructs": "*",
+    "@functionless/aws-dynamodb-constructs": "*",
+    "@functionless/aws-events-constructs": "*",
+    "@functionless/aws-events": "*",
+    "@functionless/aws-lambda-constructs": "*",
+    "@functionless/aws-sdk": "*",
+    "@functionless/aws-stepfunctions-constructs": "*",
+    "@functionless/error-code": "*"
+  },
+  "devDependencies": {
+    "@types/fs-extra": "^9.0.13",
+    "@types/jest": "^29.0.3",
+    "@types/node": "^16",
+    "functionless-build-utils": "*",
+    "jest": "^29.0.3",
+    "ts-jest": "^29.0.3",
+    "typescript": "^4.8.3"
+  },
+  "files": [
+    "lib",
+    "docs"
+  ],
+  "publishConfig": {
+    "access": "public"
+  },
+  "jest": {
+    "preset": "ts-jest"
+  }
+}

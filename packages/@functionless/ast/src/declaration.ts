@@ -694,3 +694,5 @@ export class VariableDeclList extends BaseNode<
     this.ensureArrayOf(decls, "decls", [NodeKind.VariableDecl]);
   }
 }
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

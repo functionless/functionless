@@ -1,0 +1,38 @@
+{
+  "compilerOptions": {
+    "composite": true,
+    "outDir": "lib",
+    "declaration": true,
+    "inlineSourceMap": true,
+    "esModuleInterop": true,
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "exclude": ["lib", "node_modules"],
+  "references": [
+    {
+      "path": "../../functionless-build-utils"
+    },
+    {
+      "path": "../asl"
+    },
+    {
+      "path": "../ast"
+    },
+    {
+      "path": "../aws-events"
+    },
+    {
+      "path": "../aws-events-constructs"
+    },
+    {
+      "path": "../aws-lambda"
+    },
+    {
+      "path": "../aws-lambda-constructs"
+    },
+    {
+      "path": "../error-code"
+    }
+  ]
+}

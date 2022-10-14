@@ -1,7 +1,4 @@
-const {
-  ErrorCodes,
-  ErrorType,
-} = require("@functionless/aws-constructs/lib/error-code");
+const { ErrorCodes, ErrorType } = require("@functionless/error-code/lib");
 
 const fs = require("fs");
 const path = require("path");
@@ -13,6 +10,11 @@ const path = require("path");
 const errorCodesAPIReference = path.join(
   __dirname,
   "..",
+  "..",
+  "..",
+  "packages",
+  "@functionless",
+  "error-code",
   "docs",
   "api",
   "namespaces",
@@ -29,7 +31,6 @@ const errorCodeDocumentationPath = path.join(
 let errorCodeMarkdown = fs
   .readFileSync(errorCodesAPIReference)
   .toString()
-  .replace("## Variables\n", "# Error Codes\n")
   .replace(
     `id: "ErrorCodes"
 title: "Namespace: ErrorCodes"
@@ -39,6 +40,11 @@ custom_edit_url: null`,
     `title: "Error Codes"
 sidebar_position: 3`
   )
+  .replace(/\[@functionless.*README.*modules.md.*\n\n/g, "")
+  .replace(/[\-] .*\n/gi, "")
+  .replace(/### Variables\n\n/g, "## Error Codes\n")
+  .replace(/## Variables\n\n/g, "")
+  .replace("## Table of contents\n", "")
   .replace(/• `Const`.*\n/g, "")
   .replace(/\n\n\n/g, "\n\n")
   .replace(/\n#### Defined in.*\n\n.*error.*\n/g, "")

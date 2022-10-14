@@ -7,16 +7,14 @@
     "build": "npm run synth",
     "deploy": "cdk deploy",
     "local": "fl local",
-    "synth": "cdk synth",
+    "synth": "cdk synth --quiet",
     "test": "jest --passWithNoTests",
     "validate": "functionless"
   },
   "devDependencies": {
     "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
     "@functionless/ast-reflection": "^0.3.1",
-    "@functionless/aws": "*",
-    "@functionless/aws-constructs": "*",
-    "@functionless/fl-exp": "*",
+    "@functionless/cli": "*",
     "@functionless/language-service": "^0.0.4",
     "@functionless/register": "*",
     "@types/jest": "^29.0.3",
@@ -27,8 +25,9 @@
     "aws-sdk": "^2",
     "constructs": "10.0.0",
     "esbuild": "0.15.9",
+    "functionless": "*",
     "jest": "^29.0.3",
-    "typesafe-dynamodb": "0.2.3",
+    "typesafe-dynamodb": "^0.2.3",
     "typescript": "^4.8.3"
   },
   "jest": {

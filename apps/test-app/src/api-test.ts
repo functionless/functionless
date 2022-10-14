@@ -6,15 +6,15 @@ import {
   Stack,
 } from "aws-cdk-lib";
 import type { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { Table } from "@functionless/aws-dynamodb-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
 import {
-  AwsMethod,
-  MockMethod,
-  ExpressStepFunction,
-  Function,
-  Table,
   ApiGatewayInput,
+  AwsMethod,
   LambdaMethod,
-} from "@functionless/aws-constructs";
+  MockMethod,
+} from "@functionless/aws-apigateway-constructs";
+import { ExpressStepFunction } from "@functionless/aws-stepfunctions-constructs";
 
 export const app = new App();
 

@@ -1,4 +1,4 @@
-import { LambdaFunction } from "@functionless/aws";
+import { LambdaFunction } from "@functionless/aws-lambda";
 import * as uuid from "uuid";
 
 import { AppTable } from "./table";

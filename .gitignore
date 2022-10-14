@@ -54,5 +54,6 @@ packages/*/lib
 !/.github/workflows/close.yml
 .turbo
 lib
+docs/
 .npmrc
 .turbo-cache

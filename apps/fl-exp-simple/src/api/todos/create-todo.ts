@@ -1,4 +1,5 @@
-import { LambdaFunction, Method } from "@functionless/aws";
+import { LambdaFunction } from "@functionless/aws-lambda";
+import { Method } from "@functionless/aws-apigateway";
 import * as uuid from "uuid";
 import MyDatabase from "../../table";
 

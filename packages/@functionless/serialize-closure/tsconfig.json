@@ -1,0 +1,29 @@
+{
+  "extends": "../../../tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "lib",
+    "declaration": true,
+    "inlineSourceMap": true,
+    "resolveJsonModule": true,
+    "rootDir": "src"
+  },
+  "include": ["src", "src/globals.json"],
+  "exclude": ["lib", "test", "node_modules"],
+  "references": [
+    {
+      "path": "../../functionless-build-utils"
+    },
+    {
+      "path": "../ast"
+    },
+    {
+      "path": "../aws-lambda"
+    },
+    {
+      "path": "../jest"
+    },
+    {
+      "path": "../util"
+    }
+  ]
+}

@@ -1,3 +1,3 @@
-import { RestApi } from "@functionless/aws";
+import { RestApi } from "@functionless/aws-apigateway";
 
 export default RestApi();

@@ -4,64 +4,37 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "build": "tsc -b",
+    "build:docs": "fls-typedoc",
+    "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit",
     "test": "jest"
   },
+  "dependencies": {
+    "@functionless/error-code": "*"
+  },
   "devDependencies": {
     "@types/jest": "^29.0.3",
-    "@types/node": "^18.0.0",
+    "@types/node": "^16",
+    "@functionless/jest": "*",
+    "functionless-build-utils": "*",
     "jest": "^29.0.3",
     "ts-jest": "^29.0.2",
     "typescript": "^4.8.3"
   },
   "files": [
-    "lib"
+    "lib",
+    "docs"
   ],
   "publishConfig": {
     "access": "public"
   },
   "jest": {
-    "collectCoverage": false,
-    "coveragePathIgnorePatterns": [
-      "/test/",
-      "/node_modules/",
-      "/lib"
-    ],
     "transform": {
       "^.+\\.(t|j)sx?$": [
-        "ts-jest",
+        "@functionless/jest",
         {}
       ]
-    },
-    "testMatch": [
-      "<rootDir>/src/**/__tests__/**/*.ts?(x)",
-      "<rootDir>/(test|src)/**/*(*.)@(spec|test).ts?(x)"
-    ],
-    "clearMocks": true,
-    "coverageReporters": [
-      "json",
-      "lcov",
-      "clover",
-      "cobertura",
-      "text"
-    ],
-    "coverageDirectory": "coverage",
-    "testPathIgnorePatterns": [
-      "/node_modules/"
-    ],
-    "watchPathIgnorePatterns": [
-      "/node_modules/"
-    ],
-    "reporters": [
-      "default",
-      [
-        "jest-junit",
-        {
-          "outputDirectory": "test-reports"
-        }
-      ]
-    ]
+    }
   }
 }

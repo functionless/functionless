@@ -148,3 +148,6 @@ const NodeKindNames: {
 export function getNodeKindName<Kind extends NodeKind>(kind: Kind) {
   return NodeKindNames[kind];
 }
+
+// to prevent the closure serializer from trying to import all of functionless.
+export const deploymentOnlyModule = true;

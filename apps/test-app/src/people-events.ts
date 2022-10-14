@@ -1,5 +1,7 @@
 import { Construct } from "constructs";
-import * as functionless from "@functionless/aws-constructs";
+import { Event } from "@functionless/aws-events";
+import { EventBus } from "@functionless/aws-events-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
 
 interface UserDetails {
   id?: string;
@@ -9,7 +11,7 @@ interface UserDetails {
 }
 
 interface UserEvent
-  extends functionless.Event<
+  extends Event<
     UserDetails,
     // We can provide custom detail-types to match on
     "Create" | "Update" | "Delete"
@@ -31,14 +33,15 @@ export class PeopleEvents extends Construct {
   constructor(scope: Construct, id: string) {
     super(scope, id);
 
-    const createOrUpdateFunction = new functionless.Function<
-      CreateOrUpdate,
-      void
-    >(this, "createOrUpdate", async (event) => {
-      console.log("event: ", event);
-    });
+    const createOrUpdateFunction = new Function<CreateOrUpdate, void>(
+      this,
+      "createOrUpdate",
+      async (event) => {
+        console.log("event: ", event);
+      }
+    );
 
-    const deleteFunction = new functionless.Function<Delete, void>(
+    const deleteFunction = new Function<Delete, void>(
       this,
       "delete",
       async (event) => {
@@ -46,7 +49,7 @@ export class PeopleEvents extends Construct {
       }
     );
 
-    const bus = new functionless.EventBus<UserEvent>(this, "myBus");
+    const bus = new EventBus<UserEvent>(this, "myBus");
 
     // Create and update events are sent to a specific lambda function.
     bus
@@ -79,10 +82,7 @@ export class PeopleEvents extends Construct {
       )
       .pipe(deleteFunction);
 
-    const catPeopleBus = new functionless.EventBus<UserEvent>(
-      this,
-      "catTeamBus"
-    );
+    const catPeopleBus = new EventBus<UserEvent>(this, "catTeamBus");
 
     // New, young, cat loving users are forwarded to our sister team.
     bus
@@ -101,13 +101,9 @@ export class PeopleEvents extends Construct {
     catPeopleBus
       .when(this, "catSinkRule", () => true)
       .pipe(
-        new functionless.Function<UserEvent, void>(
-          this,
-          "cats",
-          async (event) => {
-            console.log("event: ", event);
-          }
-        )
+        new Function<UserEvent, void>(this, "cats", async (event) => {
+          console.log("event: ", event);
+        })
       );
   }
 }

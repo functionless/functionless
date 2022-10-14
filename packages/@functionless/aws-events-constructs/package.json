@@ -1,0 +1,36 @@
+{
+  "name": "@functionless/aws-events-constructs",
+  "version": "0.0.0",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib",
+    "docs"
+  ],
+  "scripts": {
+    "build:docs": "fls-typedoc",
+    "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch"
+  },
+  "dependencies": {
+    "@functionless/asl": "*",
+    "@functionless/ast": "^0.27.2",
+    "@functionless/aws-apigateway": "*",
+    "@functionless/aws-appsync": "*",
+    "@functionless/aws-events": "*",
+    "@functionless/aws-lambda": "*",
+    "@functionless/util": "^0.27.2"
+  },
+  "peerDependencies": {
+    "aws-cdk-lib": "^2.44.0"
+  },
+  "devDependencies": {
+    "aws-cdk-lib": "2.44.0",
+    "functionless-build-utils": "*",
+    "typescript": "^4.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  }
+}

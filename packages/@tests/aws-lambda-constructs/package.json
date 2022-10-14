@@ -1,0 +1,48 @@
+{
+  "name": "@tests/aws-lambda-constructs",
+  "version": "0.0.0",
+  "private": true,
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib",
+    "docs"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@aws-cdk/aws-appsync-alpha": "2.44.0-alpha.0",
+    "@functionless/asl": "*",
+    "@functionless/ast": "*",
+    "@functionless/aws-apigateway": "*",
+    "@functionless/aws-appsync-constructs": "*",
+    "@functionless/aws-dynamodb-constructs": "*",
+    "@functionless/aws-events-constructs": "*",
+    "@functionless/aws-events": "*",
+    "@functionless/aws-lambda-constructs": "*",
+    "@functionless/aws-sdk": "*",
+    "@functionless/aws-secretsmanager-constructs": "*",
+    "@functionless/aws-stepfunctions-constructs": "*",
+    "@functionless/aws-util": "*",
+    "@functionless/jest": "*",
+    "@functionless/nodejs-closure-serializer": "^0.1.5",
+    "@functionless/serialize-closure": "*",
+    "@functionless/util": "*",
+    "@types/node": "^16",
+    "@types/jest": "^29.0.3",
+    "functionless-build-utils": "*",
+    "jest": "^29.0.3",
+    "typesafe-dynamodb": "^0.2.3",
+    "typescript": "^4.8.3"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "@functionless/jest",
+        {}
+      ]
+    }
+  }
+}

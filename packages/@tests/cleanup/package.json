@@ -1,0 +1,41 @@
+{
+  "name": "@tests/cleanup",
+  "private": true,
+  "version": "0.0.0",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch",
+    "test": "jest"
+  },
+  "devDependencies": {
+    "@functionless/aws-lambda-constructs": "*",
+    "@functionless/aws-sdk": "*",
+    "@functionless/aws-stepfunctions-constructs": "*",
+    "@functionless/jest": "*",
+    "@functionless/test": "*",
+    "@tests/aws-apigateway-constructs": "*",
+    "@tests/aws-appsync-constructs": "*",
+    "@tests/aws-dynamodb-constructs": "*",
+    "@tests/aws-events-constructs": "*",
+    "@tests/aws-lambda-constructs": "*",
+    "@tests/aws-secretsmanager-constructs": "*",
+    "@tests/aws-sqs-constructs": "*",
+    "@tests/aws-stepfunctions-constructs": "*",
+    "@types/jest": "^29.0.3",
+    "jest": "^29.0.3",
+    "typescript": "^4.8.3"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "@functionless/jest",
+        {}
+      ]
+    }
+  }
+}

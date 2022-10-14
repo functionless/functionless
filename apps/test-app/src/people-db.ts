@@ -6,14 +6,14 @@ import {
   RemovalPolicy,
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
 import {
-  Table,
-  Function,
   $util,
-  AppsyncResolver,
   AppsyncContext,
-  ExpressStepFunction,
-} from "@functionless/aws-constructs";
+  AppsyncResolver,
+} from "@functionless/aws-appsync-constructs";
+import { Function } from "@functionless/aws-lambda-constructs";
+import { ExpressStepFunction } from "@functionless/aws-stepfunctions-constructs";
 
 import {
   QueryResolvers,

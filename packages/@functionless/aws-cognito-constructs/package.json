@@ -1,0 +1,44 @@
+{
+  "name": "@functionless/aws-cognito-constructs",
+  "version": "0.0.0",
+  "main": "./lib/index.js",
+  "types": "./lib/index.d.ts",
+  "files": [
+    "lib",
+    "docs"
+  ],
+  "scripts": {
+    "build:docs": "fls-typedoc",
+    "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
+    "typecheck": "tsc --noEmit",
+    "dev": "tsc --watch",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@functionless/aws-lambda": "*",
+    "@functionless/aws-lambda-constructs": "*",
+    "aws-sdk": "^2"
+  },
+  "peerDependencies": {
+    "aws-cdk-lib": "^2.44.0"
+  },
+  "devDependencies": {
+    "aws-cdk-lib": "2.44.0",
+    "@types/node": "^16",
+    "@functionless/jest": "*",
+    "functionless-build-utils": "*",
+    "jest": "^29.0.3",
+    "typescript": "^4.8.3"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "jest": {
+    "transform": {
+      "^.+\\.(t|j)sx?$": [
+        "@functionless/jest",
+        {}
+      ]
+    }
+  }
+}

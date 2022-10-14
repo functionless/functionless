@@ -4,19 +4,26 @@
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
-    "build": "tsc -b",
+    "build:docs": "fls-typedoc",
+    "clean:build": "rm -rf lib tsconfig.tsbuildinfo",
     "dev": "tsc --watch",
     "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@functionless/util": "*"
   },
   "peerDependencies": {
     "aws-sdk": "^2"
   },
   "devDependencies": {
+    "@types/node": "^16",
     "aws-sdk": "^2",
+    "functionless-build-utils": "*",
     "typescript": "^4.8.3"
   },
   "files": [
-    "lib"
+    "lib",
+    "docs"
   ],
   "publishConfig": {
     "access": "public"

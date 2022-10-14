@@ -1,0 +1,64 @@
+{
+  "extends": "../../../tsconfig-base.json",
+  "compilerOptions": {
+    "outDir": "lib",
+    "declaration": true,
+    "inlineSourceMap": true,
+    "rootDir": "src"
+  },
+  "include": ["src"],
+  "exclude": ["lib", "test", "node_modules"],
+  "references": [
+    {
+      "path": "../../functionless-build-utils"
+    },
+    {
+      "path": "../asl"
+    },
+    {
+      "path": "../ast"
+    },
+    {
+      "path": "../aws-apigateway"
+    },
+    {
+      "path": "../aws-appsync"
+    },
+    {
+      "path": "../aws-dynamodb"
+    },
+    {
+      "path": "../aws-dynamodb-constructs"
+    },
+    {
+      "path": "../aws-events"
+    },
+    {
+      "path": "../aws-events-constructs"
+    },
+    {
+      "path": "../aws-lambda"
+    },
+    {
+      "path": "../aws-secretsmanager"
+    },
+    {
+      "path": "../aws-secretsmanager-constructs"
+    },
+    {
+      "path": "../aws-stepfunctions"
+    },
+    {
+      "path": "../aws-stepfunctions-constructs"
+    },
+    {
+      "path": "../aws-util"
+    },
+    {
+      "path": "../serialize-closure"
+    },
+    {
+      "path": "../util"
+    }
+  ]
+}

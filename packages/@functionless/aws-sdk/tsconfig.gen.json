@@ -1,0 +1,8 @@
+{
+  "compilerOptions": {
+    "noEmit": true,
+    "rootDir": "."
+  },
+  "include": ["scripts/*.ts"],
+  "exclude": ["lib", "node_modules"]
+}
