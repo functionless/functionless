@@ -69,12 +69,8 @@ async function patch(pkgJsonPath, pkgJson, packages, dependenciesKey) {
     ...Object.fromEntries(
       packages
         .sort((pkgA, pkgB) => pkgA.name < pkgB.name)
-        .flatMap((pkg) => {
-          if (pkgJson[dependenciesKey]) {
-            // Don't overwrite dependency references which already exist.
-            return [];
-          }
-          return [pkg.name, pkgJson[pkg.name] ?? "*"];
+        .map((pkg) => {
+          return [pkg.name, pkgJson[dependenciesKey][pkg.name] ?? "*"];
         })
     ),
   };
