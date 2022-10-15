@@ -15,6 +15,9 @@
     "@functionless/swc-config": "^0.28.0",
     "@swc/register": "^0.1.10"
   },
+  "peerDependencies": {
+    "@swc/core": "~1.2.245"
+  },
   "devDependencies": {
     "functionless-build-utils": "*",
     "typescript": "^4.8.3"
