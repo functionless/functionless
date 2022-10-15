@@ -1,5 +1,6 @@
 {
   "devDependencies": [
+    "@swc/core@~1.2",
     "@aws-cdk/aws-appsync-alpha",
     "@functionless/ast-reflection",
     "@functionless/language-service",

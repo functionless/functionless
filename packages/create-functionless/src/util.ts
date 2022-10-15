@@ -42,30 +42,23 @@ export type PackageManager = "yarn" | "pnpm" | "npm";
 export function getPackageManager(): PackageManager {
   const packageManager = process.env.npm_config_user_agent;
 
-  if (packageManager?.startsWith("yarn")) {
-    return "yarn";
-  } else if (packageManager?.startsWith("pnpm")) {
-    return "pnpm";
-  } else {
-    return "npm";
-  }
+  return packageManager?.startsWith("yarn")
+    ? "yarn"
+    : packageManager?.startsWith("pnpm")
+    ? "pnpm"
+    : "npm";
 }
 
 export function installPackages(
   manager: PackageManager,
   dependencies: string[]
 ) {
-  let executable = "npm";
-  let command = "install";
-
-  if (manager === "yarn") {
-    executable = "yarn";
-    command = "add";
-  }
-
-  if (manager == "pnpm") {
-    executable = "pnpm";
-  }
+  const [executable, command = "install"] =
+    manager === "yarn"
+      ? ["yarn", "add"]
+      : manager === "pnpm"
+      ? ["pnpm"]
+      : ["npm"];
 
   failOnError(
     spawn.sync(executable, [command, "-D", ...dependencies], {
