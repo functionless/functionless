@@ -1,6 +1,6 @@
 {
   "name": "@functionless/cli",
-  "version": "0.28.0",
+  "version": "0.28.3",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "bin": {
@@ -77,7 +77,7 @@
     "@functionless/aws-stepfunctions": "^0.28.0",
     "@functionless/aws-stepfunctions-constructs": "^0.28.0",
     "@functionless/language-service": "^0.0.4",
-    "@functionless/register": "^0.28.0",
+    "@functionless/register": "^0.28.3",
     "@functionless/util": "^0.28.0",
     "@swc/jest": "^0.2.22",
     "@types/express": "^4.17.14",

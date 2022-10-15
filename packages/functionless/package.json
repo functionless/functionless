@@ -1,6 +1,6 @@
 {
   "name": "functionless",
-  "version": "0.28.2",
+  "version": "0.28.3",
   "dependencies": {
     "@functionless/asl": "^0.28.0",
     "@functionless/ast": "^0.28.0",
@@ -25,11 +25,11 @@
     "@functionless/aws-stepfunctions": "^0.28.0",
     "@functionless/aws-stepfunctions-constructs": "^0.28.0",
     "@functionless/aws-util": "^0.28.0",
-    "@functionless/cli": "^0.28.0",
+    "@functionless/cli": "^0.28.3",
     "@functionless/error-code": "^0.28.0",
     "@functionless/jest": "^0.28.0",
     "@functionless/language-service": "^0.0.4",
-    "@functionless/register": "^0.28.0",
+    "@functionless/register": "^0.28.3",
     "@functionless/serde": "^0.28.0",
     "@functionless/serialize-closure": "^0.28.0",
     "@functionless/swc-config": "^0.28.0",

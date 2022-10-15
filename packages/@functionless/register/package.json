@@ -1,6 +1,6 @@
 {
   "name": "@functionless/register",
-  "version": "0.28.0",
+  "version": "0.28.3",
   "main": "./lib/index.js",
   "types": "./lib/index.js",
   "files": [
