@@ -85,7 +85,7 @@ export async function loadProject(rootDir: string): Promise<Project> {
     ): Promise<Tree | undefined> {
       const stat = await fs.stat(filePath);
       if (stat.isFile()) {
-        const resource = require(filePath).default;
+        const { default: resource } = await import(filePath);
         if (isResource(resource)) {
           return new File({
             filePath,

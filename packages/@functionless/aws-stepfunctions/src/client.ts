@@ -1,5 +1,4 @@
-import StepFunctions from "aws-sdk/clients/stepfunctions";
-import { createClientFactory } from "@functionless/aws-util";
+import type StepFunctions from "aws-sdk/clients/stepfunctions";
 import { NativeRuntimeInitializer } from "@functionless/aws-lambda";
 
 export const StepFunctionsClient: NativeRuntimeInitializer<
@@ -12,5 +11,3 @@ export const StepFunctionsClient: NativeRuntimeInitializer<
       props?.clientConfigRetriever?.(key)
     ),
 };
-
-export const stepFunctionClient = createClientFactory(StepFunctions);

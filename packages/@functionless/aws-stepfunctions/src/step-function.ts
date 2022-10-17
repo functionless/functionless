@@ -1,6 +1,4 @@
 import type { aws_stepfunctions } from "aws-cdk-lib";
-import { getEnvironmentVariableName } from "@functionless/util";
-import { stepFunctionClient } from "./client";
 
 export type StepFunctionHandler<
   In extends Record<string, unknown> = any,
@@ -42,38 +40,18 @@ export function StepFunction<F extends StepFunctionHandler>(
 
 export function StepFunction<F extends StepFunctionHandler>(
   handlerOrProps: F | StepFunctionProps,
-  handlerOrUndefined?: F,
-  resourceId?: string,
-  roleArn?: string
+  handlerOrUndefined?: F
 ): StepFunction<F> {
   const handler =
     typeof handlerOrProps === "function" ? handlerOrProps : handlerOrUndefined!;
   const props = typeof handlerOrProps === "object" ? handlerOrProps : undefined;
 
   async function entrypoint(input: any) {
-    // eslint-disable-next-line turbo/no-undeclared-env-vars
-    if (process.env.FL_LOCAL) {
-      // this Function was invoked, so run its handler path
-      handler(input);
-      return <AWS.StepFunctions.StartExecutionOutput>{
-        executionArn: "dummy-arn",
-        startDate: new Date(),
-      };
-    } else {
-      const client = await stepFunctionClient(roleArn);
-      // this function was called from within another Lambda, so invoke it
-      return client
-        .startExecution({
-          stateMachineArn: getStateMachineArn(),
-          input: JSON.stringify(input),
-        })
-        .promise();
-    }
-  }
-
-  function getStateMachineArn(): string {
-    // eslint-disable-next-line turbo/no-undeclared-env-vars
-    return process.env[`${getEnvironmentVariableName(resourceId!)}_ARN`]!;
+    handler(input);
+    return {
+      executionArn: "dummy-arn",
+      startDate: new Date(),
+    };
   }
 
   Object.assign(entrypoint, <StepFunction<F>>{

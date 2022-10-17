@@ -1,7 +1,8 @@
+import path from "path";
 import { Resource } from "./resource";
-import { isFile, File } from "./tree/file";
+import { File } from "./tree/file";
 import { Folder } from "./tree/folder";
-import { Tree } from "./tree/tree";
+import { getResourceFiles } from "./tree/tree";
 
 export interface ProjectProps {
   /**
@@ -37,6 +38,8 @@ export class Project implements ProjectProps {
    * An index of {@link File} that supports lookups by:
    * 1. the fully qualified address of a {@link Resource}.
    * 2. the {@link Resource} instance.
+   * 3. Absolute filepath
+   * 4. Relative filepath
    */
   readonly resourceIndex: Map<string | Resource, File>;
 
@@ -56,6 +59,8 @@ export class Project implements ProjectProps {
           [
             [file.address, file],
             [file.resource, file],
+            [file.filePath, file],
+            [path.relative(process.cwd(), file.filePath), file],
             // TS's Map definition seems stupid
           ] as [string, File][]
       )
@@ -72,13 +77,5 @@ export class Project implements ProjectProps {
 
   public tryLookupResource(key: Resource | string): File | undefined {
     return this.resourceIndex.get(key);
-  }
-}
-
-function getResourceFiles(node: Tree): File[] {
-  if (isFile(node)) {
-    return [node];
-  } else {
-    return Object.values(node.tree).flatMap(getResourceFiles);
   }
 }

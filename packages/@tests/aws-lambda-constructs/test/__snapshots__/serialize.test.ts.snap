@@ -15327,29 +15327,26 @@ var __aws_stepfunctions_1_StepFunctionsClient = {key: "StepFunctions", init: __f
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, "__esModule", { value: true });
 __m.StepFunctionsClient = __aws_stepfunctions_1_StepFunctionsClient;
-var __sts_1 = {default: require("aws-sdk/clients/sts.js")};
-var __credentials_1 = {getClientProps: __getClientProps};
-__m.stepFunctionClient = __f5;
 Object.defineProperty(__aws_stepfunctions_1, "StepFunctionsClient", { enumerable: true, get: __f4 });
 var __preWarmContext_proto = {};
-Object.defineProperty(__f7, "prototype", { value: __preWarmContext_proto });
-Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f7 });
-Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f8 });
-Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__f5, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f5 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f6 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f7 });
 var __preWarmContext = Object.create(__preWarmContext_proto);
 __preWarmContext.props = undefined;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f1.kind = "StepFunction";
 __f1.functionlessKind = "StepFunction";
-__f10.kind = "StepFunction.describeExecution";
-__f1.describeExecution = __f10;
-__f12.kind = "StepFunction.sendTaskSuccess";
-__f1.sendTaskSuccess = __f12;
-__f14.kind = "StepFunction.sendTaskFailure";
-__f1.sendTaskFailure = __f14;
-__f16.kind = "StepFunction.sendTaskHeartbeat";
-__f1.sendTaskHeartbeat = __f16;
+__f8.kind = "StepFunction.describeExecution";
+__f1.describeExecution = __f8;
+__f10.kind = "StepFunction.sendTaskSuccess";
+__f1.sendTaskSuccess = __f10;
+__f12.kind = "StepFunction.sendTaskFailure";
+__f1.sendTaskFailure = __f12;
+__f14.kind = "StepFunction.sendTaskHeartbeat";
+__f1.sendTaskHeartbeat = __f14;
 var __f1_definition = {};
 __f1_definition.StartAt = "Initialize Functionless Context";
 var __f1_definition_States = {};
@@ -15372,50 +15369,6 @@ function __f3(__0, __1) {
   return (function() {
     return ((key, props) => { var _a; return new (require("aws-sdk/clients/stepfunctions"))((_a = props === null || props === void 0 ? void 0 : props.clientConfigRetriever) === null || _a === void 0 ? void 0 : _a.call(props, key)); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __getCredentialProvider() {
-  return (function() {
-    let aws_sdk_1 = require("aws-sdk/lib/node_loader.js");
-    let getCredentialProvider = __getCredentialProvider;
-
-    return (function getCredentialProvider() { return new aws_sdk_1.CredentialProviderChain(aws_sdk_1.CredentialProviderChain.defaultProviders); });;
-  }).apply(undefined, undefined).apply(this, arguments);
-}function __getClientProps() {
-  return (function() {
-    let getCredentialProvider = __getCredentialProvider;
-    let getClientProps = __getClientProps;
-
-    return (function getClientProps() { return { credentialProvider: getCredentialProvider() }; });;
-  }).apply(undefined, undefined).apply(this, arguments);
-}function __createLocalClient(__0, __1) {
-  return (function() {
-    let sts_1 = __sts_1;
-    let credentials_1 = __credentials_1;
-    let createLocalClient = __createLocalClient;
-
-    return (async function createLocalClient(roleArn, clss) { var _a, _b, _c, _d; const sts = new sts_1.default((0, credentials_1.getClientProps)()); const role = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: "FL_LOCAL" }).promise(); return new clss({ credentials: { accessKeyId: (_a = role.Credentials) === null || _a === void 0 ? void 0 : _a.AccessKeyId, secretAccessKey: (_b = role.Credentials) === null || _b === void 0 ? void 0 : _b.SecretAccessKey, expireTime: (_c = role.Credentials) === null || _c === void 0 ? void 0 : _c.Expiration, sessionToken: (_d = role.Credentials) === null || _d === void 0 ? void 0 : _d.SessionToken, expired: false } }); });;
-  }).apply(undefined, undefined).apply(this, arguments);
-}function __f6(__0) {
-  return (function() {
-    let createLocalClient = __createLocalClient;
-    let clss = require("aws-sdk/clients/stepfunctions.js");
-
-    return (async (roleArn) => { if (process.env.FL_LOCAL && roleArn) {
-    return createLocalClient(roleArn, clss);
-}
-else {
-    return new clss({});
-} });;
-  }).apply(undefined, undefined).apply(this, arguments);
-}function __f5(__0) {
-  return (function() {
-    let set = false;
-    let t = undefined;
-    let f = __f6;
-
-    return (input => { if (!set) {
-    t = f(input);
-} return t; });;
-  }).apply(undefined, undefined).apply(this, arguments);
 }function __f4() {
   return (function() {
     let m = __m;
@@ -15430,15 +15383,15 @@ else {
 
     return (async (args, prewarmContext) => { const stepFunctionsClient = prewarmContext.getOrInit(aws_stepfunctions_1.StepFunctionsClient); const [payload] = args; const result = await stepFunctionsClient.startExecution({ ...payload, stateMachineArn: stateMachineArn, input: payload.input ? JSON.stringify(payload.input) : undefined }).promise(); return result; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f7(__0) {
+}function __f5(__0) {
   return (function() {
     return (function constructor(props) { this.props = props; this.cache = {}; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f8(__0) {
+}function __f6(__0) {
   return (function() {
     return (function (key) { return this.cache[key]; });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f9(__0) {
+}function __f7(__0) {
   return (function() {
     return (function getOrInit(client) { if (!this.cache[client.key]) {
     this.cache[client.key] = client.init(client.key, this.props);
@@ -15451,11 +15404,24 @@ else {
 
     return (function __computed(...args) { return c(args, preWarmContext); });;
   }).apply(undefined, undefined).apply(this, arguments);
-}function __f11(__0, __1) {
+}function __f9(__0, __1) {
   return (function() {
     let aws_stepfunctions_1 = __aws_stepfunctions_1;
 
     return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(aws_stepfunctions_1.StepFunctionsClient); const [arn] = args; return stepFunctionClient.describeExecution({ executionArn: arn }).promise(); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f8() {
+  return (function() {
+    let c = __f9;
+    let preWarmContext = __preWarmContext;
+
+    return (function __computed(...args) { return c(args, preWarmContext); });;
+  }).apply(undefined, undefined).apply(this, arguments);
+}function __f11(__0, __1) {
+  return (function() {
+    let aws_stepfunctions_1 = __aws_stepfunctions_1;
+
+    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(aws_stepfunctions_1.StepFunctionsClient); const [taskToken, output] = args; return stepFunctionClient.sendTaskSuccess({ taskToken, output: JSON.stringify(output) }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f10() {
   return (function() {
@@ -15468,7 +15434,7 @@ else {
   return (function() {
     let aws_stepfunctions_1 = __aws_stepfunctions_1;
 
-    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(aws_stepfunctions_1.StepFunctionsClient); const [taskToken, output] = args; return stepFunctionClient.sendTaskSuccess({ taskToken, output: JSON.stringify(output) }).promise(); });;
+    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(aws_stepfunctions_1.StepFunctionsClient); const [taskToken, error, cause] = args; return stepFunctionClient.sendTaskFailure({ taskToken, error, cause }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f12() {
   return (function() {
@@ -15481,24 +15447,11 @@ else {
   return (function() {
     let aws_stepfunctions_1 = __aws_stepfunctions_1;
 
-    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(aws_stepfunctions_1.StepFunctionsClient); const [taskToken, error, cause] = args; return stepFunctionClient.sendTaskFailure({ taskToken, error, cause }).promise(); });;
+    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(aws_stepfunctions_1.StepFunctionsClient); const [token] = args; return stepFunctionClient.sendTaskHeartbeat({ taskToken: token }).promise(); });;
   }).apply(undefined, undefined).apply(this, arguments);
 }function __f14() {
   return (function() {
     let c = __f15;
-    let preWarmContext = __preWarmContext;
-
-    return (function __computed(...args) { return c(args, preWarmContext); });;
-  }).apply(undefined, undefined).apply(this, arguments);
-}function __f17(__0, __1) {
-  return (function() {
-    let aws_stepfunctions_1 = __aws_stepfunctions_1;
-
-    return (async (args, prewarmContext) => { const stepFunctionClient = prewarmContext.getOrInit(aws_stepfunctions_1.StepFunctionsClient); const [token] = args; return stepFunctionClient.sendTaskHeartbeat({ taskToken: token }).promise(); });;
-  }).apply(undefined, undefined).apply(this, arguments);
-}function __f16() {
-  return (function() {
-    let c = __f17;
     let preWarmContext = __preWarmContext;
 
     return (function __computed(...args) { return c(args, preWarmContext); });;
@@ -15520,29 +15473,26 @@ var __aws_stepfunctions_1_StepFunctionsClient = { key: "StepFunctions", init: __
 var __m = Object.create(global.constructor.prototype);
 Object.defineProperty(__m, "__esModule", { value: true });
 __m.StepFunctionsClient = __aws_stepfunctions_1_StepFunctionsClient;
-var __sts_1 = { default: require("aws-sdk/clients/sts.js") };
-var __credentials_1 = { getClientProps: __getClientProps };
-__m.stepFunctionClient = __f5;
 Object.defineProperty(__aws_stepfunctions_1, "StepFunctionsClient", { enumerable: true, get: __f4 });
 var __preWarmContext_proto = {};
-Object.defineProperty(__f7, "prototype", { value: __preWarmContext_proto });
-Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f7 });
-Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f8 });
-Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f9 });
+Object.defineProperty(__f5, "prototype", { value: __preWarmContext_proto });
+Object.defineProperty(__preWarmContext_proto, "constructor", { configurable: true, writable: true, value: __f5 });
+Object.defineProperty(__preWarmContext_proto, "get", { configurable: true, writable: true, value: __f6 });
+Object.defineProperty(__preWarmContext_proto, "getOrInit", { configurable: true, writable: true, value: __f7 });
 var __preWarmContext = Object.create(__preWarmContext_proto);
 __preWarmContext.props = void 0;
 var __preWarmContext_cache = {};
 __preWarmContext.cache = __preWarmContext_cache;
 __f1.kind = "StepFunction";
 __f1.functionlessKind = "StepFunction";
-__f10.kind = "StepFunction.describeExecution";
-__f1.describeExecution = __f10;
-__f12.kind = "StepFunction.sendTaskSuccess";
-__f1.sendTaskSuccess = __f12;
-__f14.kind = "StepFunction.sendTaskFailure";
-__f1.sendTaskFailure = __f14;
-__f16.kind = "StepFunction.sendTaskHeartbeat";
-__f1.sendTaskHeartbeat = __f16;
+__f8.kind = "StepFunction.describeExecution";
+__f1.describeExecution = __f8;
+__f10.kind = "StepFunction.sendTaskSuccess";
+__f1.sendTaskSuccess = __f10;
+__f12.kind = "StepFunction.sendTaskFailure";
+__f1.sendTaskFailure = __f12;
+__f14.kind = "StepFunction.sendTaskHeartbeat";
+__f1.sendTaskHeartbeat = __f14;
 var __f1_definition = {};
 __f1_definition.StartAt = "Initialize Functionless Context";
 var __f1_definition_States = {};
@@ -15570,68 +15520,6 @@ function __f3(__0, __1) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __getCredentialProvider() {
-  return function() {
-    let aws_sdk_1 = require("aws-sdk/lib/node_loader.js");
-    let getCredentialProvider = __getCredentialProvider;
-    return function getCredentialProvider2() {
-      return new aws_sdk_1.CredentialProviderChain(aws_sdk_1.CredentialProviderChain.defaultProviders);
-    };
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
-function __getClientProps() {
-  return function() {
-    let getCredentialProvider = __getCredentialProvider;
-    let getClientProps = __getClientProps;
-    return function getClientProps2() {
-      return { credentialProvider: getCredentialProvider() };
-    };
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
-function __createLocalClient(__0, __1) {
-  return function() {
-    let sts_1 = __sts_1;
-    let credentials_1 = __credentials_1;
-    let createLocalClient = __createLocalClient;
-    return async function createLocalClient2(roleArn, clss) {
-      var _a, _b, _c, _d;
-      const sts = new sts_1.default((0, credentials_1.getClientProps)());
-      const role = await sts.assumeRole({ RoleArn: roleArn, RoleSessionName: "FL_LOCAL" }).promise();
-      return new clss({ credentials: { accessKeyId: (_a = role.Credentials) === null || _a === void 0 ? void 0 : _a.AccessKeyId, secretAccessKey: (_b = role.Credentials) === null || _b === void 0 ? void 0 : _b.SecretAccessKey, expireTime: (_c = role.Credentials) === null || _c === void 0 ? void 0 : _c.Expiration, sessionToken: (_d = role.Credentials) === null || _d === void 0 ? void 0 : _d.SessionToken, expired: false } });
-    };
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
-function __f6(__0) {
-  return function() {
-    let createLocalClient = __createLocalClient;
-    let clss = require("aws-sdk/clients/stepfunctions.js");
-    return async (roleArn) => {
-      if (process.env.FL_LOCAL && roleArn) {
-        return createLocalClient(roleArn, clss);
-      } else {
-        return new clss({});
-      }
-    };
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
-function __f5(__0) {
-  return function() {
-    let set = false;
-    let t = void 0;
-    let f = __f6;
-    return (input) => {
-      if (!set) {
-        t = f(input);
-      }
-      return t;
-    };
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
 function __f4() {
   return function() {
     let m = __m;
@@ -15655,7 +15543,7 @@ function __f2(__0, __1) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f7(__0) {
+function __f5(__0) {
   return function() {
     return function constructor(props) {
       this.props = props;
@@ -15664,7 +15552,7 @@ function __f7(__0) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f8(__0) {
+function __f6(__0) {
   return function() {
     return function(key) {
       return this.cache[key];
@@ -15672,7 +15560,7 @@ function __f8(__0) {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f9(__0) {
+function __f7(__0) {
   return function() {
     return function getOrInit(client) {
       if (!this.cache[client.key]) {
@@ -15693,13 +15581,34 @@ function __f1() {
     ;
   }.apply(void 0, void 0).apply(this, arguments);
 }
-function __f11(__0, __1) {
+function __f9(__0, __1) {
   return function() {
     let aws_stepfunctions_1 = __aws_stepfunctions_1;
     return async (args, prewarmContext) => {
       const stepFunctionClient = prewarmContext.getOrInit(aws_stepfunctions_1.StepFunctionsClient);
       const [arn] = args;
       return stepFunctionClient.describeExecution({ executionArn: arn }).promise();
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f8() {
+  return function() {
+    let c = __f9;
+    let preWarmContext = __preWarmContext;
+    return function __computed(...args) {
+      return c(args, preWarmContext);
+    };
+    ;
+  }.apply(void 0, void 0).apply(this, arguments);
+}
+function __f11(__0, __1) {
+  return function() {
+    let aws_stepfunctions_1 = __aws_stepfunctions_1;
+    return async (args, prewarmContext) => {
+      const stepFunctionClient = prewarmContext.getOrInit(aws_stepfunctions_1.StepFunctionsClient);
+      const [taskToken, output] = args;
+      return stepFunctionClient.sendTaskSuccess({ taskToken, output: JSON.stringify(output) }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15719,8 +15628,8 @@ function __f13(__0, __1) {
     let aws_stepfunctions_1 = __aws_stepfunctions_1;
     return async (args, prewarmContext) => {
       const stepFunctionClient = prewarmContext.getOrInit(aws_stepfunctions_1.StepFunctionsClient);
-      const [taskToken, output] = args;
-      return stepFunctionClient.sendTaskSuccess({ taskToken, output: JSON.stringify(output) }).promise();
+      const [taskToken, error, cause] = args;
+      return stepFunctionClient.sendTaskFailure({ taskToken, error, cause }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15740,8 +15649,8 @@ function __f15(__0, __1) {
     let aws_stepfunctions_1 = __aws_stepfunctions_1;
     return async (args, prewarmContext) => {
       const stepFunctionClient = prewarmContext.getOrInit(aws_stepfunctions_1.StepFunctionsClient);
-      const [taskToken, error, cause] = args;
-      return stepFunctionClient.sendTaskFailure({ taskToken, error, cause }).promise();
+      const [token] = args;
+      return stepFunctionClient.sendTaskHeartbeat({ taskToken: token }).promise();
     };
     ;
   }.apply(void 0, void 0).apply(this, arguments);
@@ -15749,27 +15658,6 @@ function __f15(__0, __1) {
 function __f14() {
   return function() {
     let c = __f15;
-    let preWarmContext = __preWarmContext;
-    return function __computed(...args) {
-      return c(args, preWarmContext);
-    };
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
-function __f17(__0, __1) {
-  return function() {
-    let aws_stepfunctions_1 = __aws_stepfunctions_1;
-    return async (args, prewarmContext) => {
-      const stepFunctionClient = prewarmContext.getOrInit(aws_stepfunctions_1.StepFunctionsClient);
-      const [token] = args;
-      return stepFunctionClient.sendTaskHeartbeat({ taskToken: token }).promise();
-    };
-    ;
-  }.apply(void 0, void 0).apply(this, arguments);
-}
-function __f16() {
-  return function() {
-    let c = __f17;
     let preWarmContext = __preWarmContext;
     return function __computed(...args) {
       return c(args, preWarmContext);

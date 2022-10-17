@@ -1,7 +1,4 @@
-import Lambda from "aws-sdk/clients/lambda";
 import type { aws_lambda } from "aws-cdk-lib";
-
-import { memoize, getEnvironmentVariableName } from "@functionless/util";
 import { NativeRuntimeEnvironmentProps } from "./native-runtime-environment";
 
 export type FunctionHandler<In = any, Out = any> = (input: In) => Promise<Out>;
@@ -21,8 +18,6 @@ export function isLambdaFunction<F extends FunctionHandler>(
 ): decl is LambdaFunction<F> {
   return decl?.kind === LambdaFunctionKind;
 }
-
-const lambdaClient = memoize(() => new Lambda());
 
 export interface FunctionProps
   extends Omit<
@@ -62,11 +57,7 @@ export function LambdaFunction<F extends (input: any) => Promise<any>>(
 
 export function LambdaFunction(
   handlerOrProps: (input: any) => Promise<any> | FunctionProps,
-  handlerOrUndefined: (input: any) => Promise<any> | undefined,
-  /**
-   * Injected by the compiler.
-   */
-  resourceId?: string
+  handlerOrUndefined: (input: any) => Promise<any> | undefined
 ) {
   const handler =
     typeof handlerOrUndefined === "function"
@@ -74,33 +65,13 @@ export function LambdaFunction(
       : handlerOrProps;
   const props = typeof handlerOrProps === "object" ? handlerOrProps : undefined;
 
-  async function func(input: any) {
-    // eslint-disable-next-line turbo/no-undeclared-env-vars
-    if (process.env.RESOURCE_ID === resourceId || process.env.FL_LOCAL) {
-      // this Function was invoked, so run its handler path
-      return handler(input);
-    } else {
-      // this function was called from within another Lambda, so invoke it
-      return lambdaClient()
-        .invoke({
-          FunctionName: getFunctionName(),
-          Payload: JSON.stringify(input),
-        })
-        .promise();
-    }
-  }
+  const resource = (input: any) => handler(input);
 
-  function getFunctionName(): string {
-    // eslint-disable-next-line turbo/no-undeclared-env-vars
-    return process.env[`${getEnvironmentVariableName(resourceId!)}_NAME`]!;
-  }
-
-  Object.assign(func, {
+  Object.assign(resource, {
     kind: LambdaFunctionKind,
     handler,
     props,
-    resourceId,
   });
 
-  return func as any;
+  return resource;
 }

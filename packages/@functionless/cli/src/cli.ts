@@ -19,12 +19,13 @@ program
   .action((...args) => {
     console.log(args);
   })
-  .action(async (resourcePath, ...args) => {
+  .action(async (resourcePath: string, ...args) => {
     // eslint-disable-next-line turbo/no-undeclared-env-vars
     process.env.AWS_SDK_LOAD_CONFIG = "1";
 
     const { invoke } = await import("./commands/resource");
-    return invoke(resourcePath, args);
+    const project = await loadProject(process.cwd());
+    return invoke(project.lookupResource(resourcePath), args);
   });
 
 program.command("local").action(async () => {
