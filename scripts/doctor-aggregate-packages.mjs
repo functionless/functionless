@@ -17,12 +17,6 @@ const flsPkgJsonPath = path.resolve(
   "functionless",
   "package.json"
 );
-const websitePkgJsonPath = path.resolve(
-  rootDir,
-  "apps",
-  "website",
-  "package.json"
-);
 
 const cleanupPkgJsonPath = path.resolve(
   rootDir,
@@ -32,23 +26,16 @@ const cleanupPkgJsonPath = path.resolve(
   "package.json"
 );
 
-const [
-  flsPkgJson,
-  websitePkgJson,
-  cleanupPkgJson,
-  publicPackages,
-  testPackages,
-] = await Promise.all([
-  readJsonFile(flsPkgJsonPath),
-  readJsonFile(websitePkgJsonPath),
-  readJsonFile(cleanupPkgJsonPath),
-  getPackages(packagesPath),
-  getPackages(testsPath, (p) => path.basename(p) !== "cleanup"),
-]);
+const [flsPkgJson, cleanupPkgJson, publicPackages, testPackages] =
+  await Promise.all([
+    readJsonFile(flsPkgJsonPath),
+    readJsonFile(cleanupPkgJsonPath),
+    getPackages(packagesPath),
+    getPackages(testsPath, (p) => path.basename(p) !== "cleanup"),
+  ]);
 
 await Promise.all([
   patch(flsPkgJsonPath, flsPkgJson, publicPackages, "dependencies"),
-  patch(websitePkgJsonPath, websitePkgJson, publicPackages, "dependencies"),
   patch(cleanupPkgJsonPath, cleanupPkgJson, testPackages, "devDependencies"),
 ]);
 

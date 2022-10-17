@@ -41,31 +41,3 @@ jobs:
         env:
           TEST_DEPLOY_TARGET: AWS
           NODE_OPTIONS: --max-old-space-size=6144
-
-  website-preview:
-    needs: [build]
-    runs-on: ubuntu-latest
-    permissions:
-      issues: write
-      pull-requests: write
-    env:
-      CI: "true"
-    steps:
-      - uses: actions/checkout@v3
-
-      - uses: ./.github/actions/build
-
-      - run: yarn run build:website
-
-      - name: Netlify Preview
-        uses: nwtgck/actions-netlify@v1.2
-        with:
-          publish-dir: "./apps/website/build"
-          production-branch: main
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          deploy-message: "Deploy from GitHub Actions"
-          enable-pull-request-comment: true
-          overwrites-pull-request-comment: true
-        env:
-          NETLIFY_AUTH_TOKEN: ${{ secrets.NETLIFY_AUTH_TOKEN }}
-          NETLIFY_SITE_ID: b49248b3-07b2-49ea-bc73-86deecce6633
