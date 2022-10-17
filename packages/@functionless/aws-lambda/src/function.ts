@@ -13,7 +13,7 @@ export interface LambdaFunction<F extends FunctionHandler = FunctionHandler> {
 
   kind: typeof LambdaFunctionKind;
   handler: F;
-  props: FunctionProps;
+  props?: FunctionProps;
 }
 
 export function isLambdaFunction<F extends FunctionHandler>(
@@ -96,7 +96,7 @@ export function LambdaFunction(
   }
 
   Object.assign(func, {
-    kind: "fl.Function",
+    kind: LambdaFunctionKind,
     handler,
     props,
     resourceId,
