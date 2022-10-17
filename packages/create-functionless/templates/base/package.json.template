@@ -6,7 +6,8 @@
     "deploy": "cdk deploy",
     "synth": "cdk synth",
     "test": "jest",
-    "validate": "functionless"
+    "validate": "functionless",
+    "watch": "tsc --build --watch"
   },
   "devDependencies": {},
   "jest": {

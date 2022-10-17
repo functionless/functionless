@@ -2,3 +2,4 @@
 .swc/
 cdk.out/
 node_modules/
+lib/
