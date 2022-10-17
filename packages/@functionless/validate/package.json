@@ -1,6 +1,6 @@
 {
   "name": "@functionless/validate",
-  "version": "0.28.0",
+  "version": "0.28.4",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
@@ -10,15 +10,15 @@
     "test": "jest"
   },
   "dependencies": {
-    "@functionless/asl": "^0.28.0",
-    "@functionless/aws-apigateway-constructs": "^0.28.0",
-    "@functionless/aws-appsync-constructs": "^0.28.0",
-    "@functionless/aws-dynamodb-constructs": "^0.28.0",
-    "@functionless/aws-events": "^0.28.0",
-    "@functionless/aws-events-constructs": "^0.28.0",
-    "@functionless/aws-lambda-constructs": "^0.28.0",
-    "@functionless/aws-sdk": "^0.28.0",
-    "@functionless/aws-stepfunctions-constructs": "^0.28.0",
+    "@functionless/asl": "^0.28.4",
+    "@functionless/aws-apigateway-constructs": "^0.28.4",
+    "@functionless/aws-appsync-constructs": "^0.28.4",
+    "@functionless/aws-dynamodb-constructs": "^0.28.4",
+    "@functionless/aws-events": "^0.28.4",
+    "@functionless/aws-events-constructs": "^0.28.4",
+    "@functionless/aws-lambda-constructs": "^0.28.4",
+    "@functionless/aws-sdk": "^0.28.4",
+    "@functionless/aws-stepfunctions-constructs": "^0.28.4",
     "@functionless/error-code": "^0.28.0",
     "fs-extra": "^10.1.0",
     "ts-patch": "^2.0.2"

@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.28.4](https://github.com/functionless/functionless/compare/v0.28.3...v0.28.4) (2022-10-17)
+
+### Bug Fixes
+
+- support lambda props and env ([#570](https://github.com/functionless/functionless/issues/570)) ([25bcf86](https://github.com/functionless/functionless/commit/25bcf8673dbbe438efa5159811841b39dd263bbb))
+
 ## [0.28.3](https://github.com/functionless/functionless/compare/v0.28.2...v0.28.3) (2022-10-15)
 
 **Note:** Version bump only for package @functionless/cli

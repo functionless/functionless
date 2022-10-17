@@ -1,6 +1,6 @@
 {
   "name": "@functionless/asl",
-  "version": "0.28.0",
+  "version": "0.28.4",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@functionless/ast": "^0.28.0",
-    "@functionless/aws-stepfunctions": "^0.28.0",
+    "@functionless/aws-stepfunctions": "^0.28.4",
     "@functionless/util": "^0.28.0"
   },
   "peerDependencies": {

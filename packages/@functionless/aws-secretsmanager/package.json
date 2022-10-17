@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-secretsmanager",
-  "version": "0.28.0",
+  "version": "0.28.4",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -15,7 +15,7 @@
   },
   "dependencies": {
     "@functionless/ast": "^0.28.0",
-    "@functionless/aws-lambda": "^0.28.0",
+    "@functionless/aws-lambda": "^0.28.4",
     "aws-sdk": "^2"
   },
   "devDependencies": {

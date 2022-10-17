@@ -1,6 +1,6 @@
 {
   "name": "create-functionless",
-  "version": "0.28.3",
+  "version": "0.28.4",
   "description": "Create a Functionless app.",
   "files": [
     "lib",
@@ -33,7 +33,7 @@
     "cross-spawn": "^7.0.3",
     "esbuild": "0.15.9",
     "fl-exp": "*",
-    "functionless": "^0.28.3",
+    "functionless": "^0.28.4",
     "mustache": "^4.2.0",
     "prompts": "^2.4.2",
     "rimraf": "^3.0.2",

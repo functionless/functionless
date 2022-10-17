@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-sqs-constructs",
-  "version": "0.28.0",
+  "version": "0.28.4",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -14,12 +14,12 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/asl": "^0.28.0",
+    "@functionless/asl": "^0.28.4",
     "@functionless/ast": "^0.28.0",
-    "@functionless/aws-events": "^0.28.0",
-    "@functionless/aws-lambda": "^0.28.0",
-    "@functionless/aws-lambda-constructs": "^0.28.0",
-    "@functionless/aws-sqs": "^0.28.0",
+    "@functionless/aws-events": "^0.28.4",
+    "@functionless/aws-lambda": "^0.28.4",
+    "@functionless/aws-lambda-constructs": "^0.28.4",
+    "@functionless/aws-sqs": "^0.28.4",
     "@functionless/serde": "^0.28.0",
     "aws-sdk": "^2"
   },

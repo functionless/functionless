@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-apigateway-constructs",
-  "version": "0.28.0",
+  "version": "0.28.4",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -15,8 +15,8 @@
   },
   "dependencies": {
     "@functionless/ast": "^0.28.0",
-    "@functionless/aws-apigateway": "^0.28.0",
-    "@functionless/aws-lambda-constructs": "^0.28.0",
+    "@functionless/aws-apigateway": "^0.28.4",
+    "@functionless/aws-lambda-constructs": "^0.28.4",
     "@functionless/error-code": "^0.28.0",
     "@functionless/vtl": "^0.28.0",
     "aws-cdk-lib": "2.44.0"

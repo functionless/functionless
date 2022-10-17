@@ -1,6 +1,6 @@
 {
   "name": "@functionless/serialize-closure",
-  "version": "0.28.0",
+  "version": "0.28.4",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -20,7 +20,7 @@
     "source-map": "^0.7.4"
   },
   "devDependencies": {
-    "@functionless/aws-lambda": "^0.28.0",
+    "@functionless/aws-lambda": "^0.28.4",
     "@functionless/jest": "^0.28.0",
     "@types/jest": "^29.0.3",
     "@types/node": "^16",
