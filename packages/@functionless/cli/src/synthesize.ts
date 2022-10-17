@@ -165,8 +165,10 @@ export async function synthesizeProject(project: Project): Promise<void> {
         runtime: aws_lambda.Runtime.NODEJS_16_X,
         handler: "index.default",
         code: aws_lambda.Code.fromAsset(outFolder),
+        ...file.resource.props,
         environment: {
           NODE_OPTIONS: "--enable-source-maps",
+          ...file.resource.props?.environment,
         },
       });
       func.addEnvironment("RESOURCE_ID", func.node.path);
