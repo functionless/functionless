@@ -8,9 +8,6 @@
       "path": "apps/test-app"
     },
     {
-      "path": "apps/website"
-    },
-    {
       "path": "packages/@functionless/asl"
     },
     {
