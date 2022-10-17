@@ -3,6 +3,12 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+## [0.28.5](https://github.com/functionless/functionless/compare/v0.28.4...v0.28.5) (2022-10-17)
+
+### Bug Fixes
+
+- create-functionless ts output config and gitignore ([#571](https://github.com/functionless/functionless/issues/571)) ([f2bbf85](https://github.com/functionless/functionless/commit/f2bbf851e1ec6599c313bcd60d9c558621a25775))
+
 ## [0.28.4](https://github.com/functionless/functionless/compare/v0.28.3...v0.28.4) (2022-10-17)
 
 **Note:** Version bump only for package create-functionless
