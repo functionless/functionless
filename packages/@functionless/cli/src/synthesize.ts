@@ -10,35 +10,24 @@ import {
 } from "aws-cdk-lib";
 import { Construct } from "constructs";
 
-import {
-  forEachChild,
-  FunctionlessNode,
-  isReferenceExpr,
-  reflect,
-  registerSubstitution,
-  resolveSubstitution,
-  validateFunctionLike,
-} from "@functionless/ast";
+import { registerSubstitution, validateFunctionLike } from "@functionless/ast";
 import { logicalIdForPath } from "./logical-id";
-import { bundleLambdaFunction, getBundleOutFolder } from "./bundle-lambda";
-import { getEnvironmentVariableName } from "@functionless/util";
 import { Tree } from "./tree/tree";
 import { isFile, File } from "./tree/file";
 import { isFolder } from "./tree/folder";
 
 import { ASL } from "@functionless/asl";
-import { isRestApi, isMethod } from "@functionless/aws-apigateway";
+import { isRestApi, isMethod, Method } from "@functionless/aws-apigateway";
 import {
   isLambdaFunction,
   LambdaFunction,
   LambdaFunctionKind,
 } from "@functionless/aws-lambda";
 import { isTable } from "@functionless/aws-dynamodb";
-import { isTableConstruct, Table } from "@functionless/aws-dynamodb-constructs";
+import { Table } from "@functionless/aws-dynamodb-constructs";
 import { isEventBus } from "@functionless/aws-events";
 import { EventBus } from "@functionless/aws-events-constructs";
 import {
-  isFunctionConstruct,
   Function,
   inferIamPolicies,
 } from "@functionless/aws-lambda-constructs";
@@ -48,7 +37,6 @@ import {
   $SFN,
   IStepFunction,
   IExpressStepFunction,
-  isStepFunctionConstruct,
 } from "@functionless/aws-stepfunctions-constructs";
 import {
   ExpressStepFunction,
@@ -57,6 +45,10 @@ import {
   isStepFunction,
   StepFunction,
 } from "@functionless/aws-stepfunctions";
+import { EntryEnvMap } from "./esbuild-resource-processor";
+import pMap from "p-map";
+import { processLambdaFunction } from "./process-lambda";
+import { Resource } from "./resource";
 
 export class FunctionlessStack extends Stack {
   protected allocateLogicalId(cfnElement: CfnElement): string {
@@ -78,29 +70,38 @@ export async function synthesizeProject(project: Project): Promise<void> {
   });
   const rootStack = new FunctionlessStack(app, project.projectName);
 
+  const synthedResourceMap: Record<string, SynthesizedResource> = {};
+  const entryEnvMaps: EntryEnvMap[] = [];
   await constructProject();
-  connectProject(project, app);
+  await connectProject(project, app, synthedResourceMap, entryEnvMaps);
 
   app.synth();
 
   async function constructProject() {
     for (const file of project.module.files) {
       if (isFolder(file) && file._stack) {
-        await synthesizeNode(app, file, undefined);
+        await synthesizeNode(app, project, file, undefined);
       } else {
-        await synthesizeNode(rootStack, file, undefined);
+        await synthesizeNode(rootStack, project, file, undefined);
       }
     }
   }
 
   async function synthesizeNode(
     scope: Construct,
+    project: Project,
     node: Tree,
     ctx: Construct | undefined,
     overrideId?: string
   ): Promise<Construct> {
     if (isFile(node)) {
-      return synthesizeResource(scope, overrideId ?? node.name, node, ctx);
+      return synthesizeResource(
+        scope,
+        overrideId ?? node.name,
+        project,
+        node,
+        ctx
+      );
     } else {
       if (node._stack) {
         if (node.isSrcRoot) {
@@ -120,7 +121,7 @@ export async function synthesizeProject(project: Project): Promise<void> {
       if (node._api) {
         // if this folder marks the beginning of a new RestApi, then instantiate the
         // RestApi Resource and set it as the surrounding scope and context of all children nodes.
-        ctx = await synthesizeNode(scope, node._api, ctx);
+        ctx = await synthesizeNode(scope, project, node._api, ctx);
       }
 
       const children = node.files.filter(
@@ -129,7 +130,7 @@ export async function synthesizeProject(project: Project): Promise<void> {
 
       // synthesize all nodes that are not the `_stack` or `_api` special nodes
       for (const child of children) {
-        await synthesizeNode(scope, child, ctx);
+        await synthesizeNode(scope, project, child, ctx);
       }
       return scope;
     }
@@ -138,14 +139,16 @@ export async function synthesizeProject(project: Project): Promise<void> {
   async function synthesizeResource(
     scope: Construct,
     id: string,
+    project: Project,
     file: File,
     ctx: Construct | undefined
   ): Promise<Construct> {
-    const construct = await _synthesizeResource(scope, id, file, ctx);
+    const construct = await _synthesizeResource(scope, id, project, file, ctx);
     if (construct instanceof Construct) {
       return construct;
     } else {
       registerSubstitution(file.resource, construct);
+      synthedResourceMap[file.address] = construct;
       // @ts-ignore
       return construct.resource;
     }
@@ -154,24 +157,25 @@ export async function synthesizeProject(project: Project): Promise<void> {
   async function _synthesizeResource(
     scope: Construct,
     id: string,
+    project: Project,
     file: File,
     ctx: Construct | undefined
   ): Promise<SynthesizedResource> {
     if (isLambdaFunction(file.resource)) {
-      const outFolder = getBundleOutFolder(id);
-      await bundleLambdaFunction(project, file.filePath, outFolder);
+      const { bundleFolder, env } = await processLambdaFunction(file, "synth");
+      entryEnvMaps.push(env);
 
       const func = new aws_lambda.Function(scope, id, {
         runtime: aws_lambda.Runtime.NODEJS_16_X,
         handler: "index.default",
-        code: aws_lambda.Code.fromAsset(outFolder),
+        code: aws_lambda.Code.fromAsset(bundleFolder),
+
         ...file.resource.props,
         environment: {
           NODE_OPTIONS: "--enable-source-maps",
           ...file.resource.props?.environment,
         },
       });
-      func.addEnvironment("RESOURCE_ID", func.node.path);
       return Function.fromFunction(func);
     } else if (isStepFunction(file.resource)) {
       return StepFunctionConstruct.fromStateMachine(
@@ -209,10 +213,8 @@ export async function synthesizeProject(project: Project): Promise<void> {
       const handler = await synthesizeResource(
         scope,
         id,
-        new File({
-          ...file,
-          resource: file.resource.handler,
-        }),
+        project,
+        methodHandlerFile(file),
         api
       );
 
@@ -233,7 +235,7 @@ export async function synthesizeProject(project: Project): Promise<void> {
         .resourceForPath(resourcePath)
         .addMethod(
           file.resource.props.httpMethod,
-          isLambdaFunction(file.resource.handler)
+          isLambdaFunction((file.resource as any).handler)
             ? new aws_apigateway.LambdaIntegration(handler as any)
             : aws_apigateway.StepFunctionsIntegration.startExecution(
                 handler as any
@@ -302,79 +304,46 @@ function synthesizeStepFunctionDefinition(
   }
 }
 
-function synthesizeLambdaEnvironment(
+async function synthesizeLambdaEnvironment(
   resource: LambdaFunction,
-  lambdaFunction: aws_lambda.Function
+  lambdaFunction: aws_lambda.Function,
+  entryFile: File,
+  synthedResourceMap: Record<string, SynthesizedResource>,
+  entryEnvMaps: EntryEnvMap[]
 ) {
   const ast = validateFunctionLike(resource.handler, resource.kind);
 
   inferIamPolicies(ast, lambdaFunction);
 
-  const seen = new Set();
-  forEachChild(ast, function visit(node: FunctionlessNode): void {
-    if (isReferenceExpr(node)) {
-      let ref: any = node.ref();
-      if (typeof ref === "function") {
-        if (!seen.has(ref)) {
-          seen.add(ref);
-          const ast = reflect(ref);
-          if (ast) {
-            visit(ast);
-          }
+  const envs = await pMap(
+    entryEnvMaps,
+    async (entryEnvMap) =>
+      await pMap(
+        Object.entries(entryEnvMap[entryFile.address] ?? {}),
+        ([resourceFileAddress, materializeEnv]) => {
+          const resource = synthedResourceMap[resourceFileAddress];
+          return materializeEnv({ functionTarget: "synth", resource });
         }
-      } else {
-        let resource = ref;
-        if (resource?.__esModule === true && "default" in resource) {
-          resource = ref.default;
-        }
-        const construct = resolveSubstitution(resource);
-        if (
-          isTableConstruct(construct) ||
-          isFunctionConstruct(construct) ||
-          isStepFunctionConstruct(construct)
-        ) {
-          if (construct && !seen.has(construct)) {
-            const resourceID = construct.resource.node.path;
-            if (resourceID === undefined) {
-              console.error(`Could not look up Resource ID`, ref);
-              throw new Error(`Could not look up Resource ID`);
-            }
-            seen.add(construct);
-            const envKey = getEnvironmentVariableName(resourceID);
-            if (isTableConstruct(construct)) {
-              const table = construct.resource;
-              lambdaFunction.addEnvironment(`${envKey}_NAME`, table.tableName);
-              lambdaFunction.addEnvironment(`${envKey}_ARN`, table.tableArn);
-              lambdaFunction.addEnvironment("TODO", "TODO");
-            } else if (isFunctionConstruct(construct)) {
-              const func = construct.resource;
-              lambdaFunction.addEnvironment(
-                `${envKey}_NAME`,
-                func.functionName
-              );
-              lambdaFunction.addEnvironment(`${envKey}_ARN`, func.functionArn);
-            } else if (isStepFunctionConstruct(construct)) {
-              const machine = construct.resource;
-              lambdaFunction.addEnvironment(
-                `${envKey}_NAME`,
-                machine.stateMachineName
-              );
-              lambdaFunction.addEnvironment(
-                `${envKey}_ARN`,
-                machine.stateMachineArn
-              );
-            }
-          }
-        }
-      }
-    }
-    forEachChild(node, visit);
-  });
+      )
+  );
+
+  envs
+    .flatMap((x) => x)
+    .flatMap((e) => Object.entries(e))
+    .forEach(([name, value]) => {
+      lambdaFunction.addEnvironment(name, value);
+    });
 }
 
-function connectProject(project: Project, scope: Construct) {
+async function connectProject(
+  project: Project,
+  scope: Construct,
+  synthedResourceMap: Record<string, SynthesizedResource>,
+  entryEnvMaps: EntryEnvMap[]
+) {
   if (scope instanceof aws_stepfunctions.StateMachine) {
-    const resource = project.lookupResource(scope.node.path).resource;
+    const resource = project.lookupResource(scope.node.path)
+      .resource as Resource & { handler: any };
     if (
       isMethod(resource) &&
       (isStepFunction(resource.handler) ||
@@ -385,14 +354,40 @@ function connectProject(project: Project, scope: Construct) {
       synthesizeStepFunctionDefinition(resource, scope);
     }
   } else if (scope instanceof aws_lambda.Function) {
-    const resource = project.lookupResource(scope.node.path).resource;
-    if (isMethod(resource) && isLambdaFunction(resource.handler)) {
-      synthesizeLambdaEnvironment(resource.handler, scope);
-    } else if (isLambdaFunction(resource)) {
-      synthesizeLambdaEnvironment(resource, scope);
+    const resourceFile = project.lookupResource(scope.node.path) as File & {
+      resource: { handler: any };
+    };
+    if (
+      isMethod(resourceFile.resource) &&
+      isLambdaFunction(resourceFile.resource.handler)
+    ) {
+      await synthesizeLambdaEnvironment(
+        resourceFile.resource.handler,
+        scope,
+        methodHandlerFile(resourceFile),
+        synthedResourceMap,
+        entryEnvMaps
+      );
+    } else if (isLambdaFunction(resourceFile.resource)) {
+      await synthesizeLambdaEnvironment(
+        resourceFile.resource,
+        scope,
+        resourceFile,
+        synthedResourceMap,
+        entryEnvMaps
+      );
     }
   }
-  for (const child of scope.node.children) {
-    connectProject(project, child);
-  }
+  await pMap(scope.node.children, (child) =>
+    connectProject(project, child, synthedResourceMap, entryEnvMaps)
+  );
+}
+
+function methodHandlerFile(methodFile: File): File {
+  const handlerFile = new File({
+    ...methodFile,
+    resource: (methodFile.resource as Method).handler,
+  });
+  Object.defineProperty(handlerFile, "parent", { value: methodFile });
+  return handlerFile;
 }

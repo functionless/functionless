@@ -14,3 +14,12 @@ export async function exists(file: string): Promise<boolean> {
 export async function ls(dir: string): Promise<string[]> {
   return (await fs.readdir(dir)).map((file) => path.resolve(dir, file));
 }
+
+/**
+ * One or more of something
+ */
+export type AtLeastOne<T> = T | T[];
+
+export function matchAtLeastOne<T>(t: AtLeastOne<T> | undefined, val: T) {
+  return !t || (Array.isArray(t) ? t.includes(val) : t === val);
+}

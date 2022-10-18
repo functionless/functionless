@@ -1,10 +1,12 @@
 import type { aws_dynamodb } from "aws-cdk-lib";
-import type DynamoDB from "aws-sdk/clients/dynamodb";
+import DynamoDB from "aws-sdk/clients/dynamodb";
 import { TableAppsyncApi } from "./appsync";
 import { AttributeType } from "./attribute-type";
 import { TableAttributesApi, TableDocumentApi } from "./runtime";
-import { getEnvironmentVariableName } from "@functionless/util";
-import { documentClient, dynamoClient } from "./client-factory";
+import { Request, PromiseResult } from "aws-sdk/lib/request";
+import { AWSError } from "aws-sdk/lib/error";
+import { createTargetClient, TargetClientData } from "@functionless/aws-util";
+import { DocumentClient } from "aws-sdk/clients/dynamodb";
 
 export const TableKind = "fl.Table";
 
@@ -104,17 +106,13 @@ export function Table<
   PK extends keyof Item,
   SK extends keyof Item | undefined = undefined
 >(
-  props: TableProps<Exclude<PK, number | Symbol>, Exclude<SK, number | Symbol>>,
-  /**
-   * Injected by the compiler.
-   */
-  resourceId?: string,
-  /**
-   * Injected by the compiler.
-   */
-  roleArn?: string
+  props: TableProps<Exclude<PK, number | Symbol>, Exclude<SK, number | Symbol>>
 ): Table<Item, PK, SK> {
-  return new TableDocumentClient(props as any, resourceId!, roleArn) as any;
+  return new TableDocumentClient(props as any) as unknown as Table<
+    Item,
+    PK,
+    SK
+  >;
 }
 
 export class TableDocumentClient<
@@ -125,260 +123,236 @@ export class TableDocumentClient<
   readonly kind = TableKind;
   readonly attributes: TableAttributesClient;
 
+  //Following properties will be set by transform plugin
+  //Document client is a function as we want to assume role each time we invoke,
+  //lest it expire
+  private declare readonly documentClient: () => Promise<DocumentClient>;
+  private declare readonly tableName: string;
+  private declare readonly tableArn: string;
+
+  private withTableName(request: any) {
+    return { ...request, TableName: this.tableName };
+  }
+
+  private async performRequest<F>(
+    request: any,
+    action: (d: DocumentClient) => (request: any) => Request<F, AWSError>
+  ): Promise<PromiseResult<F, AWSError>> {
+    const documentClient = await this.documentClient();
+    return action(documentClient).bind(documentClient)(request).promise();
+  }
+
   constructor(
     readonly props: TableProps<
       Exclude<PK, number | Symbol>,
       Exclude<SK, number | Symbol>
-    >,
-    readonly resourceId: string,
-    readonly roleArn?: string
+    >
   ) {
-    this.attributes = new TableAttributesClient(resourceId, roleArn);
+    this.attributes = new TableAttributesClient();
   }
 
-  private getEnvironmentKey() {
-    return getEnvironmentVariableName(this.resourceId);
+  get(request: any) {
+    return this.performRequest(this.withTableName(request), (d) => d.get);
   }
 
-  public getTableArn(): string {
-    return process.env[`${this.getEnvironmentKey()}_ARN`]!;
+  put(request: any) {
+    return this.performRequest(this.withTableName(request), (d) => d.put);
   }
 
-  public getTableName(): string {
-    return process.env[`${this.getEnvironmentKey()}_NAME`]!;
+  update(request: any) {
+    return this.performRequest(this.withTableName(request), (d) => d.update);
   }
 
-  async get(request: any) {
-    const input: any = {
-      ...request,
-      TableName: this.getTableName(),
-    };
-    return await (await documentClient(this.roleArn)).get(input).promise();
+  delete(request: any) {
+    return this.performRequest(this.withTableName(request), (d) => d.delete);
   }
-  async put(request: any) {
-    const input: any = {
-      ...request,
-      TableName: this.getTableName(),
-    };
 
-    return await (await documentClient(this.roleArn)).put(input).promise();
+  query(request: any) {
+    return this.performRequest(this.withTableName(request), (d) => d.query);
   }
-  async update(request: any) {
-    const input: any = {
-      ...request,
-      TableName: this.getTableName(),
-    };
 
-    return await (await documentClient(this.roleArn)).update(input).promise();
+  scan(request: any) {
+    return this.performRequest(this.withTableName(request), (d) => d.scan);
   }
-  async delete(request: any) {
-    const input: any = {
-      ...request,
-      TableName: this.getTableName(),
-    };
 
-    return await (await documentClient(this.roleArn)).delete(input).promise();
+  wrapInRequestItems(request: any) {
+    return { RequestItems: { [this.tableName]: request } };
   }
-  async query(request: any) {
-    const input: any = {
-      ...request,
-      TableName: this.getTableName(),
-    };
 
-    return await (await documentClient(this.roleArn)).query(input).promise();
-  }
-  async scan(request: any) {
-    const input: any = {
-      ...request,
-      TableName: this.getTableName(),
-    };
-
-    return await (await documentClient(this.roleArn)).scan(input).promise();
-  }
   async batchGet(request: any) {
-    const input: any = {
-      RequestItems: {
-        [this.getTableName()]: request,
-      },
-    };
-    const response = await (await documentClient(this.roleArn))
-      .batchGet(input)
-      .promise();
+    const response = await this.performRequest(
+      this.wrapInRequestItems(request),
+      (d) => d.batchGet
+    );
     return {
       ...response,
-      Items: response.Responses?.[this.getTableName()] as any,
+      Items: response.Responses?.[this.tableName],
     };
   }
+
   async batchWrite(request: any) {
-    const input: any = {
-      RequestItems: {
-        [this.getTableName()]: request,
-      },
-    };
-    const response = await (await documentClient(this.roleArn))
-      .batchWrite(input)
-      .promise();
+    const response = await this.performRequest(
+      this.wrapInRequestItems(request),
+      (d) => d.batchWrite
+    );
 
     return {
       ...response,
-      UnprocessedItems: response.UnprocessedItems?.[this.getTableName()] as any,
+      UnprocessedItems: response.UnprocessedItems?.[this.tableName] as any,
     };
   }
+
   async transactGet({ TransactItems }: any) {
     const input: any = {
-      TransactItems: TransactItems.map((item: any) => ({
-        Get: {
-          ...item.Get,
-          TableName: this.getTableName(),
-        },
+      TransactItems: TransactItems.map(({ Get }: any) => ({
+        Get: this.withTableName(Get),
       })),
     };
-    const response = await (await documentClient(this.roleArn))
-      .transactGet(input)
-      .promise();
+    const response = await this.performRequest(input, (d) => d.transactGet);
 
     return {
       Items: response.Responses?.map(({ Item }) => Item),
     } as any;
   }
+
   async transactWrite({ TransactItems }: any) {
-    const input: DynamoDB.TransactWriteItemsInput = {
+    const input: AWS.DynamoDB.TransactWriteItemsInput = {
       TransactItems: TransactItems.flatMap((item: any) =>
         Object.keys(item).map((key) => ({
-          [key]: {
-            ...item[key as keyof typeof item],
-            TableName: this.getTableName(),
-          },
+          [key]: this.withTableName(item[key as keyof typeof item]),
         }))
       ),
     };
-    return await (await documentClient(this.roleArn))
-      .transactWrite(input)
-      .promise();
+    return this.performRequest(input, (d) => d.transactWrite);
   }
 }
 
 export class TableAttributesClient {
-  constructor(readonly resourceId: string, readonly roleArn?: string) {}
+  //Will be set by transform plugin
+  declare readonly tableName: string;
+  private declare dynamoClient: () => Promise<DynamoDB>;
 
-  private getEnvironmentKey() {
-    return getEnvironmentVariableName(this.resourceId);
+  constructor() {}
+
+  private withTableName(request: any) {
+    return { ...request, TableName: this.tableName };
   }
 
-  public getTableArn(): string {
-    return process.env[`${this.getEnvironmentKey()}_ARN`]!;
+  private async performRequest<F>(
+    request: any,
+    action: (d: DynamoDB) => (request: any) => Request<F, AWSError>
+  ): Promise<PromiseResult<F, AWSError>> {
+    const dynamoClient = await this.dynamoClient();
+    return action(dynamoClient).bind(dynamoClient)(request).promise();
   }
 
-  public getTableName(): string {
-    return process.env[`${this.getEnvironmentKey()}_NAME`]!;
+  get(request: any) {
+    return this.performRequest(this.withTableName(request), (d) => d.getItem);
   }
 
-  async get(request: any) {
-    const input: any = {
-      ...request,
-      TableName: this.getTableName(),
-    };
-    return await (await dynamoClient(this.roleArn)).getItem(input).promise();
+  put(request: any) {
+    return this.performRequest(this.withTableName(request), (d) => d.putItem);
   }
-  async put(request: any) {
-    const input: any = {
-      ...request,
-      TableName: this.getTableName(),
-    };
 
-    return await (await dynamoClient(this.roleArn)).putItem(input).promise();
+  update(request: any) {
+    return this.performRequest(
+      this.withTableName(request),
+      (d) => d.updateItem
+    );
   }
-  async update(request: any) {
-    const input: any = {
-      ...request,
-      TableName: this.getTableName(),
-    };
 
-    return await (await dynamoClient(this.roleArn)).updateItem(input).promise();
+  delete(request: any) {
+    return this.performRequest(
+      this.withTableName(request),
+      (d) => d.deleteItem
+    );
   }
-  async delete(request: any) {
-    const input: any = {
-      ...request,
-      TableName: this.getTableName(),
-    };
 
-    return await (await dynamoClient(this.roleArn)).deleteItem(input).promise();
+  query(request: any) {
+    return this.performRequest(this.withTableName(request), (d) => d.query);
   }
-  async query(request: any) {
-    const input: any = {
-      ...request,
-      TableName: this.getTableName(),
-    };
 
-    return await (await dynamoClient(this.roleArn)).query(input).promise();
+  scan(request: any) {
+    return this.performRequest(this.withTableName(request), (d) => d.scan);
   }
-  async scan(request: any) {
-    const input: any = {
-      ...request,
-      TableName: this.getTableName(),
-    };
 
-    return await (await dynamoClient(this.roleArn)).scan(input).promise();
+  wrapInRequestItems(request: any) {
+    return { RequestItems: { [this.tableName]: request } };
   }
+
   async batchGet(request: any) {
-    const input: any = {
-      RequestItems: {
-        [this.getTableName()]: request,
-      },
-    };
-    const response = await (await dynamoClient(this.roleArn))
-      .batchGetItem(input)
-      .promise();
+    const response = await this.performRequest(
+      this.wrapInRequestItems(request),
+      (d) => d.batchGetItem
+    );
     return {
       ...response,
-      Items: response.Responses?.[this.getTableName()] as any,
+      Items: response.Responses?.[this.tableName] as any,
     };
   }
   async batchWrite(request: any) {
-    const input: any = {
-      RequestItems: {
-        [this.getTableName()]: request,
-      },
-    };
-    const response = await (await dynamoClient(this.roleArn))
-      .batchWriteItem(input)
-      .promise();
+    const response = await this.performRequest(
+      this.wrapInRequestItems(request),
+      (d) => d.batchWriteItem
+    );
 
     return {
       ...response,
-      UnprocessedItems: response.UnprocessedItems?.[this.getTableName()] as any,
+      UnprocessedItems: response.UnprocessedItems?.[this.tableName] as any,
     };
   }
+
   async transactGet({ TransactItems }: any) {
     const input: any = {
-      TransactItems: TransactItems.map((item: any) => ({
-        Get: {
-          ...item.Get,
-          TableName: this.getTableName(),
-        },
+      TransactItems: TransactItems.map(({ Get }: any) => ({
+        Get: this.withTableName(Get),
       })),
     };
-    const response = await (await dynamoClient(this.roleArn))
-      .transactGetItems(input)
-      .promise();
+    const response = await this.performRequest(
+      input,
+      (d) => d.transactGetItems
+    );
 
     return {
       Items: response.Responses?.map(({ Item }) => Item),
     } as any;
   }
+
   async transactWrite({ TransactItems }: any) {
-    const input: DynamoDB.TransactWriteItemsInput = {
+    const input: AWS.DynamoDB.TransactWriteItemsInput = {
       TransactItems: TransactItems.flatMap((item: any) =>
         Object.keys(item).map((key) => ({
-          [key]: {
-            ...item[key as keyof typeof item],
-            TableName: this.getTableName(),
-          },
+          [key]: this.withTableName(item[key as keyof typeof item]),
         }))
       ),
     };
-    return await (await dynamoClient(this.roleArn))
-      .transactWriteItems(input)
-      .promise();
+    return this.performRequest(input, (d) => d.transactWriteItems);
   }
+}
+
+//Called by transform plugin to set up the client
+export function _initTable(
+  table: TableDocumentClient<any, any, any>,
+  {
+    targetClientData,
+    tableName,
+    tableArn,
+  }: {
+    targetClientData: TargetClientData;
+    tableName: string;
+    tableArn: string;
+  }
+) {
+  Object.defineProperty(table, "documentClient", {
+    value: () => createTargetClient(DocumentClient, targetClientData),
+  });
+
+  Object.defineProperty(table, "tableArn", { value: tableArn });
+  Object.defineProperty(table, "tableName", { value: tableName });
+
+  Object.defineProperty(table.attributes, "dynamoClient", {
+    value: () => createTargetClient(DynamoDB, targetClientData),
+  });
+  Object.defineProperty(table.attributes, "tableName", { value: tableName });
+  return table;
 }

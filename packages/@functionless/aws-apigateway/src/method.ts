@@ -91,36 +91,21 @@ export function Method<
   const props = typeof handlerOrProps === "object" ? handlerOrProps : undefined;
 
   function method(event: APIGatewayProxyEvent, ...args: any[]) {
-    /* eslint-disable turbo/no-undeclared-env-vars */
-    if (
-      // @ts-ignore
-      process.env.RESOURCE_ID === handler.resourceId ||
-      process.env.FL_LOCAL === "true"
-    ) {
-      /* eslint-enable turbo/no-undeclared-env-vars */
-      const merged: ApiRequestEvent<RequestEvent> = {
-        ...(event.body ? JSON.parse(event.body) : {}),
-        ...event.pathParameters,
-        _request: event,
-      };
+    /* eslint-enable turbo/no-undeclared-env-vars */
+    const merged: ApiRequestEvent<RequestEvent> = {
+      ...(event.body ? JSON.parse(event.body) : {}),
+      ...event.pathParameters,
+      _request: event,
+    };
 
-      // this is the API being invoked
-      // @ts-ignore
-      return handler(merged, ...args);
-    } else {
-      // this is a Lambda Function directly invoking this API
-      // axios
-      throw new Error("Not Implemented");
-    }
+    // this is the API being invoked
+    // @ts-ignore
+    return handler(merged, ...args);
   }
   Object.assign(method, <Method<RequestEvent, Result>>{
     kind: MethodKind,
     handler,
     props,
-  });
-  Object.defineProperty(handler, "RESOURCE_ID", {
-    // @ts-ignore
-    get: () => method.RESOURCE_ID,
   });
   return method as any;
 }
