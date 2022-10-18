@@ -3,6 +3,10 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# [0.29.0](https://github.com/functionless/functionless/compare/v0.28.5...v0.29.0) (2022-10-18)
+
+**Note:** Version bump only for package @functionless/aws-secretsmanager
+
 ## [0.28.4](https://github.com/functionless/functionless/compare/v0.28.3...v0.28.4) (2022-10-17)
 
 **Note:** Version bump only for package @functionless/aws-secretsmanager

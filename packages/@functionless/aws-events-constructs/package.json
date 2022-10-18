@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-events-constructs",
-  "version": "0.28.4",
+  "version": "0.29.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -14,13 +14,13 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/asl": "^0.28.4",
-    "@functionless/ast": "^0.28.0",
-    "@functionless/aws-apigateway": "^0.28.4",
-    "@functionless/aws-appsync": "^0.28.0",
-    "@functionless/aws-events": "^0.28.4",
-    "@functionless/aws-lambda": "^0.28.4",
-    "@functionless/util": "^0.28.0"
+    "@functionless/asl": "^0.29.0",
+    "@functionless/ast": "^0.29.0",
+    "@functionless/aws-apigateway": "^0.29.0",
+    "@functionless/aws-appsync": "^0.29.0",
+    "@functionless/aws-events": "^0.29.0",
+    "@functionless/aws-lambda": "^0.29.0",
+    "@functionless/util": "^0.29.0"
   },
   "peerDependencies": {
     "aws-cdk-lib": "^2.44.0"

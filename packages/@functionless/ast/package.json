@@ -1,6 +1,6 @@
 {
   "name": "@functionless/ast",
-  "version": "0.28.0",
+  "version": "0.29.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
@@ -11,10 +11,10 @@
     "test": "jest"
   },
   "dependencies": {
-    "@functionless/error-code": "^0.28.0"
+    "@functionless/error-code": "^0.29.0"
   },
   "devDependencies": {
-    "@functionless/jest": "^0.28.0",
+    "@functionless/jest": "^0.29.0",
     "@types/jest": "^29.0.3",
     "@types/node": "^16",
     "functionless-build-utils": "*",

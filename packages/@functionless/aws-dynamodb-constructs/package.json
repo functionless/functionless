@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-dynamodb-constructs",
-  "version": "0.28.4",
+  "version": "0.29.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -14,12 +14,12 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/asl": "^0.28.4",
-    "@functionless/aws-apigateway": "^0.28.4",
-    "@functionless/aws-appsync": "^0.28.0",
-    "@functionless/aws-dynamodb": "^0.28.4",
-    "@functionless/aws-lambda": "^0.28.4",
-    "@functionless/vtl": "^0.28.0",
+    "@functionless/asl": "^0.29.0",
+    "@functionless/aws-apigateway": "^0.29.0",
+    "@functionless/aws-appsync": "^0.29.0",
+    "@functionless/aws-dynamodb": "^0.29.0",
+    "@functionless/aws-lambda": "^0.29.0",
+    "@functionless/vtl": "^0.29.0",
     "aws-sdk": "^2"
   },
   "peerDependencies": {

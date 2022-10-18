@@ -1,6 +1,6 @@
 {
   "name": "@functionless/vtl",
-  "version": "0.28.0",
+  "version": "0.29.0",
   "main": "./lib/index.js",
   "types": "./lib/index.d.ts",
   "files": [
@@ -14,8 +14,8 @@
     "dev": "tsc --watch"
   },
   "dependencies": {
-    "@functionless/ast": "^0.28.0",
-    "@functionless/util": "^0.28.0"
+    "@functionless/ast": "^0.29.0",
+    "@functionless/util": "^0.29.0"
   },
   "devDependencies": {
     "functionless-build-utils": "*",

@@ -1,6 +1,6 @@
 {
   "name": "@functionless/aws-util",
-  "version": "0.28.0",
+  "version": "0.29.0",
   "main": "lib/index.js",
   "types": "lib/index.d.ts",
   "scripts": {
@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit"
   },
   "dependencies": {
-    "@functionless/util": "^0.28.0"
+    "@functionless/util": "^0.29.0"
   },
   "peerDependencies": {
     "aws-sdk": "^2"
